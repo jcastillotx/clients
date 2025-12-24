@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Model;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Prevent lazy loading in development
         Model::preventLazyLoading(! app()->isProduction());
+
+        // Livewire components (non-standard namespace path)
+        Livewire::component('dashboard', \App\Http\Livewire\Dashboard::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
