@@ -26,17 +26,19 @@ class RequestAttachment extends Model
         'file_size',
     ];
 
+    protected $casts = [
+        'file_size' => 'integer',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be mutated to dates.
      *
-     * @return array<string, string>
+     * @var array<int, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'file_size' => 'integer',
-        ];
-    }
+    protected $dates = [
+        'created_at',
+        'updated_at',
+    ];
 
     /**
      * Get the request that owns the attachment.

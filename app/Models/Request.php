@@ -7,10 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\ValidationException;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Request extends Model
 {
     use HasFactory, SoftDeletes;
+    use LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -39,16 +43,36 @@ class Request extends Model
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'due_date' => 'date',
+        'estimated_hours' => 'decimal:2',
+        'actual_hours' => 'decimal:2',
+        'estimated_cost' => 'decimal:2',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array<int, string>
+     */
+    protected $dates = [
+        'due_date',
+        'started_at',
+        'completed_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'due_date' => 'date',
-            'estimated_hours' => 'decimal:2',
-            'actual_hours' => 'decimal:2',
-            'estimated_cost' => 'decimal:2',
-            'started_at' => 'datetime',
-            'completed_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     /**
@@ -70,9 +94,17 @@ class Request extends Model
     /**
      * Get the user assigned to the request.
      */
-    public function assignee(): BelongsTo
+    public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Backwards-compatible alias.
+     */
+    public function assignee(): BelongsTo
+    {
+        return $this->assignedTo();
     }
 
     /**
@@ -179,7 +211,24 @@ class Request extends Model
     }
 
     /**
-     * Get priority color for UI.
+     * Get priority badge HTML for UI.
+     */
+    public function getPriorityBadgeAttribute(): string
+    {
+        $label = ucfirst($this->priority);
+        $class = match ($this->priority) {
+            'low' => 'bg-success',
+            'medium' => 'bg-info',
+            'high' => 'bg-warning',
+            'urgent' => 'bg-danger',
+            default => 'bg-secondary',
+        };
+
+        return sprintf('<span class="badge %s">%s</span>', $class, $label);
+    }
+
+    /**
+     * Backwards-compatible priority color helper.
      */
     public function getPriorityColorAttribute(): string
     {
@@ -193,17 +242,9 @@ class Request extends Model
     }
 
     /**
-     * Scope for open requests.
-     */
-    public function scopeOpen($query)
-    {
-        return $query->whereNotIn('status', ['completed', 'cancelled']);
-    }
-
-    /**
      * Scope for requests by status.
      */
-    public function scopeStatus($query, string $status)
+    public function scopeByStatus($query, string $status)
     {
         return $query->where('status', $status);
     }
@@ -211,9 +252,36 @@ class Request extends Model
     /**
      * Scope for requests by priority.
      */
-    public function scopePriority($query, string $priority)
+    public function scopeByPriority($query, string $priority)
     {
         return $query->where('priority', $priority);
+    }
+
+    /**
+     * Scope for requests for a client.
+     */
+    public function scopeForClient($query, int|Client $client)
+    {
+        $clientId = $client instanceof Client ? $client->id : $client;
+        return $query->where('client_id', $clientId);
+    }
+
+    /**
+     * Backwards-compatible aliases.
+     */
+    public function scopeOpen($query)
+    {
+        return $query->whereNotIn('status', ['completed', 'cancelled']);
+    }
+
+    public function scopeStatus($query, string $status)
+    {
+        return $query->byStatus($status);
+    }
+
+    public function scopePriority($query, string $priority)
+    {
+        return $query->byPriority($priority);
     }
 
     /**
@@ -224,5 +292,26 @@ class Request extends Model
         return $query->open()
             ->whereNotNull('due_date')
             ->where('due_date', '<', now());
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function booted(): void
+    {
+        static::updating(function (Request $request) {
+            if (!$request->isDirty('status')) {
+                return;
+            }
+
+            $from = $request->getOriginal('status');
+            $to = $request->status;
+
+            if ($from === 'completed' && $to === 'draft') {
+                throw ValidationException::withMessages([
+                    'status' => "Status cannot transition from '{$from}' to '{$to}'.",
+                ]);
+            }
+        });
     }
 }

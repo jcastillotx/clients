@@ -5,11 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Client extends Model
 {
     use HasFactory, SoftDeletes;
+    use LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -39,16 +43,41 @@ class Client extends Model
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'status' => 'string',
+        'tier' => 'string',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array<int, string>
+     */
+    protected $dates = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'status' => 'string',
-            'tier' => 'string',
-        ];
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     /**
-     * Get users associated with this client.
+     * Get the primary user associated with this client.
+     */
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class);
+    }
+
+    /**
+     * Get all users associated with this client.
      */
     public function users(): HasMany
     {
@@ -138,6 +167,23 @@ class Client extends Model
     }
 
     /**
+     * Get an HTML status badge for UI.
+     */
+    public function getStatusBadgeAttribute(): string
+    {
+        $label = ucfirst($this->status);
+        $class = match ($this->status) {
+            'active' => 'bg-success',
+            'inactive' => 'bg-secondary',
+            'pending' => 'bg-warning',
+            'suspended' => 'bg-danger',
+            default => 'bg-secondary',
+        };
+
+        return sprintf('<span class="badge %s">%s</span>', $class, $label);
+    }
+
+    /**
      * Get unpaid invoices total.
      */
     public function getUnpaidInvoicesTotalAttribute(): float
@@ -153,6 +199,14 @@ class Client extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope for premium clients.
+     */
+    public function scopePremium($query)
+    {
+        return $query->where('tier', 'premium');
     }
 
     /**

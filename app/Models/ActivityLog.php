@@ -2,14 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Spatie\Activitylog\Models\Activity;
 
-class ActivityLog extends Model
+class ActivityLog extends Activity
 {
-    use HasFactory;
+    protected $table = 'activity_logs';
 
     /**
      * The attributes that are mass assignable.
@@ -17,6 +16,7 @@ class ActivityLog extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        // Custom convenience columns (in addition to Spatie's causer polymorph)
         'user_id',
         'client_id',
         'log_name',
@@ -36,12 +36,19 @@ class ActivityLog extends Model
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'properties' => 'array',
-        ];
-    }
+    protected $casts = [
+        'properties' => 'array',
+    ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array<int, string>
+     */
+    protected $dates = [
+        'created_at',
+        'updated_at',
+    ];
 
     /**
      * Get the user who performed the activity.

@@ -23,17 +23,21 @@ class RequestComment extends Model
         'is_internal',
     ];
 
+    protected $casts = [
+        'is_internal' => 'boolean',
+        'deleted_at' => 'datetime',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be mutated to dates.
      *
-     * @return array<string, string>
+     * @var array<int, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'is_internal' => 'boolean',
-        ];
-    }
+    protected $dates = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     /**
      * Get the request that the comment belongs to.

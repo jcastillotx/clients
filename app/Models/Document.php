@@ -37,13 +37,22 @@ class Document extends Model
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'file_size' => 'integer',
-            'is_public' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'file_size' => 'integer',
+        'is_public' => 'boolean',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array<int, string>
+     */
+    protected $dates = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     /**
      * Get the client that owns the document.
@@ -75,6 +84,14 @@ class Document extends Model
     public function getUrlAttribute(): string
     {
         return Storage::disk('documents')->url($this->file_path);
+    }
+
+    /**
+     * Download URL accessor.
+     */
+    public function getDownloadUrlAttribute(): string
+    {
+        return $this->url;
     }
 
     /**

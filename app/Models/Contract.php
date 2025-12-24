@@ -38,15 +38,27 @@ class Contract extends Model
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'start_date' => 'date',
-            'end_date' => 'date',
-            'value' => 'decimal:2',
-            'signed_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'value' => 'decimal:2',
+        'signed_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array<int, string>
+     */
+    protected $dates = [
+        'start_date',
+        'end_date',
+        'signed_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     /**
      * Get the client that owns the contract.
@@ -94,6 +106,14 @@ class Contract extends Model
         }
 
         return $this->end_date->isPast();
+    }
+
+    /**
+     * Days until expiration (negative if already expired).
+     */
+    public function daysUntilExpiration(): ?int
+    {
+        return $this->end_date ? now()->diffInDays($this->end_date, false) : null;
     }
 
     /**

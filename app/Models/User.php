@@ -40,20 +40,26 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+        'last_login_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be mutated to dates.
      *
-     * @return array<string, string>
+     * @var array<int, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
-            'last_login_at' => 'datetime',
-        ];
-    }
+    protected $dates = [
+        'email_verified_at',
+        'last_login_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     /**
      * Get the client that the user belongs to.

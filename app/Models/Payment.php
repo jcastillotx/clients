@@ -29,19 +29,22 @@ class Payment extends Model
         'processed_at',
     ];
 
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'metadata' => 'array',
+        'processed_at' => 'datetime',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be mutated to dates.
      *
-     * @return array<string, string>
+     * @var array<int, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'amount' => 'decimal:2',
-            'metadata' => 'array',
-            'processed_at' => 'datetime',
-        ];
-    }
+    protected $dates = [
+        'processed_at',
+        'created_at',
+        'updated_at',
+    ];
 
     /**
      * Get the invoice for this payment.
