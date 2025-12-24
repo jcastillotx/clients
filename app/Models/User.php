@@ -70,6 +70,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Accessor: get the related client (safe proxy to relationship).
+     */
+    public function getClientAttribute(): ?Client
+    {
+        if ($this->relationLoaded('client')) {
+            return $this->getRelation('client');
+        }
+
+        return $this->client()->getResults();
+    }
+
+    /**
      * Get requests created by this user.
      */
     public function createdRequests(): HasMany
@@ -114,7 +126,7 @@ class User extends Authenticatable
      */
     public function isClient(): bool
     {
-        return $this->client_id !== null;
+        return $this->hasRole('client') || $this->client_id !== null;
     }
 
     /**
@@ -122,7 +134,23 @@ class User extends Authenticatable
      */
     public function isStaff(): bool
     {
-        return $this->client_id === null;
+        return $this->hasRole('staff') || ($this->client_id === null && !$this->hasRole('client'));
+    }
+
+    /**
+     * Check if user is an admin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'admin']);
+    }
+
+    /**
+     * Check if user is a super admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('super_admin');
     }
 
     /**

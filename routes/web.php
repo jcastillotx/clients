@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InvoiceController;
@@ -73,6 +74,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
 });
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'verified', 'ensure.admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    });
 
 /*
 |--------------------------------------------------------------------------

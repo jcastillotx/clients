@@ -73,7 +73,11 @@ class AuthenticatedSessionController extends Controller
             'auth'
         );
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $defaultRedirect = ($user->isAdmin() || $user->isStaff())
+            ? route('admin.dashboard', absolute: false)
+            : route('dashboard', absolute: false);
+
+        return redirect()->intended($defaultRedirect);
     }
 
     /**
