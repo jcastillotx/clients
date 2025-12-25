@@ -19,9 +19,13 @@
             padding: 40px;
         }
         .header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 40px;
+            margin-bottom: 28px;
+        }
+        .header-table {
+            width: 100%;
+        }
+        .header-table td {
+            vertical-align: top;
         }
         .company-info {
             float: left;
@@ -29,6 +33,11 @@
         .invoice-info {
             float: right;
             text-align: right;
+        }
+        .logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 10px;
         }
         .company-name {
             font-size: 24px;
@@ -39,7 +48,7 @@
         .invoice-title {
             font-size: 32px;
             font-weight: bold;
-            color: #3c8dbc;
+            color: #0f172a;
         }
         .invoice-number {
             font-size: 14px;
@@ -144,31 +153,53 @@
             color: white;
         }
         .status-unpaid {
-            background: #dc3545;
+            background: #f59e0b;
+            color: #111827;
+        }
+        .status-overdue {
+            background: #dc2626;
             color: white;
         }
     </style>
 </head>
 <body>
+    @php
+        $logoPath = public_path('images/logo.png');
+        $logoDataUri = null;
+        if (is_file($logoPath)) {
+            $ext = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $data = base64_encode(file_get_contents($logoPath));
+            $logoDataUri = "data:image/{$ext};base64,{$data}";
+        }
+    @endphp
     <div class="container">
         <div class="header clearfix">
-            <div class="company-info">
-                <div class="company-name">{{ config('client-portal.invoice.company.name') }}</div>
-                <p>{{ config('client-portal.invoice.company.address') }}</p>
-                <p>{{ config('client-portal.invoice.company.email') }}</p>
-                <p>{{ config('client-portal.invoice.company.phone') }}</p>
-            </div>
-            <div class="invoice-info">
-                <div class="invoice-title">INVOICE</div>
-                <div class="invoice-number">{{ $invoice->invoice_number }}</div>
-                <div style="margin-top: 10px;">
-                    @if($invoice->isPaid())
-                    <span class="status-badge status-paid">PAID</span>
-                    @else
-                    <span class="status-badge status-unpaid">UNPAID</span>
-                    @endif
-                </div>
-            </div>
+            <table class="header-table">
+                <tr>
+                    <td style="width: 60%;">
+                        @if($logoDataUri)
+                            <img class="logo" src="{{ $logoDataUri }}" alt="Logo">
+                        @endif
+                        <div class="company-name">{{ config('client-portal.invoice.company.name') }}</div>
+                        <p>{{ config('client-portal.invoice.company.address') }}</p>
+                        <p>{{ config('client-portal.invoice.company.email') }}</p>
+                        <p>{{ config('client-portal.invoice.company.phone') }}</p>
+                    </td>
+                    <td style="width: 40%; text-align: right;">
+                        <div class="invoice-title">INVOICE</div>
+                        <div class="invoice-number">{{ $invoice->invoice_number }}</div>
+                        <div style="margin-top: 10px;">
+                            @if($invoice->isPaid())
+                                <span class="status-badge status-paid">PAID</span>
+                            @elseif($invoice->isOverdue())
+                                <span class="status-badge status-overdue">OVERDUE</span>
+                            @else
+                                <span class="status-badge status-unpaid">UNPAID</span>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <div class="billing-info clearfix">
@@ -249,6 +280,12 @@
                     <td>Total</td>
                     <td>${{ number_format($invoice->amount, 2) }}</td>
                 </tr>
+                @if($invoice->balance_due > 0 && $invoice->balance_due < $invoice->amount)
+                <tr>
+                    <td>Balance Due</td>
+                    <td>${{ number_format($invoice->balance_due, 2) }}</td>
+                </tr>
+                @endif
             </table>
         </div>
 
