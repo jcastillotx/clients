@@ -53,6 +53,8 @@ class StorageSettings extends Component
                 'auto_sync_enabled' => (bool) ($c->auto_sync_enabled ?? true),
                 'sync_frequency_minutes' => (int) ($c->sync_frequency_minutes ?? 0),
                 'conflict_strategy' => (string) ($c->conflict_strategy ?? 'prefer_primary'),
+                'quota_alerts_enabled' => (bool) ($creds['quota_alerts_enabled'] ?? true),
+                'sync_failure_alerts_enabled' => (bool) ($creds['sync_failure_alerts_enabled'] ?? true),
                 'folder_path' => (string) ($creds['folder_path'] ?? ''),
                 'bucket' => (string) ($creds['bucket'] ?? ''),
                 'drive_folder_id' => (string) ($creds['folder_id'] ?? ''),
@@ -74,12 +76,16 @@ class StorageSettings extends Component
             'auto_sync_enabled' => ['boolean'],
             'sync_frequency_minutes' => ['integer', 'min:0', 'max:10080'],
             'conflict_strategy' => ['required', Rule::in(['prefer_primary', 'prefer_newest', 'keep_both'])],
+            'quota_alerts_enabled' => ['boolean'],
+            'sync_failure_alerts_enabled' => ['boolean'],
             'folder_path' => ['nullable', 'string', 'max:255'],
             'drive_folder_id' => ['nullable', 'string', 'max:255'],
             'is_primary' => ['boolean'],
         ])->validate();
 
         $creds = (array) ($conn->credentials ?? []);
+        $creds['quota_alerts_enabled'] = (bool) ($data['quota_alerts_enabled'] ?? true);
+        $creds['sync_failure_alerts_enabled'] = (bool) ($data['sync_failure_alerts_enabled'] ?? true);
         if ($conn->provider === 'aws_s3' || $conn->provider === 'dropbox') {
             $creds['folder_path'] = trim((string) ($data['folder_path'] ?? ''), '/');
         }

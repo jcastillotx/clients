@@ -18,6 +18,9 @@ class StorageDashboard extends Component
     /** @var array<int, array<string, mixed>> */
     public array $cards = [];
 
+    /** @var array<int, array<string, mixed>> */
+    public array $recentLogs = [];
+
     /** @var array<string, mixed> */
     public array $totals = [
         'used' => 0,
@@ -72,7 +75,9 @@ class StorageDashboard extends Component
         $totalKnown = true;
 
         $cards = [];
+        $connectionIds = [];
         foreach ($connections as $conn) {
+            $connectionIds[] = $conn->id;
             $used = (int) ($conn->storage_used ?? 0);
             $limit = $conn->storage_limit !== null ? (int) $conn->storage_limit : null;
 
@@ -114,6 +119,26 @@ class StorageDashboard extends Component
             'connected' => $connections->where('status', 'connected')->count(),
             'errors' => $connections->where('status', 'error')->count(),
         ];
+
+        $this->recentLogs = empty($connectionIds)
+            ? []
+            : StorageSyncLog::query()
+                ->with('storageConnection.client')
+                ->whereIn('storage_connection_id', $connectionIds)
+                ->orderByDesc('started_at')
+                ->limit(15)
+                ->get()
+                ->map(fn (StorageSyncLog $l) => [
+                    'id' => $l->id,
+                    'client' => $l->storageConnection?->client?->company_name,
+                    'provider' => $l->storageConnection?->provider,
+                    'status' => $l->status,
+                    'files_processed' => (int) ($l->files_processed ?? 0),
+                    'started_at' => $l->started_at,
+                    'finished_at' => $l->finished_at,
+                    'message' => $l->message,
+                ])
+                ->all();
     }
 
     public function syncNow(int $connectionId): void

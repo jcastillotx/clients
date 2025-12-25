@@ -130,7 +130,7 @@
                             @endif
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-secondary" wire:click="openLinkModal({{ $f->id }})">Link/Tag</button>
+                            <button class="btn btn-sm btn-outline-secondary" wire:click="openLinkModal({{ $f->id }})">Link/Share/Tag</button>
                         </td>
                     </tr>
                 @empty
@@ -149,7 +149,7 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Link file &amp; tags</h5>
+                        <h5 class="modal-title">Link / share file &amp; tags</h5>
                         <button type="button" class="btn-close" wire:click="closeLinkModal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">

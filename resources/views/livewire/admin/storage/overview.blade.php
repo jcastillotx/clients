@@ -39,6 +39,57 @@
     </div>
 
     <div class="card mb-3">
+        <div class="card-header">
+            <div class="card-title mb-0">Client quota usage (by tier)</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Tier</th>
+                    <th class="text-end">Used</th>
+                    <th class="text-end">Quota</th>
+                    <th style="width: 240px;">Utilization</th>
+                </tr>
+                </thead>
+                <tbody>
+                @forelse(($clientTotals ?? []) as $r)
+                    @php
+                        $pct = $r['pct'];
+                        $bar = $pct === null ? 0 : min(100, (int)$pct);
+                        $color = $pct !== null && $pct >= 100 ? 'danger' : ($pct !== null && $pct >= 80 ? 'warning' : 'primary');
+                    @endphp
+                    <tr>
+                        <td class="fw-semibold">{{ $r['client'] }}</td>
+                        <td class="text-muted">{{ $r['tier'] }}</td>
+                        <td class="text-end text-muted">{{ number_format(((int)$r['used']) / (1024*1024), 1) }} MB</td>
+                        <td class="text-end text-muted">
+                            {{ (int)$r['quota'] > 0 ? number_format(((int)$r['quota']) / (1024*1024), 1) . ' MB' : '—' }}
+                        </td>
+                        <td>
+                            @if($pct === null)
+                                <span class="text-muted small">No quota configured for this tier.</span>
+                            @else
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-{{ $color }}" style="width: {{ $bar }}%"></div>
+                                </div>
+                                <div class="text-muted small mt-1">{{ $pct }}% of tier quota</div>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="text-center text-muted py-4">No client usage data.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small">
+            Quotas come from system settings: Storage quota per client tier. Warning threshold is 80%.
+        </div>
+    </div>
+
+    <div class="card mb-3">
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-12 col-lg-4">

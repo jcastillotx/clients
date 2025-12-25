@@ -109,11 +109,21 @@
                             'google_drive' => 'Google Drive',
                             default => $c['provider'],
                         };
+                        $providerIcon = match ($c['provider']) {
+                            'aws_s3' => 'S3',
+                            'dropbox' => 'Db',
+                            'google_drive' => 'Dr',
+                            default => strtoupper(substr((string)$c['provider'], 0, 2)),
+                        };
                         $statusColor = match ($c['status']) {
                             'connected' => 'success',
                             'error' => 'danger',
                             'disconnected' => 'secondary',
                             default => 'secondary',
+                        };
+                        $statusLabel = match ($c['status']) {
+                            'connected' => 'active',
+                            default => $c['status'],
                         };
                         $pct = null;
                         if (!is_null($c['total']) && (int)$c['total'] > 0) {
@@ -130,12 +140,15 @@
                                             @if(!empty($c['client_name']))
                                                 {{ $c['client_name'] }} ·
                                             @endif
-                                            <span class="badge bg-{{ $statusColor }}">{{ $c['status'] }}</span>
+                                            <span class="badge bg-{{ $statusColor }}">{{ $statusLabel }}</span>
                                             @if($c['is_primary'])
                                                 <span class="badge bg-primary">Primary</span>
                                             @endif
                                         </div>
-                                        <div class="h3 mb-0">{{ $providerLabel }}</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="avatar avatar-sm bg-blue-lt">{{ $providerIcon }}</span>
+                                            <div class="h3 mb-0">{{ $providerLabel }}</div>
+                                        </div>
                                         <div class="text-muted small">
                                             Last sync: {{ $c['last_synced_at'] ? \Carbon\Carbon::parse($c['last_synced_at'])->format('Y-m-d H:i') : '—' }}
                                         </div>
@@ -195,6 +208,58 @@
                     <div class="text-muted">No storage connections yet.</div>
                 @endforelse
             </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <div class="card-title mb-0">Sync history</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Provider</th>
+                    <th>Status</th>
+                    <th class="text-end">Files</th>
+                    <th>Started</th>
+                    <th>Finished</th>
+                    <th>Message</th>
+                </tr>
+                </thead>
+                <tbody>
+                @forelse($recentLogs as $l)
+                    @php
+                        $p = $l['provider'];
+                        $pLabel = match ($p) {
+                            'aws_s3' => 'AWS S3',
+                            'dropbox' => 'Dropbox',
+                            'google_drive' => 'Google Drive',
+                            default => $p,
+                        };
+                        $st = $l['status'] ?? '—';
+                        $stColor = match ($st) {
+                            'success' => 'success',
+                            'error' => 'danger',
+                            'running' => 'info',
+                            default => 'secondary',
+                        };
+                    @endphp
+                    <tr>
+                        <td class="text-muted">{{ $l['client'] ?? '—' }}</td>
+                        <td class="text-muted">{{ $pLabel }}</td>
+                        <td><span class="badge bg-{{ $stColor }}">{{ $st }}</span></td>
+                        <td class="text-end text-muted">{{ $l['files_processed'] ?? 0 }}</td>
+                        <td class="text-muted">{{ $l['started_at'] ? \Carbon\Carbon::parse($l['started_at'])->format('Y-m-d H:i') : '—' }}</td>
+                        <td class="text-muted">{{ $l['finished_at'] ? \Carbon\Carbon::parse($l['finished_at'])->format('Y-m-d H:i') : '—' }}</td>
+                        <td class="text-muted small">{{ $l['message'] ?? '—' }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="text-center text-muted py-4">No sync runs yet.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

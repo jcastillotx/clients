@@ -34,6 +34,10 @@ class SyncStorageConnection implements ShouldQueue
             return;
         }
 
+        $creds = (array) ($connection->credentials ?? []);
+        $quotaAlertsEnabled = (bool) ($creds['quota_alerts_enabled'] ?? true);
+        $syncFailureAlertsEnabled = (bool) ($creds['sync_failure_alerts_enabled'] ?? true);
+
         $log = StorageSyncLog::create([
             'storage_connection_id' => $connection->id,
             'status' => 'running',
@@ -64,7 +68,7 @@ class SyncStorageConnection implements ShouldQueue
                 $pct = $used / $total;
                 if ($pct >= 0.8) {
                     $shouldNotify = $connection->quota_warned_80_at === null || $connection->quota_warned_80_at->lt(now()->subDays(7));
-                    if ($shouldNotify) {
+                    if ($quotaAlertsEnabled && $shouldNotify) {
                         $this->notifyClientUsers($connection, new StorageQuotaWarningNotification($connection, $used, $total));
                         $connection->update(['quota_warned_80_at' => now()]);
                     }
@@ -96,7 +100,7 @@ class SyncStorageConnection implements ShouldQueue
             ]);
 
             $shouldNotify = $connection->sync_failed_notified_at === null || $connection->sync_failed_notified_at->lt(now()->subHours(6));
-            if ($shouldNotify) {
+            if ($syncFailureAlertsEnabled && $shouldNotify) {
                 $this->notifyClientUsers($connection, new StorageSyncFailedNotification($connection, $e->getMessage()));
                 $connection->update(['sync_failed_notified_at' => now()]);
             }
@@ -287,10 +291,13 @@ class SyncStorageConnection implements ShouldQueue
 
             foreach ($files as $f) {
                 $tags = is_array($f->tags) ? $f->tags : [];
-                $tags = array_values(array_filter($tags, fn ($t) => $t !== 'conflict'));
+                $tags = array_values(array_filter($tags, fn ($t) => $t !== 'conflict' && $t !== 'duplicate'));
 
                 if ($strategy !== 'keep_both' && $winner && $f->id !== $winner->id) {
                     $tags[] = 'conflict';
+                }
+                if ($strategy === 'keep_both' && $files->count() > 1) {
+                    $tags[] = 'duplicate';
                 }
                 $tags = array_values(array_unique($tags));
 

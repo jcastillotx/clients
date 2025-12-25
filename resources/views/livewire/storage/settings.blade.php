@@ -50,6 +50,8 @@
                     <th>Auto sync</th>
                     <th>Frequency (min)</th>
                     <th>Conflict rule</th>
+                    <th>Quota alerts</th>
+                    <th>Sync fail alerts</th>
                     <th>Folder</th>
                     <th class="text-end">Actions</th>
                 </tr>
@@ -96,6 +98,18 @@
                                 <option value="keep_both">Keep both</option>
                             </select>
                         </td>
+                        <td>
+                            <label class="form-check">
+                                <input class="form-check-input" type="checkbox" wire:model="connections.{{ $i }}.quota_alerts_enabled">
+                                <span class="form-check-label">80% warn</span>
+                            </label>
+                        </td>
+                        <td>
+                            <label class="form-check">
+                                <input class="form-check-input" type="checkbox" wire:model="connections.{{ $i }}.sync_failure_alerts_enabled">
+                                <span class="form-check-label">On fail</span>
+                            </label>
+                        </td>
                         <td style="max-width: 260px;">
                             @if($c['provider'] === 'google_drive')
                                 <input type="text" class="form-control" wire:model="connections.{{ $i }}.drive_folder_id" placeholder="Drive folder ID">
@@ -108,7 +122,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center text-muted py-4">No storage connections found.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-4">No storage connections found.</td></tr>
                 @endforelse
                 </tbody>
             </table>

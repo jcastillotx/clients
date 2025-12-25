@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire\Admin\Storage;
 
+use App\Models\Client;
+use App\Models\Setting;
 use App\Models\StorageConnection;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -59,11 +61,43 @@ class StorageOverview extends Component
         $s3Gb = $s3UsedBytes / (1024 * 1024 * 1024);
         $s3EstimatedMonthly = round($s3Gb * 0.023, 2);
 
+        $quotaByTierMb = (array) Setting::getValue('storage.quota_by_tier_mb', []);
+        $quotaByTierBytes = collect($quotaByTierMb)
+            ->map(fn ($mb) => (int) $mb * 1024 * 1024)
+            ->all();
+
+        $clientTotals = Client::query()
+            ->leftJoin('storage_connections', function ($j) {
+                $j->on('storage_connections.client_id', '=', 'clients.id')
+                    ->whereNull('storage_connections.deleted_at');
+            })
+            ->selectRaw('clients.id, clients.company_name, clients.tier, SUM(COALESCE(storage_connections.storage_used,0)) as used')
+            ->groupBy('clients.id', 'clients.company_name', 'clients.tier')
+            ->orderByDesc('used')
+            ->limit(50)
+            ->get()
+            ->map(function ($r) use ($quotaByTierBytes) {
+                $tier = (string) ($r->tier ?? 'standard');
+                $quota = (int) ($quotaByTierBytes[$tier] ?? 0);
+                $used = (int) ($r->used ?? 0);
+                $pct = $quota > 0 ? min(200, (int) round(($used / $quota) * 100)) : null;
+
+                return [
+                    'client' => (string) $r->company_name,
+                    'tier' => $tier,
+                    'used' => $used,
+                    'quota' => $quota,
+                    'pct' => $pct,
+                ];
+            })
+            ->all();
+
         return view('livewire.admin.storage.overview', [
             'connections' => $rows,
             'totalUsed' => $totalUsed,
             'totalKnownLimit' => $totalKnownLimit,
             's3EstimatedMonthly' => $s3EstimatedMonthly,
+            'clientTotals' => $clientTotals,
         ])->layout('layouts.admin', ['title' => 'Storage Overview']);
     }
 }
