@@ -8,14 +8,14 @@
         <div class="flex flex-wrap items-center gap-2">
             <div class="w-full sm:w-64">
                 <input
-                    wire:model.debounce.250ms="search"
+                    wire:model.live.debounce.250ms="search"
                     type="text"
                     placeholder="Search by title…"
                     class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
                 />
             </div>
 
-            <select wire:model="category" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900">
+            <select wire:model.live="category" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" title="Filter documents by category">
                 <option value="all">All categories</option>
                 <option value="contract">Contract</option>
                 <option value="deliverable">Deliverable</option>
@@ -43,7 +43,23 @@
                         <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <!-- Skeleton rows while loading -->
+                <tbody wire:loading.delay class="divide-y divide-slate-100">
+                    @for($i = 0; $i < 8; $i++)
+                        <tr>
+                            <td class="px-4 py-4">
+                                <div class="h-4 w-64 max-w-[18rem] animate-pulse rounded bg-slate-200"></div>
+                                <div class="mt-2 h-3 w-40 animate-pulse rounded bg-slate-200"></div>
+                            </td>
+                            <td class="px-4 py-4"><div class="h-6 w-24 animate-pulse rounded-full bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-32 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="ml-auto h-8 w-40 animate-pulse rounded bg-slate-200"></div></td>
+                        </tr>
+                    @endfor
+                </tbody>
+
+                <tbody wire:loading.remove class="divide-y divide-slate-100">
                     @forelse($documents as $document)
                         <tr class="hover:bg-slate-50">
                             <td class="px-4 py-3 text-sm font-semibold text-slate-900">
@@ -62,15 +78,15 @@
                             <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
                                 <div class="flex justify-end gap-2">
                                     @if($document->isPdf() || $document->isImage())
-                                        <a href="{{ route('documents.view', $document) }}" target="_blank" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                                        <a href="{{ route('documents.view', $document) }}" target="_blank" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:py-1.5 sm:text-xs">
                                             Preview
                                         </a>
                                     @else
-                                        <span class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-400">
+                                        <span class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400 sm:py-1.5 sm:text-xs" title="Preview available for PDFs and images">
                                             Preview
                                         </span>
                                     @endif
-                                    <a href="{{ route('documents.download', $document) }}" class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
+                                    <a href="{{ route('documents.download', $document) }}" class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 sm:py-1.5 sm:text-xs">
                                         Download
                                     </a>
                                 </div>

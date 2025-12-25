@@ -16,7 +16,7 @@
             <div>
                 <label class="text-xs font-semibold text-slate-600">Search</label>
                 <input
-                    wire:model.debounce.250ms="search"
+                    wire:model.live.debounce.250ms="search"
                     type="text"
                     placeholder="Search by title…"
                     class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
@@ -26,7 +26,7 @@
             <div>
                 <label class="text-xs font-semibold text-slate-600">Status</label>
                 <select
-                    wire:model="status"
+                    wire:model.live="status"
                     class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
                 >
                     <option value="">All statuses</option>
@@ -39,7 +39,7 @@
             <div>
                 <label class="text-xs font-semibold text-slate-600">Type</label>
                 <select
-                    wire:model="type"
+                    wire:model.live="type"
                     class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
                 >
                     <option value="">All types</option>
@@ -76,7 +76,24 @@
                     </tr>
                 </thead>
 
-                <tbody class="divide-y divide-slate-100">
+                <!-- Skeleton rows while loading -->
+                <tbody wire:loading.delay class="divide-y divide-slate-100">
+                    @for($i = 0; $i < 8; $i++)
+                        <tr>
+                            <td class="px-4 py-4"><div class="h-4 w-12 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4">
+                                <div class="h-4 w-72 max-w-[18rem] animate-pulse rounded bg-slate-200"></div>
+                            </td>
+                            <td class="px-4 py-4"><div class="h-4 w-28 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-6 w-24 animate-pulse rounded-full bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-6 w-24 animate-pulse rounded-full bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="ml-auto h-8 w-44 animate-pulse rounded bg-slate-200"></div></td>
+                        </tr>
+                    @endfor
+                </tbody>
+
+                <tbody wire:loading.remove class="divide-y divide-slate-100">
                     @forelse($requests as $request)
                         @php
                             $canEdit = in_array($request->status, ['draft','pending'], true);
@@ -103,15 +120,15 @@
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{{ $request->created_at->format('M d, Y') }}</td>
                             <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
                                 <div class="flex justify-end gap-2">
-                                    <a href="{{ route('requests.show', $request) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                                    <a href="{{ route('requests.show', $request) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:py-1.5 sm:text-xs">
                                         View
                                     </a>
                                     @if($canEdit)
-                                        <a href="{{ route('requests.edit', $request) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                                        <a href="{{ route('requests.edit', $request) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:py-1.5 sm:text-xs">
                                             Edit
                                         </a>
                                     @else
-                                        <span class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-400">Edit</span>
+                                        <span class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400 sm:py-1.5 sm:text-xs">Edit</span>
                                     @endif
 
                                     @if($canDelete)
@@ -119,13 +136,13 @@
                                             type="button"
                                             wire:click="delete({{ $request->id }})"
                                             onclick="confirm('Delete this request?') || event.stopImmediatePropagation()"
-                                            class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                                            class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 sm:py-1.5 sm:text-xs"
                                             wire:loading.attr="disabled"
                                         >
                                             Delete
                                         </button>
                                     @else
-                                        <span class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-400">Delete</span>
+                                        <span class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400 sm:py-1.5 sm:text-xs">Delete</span>
                                     @endif
                                 </div>
                             </td>

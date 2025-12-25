@@ -23,6 +23,11 @@ class SignContract extends Component
         'agreeTerms.accepted' => 'You must agree to the terms to sign this contract.',
     ];
 
+    public function updated(string $property): void
+    {
+        $this->validateOnly($property);
+    }
+
     public function mount(Contract $contract): void
     {
         $this->contract = $contract;

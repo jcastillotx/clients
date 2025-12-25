@@ -31,6 +31,11 @@ class DocumentUpload extends Component
         ];
     }
 
+    public function updated(string $property): void
+    {
+        $this->validateOnly($property);
+    }
+
     public function save(): void
     {
         $user = auth()->user();

@@ -17,6 +17,11 @@ class RequestComments extends Component
         'newComment' => ['required', 'string', 'min:3', 'max:2000'],
     ];
 
+    public function updated(string $property): void
+    {
+        $this->validateOnly($property);
+    }
+
     public function mount(Request $request): void
     {
         $this->request = $request;

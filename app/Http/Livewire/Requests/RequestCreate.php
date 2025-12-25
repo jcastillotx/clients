@@ -39,6 +39,11 @@ class RequestCreate extends Component
         ];
     }
 
+    public function updated(string $property): void
+    {
+        $this->validateOnly($property);
+    }
+
     public function save()
     {
         $this->validate();

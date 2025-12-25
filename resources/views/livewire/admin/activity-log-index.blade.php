@@ -10,11 +10,11 @@
         <div class="grid grid-cols-1 gap-3 md:grid-cols-5">
             <div class="md:col-span-2">
                 <label class="text-xs font-semibold text-slate-600">Search description</label>
-                <input wire:model.debounce.250ms="search" type="text" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="e.g. Updated invoice…" />
+                <input wire:model.live.debounce.250ms="search" type="text" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="e.g. Updated invoice…" />
             </div>
             <div>
                 <label class="text-xs font-semibold text-slate-600">Log</label>
-                <select wire:model="logName" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
+                <select wire:model.live="logName" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
                     <option value="all">All</option>
                     @foreach($logNames as $ln)
                         <option value="{{ $ln }}">{{ $ln }}</option>
@@ -23,7 +23,7 @@
             </div>
             <div>
                 <label class="text-xs font-semibold text-slate-600">Event</label>
-                <select wire:model="event" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
+                <select wire:model.live="event" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
                     <option value="all">All</option>
                     @foreach($events as $ev)
                         <option value="{{ $ev }}">{{ $ev }}</option>
@@ -33,11 +33,11 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-xs font-semibold text-slate-600">Client ID</label>
-                    <input wire:model="clientId" type="number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="—" />
+                    <input wire:model.live="clientId" type="number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="—" />
                 </div>
                 <div>
                     <label class="text-xs font-semibold text-slate-600">User ID</label>
-                    <input wire:model="userId" type="number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="—" />
+                    <input wire:model.live="userId" type="number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="—" />
                 </div>
             </div>
         </div>
@@ -57,7 +57,22 @@
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">IP</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <!-- Skeleton rows while loading -->
+                <tbody wire:loading.delay class="divide-y divide-slate-100">
+                    @for($i = 0; $i < 10; $i++)
+                        <tr>
+                            <td class="px-4 py-4"><div class="h-4 w-36 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-16 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-40 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-16 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-20 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-96 max-w-[20rem] animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-24 animate-pulse rounded bg-slate-200"></div></td>
+                        </tr>
+                    @endfor
+                </tbody>
+
+                <tbody wire:loading.remove class="divide-y divide-slate-100">
                     @forelse($activities as $a)
                         <tr class="hover:bg-slate-50">
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{{ $a->created_at?->format('Y-m-d H:i:s') }}</td>

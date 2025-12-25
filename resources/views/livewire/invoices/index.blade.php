@@ -7,7 +7,7 @@
 
         <div class="flex items-center gap-2">
             <label class="text-xs font-semibold text-slate-600">Status</label>
-            <select wire:model="status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900">
+            <select wire:model.live="status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900">
                 <option value="all">All</option>
                 <option value="unpaid">Unpaid</option>
                 <option value="paid">Paid</option>
@@ -29,7 +29,21 @@
                         <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <!-- Skeleton rows while loading -->
+                <tbody wire:loading.delay class="divide-y divide-slate-100">
+                    @for($i = 0; $i < 8; $i++)
+                        <tr>
+                            <td class="px-4 py-4"><div class="h-4 w-40 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4 text-right"><div class="ml-auto h-4 w-20 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-4 w-28 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4"><div class="h-6 w-24 animate-pulse rounded-full bg-slate-200"></div></td>
+                            <td class="px-4 py-4 text-right"><div class="ml-auto h-4 w-20 animate-pulse rounded bg-slate-200"></div></td>
+                            <td class="px-4 py-4 text-right"><div class="ml-auto h-8 w-40 animate-pulse rounded bg-slate-200"></div></td>
+                        </tr>
+                    @endfor
+                </tbody>
+
+                <tbody wire:loading.remove class="divide-y divide-slate-100">
                     @forelse($invoices as $invoice)
                         @php
                             $badge = match (true) {
@@ -58,15 +72,15 @@
                             <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold text-slate-900">@money($invoice->balance_due)</td>
                             <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
                                 <div class="flex justify-end gap-2">
-                                    <a href="{{ route('invoices.show', $invoice) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                                    <a href="{{ route('invoices.show', $invoice) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:py-1.5 sm:text-xs">
                                         View
                                     </a>
                                     @if($payable)
-                                        <a href="{{ route('payments.show', $invoice) }}" class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
+                                        <a href="{{ route('payments.show', $invoice) }}" class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 sm:py-1.5 sm:text-xs" title="Payments are processed securely via Stripe.">
                                             Pay Now
                                         </a>
                                     @else
-                                        <span class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-400">
+                                        <span class="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-400 sm:py-1.5 sm:text-xs" title="This invoice can't be paid online right now.">
                                             Pay Now
                                         </span>
                                     @endif

@@ -44,6 +44,11 @@ class RequestEdit extends Component
         ];
     }
 
+    public function updated(string $property): void
+    {
+        $this->validateOnly($property);
+    }
+
     public function mount(ServiceRequest $request): void
     {
         $this->authorizeClientAccess($request);

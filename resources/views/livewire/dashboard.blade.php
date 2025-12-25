@@ -68,6 +68,45 @@
         </div>
     </div>
 
+    <!-- Charts -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-semibold text-slate-900">Requests by status</div>
+                    <div class="mt-1 text-xs text-slate-500">Current breakdown</div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <canvas id="requestStatusChart" height="180"></canvas>
+            </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-semibold text-slate-900">Invoice trends</div>
+                    <div class="mt-1 text-xs text-slate-500">Billed vs paid (last 6 months)</div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <canvas id="invoiceTrendChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-sm font-semibold text-slate-900">Monthly spending</div>
+                <div class="mt-1 text-xs text-slate-500">Successful payments (last 6 months)</div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <canvas id="monthlySpendChart" height="120"></canvas>
+        </div>
+    </div>
+
     <!-- Quick actions -->
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -174,4 +213,109 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        const data = {
+            requestStatus: @json($requestStatusChart),
+            invoiceTrend: @json($invoiceTrendChart),
+            monthlySpend: @json($monthlySpendChart),
+        };
+
+        function initDashboardCharts() {
+            if (!window.Chart) return;
+            window.__portalCharts = window.__portalCharts || {};
+
+            const rsEl = document.getElementById('requestStatusChart');
+            const itEl = document.getElementById('invoiceTrendChart');
+            const msEl = document.getElementById('monthlySpendChart');
+            if (!rsEl || !itEl || !msEl) return;
+
+            // Destroy previous instances (Livewire re-renders)
+            for (const key of ['requestStatus', 'invoiceTrend', 'monthlySpend']) {
+                if (window.__portalCharts[key]) {
+                    try { window.__portalCharts[key].destroy(); } catch (e) {}
+                    window.__portalCharts[key] = null;
+                }
+            }
+
+            window.__portalCharts.requestStatus = new Chart(rsEl.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.requestStatus.labels || [],
+                    datasets: [{
+                        data: data.requestStatus.values || [],
+                        backgroundColor: ['#0f172a', '#334155', '#64748b', '#94a3b8', '#22c55e', '#ef4444', '#f59e0b'],
+                        borderWidth: 0,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10 } },
+                        tooltip: { enabled: true },
+                    },
+                },
+            });
+
+            window.__portalCharts.invoiceTrend = new Chart(itEl.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: data.invoiceTrend.labels || [],
+                    datasets: [
+                        {
+                            label: 'Billed',
+                            data: data.invoiceTrend.billed || [],
+                            borderColor: '#0f172a',
+                            backgroundColor: 'rgba(15, 23, 42, 0.08)',
+                            tension: 0.35,
+                            fill: true,
+                        },
+                        {
+                            label: 'Paid',
+                            data: data.invoiceTrend.paid || [],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.10)',
+                            tension: 0.35,
+                            fill: true,
+                        }
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: (v) => '$' + Number(v).toFixed(0) } },
+                    },
+                },
+            });
+
+            window.__portalCharts.monthlySpend = new Chart(msEl.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.monthlySpend.labels || [],
+                    datasets: [{
+                        label: 'Spend',
+                        data: data.monthlySpend.values || [],
+                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                        borderRadius: 8,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: (v) => '$' + Number(v).toFixed(0) } },
+                    },
+                },
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initDashboardCharts);
+        document.addEventListener('livewire:initialized', initDashboardCharts);
+    })();
+</script>
+@endpush
 

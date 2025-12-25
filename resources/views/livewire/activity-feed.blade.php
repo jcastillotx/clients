@@ -7,7 +7,7 @@
 
         <div class="flex items-center gap-2">
             <label class="text-xs font-semibold text-slate-600">Filter</label>
-            <select wire:model="type" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900">
+            <select wire:model.live="type" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900">
                 <option value="all">All</option>
                 <option value="requests">Requests</option>
                 <option value="invoices">Invoices</option>
@@ -18,6 +18,19 @@
 
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="divide-y divide-slate-100">
+            <!-- Skeleton rows while loading -->
+            <div wire:loading.delay class="p-5">
+                <div class="space-y-3">
+                    @for($i = 0; $i < 6; $i++)
+                        <div class="animate-pulse rounded-xl border border-slate-100 bg-slate-50 px-4 py-4">
+                            <div class="h-4 w-3/4 rounded bg-slate-200"></div>
+                            <div class="mt-2 h-3 w-1/3 rounded bg-slate-200"></div>
+                        </div>
+                    @endfor
+                </div>
+            </div>
+
+            <div wire:loading.remove>
             @forelse($activities as $activity)
                 @php
                     $actor = $activity->causer?->name ?? $activity->user?->name ?? 'System';
@@ -75,6 +88,7 @@
                     No activity yet.
                 </div>
             @endforelse
+            </div>
         </div>
 
         @if(method_exists($activities, 'links'))
