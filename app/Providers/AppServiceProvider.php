@@ -51,6 +51,10 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('admin.invoices.management', \App\Http\Livewire\Admin\Invoices\AdminInvoiceManagement::class);
         Livewire::component('admin.invoices.create', \App\Http\Livewire\Admin\Invoices\InvoiceCreate::class);
         Livewire::component('admin.invoices.edit', \App\Http\Livewire\Admin\Invoices\InvoiceEdit::class);
+        Livewire::component('admin.users.management', \App\Http\Livewire\Admin\Users\UserManagement::class);
+        Livewire::component('admin.users.create', \App\Http\Livewire\Admin\Users\UserCreate::class);
+        Livewire::component('admin.users.edit', \App\Http\Livewire\Admin\Users\UserEdit::class);
+        Livewire::component('admin.users.permissions', \App\Http\Livewire\Admin\Users\Permissions::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {

@@ -62,8 +62,15 @@ class AdminRequestManagement extends Component
 
     protected function baseQuery(): Builder
     {
+        $user = auth()->user();
+        $staffClientIds = [];
+        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+            $staffClientIds = $user->assignedClientIds();
+        }
+
         return ServiceRequest::query()
             ->with(['client', 'creator', 'assignee'])
+            ->when(!empty($staffClientIds), fn ($q) => $q->whereIn('client_id', $staffClientIds))
             ->when($this->search, function ($q) {
                 $s = '%' . $this->search . '%';
                 $q->where(function ($qq) use ($s) {

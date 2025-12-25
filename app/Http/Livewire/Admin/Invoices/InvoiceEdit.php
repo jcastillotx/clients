@@ -53,6 +53,15 @@ class InvoiceEdit extends Component
     {
         $this->invoice = $invoice->load(['client', 'items', 'payments']);
 
+        // Staff can only access invoices for assigned clients
+        $user = auth()->user();
+        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+            $allowed = $user->assignedClientIds();
+            if (!in_array((int) $this->invoice->client_id, $allowed, true)) {
+                abort(403, 'You do not have access to this invoice.');
+            }
+        }
+
         $this->editable = in_array($this->invoice->status, ['draft', 'sent'], true);
 
         $this->invoice_number = $this->invoice->invoice_number;

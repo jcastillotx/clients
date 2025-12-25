@@ -52,9 +52,16 @@ class AdminInvoiceManagement extends Component
 
     protected function invoicesQuery(): Builder
     {
+        $user = auth()->user();
+        $staffClientIds = [];
+        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+            $staffClientIds = $user->assignedClientIds();
+        }
+
         $q = Invoice::query()
             ->with('client')
             ->withSum(['payments as total_paid' => fn ($p) => $p->where('status', 'succeeded')], 'amount')
+            ->when(!empty($staffClientIds), fn ($qq) => $qq->whereIn('client_id', $staffClientIds))
             ->when($this->clientId, fn ($qq) => $qq->where('client_id', $this->clientId))
             ->when($this->status !== 'all', fn ($qq) => $qq->where('status', $this->status))
             ->when($this->dateFrom, fn ($qq) => $qq->whereDate('issue_date', '>=', $this->dateFrom))
@@ -76,8 +83,15 @@ class AdminInvoiceManagement extends Component
 
     protected function paymentsQuery(): Builder
     {
+        $user = auth()->user();
+        $staffClientIds = [];
+        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+            $staffClientIds = $user->assignedClientIds();
+        }
+
         return Payment::query()
             ->with(['invoice', 'client'])
+            ->when(!empty($staffClientIds), fn ($q) => $q->whereIn('client_id', $staffClientIds))
             ->when($this->clientId, fn ($q) => $q->where('client_id', $this->clientId))
             ->when($this->paymentMethod !== 'all', fn ($q) => $q->where('payment_method', $this->paymentMethod))
             ->when($this->paymentState !== 'all', fn ($q) => $q->where('status', $this->paymentState))

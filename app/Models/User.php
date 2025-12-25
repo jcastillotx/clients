@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -27,7 +28,9 @@ class User extends Authenticatable
         'avatar',
         'client_id',
         'is_active',
+        'status',
         'last_login_at',
+        'two_factor_enabled',
     ];
 
     /**
@@ -44,7 +47,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'status' => 'string',
         'last_login_at' => 'datetime',
+        'two_factor_enabled' => 'boolean',
         'deleted_at' => 'datetime',
     ];
 
@@ -122,6 +127,34 @@ class User extends Authenticatable
     }
 
     /**
+     * Login history entries.
+     */
+    public function loginHistories(): HasMany
+    {
+        return $this->hasMany(LoginHistory::class)->orderByDesc('logged_in_at')->orderByDesc('id');
+    }
+
+    /**
+     * Staff-to-client assignments (account managers).
+     */
+    public function assignedClients(): BelongsToMany
+    {
+        return $this->belongsToMany(Client::class, 'client_staff')
+            ->withPivot(['relationship'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Convenience: list of assigned client IDs.
+     *
+     * @return array<int, int>
+     */
+    public function assignedClientIds(): array
+    {
+        return $this->assignedClients()->pluck('clients.id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
      * Check if user is a client user.
      */
     public function isClient(): bool
@@ -151,6 +184,25 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->hasRole('super_admin');
+    }
+
+    public function isSuspended(): bool
+    {
+        return ($this->status ?? 'active') === 'suspended';
+    }
+
+    public function isInactive(): bool
+    {
+        return ($this->status ?? 'active') === 'inactive';
+    }
+
+    public function isActiveAccount(): bool
+    {
+        if (!$this->is_active) {
+            return false;
+        }
+
+        return ($this->status ?? 'active') === 'active';
     }
 
     /**

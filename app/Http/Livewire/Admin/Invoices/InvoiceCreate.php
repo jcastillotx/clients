@@ -204,7 +204,16 @@ class InvoiceCreate extends Component
 
     public function render()
     {
-        $clients = Client::query()->orderBy('company_name')->get(['id', 'company_name']);
+        $user = auth()->user();
+        $staffClientIds = [];
+        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+            $staffClientIds = $user->assignedClientIds();
+        }
+
+        $clients = Client::query()
+            ->when(!empty($staffClientIds), fn ($q) => $q->whereIn('id', $staffClientIds))
+            ->orderBy('company_name')
+            ->get(['id', 'company_name']);
 
         $requests = collect();
         $contracts = collect();

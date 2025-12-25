@@ -51,6 +51,18 @@ class RolePermissionSeeder extends Seeder
             'view_document',
             'upload_document',
             'delete_document',
+
+            // Users & Permissions
+            'view_any_user',
+            'view_user',
+            'create_user',
+            'update_user',
+            'delete_user',
+            'manage_permissions',
+
+            // Settings
+            'view_settings',
+            'update_settings',
         ];
 
         foreach ($permissions as $permission) {
@@ -103,6 +115,10 @@ class RolePermissionSeeder extends Seeder
             'view_document',
             'upload_document',
             'delete_document',
+
+            // Users (limited)
+            'view_any_user',
+            'view_user',
         ]);
 
         // Client role - limited access

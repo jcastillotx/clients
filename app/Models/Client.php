@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
@@ -133,6 +134,16 @@ class Client extends Model
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Staff users assigned to this client (account managers).
+     */
+    public function staff(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'client_staff')
+            ->withPivot(['relationship'])
+            ->withTimestamps();
     }
 
     /**
