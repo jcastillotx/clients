@@ -36,6 +36,7 @@ use App\Http\Livewire\Admin\Reports\RequestReport as AdminRequestReport;
 use App\Http\Livewire\Admin\Reports\CustomReportBuilder as AdminCustomReportBuilder;
 use App\Http\Livewire\Admin\Reports\PerformanceReport as AdminPerformanceReport;
 use App\Http\Livewire\Admin\Reports\StorageReport as AdminStorageReport;
+use App\Http\Livewire\Admin\Settings\SystemSettings as AdminSystemSettings;
 use App\Http\Livewire\Storage\ConnectDropbox;
 use App\Http\Livewire\Storage\ConnectGoogleDrive;
 use App\Http\Livewire\Storage\ConnectS3;
@@ -186,7 +187,7 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
         Route::get('/reports/requests', AdminRequestReport::class)->name('reports.requests');
         Route::get('/reports/performance', AdminPerformanceReport::class)->name('reports.performance');
         Route::get('/reports/storage', AdminStorageReport::class)->name('reports.storage');
-        Route::get('/settings', fn () => view('admin.section', ['title' => 'System Settings']))->name('settings');
+        Route::get('/settings', AdminSystemSettings::class)->name('settings');
     });
 
 /*

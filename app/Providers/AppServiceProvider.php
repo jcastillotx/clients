@@ -72,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('admin.reports.builder', \App\Http\Livewire\Admin\Reports\CustomReportBuilder::class);
         Livewire::component('admin.reports.performance', \App\Http\Livewire\Admin\Reports\PerformanceReport::class);
         Livewire::component('admin.reports.storage', \App\Http\Livewire\Admin\Reports\StorageReport::class);
+        Livewire::component('admin.settings.system', \App\Http\Livewire\Admin\Settings\SystemSettings::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
