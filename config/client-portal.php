@@ -32,6 +32,15 @@ return [
     'invoice' => [
         'prefix' => env('INVOICE_PREFIX', 'INV-'),
         'tax_rate' => env('INVOICE_TAX_RATE', 0),
+        'templates' => [
+            'classic' => 'Classic',
+            'modern' => 'Modern',
+        ],
+        'branding' => [
+            'primary_color' => env('INVOICE_PRIMARY_COLOR', '#0f172a'),
+            'accent_color' => env('INVOICE_ACCENT_COLOR', '#2563eb'),
+            'logo_path' => env('INVOICE_LOGO_PATH', 'images/logo.png'), // relative to public/
+        ],
         'company' => [
             'name' => env('INVOICE_COMPANY_NAME', 'Kre8iv Designs LLC'),
             'address' => env('INVOICE_COMPANY_ADDRESS', 'Your Company Address'),

@@ -63,7 +63,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.invoices') ? 'active' : '' }}" href="{{ route('admin.invoices') }}">
+                        <a class="nav-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}" href="{{ route('admin.invoices.index') }}">
                             <span class="nav-link-title">Invoices &amp; Payments</span>
                         </a>
                     </li>

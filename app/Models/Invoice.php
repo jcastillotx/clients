@@ -27,6 +27,7 @@ class Invoice extends Model
     protected $fillable = [
         'client_id',
         'request_id',
+        'contract_id',
         'invoice_number',
         'subtotal',
         'tax_rate',
@@ -36,10 +37,13 @@ class Invoice extends Model
         'issue_date',
         'due_date',
         'paid_at',
+        'reminded_due_7_at',
+        'reminded_overdue_3_at',
         'status',
         'notes',
         'terms',
         'pdf_path',
+        'template',
     ];
 
     protected $casts = [
@@ -51,6 +55,8 @@ class Invoice extends Model
         'issue_date' => 'date',
         'due_date' => 'date',
         'paid_at' => 'datetime',
+        'reminded_due_7_at' => 'datetime',
+        'reminded_overdue_3_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
 
@@ -63,6 +69,8 @@ class Invoice extends Model
         'issue_date',
         'due_date',
         'paid_at',
+        'reminded_due_7_at',
+        'reminded_overdue_3_at',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -91,6 +99,14 @@ class Invoice extends Model
     public function request(): BelongsTo
     {
         return $this->belongsTo(Request::class);
+    }
+
+    /**
+     * Get the contract associated with the invoice (optional).
+     */
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
     }
 
     /**
@@ -326,6 +342,9 @@ class Invoice extends Model
             }
             if (!$invoice->due_date) {
                 $invoice->due_date = now()->addDays(30);
+            }
+            if (!$invoice->template) {
+                $invoice->template = 'classic';
             }
         });
     }
