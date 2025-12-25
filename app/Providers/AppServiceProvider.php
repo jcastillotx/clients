@@ -41,6 +41,10 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('activity-feed', \App\Http\Livewire\ActivityFeed::class);
         Livewire::component('admin.activity-log-index', \App\Http\Livewire\Admin\ActivityLogIndex::class);
         Livewire::component('admin.dashboard', \App\Http\Livewire\Admin\Dashboard::class);
+        Livewire::component('admin.clients.management', \App\Http\Livewire\Admin\Clients\ClientManagement::class);
+        Livewire::component('admin.clients.create', \App\Http\Livewire\Admin\Clients\ClientCreate::class);
+        Livewire::component('admin.clients.edit', \App\Http\Livewire\Admin\Clients\ClientEdit::class);
+        Livewire::component('admin.clients.detail', \App\Http\Livewire\Admin\Clients\ClientDetail::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {

@@ -56,7 +56,7 @@
                         <div class="text-muted small">Jump to common admin workflows.</div>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('admin.clients') }}" class="btn btn-primary">Create Client</a>
+                        <a href="{{ route('admin.clients.create') }}" class="btn btn-primary">Create Client</a>
                         <a href="{{ route('admin.invoices') }}" class="btn btn-outline-primary">Create Invoice</a>
                         <a href="{{ route('admin.requests') }}" class="btn btn-outline-primary">Assign Request</a>
                     </div>
