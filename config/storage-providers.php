@@ -11,6 +11,11 @@ return [
         'app_secret' => env('DROPBOX_APP_SECRET'),
         'redirect_uri' => env('DROPBOX_REDIRECT_URI'),
     ],
+    'google_drive' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect_uri' => env('GOOGLE_REDIRECT_URI'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

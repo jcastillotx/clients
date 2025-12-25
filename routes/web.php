@@ -10,6 +10,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RequestAttachmentController;
 use App\Http\Controllers\Storage\DropboxOAuthController;
+use App\Http\Controllers\Storage\GoogleDriveDownloadController;
+use App\Http\Controllers\Storage\GoogleDriveOAuthController;
 use App\Http\Controllers\Webhook\DropboxWebhookController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Livewire\Admin\Clients\ClientCreate;
@@ -27,8 +29,10 @@ use App\Http\Livewire\Admin\Users\UserCreate as AdminUserCreate;
 use App\Http\Livewire\Admin\Users\UserEdit as AdminUserEdit;
 use App\Http\Livewire\Admin\Users\Permissions as AdminPermissions;
 use App\Http\Livewire\Storage\ConnectDropbox;
+use App\Http\Livewire\Storage\ConnectGoogleDrive;
 use App\Http\Livewire\Storage\ConnectS3;
 use App\Http\Livewire\Storage\DropboxBrowser;
+use App\Http\Livewire\Storage\GoogleDriveBrowser;
 use App\Http\Livewire\Storage\S3Browser;
 use Illuminate\Support\Facades\Route;
 
@@ -107,6 +111,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/storage/dropbox/authorize', [DropboxOAuthController::class, 'authorize'])->name('storage.dropbox.authorize');
     Route::get('/storage/dropbox/callback', [DropboxOAuthController::class, 'callback'])->name('storage.dropbox.callback');
 
+    // Storage: Google Drive OAuth + download/export (used by admin storage UI; can be opened in popup)
+    Route::get('/storage/google-drive/authorize', [GoogleDriveOAuthController::class, 'authorize'])->name('storage.google-drive.authorize');
+    Route::get('/storage/google-drive/callback', [GoogleDriveOAuthController::class, 'callback'])->name('storage.google-drive.callback');
+    Route::get('/storage/google-drive/{connection}/download', [GoogleDriveDownloadController::class, 'download'])->name('storage.google-drive.download');
+
 });
 
 /*
@@ -153,6 +162,8 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
             Route::get('/storage/s3/browse/{connection?}', S3Browser::class)->name('storage.s3.browse');
             Route::get('/storage/dropbox/connect', ConnectDropbox::class)->name('storage.dropbox.connect');
             Route::get('/storage/dropbox/browse/{connection?}', DropboxBrowser::class)->name('storage.dropbox.browse');
+            Route::get('/storage/google-drive/connect', ConnectGoogleDrive::class)->name('storage.google-drive.connect');
+            Route::get('/storage/google-drive/browse/{connection?}', GoogleDriveBrowser::class)->name('storage.google-drive.browse');
         Route::get('/reports', fn () => view('admin.section', ['title' => 'Reports & Analytics']))->name('reports');
         Route::get('/settings', fn () => view('admin.section', ['title' => 'System Settings']))->name('settings');
     });
