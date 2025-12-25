@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\ValidationException;
+use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -15,6 +16,7 @@ class Request extends Model
 {
     use HasFactory, SoftDeletes;
     use LogsActivity;
+    use LogsActivityWithContext;
 
     /**
      * The attributes that are mass assignable.
@@ -70,6 +72,7 @@ class Request extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
+            ->useLogName('requests')
             ->logFillable()
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();

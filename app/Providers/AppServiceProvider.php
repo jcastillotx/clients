@@ -38,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('contracts.contract-show', \App\Http\Livewire\Contracts\ContractShow::class);
         Livewire::component('documents.document-index', \App\Http\Livewire\Documents\DocumentIndex::class);
         Livewire::component('documents.document-upload', \App\Http\Livewire\Documents\DocumentUpload::class);
+        Livewire::component('activity-feed', \App\Http\Livewire\ActivityFeed::class);
+        Livewire::component('admin.activity-log-index', \App\Http\Livewire\Admin\ActivityLogIndex::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {

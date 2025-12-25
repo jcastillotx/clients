@@ -86,6 +86,7 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::view('/activity', 'admin.activity')->name('activity');
     });
 
 /*
