@@ -40,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('documents.document-upload', \App\Http\Livewire\Documents\DocumentUpload::class);
         Livewire::component('activity-feed', \App\Http\Livewire\ActivityFeed::class);
         Livewire::component('admin.activity-log-index', \App\Http\Livewire\Admin\ActivityLogIndex::class);
+        Livewire::component('admin.dashboard', \App\Http\Livewire\Admin\Dashboard::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {

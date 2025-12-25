@@ -88,8 +88,20 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        Route::get('/', fn () => redirect()->route('admin.dashboard'));
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::view('/activity', 'admin.activity')->name('activity');
+
+        // Placeholder routes for the expanded admin navigation (wired to admin layout)
+        Route::get('/clients', fn () => view('admin.section', ['title' => 'Clients Management']))->name('clients');
+        Route::get('/requests', fn () => view('admin.section', ['title' => 'Requests Management']))->name('requests');
+        Route::get('/invoices', fn () => view('admin.section', ['title' => 'Invoices & Payments']))->name('invoices');
+        Route::get('/contracts', fn () => view('admin.section', ['title' => 'Contracts Management']))->name('contracts');
+        Route::get('/documents', fn () => view('admin.section', ['title' => 'Documents']))->name('documents');
+        Route::get('/users', fn () => view('admin.section', ['title' => 'Users & Permissions']))->name('users');
+        Route::get('/storage', fn () => view('admin.section', ['title' => 'Storage Settings']))->name('storage');
+        Route::get('/reports', fn () => view('admin.section', ['title' => 'Reports & Analytics']))->name('reports');
+        Route::get('/settings', fn () => view('admin.section', ['title' => 'System Settings']))->name('settings');
     });
 
 /*

@@ -15,7 +15,18 @@ class EnsureUserIsAdmin
     {
         $user = $request->user();
 
-        if (!$user || !($user->isAdmin() || $user->isStaff())) {
+        if (!$user) {
+            abort(403);
+        }
+
+        // Redirect clients away from admin routes (better UX than a hard 403)
+        if ($user->isClient()) {
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'You do not have access to the admin area.');
+        }
+
+        if (!($user->isAdmin() || $user->isStaff())) {
             abort(403);
         }
 
