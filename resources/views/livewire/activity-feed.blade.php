@@ -59,13 +59,13 @@
                         </div>
                     </div>
 
-                    @if(!empty($activity->changes))
+                    @if($activity->changes?->isNotEmpty())
                         <details class="mt-3">
                             <summary class="cursor-pointer text-xs font-semibold text-slate-700 hover:underline">
                                 View changes
                             </summary>
                             <div class="mt-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-700 overflow-x-auto">
-                                <pre style="white-space:pre-wrap;">{{ json_encode($activity->changes, JSON_PRETTY_PRINT) }}</pre>
+                                <pre style="white-space:pre-wrap;">{{ json_encode($activity->changes->toArray(), JSON_PRETTY_PRINT) }}</pre>
                             </div>
                         </details>
                     @endif

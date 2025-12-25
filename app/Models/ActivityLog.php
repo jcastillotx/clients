@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Collection;
 use Spatie\Activitylog\Models\Activity;
 
 class ActivityLog extends Activity
@@ -93,7 +95,12 @@ class ActivityLog extends Activity
         string $logName = 'default'
     ): static {
         $user = auth()->user();
-        $request = request();
+        $request = null;
+        try {
+            $request = request();
+        } catch (\Throwable $e) {
+            // ignore
+        }
 
         return static::create([
             'user_id' => $user?->id,
@@ -106,8 +113,8 @@ class ActivityLog extends Activity
             'causer_id' => $user?->id,
             'properties' => $properties,
             'event' => $event,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
+            'ip_address' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
         ]);
     }
 
@@ -130,7 +137,7 @@ class ActivityLog extends Activity
     /**
      * Get changes from properties.
      */
-    public function getChangesAttribute(): array
+    public function getChangesAttribute(): Collection
     {
         $old = $this->old;
         $new = $this->new;
@@ -145,31 +152,8 @@ class ActivityLog extends Activity
             }
         }
 
-        return $changes;
+        return collect($changes);
     }
 
-    /**
-     * Scope for specific log name.
-     */
-    public function scopeInLog($query, string $logName)
-    {
-        return $query->where('log_name', $logName);
-    }
-
-    /**
-     * Scope for specific event.
-     */
-    public function scopeForEvent($query, string $event)
-    {
-        return $query->where('event', $event);
-    }
-
-    /**
-     * Scope for specific subject.
-     */
-    public function scopeForSubject($query, Model $subject)
-    {
-        return $query->where('subject_type', get_class($subject))
-            ->where('subject_id', $subject->id);
-    }
+    // Note: Spatie's base Activity model already provides useful scopes like scopeInLog().
 }

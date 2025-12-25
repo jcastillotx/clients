@@ -21,12 +21,13 @@ return new class extends Migration
             $table->nullableMorphs('causer');
             $table->json('properties')->nullable();
             $table->string('event')->nullable();
+            $table->uuid('batch_uuid')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent')->nullable();
             $table->timestamps();
 
             $table->index('log_name');
-            $table->index(['subject_type', 'subject_id']);
+            // nullableMorphs('subject') already creates an index for (subject_type, subject_id)
             $table->index('user_id');
             $table->index('client_id');
         });

@@ -26,47 +26,33 @@ class UserSeeder extends Seeder
         );
         $admin->assignRole('admin');
 
-        // Create staff user
-        $staff = User::firstOrCreate(
-            ['email' => 'staff@kre8ivdesigns.com'],
-            [
-                'name' => 'Staff Member',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-                'is_active' => true,
-            ]
-        );
-        $staff->assignRole('staff');
+        // Create 3 test client users (one per test client company)
+        $clients = Client::query()
+            ->whereIn('email', ['client1@example.com', 'client2@example.com', 'client3@example.com'])
+            ->get()
+            ->keyBy('email');
 
-        // Create demo client user
-        $demoClient = Client::where('email', 'demo@example.com')->first();
-        if ($demoClient) {
-            $clientUser = User::firstOrCreate(
-                ['email' => 'client@demo.com'],
-                [
-                    'name' => 'Demo Client User',
-                    'password' => Hash::make('password'),
-                    'client_id' => $demoClient->id,
-                    'email_verified_at' => now(),
-                    'is_active' => true,
-                ]
-            );
-            $clientUser->assignRole('client');
-        }
+        $users = [
+            ['email' => 'client.user1@example.com', 'name' => 'Test Client User 1', 'client_email' => 'client1@example.com'],
+            ['email' => 'client.user2@example.com', 'name' => 'Test Client User 2', 'client_email' => 'client2@example.com'],
+            ['email' => 'client.user3@example.com', 'name' => 'Test Client User 3', 'client_email' => 'client3@example.com'],
+        ];
 
-        // Create users for other clients
-        $clients = Client::where('email', '!=', 'demo@example.com')->get();
-        foreach ($clients as $client) {
+        foreach ($users as $data) {
+            $client = $clients->get($data['client_email'])
+                ?? Client::factory()->active()->create(['email' => $data['client_email']]);
+
             $user = User::firstOrCreate(
-                ['email' => 'user@' . parse_url($client->website ?? 'example.com', PHP_URL_HOST) ?: strtolower(str_replace(' ', '', $client->company_name)) . '.com'],
+                ['email' => $data['email']],
                 [
-                    'name' => $client->contact_name,
+                    'name' => $data['name'],
                     'password' => Hash::make('password'),
                     'client_id' => $client->id,
                     'email_verified_at' => now(),
                     'is_active' => true,
                 ]
             );
+
             $user->assignRole('client');
         }
     }
