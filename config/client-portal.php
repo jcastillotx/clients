@@ -18,6 +18,9 @@ return [
 
     'max_upload_size' => env('CLIENT_PORTAL_MAX_UPLOAD_SIZE', 10240), // in KB
 
+    // Documents can be larger than request attachments.
+    'max_document_upload_size' => env('CLIENT_PORTAL_MAX_DOCUMENT_UPLOAD_SIZE', 51200), // in KB (50MB)
+
     'allowed_file_types' => explode(',', env('CLIENT_PORTAL_ALLOWED_FILE_TYPES', 'pdf,doc,docx,xls,xlsx,png,jpg,jpeg,gif,zip')),
 
     /*

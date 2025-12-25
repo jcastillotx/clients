@@ -6,7 +6,9 @@ use App\Models\ActivityLog;
 use App\Models\Document;
 use App\Models\User;
 use App\Notifications\DocumentUploadedNotification;
+use App\Services\ThumbnailService;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -22,12 +24,12 @@ class DocumentUpload extends Component
     protected function rules(): array
     {
         $categories = implode(',', array_keys(config('client-portal.document_categories', [])));
+        $maxKb = (int) config('client-portal.max_document_upload_size', 51200);
 
         return [
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:' . $categories],
-            // 50MB max (51200 KB)
-            'file' => ['required', 'file', 'max:51200', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip'],
+            'file' => ['required', 'file', "max:{$maxKb}", 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip'],
         ];
     }
 
@@ -57,6 +59,15 @@ class DocumentUpload extends Component
             'documents'
         );
 
+        $thumbnailPath = null;
+        if (str_starts_with((string) $this->file->getMimeType(), 'image/')) {
+            $thumb = app(ThumbnailService::class)->makeJpegThumbnailFromFile($this->file->getRealPath(), 640);
+            if ($thumb) {
+                $thumbnailPath = 'clients/' . $user->client_id . '/documents/thumbnails/' . (string) Str::uuid() . '.jpg';
+                Storage::disk('documents')->put($thumbnailPath, $thumb);
+            }
+        }
+
         $document = Document::create([
             'client_id' => $user->client_id,
             'uploaded_by' => $user->id,
@@ -65,6 +76,7 @@ class DocumentUpload extends Component
             'filename' => $filename,
             'original_filename' => $this->file->getClientOriginalName(),
             'file_path' => $path,
+            'thumbnail_path' => $thumbnailPath,
             'mime_type' => $this->file->getMimeType(),
             'file_size' => $this->file->getSize(),
             'category' => $this->category,

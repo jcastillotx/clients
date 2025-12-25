@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -145,7 +146,18 @@ class Invoice extends Model
      */
     public function getTotalPaidAttribute(): float
     {
-        return (float) $this->payments()->where('status', 'succeeded')->sum('amount');
+        // If query included a precomputed alias (recommended for lists), use it.
+        $attrs = $this->getAttributes();
+        if (array_key_exists('total_paid', $attrs)) {
+            return (float) $attrs['total_paid'];
+        }
+
+        // Fallback: cache the aggregate for 15 minutes.
+        return (float) Cache::remember(
+            "invoice:{$this->id}:total_paid",
+            now()->addMinutes(15),
+            fn () => (float) $this->payments()->where('status', 'succeeded')->sum('amount')
+        );
     }
 
     /**

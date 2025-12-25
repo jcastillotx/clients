@@ -109,7 +109,7 @@
                     <span class="text-xs text-slate-500">Live</span>
                 </div>
                 <div class="mt-4">
-                    <livewire:requests.request-comments :request="$request" />
+                    <livewire:requests.request-comments :request="$request" lazy />
                 </div>
             </div>
         </div>

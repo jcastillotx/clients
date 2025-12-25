@@ -7,7 +7,9 @@ use App\Models\Request as ServiceRequest;
 use App\Models\RequestAttachment;
 use App\Models\User;
 use App\Notifications\RequestActivityNotification;
+use App\Services\ThumbnailService;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -33,6 +35,7 @@ class RequestEdit extends Component
     {
         $types = implode(',', array_keys(config('client-portal.request_types', ['support' => 'Support'])));
         $priorities = implode(',', array_keys(config('client-portal.request_priorities', ['medium' => 'Medium'])));
+        $maxKb = (int) config('client-portal.max_upload_size', 10240);
 
         return [
             'title' => ['required', 'string', 'max:255'],
@@ -40,7 +43,7 @@ class RequestEdit extends Component
             'priority' => ['required', 'in:' . $priorities],
             'description' => ['required', 'string'],
             'files' => ['array'],
-            'files.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,jpg,jpeg,png'],
+            'files.*' => ['file', "max:{$maxKb}", 'mimes:pdf,doc,docx,jpg,jpeg,png'],
         ];
     }
 
@@ -119,12 +122,22 @@ class RequestEdit extends Component
             $filename = (string) Str::uuid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('requests/' . $this->request->id, $filename, 'attachments');
 
+            $thumbnailPath = null;
+            if (str_starts_with((string) $file->getMimeType(), 'image/')) {
+                $thumb = app(ThumbnailService::class)->makeJpegThumbnailFromFile($file->getRealPath(), 640);
+                if ($thumb) {
+                    $thumbnailPath = 'requests/' . $this->request->id . '/thumbnails/' . (string) Str::uuid() . '.jpg';
+                    Storage::disk('attachments')->put($thumbnailPath, $thumb);
+                }
+            }
+
             RequestAttachment::create([
                 'request_id' => $this->request->id,
                 'uploaded_by' => $user->id,
                 'filename' => $filename,
                 'original_filename' => $file->getClientOriginalName(),
                 'file_path' => $path,
+                'thumbnail_path' => $thumbnailPath,
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
             ]);

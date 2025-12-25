@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class RequestAttachment extends Model
 {
@@ -22,6 +21,7 @@ class RequestAttachment extends Model
         'filename',
         'original_filename',
         'file_path',
+        'thumbnail_path',
         'mime_type',
         'file_size',
     ];
@@ -61,7 +61,7 @@ class RequestAttachment extends Model
      */
     public function getUrlAttribute(): string
     {
-        return Storage::disk('attachments')->url($this->file_path);
+        return route('requests.attachments.download', [$this->request_id, $this->id]);
     }
 
     /**
@@ -101,7 +101,14 @@ class RequestAttachment extends Model
     protected static function booted(): void
     {
         static::deleting(function (RequestAttachment $attachment) {
-            Storage::disk('attachments')->delete($attachment->file_path);
+            try {
+                \Illuminate\Support\Facades\Storage::disk('attachments')->delete($attachment->file_path);
+                if ($attachment->thumbnail_path) {
+                    \Illuminate\Support\Facades\Storage::disk('attachments')->delete($attachment->thumbnail_path);
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
         });
     }
 }

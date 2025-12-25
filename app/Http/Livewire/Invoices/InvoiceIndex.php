@@ -28,6 +28,7 @@ class InvoiceIndex extends Component
 
         $query = Invoice::query()
             ->with('client')
+            ->withSum(['payments as total_paid' => fn ($q) => $q->where('status', 'succeeded')], 'amount')
             ->when($user->isClient(), fn ($q) => $q->where('client_id', $user->client_id))
             ->when($this->status === 'paid', fn ($q) => $q->where('status', 'paid'))
             ->when($this->status === 'overdue', fn ($q) => $q->where('status', 'overdue'))

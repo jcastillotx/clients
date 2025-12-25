@@ -110,7 +110,7 @@
                 Please review the contract above and sign to proceed.
             </div>
             <div class="mt-4 rounded-2xl border border-amber-200 bg-white p-5">
-                <livewire:contracts.sign-contract :contract="$contract" />
+                <livewire:contracts.sign-contract :contract="$contract" lazy />
             </div>
         </div>
     @endif

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -168,5 +169,16 @@ class Payment extends Model
     public function scopeFailed($query)
     {
         return $query->where('status', 'failed');
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (Payment $payment) {
+            Cache::forget("invoice:{$payment->invoice_id}:total_paid");
+        });
+
+        static::deleted(function (Payment $payment) {
+            Cache::forget("invoice:{$payment->invoice_id}:total_paid");
+        });
     }
 }

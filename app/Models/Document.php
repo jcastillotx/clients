@@ -26,6 +26,7 @@ class Document extends Model
         'filename',
         'original_filename',
         'file_path',
+        'thumbnail_path',
         'mime_type',
         'file_size',
         'category',
@@ -83,7 +84,7 @@ class Document extends Model
      */
     public function getUrlAttribute(): string
     {
-        return Storage::disk('documents')->url($this->file_path);
+        return route('documents.download', $this);
     }
 
     /**
@@ -182,7 +183,14 @@ class Document extends Model
             if (!$document->isForceDeleting()) {
                 return;
             }
-            Storage::disk('documents')->delete($document->file_path);
+            try {
+                Storage::disk('documents')->delete($document->file_path);
+                if ($document->thumbnail_path) {
+                    Storage::disk('documents')->delete($document->thumbnail_path);
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
         });
     }
 }

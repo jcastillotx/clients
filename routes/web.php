@@ -8,6 +8,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\RequestAttachmentController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +45,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Service Requests
     Route::resource('requests', RequestController::class);
+    Route::get('/requests/{request}/attachments/{attachment}/download', [RequestAttachmentController::class, 'download'])
+        ->name('requests.attachments.download');
 
     // Contracts
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');

@@ -7,8 +7,8 @@
 
     <title>{{ $title ?? config('app.name') }}</title>
 
-    <!-- Tailwind CSS (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Compiled assets (Vite) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,6 +54,7 @@
                     alt="{{ config('app.name') }}"
                     class="h-9 w-9 rounded-md object-contain"
                     onerror="this.style.display='none'"
+                    loading="lazy"
                 />
                 <div class="min-w-0">
                     <div class="text-sm font-semibold text-slate-900">{{ config('app.name') }}</div>
