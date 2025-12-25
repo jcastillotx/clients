@@ -153,6 +153,14 @@ class Request extends Model
     }
 
     /**
+     * Time entries logged by staff.
+     */
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(RequestTimeEntry::class)->orderByDesc('logged_at')->orderByDesc('id');
+    }
+
+    /**
      * Check if request is open.
      */
     public function isOpen(): bool

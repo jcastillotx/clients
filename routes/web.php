@@ -14,6 +14,9 @@ use App\Http\Livewire\Admin\Clients\ClientCreate;
 use App\Http\Livewire\Admin\Clients\ClientDetail;
 use App\Http\Livewire\Admin\Clients\ClientEdit;
 use App\Http\Livewire\Admin\Clients\ClientManagement;
+use App\Http\Livewire\Admin\Requests\AdminRequestDetail;
+use App\Http\Livewire\Admin\Requests\AdminRequestManagement;
+use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -102,8 +105,12 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
         Route::get('/clients/{client}', ClientDetail::class)->name('clients.show');
         Route::get('/clients/{client}/edit', ClientEdit::class)->name('clients.edit');
 
+        // Requests
+        Route::get('/requests', AdminRequestManagement::class)->name('requests.index');
+        Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
+        Route::get('/requests/{request}', AdminRequestDetail::class)->name('requests.show');
+
         // Placeholder routes for the expanded admin navigation (wired to admin layout)
-        Route::get('/requests', fn () => view('admin.section', ['title' => 'Requests Management']))->name('requests');
         Route::get('/invoices', fn () => view('admin.section', ['title' => 'Invoices & Payments']))->name('invoices');
         Route::get('/contracts', fn () => view('admin.section', ['title' => 'Contracts Management']))->name('contracts');
         Route::get('/documents', fn () => view('admin.section', ['title' => 'Documents']))->name('documents');

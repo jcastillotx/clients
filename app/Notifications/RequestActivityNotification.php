@@ -35,6 +35,17 @@ class RequestActivityNotification extends Notification implements ShouldQueue
             default => 'Request notification',
         };
 
+        $url = null;
+        try {
+            if (method_exists($notifiable, 'isClient') && !$notifiable->isClient()) {
+                $url = route('admin.requests.show', $this->request);
+            } else {
+                $url = route('requests.show', $this->request);
+            }
+        } catch (\Throwable $e) {
+            $url = route('requests.show', $this->request);
+        }
+
         return (new MailMessage)
             ->subject($title . ' · #' . $this->request->id)
             ->greeting('Hello!')
@@ -43,7 +54,7 @@ class RequestActivityNotification extends Notification implements ShouldQueue
             ->line("Type: {$this->request->type}")
             ->line("Priority: {$this->request->priority}")
             ->line("Status: {$this->request->status}")
-            ->action('View request', route('requests.show', $this->request))
+            ->action('View request', $url)
             ->line('— ' . config('app.name'));
     }
 }
