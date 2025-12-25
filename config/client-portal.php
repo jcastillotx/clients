@@ -135,6 +135,9 @@ return [
 
     'document_categories' => [
         'contract' => 'Contract',
+        // Requested categories
+        'deliverable' => 'Deliverable',
+        'misc' => 'Misc',
         'invoice' => 'Invoice',
         'proposal' => 'Proposal',
         'report' => 'Report',
