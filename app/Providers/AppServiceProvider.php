@@ -34,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('requests.request-comments', \App\Http\Livewire\Requests\RequestComments::class);
         Livewire::component('invoices.invoice-index', \App\Http\Livewire\Invoices\InvoiceIndex::class);
         Livewire::component('invoices.invoice-show', \App\Http\Livewire\Invoices\InvoiceShow::class);
+        Livewire::component('contracts.contract-index', \App\Http\Livewire\Contracts\ContractIndex::class);
+        Livewire::component('contracts.contract-show', \App\Http\Livewire\Contracts\ContractShow::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
