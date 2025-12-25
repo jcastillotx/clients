@@ -29,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('dashboard', \App\Http\Livewire\Dashboard::class);
         Livewire::component('requests.request-index', \App\Http\Livewire\Requests\RequestIndex::class);
         Livewire::component('requests.request-show', \App\Http\Livewire\Requests\RequestShow::class);
+        Livewire::component('requests.request-create', \App\Http\Livewire\Requests\RequestCreate::class);
+        Livewire::component('requests.request-edit', \App\Http\Livewire\Requests\RequestEdit::class);
+        Livewire::component('requests.request-comments', \App\Http\Livewire\Requests\RequestComments::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
