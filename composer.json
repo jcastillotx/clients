@@ -6,6 +6,7 @@
     "license": "proprietary",
     "require": {
         "php": "^8.2",
+        "aws/aws-sdk-php": "^3.369",
         "barryvdh/laravel-dompdf": "^3.0",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
