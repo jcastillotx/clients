@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Exports\MultiSheetArrayExport;
 use App\Mail\ScheduledReportMail;
 use App\Models\Payment;
 use App\Models\ReportTemplate;
@@ -14,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SendScheduledReport implements ShouldQueue
 {
@@ -29,11 +31,19 @@ class SendScheduledReport implements ShouldQueue
         }
 
         $cfg = (array) ($tpl->config ?? []);
+        $metrics = (array) ($cfg['metrics'] ?? []);
         $metric = (string) ($cfg['metric'] ?? '');
         $from = (string) ($cfg['from'] ?? now()->subDays(30)->toDateString());
         $to = (string) ($cfg['to'] ?? now()->toDateString());
 
-        [$title, $headings, $rows] = $this->buildDataset($metric, $from, $to);
+        $datasets = $this->buildDatasets($metrics, $metric, $from, $to);
+        if (empty($datasets)) {
+            $datasets = [[
+                'title' => 'Report',
+                'headings' => ['Metric', 'Value'],
+                'rows' => [['unknown', 'no data']],
+            ]];
+        }
 
         $recipients = collect((array) ($tpl->recipients ?? []))
             ->map(fn ($e) => trim((string) $e))
@@ -46,9 +56,20 @@ class SendScheduledReport implements ShouldQueue
             return;
         }
 
-        $filename = Str::slug($title) . "-{$from}-{$to}.csv";
+        $title = (string) ($cfg['name'] ?? $tpl->name ?? $datasets[0]['title'] ?? 'Report');
+        $filename = Str::slug($title) . "-{$from}-{$to}.xlsx";
+        $binary = Excel::raw(new MultiSheetArrayExport($datasets), \Maatwebsite\Excel\Excel::XLSX);
         foreach ($recipients as $email) {
-            Mail::to($email)->queue(new ScheduledReportMail($title, $from, $to, $headings, $rows, $filename));
+            Mail::to($email)->queue(new ScheduledReportMail(
+                $title,
+                $from,
+                $to,
+                (array) ($datasets[0]['headings'] ?? []),
+                (array) ($datasets[0]['rows'] ?? []),
+                $filename,
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                $binary,
+            ));
         }
 
         $tpl->update([
@@ -68,6 +89,29 @@ class SendScheduledReport implements ShouldQueue
             'storage_usage_by_client' => $this->storageUsageByClient(),
             default => ['Custom report', ['Metric', 'Value'], [[$metric ?: 'unknown', 'unsupported metric']]],
         };
+    }
+
+    /**
+     * @return array<int, array{title:string, headings:array<int,string>, rows:array<int,array<int,mixed>>}>
+     */
+    protected function buildDatasets(array $metrics, string $fallbackMetric, string $from, string $to): array
+    {
+        $metrics = array_values(array_filter(array_map(fn ($m) => (string) $m, $metrics)));
+        if (empty($metrics) && $fallbackMetric !== '') {
+            $metrics = [$fallbackMetric];
+        }
+
+        $out = [];
+        foreach ($metrics as $m) {
+            [$title, $headings, $rows] = $this->buildDataset($m, $from, $to);
+            $out[] = [
+                'title' => $title,
+                'headings' => $headings,
+                'rows' => $rows,
+            ];
+        }
+
+        return $out;
     }
 
     protected function revenueByMonth(string $from, string $to): array

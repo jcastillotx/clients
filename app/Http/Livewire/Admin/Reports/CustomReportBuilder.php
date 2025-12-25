@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admin\Reports;
 
 use App\Exports\ArrayExport;
+use App\Exports\MultiSheetArrayExport;
 use App\Models\Payment;
 use App\Models\ReportTemplate;
 use App\Models\Request as ServiceRequest;
@@ -15,7 +16,9 @@ use Maatwebsite\Excel\Facades\Excel;
 class CustomReportBuilder extends Component
 {
     public string $name = '';
-    public string $metric = 'revenue_by_month'; // revenue_by_month|requests_by_status|storage_usage_by_client
+    /** @var array<int,string> */
+    public array $metrics = ['revenue_by_month'];
+    public string $previewMetric = 'revenue_by_month';
 
     public string $from = '';
     public string $to = '';
@@ -38,14 +41,14 @@ class CustomReportBuilder extends Component
 
     public function updated($property): void
     {
-        if (in_array($property, ['metric', 'from', 'to'], true)) {
+        if (in_array($property, ['metrics', 'previewMetric', 'from', 'to'], true)) {
             $this->preview();
         }
     }
 
     public function preview(): void
     {
-        [$title, $headings, $rows] = $this->buildDataset();
+        [$title, $headings, $rows] = $this->buildDataset($this->previewMetric ?: (($this->metrics[0] ?? '') ?: 'revenue_by_month'));
         $this->headings = $headings;
         $this->rows = $rows;
     }
@@ -53,14 +56,36 @@ class CustomReportBuilder extends Component
     /**
      * @return array{0:string,1:array<int,string>,2:array<int,array<int,mixed>>}
      */
-    protected function buildDataset(): array
+    protected function buildDataset(string $metric): array
     {
-        return match ($this->metric) {
+        return match ($metric) {
             'revenue_by_month' => $this->revenueByMonth(),
             'requests_by_status' => $this->requestsByStatus(),
             'storage_usage_by_client' => $this->storageUsageByClient(),
             default => ['Custom report', ['Metric', 'Value'], [[$this->metric, 'unsupported']]],
         };
+    }
+
+    /**
+     * @return array<int, array{title:string, headings:array<int,string>, rows:array<int,array<int,mixed>>}>
+     */
+    protected function buildDatasets(): array
+    {
+        $metrics = array_values(array_unique(array_filter(array_map(fn ($m) => (string) $m, $this->metrics))));
+        if (empty($metrics)) {
+            $metrics = ['revenue_by_month'];
+        }
+
+        $out = [];
+        foreach ($metrics as $m) {
+            [$title, $headings, $rows] = $this->buildDataset($m);
+            $out[] = [
+                'title' => $title,
+                'headings' => $headings,
+                'rows' => $rows,
+            ];
+        }
+        return $out;
     }
 
     protected function revenueByMonth(): array
@@ -128,7 +153,7 @@ class CustomReportBuilder extends Component
     {
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'metric' => ['required', 'string'],
+            'metrics' => ['required', 'array', 'min:1'],
             'from' => ['required', 'date'],
             'to' => ['required', 'date'],
             'schedule' => ['required', 'in:none,daily,weekly,monthly'],
@@ -153,7 +178,7 @@ class CustomReportBuilder extends Component
             'name' => $this->name,
             'created_by' => auth()->id(),
             'config' => [
-                'metric' => $this->metric,
+                'metrics' => array_values(array_unique(array_filter($this->metrics))),
                 'from' => $this->from,
                 'to' => $this->to,
             ],
@@ -168,12 +193,14 @@ class CustomReportBuilder extends Component
 
     public function export(string $format)
     {
-        [$title, $headings, $rows] = $this->buildDataset();
-        $baseName = Str::slug($this->name ?: $title) . "-{$this->from}-{$this->to}";
+        $datasets = $this->buildDatasets();
+        $baseName = Str::slug($this->name ?: ($datasets[0]['title'] ?? 'report')) . "-{$this->from}-{$this->to}";
         $format = strtolower($format);
 
         if ($format === 'csv') {
-            $filename = $baseName . '.csv';
+            // CSV exports the currently previewed metric only.
+            [$title, $headings, $rows] = $this->buildDataset($this->previewMetric ?: ($this->metrics[0] ?? 'revenue_by_month'));
+            $filename = Str::slug($this->name ?: $title) . "-{$this->from}-{$this->to}.csv";
             return response()->streamDownload(function () use ($headings, $rows) {
                 $out = fopen('php://output', 'w');
                 fputcsv($out, $headings);
@@ -184,17 +211,16 @@ class CustomReportBuilder extends Component
 
         if ($format === 'xlsx' || $format === 'excel') {
             $filename = $baseName . '.xlsx';
-            return Excel::download(new ArrayExport($headings, $rows), $filename);
+            return Excel::download(new MultiSheetArrayExport($datasets), $filename);
         }
 
         if ($format === 'pdf') {
             $filename = $baseName . '.pdf';
-            $pdf = Pdf::loadView('admin.reports.export-pdf', [
-                'title' => $title,
+            $pdf = Pdf::loadView('admin.reports.export-multi-pdf', [
+                'title' => $this->name ?: 'Custom report',
                 'from' => $this->from,
                 'to' => $this->to,
-                'headings' => $headings,
-                'rows' => $rows,
+                'datasets' => $datasets,
             ]);
             return response()->streamDownload(fn () => print($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
         }

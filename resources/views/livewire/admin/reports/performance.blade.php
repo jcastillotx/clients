@@ -71,6 +71,14 @@
         </div>
     </div>
 
+    <div class="card mb-3">
+        <div class="card-header"><div class="card-title mb-0">Monthly performance trends</div></div>
+        <div class="card-body"><canvas id="volumeChart" height="160"></canvas></div>
+        <div class="card-footer text-muted small">
+            Client satisfaction metrics are not tracked yet (placeholder shown as N/A).
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header">
             <div class="card-title mb-0">Staff workload (open requests)</div>
@@ -108,6 +116,8 @@
 
                     const resp = data.avgResponseByMonth || [];
                     const res = data.avgResolutionByMonth || [];
+                    const created = data.createdByMonth || [];
+                    const completed = data.completedByMonth || [];
 
                     window.__perfCharts.resp = new Chart(document.getElementById('respChart'), {
                         type: 'line',
@@ -119,12 +129,31 @@
                         data: { labels: res.map(x => x.label), datasets: [{ label: 'Hours', data: res.map(x => x.value), borderWidth: 2 }] },
                         options: { responsive: true, maintainAspectRatio: false }
                     });
+
+                    // Align labels (union)
+                    const labels = Array.from(new Set([...created.map(x => x.label), ...completed.map(x => x.label)])).sort();
+                    const createdMap = Object.fromEntries(created.map(x => [x.label, x.value]));
+                    const completedMap = Object.fromEntries(completed.map(x => [x.label, x.value]));
+
+                    window.__perfCharts.volume = new Chart(document.getElementById('volumeChart'), {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [
+                                { label: 'Created', data: labels.map(l => createdMap[l] ?? 0) },
+                                { label: 'Completed', data: labels.map(l => completedMap[l] ?? 0) },
+                            ]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
                 }
 
                 document.addEventListener('livewire:init', () => {
                     render({
                         avgResponseByMonth: @json($avgResponseByMonth),
                         avgResolutionByMonth: @json($avgResolutionByMonth),
+                        createdByMonth: @json($createdByMonth ?? []),
+                        completedByMonth: @json($completedByMonth ?? []),
                     });
                     Livewire.on('performance-report-updated', (payload) => render(payload || {}));
                 });

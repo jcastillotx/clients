@@ -3,8 +3,10 @@
 namespace App\Http\Livewire\Admin\Reports;
 
 use App\Exports\ArrayExport;
+use App\Models\RequestTimeEntry;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -36,6 +38,9 @@ class FinancialReport extends Component
 
     /** @var array<int, array<string, mixed>> */
     public array $invoiceAging = [];
+
+    /** @var array<int, array<string, mixed>> */
+    public array $profitAndLoss = [];
 
     public function mount(): void
     {
@@ -242,6 +247,25 @@ class FinancialReport extends Component
 
         $this->invoiceAging = collect($byClient)->values()->sortByDesc('total')->values()->all();
 
+        // Profit & Loss (approx): Revenue - refunds - estimated labor cost (time entries * hourly rate)
+        $hourlyRate = (float) Setting::getValue('billing.hourly_rate', 0);
+        $laborHours = (float) RequestTimeEntry::query()
+            ->whereDate('logged_at', '>=', $this->from)
+            ->whereDate('logged_at', '<=', $this->to)
+            ->sum('hours');
+        $laborCost = $hourlyRate > 0 ? ($laborHours * $hourlyRate) : null;
+        $grossProfit = $laborCost !== null ? max(0, ($totalRevenue - $refunds) - $laborCost) : null;
+
+        $this->profitAndLoss = [
+            ['label' => 'Revenue', 'value' => $totalRevenue],
+            ['label' => 'Refunds', 'value' => $refunds],
+            ['label' => 'Net revenue', 'value' => max(0, $totalRevenue - $refunds)],
+            ['label' => 'Labor hours (time entries)', 'value' => $laborHours],
+            ['label' => 'Hourly rate', 'value' => $hourlyRate],
+            ['label' => 'Estimated labor cost', 'value' => $laborCost],
+            ['label' => 'Estimated gross profit', 'value' => $grossProfit],
+        ];
+
         $this->dispatch('financial-report-updated',
             revenueByPeriod: $this->revenueByPeriod,
             revenueByTier: $this->revenueByTier,
@@ -283,6 +307,18 @@ class FinancialReport extends Component
             ], $this->invoiceAging);
             return $this->exportRows($headings, $rows, "invoice-aging-{$this->from}-{$this->to}", $format, [
                 'title' => 'Invoice aging report',
+            ]);
+        }
+
+        if ($kind === 'pnl') {
+            $headings = ['Metric', 'Value'];
+            $rows = array_map(function ($r) {
+                $v = $r['value'];
+                if ($v === null) $v = 'N/A';
+                return [$r['label'], $v];
+            }, $this->profitAndLoss);
+            return $this->exportRows($headings, $rows, "profit-loss-{$this->from}-{$this->to}", $format, [
+                'title' => 'Profit & Loss (summary)',
             ]);
         }
 
@@ -334,6 +370,7 @@ class FinancialReport extends Component
             'revenueByServiceType' => $this->revenueByServiceType,
             'paymentMethods' => $this->paymentMethods,
             'invoiceAging' => $this->invoiceAging,
+            'profitAndLoss' => $this->profitAndLoss,
         ])->layout('layouts.admin', ['title' => 'Financial Reports']);
     }
 }

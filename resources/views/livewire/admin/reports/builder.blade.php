@@ -20,12 +20,21 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Metric</label>
-                        <select class="form-select" wire:model.live="metric">
-                            <option value="revenue_by_month">Revenue by month</option>
-                            <option value="requests_by_status">Requests by status</option>
-                            <option value="storage_usage_by_client">Storage usage by client</option>
-                        </select>
+                        <label class="form-label">Metrics (select one or more)</label>
+                        <div class="vstack gap-2">
+                            <label class="form-check">
+                                <input class="form-check-input" type="checkbox" value="revenue_by_month" wire:model.live="metrics">
+                                <span class="form-check-label">Revenue by month</span>
+                            </label>
+                            <label class="form-check">
+                                <input class="form-check-input" type="checkbox" value="requests_by_status" wire:model.live="metrics">
+                                <span class="form-check-label">Requests by status</span>
+                            </label>
+                            <label class="form-check">
+                                <input class="form-check-input" type="checkbox" value="storage_usage_by_client" wire:model.live="metrics">
+                                <span class="form-check-label">Storage usage by client</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="row g-2 mb-3">
@@ -74,7 +83,16 @@
 
         <div class="col-12 col-xl-8">
             <div class="card">
-                <div class="card-header"><div class="card-title mb-0">Preview</div></div>
+                <div class="card-header">
+                    <div class="card-title mb-0">Preview</div>
+                    <div class="ms-auto" style="min-width: 220px;">
+                        <select class="form-select form-select-sm" wire:model.live="previewMetric">
+                            <option value="revenue_by_month">Revenue by month</option>
+                            <option value="requests_by_status">Requests by status</option>
+                            <option value="storage_usage_by_client">Storage usage by client</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-vcenter card-table">
                         <thead>

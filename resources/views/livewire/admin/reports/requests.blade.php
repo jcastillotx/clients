@@ -131,6 +131,37 @@
         </div>
     </div>
 
+    <div class="card mt-3">
+        <div class="card-header">
+            <div class="card-title mb-0">Request bottleneck analysis (open requests)</div>
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('bottlenecks','csv')">CSV</button>
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('bottlenecks','xlsx')">Excel</button>
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('bottlenecks','pdf')">PDF</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead><tr><th>Status</th><th class="text-end">Open</th><th class="text-end">Avg age (days)</th><th class="text-end">Max age (days)</th></tr></thead>
+                <tbody>
+                @forelse($bottlenecks as $r)
+                    <tr>
+                        <td class="fw-semibold">@status($r['status'])</td>
+                        <td class="text-end text-muted">{{ $r['open'] }}</td>
+                        <td class="text-end text-muted">{{ $r['avg_days'] }}</td>
+                        <td class="text-end text-muted">{{ $r['max_days'] }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="4" class="text-center text-muted py-4">No open requests in range.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small">
+            Bottlenecks are estimated from request age by current status (status transition timestamps aren’t tracked yet).
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             (function () {

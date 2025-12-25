@@ -150,7 +150,45 @@
             </table>
         </div>
         <div class="card-footer text-muted small">
-            Profit &amp; Loss note: this portal currently tracks revenue and refunds; expenses/costs are not modeled, so “profit” is not calculated.
+            Profit &amp; Loss note: this summary uses revenue/refunds plus optional labor cost from request time entries (if an hourly rate is set).
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <div class="card-title mb-0">Profit &amp; Loss summary (approx.)</div>
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('pnl','csv')">CSV</button>
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('pnl','xlsx')">Excel</button>
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('pnl','pdf')">PDF</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead><tr><th>Metric</th><th class="text-end">Value</th></tr></thead>
+                <tbody>
+                @foreach(($profitAndLoss ?? []) as $r)
+                    @php($v = $r['value'])
+                    <tr>
+                        <td class="fw-semibold">{{ $r['label'] }}</td>
+                        <td class="text-end text-muted">
+                            @if(is_null($v))
+                                N/A
+                            @elseif(is_numeric($v) && str_contains(strtolower($r['label']), 'rate'))
+                                @money($v)
+                            @elseif(is_numeric($v) && (str_contains(strtolower($r['label']), 'revenue') || str_contains(strtolower($r['label']), 'cost') || str_contains(strtolower($r['label']), 'profit') || str_contains(strtolower($r['label']), 'refund')))
+                                @money($v)
+                            @else
+                                {{ $v }}
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small">
+            To enable labor-cost profit estimates, set the system setting <code>billing.hourly_rate</code>.
         </div>
     </div>
 

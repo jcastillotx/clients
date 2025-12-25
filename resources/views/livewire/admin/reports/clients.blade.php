@@ -51,6 +51,12 @@
                 <div class="h3 mb-0">{{ number_format(($kpis['retention_rate'] ?? 0) * 100, 1) }}%</div>
             </div></div>
         </div>
+        <div class="col-12 col-lg-4">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">Avg lifetime value (all time)</div>
+                <div class="h3 mb-0">@money($kpis['avg_ltv'] ?? 0)</div>
+            </div></div>
+        </div>
     </div>
 
     <div class="row g-3 mb-3">
@@ -150,6 +156,33 @@
         </div>
         <div class="card-footer text-muted small">
             Retention/churn are approximations based on the presence/absence of activity log entries.
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <div class="card-title mb-0">Client lifetime value (top 20, all time)</div>
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('ltv','csv')">CSV</button>
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('ltv','xlsx')">Excel</button>
+                <button class="btn btn-sm btn-outline-secondary" wire:click="export('ltv','pdf')">PDF</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead><tr><th>Client</th><th>Tier</th><th class="text-end">LTV</th></tr></thead>
+                <tbody>
+                @forelse($lifetimeValue ?? [] as $r)
+                    <tr>
+                        <td class="fw-semibold">{{ $r['client'] }}</td>
+                        <td class="text-muted">{{ $r['tier'] }}</td>
+                        <td class="text-end">@money($r['ltv'] ?? 0)</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="3" class="text-center text-muted py-4">No payment data yet.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 

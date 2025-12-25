@@ -37,6 +37,9 @@ class RequestReport extends Component
     /** @var array<int, array<string,mixed>> */
     public array $sla = [];
 
+    /** @var array<int, array<string,mixed>> */
+    public array $bottlenecks = [];
+
     public function mount(): void
     {
         $this->hydrateRange();
@@ -205,6 +208,33 @@ class RequestReport extends Component
             ],
         ];
 
+        // Bottleneck analysis (approx): for open requests, compute count + avg age (days) by status.
+        $openQ = ServiceRequest::query()
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereDate('created_at', '>=', $this->from)
+            ->whereDate('created_at', '<=', $this->to);
+
+        $bt = (clone $openQ)
+            ->selectRaw('status, COUNT(*) as total, AVG((julianday("now") - julianday(created_at))) as avg_days, MAX((julianday("now") - julianday(created_at))) as max_days')
+            ->groupBy('status')
+            ->orderByDesc('avg_days')
+            ->get();
+
+        if ($bt->isEmpty()) {
+            $bt = (clone $openQ)
+                ->selectRaw('status, COUNT(*) as total, AVG(TIMESTAMPDIFF(DAY, created_at, NOW())) as avg_days, MAX(TIMESTAMPDIFF(DAY, created_at, NOW())) as max_days')
+                ->groupBy('status')
+                ->orderByDesc('avg_days')
+                ->get();
+        }
+
+        $this->bottlenecks = $bt->map(fn ($r) => [
+            'status' => (string) $r->status,
+            'open' => (int) $r->total,
+            'avg_days' => round((float) $r->avg_days, 1),
+            'max_days' => round((float) $r->max_days, 1),
+        ])->values()->all();
+
         $this->dispatch('request-report-updated',
             volumeByType: $this->volumeByType,
             volumeByStatus: $this->volumeByStatus,
@@ -228,6 +258,12 @@ class RequestReport extends Component
             $headings = ['Metric', 'Value'];
             $rows = array_map(fn ($r) => [$r['metric'], $r['value']], $this->sla);
             return $this->exportRows($headings, $rows, "sla-{$this->from}-{$this->to}", $format, 'SLA compliance');
+        }
+
+        if ($kind === 'bottlenecks') {
+            $headings = ['Status', 'Open', 'Avg age (days)', 'Max age (days)'];
+            $rows = array_map(fn ($r) => [$r['status'], $r['open'], $r['avg_days'], $r['max_days']], $this->bottlenecks);
+            return $this->exportRows($headings, $rows, "request-bottlenecks-{$this->from}-{$this->to}", $format, 'Request bottleneck analysis');
         }
 
         session()->flash('error', 'Unknown export.');
@@ -277,6 +313,7 @@ class RequestReport extends Component
             'avgCompletionByType' => $this->avgCompletionByType,
             'staffProductivity' => $this->staffProductivity,
             'sla' => $this->sla,
+            'bottlenecks' => $this->bottlenecks,
         ])->layout('layouts.admin', ['title' => 'Request Reports']);
     }
 }

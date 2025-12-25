@@ -21,13 +21,13 @@ class ScheduledReportMail extends Mailable implements ShouldQueue
         public string $to,
         public array $headings,
         public array $rows,
-        public string $csvFilename,
+        public string $attachmentFilename,
+        public string $attachmentMime,
+        public string $attachmentContents,
     ) {}
 
     public function build(): self
     {
-        $csv = $this->toCsvString($this->headings, $this->rows);
-
         return $this->subject('Scheduled report · ' . $this->title)
             ->view('emails.scheduled-report', [
                 'title' => $this->title,
@@ -39,26 +39,9 @@ class ScheduledReportMail extends Mailable implements ShouldQueue
                 'from' => $this->from,
                 'to' => $this->to,
             ])
-            ->attachData($csv, $this->csvFilename, [
-                'mime' => 'text/csv',
+            ->attachData($this->attachmentContents, $this->attachmentFilename, [
+                'mime' => $this->attachmentMime,
             ]);
-    }
-
-    /**
-     * @param  array<int, string>  $headings
-     * @param  array<int, array<int, mixed>>  $rows
-     */
-    protected function toCsvString(array $headings, array $rows): string
-    {
-        $fh = fopen('php://temp', 'w+');
-        fputcsv($fh, $headings);
-        foreach ($rows as $r) {
-            fputcsv($fh, $r);
-        }
-        rewind($fh);
-        $csv = stream_get_contents($fh);
-        fclose($fh);
-        return $csv ?: '';
     }
 }
 

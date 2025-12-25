@@ -25,6 +25,12 @@ class PerformanceReport extends Component
     /** @var array<int, array{label:string,value:float}> */
     public array $avgResolutionByMonth = [];
 
+    /** @var array<int, array{label:string,value:int}> */
+    public array $createdByMonth = [];
+
+    /** @var array<int, array{label:string,value:int}> */
+    public array $completedByMonth = [];
+
     /** @var array<int, array<string,mixed>> */
     public array $staffWorkload = [];
 
@@ -116,6 +122,45 @@ class PerformanceReport extends Component
         }
         $this->avgResolutionByMonth = $avgRes->map(fn ($r) => ['label' => (string) $r->ym, 'value' => (float) $r->hours])->values()->all();
 
+        // Monthly trends: created vs completed
+        $created = ServiceRequest::query()
+            ->whereDate('created_at', '>=', $this->from)
+            ->whereDate('created_at', '<=', $this->to)
+            ->selectRaw("strftime('%Y-%m', created_at) as ym, COUNT(*) as total")
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->get();
+        if ($created->isEmpty()) {
+            $created = ServiceRequest::query()
+                ->whereDate('created_at', '>=', $this->from)
+                ->whereDate('created_at', '<=', $this->to)
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as total")
+                ->groupBy('ym')
+                ->orderBy('ym')
+                ->get();
+        }
+        $this->createdByMonth = $created->map(fn ($r) => ['label' => (string) $r->ym, 'value' => (int) $r->total])->values()->all();
+
+        $completed = ServiceRequest::query()
+            ->whereNotNull('completed_at')
+            ->whereDate('completed_at', '>=', $this->from)
+            ->whereDate('completed_at', '<=', $this->to)
+            ->selectRaw("strftime('%Y-%m', completed_at) as ym, COUNT(*) as total")
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->get();
+        if ($completed->isEmpty()) {
+            $completed = ServiceRequest::query()
+                ->whereNotNull('completed_at')
+                ->whereDate('completed_at', '>=', $this->from)
+                ->whereDate('completed_at', '<=', $this->to)
+                ->selectRaw("DATE_FORMAT(completed_at, '%Y-%m') as ym, COUNT(*) as total")
+                ->groupBy('ym')
+                ->orderBy('ym')
+                ->get();
+        }
+        $this->completedByMonth = $completed->map(fn ($r) => ['label' => (string) $r->ym, 'value' => (int) $r->total])->values()->all();
+
         $avgResponseOverall = (float) collect($this->avgResponseByMonth)->avg('value');
         $avgResolutionOverall = (float) collect($this->avgResolutionByMonth)->avg('value');
 
@@ -143,6 +188,8 @@ class PerformanceReport extends Component
         $this->dispatch('performance-report-updated',
             avgResponseByMonth: $this->avgResponseByMonth,
             avgResolutionByMonth: $this->avgResolutionByMonth,
+            createdByMonth: $this->createdByMonth,
+            completedByMonth: $this->completedByMonth,
         );
     }
 
@@ -200,6 +247,8 @@ class PerformanceReport extends Component
             'kpis' => $this->kpis,
             'avgResponseByMonth' => $this->avgResponseByMonth,
             'avgResolutionByMonth' => $this->avgResolutionByMonth,
+            'createdByMonth' => $this->createdByMonth,
+            'completedByMonth' => $this->completedByMonth,
             'staffWorkload' => $this->staffWorkload,
         ])->layout('layouts.admin', ['title' => 'Performance Reports']);
     }

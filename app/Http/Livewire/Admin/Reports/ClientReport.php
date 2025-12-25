@@ -33,6 +33,9 @@ class ClientReport extends Component
     public array $topClients = [];
 
     /** @var array<int, array<string,mixed>> */
+    public array $lifetimeValue = [];
+
+    /** @var array<int, array<string,mixed>> */
     public array $churnRisk = [];
 
     public function mount(): void
@@ -98,10 +101,38 @@ class ClientReport extends Component
         }
         $retention = !empty($existingBefore) ? (count($activeInRange) / count($existingBefore)) : 0;
 
+        // Client lifetime value (LTV): total succeeded payments per client (all-time).
+        $ltvRows = Payment::query()
+            ->where('status', 'succeeded')
+            ->join('clients', 'clients.id', '=', 'payments.client_id')
+            ->selectRaw('clients.company_name as client, clients.tier as tier, SUM(payments.amount) as ltv')
+            ->groupBy('clients.company_name', 'clients.tier')
+            ->orderByDesc('ltv')
+            ->limit(20)
+            ->get();
+        $this->lifetimeValue = $ltvRows->map(fn ($r) => [
+            'client' => (string) $r->client,
+            'tier' => (string) $r->tier,
+            'ltv' => (float) $r->ltv,
+        ])->all();
+
+        $avgLtv = (float) Payment::query()
+            ->where('status', 'succeeded')
+            ->selectRaw('AVG(t.total) as avg_ltv')
+            ->fromSub(
+                Payment::query()
+                    ->where('status', 'succeeded')
+                    ->selectRaw('client_id, SUM(amount) as total')
+                    ->groupBy('client_id'),
+                't'
+            )
+            ->value('avg_ltv');
+
         $this->kpis = [
             'total_clients' => $totalClients,
             'new_clients' => $newClients,
             'retention_rate' => $retention,
+            'avg_ltv' => $avgLtv,
         ];
 
         // New clients by month (sqlite/mysql fallback)
@@ -217,6 +248,12 @@ class ClientReport extends Component
             return $this->exportRows($headings, $rows, "churn-risk-{$this->from}-{$this->to}", $format, 'Churn risk');
         }
 
+        if ($kind === 'ltv') {
+            $headings = ['Client', 'Tier', 'Lifetime value'];
+            $rows = array_map(fn ($r) => [$r['client'], $r['tier'], $r['ltv']], $this->lifetimeValue);
+            return $this->exportRows($headings, $rows, "client-ltv-{$this->from}-{$this->to}", $format, 'Client lifetime value');
+        }
+
         session()->flash('error', 'Unknown export.');
         return null;
     }
@@ -262,6 +299,7 @@ class ClientReport extends Component
             'clientsByTier' => $this->clientsByTier,
             'clientsByStatus' => $this->clientsByStatus,
             'topClients' => $this->topClients,
+            'lifetimeValue' => $this->lifetimeValue,
             'churnRisk' => $this->churnRisk,
         ])->layout('layouts.admin', ['title' => 'Client Reports']);
     }
