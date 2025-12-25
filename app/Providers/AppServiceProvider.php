@@ -27,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Livewire components (non-standard namespace path)
         Livewire::component('dashboard', \App\Http\Livewire\Dashboard::class);
+        Livewire::component('requests.request-index', \App\Http\Livewire\Requests\RequestIndex::class);
+        Livewire::component('requests.request-show', \App\Http\Livewire\Requests\RequestShow::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
