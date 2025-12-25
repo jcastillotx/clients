@@ -29,6 +29,13 @@ use App\Http\Livewire\Admin\Users\UserCreate as AdminUserCreate;
 use App\Http\Livewire\Admin\Users\UserEdit as AdminUserEdit;
 use App\Http\Livewire\Admin\Users\Permissions as AdminPermissions;
 use App\Http\Livewire\Admin\Storage\StorageOverview as AdminStorageOverview;
+use App\Http\Livewire\Admin\Reports\ReportDashboard as AdminReportDashboard;
+use App\Http\Livewire\Admin\Reports\FinancialReport as AdminFinancialReport;
+use App\Http\Livewire\Admin\Reports\ClientReport as AdminClientReport;
+use App\Http\Livewire\Admin\Reports\RequestReport as AdminRequestReport;
+use App\Http\Livewire\Admin\Reports\CustomReportBuilder as AdminCustomReportBuilder;
+use App\Http\Livewire\Admin\Reports\PerformanceReport as AdminPerformanceReport;
+use App\Http\Livewire\Admin\Reports\StorageReport as AdminStorageReport;
 use App\Http\Livewire\Storage\ConnectDropbox;
 use App\Http\Livewire\Storage\ConnectGoogleDrive;
 use App\Http\Livewire\Storage\ConnectS3;
@@ -171,7 +178,14 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
             Route::get('/storage/dropbox/browse/{connection?}', DropboxBrowser::class)->name('storage.dropbox.browse');
             Route::get('/storage/google-drive/connect', ConnectGoogleDrive::class)->name('storage.google-drive.connect');
             Route::get('/storage/google-drive/browse/{connection?}', GoogleDriveBrowser::class)->name('storage.google-drive.browse');
-        Route::get('/reports', fn () => view('admin.section', ['title' => 'Reports & Analytics']))->name('reports');
+        // Reports
+        Route::get('/reports', AdminReportDashboard::class)->name('reports');
+        Route::get('/reports/builder', AdminCustomReportBuilder::class)->name('reports.builder');
+        Route::get('/reports/financial', AdminFinancialReport::class)->name('reports.financial');
+        Route::get('/reports/clients', AdminClientReport::class)->name('reports.clients');
+        Route::get('/reports/requests', AdminRequestReport::class)->name('reports.requests');
+        Route::get('/reports/performance', AdminPerformanceReport::class)->name('reports.performance');
+        Route::get('/reports/storage', AdminStorageReport::class)->name('reports.storage');
         Route::get('/settings', fn () => view('admin.section', ['title' => 'System Settings']))->name('settings');
     });
 

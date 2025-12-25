@@ -4,10 +4,12 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Models\Invoice;
+use App\Models\ReportTemplate;
 use App\Models\StorageConnection;
 use App\Models\User;
 use App\Mail\InvoiceReminderMail;
 use App\Jobs\SyncStorageConnection;
+use App\Jobs\SendScheduledReport;
 use Illuminate\Support\Facades\Mail;
 
 /*
@@ -105,3 +107,17 @@ Schedule::call(function () {
             ->onQueue('default');
     }
 })->everyFifteenMinutes()->name('storage-sync');
+
+// Scheduled report delivery (daily)
+Schedule::call(function () {
+    $due = ReportTemplate::query()
+        ->where('is_active', true)
+        ->whereIn('schedule', ['daily', 'weekly', 'monthly'])
+        ->whereNotNull('next_send_at')
+        ->where('next_send_at', '<=', now())
+        ->get(['id']);
+
+    foreach ($due as $tpl) {
+        SendScheduledReport::dispatch($tpl->id)->onQueue('default');
+    }
+})->daily()->name('scheduled-reports');

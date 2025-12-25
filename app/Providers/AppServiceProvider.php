@@ -65,6 +65,13 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('storage.unified-browser', \App\Http\Livewire\Storage\UnifiedFileBrowser::class);
         Livewire::component('storage.settings', \App\Http\Livewire\Storage\StorageSettings::class);
         Livewire::component('admin.storage.overview', \App\Http\Livewire\Admin\Storage\StorageOverview::class);
+        Livewire::component('admin.reports.dashboard', \App\Http\Livewire\Admin\Reports\ReportDashboard::class);
+        Livewire::component('admin.reports.financial', \App\Http\Livewire\Admin\Reports\FinancialReport::class);
+        Livewire::component('admin.reports.clients', \App\Http\Livewire\Admin\Reports\ClientReport::class);
+        Livewire::component('admin.reports.requests', \App\Http\Livewire\Admin\Reports\RequestReport::class);
+        Livewire::component('admin.reports.builder', \App\Http\Livewire\Admin\Reports\CustomReportBuilder::class);
+        Livewire::component('admin.reports.performance', \App\Http\Livewire\Admin\Reports\PerformanceReport::class);
+        Livewire::component('admin.reports.storage', \App\Http\Livewire\Admin\Reports\StorageReport::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
