@@ -5,7 +5,21 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
+use App\Models\Setting;
+use App\Models\Document;
+use App\Models\Contract;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Request as ServiceRequest;
+use App\Observers\ContractWebhookObserver;
+use App\Observers\DocumentWebhookObserver;
+use App\Observers\InvoiceWebhookObserver;
+use App\Observers\PaymentWebhookObserver;
+use App\Observers\RequestWebhookObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -73,6 +87,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('admin.reports.performance', \App\Http\Livewire\Admin\Reports\PerformanceReport::class);
         Livewire::component('admin.reports.storage', \App\Http\Livewire\Admin\Reports\StorageReport::class);
         Livewire::component('admin.settings.system', \App\Http\Livewire\Admin\Settings\SystemSettings::class);
+        Livewire::component('settings.webhooks', \App\Http\Livewire\Settings\WebhookManagement::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
@@ -82,5 +97,21 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('status', function ($expression) {
             return "<?php echo ucfirst(str_replace('_', ' ', $expression)); ?>";
         });
+
+        // API token rate limiting (per token id)
+        RateLimiter::for('api-token', function (Request $request) {
+            $tokenId = $request->user()?->currentAccessToken()?->id;
+            $key = $tokenId ? ('token:' . $tokenId) : $request->ip();
+            $limit = (int) Setting::getValue('security.api_rate_limit_per_min', 60);
+            $limit = $limit > 0 ? $limit : 60;
+            return Limit::perMinute($limit)->by($key);
+        });
+
+        // Webhook observers
+        ServiceRequest::observe(RequestWebhookObserver::class);
+        Invoice::observe(InvoiceWebhookObserver::class);
+        Document::observe(DocumentWebhookObserver::class);
+        Payment::observe(PaymentWebhookObserver::class);
+        Contract::observe(ContractWebhookObserver::class);
     }
 }

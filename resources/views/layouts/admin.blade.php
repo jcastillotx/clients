@@ -98,6 +98,16 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.settings.webhooks') ? 'active' : '' }}" href="{{ route('admin.settings.webhooks') }}">
+                            <span class="nav-link-title">Webhooks</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('api.documentation') ? 'active' : '' }}" href="{{ route('api.documentation') }}">
+                            <span class="nav-link-title">API Documentation</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('admin.activity') ? 'active' : '' }}" href="{{ route('admin.activity') }}">
                             <span class="nav-link-title">Activity Log</span>
                         </a>

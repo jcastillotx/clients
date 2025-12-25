@@ -37,6 +37,7 @@ use App\Http\Livewire\Admin\Reports\CustomReportBuilder as AdminCustomReportBuil
 use App\Http\Livewire\Admin\Reports\PerformanceReport as AdminPerformanceReport;
 use App\Http\Livewire\Admin\Reports\StorageReport as AdminStorageReport;
 use App\Http\Livewire\Admin\Settings\SystemSettings as AdminSystemSettings;
+use App\Http\Livewire\Settings\WebhookManagement;
 use App\Http\Livewire\Storage\ConnectDropbox;
 use App\Http\Livewire\Storage\ConnectGoogleDrive;
 use App\Http\Livewire\Storage\ConnectS3;
@@ -130,6 +131,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
+// API documentation (admin-only)
+Route::middleware(['auth', 'verified', 'ensure.admin'])
+    ->get('/api/documentation', fn () => view('api-docs'))
+    ->name('api.documentation');
+
 /*
 |--------------------------------------------------------------------------
 | Admin Routes
@@ -188,6 +194,7 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
         Route::get('/reports/performance', AdminPerformanceReport::class)->name('reports.performance');
         Route::get('/reports/storage', AdminStorageReport::class)->name('reports.storage');
         Route::get('/settings', AdminSystemSettings::class)->name('settings');
+        Route::get('/settings/webhooks', WebhookManagement::class)->name('settings.webhooks');
     });
 
 /*

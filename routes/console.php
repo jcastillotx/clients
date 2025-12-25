@@ -4,12 +4,14 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Models\Invoice;
+use App\Models\Contract;
 use App\Models\ReportTemplate;
 use App\Models\StorageConnection;
 use App\Models\User;
 use App\Mail\InvoiceReminderMail;
 use App\Jobs\SyncStorageConnection;
 use App\Jobs\SendScheduledReport;
+use App\Services\WebhookService;
 use Illuminate\Support\Facades\Mail;
 
 /*
@@ -85,6 +87,29 @@ Schedule::call(function () {
         $invoice->update(['reminded_overdue_3_at' => now()]);
     }
 })->daily()->name('invoice-reminders');
+
+// Contract expiring webhooks (daily)
+Schedule::call(function () {
+    $days = 30;
+    $webhooks = app(WebhookService::class);
+
+    Contract::query()
+        ->active()
+        ->whereNotNull('end_date')
+        ->where('end_date', '<=', now()->addDays($days))
+        ->where('end_date', '>', now())
+        ->chunkById(200, function ($contracts) use ($webhooks) {
+            foreach ($contracts as $c) {
+                $webhooks->triggerWebhook('contract.expiring', [
+                    'id' => $c->id,
+                    'client_id' => $c->client_id,
+                    'title' => $c->title,
+                    'end_date' => $c->end_date?->toDateString(),
+                    'days_until_expiration' => $c->daysUntilExpiration(),
+                ], (int) $c->client_id);
+            }
+        });
+})->daily()->name('contract-expiring-webhooks');
 
 // Storage sync scheduler (every 15 minutes by default)
 Schedule::call(function () {
