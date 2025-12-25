@@ -9,6 +9,8 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\RequestAttachmentController;
+use App\Http\Controllers\Storage\DropboxOAuthController;
+use App\Http\Controllers\Webhook\DropboxWebhookController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Livewire\Admin\Clients\ClientCreate;
 use App\Http\Livewire\Admin\Clients\ClientDetail;
@@ -24,7 +26,9 @@ use App\Http\Livewire\Admin\Users\UserManagement as AdminUserManagement;
 use App\Http\Livewire\Admin\Users\UserCreate as AdminUserCreate;
 use App\Http\Livewire\Admin\Users\UserEdit as AdminUserEdit;
 use App\Http\Livewire\Admin\Users\Permissions as AdminPermissions;
+use App\Http\Livewire\Storage\ConnectDropbox;
 use App\Http\Livewire\Storage\ConnectS3;
+use App\Http\Livewire\Storage\DropboxBrowser;
 use App\Http\Livewire\Storage\S3Browser;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +50,13 @@ Route::get('/', function () {
 
 Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])
     ->name('webhooks.stripe')
+    ->withoutMiddleware(['web']);
+
+Route::get('/webhooks/dropbox', [DropboxWebhookController::class, 'verify'])
+    ->name('webhooks.dropbox.verify')
+    ->withoutMiddleware(['web']);
+Route::post('/webhooks/dropbox', [DropboxWebhookController::class, 'handle'])
+    ->name('webhooks.dropbox')
     ->withoutMiddleware(['web']);
 
 /*
@@ -92,6 +103,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Storage: Dropbox OAuth (used by admin storage UI; can be opened in popup)
+    Route::get('/storage/dropbox/authorize', [DropboxOAuthController::class, 'authorize'])->name('storage.dropbox.authorize');
+    Route::get('/storage/dropbox/callback', [DropboxOAuthController::class, 'callback'])->name('storage.dropbox.callback');
+
 });
 
 /*
@@ -136,6 +151,8 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
             Route::get('/storage', fn () => redirect()->route('admin.storage.s3.connect'))->name('storage');
             Route::get('/storage/s3/connect', ConnectS3::class)->name('storage.s3.connect');
             Route::get('/storage/s3/browse/{connection?}', S3Browser::class)->name('storage.s3.browse');
+            Route::get('/storage/dropbox/connect', ConnectDropbox::class)->name('storage.dropbox.connect');
+            Route::get('/storage/dropbox/browse/{connection?}', DropboxBrowser::class)->name('storage.dropbox.browse');
         Route::get('/reports', fn () => view('admin.section', ['title' => 'Reports & Analytics']))->name('reports');
         Route::get('/settings', fn () => view('admin.section', ['title' => 'System Settings']))->name('settings');
     });

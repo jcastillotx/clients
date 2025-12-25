@@ -57,6 +57,8 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('admin.users.permissions', \App\Http\Livewire\Admin\Users\Permissions::class);
         Livewire::component('storage.connect-s3', \App\Http\Livewire\Storage\ConnectS3::class);
         Livewire::component('storage.s3-browser', \App\Http\Livewire\Storage\S3Browser::class);
+        Livewire::component('storage.connect-dropbox', \App\Http\Livewire\Storage\ConnectDropbox::class);
+        Livewire::component('storage.dropbox-browser', \App\Http\Livewire\Storage\DropboxBrowser::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
