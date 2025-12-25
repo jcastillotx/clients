@@ -146,6 +146,11 @@ class Client extends Model
             ->withTimestamps();
     }
 
+    public function storageConnections(): HasMany
+    {
+        return $this->hasMany(StorageConnection::class);
+    }
+
     /**
      * Get the full address.
      */
