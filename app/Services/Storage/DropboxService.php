@@ -334,6 +334,14 @@ class DropboxService implements StorageProviderInterface
             $total = (int) ($allocation['allocated'] ?? 0);
         }
 
+        if ($this->connection) {
+            $this->connection->update([
+                'storage_used' => $used,
+                'storage_limit' => $total,
+                'last_synced_at' => $this->connection->last_synced_at ?? now(),
+            ]);
+        }
+
         return ['used' => $used, 'total' => $total];
     }
 

@@ -439,6 +439,14 @@ class GoogleDriveService implements StorageProviderInterface
         $used = (int) ($quota?->getUsage() ?? 0);
         $limit = $quota?->getLimit();
 
+        if ($this->connection) {
+            $this->connection->update([
+                'storage_used' => $used,
+                'storage_limit' => $limit !== null ? (int) $limit : null,
+                'last_synced_at' => $this->connection->last_synced_at ?? now(),
+            ]);
+        }
+
         return [
             'used' => $used,
             'total' => $limit !== null ? (int) $limit : null,

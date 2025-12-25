@@ -28,12 +28,16 @@ use App\Http\Livewire\Admin\Users\UserManagement as AdminUserManagement;
 use App\Http\Livewire\Admin\Users\UserCreate as AdminUserCreate;
 use App\Http\Livewire\Admin\Users\UserEdit as AdminUserEdit;
 use App\Http\Livewire\Admin\Users\Permissions as AdminPermissions;
+use App\Http\Livewire\Admin\Storage\StorageOverview as AdminStorageOverview;
 use App\Http\Livewire\Storage\ConnectDropbox;
 use App\Http\Livewire\Storage\ConnectGoogleDrive;
 use App\Http\Livewire\Storage\ConnectS3;
 use App\Http\Livewire\Storage\DropboxBrowser;
 use App\Http\Livewire\Storage\GoogleDriveBrowser;
 use App\Http\Livewire\Storage\S3Browser;
+use App\Http\Livewire\Storage\StorageDashboard;
+use App\Http\Livewire\Storage\StorageSettings;
+use App\Http\Livewire\Storage\UnifiedFileBrowser;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -157,7 +161,10 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
         // Placeholder routes for the expanded admin navigation (wired to admin layout)
         Route::get('/contracts', fn () => view('admin.section', ['title' => 'Contracts Management']))->name('contracts');
         Route::get('/documents', fn () => view('admin.section', ['title' => 'Documents']))->name('documents');
-            Route::get('/storage', fn () => redirect()->route('admin.storage.s3.connect'))->name('storage');
+            Route::get('/storage', StorageDashboard::class)->name('storage');
+            Route::get('/storage/files', UnifiedFileBrowser::class)->name('storage.files');
+            Route::get('/storage/settings', StorageSettings::class)->name('storage.settings');
+            Route::get('/storage/overview', AdminStorageOverview::class)->name('storage.overview');
             Route::get('/storage/s3/connect', ConnectS3::class)->name('storage.s3.connect');
             Route::get('/storage/s3/browse/{connection?}', S3Browser::class)->name('storage.s3.browse');
             Route::get('/storage/dropbox/connect', ConnectDropbox::class)->name('storage.dropbox.connect');

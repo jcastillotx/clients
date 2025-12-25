@@ -61,6 +61,10 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('storage.dropbox-browser', \App\Http\Livewire\Storage\DropboxBrowser::class);
         Livewire::component('storage.connect-google-drive', \App\Http\Livewire\Storage\ConnectGoogleDrive::class);
         Livewire::component('storage.google-drive-browser', \App\Http\Livewire\Storage\GoogleDriveBrowser::class);
+        Livewire::component('storage.dashboard', \App\Http\Livewire\Storage\StorageDashboard::class);
+        Livewire::component('storage.unified-browser', \App\Http\Livewire\Storage\UnifiedFileBrowser::class);
+        Livewire::component('storage.settings', \App\Http\Livewire\Storage\StorageSettings::class);
+        Livewire::component('admin.storage.overview', \App\Http\Livewire\Admin\Storage\StorageOverview::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {
