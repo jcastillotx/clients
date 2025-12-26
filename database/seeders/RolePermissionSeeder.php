@@ -16,47 +16,53 @@ class RolePermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create permissions
+        // Create permissions (requested naming)
         $permissions = [
-            // Request permissions
-            'view requests',
-            'create requests',
-            'edit requests',
-            'delete requests',
-            'manage all requests',
-            
-            // Contract permissions
-            'view contracts',
-            'sign contracts',
-            'manage contracts',
-            
-            // Invoice permissions
-            'view invoices',
-            'pay invoices',
-            'manage invoices',
-            
-            // Document permissions
-            'view documents',
-            'upload documents',
-            'delete documents',
-            'manage documents',
-            
-            // Client permissions
-            'view clients',
-            'create clients',
-            'edit clients',
-            'delete clients',
-            
-            // User permissions
-            'view users',
-            'create users',
-            'edit users',
-            'delete users',
-            
-            // Admin permissions
-            'access admin panel',
-            'view reports',
-            'manage settings',
+            // Clients
+            'view_any_client',
+            'view_client',
+            'create_client',
+            'update_client',
+            'delete_client',
+
+            // Requests
+            'view_any_request',
+            'view_request',
+            'create_request',
+            'update_request',
+            'delete_request',
+
+            // Invoices
+            'view_any_invoice',
+            'view_invoice',
+            'create_invoice',
+            'update_invoice',
+            'delete_invoice',
+            'process_payment',
+
+            // Contracts
+            'view_any_contract',
+            'view_contract',
+            'create_contract',
+            'update_contract',
+
+            // Documents
+            'view_any_document',
+            'view_document',
+            'upload_document',
+            'delete_document',
+
+            // Users & Permissions
+            'view_any_user',
+            'view_user',
+            'create_user',
+            'update_user',
+            'delete_user',
+            'manage_permissions',
+
+            // Settings
+            'view_settings',
+            'update_settings',
         ];
 
         foreach ($permissions as $permission) {
@@ -65,41 +71,68 @@ class RolePermissionSeeder extends Seeder
 
         // Create roles and assign permissions
 
-        // Admin role - full access
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $adminRole->givePermissionTo(Permission::all());
+        $allPermissions = Permission::all();
 
-        // Staff role - manage clients and work
+        // super_admin - full access
+        $superAdminRole = Role::firstOrCreate(['name' => 'super_admin']);
+        $superAdminRole->syncPermissions($allPermissions);
+
+        // admin - full access
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole->syncPermissions($allPermissions);
+
+        // staff - operational access
         $staffRole = Role::firstOrCreate(['name' => 'staff']);
-        $staffRole->givePermissionTo([
-            'view requests',
-            'create requests',
-            'edit requests',
-            'manage all requests',
-            'view contracts',
-            'manage contracts',
-            'view invoices',
-            'manage invoices',
-            'view documents',
-            'upload documents',
-            'manage documents',
-            'view clients',
-            'view users',
-            'access admin panel',
+        $staffRole->syncPermissions([
+            // Clients
+            'view_any_client',
+            'view_client',
+            'create_client',
+            'update_client',
+
+            // Requests
+            'view_any_request',
+            'view_request',
+            'create_request',
+            'update_request',
+            'delete_request',
+
+            // Invoices
+            'view_any_invoice',
+            'view_invoice',
+            'create_invoice',
+            'update_invoice',
+            'process_payment',
+
+            // Contracts
+            'view_any_contract',
+            'view_contract',
+            'create_contract',
+            'update_contract',
+
+            // Documents
+            'view_any_document',
+            'view_document',
+            'upload_document',
+            'delete_document',
+
+            // Users (limited)
+            'view_any_user',
+            'view_user',
         ]);
 
         // Client role - limited access
         $clientRole = Role::firstOrCreate(['name' => 'client']);
-        $clientRole->givePermissionTo([
-            'view requests',
-            'create requests',
-            'edit requests',
-            'view contracts',
-            'sign contracts',
-            'view invoices',
-            'pay invoices',
-            'view documents',
-            'upload documents',
+        $clientRole->syncPermissions([
+            'view_client',
+            'view_request',
+            'create_request',
+            'update_request',
+            'view_contract',
+            'view_invoice',
+            'process_payment',
+            'view_document',
+            'upload_document',
         ]);
     }
 }

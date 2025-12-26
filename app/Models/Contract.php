@@ -7,10 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Concerns\LogsActivityWithContext;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Contract extends Model
 {
     use HasFactory, SoftDeletes;
+    use LogsActivity;
+    use LogsActivityWithContext;
 
     /**
      * The attributes that are mass assignable.
@@ -38,14 +43,35 @@ class Contract extends Model
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'value' => 'decimal:2',
+        'signed_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array<int, string>
+     */
+    protected $dates = [
+        'start_date',
+        'end_date',
+        'signed_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'start_date' => 'date',
-            'end_date' => 'date',
-            'value' => 'decimal:2',
-            'signed_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->useLogName('contracts')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     /**
@@ -94,6 +120,14 @@ class Contract extends Model
         }
 
         return $this->end_date->isPast();
+    }
+
+    /**
+     * Days until expiration (negative if already expired).
+     */
+    public function daysUntilExpiration(): ?int
+    {
+        return $this->end_date ? now()->diffInDays($this->end_date, false) : null;
     }
 
     /**

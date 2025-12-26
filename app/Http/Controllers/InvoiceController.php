@@ -11,6 +11,11 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
+    protected function invoiceBranding(): array
+    {
+        return (array) config('client-portal.invoice.branding', []);
+    }
+
     /**
      * Display a listing of the invoices.
      */
@@ -68,7 +73,8 @@ class InvoiceController extends Controller
 
         $invoice->load(['client', 'items']);
 
-        $pdf = Pdf::loadView('invoices.pdf', compact('invoice'));
+        $brand = $this->invoiceBranding();
+        $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'brand'));
 
         return $pdf->stream($invoice->invoice_number . '.pdf');
     }
@@ -78,7 +84,8 @@ class InvoiceController extends Controller
      */
     protected function generatePdf(Invoice $invoice): void
     {
-        $pdf = Pdf::loadView('invoices.pdf', compact('invoice'));
+        $brand = $this->invoiceBranding();
+        $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'brand'));
 
         $filename = $invoice->invoice_number . '.pdf';
         $path = 'generated/' . $filename;

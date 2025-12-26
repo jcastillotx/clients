@@ -6,17 +6,21 @@
     "license": "proprietary",
     "require": {
         "php": "^8.2",
+        "aws/aws-sdk-php": "^3.369",
         "barryvdh/laravel-dompdf": "^3.0",
+        "dedoc/scramble": "^0.13",
+        "google/apiclient": "^2.18",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.4",
         "maatwebsite/excel": "^3.1",
+        "spatie/dropbox-api": "^1.23",
+        "spatie/laravel-activitylog": "^4.0",
         "spatie/laravel-permission": "^6.4",
         "stripe/stripe-php": "^13.0"
     },
     "require-dev": {
-        "dedoc/scramble": "^0.12",
         "fakerphp/faker": "^1.23",
         "laravel/breeze": "^2.0",
         "laravel/pint": "^1.13",

@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -29,7 +32,9 @@ class User extends Authenticatable
         'avatar',
         'client_id',
         'is_active',
+        'status',
         'last_login_at',
+        'two_factor_enabled',
     ];
 
     /**
@@ -42,20 +47,28 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+        'status' => 'string',
+        'last_login_at' => 'datetime',
+        'two_factor_enabled' => 'boolean',
+        'deleted_at' => 'datetime',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be mutated to dates.
      *
-     * @return array<string, string>
+     * @var array<int, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
-            'last_login_at' => 'datetime',
-        ];
-    }
+    protected $dates = [
+        'email_verified_at',
+        'last_login_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     /**
      * Get the client that the user belongs to.
@@ -63,6 +76,18 @@ class User extends Authenticatable
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Accessor: get the related client (safe proxy to relationship).
+     */
+    public function getClientAttribute(): ?Client
+    {
+        if ($this->relationLoaded('client')) {
+            return $this->getRelation('client');
+        }
+
+        return $this->client()->getResults();
     }
 
     /**
@@ -120,11 +145,78 @@ class User extends Authenticatable
     }
 
     /**
+     * Login history entries.
+     */
+    public function loginHistories(): HasMany
+    {
+        return $this->hasMany(LoginHistory::class)->orderByDesc('logged_in_at')->orderByDesc('id');
+    }
+
+    /**
+     * Staff-to-client assignments (account managers).
+     */
+    public function assignedClients(): BelongsToMany
+    {
+        // Prefer the newer `staff_assignments` table (requested schema); fall back to legacy `client_staff`.
+        if (Schema::hasTable('staff_assignments')) {
+            return $this->belongsToMany(Client::class, 'staff_assignments', 'staff_user_id', 'client_id')
+                ->withPivot(['role']);
+        }
+
+        return $this->belongsToMany(Client::class, 'client_staff', 'user_id', 'client_id')
+            ->withPivot(['relationship'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Convenience: list of assigned client IDs.
+     *
+     * @return array<int, int>
+     */
+    public function assignedClientIds(): array
+    {
+        return $this->assignedClients()->pluck('clients.id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
+     * Sync assigned clients for a staff user.
+     *
+     * @param  array<int,int>  $clientIds
+     */
+    public function syncAssignedClients(array $clientIds, string $role = 'account_manager'): void
+    {
+        $clientIds = array_values(array_unique(array_map('intval', $clientIds)));
+
+        if (Schema::hasTable('staff_assignments')) {
+            DB::table('staff_assignments')->where('staff_user_id', $this->id)->delete();
+            if ($clientIds === []) {
+                return;
+            }
+            $now = now();
+            $rows = array_map(fn ($cid) => [
+                'staff_user_id' => $this->id,
+                'client_id' => $cid,
+                'role' => in_array($role, ['account_manager', 'project_lead'], true) ? $role : 'account_manager',
+                'created_at' => $now,
+            ], $clientIds);
+            DB::table('staff_assignments')->insert($rows);
+            return;
+        }
+
+        // Legacy pivot.
+        $map = [];
+        foreach ($clientIds as $cid) {
+            $map[$cid] = ['relationship' => $role];
+        }
+        $this->belongsToMany(Client::class, 'client_staff', 'user_id', 'client_id')->sync($map);
+    }
+
+    /**
      * Check if user is a client user.
      */
     public function isClient(): bool
     {
-        return $this->client_id !== null;
+        return $this->hasRole('client') || $this->client_id !== null;
     }
 
     /**
@@ -132,7 +224,42 @@ class User extends Authenticatable
      */
     public function isStaff(): bool
     {
-        return $this->client_id === null;
+        return $this->hasRole('staff') || ($this->client_id === null && !$this->hasRole('client'));
+    }
+
+    /**
+     * Check if user is an admin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'admin']);
+    }
+
+    /**
+     * Check if user is a super admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('super_admin');
+    }
+
+    public function isSuspended(): bool
+    {
+        return ($this->status ?? 'active') === 'suspended';
+    }
+
+    public function isInactive(): bool
+    {
+        return ($this->status ?? 'active') === 'inactive';
+    }
+
+    public function isActiveAccount(): bool
+    {
+        if (!$this->is_active) {
+            return false;
+        }
+
+        return ($this->status ?? 'active') === 'active';
     }
 
     /**

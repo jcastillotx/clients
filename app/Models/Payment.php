@@ -5,10 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
+use App\Models\Concerns\LogsActivityWithContext;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Payment extends Model
 {
     use HasFactory;
+    use LogsActivity;
+    use LogsActivityWithContext;
 
     /**
      * The attributes that are mass assignable.
@@ -29,18 +35,30 @@ class Payment extends Model
         'processed_at',
     ];
 
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'metadata' => 'array',
+        'processed_at' => 'datetime',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be mutated to dates.
      *
-     * @return array<string, string>
+     * @var array<int, string>
      */
-    protected function casts(): array
+    protected $dates = [
+        'processed_at',
+        'created_at',
+        'updated_at',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'amount' => 'decimal:2',
-            'metadata' => 'array',
-            'processed_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->useLogName('payments')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     /**
@@ -151,5 +169,16 @@ class Payment extends Model
     public function scopeFailed($query)
     {
         return $query->where('status', 'failed');
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (Payment $payment) {
+            Cache::forget("invoice:{$payment->invoice_id}:total_paid");
+        });
+
+        static::deleted(function (Payment $payment) {
+            Cache::forget("invoice:{$payment->invoice_id}:total_paid");
+        });
     }
 }

@@ -8,10 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
+use App\Models\Concerns\LogsActivityWithContext;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Invoice extends Model
 {
     use HasFactory, SoftDeletes;
+    use LogsActivity;
+    use LogsActivityWithContext;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +27,7 @@ class Invoice extends Model
     protected $fillable = [
         'client_id',
         'request_id',
+        'contract_id',
         'invoice_number',
         'subtotal',
         'tax_rate',
@@ -30,29 +37,52 @@ class Invoice extends Model
         'issue_date',
         'due_date',
         'paid_at',
+        'reminded_due_7_at',
+        'reminded_overdue_3_at',
         'status',
         'notes',
         'terms',
         'pdf_path',
+        'template',
+    ];
+
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'tax_rate' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'amount' => 'decimal:2',
+        'issue_date' => 'date',
+        'due_date' => 'date',
+        'paid_at' => 'datetime',
+        'reminded_due_7_at' => 'datetime',
+        'reminded_overdue_3_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be mutated to dates.
      *
-     * @return array<string, string>
+     * @var array<int, string>
      */
-    protected function casts(): array
+    protected $dates = [
+        'issue_date',
+        'due_date',
+        'paid_at',
+        'reminded_due_7_at',
+        'reminded_overdue_3_at',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'subtotal' => 'decimal:2',
-            'tax_rate' => 'decimal:2',
-            'tax_amount' => 'decimal:2',
-            'discount' => 'decimal:2',
-            'amount' => 'decimal:2',
-            'issue_date' => 'date',
-            'due_date' => 'date',
-            'paid_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->useLogName('invoices')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     /**
@@ -69,6 +99,14 @@ class Invoice extends Model
     public function request(): BelongsTo
     {
         return $this->belongsTo(Request::class);
+    }
+
+    /**
+     * Get the contract associated with the invoice (optional).
+     */
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
     }
 
     /**
@@ -120,6 +158,25 @@ class Invoice extends Model
     }
 
     /**
+     * Total paid (successful payments).
+     */
+    public function getTotalPaidAttribute(): float
+    {
+        // If query included a precomputed alias (recommended for lists), use it.
+        $attrs = $this->getAttributes();
+        if (array_key_exists('total_paid', $attrs)) {
+            return (float) $attrs['total_paid'];
+        }
+
+        // Fallback: cache the aggregate for 15 minutes.
+        return (float) Cache::remember(
+            "invoice:{$this->id}:total_paid",
+            now()->addMinutes(15),
+            fn () => (float) $this->payments()->where('status', 'succeeded')->sum('amount')
+        );
+    }
+
+    /**
      * Check if invoice can be paid.
      */
     public function canBePaid(): bool
@@ -156,8 +213,15 @@ class Invoice extends Model
      */
     public function getBalanceDueAttribute(): float
     {
-        $paid = $this->payments()->where('status', 'succeeded')->sum('amount');
-        return max(0, $this->amount - $paid);
+        return max(0, (float) $this->amount - $this->total_paid);
+    }
+
+    /**
+     * Attribute accessor for "is_overdue".
+     */
+    public function getIsOverdueAttribute(): bool
+    {
+        return $this->isOverdue();
     }
 
     /**
@@ -175,7 +239,7 @@ class Invoice extends Model
     /**
      * Calculate totals from items.
      */
-    public function calculateTotals(): void
+    public function calculateTotal(): float
     {
         $subtotal = $this->items()->sum('total');
         $taxAmount = $subtotal * ($this->tax_rate / 100);
@@ -186,6 +250,16 @@ class Invoice extends Model
             'tax_amount' => $taxAmount,
             'amount' => max(0, $amount),
         ]);
+
+        return (float) $this->amount;
+    }
+
+    /**
+     * Backwards-compatible alias.
+     */
+    public function calculateTotals(): void
+    {
+        $this->calculateTotal();
     }
 
     /**
@@ -268,6 +342,9 @@ class Invoice extends Model
             }
             if (!$invoice->due_date) {
                 $invoice->due_date = now()->addDays(30);
+            }
+            if (!$invoice->template) {
+                $invoice->template = 'classic';
             }
         });
     }

@@ -73,6 +73,16 @@ class Document extends Model
         return $this->belongsTo(Request::class);
     }
 
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
+    }
+
     /**
      * Get the user who uploaded the document.
      */
@@ -111,7 +121,15 @@ class Document extends Model
      */
     public function getUrlAttribute(): string
     {
-        return Storage::disk('documents')->url($this->file_path);
+        return route('documents.download', $this);
+    }
+
+    /**
+     * Download URL accessor.
+     */
+    public function getDownloadUrlAttribute(): string
+    {
+        return $this->url;
     }
 
     public function isPendingReview(): bool
@@ -217,7 +235,14 @@ class Document extends Model
             if (!$document->isForceDeleting()) {
                 return;
             }
-            Storage::disk('documents')->delete($document->file_path);
+            try {
+                Storage::disk('documents')->delete($document->file_path);
+                if ($document->thumbnail_path) {
+                    Storage::disk('documents')->delete($document->thumbnail_path);
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
         });
     }
 }
