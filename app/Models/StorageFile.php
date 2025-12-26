@@ -58,13 +58,8 @@ class StorageFile extends Model
 
     public function getDownloadUrlAttribute(): ?string
     {
-        $disk = $this->connection?->disk;
-        if (!$disk) {
-            return null;
-        }
-
         try {
-            return Storage::disk($disk)->url($this->path);
+            return route('storage.files.download', $this);
         } catch (\Throwable) {
             return null;
         }

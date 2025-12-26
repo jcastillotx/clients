@@ -236,15 +236,27 @@ class SyncStorageProviderJob implements ShouldQueue
                 $chosen = null;
             }
 
-            StorageSyncConflict::updateOrCreate(
-                ['client_id' => $clientId, 'filename' => (string) $filename],
-                [
+            $existingConflict = StorageSyncConflict::query()
+                ->where('client_id', $clientId)
+                ->where('filename', (string) $filename)
+                ->first();
+
+            if ($existingConflict && $existingConflict->resolution !== 'unresolved') {
+                // Respect manual/previous resolution; only refresh candidates.
+                $existingConflict->update([
                     'candidates' => $candidates,
-                    'chosen' => $chosen,
-                    'resolution' => $resolution,
-                    'notes' => $notes,
-                ]
-            );
+                ]);
+            } else {
+                StorageSyncConflict::updateOrCreate(
+                    ['client_id' => $clientId, 'filename' => (string) $filename],
+                    [
+                        'candidates' => $candidates,
+                        'chosen' => $chosen,
+                        'resolution' => $resolution,
+                        'notes' => $notes,
+                    ]
+                );
+            }
             $conflicts++;
         }
 

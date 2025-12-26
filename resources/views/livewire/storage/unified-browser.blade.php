@@ -72,8 +72,8 @@
                                                 <i class="fas fa-link"></i>
                                             </button>
                                             @if($file->download_url)
-                                                <a class="btn btn-sm btn-outline-secondary" href="{{ $file->download_url }}" target="_blank" rel="noopener">
-                                                    <i class="fas fa-external-link-alt"></i>
+                                                <a class="btn btn-sm btn-outline-secondary" href="{{ $file->download_url }}">
+                                                    <i class="fas fa-download"></i>
                                                 </a>
                                             @endif
                                         </td>

@@ -127,6 +127,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a href="{{ route('storage.conflicts') }}" class="nav-link {{ request()->routeIs('storage.conflicts') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Conflicts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a href="{{ route('storage.settings') }}" class="nav-link {{ request()->routeIs('storage.settings') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Settings</p>

@@ -8,9 +8,11 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\Admin\AdminReportExportController;
+use App\Http\Controllers\Storage\StorageFileController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use App\Http\Livewire\Storage\StorageDashboard;
+use App\Http\Livewire\Storage\StorageConflicts;
 use App\Http\Livewire\Storage\UnifiedFileBrowser;
 use App\Http\Livewire\Storage\StorageSettings;
 use App\Http\Livewire\Admin\Storage\StorageOverview;
@@ -82,6 +84,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/storage', StorageDashboard::class)->name('storage.dashboard');
     Route::get('/storage/browser', UnifiedFileBrowser::class)->name('storage.browser');
     Route::get('/storage/settings', StorageSettings::class)->name('storage.settings');
+    Route::get('/storage/conflicts', StorageConflicts::class)->name('storage.conflicts');
+    Route::get('/storage/files/{storageFile}/download', [StorageFileController::class, 'download'])->name('storage.files.download');
 
 });
 
