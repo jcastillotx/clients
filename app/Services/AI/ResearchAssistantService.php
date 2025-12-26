@@ -187,21 +187,22 @@ class ResearchAssistantService
         $category = $context['category'] ?? null;
 
         $conversation = AiConversation::create([
-            'type' => 'client_qa',
             'client_id' => $clientId,
             'user_id' => $askedBy,
+            'context_type' => $requestId ? 'request' : 'general',
+            'context_id' => $requestId ? (int) $requestId : null,
             'title' => $topic ?: 'Client Q&A',
-            'metadata' => ['request_id' => $requestId],
         ]);
 
         AiMessage::create([
             'ai_conversation_id' => $conversation->id,
             'role' => 'user',
             'content' => $question,
-            'provider' => null,
-            'model' => null,
-            'usage' => null,
+            'provider_used' => null,
+            'model_used' => null,
+            'tokens_used' => null,
             'cost' => null,
+            'response_time_ms' => null,
         ]);
 
         $messages = [
@@ -222,14 +223,18 @@ class ResearchAssistantService
             ? (($payload['executive_summary'] ?? '') . "\n\n" . $this->bullets($payload['recommended_next_steps'] ?? []))
             : (string) ($res['text'] ?? '');
 
+        $tokens = (array) ($res['tokens'] ?? []);
+        $tokensUsed = (int) ($tokens['total'] ?? ((int) ($tokens['input'] ?? 0) + (int) ($tokens['output'] ?? 0)));
+
         AiMessage::create([
             'ai_conversation_id' => $conversation->id,
             'role' => 'assistant',
             'content' => (string) ($res['text'] ?? ''),
-            'provider' => $res['provider'] ?? null,
-            'model' => $res['model'] ?? null,
-            'usage' => $res['usage'] ?? null,
+            'provider_used' => $res['provider'] ?? null,
+            'model_used' => $res['model'] ?? null,
+            'tokens_used' => $tokensUsed > 0 ? $tokensUsed : null,
             'cost' => $res['estimated_cost'] ?? null,
+            'response_time_ms' => isset($res['response_time_ms']) ? (int) $res['response_time_ms'] : null,
         ]);
 
         $sources = is_array($payload) ? ($payload['sources'] ?? []) : ($res['sources'] ?? $res['citations'] ?? []);

@@ -83,14 +83,22 @@ abstract class BaseAIService implements AIProviderInterface
 
             // Usage tracking
             if ($provider !== '' && ($clientId !== null || $userId !== null)) {
+                $aiTaskId = null;
+                if (isset($meta['task_id']) && (int) $meta['task_id'] > 0) {
+                    $aiTaskId = (int) $meta['task_id'];
+                }
                 AiUsageTracking::create([
                     'client_id' => $clientId,
                     'user_id' => $userId,
+                    'ai_task_id' => $aiTaskId,
                     'provider' => $provider,
                     'model' => $model ?: null,
                     'tokens_input' => max(0, $inputTokens),
                     'tokens_output' => max(0, $outputTokens),
                     'cost' => $cost,
+                    'response_time_ms' => isset($result['response_time_ms']) ? (int) $result['response_time_ms'] : null,
+                    'success' => true,
+                    'error_message' => null,
                     'task_type' => $taskType,
                 ]);
             }

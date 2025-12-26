@@ -17,19 +17,26 @@ class AiUsageTracking extends Model
     protected $fillable = [
         'client_id',
         'user_id',
+        'ai_task_id',
         'provider',
         'model',
         'tokens_input',
         'tokens_output',
         'cost',
+        'response_time_ms',
+        'success',
+        'error_message',
         'task_type',
     ];
 
     protected $casts = [
         'client_id' => 'integer',
         'user_id' => 'integer',
+        'ai_task_id' => 'integer',
         'tokens_input' => 'integer',
         'tokens_output' => 'integer',
+        'response_time_ms' => 'integer',
+        'success' => 'boolean',
         'cost' => 'decimal:6',
         'created_at' => 'datetime',
     ];

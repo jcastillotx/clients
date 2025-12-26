@@ -49,6 +49,11 @@ use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMo
 use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
 use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
 use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
+use App\Http\Livewire\Admin\AI\AIProviderManagement as AdminAIProviderManagement;
+use App\Http\Livewire\Admin\AI\AIProviderForm as AdminAIProviderForm;
+use App\Http\Livewire\Admin\AI\AITaskConfiguration as AdminAITaskConfiguration;
+use App\Http\Livewire\Admin\AI\AIUsageDashboard as AdminAIUsageDashboard;
+use App\Http\Livewire\Admin\AI\AIAuditLog as AdminAIAuditLog;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -198,6 +203,14 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
         Route::get('/analytics/ai-insights', AdminAIInsightsDashboard::class)->name('analytics.ai-insights')->middleware('permission:view reports');
         Route::get('/analytics/predictive', AdminPredictiveCharts::class)->name('analytics.predictive')->middleware('permission:view reports');
         Route::get('/analytics/client-health', AdminClientHealthMonitor::class)->name('analytics.client-health')->middleware('permission:view reports');
+
+        // AI admin
+        Route::get('/ai/providers', AdminAIProviderManagement::class)->name('ai.providers');
+        Route::get('/ai/providers/create', AdminAIProviderForm::class)->name('ai.providers.create');
+        Route::get('/ai/providers/{provider}', AdminAIProviderForm::class)->name('ai.providers.edit');
+        Route::get('/ai/tasks', AdminAITaskConfiguration::class)->name('ai.tasks');
+        Route::get('/ai/usage', AdminAIUsageDashboard::class)->name('ai.usage');
+        Route::get('/ai/audit', AdminAIAuditLog::class)->name('ai.audit');
 
         // Export endpoints
         Route::get('/reports/export/{category}/{format}', [AdminReportExportController::class, 'export'])
