@@ -4,42 +4,48 @@ This guide is for deploying the Laravel 11 + Livewire client portal to a product
 
 ## Pre-deployment checklist
 
-- [ ] **Environment file ready** (`.env.production`)
+- [ ] **All environment variables configured** (`.env.production`)
+  - [ ] Use `/workspace/.env.production.example` as the baseline
   - [ ] `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...`
-  - [ ] `APP_KEY` generated
-  - [ ] `LOG_CHANNEL` set (recommend `stack`)
-  - [ ] `SESSION_DRIVER` and `CACHE_STORE` set appropriately (recommend Redis if available)
-  - [ ] `QUEUE_CONNECTION` set (recommend Redis/database + worker)
+  - [ ] `APP_KEY` generated (`php artisan key:generate --show`)
+  - [ ] `DB_*` correct and tested
+  - [ ] `CACHE_STORE`, `SESSION_DRIVER`, `QUEUE_CONNECTION` set for your host
+  - [ ] `LOG_LEVEL=info` (recommended)
 - [ ] **Database migrations tested**
-  - [ ] Run `php artisan migrate` in staging
-  - [ ] Validate new features that touch DB
-- [ ] **Stripe live keys configured**
+  - [ ] Run `php artisan migrate` on staging with a production-like DB
+  - [ ] Confirm any enum/constraint changes are compatible
+  - [ ] Confirm rollback plan
+- [ ] **Stripe live API keys configured**
   - [ ] `STRIPE_KEY`, `STRIPE_SECRET`, `STRIPE_WEBHOOK_SECRET`
-  - [ ] Stripe webhook endpoint configured (see Webhooks section)
+  - [ ] Webhook endpoint configured: `/webhooks/stripe`
+  - [ ] Stripe dashboard shows successful deliveries
 - [ ] **AWS/Dropbox/Google OAuth credentials (production)**
-  - [ ] AWS keys/region/bucket
-  - [ ] Dropbox OAuth app keys + redirect URI
-  - [ ] Google OAuth client + redirect URI
+  - [ ] AWS: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, region, bucket
+  - [ ] Dropbox: `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET`, `DROPBOX_REDIRECT_URI`
+  - [ ] Google: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
 - [ ] **SSL certificate installed**
-  - [ ] Enforce HTTPS (redirect HTTP → HTTPS)
-  - [ ] HSTS enabled (after validation)
+  - [ ] Domain uses HTTPS
+  - [ ] HTTP → HTTPS redirect enabled
+  - [ ] HSTS enabled *after* validation (optional)
 - [ ] **Email SMTP configured and tested**
-  - [ ] `MAIL_MAILER=smtp` and SMTP creds set
-  - [ ] Send a test email from the admin settings panel
+  - [ ] `MAIL_*` set and verified (send test email)
+  - [ ] SPF/DKIM/DMARC set on sending domain (deliverability)
 - [ ] **Backup system configured**
-  - [ ] Daily DB dump automated
-  - [ ] Weekly full backup (files + DB)
-  - [ ] Retention policy configured (30 days)
+  - [ ] Daily DB backups automated
+  - [ ] Weekly full backup automated
+  - [ ] Retention policy (30 days) configured
+  - [ ] Restore procedure tested
 - [ ] **Monitoring tools setup**
-  - [ ] Error tracking: Sentry/Bugsnag
-  - [ ] APM: New Relic/DataDog (optional)
-  - [ ] Uptime: UptimeRobot
+  - [ ] Uptime monitoring (UptimeRobot)
+  - [ ] Error tracking (Sentry, Bugsnag)
+  - [ ] APM/performance (New Relic, DataDog) if host supports agents
 
 ## cPanel deployment steps (recommended “releases” approach)
 
 ### 1) Enable SSH / Terminal in cPanel
 
 - cPanel → **SSH Access** → enable/manage keys
+- Ensure your user has **Shell access** (not “Jailed” if you need Supervisor/cron utilities)
 - Confirm you can login:
 
 ```bash
@@ -64,6 +70,11 @@ The webroot should point to: `~/apps/client-portal/current/public`
 On cPanel:
 - Preferred: configure the domain document root to `.../current/public`
 - Alternative: keep cPanel docroot and place a `public/index.php` forwarder (not recommended)
+
+#### Symlink configuration for public directory (cPanel docroot)
+If you *cannot* change the domain docroot:
+- Put the Laravel project outside `public_html`
+- Symlink `public_html/clients` → `~/apps/client-portal/current/public` (if your cPanel allows symlinks)
 
 ### 3) Upload code (git or upload)
 
@@ -117,6 +128,10 @@ mkdir -p ~/apps/client-portal/shared/storage
 chmod -R 775 storage bootstrap/cache
 ```
 
+If you get “permission denied” errors:
+- Ensure `bootstrap/cache` exists and is writable
+- Ensure your PHP-FPM user/group matches filesystem ownership
+
 ### 8) Zero-downtime migration strategy
 
 Best practice:
@@ -128,6 +143,12 @@ Run:
 ```bash
 php artisan migrate --force
 ```
+
+Optional (brief maintenance window):
+- Put site in maintenance mode (custom page)
+- Migrate
+- Clear caches
+- Bring site back up
 
 ### 9) Cache warmup (production)
 
@@ -141,6 +162,13 @@ php artisan view:cache
 
 ```bash
 ln -sfn ~/apps/client-portal/releases/<NEW_RELEASE> ~/apps/client-portal/current
+```
+
+#### Queue restart after deploy
+If you use workers, restart so they pick up new code:
+
+```bash
+php artisan queue:restart
 ```
 
 ### 11) Queue worker (Supervisor)
@@ -164,13 +192,20 @@ cPanel → Cron Jobs → add (every minute):
 * * * * * cd /home/USERNAME/apps/client-portal/current && php artisan schedule:run >> /dev/null 2>&1
 ```
 
+See also: `scripts/cron/cpanel-cron.txt`
+
+## Database migration strategy notes (production-safe)
+- Prefer additive migrations (new columns nullable, new tables, new indexes created online if MySQL supports it).
+- Avoid destructive operations during peak hours (drop/rename, enum changes) unless you have a planned window.
+- For long-running migrations: schedule a maintenance window and communicate it.
+
 ## Post-deployment verification checklist
 
 - [ ] **Client login works**
 - [ ] **Admin login works**
 - [ ] **Request creation works**
 - [ ] **Invoice generation works**
-- [ ] **Payment processing works** (Stripe test transaction in production mode is not possible; do a small real transaction and refund)
+- [ ] **Payment processing works** (do a small real transaction and refund, or use a staging environment for full test-mode coverage)
 - [ ] **Storage connections work** (S3/Dropbox/Google Drive)
 - [ ] **Email notifications sending**
 - [ ] **Webhooks triggering**
@@ -233,6 +268,13 @@ cPanel → Cron Jobs → add (every minute):
   - Rotate API tokens
 - **Dependency scanning**:
   - Run `composer audit` in CI
+
+## Documentation deliverables
+- Admin user manual: `docs/manuals/admin.md`
+- Client user manual: `docs/manuals/client.md`
+- API documentation: `/api/documentation` + `docs/developer/api.md`
+- Developer setup: `docs/developer/setup.md`
+- Troubleshooting: `docs/troubleshooting/guide.md`
 
 ## Documentation index
 

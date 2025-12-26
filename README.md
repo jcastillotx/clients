@@ -178,6 +178,16 @@ Add to cPanel Cron Jobs (run every minute):
 * * * * * cd /home/username/public_html/clients && php artisan schedule:run >> /dev/null 2>&1
 ```
 
+### Production deployment guide + scripts
+- Guide: `docs/deployment/production.md`
+- Example production env: `.env.production.example`
+- Scripts:
+  - cPanel releases deploy: `scripts/deploy/cpanel/deploy_release.sh`
+  - Preflight checks: `scripts/deploy/cpanel/preflight.sh`
+  - Post-deploy verify: `scripts/deploy/cpanel/post_deploy_verify.sh`
+  - Backups: `scripts/backup/`
+  - Cron templates: `scripts/cron/cpanel-cron.txt`
+
 ## Stripe Configuration
 
 1. Create a Stripe account at https://stripe.com
