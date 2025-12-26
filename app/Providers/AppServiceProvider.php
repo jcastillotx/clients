@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +26,22 @@ class AppServiceProvider extends ServiceProvider
     {
         // Prevent lazy loading in development
         Model::preventLazyLoading(! app()->isProduction());
+
+        RateLimiter::for('api-token', function (Request $request) {
+            $token = $request->user()?->currentAccessToken();
+            $key = $token ? 'token:' . $token->id : 'ip:' . $request->ip();
+
+            // Default: 60 req/min per token
+            return Limit::perMinute(60)->by($key);
+        });
+
+        // Webhook observers
+        \App\Models\Request::observe(\App\Observers\RequestObserver::class);
+        \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
+        \App\Models\Contract::observe(\App\Observers\ContractObserver::class);
+        \App\Models\Document::observe(\App\Observers\DocumentObserver::class);
+        \App\Models\DocumentShare::observe(\App\Observers\DocumentShareObserver::class);
+        \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
 
         // Custom Blade directives for client portal
         Blade::directive('money', function ($expression) {

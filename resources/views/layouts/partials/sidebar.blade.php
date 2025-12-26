@@ -189,6 +189,12 @@
                         <p>System Settings</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.webhooks.index') }}" class="nav-link {{ request()->routeIs('admin.webhooks.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-plug"></i>
+                        <p>Webhooks</p>
+                    </a>
+                </li>
                 @endcan
                 @endcan
                 @endcan

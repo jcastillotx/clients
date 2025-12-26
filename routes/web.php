@@ -15,6 +15,7 @@ use App\Http\Controllers\Documents\DocumentVersionController;
 use App\Http\Controllers\Documents\DocumentViewerController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
+use App\Http\Livewire\Settings\WebhookManagement;
 use App\Http\Livewire\Storage\StorageDashboard;
 use App\Http\Livewire\Storage\StorageConflicts;
 use App\Http\Livewire\Storage\UnifiedFileBrowser;
@@ -23,6 +24,8 @@ use App\Http\Livewire\Admin\Storage\StorageOverview;
 use App\Http\Livewire\Documents\DocumentWorkflow;
 use App\Http\Livewire\Documents\SmartDocumentBrowser;
 use App\Http\Livewire\Documents\DocumentTemplates;
+use Dedoc\Scramble\Generator;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,6 +40,22 @@ Route::get('/', function () {
 
 // Public share links
 Route::get('/share/{token}', [DocumentShareController::class, 'download'])->name('documents.share.download');
+
+// Interactive API documentation (Scramble)
+Route::middleware(['auth', 'verified', 'permission:access admin panel'])
+    ->get('/api/documentation', function (Generator $generator) {
+        $config = Scramble::configure();
+        $spec = $generator($config);
+        return view('api-docs', compact('spec', 'config'));
+    })
+    ->name('api.documentation');
+
+Route::middleware(['auth', 'verified', 'permission:access admin panel'])
+    ->get('/api/documentation.json', function (Generator $generator) {
+        $config = Scramble::configure();
+        return response()->json($generator($config), options: JSON_PRETTY_PRINT);
+    })
+    ->name('api.documentation.json');
 
 /*
 |--------------------------------------------------------------------------
@@ -134,6 +153,9 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
 
         // System settings
         Route::get('/settings', SystemSettings::class)->name('settings.index')->middleware('permission:manage settings');
+
+        // Webhooks
+        Route::get('/webhooks', WebhookManagement::class)->name('webhooks.index')->middleware('permission:manage settings');
     });
 
 /*
