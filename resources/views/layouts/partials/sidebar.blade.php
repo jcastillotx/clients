@@ -157,6 +157,14 @@
                         <p>Storage Overview</p>
                     </a>
                 </li>
+                @can('manage settings')
+                <li class="nav-item">
+                    <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-cogs"></i>
+                        <p>System Settings</p>
+                    </a>
+                </li>
+                @endcan
                 @endcan
                 @endcan
 

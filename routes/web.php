@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminReportExportController;
 use App\Http\Controllers\Storage\StorageFileController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
+use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Storage\StorageDashboard;
 use App\Http\Livewire\Storage\StorageConflicts;
 use App\Http\Livewire\Storage\UnifiedFileBrowser;
@@ -95,22 +96,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified', 'permission:view reports'])
+Route::middleware(['auth', 'verified', 'permission:access admin panel'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::get('/reports', ReportDashboard::class)->name('reports.dashboard');
+        // Reports
+        Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
 
         // Export endpoints
         Route::get('/reports/export/{category}/{format}', [AdminReportExportController::class, 'export'])
             ->whereIn('category', ['financial', 'clients', 'requests', 'performance', 'storage'])
             ->whereIn('format', ['csv', 'xlsx', 'pdf'])
-            ->name('reports.export');
+            ->name('reports.export')
+            ->middleware('permission:view reports');
 
         // Admin storage overview
-        Route::middleware(['permission:access admin panel'])->group(function () {
-            Route::get('/storage/overview', StorageOverview::class)->name('storage.overview');
-        });
+        Route::get('/storage/overview', StorageOverview::class)->name('storage.overview');
+
+        // System settings
+        Route::get('/settings', SystemSettings::class)->name('settings.index')->middleware('permission:manage settings');
     });
 
 /*
