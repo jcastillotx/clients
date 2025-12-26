@@ -6,6 +6,7 @@ use App\Models\AiConversation;
 use App\Models\AiMessage;
 use App\Models\AiMessageFeedback;
 use App\Services\AI\AIProviderManager;
+use App\Services\AI\AISafetyService;
 use App\Services\AI\KnowledgeBaseRagService;
 use App\Services\AI\PromptTemplateService;
 use Illuminate\Support\Facades\Auth;
@@ -58,7 +59,7 @@ class ClientAssistantChat extends Component
         ])->all();
     }
 
-    public function send(AIProviderManager $providers, PromptTemplateService $templates, KnowledgeBaseRagService $rag): void
+    public function send(AIProviderManager $providers, AISafetyService $safety, PromptTemplateService $templates, KnowledgeBaseRagService $rag): void
     {
         $this->authorizeClient();
 
@@ -105,16 +106,16 @@ SYS;
 
         try {
             $target = $providers->routeToOptimalProvider('client_assistant', 'low');
-            $res = $providers->withFallback($target['provider'], function ($provider) use ($messages, $target) {
-                return $provider->chat($messages, [
-                    'task_type' => 'client_assistant',
-                    'timeout' => 90,
-                    'model' => $target['model'],
-                    'ai_conversation_id' => $this->conversationId,
-                    'user_id' => Auth::id(),
-                    'client_id' => Auth::user()?->client_id,
-                ]);
-            }, 'client_assistant');
+            $res = $safety->safeChat($messages, [
+                'provider' => $target['provider'],
+                'model' => $target['model'],
+                'task_type' => 'client_assistant',
+                'timeout' => 90,
+                'ai_conversation_id' => $this->conversationId,
+                'user_id' => Auth::id(),
+                'client_id' => Auth::user()?->client_id,
+                'user_query' => $text,
+            ]);
 
             $assistantText = trim((string) ($res['text'] ?? ''));
             if ($assistantText === '') {

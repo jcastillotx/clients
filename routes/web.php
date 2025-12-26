@@ -54,6 +54,9 @@ use App\Http\Livewire\Admin\AI\AIProviderForm as AdminAIProviderForm;
 use App\Http\Livewire\Admin\AI\AITaskConfiguration as AdminAITaskConfiguration;
 use App\Http\Livewire\Admin\AI\AIUsageDashboard as AdminAIUsageDashboard;
 use App\Http\Livewire\Admin\AI\AIAuditLog as AdminAIAuditLog;
+use App\Http\Livewire\Admin\AI\AISafetyDashboard as AdminAISafetyDashboard;
+use App\Http\Livewire\Admin\AI\AIReviewQueue as AdminAIReviewQueue;
+use App\Http\Livewire\Admin\AI\AIQualityMetrics as AdminAIQualityMetrics;
 use App\Http\Livewire\AI\AIAssistantChat as AdminAssistantChat;
 use App\Http\Livewire\AI\PromptTemplateManager as AdminPromptTemplates;
 use App\Http\Livewire\AI\KnowledgeBase as AdminKnowledgeBase;
@@ -219,6 +222,9 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
         Route::get('/ai/tasks', AdminAITaskConfiguration::class)->name('ai.tasks');
         Route::get('/ai/usage', AdminAIUsageDashboard::class)->name('ai.usage');
         Route::get('/ai/audit', AdminAIAuditLog::class)->name('ai.audit');
+        Route::get('/ai/safety', AdminAISafetyDashboard::class)->name('ai.safety');
+        Route::get('/ai/review-queue', AdminAIReviewQueue::class)->name('ai.review-queue');
+        Route::get('/ai/quality', AdminAIQualityMetrics::class)->name('ai.quality');
 
         // AI assistant & training tools
         Route::get('/ai/assistant', AdminAssistantChat::class)->name('ai.assistant');

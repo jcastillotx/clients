@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\Request as ServiceRequest;
 use App\Services\AI\AdminAssistantToolingService;
 use App\Services\AI\AIProviderManager;
+use App\Services\AI\AISafetyService;
 use App\Services\AI\KnowledgeBaseRagService;
 use App\Services\AI\PromptTemplateService;
 use Illuminate\Support\Facades\Auth;
@@ -85,6 +86,7 @@ class AIAssistantChat extends Component
 
     public function send(
         AIProviderManager $providers,
+        AISafetyService $safety,
         PromptTemplateService $templates,
         KnowledgeBaseRagService $rag,
         AdminAssistantToolingService $tools
@@ -154,16 +156,15 @@ SYS;
 
         try {
             $target = $providers->routeToOptimalProvider('admin_assistant', 'high');
-            $res = $providers->withFallback($target['provider'], function ($provider) use ($messages, $target) {
-                return $provider->chat($messages, [
-                    'task_type' => 'admin_assistant',
-                    'timeout' => 120,
-                    'model' => $target['model'],
-                    'ai_conversation_id' => $this->conversationId,
-                    'user_message' => null,
-                    'user_id' => Auth::id(),
-                ]);
-            }, 'admin_assistant');
+            $res = $safety->safeChat($messages, [
+                'provider' => $target['provider'],
+                'model' => $target['model'],
+                'task_type' => 'admin_assistant',
+                'timeout' => 120,
+                'ai_conversation_id' => $this->conversationId,
+                'user_id' => Auth::id(),
+                'user_query' => $text,
+            ]);
 
             $assistantText = (string) ($res['text'] ?? '');
             $tokens = (array) ($res['tokens'] ?? []);

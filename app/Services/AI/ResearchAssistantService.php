@@ -13,7 +13,7 @@ use App\Services\AI\Prompts\ResearchPrompts;
 
 class ResearchAssistantService
 {
-    public function __construct(protected AIProviderManager $providers)
+    public function __construct(protected AIProviderManager $providers, protected AISafetyService $safety)
     {
     }
 
@@ -32,18 +32,25 @@ class ResearchAssistantService
             ['role' => 'user', 'content' => ResearchPrompts::researchUser($topic, $depth, $region)],
         ];
 
-        $res = $this->providers->withFallback('perplexity', function ($provider) use ($messages) {
-            return $provider->chat($messages, [
-                'task_type' => 'research',
-                'timeout' => 180,
-            ]);
-        }, 'research');
+        $res = $this->safety->safeChat($messages, [
+            'provider' => 'perplexity',
+            'task_type' => 'research',
+            'timeout' => 180,
+            'user_query' => $topic,
+        ]);
 
         $json = $this->parseJsonBestEffort((string) ($res['text'] ?? ''));
 
         // Enrich sources if provider returned citations separately.
         if (is_array($json) && empty($json['sources']) && !empty($res['sources'])) {
             $json['sources'] = $res['sources'];
+        }
+
+        if (is_array($json)) {
+            $fc = $this->safety->factCheck($json);
+            if (!$fc['passed']) {
+                $json['_safety'] = ['fact_check' => $fc];
+            }
         }
 
         return is_array($json) ? $json : [
