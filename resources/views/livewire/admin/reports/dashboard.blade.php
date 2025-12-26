@@ -70,11 +70,15 @@
         @include('livewire.admin.reports.clients')
     @elseif($category === 'requests')
         @include('livewire.admin.reports.requests')
+    @elseif($category === 'performance')
+        @include('livewire.admin.reports.performance')
+    @elseif($category === 'storage')
+        @include('livewire.admin.reports.storage')
     @else
         <div class="card">
             <div class="card-body">
                 <div class="alert alert-info mb-0">
-                    This category is available for export and tables, but the main dashboard charts are currently implemented for Financial, Clients, and Requests.
+                    This category is available for export and tables.
                 </div>
 
                 @include('livewire.admin.reports._tables', ['tables' => $payload['tables'] ?? []])
@@ -294,6 +298,28 @@
                         });
                     }
 
+                    // Revenue by service type
+                    if (document.getElementById('revenueByServiceTypeChart')) {
+                        destroy('revenueByServiceTypeChart');
+                        const rows = chartsData.revenueByServiceType || [];
+                        charts['revenueByServiceTypeChart'] = new Chart(document.getElementById('revenueByServiceTypeChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: rows.map(r => r.service_type),
+                                datasets: [{
+                                    label: 'Revenue',
+                                    data: rows.map(r => r.revenue),
+                                    backgroundColor: '#605ca8',
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: { tooltip: { callbacks: { label: (ctx) => money(ctx.parsed.y) } } },
+                                scales: { y: { ticks: { callback: (v) => money(v) } } }
+                            }
+                        });
+                    }
+
                     // Payment methods
                     if (document.getElementById('paymentMethodsChart')) {
                         destroy('paymentMethodsChart');
@@ -445,11 +471,110 @@
                     }
                 }
 
+                function renderPerformance(payload) {
+                    const chartsData = (payload && payload.charts) ? payload.charts : {};
+
+                    if (document.getElementById('performanceResponseChart')) {
+                        destroy('performanceResponseChart');
+                        const v = (chartsData.responseTime && chartsData.responseTime[0]) ? chartsData.responseTime[0].avg_response_hours : null;
+                        charts['performanceResponseChart'] = new Chart(document.getElementById('performanceResponseChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: ['Avg response (hours)'],
+                                datasets: [{ data: [v ?? 0], backgroundColor: '#00c0ef' }]
+                            },
+                            options: { responsive: true }
+                        });
+                    }
+
+                    if (document.getElementById('performanceResolutionChart')) {
+                        destroy('performanceResolutionChart');
+                        const v = (chartsData.resolutionTime && chartsData.resolutionTime[0]) ? chartsData.resolutionTime[0].avg_resolution_hours : null;
+                        charts['performanceResolutionChart'] = new Chart(document.getElementById('performanceResolutionChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: ['Avg resolution (hours)'],
+                                datasets: [{ data: [v ?? 0], backgroundColor: '#00a65a' }]
+                            },
+                            options: { responsive: true }
+                        });
+                    }
+
+                    if (document.getElementById('performanceWorkloadChart')) {
+                        destroy('performanceWorkloadChart');
+                        const rows = chartsData.workload || [];
+                        charts['performanceWorkloadChart'] = new Chart(document.getElementById('performanceWorkloadChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: rows.map(r => r.name),
+                                datasets: [{
+                                    label: 'Open assigned',
+                                    data: rows.map(r => r.open_assigned),
+                                    backgroundColor: '#605ca8',
+                                }]
+                            },
+                            options: { responsive: true }
+                        });
+                    }
+
+                    if (document.getElementById('performanceMonthlyChart')) {
+                        destroy('performanceMonthlyChart');
+                        const rows = chartsData.monthly || [];
+                        charts['performanceMonthlyChart'] = new Chart(document.getElementById('performanceMonthlyChart'), {
+                            type: 'line',
+                            data: {
+                                labels: rows.map(r => r.period),
+                                datasets: [
+                                    { label: 'Created', data: rows.map(r => r.created), borderColor: '#3c8dbc', tension: 0.25 },
+                                    { label: 'Completed', data: rows.map(r => r.completed), borderColor: '#00a65a', tension: 0.25 },
+                                ]
+                            },
+                            options: { responsive: true }
+                        });
+                    }
+                }
+
+                function renderStorage(payload) {
+                    const chartsData = (payload && payload.charts) ? payload.charts : {};
+
+                    if (document.getElementById('storageUsageByClientChart')) {
+                        destroy('storageUsageByClientChart');
+                        const rows = chartsData.usageByClient || [];
+                        charts['storageUsageByClientChart'] = new Chart(document.getElementById('storageUsageByClientChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: rows.map(r => r.company_name),
+                                datasets: [{
+                                    label: 'Bytes',
+                                    data: rows.map(r => r.bytes),
+                                    backgroundColor: '#f39c12',
+                                }]
+                            },
+                            options: { responsive: true }
+                        });
+                    }
+
+                    if (document.getElementById('storageFileTypesChart')) {
+                        destroy('storageFileTypesChart');
+                        const rows = chartsData.fileTypes || [];
+                        charts['storageFileTypesChart'] = new Chart(document.getElementById('storageFileTypesChart'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: rows.map(r => r.ext),
+                                datasets: [{ data: rows.map(r => r.bytes) }]
+                            },
+                            options: { responsive: true }
+                        });
+                    }
+                }
+
                 function render(payload) {
                     const category = payload && payload.meta ? payload.meta.category : null;
                     if (category === 'financial') return renderFinancial(payload);
                     if (category === 'clients') return renderClients(payload);
                     if (category === 'requests') return renderRequests(payload);
+                    if (category === 'performance') return renderPerformance(payload);
+                    if (category === 'storage') return renderStorage(payload);
                 }
 
                 window.addEventListener('reports-updated', function (e) {

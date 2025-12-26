@@ -21,7 +21,13 @@ class AdminReportExportController extends Controller
      */
     public function export(Request $request, string $category, string $format): Response|StreamedResponse
     {
-        $payload = $this->reportData->build($category, $request->all());
+        $params = $request->all();
+        // Allow metrics filtering via query (?metrics[]=... or ?metrics=a,b,c)
+        if ($request->has('metrics')) {
+            $params['metrics'] = $request->input('metrics');
+        }
+
+        $payload = $this->reportData->build($category, $params);
 
         return match ($format) {
             'csv' => $this->exportCsv($category, $payload),

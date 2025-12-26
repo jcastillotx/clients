@@ -208,18 +208,27 @@ class ReportDashboard extends Component
                 'revenueByServiceType' => 'Revenue by service type',
                 'paymentMethods' => 'Payment method breakdown',
                 'invoiceAging' => 'Invoice aging buckets',
+                'invoiceAgingByClient' => 'Invoice aging (client breakdown)',
+                'plSummary' => 'Profit & Loss summary',
+                'unpaidInvoices' => 'Outstanding invoices list',
             ],
             'clients' => [
                 'acquisition' => 'Client acquisition (new clients over time)',
                 'clientsByTier' => 'Clients by tier',
                 'clientsByStatus' => 'Clients by status',
                 'retention' => 'Retention (best-effort)',
+                'ltv' => 'Client lifetime value (top)',
+                'mostActiveByRequests' => 'Most active clients (by requests)',
+                'mostActiveByRevenue' => 'Most active clients (by revenue)',
+                'churnRisk' => 'Churn risk (inactive clients)',
             ],
             'requests' => [
                 'byType' => 'Request volume by type',
                 'byStatus' => 'Request volume by status',
                 'byPriority' => 'Request volume by priority',
                 'avgCompletionByType' => 'Average completion time by type',
+                'staffProductivity' => 'Staff productivity',
+                'bottlenecks' => 'Bottleneck analysis',
                 'sla' => 'SLA compliance',
             ],
             'performance' => [
@@ -231,6 +240,9 @@ class ReportDashboard extends Component
             'storage' => [
                 'usageByClient' => 'Storage usage by client',
                 'fileTypes' => 'File type distribution',
+                'largeFiles' => 'Large file alerts',
+                'provider' => 'Storage provider summary',
+                'sync' => 'Sync success rate (placeholder)',
             ],
         ];
 

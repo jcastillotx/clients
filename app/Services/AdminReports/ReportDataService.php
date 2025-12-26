@@ -23,8 +23,10 @@ class ReportDataService
     {
         [$start, $end] = $this->dateRange($params);
         $granularity = Arr::get($params, 'granularity', 'month');
+        $metrics = Arr::get($params, 'metrics', []);
+        $metrics = is_string($metrics) ? array_filter(array_map('trim', explode(',', $metrics))) : (array) $metrics;
 
-        return match ($category) {
+        $payload = match ($category) {
             'financial' => $this->financial($start, $end, $granularity),
             'clients' => $this->clients($start, $end),
             'requests' => $this->requests($start, $end),
@@ -36,6 +38,89 @@ class ReportDataService
                 'tables' => [],
             ],
         };
+
+        if (!empty($metrics)) {
+            $payload = $this->filterPayload($payload, $category, $metrics);
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Limit charts/tables to requested metric keys.
+     */
+    protected function filterPayload(array $payload, string $category, array $metrics): array
+    {
+        $metricMap = [
+            'financial' => [
+                'revenueTrend' => ['charts' => ['revenueTrend'], 'tables' => ['Revenue Trend']],
+                'revenueByTier' => ['charts' => ['revenueByTier'], 'tables' => ['Revenue by Client Tier']],
+                'revenueByServiceType' => ['charts' => ['revenueByServiceType'], 'tables' => ['Revenue by Service Type']],
+                'paymentMethods' => ['charts' => ['paymentMethods'], 'tables' => ['Payment Methods']],
+                'invoiceAging' => ['charts' => ['invoiceAging'], 'tables' => ['Invoice Aging Buckets']],
+                'invoiceAgingByClient' => ['charts' => [], 'tables' => ['Invoice Aging (by Client)']],
+                'unpaidInvoices' => ['charts' => [], 'tables' => ['Unpaid Invoices (sample)']],
+                'plSummary' => ['charts' => [], 'tables' => ['P&L Summary']],
+            ],
+            'clients' => [
+                'acquisition' => ['charts' => ['acquisition'], 'tables' => ['Client Acquisition']],
+                'clientsByTier' => ['charts' => ['clientsByTier'], 'tables' => ['Clients by Tier']],
+                'clientsByStatus' => ['charts' => ['clientsByStatus'], 'tables' => ['Clients by Status']],
+                'retention' => ['charts' => ['retention'], 'tables' => ['Client Retention (best-effort)']],
+                'ltv' => ['charts' => [], 'tables' => ['Top Clients by Lifetime Value']],
+                'mostActiveByRequests' => ['charts' => [], 'tables' => ['Most Active Clients (by Requests)']],
+                'mostActiveByRevenue' => ['charts' => [], 'tables' => ['Top Clients (by Revenue)']],
+                'churnRisk' => ['charts' => [], 'tables' => ['Churn Risk (inactive clients)']],
+            ],
+            'requests' => [
+                'byType' => ['charts' => ['byType'], 'tables' => ['Requests by Type']],
+                'byStatus' => ['charts' => ['byStatus'], 'tables' => ['Requests by Status']],
+                'byPriority' => ['charts' => ['byPriority'], 'tables' => ['Requests by Priority']],
+                'avgCompletionByType' => ['charts' => ['avgCompletionByType'], 'tables' => ['Avg Completion Time by Type (hours)']],
+                'staffProductivity' => ['charts' => [], 'tables' => ['Staff Productivity']],
+                'bottlenecks' => ['charts' => [], 'tables' => ['Request Bottlenecks (open)']],
+                'sla' => ['charts' => ['sla'], 'tables' => ['SLA Compliance Summary']],
+            ],
+            'performance' => [
+                'responseTime' => ['charts' => ['responseTime'], 'tables' => ['Performance Summary']],
+                'resolutionTime' => ['charts' => ['resolutionTime'], 'tables' => ['Performance Summary']],
+                'workload' => ['charts' => ['workload'], 'tables' => ['Staff Workload Distribution (open assigned)']],
+                'monthly' => ['charts' => ['monthly'], 'tables' => ['Monthly Trends']],
+            ],
+            'storage' => [
+                'usageByClient' => ['charts' => ['usageByClient'], 'tables' => ['Storage Usage by Client']],
+                'fileTypes' => ['charts' => ['fileTypes'], 'tables' => ['File Type Distribution']],
+                'largeFiles' => ['charts' => [], 'tables' => ['Large File Alerts (>= 50MB)']],
+                'provider' => ['charts' => [], 'tables' => ['Storage Provider Summary']],
+                'sync' => ['charts' => [], 'tables' => ['Sync Success Rate']],
+            ],
+        ];
+
+        $allowedChartKeys = [];
+        $allowedTableNames = [];
+
+        foreach ($metrics as $metricKey) {
+            $metricKey = (string) $metricKey;
+            $spec = $metricMap[$category][$metricKey] ?? null;
+            if (!$spec) {
+                continue;
+            }
+            $allowedChartKeys = array_merge($allowedChartKeys, $spec['charts'] ?? []);
+            $allowedTableNames = array_merge($allowedTableNames, $spec['tables'] ?? []);
+        }
+
+        $allowedChartKeys = array_values(array_unique($allowedChartKeys));
+        $allowedTableNames = array_values(array_unique($allowedTableNames));
+
+        if (!empty($allowedChartKeys)) {
+            $payload['charts'] = array_intersect_key((array) ($payload['charts'] ?? []), array_flip($allowedChartKeys));
+        }
+
+        if (!empty($allowedTableNames)) {
+            $payload['tables'] = array_intersect_key((array) ($payload['tables'] ?? []), array_flip($allowedTableNames));
+        }
+
+        return $payload;
     }
 
     /**
@@ -212,6 +297,11 @@ class ReportDataService
                 'invoiceAging' => $agingBuckets,
             ],
             'tables' => [
+                'Revenue Trend' => $revenueTrend,
+                'Revenue by Client Tier' => $revenueByTier,
+                'Revenue by Service Type' => $revenueByServiceType,
+                'Payment Methods' => $paymentMethods,
+                'Invoice Aging Buckets' => $agingBuckets,
                 'P&L Summary' => [[
                     'total_revenue' => $totalRevenue,
                     'estimated_costs' => $estimatedCosts,
@@ -352,6 +442,9 @@ class ReportDataService
                 ]],
             ],
             'tables' => [
+                'Client Acquisition' => $acquisition,
+                'Clients by Tier' => $byTier,
+                'Clients by Status' => $byStatus,
                 'Client Retention (best-effort)' => [[
                     'previous_period_start' => $prevStart->toDateString(),
                     'previous_period_end' => $prevEnd->toDateString(),
@@ -488,6 +581,9 @@ class ReportDataService
                 ]],
             ],
             'tables' => [
+                'Requests by Type' => $byType,
+                'Requests by Status' => $byStatus,
+                'Requests by Priority' => $byPriority,
                 'Avg Completion Time by Type (hours)' => $avgCompletion,
                 'Staff Productivity' => $staffProductivity,
                 'Request Bottlenecks (open)' => $openByStatus,

@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('log_name');
-            $table->index(['subject_type', 'subject_id']);
+            // `nullableMorphs('subject')` already creates an index for (subject_type, subject_id).
             $table->index('user_id');
             $table->index('client_id');
         });

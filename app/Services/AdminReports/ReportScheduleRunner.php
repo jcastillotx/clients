@@ -30,9 +30,11 @@ class ReportScheduleRunner
                 $config = $schedule->template?->config ?? [];
                 $category = (string) ($config['category'] ?? 'financial');
                 $filters = (array) ($config['filters'] ?? []);
+                $metrics = (array) ($config['metrics'] ?? []);
 
                 $payload = $this->data->build($category, $filters + [
                     'granularity' => $config['granularity'] ?? 'month',
+                    'metrics' => $metrics,
                 ]);
 
                 $pdf = Pdf::loadView('admin.reports.exports.generic', [
