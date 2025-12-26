@@ -89,6 +89,15 @@
 
                     <div class="col-12 col-xl-6">
                         <label class="form-label">Assign to clients (staff will only see assigned clients)</label>
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Assignment role</label>
+                                <select class="form-select" wire:model.live="staffAssignmentRole">
+                                    <option value="account_manager">Account manager</option>
+                                    <option value="project_lead">Project lead</option>
+                                </select>
+                            </div>
+                        </div>
                         <select class="form-select" multiple size="8" wire:model.live="assignedClientIds">
                             @foreach($clients as $c)
                                 <option value="{{ $c->id }}">{{ $c->company_name }}</option>

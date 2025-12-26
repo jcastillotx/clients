@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -140,7 +142,13 @@ class User extends Authenticatable
      */
     public function assignedClients(): BelongsToMany
     {
-        return $this->belongsToMany(Client::class, 'client_staff')
+        // Prefer the newer `staff_assignments` table (requested schema); fall back to legacy `client_staff`.
+        if (Schema::hasTable('staff_assignments')) {
+            return $this->belongsToMany(Client::class, 'staff_assignments', 'staff_user_id', 'client_id')
+                ->withPivot(['role']);
+        }
+
+        return $this->belongsToMany(Client::class, 'client_staff', 'user_id', 'client_id')
             ->withPivot(['relationship'])
             ->withTimestamps();
     }
@@ -153,6 +161,39 @@ class User extends Authenticatable
     public function assignedClientIds(): array
     {
         return $this->assignedClients()->pluck('clients.id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
+     * Sync assigned clients for a staff user.
+     *
+     * @param  array<int,int>  $clientIds
+     */
+    public function syncAssignedClients(array $clientIds, string $role = 'account_manager'): void
+    {
+        $clientIds = array_values(array_unique(array_map('intval', $clientIds)));
+
+        if (Schema::hasTable('staff_assignments')) {
+            DB::table('staff_assignments')->where('staff_user_id', $this->id)->delete();
+            if ($clientIds === []) {
+                return;
+            }
+            $now = now();
+            $rows = array_map(fn ($cid) => [
+                'staff_user_id' => $this->id,
+                'client_id' => $cid,
+                'role' => in_array($role, ['account_manager', 'project_lead'], true) ? $role : 'account_manager',
+                'created_at' => $now,
+            ], $clientIds);
+            DB::table('staff_assignments')->insert($rows);
+            return;
+        }
+
+        // Legacy pivot.
+        $map = [];
+        foreach ($clientIds as $cid) {
+            $map[$cid] = ['relationship' => $role];
+        }
+        $this->belongsToMany(Client::class, 'client_staff', 'user_id', 'client_id')->sync($map);
     }
 
     /**

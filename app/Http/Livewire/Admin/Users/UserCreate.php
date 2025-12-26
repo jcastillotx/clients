@@ -32,6 +32,7 @@ class UserCreate extends Component
 
     /** @var array<int, int> */
     public array $assignedClientIds = [];
+    public string $staffAssignmentRole = 'account_manager'; // account_manager|project_lead
 
     protected function rules(): array
     {
@@ -53,6 +54,7 @@ class UserCreate extends Component
             'staffPermissions.*' => ['string'],
             'assignedClientIds' => ['array'],
             'assignedClientIds.*' => ['integer', Rule::exists('clients', 'id')],
+            'staffAssignmentRole' => ['required', Rule::in(['account_manager', 'project_lead'])],
         ];
     }
 
@@ -149,7 +151,7 @@ class UserCreate extends Component
 
         if ($data['role'] === 'staff') {
             $user->syncPermissions($this->staffPermissions);
-            $user->assignedClients()->sync($this->assignedClientIds);
+            $user->syncAssignedClients($this->assignedClientIds, $this->staffAssignmentRole);
         }
 
         // Create reset token + send invitation email (password setup link)

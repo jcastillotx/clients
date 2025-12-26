@@ -36,6 +36,7 @@ class UserEdit extends Component
 
     /** @var array<int, int> */
     public array $assignedClientIds = [];
+    public string $staffAssignmentRole = 'account_manager';
 
     public function mount(User $user): void
     {
@@ -50,6 +51,9 @@ class UserEdit extends Component
 
         $this->client_id = $this->user->client_id;
         $this->assignedClientIds = $this->user->assignedClients()->pluck('clients.id')->map(fn ($id) => (int) $id)->all();
+        $this->staffAssignmentRole = (string) ($this->user->assignedClients()->first()?->pivot?->role
+            ?? $this->user->assignedClients()->first()?->pivot?->relationship
+            ?? 'account_manager');
     }
 
     protected function rules(): array
@@ -67,6 +71,7 @@ class UserEdit extends Component
             'directPermissions.*' => ['string'],
             'assignedClientIds' => ['array'],
             'assignedClientIds.*' => ['integer', Rule::exists('clients', 'id')],
+            'staffAssignmentRole' => ['required', Rule::in(['account_manager', 'project_lead'])],
             'confirmRoleDowngrade' => ['boolean'],
         ];
     }
@@ -145,11 +150,11 @@ class UserEdit extends Component
         // Staff: keep direct permission selections + client assignments
         if ($data['role'] === 'staff') {
             $this->user->syncPermissions($this->directPermissions);
-            $this->user->assignedClients()->sync($this->assignedClientIds);
+            $this->user->syncAssignedClients($this->assignedClientIds, $this->staffAssignmentRole);
         } else {
             // Non-staff: clear staff-only constructs
             $this->user->syncPermissions([]);
-            $this->user->assignedClients()->sync([]);
+            $this->user->syncAssignedClients([], $this->staffAssignmentRole);
         }
 
         $this->confirmRoleDowngrade = false;
