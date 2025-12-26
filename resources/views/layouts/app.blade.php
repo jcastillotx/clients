@@ -7,6 +7,9 @@
 
     <title>{{ $title ?? config('app.name') }}</title>
 
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#3c8dbc">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +22,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
 
     <!-- Tailwind CSS (for custom components) -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if(!app()->runningUnitTests())
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
 
     <!-- Livewire Styles -->
     @livewireStyles

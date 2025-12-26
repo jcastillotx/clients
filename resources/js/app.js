@@ -21,6 +21,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// PWA: register service worker (offline support)
+document.addEventListener('DOMContentLoaded', function () {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+});
+
 // Custom file input label update
 document.addEventListener('change', function(e) {
     if (e.target.classList.contains('custom-file-input')) {

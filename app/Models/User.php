@@ -97,6 +97,11 @@ class User extends Authenticatable
         return $this->hasMany(Document::class, 'uploaded_by');
     }
 
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
     /**
      * Get activity logs for this user.
      */

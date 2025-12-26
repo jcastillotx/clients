@@ -20,19 +20,28 @@
                 @php
                     $user = auth()->user();
                     $pendingCount = 0;
+                    $unread = 0;
                     if ($user && $user->client) {
                         $pendingCount = \App\Models\Invoice::where('client_id', $user->client_id)
                             ->whereIn('status', ['sent', 'overdue'])
                             ->count();
+                        $unread = $user->unreadNotificationsCount();
                     }
                 @endphp
-                @if($pendingCount > 0)
-                <span class="badge badge-warning navbar-badge">{{ $pendingCount }}</span>
+                @if(($pendingCount + $unread) > 0)
+                <span class="badge badge-warning navbar-badge">{{ $pendingCount + $unread }}</span>
                 @endif
             </a>
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                 <span class="dropdown-item dropdown-header">Notifications</span>
                 <div class="dropdown-divider"></div>
+                @if($unread > 0)
+                <a href="{{ route('client.notifications') }}" class="dropdown-item">
+                    <i class="fas fa-bell mr-2"></i> {{ $unread }} unread notification(s)
+                    <span class="float-right text-muted text-sm">Open</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                @endif
                 @if($pendingCount > 0)
                 <a href="{{ route('invoices.index') }}" class="dropdown-item">
                     <i class="fas fa-file-invoice mr-2"></i> {{ $pendingCount }} pending invoice(s)

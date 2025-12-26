@@ -96,6 +96,16 @@ class Client extends Model
         return $this->hasMany(Document::class);
     }
 
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
     public function storageConnections(): HasMany
     {
         return $this->hasMany(StorageConnection::class);

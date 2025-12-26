@@ -129,6 +129,41 @@
                     </ul>
                 </li>
 
+                @if(auth()->user()->isClient())
+                <!-- Client Extras -->
+                <li class="nav-header">CLIENT</li>
+                <li class="nav-item">
+                    <a href="{{ route('client.projects') }}" class="nav-link {{ request()->routeIs('client.projects') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-project-diagram"></i>
+                        <p>Projects</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.messaging') }}" class="nav-link {{ request()->routeIs('client.messaging') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-comments"></i>
+                        <p>Messages</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.knowledge-base') }}" class="nav-link {{ request()->routeIs('client.knowledge-base') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-book"></i>
+                        <p>Knowledge Base</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.notifications') }}" class="nav-link {{ request()->routeIs('client.notifications') ? 'active' : '' }}">
+                        <i class="nav-icon far fa-bell"></i>
+                        <p>Notifications</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.analytics') }}" class="nav-link {{ request()->routeIs('client.analytics') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-pie"></i>
+                        <p>Analytics</p>
+                    </a>
+                </li>
+                @endif
+
                 <!-- Storage -->
                 <li class="nav-item {{ request()->routeIs('storage.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('storage.*') ? 'active' : '' }}">

@@ -27,6 +27,11 @@ use App\Http\Livewire\Admin\Storage\StorageOverview;
 use App\Http\Livewire\Documents\DocumentWorkflow;
 use App\Http\Livewire\Documents\SmartDocumentBrowser;
 use App\Http\Livewire\Documents\DocumentTemplates;
+use App\Http\Livewire\Client\ProjectDashboard;
+use App\Http\Livewire\Client\Messaging;
+use App\Http\Livewire\Client\KnowledgeBase;
+use App\Http\Livewire\Client\NotificationsCenter;
+use App\Http\Livewire\Client\AnalyticsDashboard;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -128,6 +133,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/storage/settings', StorageSettings::class)->name('storage.settings');
     Route::get('/storage/conflicts', StorageConflicts::class)->name('storage.conflicts');
     Route::get('/storage/files/{storageFile}/download', [StorageFileController::class, 'download'])->name('storage.files.download');
+
+    // Client advanced features
+    Route::get('/projects', ProjectDashboard::class)->name('client.projects');
+    Route::get('/messages', Messaging::class)->name('client.messaging');
+    Route::get('/knowledge-base', KnowledgeBase::class)->name('client.knowledge-base');
+    Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
+    Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
 
 });
 
