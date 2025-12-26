@@ -4,6 +4,8 @@ namespace App\Services\AI;
 
 use App\Contracts\AIProviderInterface;
 use App\Models\AiProvider;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 use RuntimeException;
 
@@ -27,11 +29,90 @@ class AIProviderManager
     }
 
     /**
+     * Factory method alias (requested name).
+     */
+    public function getProvider(string $providerName): AIProviderInterface
+    {
+        return $this->provider($providerName);
+    }
+
+    /**
      * Get the configured default provider.
      */
     public function defaultProvider(): AIProviderInterface
     {
         return $this->provider((string) config('ai-providers.default_provider', 'openai'));
+    }
+
+    /**
+     * Smart routing: pick provider+model based on task type + complexity.
+     *
+     * @param  'low'|'medium'|'high'  $complexity
+     * @return array{provider:string, model:?string}
+     */
+    public function routeToOptimalProvider(string $taskType, string $complexity = 'low'): array
+    {
+        // Task defaults override complexity.
+        $task = $this->resolveTaskTarget($taskType);
+        $provider = $task['provider'];
+        $model = $task['model'];
+
+        if (!$model) {
+            $map = (array) config('ai-providers.routing.complexity_models.' . $complexity, []);
+            $model = isset($map[$provider]) && is_string($map[$provider]) ? $map[$provider] : null;
+        }
+
+        // If provider is currently unhealthy, pick next healthy fallback.
+        if ($this->isUnhealthy($provider)) {
+            foreach ($this->fallbackOrder() as $alt) {
+                if ($alt === $provider) continue;
+                if (!$this->isUnhealthy($alt)) {
+                    $provider = $alt;
+                    if (!$model) {
+                        $map = (array) config('ai-providers.routing.complexity_models.' . $complexity, []);
+                        $model = isset($map[$provider]) && is_string($map[$provider]) ? $map[$provider] : null;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return ['provider' => $provider, 'model' => $model];
+    }
+
+    /**
+     * Execute a provider call with fallback + health monitoring.
+     *
+     * @param callable(AIProviderInterface):array<string,mixed> $fn
+     * @return array<string, mixed>
+     */
+    public function withFallback(string $preferredProvider, callable $fn, ?string $taskType = null): array
+    {
+        $order = $this->fallbackOrder();
+        $providers = array_values(array_unique(array_merge([$preferredProvider], $order)));
+
+        $last = null;
+        foreach ($providers as $p) {
+            if ($this->isUnhealthy($p)) {
+                continue;
+            }
+            try {
+                $res = $fn($this->provider($p));
+                $this->markHealthy($p);
+                return $res;
+            } catch (\Throwable $e) {
+                $last = $e;
+                $this->markFailure($p, $e);
+                Log::warning('AI provider failed; trying fallback', [
+                    'provider' => $p,
+                    'task_type' => $taskType,
+                    'error' => $e->getMessage(),
+                ]);
+                continue;
+            }
+        }
+
+        throw new RuntimeException('All AI providers failed.', 0, $last instanceof \Throwable ? $last : null);
     }
 
     /**
@@ -76,6 +157,47 @@ class AIProviderManager
         $provider = (string) Arr::get($cfg, 'provider', config('ai-providers.default_provider', 'openai'));
         $model = Arr::get($cfg, 'model');
         return ['provider' => $provider, 'model' => is_string($model) ? $model : null];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function fallbackOrder(): array
+    {
+        return (array) config('ai-providers.fallback.order', ['openai', 'openrouter', 'claude', 'perplexity', 'asksage']);
+    }
+
+    protected function healthKey(string $provider): string
+    {
+        return "ai:provider_health:{$provider}";
+    }
+
+    protected function isUnhealthy(string $provider): bool
+    {
+        $state = (array) Cache::get($this->healthKey($provider), []);
+        $until = (int) ($state['cooldown_until'] ?? 0);
+        return $until > time();
+    }
+
+    protected function markFailure(string $provider, \Throwable $e): void
+    {
+        $key = $this->healthKey($provider);
+        $state = (array) Cache::get($key, ['fails' => 0, 'cooldown_until' => 0]);
+        $fails = (int) ($state['fails'] ?? 0) + 1;
+
+        // After 3 failures, cool down for 2 minutes.
+        $cooldown = $fails >= 3 ? (time() + 120) : 0;
+
+        Cache::put($key, [
+            'fails' => $fails,
+            'cooldown_until' => $cooldown,
+            'last_error' => substr($e->getMessage(), 0, 500),
+        ], now()->addMinutes(10));
+    }
+
+    protected function markHealthy(string $provider): void
+    {
+        Cache::forget($this->healthKey($provider));
     }
 }
 

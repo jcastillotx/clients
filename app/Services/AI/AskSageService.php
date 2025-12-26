@@ -3,29 +3,36 @@
 namespace App\Services\AI;
 
 /**
- * AskSage provider (stub).
+ * AskSage provider (implementation via configurable HTTP JSON).
  *
- * AskSage APIs vary by plan; this is a placeholder that assumes a chat-style JSON endpoint.
+ * AskSage APIs vary by plan; this implementation is intentionally flexible:
+ * - `api_base` and `chat_path` can be configured in DB or config.
+ * - auth header defaults to Bearer but can be swapped by overriding `auth_mode`.
  */
 class AskSageService extends HttpJsonProviderService
 {
     protected function authHeaders(): array
     {
-        // Adjust header scheme to AskSage docs (Bearer is placeholder).
-        return [
-            'Authorization' => 'Bearer ' . (string) ($this->config['api_key'] ?? ''),
-        ];
+        $key = (string) ($this->config['api_key'] ?? '');
+        $mode = (string) ($this->config['auth_mode'] ?? 'bearer'); // bearer|x-api-key
+
+        return match ($mode) {
+            'x-api-key' => ['x-api-key' => $key],
+            default => ['Authorization' => 'Bearer ' . $key],
+        };
     }
 
     protected function chatEndpoint(): string
     {
-        // Placeholder path; adjust to AskSage docs.
-        return '/chat';
+        return (string) ($this->config['chat_path'] ?? '/chat');
     }
 
     protected function normalizeChatResponse(array $payload, array $raw, int $responseTimeMs): array
     {
-        $text = (string) (($raw['text'] ?? '') ?: ($raw['choices'][0]['message']['content'] ?? ''));
+        // Handle common shapes:
+        // - { text: "...", ... }
+        // - OpenAI compatible: { choices: [{ message: { content: "..." } }], usage: {...} }
+        $text = (string) (($raw['text'] ?? '') ?: ($raw['response'] ?? '') ?: ($raw['choices'][0]['message']['content'] ?? ''));
 
         return [
             'provider' => 'asksage',

@@ -4,6 +4,8 @@ namespace App\Services\AI;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -64,27 +66,81 @@ abstract class HttpJsonProviderService extends BaseAIService
 
         $payload = array_merge($payload, array_intersect_key($options, array_flip(['temperature', 'max_tokens', 'top_p'])));
 
+        $attempts = (int) (($this->config['retries'] ?? 3));
+        $sleepMs = 250;
+
         $started = microtime(true);
-        try {
-            $resp = $this->http->post($this->chatEndpoint(), [
-                'headers' => array_merge([
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ], $this->authHeaders()),
-                'json' => $payload,
-            ]);
-        } catch (GuzzleException $e) {
-            throw new RuntimeException('AI provider request failed: ' . $e->getMessage(), 0, $e);
-        }
-        $ms = (int) round((microtime(true) - $started) * 1000);
+        $lastError = null;
 
-        $rawBody = (string) $resp->getBody();
-        $raw = json_decode($rawBody, true);
-        if (!is_array($raw)) {
-            throw new RuntimeException('AI provider returned non-JSON response.');
+        for ($i = 0; $i < max(1, $attempts); $i++) {
+            try {
+                $resp = $this->http->post($this->chatEndpoint(), [
+                    'headers' => array_merge([
+                        'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                    ], $this->authHeaders()),
+                    'json' => $payload,
+                    'timeout' => (float) ($options['timeout'] ?? $this->config['timeout'] ?? 30),
+                ]);
+
+                $ms = (int) round((microtime(true) - $started) * 1000);
+                $rawBody = (string) $resp->getBody();
+                $raw = json_decode($rawBody, true);
+                if (!is_array($raw)) {
+                    throw new RuntimeException('AI provider returned non-JSON response.');
+                }
+
+                $out = $this->normalizeChatResponse($payload, $raw, $ms);
+                $out['estimated_cost'] = $out['estimated_cost'] ?? $this->estimateCost($out['tokens'] ?? []);
+
+                $this->recordInteraction([
+                    'provider' => $out['provider'] ?? null,
+                    'model' => $out['model'] ?? null,
+                    'task_type' => $options['task_type'] ?? null,
+                    'client_id' => $options['client_id'] ?? null,
+                    'user_id' => $options['user_id'] ?? null,
+                    'ai_conversation_id' => $options['ai_conversation_id'] ?? null,
+                    'task_id' => $options['task_id'] ?? null,
+                    'user_message' => $this->extractUserMessage($messages),
+                ], $out);
+
+                return $out;
+            } catch (RequestException $e) {
+                $lastError = $e;
+
+                $status = $e->getResponse()?->getStatusCode();
+                $body = $e->getResponse() ? (string) $e->getResponse()->getBody() : '';
+
+                $shouldRetry = in_array($status, [408, 429], true) || ($status !== null && $status >= 500);
+
+                // Provider-specific error parsing (best-effort)
+                if ($body !== '') {
+                    Log::warning('AI provider error', [
+                        'provider' => static::class,
+                        'status' => $status,
+                        'body' => $body,
+                    ]);
+                }
+
+                if (!$shouldRetry || $i >= ($attempts - 1)) {
+                    throw new RuntimeException('AI provider request failed: ' . $e->getMessage(), (int) ($status ?? 0), $e);
+                }
+
+                usleep($sleepMs * 1000);
+                $sleepMs = min(4000, $sleepMs * 2);
+            } catch (GuzzleException $e) {
+                $lastError = $e;
+                if ($i >= ($attempts - 1)) {
+                    throw new RuntimeException('AI provider request failed: ' . $e->getMessage(), 0, $e);
+                }
+                usleep($sleepMs * 1000);
+                $sleepMs = min(4000, $sleepMs * 2);
+            } catch (\Throwable $e) {
+                throw $e;
+            }
         }
 
-        return $this->normalizeChatResponse($payload, $raw, $ms);
+        throw new RuntimeException('AI provider request failed after retries.', 0, $lastError instanceof \Throwable ? $lastError : null);
     }
 
     public function streamChat(array $messages, array $options = []): \Generator
@@ -111,6 +167,20 @@ abstract class HttpJsonProviderService extends BaseAIService
         } catch (\Throwable) {
             return false;
         }
+    }
+
+    /**
+     * @param array<int, array{role:string, content:string}> $messages
+     */
+    protected function extractUserMessage(array $messages): ?string
+    {
+        for ($i = count($messages) - 1; $i >= 0; $i--) {
+            if (($messages[$i]['role'] ?? null) === 'user') {
+                $c = $messages[$i]['content'] ?? null;
+                return is_string($c) ? $c : null;
+            }
+        }
+        return null;
     }
 }
 
