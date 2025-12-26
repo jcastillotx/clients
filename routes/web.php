@@ -54,6 +54,11 @@ use App\Http\Livewire\Admin\AI\AIProviderForm as AdminAIProviderForm;
 use App\Http\Livewire\Admin\AI\AITaskConfiguration as AdminAITaskConfiguration;
 use App\Http\Livewire\Admin\AI\AIUsageDashboard as AdminAIUsageDashboard;
 use App\Http\Livewire\Admin\AI\AIAuditLog as AdminAIAuditLog;
+use App\Http\Livewire\AI\AIAssistantChat as AdminAssistantChat;
+use App\Http\Livewire\AI\PromptTemplateManager as AdminPromptTemplates;
+use App\Http\Livewire\AI\KnowledgeBase as AdminKnowledgeBase;
+use App\Http\Livewire\AI\WorkflowBuilder as AdminWorkflowBuilder;
+use App\Http\Livewire\AI\ClientAssistantChat as ClientAssistantChat;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -173,6 +178,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/research/technical', TechnicalAdvisorTool::class)->name('research.technical');
     Route::get('/research/monitor', IndustryMonitorTool::class)->name('research.monitor');
 
+    // Client AI assistant
+    Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
+
 });
 
 /*
@@ -211,6 +219,12 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
         Route::get('/ai/tasks', AdminAITaskConfiguration::class)->name('ai.tasks');
         Route::get('/ai/usage', AdminAIUsageDashboard::class)->name('ai.usage');
         Route::get('/ai/audit', AdminAIAuditLog::class)->name('ai.audit');
+
+        // AI assistant & training tools
+        Route::get('/ai/assistant', AdminAssistantChat::class)->name('ai.assistant');
+        Route::get('/ai/prompt-templates', AdminPromptTemplates::class)->name('ai.prompt-templates');
+        Route::get('/ai/knowledge-base', AdminKnowledgeBase::class)->name('ai.knowledge-base');
+        Route::get('/ai/workflows', AdminWorkflowBuilder::class)->name('ai.workflows');
 
         // Export endpoints
         Route::get('/reports/export/{category}/{format}', [AdminReportExportController::class, 'export'])
