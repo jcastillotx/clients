@@ -64,6 +64,7 @@ class SystemSettings extends Component
             'email.from.address' => '',
             'email.from.name' => '',
             'email.signature' => '',
+            'email.template.design' => null,
             'email.template.html' => '<div>{{ $content }}</div>',
             'email.events.invoice_paid' => true,
             'email.events.request_created' => true,
@@ -78,6 +79,7 @@ class SystemSettings extends Component
             'from_address' => $e['email.from.address'],
             'from_name' => $e['email.from.name'],
             'signature' => $e['email.signature'],
+            'template_design' => $e['email.template.design'],
             'template_html' => $e['email.template.html'],
             'events_invoice_paid' => (bool) $e['email.events.invoice_paid'],
             'events_request_created' => (bool) $e['email.events.request_created'],
@@ -245,12 +247,34 @@ class SystemSettings extends Component
             'email.from.address' => $this->email['from_address'] ?? '',
             'email.from.name' => $this->email['from_name'] ?? '',
             'email.signature' => $this->email['signature'] ?? '',
+            'email.template.design' => $this->email['template_design'] ?? null,
             'email.template.html' => $this->email['template_html'] ?? '',
             'email.events.invoice_paid' => (bool) ($this->email['events_invoice_paid'] ?? true),
             'email.events.request_created' => (bool) ($this->email['events_request_created'] ?? true),
             'email.events.contract_signed' => (bool) ($this->email['events_contract_signed'] ?? true),
         ], 'email', $encrypted);
         session()->flash('success', 'Email settings saved.');
+    }
+
+    public function openEmailBuilder(): void
+    {
+        $this->dispatch('open-email-builder', design: $this->email['template_design'] ?? null);
+    }
+
+    /**
+     * Save builder output (design JSON + exported HTML).
+     */
+    public function saveEmailTemplate(mixed $design, string $html, SettingsService $settings): void
+    {
+        $this->email['template_design'] = $design;
+        $this->email['template_html'] = $html;
+
+        $settings->setMany([
+            'email.template.design' => $design,
+            'email.template.html' => $html,
+        ], 'email');
+
+        session()->flash('success', 'Email template saved from builder.');
     }
 
     public function sendTestEmail(): void
