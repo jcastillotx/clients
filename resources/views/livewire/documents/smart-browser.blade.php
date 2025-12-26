@@ -124,9 +124,11 @@
                                     @if($it->item_type === 'document')
                                         <a class="btn btn-sm btn-outline-primary" href="{{ route('documents.show', $it->id) }}"><i class="fas fa-eye"></i></a>
                                         <a class="btn btn-sm btn-outline-secondary" href="{{ route('documents.download', $it->id) }}"><i class="fas fa-download"></i></a>
+                                        <a class="btn btn-sm btn-outline-info" href="{{ route('documents.viewer.document', [$it->id, 'office']) }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
                                         <a class="btn btn-sm btn-outline-info" href="{{ route('documents.workflow', $it->id) }}"><i class="fas fa-tasks"></i></a>
                                     @else
                                         <a class="btn btn-sm btn-outline-secondary" href="{{ route('storage.files.download', $it->id) }}"><i class="fas fa-download"></i></a>
+                                        <a class="btn btn-sm btn-outline-info" href="{{ route('documents.viewer.storage-file', [$it->id, 'office']) }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i></a>
                                     @endif
                                     <button class="btn btn-sm btn-outline-success" wire:click="createShare('{{ $it->key }}')">
                                         <i class="fas fa-share-alt"></i>

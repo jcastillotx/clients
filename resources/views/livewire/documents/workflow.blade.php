@@ -16,6 +16,12 @@
                         <a href="{{ route('documents.view', $document) }}" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-eye mr-1"></i> View
                         </a>
+                        <a href="{{ route('documents.viewer.document', [$document, 'office']) }}" class="btn btn-sm btn-outline-info" target="_blank" rel="noopener">
+                            <i class="fas fa-external-link-alt mr-1"></i> Open (Office)
+                        </a>
+                        <a href="{{ route('documents.viewer.document', [$document, 'google']) }}" class="btn btn-sm btn-outline-info" target="_blank" rel="noopener">
+                            <i class="fas fa-external-link-alt mr-1"></i> Open (Google)
+                        </a>
                     </div>
                 </div>
                 <div class="card-body">
@@ -200,17 +206,42 @@
 
                     @if($compareTextA !== null || $compareTextB !== null)
                         <hr>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="text-muted small">A</div>
-                                <pre style="max-height: 240px; overflow:auto;" class="border rounded p-2">{{ $compareTextA }}</pre>
+                        @if(!empty($diffA) && !empty($diffB))
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-muted small">A</div>
+                                    <div style="max-height: 240px; overflow:auto;" class="border rounded p-2">
+                                        @foreach($diffA as $line)
+                                            <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space: pre-wrap; {{ $line['changed'] ? 'background: #fff3cd;' : '' }}">
+                                                <span class="text-muted" style="display:inline-block; width: 36px;">{{ $line['n'] }}</span>{{ $line['text'] }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">B</div>
+                                    <div style="max-height: 240px; overflow:auto;" class="border rounded p-2">
+                                        @foreach($diffB as $line)
+                                            <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space: pre-wrap; {{ $line['changed'] ? 'background: #fff3cd;' : '' }}">
+                                                <span class="text-muted" style="display:inline-block; width: 36px;">{{ $line['n'] }}</span>{{ $line['text'] }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-6">
-                                <div class="text-muted small">B</div>
-                                <pre style="max-height: 240px; overflow:auto;" class="border rounded p-2">{{ $compareTextB }}</pre>
+                            <small class="text-muted">Line-level highlighting (simple alignment).</small>
+                        @else
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-muted small">A</div>
+                                    <pre style="max-height: 240px; overflow:auto;" class="border rounded p-2">{{ $compareTextA }}</pre>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">B</div>
+                                    <pre style="max-height: 240px; overflow:auto;" class="border rounded p-2">{{ $compareTextB }}</pre>
+                                </div>
                             </div>
-                        </div>
-                        <small class="text-muted">Basic compare view (full diff highlighting can be added).</small>
+                        @endif
                     @endif
                 </div>
             </div>

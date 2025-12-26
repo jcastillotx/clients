@@ -101,6 +101,11 @@ class Document extends Model
         return $this->belongsToMany(StorageTag::class, 'document_tag', 'document_id', 'storage_tag_id');
     }
 
+    public function permissions(): HasMany
+    {
+        return $this->hasMany(DocumentPermission::class);
+    }
+
     /**
      * Get the file URL.
      */

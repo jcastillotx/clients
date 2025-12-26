@@ -12,6 +12,7 @@ use App\Http\Controllers\Storage\StorageFileController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Controllers\Documents\DocumentShareController;
 use App\Http\Controllers\Documents\DocumentVersionController;
+use App\Http\Controllers\Documents\DocumentViewerController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Storage\StorageDashboard;
@@ -82,10 +83,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
+    Route::get('/documents/{document}/open/{viewer?}', [DocumentViewerController::class, 'openDocument'])
+        ->whereIn('viewer', ['office', 'google'])
+        ->name('documents.viewer.document');
     Route::get('/documents/{document}/workflow', DocumentWorkflow::class)->name('documents.workflow');
     Route::get('/documents/smart-browser', SmartDocumentBrowser::class)->name('documents.smart-browser');
     Route::get('/documents/templates', DocumentTemplates::class)->name('documents.templates');
     Route::get('/documents/versions/{documentVersion}/download', [DocumentVersionController::class, 'download'])->name('documents.versions.download');
+    Route::get('/documents/storage-files/{storageFile}/open/{viewer?}', [DocumentViewerController::class, 'openStorageFile'])
+        ->whereIn('viewer', ['office', 'google'])
+        ->name('documents.viewer.storage-file');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

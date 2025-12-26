@@ -80,18 +80,23 @@ class DocumentTemplates extends Component
         $filename = Str::slug($this->generate_title) . '.html';
         $path = 'generated/' . now()->format('Ymd_His') . '_' . $filename;
 
-        $disk = 'documents';
+        $providerDisk = null;
         $providerLabel = 'Local';
 
         if (str_starts_with($this->generate_destination, 'connection:')) {
             $id = (int) str_replace('connection:', '', $this->generate_destination);
             $conn = StorageConnection::query()->where('client_id', $client->id)->where('status', 'active')->findOrFail($id);
             abort_unless($conn->disk, 422);
-            $disk = $conn->disk;
+            $providerDisk = $conn->disk;
             $providerLabel = strtoupper($conn->provider);
         }
 
-        Storage::disk($disk)->put($path, $rendered);
+        // Always write a local copy for portal downloads (documents disk).
+        Storage::disk('documents')->put($path, $rendered);
+        // Optionally also write to the selected provider disk.
+        if ($providerDisk && $providerDisk !== 'documents') {
+            Storage::disk($providerDisk)->put($path, $rendered);
+        }
 
         // Always create a local Document record for portal visibility, even if stored on provider disk.
         $doc = Document::create([
@@ -101,7 +106,6 @@ class DocumentTemplates extends Component
             'description' => "Generated from template: {$tpl->name} ({$providerLabel})",
             'filename' => $filename,
             'original_filename' => $filename,
-            // Store in local disk path reference; actual file may be on provider disk, so we embed the HTML into local documents too.
             'file_path' => $path,
             'mime_type' => 'text/html',
             'file_size' => strlen($rendered),
@@ -111,7 +115,8 @@ class DocumentTemplates extends Component
             'current_version' => 1,
         ]);
 
-        session()->flash('success', "Generated document #{$doc->id} and saved file to disk '{$disk}'.");
+        $savedTo = $providerDisk ? "'documents' + '{$providerDisk}'" : "'documents'";
+        session()->flash('success', "Generated document #{$doc->id} and saved file to disk {$savedTo}.");
     }
 
     protected function renderTemplate(string $body, Client $client): string

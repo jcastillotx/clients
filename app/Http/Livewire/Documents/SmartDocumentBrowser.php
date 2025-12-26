@@ -8,6 +8,7 @@ use App\Models\DocumentShare;
 use App\Models\Request;
 use App\Models\StorageFile;
 use App\Models\StorageTag;
+use App\Services\Documents\DocumentAccessService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -172,9 +173,8 @@ class SmartDocumentBrowser extends Component
         $source = null;
         if ($type === 'document') {
             $source = Document::query()->findOrFail($id);
-            if ($user->isClient() && (int) $source->client_id !== (int) $user->client_id) {
-                abort(403);
-            }
+            $access = app(DocumentAccessService::class);
+            abort_unless($access->canShare($user, $source), 403);
         } elseif ($type === 'storage_file') {
             $source = StorageFile::query()->with('connection')->findOrFail($id);
             if ($user->isClient() && (int) $source->connection->client_id !== (int) $user->client_id) {

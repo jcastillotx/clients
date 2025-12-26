@@ -10,6 +10,7 @@ use App\Models\DocumentVersion;
 use App\Models\Invoice;
 use App\Models\Request;
 use App\Models\StorageFile;
+use App\Services\Documents\DocumentAccessService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -40,15 +41,16 @@ class DocumentWorkflow extends Component
     public ?int $compareB = null;
     public ?string $compareTextA = null;
     public ?string $compareTextB = null;
+    public array $diffA = [];
+    public array $diffB = [];
 
     public function mount(Document $document): void
     {
         $user = Auth::user();
         abort_unless($user, 403);
 
-        if ($user->isClient() && (int) $user->client_id !== (int) $document->client_id) {
-            abort(403);
-        }
+        $access = app(DocumentAccessService::class);
+        abort_unless($access->canView($user, $document), 403);
 
         $this->document = $document->load(['client', 'request', 'uploader', 'reviewer']);
     }
@@ -144,9 +146,8 @@ class DocumentWorkflow extends Component
     {
         $user = Auth::user();
         abort_unless($user, 403);
-        if ($user->isClient() && (int) $user->client_id !== (int) $this->document->client_id) {
-            abort(403);
-        }
+        $access = app(DocumentAccessService::class);
+        abort_unless($access->canUploadNewVersion($user, $this->document), 403);
 
         Validator::make(['file' => $this->newVersionUpload], [
             'file' => ['required', 'file', 'max:51200'],
@@ -283,15 +284,43 @@ class DocumentWorkflow extends Component
     {
         $user = Auth::user();
         abort_unless($user, 403);
-        if ($user->isClient() && (int) $user->client_id !== (int) $this->document->client_id) {
-            abort(403);
-        }
+        $access = app(DocumentAccessService::class);
+        abort_unless($access->canView($user, $this->document), 403);
 
         $a = $this->compareA ? DocumentVersion::query()->where('document_id', $this->document->id)->find($this->compareA) : null;
         $b = $this->compareB ? DocumentVersion::query()->where('document_id', $this->document->id)->find($this->compareB) : null;
 
         $this->compareTextA = $this->readTextVersion($a);
         $this->compareTextB = $this->readTextVersion($b);
+
+        $this->diffA = [];
+        $this->diffB = [];
+        if ($this->compareTextA && $this->compareTextB
+            && !str_starts_with($this->compareTextA, '(')
+            && !str_starts_with($this->compareTextB, '(')
+        ) {
+            [$this->diffA, $this->diffB] = $this->buildSideBySideDiff($this->compareTextA, $this->compareTextB);
+        }
+    }
+
+    protected function buildSideBySideDiff(string $a, string $b): array
+    {
+        $aLines = preg_split("/\r\n|\r|\n/", $a) ?: [];
+        $bLines = preg_split("/\r\n|\r|\n/", $b) ?: [];
+
+        $max = max(count($aLines), count($bLines));
+        $outA = [];
+        $outB = [];
+
+        for ($i = 0; $i < $max; $i++) {
+            $la = $aLines[$i] ?? '';
+            $lb = $bLines[$i] ?? '';
+            $changed = $la !== $lb;
+            $outA[] = ['n' => $i + 1, 'text' => $la, 'changed' => $changed];
+            $outB[] = ['n' => $i + 1, 'text' => $lb, 'changed' => $changed];
+        }
+
+        return [$outA, $outB];
     }
 
     protected function readTextVersion(?DocumentVersion $v): ?string

@@ -14,6 +14,9 @@ class DocumentShareController extends Controller
     {
         $share = DocumentShare::query()->where('token', $token)->firstOrFail();
         abort_if($share->isExpired(), 410, 'This link has expired.');
+        if ($share->max_downloads !== null && (int) $share->downloads >= (int) $share->max_downloads) {
+            abort(410, 'This link has reached its download limit.');
+        }
 
         $source = $share->source;
         abort_unless($source, 404);
