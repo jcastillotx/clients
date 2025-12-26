@@ -22,6 +22,9 @@ use App\Http\Livewire\Admin\Requests\AdminRequestManagement;
 use App\Http\Livewire\Admin\Requests\AdminRequestDetail;
 use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
 use App\Http\Livewire\Admin\Requests\ProjectEstimator as AdminProjectEstimator;
+use App\Http\Livewire\Admin\Invoices\AdminInvoiceManagement as AdminInvoiceManagement;
+use App\Http\Livewire\Admin\Invoices\InvoiceCreate as AdminInvoiceCreate;
+use App\Http\Livewire\Admin\Invoices\InvoiceEdit as AdminInvoiceEdit;
 use App\Http\Livewire\Settings\WebhookManagement;
 use App\Http\Livewire\Storage\StorageDashboard;
 use App\Http\Livewire\Storage\StorageConflicts;
@@ -201,6 +204,11 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
         Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
         Route::get('/requests/{request}', AdminRequestDetail::class)->name('requests.show');
         Route::get('/requests/{request}/estimator', AdminProjectEstimator::class)->name('requests.estimator');
+
+        // Invoices
+        Route::get('/invoices', AdminInvoiceManagement::class)->name('invoices.index');
+        Route::get('/invoices/create', AdminInvoiceCreate::class)->name('invoices.create');
+        Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit');
 
         // Contracts (AI)
         Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');

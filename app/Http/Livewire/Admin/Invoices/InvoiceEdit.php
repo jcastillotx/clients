@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Request as ServiceRequest;
+use App\Services\AI\InvoiceGeneratorAI;
 use App\Services\NotificationService;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -245,11 +246,31 @@ class InvoiceEdit extends Component
         session()->flash('success', 'Invoice voided.');
     }
 
-    public function sendOrResend(NotificationService $notifications): void
+    public function sendOrResend(NotificationService $notifications, InvoiceGeneratorAI $invoiceAi): void
     {
         if (!in_array($this->invoice->status, ['draft', 'sent', 'overdue'], true)) {
             session()->flash('error', 'Only draft/sent/overdue invoices can be emailed.');
             return;
+        }
+
+        // AI review assistant gate (best-effort). If safety rules route to review queue, block send.
+        try {
+            $review = $invoiceAi->reviewInvoice($this->invoice->fresh(['items', 'client', 'request']), [
+                'user_id' => auth()->id(),
+            ]);
+            $queued = $review['_meta']['review_queue_id'] ?? null;
+            $mathOk = (bool) ($review['math_ok'] ?? true);
+            if ($queued || !$mathOk) {
+                session()->flash(
+                    'error',
+                    $queued
+                        ? 'Invoice requires human review before sending (AI safety queue).'
+                        : 'Invoice review detected a math/total mismatch. Please fix before sending.'
+                );
+                return;
+            }
+        } catch (\Throwable) {
+            // If AI is unavailable, do not block sending.
         }
 
         if ($this->invoice->status === 'draft') {
