@@ -7,7 +7,9 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\Admin\AdminReportExportController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
+use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,6 +75,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
 });
+
+/*
+|--------------------------------------------------------------------------
+| Admin Reporting Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'verified', 'permission:view reports'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/reports', ReportDashboard::class)->name('reports.dashboard');
+
+        // Export endpoints
+        Route::get('/reports/export/{category}/{format}', [AdminReportExportController::class, 'export'])
+            ->whereIn('category', ['financial', 'clients', 'requests', 'performance', 'storage'])
+            ->whereIn('format', ['csv', 'xlsx', 'pdf'])
+            ->name('reports.export');
+    });
 
 /*
 |--------------------------------------------------------------------------

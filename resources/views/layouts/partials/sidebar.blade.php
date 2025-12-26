@@ -104,6 +104,16 @@
                     </a>
                 </li>
 
+                @can('view reports')
+                <li class="nav-header">ADMIN</li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.reports.dashboard') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>Reporting</p>
+                    </a>
+                </li>
+                @endcan
+
                 <li class="nav-header">ACCOUNT</li>
 
                 <!-- Profile -->

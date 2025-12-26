@@ -4,6 +4,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Models\Invoice;
+use App\Services\AdminReports\ReportScheduleRunner;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,3 +28,8 @@ Schedule::call(function () {
         ->where('due_date', '<', now())
         ->update(['status' => 'overdue']);
 })->daily()->name('check-overdue-invoices');
+
+// Send scheduled admin reports (requires mail configuration)
+Schedule::call(function () {
+    app(ReportScheduleRunner::class)->runDueSchedules();
+})->everyFiveMinutes()->name('send-scheduled-admin-reports');
