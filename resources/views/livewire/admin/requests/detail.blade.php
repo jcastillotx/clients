@@ -10,6 +10,7 @@
         </div>
         <div class="d-flex flex-wrap gap-2 align-items-center">
             <span class="badge bg-{{ $request->status_color }}">{{ $statusLabels[$request->status] ?? $request->status }}</span>
+            <a href="{{ route('admin.requests.estimator', $request) }}" class="btn btn-outline-primary">Estimator</a>
             <a href="{{ route('admin.requests.index') }}" class="btn btn-outline-secondary">Back</a>
         </div>
     </div>

@@ -18,6 +18,10 @@ use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Admin\Automation\AutomationIndex;
 use App\Http\Livewire\Admin\Automation\AutomationBuilder;
 use App\Http\Livewire\Admin\Automation\AutomationLogs;
+use App\Http\Livewire\Admin\Requests\AdminRequestManagement;
+use App\Http\Livewire\Admin\Requests\AdminRequestDetail;
+use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
+use App\Http\Livewire\Admin\Requests\ProjectEstimator as AdminProjectEstimator;
 use App\Http\Livewire\Settings\WebhookManagement;
 use App\Http\Livewire\Storage\StorageDashboard;
 use App\Http\Livewire\Storage\StorageConflicts;
@@ -32,6 +36,7 @@ use App\Http\Livewire\Client\Messaging;
 use App\Http\Livewire\Client\KnowledgeBase;
 use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\AnalyticsDashboard;
+use App\Http\Livewire\Client\EstimateApproval;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -88,6 +93,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Service Requests
     Route::resource('requests', RequestController::class);
+    Route::get('/requests/{request}/estimate', EstimateApproval::class)->name('client.requests.estimate');
 
     // Contracts
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
@@ -153,6 +159,12 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        // Requests
+        Route::get('/requests', AdminRequestManagement::class)->name('requests.index');
+        Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
+        Route::get('/requests/{request}', AdminRequestDetail::class)->name('requests.show');
+        Route::get('/requests/{request}/estimator', AdminProjectEstimator::class)->name('requests.estimator');
+
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
 

@@ -6,6 +6,7 @@ use App\Models\AiTask;
 use App\Models\Request as ServiceRequest;
 use App\Models\Setting;
 use App\Services\AI\Prompts\ProjectEstimationPrompt;
+use App\Services\Estimates\CostCalculationService;
 use Illuminate\Support\Facades\Log;
 
 class ProjectEstimationService
@@ -13,7 +14,8 @@ class ProjectEstimationService
     public function __construct(
         protected AIProviderManager $providers,
         protected RequestEmbeddingService $embeddings,
-        protected RequestSemanticSearchService $semantic
+        protected RequestSemanticSearchService $semantic,
+        protected CostCalculationService $costs
     ) {
     }
 
@@ -26,15 +28,28 @@ class ProjectEstimationService
     {
         $request->loadMissing(['client', 'attachments']);
 
-        // Pull hourly rate from settings; fall back to a sensible default.
-        $hourlyRate = (float) Setting::getValue('billing.hourly_rate', 0);
-        if ($hourlyRate <= 0) $hourlyRate = (float) ($options['hourly_rate'] ?? 100);
+        // Base rate is from internal rate card / settings.
+        $baseRate = is_numeric($options['base_rate'] ?? null)
+            ? (float) $options['base_rate']
+            : $this->costs->defaultBaseRate();
+
+        $markupPct = is_numeric($options['markup_pct'] ?? null)
+            ? max(0.0, (float) $options['markup_pct'])
+            : $this->costs->defaultMarkupPct();
+
+        $complexity = (int) ($options['complexity_score'] ?? 5);
+        $contingencyPct = is_numeric($options['contingency_pct'] ?? null)
+            ? max(0.0, (float) $options['contingency_pct'])
+            : $this->costs->contingencyPctForComplexity($complexity);
 
         $task = AiTask::create([
             'task_type' => 'generate_estimate',
             'input_data' => [
                 'request_id' => $request->id,
-                'hourly_rate' => $hourlyRate,
+                'base_rate' => $baseRate,
+                'markup_pct' => $markupPct,
+                'complexity_score' => $complexity,
+                'contingency_pct' => $contingencyPct,
             ],
             'status' => 'processing',
             'executed_by' => $options['executed_by'] ?? null,
@@ -62,7 +77,7 @@ class ProjectEstimationService
 
         $messages = [
             ['role' => 'system', 'content' => ProjectEstimationPrompt::systemPrompt()],
-            ['role' => 'user', 'content' => ProjectEstimationPrompt::userPrompt($payloadRequest, $similar, $variance, $hourlyRate)],
+            ['role' => 'user', 'content' => ProjectEstimationPrompt::userPrompt($payloadRequest, $similar, $variance, $baseRate)],
         ];
 
         try {
@@ -83,7 +98,14 @@ class ProjectEstimationService
 
             $estimate = $this->parseJsonFromText((string) ($res['text'] ?? ''));
             $totals = $this->computeTotals($estimate['tasks'] ?? []);
-            $costRange = $this->computeCostRange($totals, $hourlyRate);
+            $costRange = $this->computeCostRange($totals, $baseRate);
+
+            $client = $request->client;
+            $pricingTotals = [
+                'low' => $this->costs->calculate((float) $totals['low'], $baseRate, $client, $markupPct, $contingencyPct),
+                'mid' => $this->costs->calculate((float) $totals['mid'], $baseRate, $client, $markupPct, $contingencyPct),
+                'high' => $this->costs->calculate((float) $totals['high'], $baseRate, $client, $markupPct, $contingencyPct),
+            ];
 
             $final = [
                 'tasks' => $estimate['tasks'] ?? [],
@@ -92,9 +114,13 @@ class ProjectEstimationService
                 'notes_for_admin' => $estimate['notes_for_admin'] ?? null,
                 'similar_projects' => $similar,
                 'historical_variance' => $variance,
-                'hourly_rate' => $hourlyRate,
+                'base_rate' => $baseRate,
+                'markup_pct' => $markupPct,
+                'contingency_pct' => $contingencyPct,
+                'complexity_score' => $complexity,
                 'hours_total' => $totals,
                 'cost_range' => $costRange,
+                'totals' => $pricingTotals,
                 '_meta' => [
                     'task_id' => $task->id,
                     'provider' => $res['provider'] ?? null,
@@ -155,7 +181,7 @@ class ProjectEstimationService
         $timeline = (array) ($estimate['timeline'] ?? []);
         $hours = (array) ($estimate['hours_total'] ?? ['low' => 0, 'mid' => 0, 'high' => 0]);
         $cost = (array) ($estimate['cost_range'] ?? ['low' => '0.00', 'mid' => '0.00', 'high' => '0.00']);
-        $hourlyRate = (float) ($estimate['hourly_rate'] ?? Setting::getValue('billing.hourly_rate', 100));
+        $hourlyRate = (float) (($estimate['base_rate'] ?? $estimate['hourly_rate'] ?? null) ?: Setting::getValue('billing.hourly_rate', 100));
 
         $objectives = trim((string) ($request->description ?? ''));
         if ($objectives === '') $objectives = 'Objectives to be confirmed.';
