@@ -100,8 +100,33 @@
                 <li class="nav-item">
                     <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-folder-open"></i>
-                        <p>Documents</p>
+                        <p>
+                            Documents
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.index') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>My Documents</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('documents.smart-browser') }}" class="nav-link {{ request()->routeIs('documents.smart-browser') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Smart Browser</p>
+                            </a>
+                        </li>
+                        @can('access admin panel')
+                        <li class="nav-item">
+                            <a href="{{ route('documents.templates') }}" class="nav-link {{ request()->routeIs('documents.templates') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Templates</p>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
                 </li>
 
                 <!-- Storage -->

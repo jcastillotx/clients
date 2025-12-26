@@ -10,6 +10,8 @@ use App\Http\Controllers\RequestController;
 use App\Http\Controllers\Admin\AdminReportExportController;
 use App\Http\Controllers\Storage\StorageFileController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
+use App\Http\Controllers\Documents\DocumentShareController;
+use App\Http\Controllers\Documents\DocumentVersionController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Storage\StorageDashboard;
@@ -17,6 +19,9 @@ use App\Http\Livewire\Storage\StorageConflicts;
 use App\Http\Livewire\Storage\UnifiedFileBrowser;
 use App\Http\Livewire\Storage\StorageSettings;
 use App\Http\Livewire\Admin\Storage\StorageOverview;
+use App\Http\Livewire\Documents\DocumentWorkflow;
+use App\Http\Livewire\Documents\SmartDocumentBrowser;
+use App\Http\Livewire\Documents\DocumentTemplates;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,6 +33,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+// Public share links
+Route::get('/share/{token}', [DocumentShareController::class, 'download'])->name('documents.share.download');
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +82,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
+    Route::get('/documents/{document}/workflow', DocumentWorkflow::class)->name('documents.workflow');
+    Route::get('/documents/smart-browser', SmartDocumentBrowser::class)->name('documents.smart-browser');
+    Route::get('/documents/templates', DocumentTemplates::class)->name('documents.templates');
+    Route::get('/documents/versions/{documentVersion}/download', [DocumentVersionController::class, 'download'])->name('documents.versions.download');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

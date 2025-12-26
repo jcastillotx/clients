@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -30,6 +32,12 @@ class Document extends Model
         'file_size',
         'category',
         'is_public',
+        'status',
+        'submitted_at',
+        'approved_at',
+        'rejected_at',
+        'reviewed_by',
+        'current_version',
     ];
 
     /**
@@ -42,6 +50,10 @@ class Document extends Model
         return [
             'file_size' => 'integer',
             'is_public' => 'boolean',
+            'submitted_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'current_version' => 'integer',
         ];
     }
 
@@ -69,12 +81,47 @@ class Document extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(DocumentComment::class)->latest('id');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(DocumentVersion::class)->orderByDesc('version');
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(StorageTag::class, 'document_tag', 'document_id', 'storage_tag_id');
+    }
+
     /**
      * Get the file URL.
      */
     public function getUrlAttribute(): string
     {
         return Storage::disk('documents')->url($this->file_path);
+    }
+
+    public function isPendingReview(): bool
+    {
+        return $this->status === 'pending_review';
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === 'approved';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
     }
 
     /**
