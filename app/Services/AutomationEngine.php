@@ -3,14 +3,12 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
-use App\Models\AutomationLog;
 use App\Models\AutomationRule;
+use App\Models\AutomationRun;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Request as ServiceRequest;
-use App\Models\Setting;
-use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -18,440 +16,320 @@ use Illuminate\Support\Facades\Mail;
 class AutomationEngine
 {
     /**
-     * Fire a trigger and run matching automation rules.
+     * Execute all matching automations for a trigger.
      *
-     * @param  array<string,mixed>  $payload
-     * @return array<int, array<string,mixed>>  Per-rule results
+     * @param array $context Example:
+     *  [
+     *    'request' => $request->toArray(),
+     *    'client' => $request->client?->toArray(),
+     *  ]
      */
-    public function trigger(string $trigger, array $payload, bool $dryRun = false): array
+    public function run(string $trigger, array $context = [], ?int $clientId = null): array
     {
         $rules = AutomationRule::query()
-            ->where('is_active', true)
             ->where('trigger', $trigger)
-            ->orderBy('run_order')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
 
         $results = [];
 
         foreach ($rules as $rule) {
-            $log = AutomationLog::create([
+            $run = AutomationRun::create([
                 'automation_rule_id' => $rule->id,
                 'trigger' => $trigger,
-                'status' => $dryRun ? 'dry_run' : 'succeeded',
-                'started_at' => now(),
-                'context' => [
-                    'payload' => $payload,
-                    'rule' => [
-                        'id' => $rule->id,
-                        'name' => $rule->name,
-                    ],
-                ],
+                'client_id' => $clientId,
+                'context' => $this->safeContext($context),
+                'matched' => false,
+                'succeeded' => false,
+                'actions_total' => count((array) ($rule->actions ?? [])),
+                'actions_succeeded' => 0,
+                'actions_failed' => 0,
+                'error' => null,
+                'ran_at' => now(),
             ]);
 
-            $ok = false;
-            $msg = null;
-            $actionResults = [];
-
             try {
-                $ok = $this->evaluateConditions($rule->conditions, $payload);
-                if (!$ok) {
-                    $log->update([
-                        'status' => 'skipped',
-                        'message' => 'Conditions not met.',
-                        'finished_at' => now(),
-                    ]);
-                    $results[] = ['rule_id' => $rule->id, 'status' => 'skipped'];
+                $matched = $this->evaluateConditions($rule->conditions, $context);
+                $run->matched = $matched;
+                $run->save();
+
+                if (!$matched) {
+                    $results[] = ['rule_id' => $rule->id, 'matched' => false, 'succeeded' => true];
                     continue;
                 }
 
-                $actions = (array) ($rule->actions ?? []);
-                foreach ($actions as $action) {
-                    $actionResults[] = $this->executeAction($action, $payload, $dryRun);
-                }
+                [$ok, $succ, $fail] = $this->executeActions((array) ($rule->actions ?? []), $context);
+                $run->succeeded = $ok;
+                $run->actions_succeeded = $succ;
+                $run->actions_failed = $fail;
+                $run->save();
 
-                $rule->update(['last_ran_at' => now()]);
-                $msg = $dryRun ? 'Dry run complete.' : 'Executed.';
-
-                $log->update([
-                    'status' => $dryRun ? 'dry_run' : 'succeeded',
-                    'message' => $msg,
-                    'finished_at' => now(),
-                    'context' => array_merge($log->context ?? [], [
-                        'actions' => $actions,
-                        'results' => $actionResults,
-                    ]),
-                ]);
-
-                $results[] = ['rule_id' => $rule->id, 'status' => $dryRun ? 'dry_run' : 'succeeded', 'results' => $actionResults];
+                $results[] = ['rule_id' => $rule->id, 'matched' => true, 'succeeded' => $ok];
             } catch (\Throwable $e) {
-                $log->update([
-                    'status' => 'failed',
-                    'message' => mb_substr($e->getMessage(), 0, 500),
-                    'finished_at' => now(),
-                    'context' => array_merge($log->context ?? [], [
-                        'exception' => [
-                            'class' => get_class($e),
-                            'message' => $e->getMessage(),
-                        ],
-                        'results' => $actionResults,
-                    ]),
-                ]);
-                $results[] = ['rule_id' => $rule->id, 'status' => 'failed', 'error' => $e->getMessage()];
+                $run->succeeded = false;
+                $run->error = $e->getMessage();
+                $run->save();
+                $results[] = ['rule_id' => $rule->id, 'matched' => (bool) $run->matched, 'succeeded' => false, 'error' => $e->getMessage()];
             }
         }
 
         return $results;
     }
 
-    /**
-     * Condition DSL:
-     * - null/empty => true
-     * - Group: ['op' => 'and'|'or', 'rules' => [cond|group...]]
-     * - Condition: ['path' => 'request.priority', 'operator' => 'equals', 'value' => 'urgent']
-     *
-     * Supported operators: equals, not_equals, contains, in, not_in, gt, gte, lt, lte, exists, not_exists
-     *
-     * @param  array<string,mixed>|null  $conditions
-     * @param  array<string,mixed>  $payload
-     */
-    public function evaluateConditions(?array $conditions, array $payload): bool
+    public function evaluateConditions($conditions, array $context): bool
     {
-        if (!$conditions || $conditions === []) {
+        if (empty($conditions)) {
             return true;
         }
 
-        // Group form
-        if (isset($conditions['op']) && isset($conditions['rules']) && is_array($conditions['rules'])) {
-            $op = strtolower((string) $conditions['op']);
-            $rules = $conditions['rules'];
-
-            if ($op === 'or') {
-                foreach ($rules as $r) {
-                    if ($this->evaluateConditions(is_array($r) ? $r : null, $payload)) {
-                        return true;
-                    }
-                }
-                return false;
+        // group form: {operator: and|or, rules:[...]}
+        if (is_array($conditions) && isset($conditions['rules'])) {
+            $op = strtolower((string) ($conditions['operator'] ?? 'and'));
+            $rules = (array) ($conditions['rules'] ?? []);
+            if (empty($rules)) {
+                return true;
             }
 
-            // default AND
-            foreach ($rules as $r) {
-                if (!$this->evaluateConditions(is_array($r) ? $r : null, $payload)) {
-                    return false;
-                }
-            }
+            $results = array_map(fn ($r) => $this->evaluateConditions($r, $context), $rules);
+            return $op === 'or' ? in_array(true, $results, true) : !in_array(false, $results, true);
+        }
+
+        // single rule: {field, operator, value}
+        if (!is_array($conditions)) {
             return true;
         }
 
-        // Single condition form
-        $path = (string) ($conditions['path'] ?? '');
-        $operator = strtolower((string) ($conditions['operator'] ?? 'equals'));
+        $field = (string) ($conditions['field'] ?? '');
+        $op = strtolower((string) ($conditions['operator'] ?? 'equals'));
         $expected = $conditions['value'] ?? null;
+        $actual = $this->getValue($context, $field);
 
-        $actual = Arr::get($payload, $path);
-
-        return $this->compare($actual, $operator, $expected);
+        return $this->compare($actual, $op, $expected);
     }
 
-    protected function compare(mixed $actual, string $operator, mixed $expected): bool
+    protected function compare($actual, string $op, $expected): bool
     {
-        return match ($operator) {
-            'exists' => Arr::accessible([$actual]) ? true : ($actual !== null),
-            'not_exists' => $actual === null,
-            'equals' => $actual == $expected,
-            'not_equals' => $actual != $expected,
-            'contains' => is_string($actual) && is_string($expected) ? str_contains($actual, $expected) : false,
-            'in' => is_array($expected) ? in_array($actual, $expected, false) : false,
-            'not_in' => is_array($expected) ? !in_array($actual, $expected, false) : false,
-            'gt' => is_numeric($actual) && is_numeric($expected) ? ((float) $actual > (float) $expected) : false,
-            'gte' => is_numeric($actual) && is_numeric($expected) ? ((float) $actual >= (float) $expected) : false,
-            'lt' => is_numeric($actual) && is_numeric($expected) ? ((float) $actual < (float) $expected) : false,
-            'lte' => is_numeric($actual) && is_numeric($expected) ? ((float) $actual <= (float) $expected) : false,
-            default => false,
+        return match ($op) {
+            'equals', 'eq' => $actual == $expected,
+            'not_equals', 'neq' => $actual != $expected,
+            'strict_equals' => $actual === $expected,
+            'in' => in_array($actual, (array) $expected, false),
+            'not_in' => !in_array($actual, (array) $expected, false),
+            'contains' => is_string($actual) && str_contains($actual, (string) $expected),
+            'gt' => is_numeric($actual) && is_numeric($expected) && $actual > $expected,
+            'gte' => is_numeric($actual) && is_numeric($expected) && $actual >= $expected,
+            'lt' => is_numeric($actual) && is_numeric($expected) && $actual < $expected,
+            'lte' => is_numeric($actual) && is_numeric($expected) && $actual <= $expected,
+            'is_true' => (bool) $actual === true,
+            'is_false' => (bool) $actual === false,
+            default => true,
         };
     }
 
-    /**
-     * @param  array<string,mixed>  $action
-     * @param  array<string,mixed>  $payload
-     * @return array<string,mixed>
-     */
-    public function executeAction(array $action, array $payload, bool $dryRun): array
+    protected function getValue(array $context, string $path)
     {
-        $type = (string) ($action['type'] ?? '');
-        $params = (array) ($action['params'] ?? []);
-
-        return match ($type) {
-            'send_notification' => $this->actionSendNotification($params, $payload, $dryRun),
-            'send_email' => $this->actionSendEmail($params, $payload, $dryRun),
-            'assign_request' => $this->actionAssignRequest($params, $payload, $dryRun),
-            'change_request_status' => $this->actionChangeRequestStatus($params, $payload, $dryRun),
-            'create_invoice' => $this->actionCreateInvoice($params, $payload, $dryRun),
-            'update_client_tier' => $this->actionUpdateClientTier($params, $payload, $dryRun),
-            'add_internal_note' => $this->actionAddInternalNote($params, $payload, $dryRun),
-            'trigger_webhook' => $this->actionTriggerWebhook($params, $payload, $dryRun),
-            'create_admin_task' => $this->actionCreateAdminTask($params, $payload, $dryRun),
-            default => ['type' => $type, 'ok' => false, 'message' => 'Unknown action type'],
-        };
-    }
-
-    protected function actionSendNotification(array $params, array $payload, bool $dryRun): array
-    {
-        $channel = (string) ($params['channel'] ?? 'slack'); // slack|teams|sms (sms is no-op placeholder)
-        $message = (string) ($params['message'] ?? 'Automation notification');
-        $message = $this->renderTemplate($message, $payload);
-
-        if ($dryRun) {
-            return ['type' => 'send_notification', 'ok' => true, 'dry_run' => true, 'channel' => $channel, 'message' => $message];
+        $path = trim($path);
+        if ($path === '') {
+            return null;
         }
+        return Arr::get($context, $path);
+    }
+
+    protected function executeActions(array $actions, array $context): array
+    {
+        $succ = 0;
+        $fail = 0;
+
+        foreach ($actions as $action) {
+            try {
+                $this->executeAction((array) $action, $context);
+                $succ++;
+            } catch (\Throwable $e) {
+                $fail++;
+                ActivityLog::log(
+                    'Automation action failed: ' . $e->getMessage(),
+                    null,
+                    ['action' => $action, 'context' => $this->safeContext($context)],
+                    'automation_action_failed',
+                    'automation'
+                );
+            }
+        }
+
+        return [$fail === 0, $succ, $fail];
+    }
+
+    protected function executeAction(array $action, array $context): void
+    {
+        $type = strtolower((string) ($action['type'] ?? ''));
+        $config = (array) ($action['config'] ?? []);
+
+        match ($type) {
+            'send_email' => $this->actionSendEmail($config, $context),
+            'send_notification' => $this->actionSendNotification($config, $context),
+            'assign_request' => $this->actionAssignRequest($config, $context),
+            'change_request_status' => $this->actionChangeRequestStatus($config, $context),
+            'create_invoice' => $this->actionCreateInvoice($config, $context),
+            'update_client_tier' => $this->actionUpdateClientTier($config, $context),
+            'add_internal_note' => $this->actionAddInternalNote($config, $context),
+            'trigger_webhook' => $this->actionTriggerWebhook($config, $context),
+            'create_admin_task' => $this->actionCreateAdminTask($config, $context),
+            default => null,
+        };
+    }
+
+    protected function actionSendEmail(array $config, array $context): void
+    {
+        $to = $this->renderTemplate((string) ($config['to'] ?? ''), $context);
+        if ($to === '' || !str_contains($to, '@')) {
+            // convenience: allow "client" to mean client email
+            if (($config['to'] ?? null) === 'client') {
+                $to = (string) Arr::get($context, 'client.email', '');
+            }
+        }
+        abort_unless($to && str_contains($to, '@'), 422, 'Email action missing valid recipient.');
+
+        $subject = $this->renderTemplate((string) ($config['subject'] ?? 'Notification'), $context);
+        $body = $this->renderTemplate((string) ($config['body'] ?? ''), $context);
+
+        Mail::raw($body, function ($m) use ($to, $subject) {
+            $m->to($to)->subject($subject);
+        });
+    }
+
+    protected function actionSendNotification(array $config, array $context): void
+    {
+        $channel = strtolower((string) ($config['channel'] ?? 'slack')); // slack|teams|sms|webhook
+        $url = (string) ($config['url'] ?? '');
+        $message = $this->renderTemplate((string) ($config['message'] ?? ''), $context);
 
         if ($channel === 'sms') {
-            return ['type' => 'send_notification', 'ok' => false, 'message' => 'SMS not configured'];
+            // placeholder: log-only
+            ActivityLog::log('Automation SMS: ' . $message, null, ['to' => $config['to'] ?? null], 'automation_sms', 'automation');
+            return;
         }
 
-        $urlKey = $channel === 'teams' ? 'notify.teams.webhook' : 'notify.slack.webhook';
-        $webhook = (string) Setting::getValue($urlKey, '');
-        if ($webhook === '') {
-            return ['type' => 'send_notification', 'ok' => false, 'message' => "Missing setting {$urlKey}"];
-        }
+        abort_unless($url && str_starts_with($url, 'http'), 422, 'Notification action missing url.');
 
-        Http::timeout(5)->post($webhook, ['text' => $message]);
-        return ['type' => 'send_notification', 'ok' => true, 'channel' => $channel];
+        $payload = match ($channel) {
+            'teams' => [
+                '@type' => 'MessageCard',
+                '@context' => 'https://schema.org/extensions',
+                'summary' => 'Automation',
+                'title' => 'Automation',
+                'text' => $message,
+            ],
+            default => ['text' => $message], // slack/webhook
+        };
+
+        Http::timeout(10)->post($url, $payload)->throw();
     }
 
-    protected function actionSendEmail(array $params, array $payload, bool $dryRun): array
+    protected function actionAssignRequest(array $config, array $context): void
     {
-        $to = (string) ($params['to'] ?? 'admin'); // admin|client|email
-        $email = (string) ($params['email'] ?? '');
-        $subject = (string) ($params['subject'] ?? 'Notification');
-        $body = (string) ($params['body'] ?? '');
+        $requestId = (int) ($config['request_id'] ?? Arr::get($context, 'request.id', 0));
+        $userId = (int) ($config['user_id'] ?? 0);
+        abort_unless($requestId && $userId, 422, 'Assign request action missing request_id or user_id.');
 
-        $subject = $this->renderTemplate($subject, $payload);
-        $body = $this->renderTemplate($body, $payload);
-
-        $recipients = [];
-        if ($to === 'email' && $email !== '') {
-            $recipients = [$email];
-        } elseif ($to === 'admin') {
-            $recipients = User::query()->role(['admin', 'super_admin'])->pluck('email')->filter()->values()->all();
-        } elseif ($to === 'client') {
-            $clientId = (int) Arr::get($payload, 'client.id', Arr::get($payload, 'client_id', 0));
-            if ($clientId > 0) {
-                $recipients = User::query()->where('client_id', $clientId)->role(['client'])->pluck('email')->filter()->values()->all();
-            }
-        }
-
-        if ($dryRun) {
-            return ['type' => 'send_email', 'ok' => true, 'dry_run' => true, 'to' => $to, 'recipients' => $recipients, 'subject' => $subject];
-        }
-
-        foreach ($recipients as $r) {
-            Mail::raw($body, fn ($m) => $m->to($r)->subject($subject));
-        }
-
-        return ['type' => 'send_email', 'ok' => true, 'count' => count($recipients)];
+        ServiceRequest::query()->whereKey($requestId)->update(['assigned_to' => $userId]);
     }
 
-    protected function actionAssignRequest(array $params, array $payload, bool $dryRun): array
+    protected function actionChangeRequestStatus(array $config, array $context): void
     {
-        $requestId = (int) ($params['request_id'] ?? Arr::get($payload, 'request.id', Arr::get($payload, 'id', 0)));
-        $assigneeUserId = (int) ($params['assignee_user_id'] ?? 0);
-        $assigneeRole = (string) ($params['assignee_role'] ?? 'staff'); // staff|admin
+        $requestId = (int) ($config['request_id'] ?? Arr::get($context, 'request.id', 0));
+        $status = (string) ($config['status'] ?? '');
+        abort_unless($requestId && $status, 422, 'Change status action missing request_id or status.');
 
-        $req = ServiceRequest::query()->find($requestId);
-        if (!$req) return ['type' => 'assign_request', 'ok' => false, 'message' => 'Request not found'];
-
-        if ($assigneeUserId <= 0) {
-            $assigneeUserId = (int) User::query()
-                ->where('is_active', true)
-                ->role([$assigneeRole])
-                ->orderBy('id')
-                ->value('id');
-        }
-
-        if ($assigneeUserId <= 0) return ['type' => 'assign_request', 'ok' => false, 'message' => 'No assignee found'];
-
-        if ($dryRun) {
-            return ['type' => 'assign_request', 'ok' => true, 'dry_run' => true, 'request_id' => $req->id, 'assigned_to' => $assigneeUserId];
-        }
-
-        $req->update(['assigned_to' => $assigneeUserId]);
-        return ['type' => 'assign_request', 'ok' => true, 'request_id' => $req->id, 'assigned_to' => $assigneeUserId];
+        ServiceRequest::query()->whereKey($requestId)->update(['status' => $status]);
     }
 
-    protected function actionChangeRequestStatus(array $params, array $payload, bool $dryRun): array
+    protected function actionCreateInvoice(array $config, array $context): void
     {
-        $requestId = (int) ($params['request_id'] ?? Arr::get($payload, 'request.id', Arr::get($payload, 'id', 0)));
-        $status = (string) ($params['status'] ?? '');
-        if ($status === '') return ['type' => 'change_request_status', 'ok' => false, 'message' => 'Missing status'];
-
-        $req = ServiceRequest::query()->find($requestId);
-        if (!$req) return ['type' => 'change_request_status', 'ok' => false, 'message' => 'Request not found'];
-
-        if ($dryRun) {
-            return ['type' => 'change_request_status', 'ok' => true, 'dry_run' => true, 'request_id' => $req->id, 'status' => $status];
-        }
-
-        $req->update(['status' => $status]);
-        return ['type' => 'change_request_status', 'ok' => true, 'request_id' => $req->id, 'status' => $status];
-    }
-
-    protected function actionCreateInvoice(array $params, array $payload, bool $dryRun): array
-    {
-        $clientId = (int) ($params['client_id'] ?? Arr::get($payload, 'client.id', Arr::get($payload, 'client_id', 0)));
-        $requestId = (int) ($params['request_id'] ?? Arr::get($payload, 'request.id', Arr::get($payload, 'id', 0)));
-        $status = (string) ($params['status'] ?? 'draft');
-
-        if ($clientId <= 0) return ['type' => 'create_invoice', 'ok' => false, 'message' => 'Missing client_id'];
-
-        $req = $requestId ? ServiceRequest::query()->find($requestId) : null;
-
-        $hourlyRate = (float) Setting::getValue('billing.hourly_rate', 100);
-        $hours = (float) ($req?->actual_hours ?? $req?->estimated_hours ?? 0);
-        $amount = $hours > 0 ? round($hours * $hourlyRate, 2) : (float) ($params['amount'] ?? 0);
-
-        $items = (array) ($params['items'] ?? []);
-        if ($items === []) {
-            $items = [[
-                'description' => $req ? ("Work for request: " . $req->title) : 'Service work',
-                'quantity' => $hours > 0 ? $hours : 1,
-                'unit_price' => $hours > 0 ? $hourlyRate : $amount,
-            ]];
-        }
-
-        if ($dryRun) {
-            return ['type' => 'create_invoice', 'ok' => true, 'dry_run' => true, 'client_id' => $clientId, 'request_id' => $requestId, 'amount' => $amount, 'items' => $items];
-        }
+        $requestId = (int) ($config['request_id'] ?? Arr::get($context, 'request.id', 0));
+        $clientId = (int) ($config['client_id'] ?? Arr::get($context, 'request.client_id', Arr::get($context, 'client.id', 0)));
+        abort_unless($clientId, 422, 'Create invoice action missing client_id.');
 
         $invoice = Invoice::create([
             'client_id' => $clientId,
             'request_id' => $requestId ?: null,
-            'issue_date' => now()->toDateString(),
-            'due_date' => now()->addDays(14)->toDateString(),
-            'status' => $status,
-            'tax_rate' => 0,
-            'discount' => 0,
+            'status' => 'draft',
         ]);
 
-        $sort = 1;
-        foreach ($items as $it) {
-            InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'description' => (string) ($it['description'] ?? 'Item'),
-                'quantity' => (float) ($it['quantity'] ?? 1),
-                'unit_price' => (float) ($it['unit_price'] ?? 0),
-                'sort_order' => $sort++,
-            ]);
+        $desc = $this->renderTemplate((string) ($config['description'] ?? 'Service Request {{request.id}}: {{request.title}}'), $context);
+        $amount = (float) ($config['amount'] ?? Arr::get($context, 'request.estimated_cost', 0));
+        if ($amount <= 0) {
+            $amount = 0;
         }
 
-        $invoice->refresh();
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'description' => $desc,
+            'quantity' => 1,
+            'unit_price' => $amount,
+            'total' => $amount,
+            'sort_order' => 0,
+        ]);
+
         $invoice->calculateTotals();
-        $invoice->refresh();
-
-        return ['type' => 'create_invoice', 'ok' => true, 'invoice_id' => $invoice->id, 'amount' => (float) $invoice->amount];
     }
 
-    protected function actionUpdateClientTier(array $params, array $payload, bool $dryRun): array
+    protected function actionUpdateClientTier(array $config, array $context): void
     {
-        $clientId = (int) ($params['client_id'] ?? Arr::get($payload, 'client.id', Arr::get($payload, 'client_id', 0)));
-        $tier = (string) ($params['tier'] ?? '');
-        if ($clientId <= 0 || $tier === '') return ['type' => 'update_client_tier', 'ok' => false, 'message' => 'Missing client_id/tier'];
+        $clientId = (int) ($config['client_id'] ?? Arr::get($context, 'client.id', Arr::get($context, 'request.client_id', 0)));
+        $tier = (string) ($config['tier'] ?? '');
+        abort_unless($clientId && $tier, 422, 'Update tier action missing client_id or tier.');
 
-        $client = Client::query()->find($clientId);
-        if (!$client) return ['type' => 'update_client_tier', 'ok' => false, 'message' => 'Client not found'];
-
-        if ($dryRun) {
-            return ['type' => 'update_client_tier', 'ok' => true, 'dry_run' => true, 'client_id' => $clientId, 'tier' => $tier];
-        }
-
-        $client->update(['tier' => $tier]);
-        return ['type' => 'update_client_tier', 'ok' => true, 'client_id' => $clientId, 'tier' => $tier];
+        Client::query()->whereKey($clientId)->update(['tier' => $tier]);
     }
 
-    protected function actionAddInternalNote(array $params, array $payload, bool $dryRun): array
+    protected function actionAddInternalNote(array $config, array $context): void
     {
-        $message = (string) ($params['message'] ?? 'Automation note');
-        $message = $this->renderTemplate($message, $payload);
-
-        $subjectType = (string) ($params['subject_type'] ?? '');
-        $subjectId = (int) ($params['subject_id'] ?? 0);
-
-        // Convenience: infer from payload
-        if ($subjectType === '' && Arr::has($payload, 'request.id')) {
-            $subjectType = ServiceRequest::class;
-            $subjectId = (int) Arr::get($payload, 'request.id');
-        }
-        if ($subjectType === '' && Arr::has($payload, 'invoice.id')) {
-            $subjectType = Invoice::class;
-            $subjectId = (int) Arr::get($payload, 'invoice.id');
-        }
-
-        if ($dryRun) {
-            return ['type' => 'add_internal_note', 'ok' => true, 'dry_run' => true, 'subject_type' => $subjectType, 'subject_id' => $subjectId, 'message' => $message];
-        }
-
-        ActivityLog::create([
-            'user_id' => null,
-            'client_id' => (int) Arr::get($payload, 'client.id', Arr::get($payload, 'client_id', null)),
-            'action' => 'automation_note',
-            'description' => $message,
-            'subject_type' => $subjectType ?: null,
-            'subject_id' => $subjectId ?: null,
-            'metadata' => ['automation' => true],
-        ]);
-
-        return ['type' => 'add_internal_note', 'ok' => true];
+        $message = $this->renderTemplate((string) ($config['message'] ?? 'Automation note'), $context);
+        ActivityLog::log($message, null, ['context' => $this->safeContext($context)], 'automation_note', 'automation');
     }
 
-    protected function actionTriggerWebhook(array $params, array $payload, bool $dryRun): array
+    protected function actionCreateAdminTask(array $config, array $context): void
     {
-        $event = (string) ($params['event'] ?? '');
-        $clientId = (int) ($params['client_id'] ?? Arr::get($payload, 'client.id', Arr::get($payload, 'client_id', 0)));
-        $data = (array) ($params['data'] ?? $payload);
-
-        if ($event === '' || $clientId <= 0) return ['type' => 'trigger_webhook', 'ok' => false, 'message' => 'Missing event/client_id'];
-        if ($dryRun) return ['type' => 'trigger_webhook', 'ok' => true, 'dry_run' => true, 'event' => $event, 'client_id' => $clientId];
-
-        app(WebhookService::class)->triggerWebhook($event, $data, $clientId);
-        return ['type' => 'trigger_webhook', 'ok' => true, 'event' => $event];
+        $message = $this->renderTemplate((string) ($config['message'] ?? 'Automation task'), $context);
+        ActivityLog::log($message, null, ['context' => $this->safeContext($context)], 'automation_task', 'automation');
     }
 
-    protected function actionCreateAdminTask(array $params, array $payload, bool $dryRun): array
+    protected function actionTriggerWebhook(array $config, array $context): void
     {
-        $title = (string) ($params['title'] ?? 'Automation task');
-        $title = $this->renderTemplate($title, $payload);
-        $details = (string) ($params['details'] ?? '');
-        $details = $this->renderTemplate($details, $payload);
+        $event = (string) ($config['event'] ?? '');
+        abort_unless($event !== '', 422, 'Trigger webhook action missing event.');
+        $clientId = (int) ($config['client_id'] ?? Arr::get($context, 'client.id', Arr::get($context, 'request.client_id', 0)));
 
-        if ($dryRun) {
-            return ['type' => 'create_admin_task', 'ok' => true, 'dry_run' => true, 'title' => $title];
-        }
-
-        ActivityLog::create([
-            'user_id' => null,
-            'client_id' => (int) Arr::get($payload, 'client.id', Arr::get($payload, 'client_id', null)),
-            'action' => 'automation_task',
-            'description' => $title,
-            'subject_type' => null,
-            'subject_id' => null,
-            'metadata' => [
-                'automation' => true,
-                'details' => $details,
-            ],
-        ]);
-
-        return ['type' => 'create_admin_task', 'ok' => true];
+        app(WebhookService::class)->triggerWebhook($event, [
+            'source' => 'automation',
+            'data' => $this->safeContext($context),
+        ], $clientId ?: null);
     }
 
-    protected function renderTemplate(string $template, array $payload): string
+    protected function renderTemplate(string $template, array $context): string
     {
-        // Very small templating: replaces {{path.to.value}}
-        return preg_replace_callback('/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/', function ($m) use ($payload) {
-            $v = Arr::get($payload, $m[1]);
-            if (is_array($v) || is_object($v)) return '';
+        return preg_replace_callback('/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/', function ($m) use ($context) {
+            $v = $this->getValue($context, (string) $m[1]);
+            if (is_array($v) || is_object($v)) {
+                return json_encode($v, JSON_UNESCAPED_SLASHES) ?: '';
+            }
             return (string) ($v ?? '');
         }, $template) ?? $template;
+    }
+
+    protected function safeContext(array $context): array
+    {
+        // avoid huge payloads / recursion; keep shallow known keys
+        $allow = ['request', 'invoice', 'contract', 'document', 'client', 'payment', 'storage', 'meta'];
+        $out = [];
+        foreach ($allow as $k) {
+            if (array_key_exists($k, $context)) {
+                $out[$k] = $context[$k];
+            }
+        }
+        return $out ?: $context;
     }
 }
 

@@ -1,71 +1,41 @@
-@extends('layouts.admin')
+<!doctype html>
+<html lang="en" data-theme="{{ $config->get('ui.theme', 'light') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="color-scheme" content="{{ $config->get('ui.theme', 'light') }}">
+    <title>{{ $config->get('ui.title', config('app.name') . ' - API Docs') }}</title>
 
-@section('content')
-    <div class="container-xl">
-        <div class="page-header d-print-none">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h2 class="page-title">API Documentation</h2>
-                    <div class="text-muted">Interactive OpenAPI docs generated from the codebase.</div>
-                </div>
-                <div class="col-auto">
-                    <a href="{{ route('scramble.docs.ui') }}" class="btn btn-primary" target="_blank" rel="noreferrer">
-                        Open in new tab
-                    </a>
-                </div>
-            </div>
-        </div>
+    <script src="https://unpkg.com/@stoplight/elements@8.4.2/web-components.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements@8.4.2/styles.min.css">
 
-        <div class="card">
-            <div class="card-body p-0">
-                <iframe
-                    src="{{ route('scramble.docs.ui') }}"
-                    style="width: 100%; height: 75vh; border: 0;"
-                    title="API Documentation"
-                ></iframe>
-            </div>
-        </div>
-
-        <div class="card mt-3">
-            <div class="card-header">
-                <h3 class="card-title">Quick examples</h3>
-            </div>
-            <div class="card-body">
-                <div class="mb-2 fw-bold">cURL</div>
-                <pre class="bg-light p-3 rounded"><code>curl -X POST "{{ url('/api/v1/requests') }}" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Accept: application/json" \
-  -H "Content-Type: application/json" \
-  -d '{"client_id": 1, "title": "API request", "description": "Created via integration"}'</code></pre>
-
-                <div class="mb-2 fw-bold">Node.js (fetch)</div>
-                <pre class="bg-light p-3 rounded"><code>await fetch("{{ url('/api/v1/requests') }}", {
-  method: "POST",
-  headers: {
-    Authorization: "Bearer YOUR_TOKEN",
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  },
-  body: JSON.stringify({ client_id: 1, title: "API request", description: "Created via integration" }),
-});</code></pre>
-
-                <div class="mb-2 fw-bold">Python (requests)</div>
-                <pre class="bg-light p-3 rounded"><code>import requests
-
-resp = requests.post(
-  "{{ url('/api/v1/requests') }}",
-  headers={"Authorization": "Bearer YOUR_TOKEN", "Accept": "application/json"},
-  json={"client_id": 1, "title": "API request", "description": "Created via integration"},
-)
-print(resp.status_code, resp.json())</code></pre>
-
-                <hr>
-                <div class="text-muted">
-                    <strong>Zapier / Make.com</strong>: use the Admin → Webhooks screen to register an endpoint URL, then choose an event like
-                    <code>request.created</code> or <code>invoice.paid</code>. Zapier/Make can also receive payloads via “Catch Hook” modules.
-                </div>
-            </div>
-        </div>
-    </div>
-@endsection
+    <style>
+        html, body { margin:0; height:100%; }
+        body { background-color: var(--color-canvas); }
+        [data-theme="dark"] .token.property { color: rgb(128, 203, 196) !important; }
+        [data-theme="dark"] .token.operator { color: rgb(255, 123, 114) !important; }
+        [data-theme="dark"] .token.number { color: rgb(247, 140, 108) !important; }
+        [data-theme="dark"] .token.string { color: rgb(165, 214, 255) !important; }
+        [data-theme="dark"] .token.boolean { color: rgb(121, 192, 255) !important; }
+        [data-theme="dark"] .token.punctuation { color: #dbdbdb !important; }
+    </style>
+</head>
+<body style="height: 100vh; overflow-y: hidden">
+<elements-api
+    id="docs"
+    tryItCredentialsPolicy="{{ $config->get('ui.try_it_credentials_policy', 'include') }}"
+    router="hash"
+    @if($config->get('ui.hide_try_it')) hideTryIt="true" @endif
+    @if($config->get('ui.hide_schemas')) hideSchemas="true" @endif
+    @if($config->get('ui.logo')) logo="{{ $config->get('ui.logo') }}" @endif
+    @if($config->get('ui.layout')) layout="{{ $config->get('ui.layout') }}" @endif
+/>
+<script>
+    (async () => {
+        const docs = document.getElementById('docs');
+        docs.apiDescriptionDocument = @json($spec);
+    })();
+</script>
+</body>
+</html>
 

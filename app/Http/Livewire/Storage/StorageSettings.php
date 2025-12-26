@@ -2,147 +2,111 @@
 
 namespace App\Http\Livewire\Storage;
 
-use App\Models\Client;
+use App\Models\ClientStorageSetting;
 use App\Models\StorageConnection;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 
 class StorageSettings extends Component
 {
-    public ?int $client_id = null;
+    public ?int $clientId = null;
 
-    /** @var array<int, array<string, mixed>> */
-    public array $connections = [];
+    public bool $auto_sync_enabled = true;
+    public string $auto_sync_frequency = 'daily';
+    public string $conflict_rule = 'prefer_primary';
+    public int $quota_alert_percent = 80;
+    public bool $backup_enabled = false;
+    public ?int $backup_connection_id = null;
+    public string $folders_csv = '';
+
+    public ?int $primary_connection_id = null;
 
     public function mount(): void
     {
-        $user = auth()->user();
-        if ($user?->client_id) {
-            $this->client_id = (int) $user->client_id;
-        }
+        $user = Auth::user();
+        abort_unless($user?->client_id, 403);
+        $this->clientId = $user->client_id;
 
-        $this->loadConnections();
+        $settings = ClientStorageSetting::query()->firstOrCreate(['client_id' => $this->clientId]);
+        $this->auto_sync_enabled = (bool) $settings->auto_sync_enabled;
+        $this->auto_sync_frequency = (string) $settings->auto_sync_frequency;
+        $this->conflict_rule = (string) $settings->conflict_rule;
+        $this->quota_alert_percent = (int) $settings->quota_alert_percent;
+        $this->backup_enabled = (bool) $settings->backup_enabled;
+        $this->backup_connection_id = $settings->backup_connection_id;
+        $this->folders_csv = implode(', ', (array) ($settings->folders ?? []));
+
+        $primary = StorageConnection::query()
+            ->where('client_id', $this->clientId)
+            ->where('is_primary', true)
+            ->first();
+        $this->primary_connection_id = $primary?->id;
     }
 
-    public function updatedClientId(): void
+    public function save(): void
     {
-        $this->loadConnections();
-    }
-
-    public function loadConnections(): void
-    {
-        $user = auth()->user();
-        $q = StorageConnection::query()->orderBy('provider');
-
-        if ($user?->isClient()) {
-            $q->where('client_id', $user->client_id);
-        } elseif ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
-            $q->whereIn('client_id', $user->assignedClientIds());
-        } elseif ($this->client_id) {
-            $q->where('client_id', $this->client_id);
-        }
-
-        $this->connections = $q->get()->map(function (StorageConnection $c) {
-            $creds = (array) ($c->credentials ?? []);
-            return [
-                'id' => $c->id,
-                'client_id' => (int) $c->client_id,
-                'provider' => (string) $c->provider,
-                'status' => (string) $c->status,
-                'is_primary' => (bool) $c->is_primary,
-                'auto_sync_enabled' => (bool) ($c->auto_sync_enabled ?? true),
-                'sync_frequency_minutes' => (int) ($c->sync_frequency_minutes ?? 0),
-                'conflict_strategy' => (string) ($c->conflict_strategy ?? 'prefer_primary'),
-                'quota_alerts_enabled' => (bool) ($creds['quota_alerts_enabled'] ?? true),
-                'sync_failure_alerts_enabled' => (bool) ($creds['sync_failure_alerts_enabled'] ?? true),
-                'folder_path' => (string) ($creds['folder_path'] ?? ''),
-                'bucket' => (string) ($creds['bucket'] ?? ''),
-                'drive_folder_id' => (string) ($creds['folder_id'] ?? ''),
-            ];
-        })->all();
-    }
-
-    public function save(int $connectionId): void
-    {
-        $conn = StorageConnection::query()->findOrFail($connectionId);
-        $this->authorizeConnection($conn);
-
-        $row = collect($this->connections)->firstWhere('id', $connectionId);
-        if (!$row) {
-            return;
-        }
-
-        $data = validator($row, [
+        Validator::make([
+            'auto_sync_enabled' => $this->auto_sync_enabled,
+            'auto_sync_frequency' => $this->auto_sync_frequency,
+            'conflict_rule' => $this->conflict_rule,
+            'quota_alert_percent' => $this->quota_alert_percent,
+            'backup_enabled' => $this->backup_enabled,
+            'backup_connection_id' => $this->backup_connection_id,
+        ], [
             'auto_sync_enabled' => ['boolean'],
-            'sync_frequency_minutes' => ['integer', 'min:0', 'max:10080'],
-            'conflict_strategy' => ['required', Rule::in(['prefer_primary', 'prefer_newest', 'keep_both'])],
-            'quota_alerts_enabled' => ['boolean'],
-            'sync_failure_alerts_enabled' => ['boolean'],
-            'folder_path' => ['nullable', 'string', 'max:255'],
-            'drive_folder_id' => ['nullable', 'string', 'max:255'],
-            'is_primary' => ['boolean'],
+            'auto_sync_frequency' => ['required', 'in:hourly,daily,weekly'],
+            'conflict_rule' => ['required', 'in:prefer_primary,prefer_newest,keep_both'],
+            'quota_alert_percent' => ['required', 'integer', 'min:1', 'max:100'],
+            'backup_enabled' => ['boolean'],
+            'backup_connection_id' => ['nullable', 'integer'],
         ])->validate();
 
-        $creds = (array) ($conn->credentials ?? []);
-        $creds['quota_alerts_enabled'] = (bool) ($data['quota_alerts_enabled'] ?? true);
-        $creds['sync_failure_alerts_enabled'] = (bool) ($data['sync_failure_alerts_enabled'] ?? true);
-        if ($conn->provider === 'aws_s3' || $conn->provider === 'dropbox') {
-            $creds['folder_path'] = trim((string) ($data['folder_path'] ?? ''), '/');
-        }
-        if ($conn->provider === 'google_drive') {
-            $creds['folder_id'] = trim((string) ($data['drive_folder_id'] ?? ''));
-        }
+        $folders = collect(explode(',', (string) $this->folders_csv))
+            ->map(fn ($f) => trim($f))
+            ->filter()
+            ->values()
+            ->all();
 
-        $conn->update([
-            'auto_sync_enabled' => (bool) ($data['auto_sync_enabled'] ?? true),
-            'sync_frequency_minutes' => (int) ($data['sync_frequency_minutes'] ?? 0) ?: null,
-            'conflict_strategy' => (string) $data['conflict_strategy'],
-            'credentials' => $creds,
-        ]);
+        ClientStorageSetting::query()->updateOrCreate(
+            ['client_id' => $this->clientId],
+            [
+                'auto_sync_enabled' => $this->auto_sync_enabled,
+                'auto_sync_frequency' => $this->auto_sync_frequency,
+                'conflict_rule' => $this->conflict_rule,
+                'quota_alert_percent' => $this->quota_alert_percent,
+                'backup_enabled' => $this->backup_enabled,
+                'backup_connection_id' => $this->backup_enabled ? $this->backup_connection_id : null,
+                'folders' => $folders,
+            ]
+        );
 
-        if (!empty($data['is_primary'])) {
-            StorageConnection::query()->where('client_id', $conn->client_id)->update(['is_primary' => false]);
-            $conn->update(['is_primary' => true]);
+        // Primary provider selection
+        if ($this->primary_connection_id) {
+            StorageConnection::query()
+                ->where('client_id', $this->clientId)
+                ->update(['is_primary' => false]);
+
+            StorageConnection::query()
+                ->where('client_id', $this->clientId)
+                ->where('id', $this->primary_connection_id)
+                ->update(['is_primary' => true]);
         }
 
         session()->flash('success', 'Storage settings saved.');
-        $this->loadConnections();
-    }
-
-    protected function authorizeConnection(StorageConnection $conn): void
-    {
-        $user = auth()->user();
-        if (!$user) abort(403);
-
-        if ($user->isClient()) {
-            abort_if((int) $user->client_id !== (int) $conn->client_id, 403);
-            return;
-        }
-
-        if ($user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
-            abort_if(!in_array((int) $conn->client_id, $user->assignedClientIds(), true), 403);
-        }
     }
 
     public function render()
     {
-        $user = auth()->user();
-        $isAdmin = $user?->isAdmin() || $user?->isStaff();
-
-        $clients = collect();
-        if ($isAdmin) {
-            $q = Client::query()->orderBy('company_name');
-            if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
-                $q->whereIn('id', $user->assignedClientIds());
-            }
-            $clients = $q->get(['id', 'company_name']);
-        }
+        $connections = StorageConnection::query()
+            ->where('client_id', $this->clientId)
+            ->where('status', 'active')
+            ->orderByDesc('is_primary')
+            ->get();
 
         return view('livewire.storage.settings', [
-            'isAdmin' => $isAdmin,
-            'clients' => $clients,
-            'defaultFreq' => (int) config('storage-providers.sync.frequency_minutes', 15),
-        ])->layout('layouts.admin', ['title' => 'Storage Settings']);
+            'connections' => $connections,
+        ]);
     }
 }
 

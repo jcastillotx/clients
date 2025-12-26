@@ -3,6 +3,7 @@
 /public/build
 /public/hot
 /public/storage
+/bootstrap/cache/*.php
 /storage/*.key
 /vendor
 .env
@@ -15,6 +16,7 @@ Homestead.yaml
 auth.json
 npm-debug.log
 yarn-error.log
+database/database.sqlite
 /.fleet
 /.idea
 /.vscode

@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Superseded by the newer messaging schema in `2025_12_26_030100_create_messaging_tables.php`.
+        // This older `chat_messages` table isn't used by the current app and can conflict
+        // with alternate messaging implementations. Keep it as a no-op.
+        return;
+
         Schema::create('chat_messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();

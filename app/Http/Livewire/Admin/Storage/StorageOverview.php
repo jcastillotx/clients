@@ -3,9 +3,9 @@
 namespace App\Http\Livewire\Admin\Storage;
 
 use App\Models\Client;
-use App\Models\Setting;
 use App\Models\StorageConnection;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\StorageSyncLog;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -13,92 +13,61 @@ class StorageOverview extends Component
 {
     use WithPagination;
 
-    protected string $paginationTheme = 'bootstrap';
-
     public string $search = '';
-    public string $provider = 'all';
-    public string $status = 'all';
+    public string $provider = '';
+    public string $status = '';
+
+    protected array $queryString = [
+        'search' => ['except' => ''],
+        'provider' => ['except' => ''],
+        'status' => ['except' => ''],
+    ];
+
+    public function mount(): void
+    {
+        abort_unless(Auth::user()?->can('access admin panel'), 403);
+    }
 
     public function updatingSearch(): void { $this->resetPage(); }
     public function updatingProvider(): void { $this->resetPage(); }
     public function updatingStatus(): void { $this->resetPage(); }
 
-    protected function baseQuery(): Builder
-    {
-        $q = StorageConnection::query()->with('client')->orderByDesc('last_synced_at')->orderByDesc('id');
-
-        // Staff scoping: staff can only view assigned clients.
-        $user = auth()->user();
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
-            $q->whereIn('client_id', $user->assignedClientIds());
-        }
-
-        if ($this->provider !== 'all') {
-            $q->where('provider', $this->provider);
-        }
-        if ($this->status !== 'all') {
-            $q->where('status', $this->status);
-        }
-        if ($this->search !== '') {
-            $s = '%' . $this->search . '%';
-            $q->whereHas('client', fn ($c) => $c->where('company_name', 'like', $s)->orWhere('email', 'like', $s))
-                ->orWhere('provider', 'like', $s);
-        }
-
-        return $q;
-    }
-
     public function render()
     {
-        $rows = $this->baseQuery()->paginate(25);
-
-        $all = StorageConnection::query();
-        $totalUsed = (int) $all->sum('storage_used');
-        $totalKnownLimit = (int) $all->whereNotNull('storage_limit')->sum('storage_limit');
-
-        // Naive S3 cost estimate ($0.023 per GB-month) using current used bytes.
-        $s3UsedBytes = (int) StorageConnection::query()->where('provider', 'aws_s3')->sum('storage_used');
-        $s3Gb = $s3UsedBytes / (1024 * 1024 * 1024);
-        $s3EstimatedMonthly = round($s3Gb * 0.023, 2);
-
-        $quotaByTierMb = (array) Setting::getValue('storage.quota_by_tier_mb', []);
-        $quotaByTierBytes = collect($quotaByTierMb)
-            ->map(fn ($mb) => (int) $mb * 1024 * 1024)
-            ->all();
-
-        $clientTotals = Client::query()
-            ->leftJoin('storage_connections', function ($j) {
-                $j->on('storage_connections.client_id', '=', 'clients.id')
-                    ->whereNull('storage_connections.deleted_at');
+        $query = StorageConnection::query()
+            ->with('client:id,company_name,tier,status')
+            ->when($this->provider, fn ($q) => $q->where('provider', $this->provider))
+            ->when($this->status, fn ($q) => $q->where('status', $this->status))
+            ->when($this->search, function ($q) {
+                $q->whereHas('client', function ($cq) {
+                    $cq->where('company_name', 'like', '%' . $this->search . '%');
+                })->orWhere('name', 'like', '%' . $this->search . '%');
             })
-            ->selectRaw('clients.id, clients.company_name, clients.tier, SUM(COALESCE(storage_connections.storage_used,0)) as used')
-            ->groupBy('clients.id', 'clients.company_name', 'clients.tier')
-            ->orderByDesc('used')
-            ->limit(50)
-            ->get()
-            ->map(function ($r) use ($quotaByTierBytes) {
-                $tier = (string) ($r->tier ?? 'standard');
-                $quota = (int) ($quotaByTierBytes[$tier] ?? 0);
-                $used = (int) ($r->used ?? 0);
-                $pct = $quota > 0 ? min(200, (int) round(($used / $quota) * 100)) : null;
+            ->orderByDesc('updated_at');
 
-                return [
-                    'client' => (string) $r->company_name,
-                    'tier' => $tier,
-                    'used' => $used,
-                    'quota' => $quota,
-                    'pct' => $pct,
-                ];
-            })
-            ->all();
+        $connections = $query->paginate(25);
 
-        return view('livewire.admin.storage.overview', [
-            'connections' => $rows,
-            'totalUsed' => $totalUsed,
-            'totalKnownLimit' => $totalKnownLimit,
-            's3EstimatedMonthly' => $s3EstimatedMonthly,
-            'clientTotals' => $clientTotals,
-        ])->layout('layouts.admin', ['title' => 'Storage Overview']);
+        $stats = [
+            'clients' => (int) Client::count(),
+            'connections' => (int) StorageConnection::count(),
+            'active' => (int) StorageConnection::where('status', 'active')->count(),
+            'error' => (int) StorageConnection::where('status', 'error')->count(),
+            'used_bytes' => (int) StorageConnection::sum('used_bytes'),
+        ];
+
+        $lastFailures = StorageSyncLog::query()
+            ->with('connection.client')
+            ->where('status', 'failed')
+            ->latest('id')
+            ->limit(10)
+            ->get();
+
+        // Cost tracking (placeholder): if provider == s3, use config value per GB-month.
+        $s3Rate = (float) config('storage.costs.s3_per_gb_month', 0.023);
+        $s3Bytes = (int) StorageConnection::where('provider', 's3')->sum('used_bytes');
+        $stats['s3_estimated_monthly_cost'] = round(($s3Bytes / (1024 ** 3)) * $s3Rate, 2);
+
+        return view('livewire.admin.storage.overview', compact('connections', 'stats', 'lastFailures', 's3Rate'));
     }
 }
 

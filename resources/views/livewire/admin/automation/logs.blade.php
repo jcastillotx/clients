@@ -1,104 +1,80 @@
-<div class="container-xl">
-    <div class="page-header d-print-none">
-        <div class="row align-items-center">
-            <div class="col">
-                <h2 class="page-title">Automation Logs</h2>
-                <div class="text-muted">Execution history for debugging and audit trail.</div>
-            </div>
-            <div class="col-auto">
-                <a href="{{ route('admin.automation.index') }}" class="btn btn-outline-secondary">Back</a>
-            </div>
+<x-app-layout>
+    <x-slot name="header">Automation Logs</x-slot>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div class="text-muted">Execution log for debugging + audit trail</div>
+        <div>
+            <a href="{{ route('admin.automation.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list mr-1"></i> Rules
+            </a>
         </div>
     </div>
 
     <div class="card mb-3">
         <div class="card-body">
-            <div class="row g-2">
-                <div class="col-6 col-md-3">
-                    <select class="form-select" wire:model="status">
-                        <option value="all">All statuses</option>
-                        <option value="succeeded">Succeeded</option>
-                        <option value="failed">Failed</option>
-                        <option value="skipped">Skipped</option>
-                        <option value="dry_run">Dry run</option>
-                    </select>
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="mb-1">Trigger</label>
+                    <input class="form-control" wire:model.live.debounce.300ms="trigger" placeholder="e.g. request.created">
                 </div>
-                <div class="col-6 col-md-4">
-                    <select class="form-select" wire:model="trigger">
-                        <option value="all">All triggers</option>
-                        @foreach($triggers as $t)
-                            <option value="{{ $t }}">{{ $t }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-12 col-md-5">
-                    <select class="form-select" wire:model="ruleId">
-                        <option value="">All rules</option>
-                        @foreach($rules as $r)
-                            <option value="{{ $r->id }}">{{ $r->name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-md-6">
+                    <label class="mb-1">Rule ID</label>
+                    <input type="number" class="form-control" wire:model.live.debounce.300ms="ruleId" placeholder="e.g. 12">
                 </div>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div class="table-responsive">
-            <table class="table card-table table-vcenter">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Rule</th>
-                        <th>Trigger</th>
-                        <th>Status</th>
-                        <th>When</th>
-                        <th>Message</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @forelse($logs as $l)
-                    <tr>
-                        <td class="text-muted">#{{ $l->id }}</td>
-                        <td>
-                            @if($l->rule)
-                                <a href="{{ route('admin.automation.builder', ['rule' => $l->rule->id]) }}">{{ $l->rule->name }}</a>
-                            @else
-                                <span class="text-muted">—</span>
-                            @endif
-                        </td>
-                        <td><code>{{ $l->trigger }}</code></td>
-                        <td>
-                            @php
-                                $badge = match($l->status) {
-                                    'succeeded' => 'bg-success',
-                                    'failed' => 'bg-danger',
-                                    'skipped' => 'bg-secondary',
-                                    'dry_run' => 'bg-info',
-                                    default => 'bg-secondary',
-                                };
-                            @endphp
-                            <span class="badge {{ $badge }}">{{ $l->status }}</span>
-                        </td>
-                        <td class="text-muted">{{ $l->created_at?->diffForHumans() }}</td>
-                        <td class="text-muted">{{ $l->message }}</td>
-                    </tr>
-                    @if($l->context)
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
                         <tr>
-                            <td colspan="6" class="bg-light">
-                                <pre class="mb-0"><code>{{ json_encode($l->context, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</code></pre>
-                            </td>
+                            <th>When</th>
+                            <th>Rule</th>
+                            <th>Trigger</th>
+                            <th>Matched</th>
+                            <th>Result</th>
+                            <th class="text-muted">Actions</th>
                         </tr>
-                    @endif
-                @empty
-                    <tr><td colspan="6" class="text-muted">No logs yet.</td></tr>
-                @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse($runs as $run)
+                            <tr>
+                                <td class="text-muted">{{ $run->created_at?->toDayDateTimeString() }}</td>
+                                <td>
+                                    <div class="font-weight-bold">#{{ $run->automation_rule_id }}</div>
+                                    <div class="text-muted small">{{ $run->rule?->name }}</div>
+                                </td>
+                                <td><code>{{ $run->trigger }}</code></td>
+                                <td>
+                                    <span class="badge badge-{{ $run->matched ? 'info' : 'secondary' }}">
+                                        {{ $run->matched ? 'yes' : 'no' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ $run->succeeded ? 'success' : 'danger' }}">
+                                        {{ $run->succeeded ? 'ok' : 'fail' }}
+                                    </span>
+                                    @if($run->error)
+                                        <div class="text-danger small">{{ $run->error }}</div>
+                                    @endif
+                                </td>
+                                <td class="text-muted">
+                                    {{ $run->actions_succeeded }}/{{ $run->actions_total }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="text-muted text-center py-4">No runs yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="card-footer">
-            {{ $logs->links() }}
+            {{ $runs->links() }}
         </div>
     </div>
-</div>
+</x-app-layout>
 

@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,24 +22,22 @@ class Document extends Model
     protected $fillable = [
         'client_id',
         'request_id',
-        'invoice_id',
-        'contract_id',
         'uploaded_by',
         'title',
         'description',
         'filename',
         'original_filename',
         'file_path',
-        'thumbnail_path',
         'mime_type',
         'file_size',
         'category',
-        'tags',
         'is_public',
-        'workflow_status',
-        'review_requested_at',
-        'review_decided_at',
-        'current_version_id',
+        'status',
+        'submitted_at',
+        'approved_at',
+        'rejected_at',
+        'reviewed_by',
+        'current_version',
     ];
 
     /**
@@ -47,26 +45,17 @@ class Document extends Model
      *
      * @return array<string, string>
      */
-    protected $casts = [
-        'file_size' => 'integer',
-        'is_public' => 'boolean',
-        'tags' => 'array',
-        'workflow_status' => 'string',
-        'review_requested_at' => 'datetime',
-        'review_decided_at' => 'datetime',
-        'deleted_at' => 'datetime',
-    ];
-
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array<int, string>
-     */
-    protected $dates = [
-        'created_at',
-        'updated_at',
-        'deleted_at',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'file_size' => 'integer',
+            'is_public' => 'boolean',
+            'submitted_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'current_version' => 'integer',
+        ];
+    }
 
     /**
      * Get the client that owns the document.
@@ -102,19 +91,24 @@ class Document extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
-    public function syncedFile(): HasOne
+    public function reviewer(): BelongsTo
     {
-        return $this->hasOne(SyncedFile::class);
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 
     public function comments(): HasMany
     {
-        return $this->hasMany(DocumentComment::class)->orderBy('created_at');
+        return $this->hasMany(DocumentComment::class)->latest('id');
     }
 
     public function versions(): HasMany
     {
-        return $this->hasMany(DocumentVersion::class)->orderByDesc('version')->orderByDesc('id');
+        return $this->hasMany(DocumentVersion::class)->orderByDesc('version');
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(StorageTag::class, 'document_tag', 'document_id', 'storage_tag_id');
     }
 
     public function permissions(): HasMany
@@ -136,6 +130,21 @@ class Document extends Model
     public function getDownloadUrlAttribute(): string
     {
         return $this->url;
+    }
+
+    public function isPendingReview(): bool
+    {
+        return $this->status === 'pending_review';
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === 'approved';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
     }
 
     /**

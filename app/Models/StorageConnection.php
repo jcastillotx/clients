@@ -6,39 +6,33 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Arr;
 
 class StorageConnection extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'client_id',
         'provider',
-        'credentials',
+        'name',
+        'disk',
         'status',
-        'storage_used',
-        'storage_limit',
         'is_primary',
-        'auto_sync_enabled',
-        'sync_frequency_minutes',
-        'conflict_strategy',
-        'last_synced_at',
-        'quota_warned_80_at',
-        'last_sync_failed_at',
-        'sync_failed_notified_at',
+        'used_bytes',
+        'quota_bytes',
+        'last_sync_at',
+        'last_error',
+        'settings',
     ];
 
     protected $casts = [
-        'credentials' => 'encrypted:array',
         'is_primary' => 'boolean',
-        'auto_sync_enabled' => 'boolean',
-        'storage_used' => 'integer',
-        'storage_limit' => 'integer',
-        'sync_frequency_minutes' => 'integer',
-        'last_synced_at' => 'datetime',
-        'quota_warned_80_at' => 'datetime',
-        'last_sync_failed_at' => 'datetime',
-        'sync_failed_notified_at' => 'datetime',
+        'used_bytes' => 'integer',
+        'quota_bytes' => 'integer',
+        'last_sync_at' => 'datetime',
+        'settings' => 'array',
     ];
 
     public function client(): BelongsTo
@@ -46,14 +40,58 @@ class StorageConnection extends Model
         return $this->belongsTo(Client::class);
     }
 
-    public function syncedFiles(): HasMany
+    public function files(): HasMany
     {
-        return $this->hasMany(SyncedFile::class);
+        return $this->hasMany(StorageFile::class, 'storage_connection_id');
     }
 
     public function syncLogs(): HasMany
     {
-        return $this->hasMany(StorageSyncLog::class, 'storage_connection_id')->orderByDesc('started_at')->orderByDesc('id');
+        return $this->hasMany(StorageSyncLog::class, 'storage_connection_id')->latest('id');
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'active' => 'Active',
+            'error' => 'Error',
+            default => 'Disconnected',
+        };
+    }
+
+    public function getStatusColorAttribute(): string
+    {
+        return match ($this->status) {
+            'active' => 'success',
+            'error' => 'danger',
+            default => 'secondary',
+        };
+    }
+
+    public function getProviderIconClassAttribute(): string
+    {
+        return match ($this->provider) {
+            's3' => 'fas fa-cloud',
+            'dropbox' => 'fab fa-dropbox',
+            'drive' => 'fab fa-google-drive',
+            default => 'fas fa-hdd',
+        };
+    }
+
+    public function getQuotaPercentAttribute(): ?float
+    {
+        if (!$this->quota_bytes || $this->quota_bytes <= 0) {
+            return null;
+        }
+
+        return min(100, round(($this->used_bytes / $this->quota_bytes) * 100, 2));
+    }
+
+    public function foldersToSync(): array
+    {
+        $folders = Arr::get($this->settings, 'folders', []);
+        $folders = is_string($folders) ? array_filter(array_map('trim', explode(',', $folders))) : (array) $folders;
+        return array_values(array_filter($folders, fn ($f) => $f !== null && $f !== ''));
     }
 }
 

@@ -33,7 +33,6 @@ return new class extends Migration
 
             if (!Schema::hasColumn('documents', 'tags')) {
                 $table->json('tags')->nullable()->after('category');
-                $table->index(['category']);
             }
         });
     }

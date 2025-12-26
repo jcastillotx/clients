@@ -1,39 +1,18 @@
-<div>
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div>
-            <div class="page-pretitle">Admin</div>
-            <h2 class="page-title mb-0">System Settings</h2>
-            <div class="text-muted small">System-wide configuration stored in the database (cached for performance).</div>
-        </div>
-    </div>
+<x-app-layout>
+    <x-slot name="header">System Settings</x-slot>
 
     <div class="card">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if($tab==='general') active @endif" wire:click="switchTab('general')" type="button" role="tab">General Settings</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if($tab==='email') active @endif" wire:click="switchTab('email')" type="button" role="tab">Email Settings</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if($tab==='payment') active @endif" wire:click="switchTab('payment')" type="button" role="tab">Payment Settings</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if($tab==='storage') active @endif" wire:click="switchTab('storage')" type="button" role="tab">Storage Settings</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if($tab==='notifications') active @endif" wire:click="switchTab('notifications')" type="button" role="tab">Notification Settings</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if($tab==='security') active @endif" wire:click="switchTab('security')" type="button" role="tab">Security Settings</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @if($tab==='branding') active @endif" wire:click="switchTab('branding')" type="button" role="tab">Branding</button>
-                </li>
+        <div class="card-header p-0">
+            <ul class="nav nav-tabs" role="tablist">
+                @foreach(['general' => 'General Settings', 'email' => 'Email Settings', 'payment' => 'Payment Settings', 'storage' => 'Storage Settings', 'notifications' => 'Notification Settings', 'security' => 'Security Settings', 'branding' => 'Branding'] as $k => $label)
+                    <li class="nav-item">
+                        <a href="#" class="nav-link {{ $tab === $k ? 'active' : '' }}" wire:click.prevent="setTab('{{ $k }}')">
+                            {{ $label }}
+                        </a>
+                    </li>
+                @endforeach
             </ul>
         </div>
-
         <div class="card-body">
             @if($tab === 'general')
                 @include('livewire.admin.settings.general')
@@ -52,5 +31,5 @@
             @endif
         </div>
     </div>
-</div>
+</x-app-layout>
 

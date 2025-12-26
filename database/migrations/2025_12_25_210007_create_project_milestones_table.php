@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Superseded by the newer project schema in `2025_12_26_030000_create_projects_tables.php`,
+        // which defines `project_milestones` as milestones for `projects` (not `requests`).
+        // Keeping both would cause migration conflicts (same table name, different columns).
+        return;
+
         Schema::create('project_milestones', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();

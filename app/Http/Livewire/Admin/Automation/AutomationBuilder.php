@@ -3,8 +3,16 @@
 namespace App\Http\Livewire\Admin\Automation;
 
 use App\Models\AutomationRule;
+use App\Models\Client;
+use App\Models\Contract;
+use App\Models\Document;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Request as ServiceRequest;
+use App\Models\User;
 use App\Services\AutomationEngine;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 
 class AutomationBuilder extends Component
@@ -13,105 +21,50 @@ class AutomationBuilder extends Component
 
     public string $name = '';
     public string $description = '';
-    public bool $isActive = true;
     public string $trigger = 'request.created';
-    public int $runOrder = 100;
+    public bool $is_active = true;
+    public int $sort_order = 0;
 
-    public string $conditionsOp = 'and';
-    /** @var array<int, array{path:string,operator:string,value:mixed}> */
-    public array $conditions = [];
+    // Condition group: operator + rules[]
+    public string $conditions_operator = 'and';
+    public array $conditions = []; // each: [field, operator, value]
 
-    /**
-     * @var array<int, array{type:string,params?:array,params_json?:string}>
-     */
+    // Actions: each: [type, config]
     public array $actions = [];
 
-    public string $samplePayloadJson = "{\n  \"client_id\": 1,\n  \"request\": {\"id\": 123, \"priority\": \"urgent\", \"title\": \"Test\"}\n}\n";
+    // test
     public array $testResult = [];
-
-    public array $availableTriggers = [];
-    public array $availableActionTypes = [
-        'send_email' => 'Send email',
-        'send_notification' => 'Send notification (Slack/Teams/SMS)',
-        'assign_request' => 'Assign request to staff',
-        'change_request_status' => 'Change request status',
-        'create_invoice' => 'Create invoice',
-        'update_client_tier' => 'Update client tier',
-        'add_internal_note' => 'Add internal note',
-        'trigger_webhook' => 'Trigger webhook',
-        'create_admin_task' => 'Create task for admin',
-    ];
-
-    public array $operators = [
-        'equals', 'not_equals', 'contains', 'in', 'not_in', 'gt', 'gte', 'lt', 'lte', 'exists', 'not_exists',
-    ];
 
     public function mount(?int $rule = null): void
     {
-        $this->availableTriggers = $this->defaultTriggers();
-        $this->ruleId = $rule;
+        abort_unless(Auth::user()?->can('access admin panel'), 403);
 
-        if ($rule) {
-            $r = AutomationRule::query()->findOrFail($rule);
+        $this->ruleId = $rule;
+        if ($this->ruleId) {
+            $r = AutomationRule::query()->findOrFail($this->ruleId);
             $this->name = (string) $r->name;
             $this->description = (string) ($r->description ?? '');
-            $this->isActive = (bool) $r->is_active;
             $this->trigger = (string) $r->trigger;
-            $this->runOrder = (int) $r->run_order;
+            $this->is_active = (bool) $r->is_active;
+            $this->sort_order = (int) $r->sort_order;
 
-            $conds = $r->conditions ?: null;
-            if (is_array($conds) && isset($conds['op'], $conds['rules']) && is_array($conds['rules'])) {
-                $this->conditionsOp = (string) $conds['op'];
-                $this->conditions = array_values(array_filter($conds['rules'], fn ($c) => is_array($c)));
-            } else {
-                $this->conditions = [];
-            }
-
-            $this->actions = is_array($r->actions) ? $r->actions : [];
-            $this->actions = array_map(function ($a) {
-                $params = is_array($a['params'] ?? null) ? $a['params'] : [];
-                return [
-                    'type' => (string) ($a['type'] ?? 'send_notification'),
-                    'params_json' => json_encode($params, JSON_UNESCAPED_SLASHES),
-                ];
-            }, $this->actions);
-            if ($this->actions === []) {
-                $this->actions = [[
-                    'type' => 'send_notification',
-                    'params_json' => json_encode(['channel' => 'slack', 'message' => 'Automation fired: {{event}}'], JSON_UNESCAPED_SLASHES),
-                ]];
-            }
-        } else {
-            // New rule defaults
-            $this->conditions = [['path' => 'request.priority', 'operator' => 'equals', 'value' => 'urgent']];
-            $this->actions = [
-                ['type' => 'send_notification', 'params_json' => json_encode(['channel' => 'slack', 'message' => 'Urgent request: {{request.title}} (#{{request.id}})'], JSON_UNESCAPED_SLASHES)],
-            ];
+            $group = (array) ($r->conditions ?? []);
+            $this->conditions_operator = (string) ($group['operator'] ?? 'and');
+            $this->conditions = (array) ($group['rules'] ?? []);
+            $this->actions = (array) ($r->actions ?? []);
         }
-    }
 
-    protected function rules(): array
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:5000'],
-            'isActive' => ['boolean'],
-            'trigger' => ['required', 'string', Rule::in(array_keys($this->availableTriggers))],
-            'runOrder' => ['required', 'integer', 'min:0', 'max:1000000'],
-            'conditionsOp' => ['required', Rule::in(['and', 'or'])],
-            'conditions' => ['array'],
-            'conditions.*.path' => ['required', 'string', 'max:255'],
-            'conditions.*.operator' => ['required', Rule::in($this->operators)],
-            'conditions.*.value' => ['nullable'],
-            'actions' => ['required', 'array', 'min:1'],
-            'actions.*.type' => ['required', Rule::in(array_keys($this->availableActionTypes))],
-            'actions.*.params_json' => ['nullable', 'string', 'max:5000'],
-        ];
+        if (empty($this->conditions)) {
+            $this->addCondition();
+        }
+        if (empty($this->actions)) {
+            $this->addAction();
+        }
     }
 
     public function addCondition(): void
     {
-        $this->conditions[] = ['path' => 'request.priority', 'operator' => 'equals', 'value' => 'urgent'];
+        $this->conditions[] = ['field' => 'request.priority', 'operator' => 'equals', 'value' => 'urgent'];
     }
 
     public function removeCondition(int $idx): void
@@ -122,10 +75,7 @@ class AutomationBuilder extends Component
 
     public function addAction(): void
     {
-        $this->actions[] = [
-            'type' => 'send_email',
-            'params_json' => json_encode(['to' => 'admin', 'subject' => 'Automation fired', 'body' => 'Event: {{event}}'], JSON_UNESCAPED_SLASHES),
-        ];
+        $this->actions[] = ['type' => 'add_internal_note', 'config' => ['message' => 'Automation fired for {{trigger}}']];
     }
 
     public function removeAction(int $idx): void
@@ -136,145 +86,230 @@ class AutomationBuilder extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
+        $user = Auth::user();
+        abort_unless($user?->can('access admin panel'), 403);
 
-        $conditions = [
-            'op' => $data['conditionsOp'],
-            'rules' => array_values($data['conditions'] ?? []),
-        ];
-
-        $actions = [];
-        foreach (array_values($data['actions']) as $a) {
-            $params = [];
-            $raw = (string) ($a['params_json'] ?? '');
-            if ($raw !== '') {
-                $decoded = json_decode($raw, true);
-                if (is_array($decoded)) {
-                    $params = $decoded;
-                }
-            }
-            $actions[] = [
-                'type' => (string) $a['type'],
-                'params' => $params,
-            ];
-        }
+        $data = Validator::make([
+            'name' => $this->name,
+            'description' => $this->description,
+            'trigger' => $this->trigger,
+            'is_active' => $this->is_active,
+            'sort_order' => $this->sort_order,
+            'conditions_operator' => $this->conditions_operator,
+            'conditions' => $this->conditions,
+            'actions' => $this->actions,
+        ], [
+            'name' => ['required', 'string', 'max:160'],
+            'description' => ['nullable', 'string'],
+            'trigger' => ['required', 'string', 'max:100'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['integer', 'min:0', 'max:99999'],
+            'conditions_operator' => ['required', 'in:and,or'],
+            'conditions' => ['array'],
+            'conditions.*.field' => ['required', 'string'],
+            'conditions.*.operator' => ['required', 'string'],
+            'actions' => ['required', 'array', 'min:1'],
+            'actions.*.type' => ['required', 'string'],
+        ])->validate();
 
         $payload = [
             'name' => $data['name'],
             'description' => $data['description'] ?: null,
-            'is_active' => (bool) $data['isActive'],
             'trigger' => $data['trigger'],
-            'conditions' => $conditions,
-            'actions' => $actions,
-            'run_order' => (int) $data['runOrder'],
-            'created_by' => auth()->id(),
+            'conditions' => [
+                'operator' => $data['conditions_operator'],
+                'rules' => array_values((array) $data['conditions']),
+            ],
+            'actions' => array_values((array) $data['actions']),
+            'is_active' => (bool) $data['is_active'],
+            'sort_order' => (int) $data['sort_order'],
+            'updated_by' => $user->id,
         ];
 
-        $rule = $this->ruleId
-            ? AutomationRule::query()->findOrFail($this->ruleId)
-            : new AutomationRule();
+        if ($this->ruleId) {
+            AutomationRule::query()->whereKey($this->ruleId)->update($payload);
+        } else {
+            $payload['created_by'] = $user->id;
+            $this->ruleId = AutomationRule::create($payload)->id;
+        }
 
-        $rule->fill($payload);
-        $rule->save();
-
-        $this->ruleId = $rule->id;
         session()->flash('success', 'Automation saved.');
     }
 
-    public function test(AutomationEngine $engine): void
+    public function testRun(): void
     {
-        $this->testResult = [];
+        $ctx = $this->sampleContextForTrigger($this->trigger);
+        $ctx['meta']['trigger'] = $this->trigger;
 
-        $payload = json_decode($this->samplePayloadJson, true);
-        if (!is_array($payload)) {
-            $this->testResult = ['ok' => false, 'message' => 'Invalid JSON payload.'];
-            return;
-        }
+        // run against a "synthetic" rule definition (not persisted)
+        $rule = new AutomationRule([
+            'trigger' => $this->trigger,
+            'conditions' => ['operator' => $this->conditions_operator, 'rules' => $this->conditions],
+            'actions' => $this->actions,
+            'is_active' => true,
+        ]);
 
-        $conditions = [
-            'op' => $this->conditionsOp,
-            'rules' => $this->conditions,
-        ];
-
-        $matched = $engine->evaluateConditions($conditions, $payload);
-        $actionResults = [];
-
-        if ($matched) {
-            foreach ($this->actions as $a) {
-                $params = [];
-                $raw = (string) ($a['params_json'] ?? '');
-                if ($raw !== '') {
-                    $decoded = json_decode($raw, true);
-                    if (is_array($decoded)) {
-                        $params = $decoded;
-                    }
-                }
-                $actionResults[] = $engine->executeAction([
-                    'type' => (string) ($a['type'] ?? ''),
-                    'params' => $params,
-                ], $payload, true);
-            }
-        }
+        $engine = app(AutomationEngine::class);
+        $matched = $engine->evaluateConditions($rule->conditions, $ctx);
 
         $this->testResult = [
-            'ok' => true,
             'matched' => $matched,
-            'actions' => $actionResults,
+            'sample_keys' => array_keys($ctx),
+            'note' => $matched ? 'Conditions matched. Actions will execute when saved and enabled.' : 'Conditions did not match.',
         ];
     }
 
-    protected function defaultTriggers(): array
+    public function getTriggerOptionsProperty(): array
     {
-        // 20+ trigger types (can be expanded without DB changes)
         return [
-            // Requests
-            'request.created' => 'Request created',
-            'request.updated' => 'Request updated',
-            'request.status_changed' => 'Request status changed',
-            'request.assigned' => 'Request assigned',
-            'request.completed' => 'Request completed',
-
-            // Invoices
-            'invoice.created' => 'Invoice created',
-            'invoice.sent' => 'Invoice sent',
-            'invoice.paid' => 'Invoice paid',
-            'invoice.overdue' => 'Invoice overdue',
-            'invoice.due_soon' => 'Invoice due date approaching (7 days)',
-
-            // Contracts
-            'contract.created' => 'Contract created',
-            'contract.expiring' => 'Contract expiring',
-            'contract.signed' => 'Contract signed',
-
-            // Documents
-            'document.uploaded' => 'Document uploaded',
-            'document.shared' => 'Document shared',
-
-            // Payments
-            'payment.received' => 'Payment received',
-            'payment.failed' => 'Payment failed',
-
-            // Clients
-            'client.created' => 'Client created',
-            'client.tier_changed' => 'Client tier changed',
-
+            // Request
+            'request.created',
+            'request.updated',
+            'request.status_changed',
+            'request.assigned',
+            'request.completed',
+            // Invoice
+            'invoice.created',
+            'invoice.sent',
+            'invoice.paid',
+            'invoice.overdue',
+            'invoice.due_approaching',
+            // Contract
+            'contract.created',
+            'contract.expiring',
+            'contract.signed',
+            // Document
+            'document.uploaded',
+            'document.shared',
+            // Payment
+            'payment.received',
+            'payment.failed',
+            // Client
+            'client.created',
+            'client.tier_changed',
             // Storage
-            'storage.quota_reached' => 'Storage quota reached (>=80%)',
+            'storage.quota_reached',
+            // Schedule
+            'schedule.daily',
+            'schedule.weekly',
+            'schedule.monthly',
+        ];
+    }
 
-            // Scheduled
-            'schedule.daily' => 'Schedule: daily',
-            'schedule.weekly' => 'Schedule: weekly',
-            'schedule.monthly' => 'Schedule: monthly',
+    public function getActionOptionsProperty(): array
+    {
+        return [
+            'send_email' => 'Send email',
+            'send_notification' => 'Send notification (Slack/Teams/SMS)',
+            'assign_request' => 'Assign request to staff',
+            'change_request_status' => 'Change request status',
+            'create_invoice' => 'Create invoice',
+            'update_client_tier' => 'Update client tier',
+            'add_internal_note' => 'Add internal note',
+            'trigger_webhook' => 'Trigger webhook',
+            'create_admin_task' => 'Create task for admin',
+        ];
+    }
+
+    public function getStaffOptionsProperty(): array
+    {
+        return User::query()->whereNull('client_id')->orderBy('name')->get(['id', 'name'])->toArray();
+    }
+
+    protected function sampleContextForTrigger(string $trigger): array
+    {
+        $meta = ['trigger' => $trigger];
+
+        return match (true) {
+            str_starts_with($trigger, 'request.') => $this->ctxFromRequest($meta),
+            str_starts_with($trigger, 'invoice.') => $this->ctxFromInvoice($meta),
+            str_starts_with($trigger, 'contract.') => $this->ctxFromContract($meta),
+            str_starts_with($trigger, 'document.') => $this->ctxFromDocument($meta),
+            str_starts_with($trigger, 'payment.') => $this->ctxFromPayment($meta),
+            str_starts_with($trigger, 'client.') => $this->ctxFromClient($meta),
+            str_starts_with($trigger, 'storage.') => $this->ctxFromStorage($meta),
+            default => ['meta' => $meta],
+        };
+    }
+
+    protected function ctxFromRequest(array $meta): array
+    {
+        $req = ServiceRequest::query()->with('client')->latest('id')->first();
+        return [
+            'meta' => $meta,
+            'request' => $req?->toArray() ?? ['id' => 0, 'priority' => 'urgent', 'status' => 'pending', 'title' => 'Sample Request'],
+            'client' => $req?->client?->toArray() ?? Client::query()->latest('id')->first()?->toArray(),
+        ];
+    }
+
+    protected function ctxFromInvoice(array $meta): array
+    {
+        $inv = Invoice::query()->with('client')->latest('id')->first();
+        return [
+            'meta' => $meta,
+            'invoice' => $inv?->toArray() ?? ['id' => 0, 'status' => 'sent', 'amount' => 100, 'due_date' => now()->addDays(7)->toDateString()],
+            'client' => $inv?->client?->toArray() ?? Client::query()->latest('id')->first()?->toArray(),
+        ];
+    }
+
+    protected function ctxFromContract(array $meta): array
+    {
+        $c = Contract::query()->with('client')->latest('id')->first();
+        return [
+            'meta' => $meta,
+            'contract' => $c?->toArray() ?? ['id' => 0, 'status' => 'active', 'end_date' => now()->addDays(30)->toDateString()],
+            'client' => $c?->client?->toArray() ?? Client::query()->latest('id')->first()?->toArray(),
+        ];
+    }
+
+    protected function ctxFromDocument(array $meta): array
+    {
+        $d = Document::query()->with('client')->latest('id')->first();
+        return [
+            'meta' => $meta,
+            'document' => $d?->toArray() ?? ['id' => 0, 'title' => 'Sample Doc', 'original_filename' => 'sample.pdf'],
+            'client' => $d?->client?->toArray() ?? Client::query()->latest('id')->first()?->toArray(),
+        ];
+    }
+
+    protected function ctxFromPayment(array $meta): array
+    {
+        $p = Payment::query()->with(['client', 'invoice'])->latest('id')->first();
+        return [
+            'meta' => $meta,
+            'payment' => $p?->toArray() ?? ['id' => 0, 'status' => 'succeeded', 'amount' => 50],
+            'invoice' => $p?->invoice?->toArray(),
+            'client' => $p?->client?->toArray() ?? Client::query()->latest('id')->first()?->toArray(),
+        ];
+    }
+
+    protected function ctxFromClient(array $meta): array
+    {
+        $c = Client::query()->latest('id')->first();
+        return [
+            'meta' => $meta,
+            'client' => $c?->toArray() ?? ['id' => 0, 'tier' => 'basic', 'company_name' => 'Sample Co', 'email' => 'client@example.com'],
+        ];
+    }
+
+    protected function ctxFromStorage(array $meta): array
+    {
+        // keep it simple (storage module exists, but not required for test run UI)
+        $c = Client::query()->latest('id')->first();
+        return [
+            'meta' => $meta,
+            'client' => $c?->toArray(),
+            'storage' => ['percent' => 85, 'used_bytes' => 850, 'quota_bytes' => 1000, 'provider' => 's3'],
         ];
     }
 
     public function render()
     {
         return view('livewire.admin.automation.builder', [
-            'triggerOptions' => $this->availableTriggers,
-            'actionTypes' => $this->availableActionTypes,
-            'operators' => $this->operators,
-        ])->layout('layouts.admin', ['title' => $this->ruleId ? 'Edit Automation' : 'New Automation']);
+            'triggerOptions' => $this->triggerOptions,
+            'actionOptions' => $this->actionOptions,
+            'staffOptions' => $this->staffOptions,
+        ]);
     }
 }
 

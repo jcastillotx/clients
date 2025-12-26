@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'key',
         'value',
         'is_encrypted',
+        'group',
         'updated_by',
     ];
 
@@ -19,84 +23,61 @@ class Setting extends Model
         'is_encrypted' => 'boolean',
     ];
 
-    public const CACHE_KEY = 'settings.kv.v1';
-
-    /**
-     * @return array<string, array{value:?string,is_encrypted:bool}>
-     */
-    public static function allCached(): array
+    public function updater(): BelongsTo
     {
-        /** @var array<string, array{value:?string,is_encrypted:bool}> $map */
-        $map = Cache::rememberForever(self::CACHE_KEY, function () {
-            return self::query()
-                ->get(['key', 'value', 'is_encrypted'])
-                ->mapWithKeys(fn (self $s) => [
-                    $s->key => [
-                        'value' => $s->value,
-                        'is_encrypted' => (bool) $s->is_encrypted,
-                    ],
-                ])
-                ->all();
-        });
-
-        return $map;
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public static function clearCache(): void
+    public function decoded(): mixed
     {
-        Cache::forget(self::CACHE_KEY);
+        if ($this->value === null) {
+            return null;
+        }
+
+        $raw = $this->value;
+        if ($this->is_encrypted) {
+            $raw = Crypt::decryptString($raw);
+        }
+
+        // We always store JSON (including scalars) so json_decode is safe.
+        return json_decode($raw, true);
     }
 
     public static function getValue(string $key, mixed $default = null): mixed
     {
-        $map = self::allCached();
-        if (!array_key_exists($key, $map)) {
+        $row = static::query()->where('key', $key)->first();
+        if (!$row) {
             return $default;
         }
 
-        $raw = $map[$key]['value'];
-        if ($raw === null) {
-            return $default;
-        }
-
-        if ($map[$key]['is_encrypted']) {
-            try {
-                $raw = Crypt::decryptString($raw);
-            } catch (\Throwable $e) {
-                return $default;
-            }
-        }
-
-        // All values are stored as JSON to preserve types.
-        $decoded = json_decode($raw, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            return $decoded;
-        }
-
-        // Fallback for legacy/plain values.
-        return $raw;
+        $val = $row->decoded();
+        return $val === null ? $default : $val;
     }
 
-    public static function setValue(string $key, mixed $value, bool $encrypt = false, ?int $updatedBy = null): void
+    public static function setValue(string $key, mixed $value, bool $encrypt = false, ?int $updatedBy = null, ?string $group = null): self
     {
-        $payload = json_encode($value);
-        if ($payload === false) {
-            // As last resort, store string representation.
-            $payload = json_encode((string) $value);
+        $encoded = static::encodeValue($value);
+        $isEncrypted = $encrypt === true;
+        $stored = $isEncrypted ? Crypt::encryptString($encoded) : $encoded;
+
+        /** @var self $row */
+        $row = static::query()->firstOrNew(['key' => $key]);
+        $row->value = $stored;
+        $row->is_encrypted = $isEncrypted;
+        if ($group !== null) {
+            $row->group = $group;
         }
+        if ($updatedBy !== null) {
+            $row->updated_by = $updatedBy;
+        }
+        $row->save();
 
-        $stored = $encrypt ? Crypt::encryptString($payload) : $payload;
+        return $row;
+    }
 
-        self::query()->updateOrCreate(
-            ['key' => $key],
-            [
-                'value' => $stored,
-                'is_encrypted' => $encrypt,
-                'updated_by' => $updatedBy,
-            ]
-        );
-
-        self::clearCache();
+    public static function encodeValue(mixed $value): string
+    {
+        return json_encode($value, JSON_THROW_ON_ERROR);
     }
 }
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ReportTemplate extends Model
 {
@@ -12,26 +13,23 @@ class ReportTemplate extends Model
 
     protected $fillable = [
         'name',
-        'created_by',
+        'description',
         'config',
-        'recipients',
-        'schedule',
-        'is_active',
-        'last_sent_at',
-        'next_send_at',
+        'created_by',
     ];
 
     protected $casts = [
         'config' => 'array',
-        'recipients' => 'array',
-        'is_active' => 'boolean',
-        'last_sent_at' => 'datetime',
-        'next_send_at' => 'datetime',
     ];
 
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(ReportSchedule::class, 'report_template_id');
     }
 }
 

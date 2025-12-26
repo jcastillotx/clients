@@ -100,9 +100,145 @@
                 <li class="nav-item">
                     <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-folder-open"></i>
-                        <p>Documents</p>
+                        <p>
+                            Documents
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.index') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>My Documents</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('documents.smart-browser') }}" class="nav-link {{ request()->routeIs('documents.smart-browser') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Smart Browser</p>
+                            </a>
+                        </li>
+                        @can('access admin panel')
+                        <li class="nav-item">
+                            <a href="{{ route('documents.templates') }}" class="nav-link {{ request()->routeIs('documents.templates') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Templates</p>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+
+                @if(auth()->user()->isClient())
+                <!-- Client Extras -->
+                <li class="nav-header">CLIENT</li>
+                <li class="nav-item">
+                    <a href="{{ route('client.projects') }}" class="nav-link {{ request()->routeIs('client.projects') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-project-diagram"></i>
+                        <p>Projects</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.messaging') }}" class="nav-link {{ request()->routeIs('client.messaging') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-comments"></i>
+                        <p>Messages</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.knowledge-base') }}" class="nav-link {{ request()->routeIs('client.knowledge-base') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-book"></i>
+                        <p>Knowledge Base</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.notifications') }}" class="nav-link {{ request()->routeIs('client.notifications') ? 'active' : '' }}">
+                        <i class="nav-icon far fa-bell"></i>
+                        <p>Notifications</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.analytics') }}" class="nav-link {{ request()->routeIs('client.analytics') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-pie"></i>
+                        <p>Analytics</p>
+                    </a>
+                </li>
+                @endif
+
+                <!-- Storage -->
+                <li class="nav-item {{ request()->routeIs('storage.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('storage.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-cloud"></i>
+                        <p>
+                            Storage
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('storage.dashboard') }}" class="nav-link {{ request()->routeIs('storage.dashboard') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('storage.browser') }}" class="nav-link {{ request()->routeIs('storage.browser') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>File Browser</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('storage.conflicts') }}" class="nav-link {{ request()->routeIs('storage.conflicts') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Conflicts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('storage.settings') }}" class="nav-link {{ request()->routeIs('storage.settings') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Settings</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                @can('view reports')
+                <li class="nav-header">ADMIN</li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.reports.dashboard') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>Reporting</p>
+                    </a>
+                </li>
+
+                @can('access admin panel')
+                <li class="nav-item">
+                    <a href="{{ route('admin.storage.overview') }}" class="nav-link {{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-database"></i>
+                        <p>Storage Overview</p>
+                    </a>
+                </li>
+                @can('manage settings')
+                <li class="nav-item">
+                    <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-cogs"></i>
+                        <p>System Settings</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.webhooks.index') }}" class="nav-link {{ request()->routeIs('admin.webhooks.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-plug"></i>
+                        <p>Webhooks</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.automation.index') }}" class="nav-link {{ request()->routeIs('admin.automation.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-robot"></i>
+                        <p>Automation</p>
+                    </a>
+                </li>
+                @endcan
+                @endcan
+                @endcan
 
                 <li class="nav-header">ACCOUNT</li>
 

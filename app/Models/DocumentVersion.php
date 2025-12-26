@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentVersion extends Model
 {
@@ -13,21 +14,17 @@ class DocumentVersion extends Model
     protected $fillable = [
         'document_id',
         'version',
-        'provider',
-        'provider_file_id',
+        'disk',
         'file_path',
-        'file_name',
+        'original_filename',
         'mime_type',
         'file_size',
-        'checksum',
-        'text_snapshot',
-        'created_by',
+        'uploaded_by',
     ];
 
     protected $casts = [
         'version' => 'integer',
         'file_size' => 'integer',
-        'created_by' => 'integer',
     ];
 
     public function document(): BelongsTo
@@ -35,9 +32,27 @@ class DocumentVersion extends Model
         return $this->belongsTo(Document::class);
     }
 
-    public function creator(): BelongsTo
+    public function uploader(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function getDownloadUrlAttribute(): ?string
+    {
+        try {
+            return route('documents.versions.download', $this);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public function existsOnDisk(): bool
+    {
+        try {
+            return Storage::disk($this->disk)->exists($this->file_path);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }
 

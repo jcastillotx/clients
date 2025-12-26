@@ -1,123 +1,82 @@
-<form wire:submit.prevent="savePayment" class="vstack gap-3">
-    <div>
-        <div class="h3 mb-1">Stripe</div>
-        <div class="text-muted small">Keys are stored in the database (secrets encrypted). Use mode toggle to pick test/live.</div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-12 col-md-4">
-            <label class="form-label">Mode</label>
-            <select class="form-select" wire:model.defer="state.payments.mode">
+<div class="row">
+    <div class="col-md-6">
+        <h5 class="mb-3">Stripe</h5>
+        <div class="form-group">
+            <label class="mb-1">Mode</label>
+            <select class="form-control" wire:model.defer="payment.stripe_mode">
                 <option value="test">Test</option>
                 <option value="live">Live</option>
             </select>
-            @error('state.payments.mode')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
         </div>
-        <div class="col-12 col-md-4">
-            <label class="form-label">Default payment terms</label>
-            <select class="form-select" wire:model.defer="state.payments.default_terms">
-                <option value="net_15">Net 15</option>
-                <option value="net_30">Net 30</option>
-                <option value="net_45">Net 45</option>
-                <option value="net_60">Net 60</option>
-                <option value="due_on_receipt">Due on receipt</option>
+        <div class="form-group">
+            <label class="mb-1">Test public key</label>
+            <input class="form-control" wire:model.defer="payment.stripe_test_public">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Test secret key</label>
+            <input type="password" class="form-control" wire:model.defer="payment.stripe_test_secret">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Live public key</label>
+            <input class="form-control" wire:model.defer="payment.stripe_live_public">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Live secret key</label>
+            <input type="password" class="form-control" wire:model.defer="payment.stripe_live_secret">
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <h5 class="mb-3">PayPal</h5>
+        <div class="form-group">
+            <label class="mb-1">Client ID</label>
+            <input class="form-control" wire:model.defer="payment.paypal_client_id">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Secret</label>
+            <input type="password" class="form-control" wire:model.defer="payment.paypal_secret">
+        </div>
+
+        <h5 class="mt-4 mb-3">Terms & Fees</h5>
+        <div class="form-group">
+            <label class="mb-1">Default payment terms</label>
+            <select class="form-control" wire:model.defer="payment.payment_terms">
+                <option value="Net 15">Net 15</option>
+                <option value="Net 30">Net 30</option>
+                <option value="Net 45">Net 45</option>
+                <option value="Due on receipt">Due on receipt</option>
             </select>
-            @error('state.payments.default_terms')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
         </div>
-        <div class="col-12 col-md-4">
-            <label class="form-label">Tax rate (%)</label>
-            <input type="number" step="0.01" class="form-control" wire:model.defer="state.payments.tax_rate">
-            @error('state.payments.tax_rate')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+        <div class="custom-control custom-switch mb-2">
+            <input type="checkbox" class="custom-control-input" id="late_fee_enabled" wire:model.defer="payment.late_fee_enabled">
+            <label class="custom-control-label" for="late_fee_enabled">Late fee enabled</label>
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Late fee percent</label>
+            <input type="number" class="form-control" wire:model.defer="payment.late_fee_percent" step="0.01">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Tax rate (%)</label>
+            <input type="number" class="form-control" wire:model.defer="payment.tax_rate" step="0.01">
+        </div>
+
+        <h5 class="mt-4 mb-2">Accepted payment methods</h5>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="pm_card" value="card" wire:model.defer="payment.accepted_methods">
+            <label class="custom-control-label" for="pm_card">Card</label>
+        </div>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="pm_ach" value="ach" wire:model.defer="payment.accepted_methods">
+            <label class="custom-control-label" for="pm_ach">ACH</label>
+        </div>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="pm_paypal" value="paypal" wire:model.defer="payment.accepted_methods">
+            <label class="custom-control-label" for="pm_paypal">PayPal</label>
         </div>
     </div>
+</div>
 
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="card bg-transparent border">
-                <div class="card-body">
-                    <div class="fw-semibold mb-2">Stripe test</div>
-                    <div class="mb-3">
-                        <label class="form-label">Publishable key</label>
-                        <input class="form-control" wire:model.defer="state.stripe.test_key">
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label">Secret key</label>
-                        <input class="form-control" type="password" wire:model.defer="state.stripe.test_secret" autocomplete="new-password">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-xl-6">
-            <div class="card bg-transparent border">
-                <div class="card-body">
-                    <div class="fw-semibold mb-2">Stripe live</div>
-                    <div class="mb-3">
-                        <label class="form-label">Publishable key</label>
-                        <input class="form-control" wire:model.defer="state.stripe.live_key">
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label">Secret key</label>
-                        <input class="form-control" type="password" wire:model.defer="state.stripe.live_secret" autocomplete="new-password">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <hr class="my-2">
-
-    <div>
-        <div class="h3 mb-1">PayPal (optional)</div>
-        <div class="text-muted small">Stored in DB (secret encrypted).</div>
-    </div>
-    <div class="row g-3">
-        <div class="col-12 col-md-6">
-            <label class="form-label">Client ID</label>
-            <input class="form-control" wire:model.defer="state.paypal.client_id">
-        </div>
-        <div class="col-12 col-md-6">
-            <label class="form-label">Secret</label>
-            <input class="form-control" type="password" wire:model.defer="state.paypal.secret" autocomplete="new-password">
-        </div>
-    </div>
-
-    <hr class="my-2">
-
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Late fees</div>
-            <label class="form-check mt-2">
-                <input class="form-check-input" type="checkbox" wire:model.defer="state.payments.late_fee.enabled">
-                <span class="form-check-label">Enable automatic late fee calculation</span>
-            </label>
-            <div class="mt-2">
-                <label class="form-label">Late fee percent (%)</label>
-                <input type="number" step="0.01" class="form-control" wire:model.defer="state.payments.late_fee.percent">
-                @error('state.payments.late_fee.percent')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-            </div>
-        </div>
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Accepted payment methods</div>
-            <div class="text-muted small mb-2">Controls what’s offered to clients.</div>
-            <div class="vstack gap-2">
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" value="stripe" wire:model.defer="state.payments.methods">
-                    <span class="form-check-label">Card (Stripe)</span>
-                </label>
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" value="paypal" wire:model.defer="state.payments.methods">
-                    <span class="form-check-label">PayPal</span>
-                </label>
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" value="bank_transfer" wire:model.defer="state.payments.methods">
-                    <span class="form-check-label">Bank transfer</span>
-                </label>
-            </div>
-        </div>
-    </div>
-
-    <div class="d-flex justify-content-end">
-        <button class="btn btn-primary" type="submit">Save payment settings</button>
-    </div>
-</form>
+<button class="btn btn-primary" wire:click="savePayment">
+    <i class="fas fa-save mr-1"></i> Save Payment Settings
+</button>
 

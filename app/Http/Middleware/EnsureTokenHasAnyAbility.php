@@ -8,27 +8,26 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureTokenHasAnyAbility
 {
-    /**
-     * Allow request if token has ANY of the required abilities.
-     *
-     * Usage: token.any_ability:admin,write
-     */
-    public function handle(Request $request, Closure $next, ...$abilities): Response
+    public function handle(Request $request, Closure $next, string ...$abilities): Response
     {
         $user = $request->user();
-        $token = $user?->currentAccessToken();
+        if (!$user) {
+            abort(401);
+        }
 
-        if (!$user || !$token) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+        $token = $user->currentAccessToken();
+        if (!$token) {
+            abort(401);
         }
 
         foreach ($abilities as $ability) {
-            if ($token->can($ability)) {
+            $ability = trim((string) $ability);
+            if ($ability !== '' && $token->can($ability)) {
                 return $next($request);
             }
         }
 
-        return response()->json(['message' => 'Forbidden (insufficient token permissions).'], 403);
+        abort(403);
     }
 }
 

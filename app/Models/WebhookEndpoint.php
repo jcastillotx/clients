@@ -17,10 +17,14 @@ class WebhookEndpoint extends Model
         'webhook_url',
         'secret',
         'is_active',
+        'format',
+        'headers',
+        'created_by',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'headers' => 'array',
         'secret' => 'encrypted',
     ];
 
@@ -29,9 +33,14 @@ class WebhookEndpoint extends Model
         return $this->belongsTo(Client::class);
     }
 
-    public function deliveries(): HasMany
+    public function creator(): BelongsTo
     {
-        return $this->hasMany(WebhookDelivery::class)->orderByDesc('created_at')->orderByDesc('id');
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function deliveryLogs(): HasMany
+    {
+        return $this->hasMany(WebhookDeliveryLog::class)->latest('id');
     }
 }
 

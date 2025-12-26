@@ -10,28 +10,29 @@ class StorageSyncLog extends Model
 {
     use HasFactory;
 
-    protected $table = 'storage_sync_logs';
-
     protected $fillable = [
         'storage_connection_id',
         'status',
-        'files_processed',
         'started_at',
         'finished_at',
-        'message',
+        'files_scanned',
+        'files_added',
+        'files_updated',
+        'files_deleted',
+        'conflicts',
+        'error_message',
         'meta',
     ];
 
     protected $casts = [
-        'files_processed' => 'integer',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
         'meta' => 'array',
     ];
 
-    public function storageConnection(): BelongsTo
+    public function connection(): BelongsTo
     {
-        return $this->belongsTo(StorageConnection::class);
+        return $this->belongsTo(StorageConnection::class, 'storage_connection_id');
     }
 }
 

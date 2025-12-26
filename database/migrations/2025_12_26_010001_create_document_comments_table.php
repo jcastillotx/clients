@@ -8,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // The repo already has a `document_comments` table in earlier migrations.
+        // Avoid creating it twice if both migration sets are present after merges.
+        if (Schema::hasTable('document_comments')) {
+            return;
+        }
+
         Schema::create('document_comments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained('documents')->cascadeOnDelete();

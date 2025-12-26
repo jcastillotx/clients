@@ -3,48 +3,44 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Laravel\Sanctum\PersonalAccessToken;
+use Illuminate\Support\Facades\Validator;
 
 class ApiTokenController extends Controller
 {
-    public function store(Request $request)
+    /**
+     * Create a new personal access token for the authenticated user.
+     *
+     * Abilities:
+     * - read
+     * - write
+     * - admin (staff/admin-only)
+     */
+    public function store(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'user_id' => ['nullable', 'integer', 'exists:users,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'abilities' => ['required', 'array', 'min:1'],
-            'abilities.*' => ['string', 'max:50'],
-        ]);
+        $user = $request->user();
+        abort_unless($user, 401);
 
-        $user = isset($data['user_id'])
-            ? User::query()->findOrFail((int) $data['user_id'])
-            : $request->user();
+        $data = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:120'],
+            'abilities' => ['nullable', 'array'],
+            'abilities.*' => ['string', 'in:read,write,admin'],
+        ])->validate();
 
-        $abilities = array_values(array_unique($data['abilities']));
+        $abilities = $data['abilities'] ?? ['read'];
+
+        // Only staff can mint admin tokens
+        if (in_array('admin', $abilities, true)) {
+            abort_unless(!$user->isClient() && $user->can('access admin panel'), 403);
+        }
+
         $token = $user->createToken($data['name'], $abilities);
 
         return response()->json([
             'token' => $token->plainTextToken,
             'abilities' => $abilities,
-            'user_id' => $user->id,
-        ], 201);
-    }
-
-    public function destroy(Request $request, int $tokenId)
-    {
-        $token = PersonalAccessToken::query()->findOrFail($tokenId);
-
-        // Admins can revoke any token; otherwise only revoke own.
-        if ((int) $token->tokenable_id !== (int) $request->user()->id) {
-            // Require admin role for cross-user revocation.
-            abort_unless($request->user()->hasAnyRole(['super_admin', 'admin']), 403);
-        }
-
-        $token->delete();
-
-        return response()->json(['deleted' => true]);
+        ]);
     }
 }
 

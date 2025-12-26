@@ -3,69 +3,94 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\V1\RequestResource;
 use App\Models\Request as ServiceRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class RequestController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $user = $request->user();
-        $isAdmin = $user?->currentAccessToken()?->can('admin') ?? false;
+        abort_unless($user, 401);
 
-        $data = $request->validate([
-            'client_id' => ['required', 'integer', 'exists:clients,id'],
+        $data = Validator::make($request->all(), [
+            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'type' => ['nullable', 'string', 'max:50'],
-            'priority' => ['nullable', Rule::in(['low', 'medium', 'high', 'urgent'])],
-            'status' => ['nullable', Rule::in(['pending', 'in_review', 'approved', 'in_progress', 'on_hold', 'completed', 'cancelled'])],
+            'priority' => ['nullable', 'in:low,medium,high,urgent'],
             'due_date' => ['nullable', 'date'],
-            'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
+        ])->validate();
+
+        if ($user->isClient()) {
+            $data['client_id'] = $user->client_id;
+        } else {
+            $data['client_id'] = $data['client_id'] ?? null;
+            abort_unless($data['client_id'], 422, 'client_id is required for staff requests.');
+        }
+
+        $sr = ServiceRequest::create([
+            'client_id' => $data['client_id'],
+            'created_by' => $user->id,
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'type' => $data['type'] ?? 'support',
+            'priority' => $data['priority'] ?? 'medium',
+            'due_date' => $data['due_date'] ?? null,
+            'status' => 'pending',
         ]);
 
-        $data['created_by'] = $request->user()?->id;
-        $data['type'] = $data['type'] ?? 'support';
-        $data['priority'] = $data['priority'] ?? 'medium';
-        $data['status'] = $data['status'] ?? 'pending';
-
-        if (!$isAdmin && $user?->client_id) {
-            abort_unless((int) $data['client_id'] === (int) $user->client_id, 403);
-        }
-
-        $req = ServiceRequest::create($data);
-
-        return response()->json(['data' => $req], 201);
+        return response()->json([
+            'data' => new RequestResource($sr->load(['client'])),
+        ], 201);
     }
 
-    public function show(string $id)
+    public function show(Request $request, ServiceRequest $requestModel): JsonResponse
     {
-        $req = ServiceRequest::query()->with(['client', 'creator', 'assignedTo'])->findOrFail($id);
-        $user = request()->user();
-        $isAdmin = $user?->currentAccessToken()?->can('admin') ?? false;
-        if (!$isAdmin && $user?->client_id) {
-            abort_unless((int) $req->client_id === (int) $user->client_id, 403);
-        }
-        return response()->json(['data' => $req]);
-    }
-
-    public function updateStatus(string $id, Request $request)
-    {
-        $req = ServiceRequest::query()->findOrFail($id);
         $user = $request->user();
-        $isAdmin = $user?->currentAccessToken()?->can('admin') ?? false;
-        if (!$isAdmin && $user?->client_id) {
-            abort_unless((int) $req->client_id === (int) $user->client_id, 403);
+        abort_unless($user, 401);
+
+        if ($user->isClient()) {
+            abort_unless((int) $requestModel->client_id === (int) $user->client_id, 403);
         }
 
-        $data = $request->validate([
-            'status' => ['required', Rule::in(['pending', 'in_review', 'approved', 'in_progress', 'on_hold', 'completed', 'cancelled'])],
+        return response()->json([
+            'data' => new RequestResource($requestModel->load(['client'])),
         ]);
+    }
 
-        $req->update(['status' => $data['status']]);
+    public function updateStatus(Request $request, ServiceRequest $requestModel): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
 
-        return response()->json(['data' => $req]);
+        if ($user->isClient()) {
+            abort_unless((int) $requestModel->client_id === (int) $user->client_id, 403);
+        }
+
+        $data = Validator::make($request->all(), [
+            'status' => ['required', 'in:pending,in_review,approved,in_progress,on_hold,completed,cancelled'],
+        ])->validate();
+
+        $status = $data['status'];
+
+        $updates = ['status' => $status];
+        if ($status === 'completed' && !$requestModel->completed_at) {
+            $updates['completed_at'] = now();
+        }
+
+        if ($status === 'in_progress' && !$requestModel->started_at) {
+            $updates['started_at'] = now();
+        }
+
+        $requestModel->update($updates);
+
+        return response()->json([
+            'data' => new RequestResource($requestModel->fresh()->load(['client'])),
+        ]);
     }
 }
 

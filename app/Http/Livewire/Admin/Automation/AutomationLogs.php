@@ -2,55 +2,35 @@
 
 namespace App\Http\Livewire\Admin\Automation;
 
-use App\Models\AutomationLog;
-use App\Models\AutomationRule;
+use App\Models\AutomationRun;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class AutomationLogs extends Component
 {
-    use WithPagination;
-
-    protected string $paginationTheme = 'bootstrap';
-
-    public string $status = 'all';
-    public string $trigger = 'all';
+    public ?string $trigger = '';
     public ?int $ruleId = null;
 
-    public function updatingStatus(): void { $this->resetPage(); }
-    public function updatingTrigger(): void { $this->resetPage(); }
-    public function updatingRuleId(): void { $this->resetPage(); }
+    protected array $queryString = [
+        'trigger' => ['except' => ''],
+        'ruleId' => ['except' => null],
+    ];
+
+    public function mount(): void
+    {
+        abort_unless(Auth::user()?->can('access admin panel'), 403);
+    }
 
     public function render()
     {
-        $q = AutomationLog::query()->with('rule')->orderByDesc('id');
+        $runs = AutomationRun::query()
+            ->with('rule')
+            ->when($this->trigger, fn ($q) => $q->where('trigger', $this->trigger))
+            ->when($this->ruleId, fn ($q) => $q->where('automation_rule_id', $this->ruleId))
+            ->latest('id')
+            ->paginate(25);
 
-        if ($this->status !== 'all') {
-            $q->where('status', $this->status);
-        }
-        if ($this->trigger !== 'all') {
-            $q->where('trigger', $this->trigger);
-        }
-        if ($this->ruleId) {
-            $q->where('automation_rule_id', $this->ruleId);
-        }
-
-        $logs = $q->paginate(30);
-
-        $triggers = AutomationLog::query()
-            ->select('trigger')
-            ->distinct()
-            ->orderBy('trigger')
-            ->pluck('trigger')
-            ->all();
-
-        $rules = AutomationRule::query()->orderBy('name')->get(['id', 'name']);
-
-        return view('livewire.admin.automation.logs', [
-            'logs' => $logs,
-            'triggers' => $triggers,
-            'rules' => $rules,
-        ])->layout('layouts.admin', ['title' => 'Automation Logs']);
+        return view('livewire.admin.automation.logs', compact('runs'));
     }
 }
 

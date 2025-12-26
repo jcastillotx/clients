@@ -12,19 +12,14 @@ class DocumentTemplate extends Model
 
     protected $fillable = [
         'name',
-        'slug',
-        'type',
-        'content',
+        'category',
+        'body',
         'variables',
-        'is_active',
-        'default_provider',
         'created_by',
     ];
 
     protected $casts = [
         'variables' => 'array',
-        'is_active' => 'boolean',
-        'created_by' => 'integer',
     ];
 
     public function creator(): BelongsTo

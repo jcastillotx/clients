@@ -14,34 +14,35 @@ class AutomationRule extends Model
     protected $fillable = [
         'name',
         'description',
-        'is_active',
         'trigger',
-        'trigger_meta',
         'conditions',
         'actions',
-        'run_order',
-        'last_ran_at',
+        'is_active',
+        'sort_order',
         'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'trigger_meta' => 'array',
         'conditions' => 'array',
         'actions' => 'array',
-        'last_ran_at' => 'datetime',
-        'run_order' => 'integer',
-        'created_by' => 'integer',
+        'is_active' => 'boolean',
+        'sort_order' => 'integer',
     ];
+
+    public function runs(): HasMany
+    {
+        return $this->hasMany(AutomationRun::class)->latest('id');
+    }
 
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function logs(): HasMany
+    public function updater(): BelongsTo
     {
-        return $this->hasMany(AutomationLog::class)->orderByDesc('created_at')->orderByDesc('id');
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }
 

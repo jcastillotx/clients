@@ -1,96 +1,68 @@
-<div class="container-xl">
-    <div class="page-header d-print-none">
-        <div class="row align-items-center">
-            <div class="col">
-                <h2 class="page-title">Automation Rules</h2>
-                <div class="text-muted">Trigger → Conditions → Actions. Includes execution logs for audit and debugging.</div>
-            </div>
-            <div class="col-auto">
-                <a href="{{ route('admin.automation.builder') }}" class="btn btn-primary">New automation</a>
-                <a href="{{ route('admin.automation.logs') }}" class="btn btn-outline-secondary">View logs</a>
-            </div>
-        </div>
-    </div>
+<x-app-layout>
+    <x-slot name="header">Automation Rules</x-slot>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="row g-2">
-                <div class="col-12 col-md-6">
-                    <input class="form-control" placeholder="Search automations…" wire:model.debounce.300ms="search">
-                </div>
-                <div class="col-6 col-md-3">
-                    <select class="form-select" wire:model="trigger">
-                        <option value="all">All triggers</option>
-                        @foreach($triggers as $t)
-                            <option value="{{ $t }}">{{ $t }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-6 col-md-3">
-                    <select class="form-select" wire:model="status">
-                        <option value="all">All statuses</option>
-                        <option value="active">Active</option>
-                        <option value="disabled">Disabled</option>
-                    </select>
-                </div>
-            </div>
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    <div class="d-flex justify-content-between mb-3">
+        <div class="text-muted">Trigger → Conditions → Actions</div>
+        <div>
+            <a href="{{ route('admin.automation.builder') }}" class="btn btn-primary">
+                <i class="fas fa-plus mr-1"></i> New Automation
+            </a>
+            <a href="{{ route('admin.automation.logs') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-history mr-1"></i> Logs
+            </a>
         </div>
     </div>
 
     <div class="card">
-        <div class="table-responsive">
-            <table class="table card-table table-vcenter">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Trigger</th>
-                        <th>Order</th>
-                        <th>Status</th>
-                        <th>Last ran</th>
-                        <th class="w-1"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                @forelse($rules as $r)
-                    <tr>
-                        <td>
-                            <div class="fw-bold">{{ $r->name }}</div>
-                            @if($r->description)
-                                <div class="text-muted small">{{ $r->description }}</div>
-                            @endif
-                        </td>
-                        <td><code>{{ $r->trigger }}</code></td>
-                        <td>{{ $r->run_order }}</td>
-                        <td>
-                            @if($r->is_active)
-                                <span class="badge bg-success">Active</span>
-                            @else
-                                <span class="badge bg-secondary">Disabled</span>
-                            @endif
-                        </td>
-                        <td class="text-muted">{{ $r->last_ran_at?->diffForHumans() ?? '—' }}</td>
-                        <td class="text-end">
-                            <div class="btn-list flex-nowrap">
-                                <a class="btn btn-sm" href="{{ route('admin.automation.builder', ['rule' => $r->id]) }}">Edit</a>
-                                <button class="btn btn-sm btn-outline-secondary" wire:click="toggle({{ $r->id }})">
-                                    {{ $r->is_active ? 'Disable' : 'Enable' }}
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" wire:click="delete({{ $r->id }})"
-                                    onclick="return confirm('Delete this automation?')">
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="6" class="text-muted">No automation rules yet.</td></tr>
-                @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="card-footer">
-            {{ $rules->links() }}
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">On</th>
+                            <th>Name</th>
+                            <th>Trigger</th>
+                            <th class="text-muted">Sort</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($rules as $r)
+                            <tr>
+                                <td>
+                                    <button class="btn btn-sm btn-{{ $r->is_active ? 'success' : 'secondary' }}" wire:click="toggle({{ $r->id }})">
+                                        {{ $r->is_active ? 'ON' : 'OFF' }}
+                                    </button>
+                                </td>
+                                <td>
+                                    <div class="font-weight-bold">{{ $r->name }}</div>
+                                    <div class="text-muted small">{{ $r->description }}</div>
+                                </td>
+                                <td><code>{{ $r->trigger }}</code></td>
+                                <td class="text-muted">{{ $r->sort_order }}</td>
+                                <td class="text-right">
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.automation.builder', ['rule' => $r->id]) }}">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a class="btn btn-sm btn-outline-info" href="{{ route('admin.automation.logs', ['ruleId' => $r->id]) }}">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" wire:click="delete({{ $r->id }})" onclick="return confirm('Delete this automation?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="text-muted text-center py-4">No automations yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
+</x-app-layout>
 

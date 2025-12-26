@@ -1,132 +1,84 @@
-<div>
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div>
-            <div class="page-pretitle">Storage</div>
-            <h2 class="page-title mb-0">Storage Settings</h2>
-            <div class="text-muted small">Primary provider, auto-sync rules, and per-provider folder settings.</div>
-        </div>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="{{ route('admin.storage') }}">Dashboard</a>
-            <a class="btn btn-outline-secondary" href="{{ route('admin.storage.files') }}">Unified files</a>
-        </div>
-    </div>
+<x-app-layout>
+    <x-slot name="header">Storage Settings</x-slot>
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
-    <div class="card mb-3">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-cog mr-1"></i> Configuration</h3>
+        </div>
         <div class="card-body">
-            @if($isAdmin)
-                <div class="row g-3">
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <label class="form-label">Client</label>
-                        <select class="form-select" wire:model.live="client_id">
-                            <option value="">All clients</option>
-                            @foreach($clients as $c)
-                                <option value="{{ $c->id }}">{{ $c->company_name }}</option>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="custom-control custom-switch mb-3">
+                        <input type="checkbox" class="custom-control-input" id="auto_sync" wire:model.defer="auto_sync_enabled">
+                        <label class="custom-control-label" for="auto_sync">Auto-sync enabled</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="mb-1">Auto-sync frequency</label>
+                        <select class="form-control" wire:model.defer="auto_sync_frequency">
+                            <option value="hourly">Hourly</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="mb-1">Quota alert threshold (%)</label>
+                        <input type="number" class="form-control" wire:model.defer="quota_alert_percent" min="1" max="100">
+                        <small class="text-muted">Clients are notified when a provider reaches this threshold.</small>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="mb-1">Primary storage provider</label>
+                        <select class="form-control" wire:model.defer="primary_connection_id">
+                            <option value="">(none)</option>
+                            @foreach($connections as $c)
+                                <option value="{{ $c->id }}">{{ $c->name }} ({{ strtoupper($c->provider) }})</option>
                             @endforeach
                         </select>
                     </div>
-                </div>
-            @endif
-            <div class="text-muted small mt-2">
-                Default auto-sync frequency: <strong>{{ $defaultFreq }} minutes</strong>. Quota warnings are sent at <strong>80%</strong>.
-            </div>
-        </div>
-    </div>
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-vcenter card-table">
-                <thead>
-                <tr>
-                    <th>Provider</th>
-                    <th>Status</th>
-                    <th>Primary</th>
-                    <th>Auto sync</th>
-                    <th>Frequency (min)</th>
-                    <th>Conflict rule</th>
-                    <th>Quota alerts</th>
-                    <th>Sync fail alerts</th>
-                    <th>Folder</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                @forelse($connections as $i => $c)
-                    @php
-                        $label = match ($c['provider']) {
-                            'aws_s3' => 'AWS S3',
-                            'dropbox' => 'Dropbox',
-                            'google_drive' => 'Google Drive',
-                            default => $c['provider'],
-                        };
-                        $statusColor = match ($c['status']) {
-                            'connected' => 'success',
-                            'error' => 'danger',
-                            'disconnected' => 'secondary',
-                            default => 'secondary',
-                        };
-                    @endphp
-                    <tr>
-                        <td class="fw-semibold">{{ $label }}</td>
-                        <td><span class="badge bg-{{ $statusColor }}">{{ $c['status'] }}</span></td>
-                        <td>
-                            <label class="form-check">
-                                <input class="form-check-input" type="checkbox" wire:model="connections.{{ $i }}.is_primary">
-                                <span class="form-check-label">Primary</span>
-                            </label>
-                        </td>
-                        <td>
-                            <label class="form-check">
-                                <input class="form-check-input" type="checkbox" wire:model="connections.{{ $i }}.auto_sync_enabled">
-                                <span class="form-check-label">Enabled</span>
-                            </label>
-                        </td>
-                        <td style="max-width: 160px;">
-                            <input type="number" class="form-control" wire:model="connections.{{ $i }}.sync_frequency_minutes" min="0" max="10080" placeholder="{{ $defaultFreq }}">
-                            <div class="text-muted small mt-1">0 = default</div>
-                        </td>
-                        <td style="max-width: 220px;">
-                            <select class="form-select" wire:model="connections.{{ $i }}.conflict_strategy">
-                                <option value="prefer_primary">Prefer primary</option>
-                                <option value="prefer_newest">Prefer newest</option>
-                                <option value="keep_both">Keep both</option>
-                            </select>
-                        </td>
-                        <td>
-                            <label class="form-check">
-                                <input class="form-check-input" type="checkbox" wire:model="connections.{{ $i }}.quota_alerts_enabled">
-                                <span class="form-check-label">80% warn</span>
-                            </label>
-                        </td>
-                        <td>
-                            <label class="form-check">
-                                <input class="form-check-input" type="checkbox" wire:model="connections.{{ $i }}.sync_failure_alerts_enabled">
-                                <span class="form-check-label">On fail</span>
-                            </label>
-                        </td>
-                        <td style="max-width: 260px;">
-                            @if($c['provider'] === 'google_drive')
-                                <input type="text" class="form-control" wire:model="connections.{{ $i }}.drive_folder_id" placeholder="Drive folder ID">
-                            @else
-                                <input type="text" class="form-control" wire:model="connections.{{ $i }}.folder_path" placeholder="Folder path / prefix">
-                            @endif
-                        </td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-primary" wire:click="save({{ (int)$c['id'] }})" wire:loading.attr="disabled">Save</button>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="10" class="text-center text-muted py-4">No storage connections found.</td></tr>
-                @endforelse
-                </tbody>
-            </table>
+                    <div class="form-group">
+                        <label class="mb-1">Conflict resolution</label>
+                        <select class="form-control" wire:model.defer="conflict_rule">
+                            <option value="prefer_primary">Prefer primary</option>
+                            <option value="prefer_newest">Prefer newest</option>
+                            <option value="keep_both">Keep both (log conflicts)</option>
+                        </select>
+                        <small class="text-muted">Conflicts are detected when the same filename differs across providers.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="mb-1">Folders to sync (comma separated)</label>
+                        <input class="form-control" wire:model.defer="folders_csv" placeholder="e.g. ., invoices, contracts">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="custom-control custom-switch mb-3">
+                        <input type="checkbox" class="custom-control-input" id="backup_enabled" wire:model.defer="backup_enabled">
+                        <label class="custom-control-label" for="backup_enabled">Backup enabled</label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="mb-1">Backup destination</label>
+                        <select class="form-control" wire:model.defer="backup_connection_id" @disabled(!$backup_enabled)>
+                            <option value="">Select provider...</option>
+                            @foreach($connections as $c)
+                                <option value="{{ $c->id }}">{{ $c->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Backup execution is a placeholder; configure your provider disks first.</small>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" wire:click="save">
+                <i class="fas fa-save mr-1"></i> Save Settings
+            </button>
         </div>
     </div>
-</div>
+</x-app-layout>
 

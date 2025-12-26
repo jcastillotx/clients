@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
@@ -128,6 +128,26 @@ class Client extends Model
         return $this->hasMany(Document::class);
     }
 
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
+    public function storageConnections(): HasMany
+    {
+        return $this->hasMany(StorageConnection::class);
+    }
+
+    public function storageSetting(): HasOne
+    {
+        return $this->hasOne(ClientStorageSetting::class);
+    }
+
     /**
      * Get activity logs for this client.
      */
@@ -144,11 +164,6 @@ class Client extends Model
         return $this->belongsToMany(User::class, 'client_staff')
             ->withPivot(['relationship'])
             ->withTimestamps();
-    }
-
-    public function storageConnections(): HasMany
-    {
-        return $this->hasMany(StorageConnection::class);
     }
 
     /**

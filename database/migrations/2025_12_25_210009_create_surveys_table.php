@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Superseded by the newer survey schema in `2025_12_26_030300_create_surveys_tables.php`
+        // (surveys + questions + responses + answers). Keeping both would create conflicting
+        // `surveys` tables with different columns.
+        return;
+
         Schema::create('surveys', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();

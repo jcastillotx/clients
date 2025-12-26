@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Document;
 use App\Models\ActivityLog;
+use App\Services\Documents\DocumentAccessService;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
+    public function __construct(private readonly DocumentAccessService $access)
+    {
+    }
     /**
      * Display a listing of the documents.
      */
@@ -23,7 +27,7 @@ class DocumentController extends Controller
      */
     public function show(Document $document): View
     {
-        $this->authorizeClientAccess($document);
+        $this->authorizeView($document);
 
         $document->load(['client', 'request', 'uploader']);
 
@@ -35,7 +39,7 @@ class DocumentController extends Controller
      */
     public function download(Document $document): StreamedResponse
     {
-        $this->authorizeClientAccess($document);
+        $this->authorizeDownload($document);
 
         if (!Storage::disk('documents')->exists($document->file_path)) {
             abort(404, 'Document file not found.');
@@ -60,7 +64,7 @@ class DocumentController extends Controller
      */
     public function view(Document $document)
     {
-        $this->authorizeClientAccess($document);
+        $this->authorizeView($document);
 
         if (!Storage::disk('documents')->exists($document->file_path)) {
             abort(404, 'Document file not found.');
@@ -79,10 +83,21 @@ class DocumentController extends Controller
      */
     protected function authorizeClientAccess(Document $document): void
     {
-        $user = auth()->user();
+        // kept for BC; superseded by granular permission checks below
+        $this->authorizeView($document);
+    }
 
-        if ($user->isClient() && $document->client_id !== $user->client_id) {
-            abort(403, 'You do not have access to this document.');
-        }
+    protected function authorizeView(Document $document): void
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+        abort_unless($this->access->canView($user, $document), 403);
+    }
+
+    protected function authorizeDownload(Document $document): void
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+        abort_unless($this->access->canDownload($user, $document), 403);
     }
 }

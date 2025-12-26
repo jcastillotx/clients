@@ -2,10 +2,12 @@
 
 namespace App\Http\Livewire\Admin\Settings;
 
-use App\Models\Setting;
+use App\Services\Settings\SettingsService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
-use Livewire\Features\SupportFileUploads\WithFileUploads;
+use Livewire\WithFileUploads;
 
 class SystemSettings extends Component
 {
@@ -13,416 +15,396 @@ class SystemSettings extends Component
 
     public string $tab = 'general';
 
-    /** @var array<string, mixed> */
-    public array $state = [];
+    public array $general = [];
+    public array $email = [];
+    public array $payment = [];
+    public array $storage = [];
+    public array $notifications = [];
+    public array $security = [];
+    public array $branding = [];
 
-    // UI helpers
-    public string $storageAllowedTypesCsv = '';
+    public ?string $test_email_to = null;
+    public $logo_upload;
 
-    // Branding upload
-    public $logoUpload;
-
-    // Test email
-    public string $testEmailTo = '';
-
-    // Simple template builder blocks (drag-and-drop ordering in UI)
-    /** @var array<int, array{type:string, content:string}> */
-    public array $emailTemplateBlocks = [];
-
-    public function mount(): void
+    public function mount(SettingsService $settings): void
     {
-        $this->tab = request()->query('tab', 'general');
-        $this->loadState();
-    }
+        abort_unless(Auth::user()?->can('manage settings'), 403);
 
-    public function switchTab(string $tab): void
-    {
-        $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding'];
-        $this->tab = in_array($tab, $allowed, true) ? $tab : 'general';
-    }
-
-    protected function loadState(): void
-    {
-        $this->state = [
-            // General
-            'company.name' => (string) Setting::getValue('company.name', config('app.name')),
-            'company.address' => (string) Setting::getValue('company.address', ''),
-            'company.phone' => (string) Setting::getValue('company.phone', ''),
-            'company.website' => (string) Setting::getValue('company.website', ''),
-            'business.timezone' => (string) Setting::getValue('business.timezone', config('app.timezone', 'UTC')),
-            'business.hours' => (array) Setting::getValue('business.hours', [
-                'mon' => ['09:00', '17:00'],
-                'tue' => ['09:00', '17:00'],
-                'wed' => ['09:00', '17:00'],
-                'thu' => ['09:00', '17:00'],
-                'fri' => ['09:00', '17:00'],
-                'sat' => null,
-                'sun' => null,
-            ]),
-            'locale.default_currency' => (string) Setting::getValue('locale.default_currency', 'USD'),
-            'locale.date_format' => (string) Setting::getValue('locale.date_format', 'Y-m-d'),
-            'locale.time_format' => (string) Setting::getValue('locale.time_format', 'H:i'),
-            'locale.language' => (string) Setting::getValue('locale.language', config('app.locale', 'en')),
-
-            // Email
-            'mail.from_address' => (string) Setting::getValue('mail.from_address', config('mail.from.address')),
-            'mail.from_name' => (string) Setting::getValue('mail.from_name', config('mail.from.name')),
-            'mail.smtp.host' => (string) Setting::getValue('mail.smtp.host', config('mail.mailers.smtp.host')),
-            'mail.smtp.port' => (int) Setting::getValue('mail.smtp.port', config('mail.mailers.smtp.port', 587)),
-            'mail.smtp.username' => (string) Setting::getValue('mail.smtp.username', config('mail.mailers.smtp.username')),
-            'mail.smtp.password' => (string) Setting::getValue('mail.smtp.password', ''),
-            'mail.smtp.encryption' => (string) Setting::getValue('mail.smtp.encryption', config('mail.mailers.smtp.encryption', 'tls')),
-            'mail.signature' => (string) Setting::getValue('mail.signature', ''),
-            'mail.notify_events' => (array) Setting::getValue('mail.notify_events', [
-                'request_created' => true,
-                'request_updated' => true,
-                'invoice_created' => true,
-                'payment_received' => true,
-            ]),
-            'mail.template_blocks' => (array) Setting::getValue('mail.template_blocks', [
-                ['type' => 'header', 'content' => '<h1>{{ $title ?? "Notification" }}</h1>'],
-                ['type' => 'body', 'content' => '<p>{{ $slot ?? "" }}</p>'],
-                ['type' => 'footer', 'content' => '<p style="color:#6b7280;font-size:12px;">{{ $company ?? "" }}</p>'],
-            ]),
-
-            // Payment
-            'payments.mode' => (string) Setting::getValue('payments.mode', 'test'), // test|live
-            'stripe.test_key' => (string) Setting::getValue('stripe.test_key', ''),
-            'stripe.test_secret' => (string) Setting::getValue('stripe.test_secret', ''),
-            'stripe.live_key' => (string) Setting::getValue('stripe.live_key', ''),
-            'stripe.live_secret' => (string) Setting::getValue('stripe.live_secret', ''),
-            'paypal.client_id' => (string) Setting::getValue('paypal.client_id', ''),
-            'paypal.secret' => (string) Setting::getValue('paypal.secret', ''),
-            'payments.default_terms' => (string) Setting::getValue('payments.default_terms', 'net_30'),
-            'payments.late_fee.enabled' => (bool) Setting::getValue('payments.late_fee.enabled', false),
-            'payments.late_fee.percent' => (float) Setting::getValue('payments.late_fee.percent', 0),
-            'payments.tax_rate' => (float) Setting::getValue('payments.tax_rate', 0),
-            'payments.methods' => (array) Setting::getValue('payments.methods', ['stripe']),
-
-            // Storage
-            'storage.default_provider' => (string) Setting::getValue('storage.default_provider', 's3'),
-            'storage.max_upload_mb' => (int) Setting::getValue('storage.max_upload_mb', 50),
-            'storage.allowed_types' => (array) Setting::getValue('storage.allowed_types', ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'xls', 'xlsx']),
-            'storage.quota_by_tier_mb' => (array) Setting::getValue('storage.quota_by_tier_mb', [
-                'basic' => 1024,
-                'standard' => 5120,
-                'premium' => 10240,
-                'enterprise' => 51200,
-            ]),
-            'storage.retention_days' => (int) Setting::getValue('storage.retention_days', 0), // 0 = disabled
-            'storage.backups.enabled' => (bool) Setting::getValue('storage.backups.enabled', false),
-            'storage.backups.frequency' => (string) Setting::getValue('storage.backups.frequency', 'weekly'),
-
-            // Notifications
-            'notify.admin_events' => (array) Setting::getValue('notify.admin_events', [
-                'new_request' => true,
-                'payment_failed' => true,
-                'storage_quota_80' => true,
-            ]),
-            'notify.client_defaults' => (array) Setting::getValue('notify.client_defaults', [
-                'request_updates' => true,
-                'invoice_updates' => true,
-            ]),
-            'notify.slack.webhook' => (string) Setting::getValue('notify.slack.webhook', ''),
-            'notify.teams.webhook' => (string) Setting::getValue('notify.teams.webhook', ''),
-            'notify.push.enabled' => (bool) Setting::getValue('notify.push.enabled', false),
-            'notify.sms.enabled' => (bool) Setting::getValue('notify.sms.enabled', false),
-            'notify.sms.twilio_sid' => (string) Setting::getValue('notify.sms.twilio_sid', ''),
-            'notify.sms.twilio_token' => (string) Setting::getValue('notify.sms.twilio_token', ''),
-            'notify.sms.from' => (string) Setting::getValue('notify.sms.from', ''),
-
-            // Security
-            'security.2fa_enforced' => (bool) Setting::getValue('security.2fa_enforced', false),
-            'security.password.min_length' => (int) Setting::getValue('security.password.min_length', 10),
-            'security.password.require_numbers' => (bool) Setting::getValue('security.password.require_numbers', true),
-            'security.password.require_symbols' => (bool) Setting::getValue('security.password.require_symbols', false),
-            'security.password.expire_days' => (int) Setting::getValue('security.password.expire_days', 0),
-            'security.session_timeout_minutes' => (int) Setting::getValue('security.session_timeout_minutes', 120),
-            'security.ip_allowlist' => (string) Setting::getValue('security.ip_allowlist', ''),
-            'security.ip_blocklist' => (string) Setting::getValue('security.ip_blocklist', ''),
-            'security.login_attempt_limit' => (int) Setting::getValue('security.login_attempt_limit', 10),
-            'security.api_rate_limit_per_min' => (int) Setting::getValue('security.api_rate_limit_per_min', 60),
-
-            // Branding
-            'branding.logo_path' => (string) Setting::getValue('branding.logo_path', ''),
-            'branding.primary' => (string) Setting::getValue('branding.primary', '#206bc4'),
-            'branding.secondary' => (string) Setting::getValue('branding.secondary', '#1f2937'),
-            'branding.accent' => (string) Setting::getValue('branding.accent', '#22c55e'),
-            'branding.invoice_template' => (string) Setting::getValue('branding.invoice_template', 'default'),
-            'branding.email_header_html' => (string) Setting::getValue('branding.email_header_html', ''),
-            'branding.email_footer_html' => (string) Setting::getValue('branding.email_footer_html', ''),
-            'branding.custom_domain' => (string) Setting::getValue('branding.custom_domain', ''),
+        $g = $settings->getMany([
+            'general.company_name' => config('app.name'),
+            'general.address' => '',
+            'general.phone' => '',
+            'general.website' => '',
+            'general.timezone' => config('app.timezone', 'UTC'),
+            'general.business_hours' => 'Mon-Fri 9:00-17:00',
+            'general.currency' => 'USD',
+            'general.date_format' => 'M d, Y',
+            'general.time_format' => 'h:i A',
+            'general.language' => config('app.locale', 'en'),
+        ]);
+        $this->general = [
+            'company_name' => $g['general.company_name'],
+            'address' => $g['general.address'],
+            'phone' => $g['general.phone'],
+            'website' => $g['general.website'],
+            'timezone' => $g['general.timezone'],
+            'business_hours' => $g['general.business_hours'],
+            'currency' => $g['general.currency'],
+            'date_format' => $g['general.date_format'],
+            'time_format' => $g['general.time_format'],
+            'language' => $g['general.language'],
         ];
 
-        $this->emailTemplateBlocks = $this->state['mail.template_blocks'] ?: [];
-        $this->storageAllowedTypesCsv = implode(',', (array) ($this->state['storage.allowed_types'] ?? []));
+        $e = $settings->getMany([
+            'email.smtp.host' => '',
+            'email.smtp.port' => 587,
+            'email.smtp.username' => '',
+            'email.smtp.password' => '',
+            'email.smtp.encryption' => 'tls',
+            'email.from.address' => '',
+            'email.from.name' => '',
+            'email.signature' => '',
+            'email.template.design' => null,
+            'email.template.html' => '<div>{{ $content }}</div>',
+            'email.events.invoice_paid' => true,
+            'email.events.request_created' => true,
+            'email.events.contract_signed' => true,
+        ]);
+        $this->email = [
+            'smtp_host' => $e['email.smtp.host'],
+            'smtp_port' => $e['email.smtp.port'],
+            'smtp_username' => $e['email.smtp.username'],
+            'smtp_password' => $e['email.smtp.password'],
+            'smtp_encryption' => $e['email.smtp.encryption'],
+            'from_address' => $e['email.from.address'],
+            'from_name' => $e['email.from.name'],
+            'signature' => $e['email.signature'],
+            'template_design' => $e['email.template.design'],
+            'template_html' => $e['email.template.html'],
+            'events_invoice_paid' => (bool) $e['email.events.invoice_paid'],
+            'events_request_created' => (bool) $e['email.events.request_created'],
+            'events_contract_signed' => (bool) $e['email.events.contract_signed'],
+        ];
+
+        $p = $settings->getMany([
+            'payment.stripe.mode' => 'test',
+            'payment.stripe.test_public' => '',
+            'payment.stripe.test_secret' => '',
+            'payment.stripe.live_public' => '',
+            'payment.stripe.live_secret' => '',
+            'payment.paypal.client_id' => '',
+            'payment.paypal.secret' => '',
+            'payment.terms' => 'Net 30',
+            'payment.late_fee.enabled' => false,
+            'payment.late_fee.percent' => 0,
+            'payment.tax_rate' => 0,
+            'payment.accepted_methods' => ['card', 'ach'],
+        ]);
+        $this->payment = [
+            'stripe_mode' => $p['payment.stripe.mode'],
+            'stripe_test_public' => $p['payment.stripe.test_public'],
+            'stripe_test_secret' => $p['payment.stripe.test_secret'],
+            'stripe_live_public' => $p['payment.stripe.live_public'],
+            'stripe_live_secret' => $p['payment.stripe.live_secret'],
+            'paypal_client_id' => $p['payment.paypal.client_id'],
+            'paypal_secret' => $p['payment.paypal.secret'],
+            'payment_terms' => $p['payment.terms'],
+            'late_fee_enabled' => (bool) $p['payment.late_fee.enabled'],
+            'late_fee_percent' => $p['payment.late_fee.percent'],
+            'tax_rate' => $p['payment.tax_rate'],
+            'accepted_methods' => (array) $p['payment.accepted_methods'],
+        ];
+
+        $s = $settings->getMany([
+            'storage.default_provider' => 's3',
+            'storage.max_upload_mb' => 25,
+            'storage.allowed_file_types' => 'pdf,jpg,jpeg,png,doc,docx,xls,xlsx',
+            'storage.quota.basic_gb' => 5,
+            'storage.quota.standard_gb' => 25,
+            'storage.quota.premium_gb' => 100,
+            'storage.quota.enterprise_gb' => 500,
+            'storage.retention_days' => 0,
+            'storage.backup.enabled' => false,
+            'storage.backup.provider' => 's3',
+        ]);
+        $this->storage = [
+            'default_provider' => $s['storage.default_provider'],
+            'max_upload_mb' => $s['storage.max_upload_mb'],
+            'allowed_file_types' => $s['storage.allowed_file_types'],
+            'quota_basic_gb' => $s['storage.quota.basic_gb'],
+            'quota_standard_gb' => $s['storage.quota.standard_gb'],
+            'quota_premium_gb' => $s['storage.quota.premium_gb'],
+            'quota_enterprise_gb' => $s['storage.quota.enterprise_gb'],
+            'retention_days' => $s['storage.retention_days'],
+            'backup_enabled' => (bool) $s['storage.backup.enabled'],
+            'backup_provider' => $s['storage.backup.provider'],
+        ];
+
+        $n = $settings->getMany([
+            'notifications.admin.email' => true,
+            'notifications.client.email_default' => true,
+            'notifications.slack.webhook_url' => '',
+            'notifications.teams.webhook_url' => '',
+            'notifications.push.enabled' => false,
+            'notifications.sms.enabled' => false,
+            'notifications.sms.twilio_sid' => '',
+            'notifications.sms.twilio_token' => '',
+            'notifications.sms.twilio_from' => '',
+        ]);
+        $this->notifications = [
+            'admin_email' => (bool) $n['notifications.admin.email'],
+            'client_email_default' => (bool) $n['notifications.client.email_default'],
+            'slack_webhook_url' => $n['notifications.slack.webhook_url'],
+            'teams_webhook_url' => $n['notifications.teams.webhook_url'],
+            'push_enabled' => (bool) $n['notifications.push.enabled'],
+            'sms_enabled' => (bool) $n['notifications.sms.enabled'],
+            'twilio_sid' => $n['notifications.sms.twilio_sid'],
+            'twilio_token' => $n['notifications.sms.twilio_token'],
+            'twilio_from' => $n['notifications.sms.twilio_from'],
+        ];
+
+        $sec = $settings->getMany([
+            'security.2fa.enforce' => false,
+            'security.password.min_length' => 10,
+            'security.password.require_symbols' => false,
+            'security.password.expiration_days' => 0,
+            'security.session.timeout_minutes' => 120,
+            'security.ip.whitelist' => '',
+            'security.ip.blacklist' => '',
+            'security.login.max_attempts' => 10,
+            'security.api.rate_limit_per_minute' => 60,
+        ]);
+        $this->security = [
+            'enforce_2fa' => (bool) $sec['security.2fa.enforce'],
+            'password_min_length' => (int) $sec['security.password.min_length'],
+            'password_require_symbols' => (bool) $sec['security.password.require_symbols'],
+            'password_expiration_days' => (int) $sec['security.password.expiration_days'],
+            'session_timeout_minutes' => (int) $sec['security.session.timeout_minutes'],
+            'ip_whitelist' => (string) $sec['security.ip.whitelist'],
+            'ip_blacklist' => (string) $sec['security.ip.blacklist'],
+            'login_max_attempts' => (int) $sec['security.login.max_attempts'],
+            'api_rate_limit_per_minute' => (int) $sec['security.api.rate_limit_per_minute'],
+        ];
+
+        $b = $settings->getMany([
+            'branding.logo_path' => '',
+            'branding.colors.primary' => '#3c8dbc',
+            'branding.colors.secondary' => '#6c757d',
+            'branding.colors.accent' => '#00a65a',
+            'branding.invoice_template' => 'default',
+            'branding.email.header_html' => '',
+            'branding.email.footer_html' => '',
+            'branding.custom_domain' => '',
+        ]);
+        $this->branding = [
+            'logo_path' => $b['branding.logo_path'],
+            'color_primary' => $b['branding.colors.primary'],
+            'color_secondary' => $b['branding.colors.secondary'],
+            'color_accent' => $b['branding.colors.accent'],
+            'invoice_template' => $b['branding.invoice_template'],
+            'email_header_html' => $b['branding.email.header_html'],
+            'email_footer_html' => $b['branding.email.footer_html'],
+            'custom_domain' => $b['branding.custom_domain'],
+        ];
     }
 
-    protected function persist(array $kv, array $encryptedKeys = []): void
+    public function setTab(string $tab): void
     {
-        $uid = auth()->id();
-        foreach ($kv as $key => $value) {
-            $encrypt = in_array($key, $encryptedKeys, true);
-            Setting::setValue($key, $value, $encrypt, $uid);
+        $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding'];
+        if (in_array($tab, $allowed, true)) {
+            $this->tab = $tab;
         }
     }
 
-    public function saveGeneral(): void
+    public function saveGeneral(SettingsService $settings): void
     {
-        $this->validate([
-            'state.company.name' => ['required', 'string', 'max:255'],
-            'state.company.address' => ['nullable', 'string', 'max:2000'],
-            'state.company.phone' => ['nullable', 'string', 'max:255'],
-            'state.company.website' => ['nullable', 'string', 'max:255'],
-            'state.business.timezone' => ['required', 'string', 'max:255'],
-            'state.locale.default_currency' => ['required', 'string', 'size:3'],
-            'state.locale.date_format' => ['required', 'string', 'max:50'],
-            'state.locale.time_format' => ['required', 'string', 'max:50'],
-            'state.locale.language' => ['required', 'string', 'max:10'],
-        ]);
-
-        $this->persist([
-            'company.name' => $this->state['company.name'],
-            'company.address' => $this->state['company.address'],
-            'company.phone' => $this->state['company.phone'],
-            'company.website' => $this->state['company.website'],
-            'business.timezone' => $this->state['business.timezone'],
-            'business.hours' => $this->state['business.hours'],
-            'locale.default_currency' => strtoupper($this->state['locale.default_currency']),
-            'locale.date_format' => $this->state['locale.date_format'],
-            'locale.time_format' => $this->state['locale.time_format'],
-            'locale.language' => $this->state['locale.language'],
-        ]);
-
+        $settings->setMany([
+            'general.company_name' => $this->general['company_name'] ?? '',
+            'general.address' => $this->general['address'] ?? '',
+            'general.phone' => $this->general['phone'] ?? '',
+            'general.website' => $this->general['website'] ?? '',
+            'general.timezone' => $this->general['timezone'] ?? 'UTC',
+            'general.business_hours' => $this->general['business_hours'] ?? '',
+            'general.currency' => $this->general['currency'] ?? 'USD',
+            'general.date_format' => $this->general['date_format'] ?? 'M d, Y',
+            'general.time_format' => $this->general['time_format'] ?? 'h:i A',
+            'general.language' => $this->general['language'] ?? 'en',
+        ], 'general');
         session()->flash('success', 'General settings saved.');
     }
 
-    public function saveEmail(): void
+    public function saveEmail(SettingsService $settings): void
     {
-        $this->state['mail.template_blocks'] = $this->emailTemplateBlocks;
-
-        $this->validate([
-            'state.mail.from_address' => ['required', 'email', 'max:255'],
-            'state.mail.from_name' => ['required', 'string', 'max:255'],
-            'state.mail.smtp.host' => ['required', 'string', 'max:255'],
-            'state.mail.smtp.port' => ['required', 'integer', 'min:1', 'max:65535'],
-            'state.mail.smtp.username' => ['nullable', 'string', 'max:255'],
-            'state.mail.smtp.password' => ['nullable', 'string', 'max:255'],
-            'state.mail.smtp.encryption' => ['nullable', 'string', 'max:10'],
-            'state.mail.signature' => ['nullable', 'string', 'max:5000'],
-        ]);
-
-        $this->persist([
-            'mail.from_address' => $this->state['mail.from_address'],
-            'mail.from_name' => $this->state['mail.from_name'],
-            'mail.smtp.host' => $this->state['mail.smtp.host'],
-            'mail.smtp.port' => (int) $this->state['mail.smtp.port'],
-            'mail.smtp.username' => $this->state['mail.smtp.username'],
-            'mail.smtp.password' => $this->state['mail.smtp.password'],
-            'mail.smtp.encryption' => $this->state['mail.smtp.encryption'],
-            'mail.signature' => $this->state['mail.signature'],
-            'mail.notify_events' => $this->state['mail.notify_events'],
-            'mail.template_blocks' => $this->state['mail.template_blocks'],
-        ], encryptedKeys: [
-            'mail.smtp.password',
-        ]);
-
+        $encrypted = [
+            'email.smtp.password',
+        ];
+        $settings->setMany([
+            'email.smtp.host' => $this->email['smtp_host'] ?? '',
+            'email.smtp.port' => (int) ($this->email['smtp_port'] ?? 587),
+            'email.smtp.username' => $this->email['smtp_username'] ?? '',
+            'email.smtp.password' => $this->email['smtp_password'] ?? '',
+            'email.smtp.encryption' => $this->email['smtp_encryption'] ?? 'tls',
+            'email.from.address' => $this->email['from_address'] ?? '',
+            'email.from.name' => $this->email['from_name'] ?? '',
+            'email.signature' => $this->email['signature'] ?? '',
+            'email.template.design' => $this->email['template_design'] ?? null,
+            'email.template.html' => $this->email['template_html'] ?? '',
+            'email.events.invoice_paid' => (bool) ($this->email['events_invoice_paid'] ?? true),
+            'email.events.request_created' => (bool) ($this->email['events_request_created'] ?? true),
+            'email.events.contract_signed' => (bool) ($this->email['events_contract_signed'] ?? true),
+        ], 'email', $encrypted);
         session()->flash('success', 'Email settings saved.');
+    }
+
+    public function openEmailBuilder(): void
+    {
+        $this->dispatch('open-email-builder', design: $this->email['template_design'] ?? null);
+    }
+
+    /**
+     * Save builder output (design JSON + exported HTML).
+     */
+    public function saveEmailTemplate(mixed $design, string $html, SettingsService $settings): void
+    {
+        $this->email['template_design'] = $design;
+        $this->email['template_html'] = $html;
+
+        $settings->setMany([
+            'email.template.design' => $design,
+            'email.template.html' => $html,
+        ], 'email');
+
+        session()->flash('success', 'Email template saved from builder.');
     }
 
     public function sendTestEmail(): void
     {
-        $this->validate([
-            'testEmailTo' => ['required', 'email', 'max:255'],
-        ]);
+        Validator::make(['to' => $this->test_email_to], [
+            'to' => ['required', 'email'],
+        ])->validate();
 
-        // Apply configured SMTP settings just for this send.
-        config([
-            'mail.from.address' => $this->state['mail.from_address'] ?? config('mail.from.address'),
-            'mail.from.name' => $this->state['mail.from_name'] ?? config('mail.from.name'),
-            'mail.mailers.smtp.host' => $this->state['mail.smtp.host'] ?? config('mail.mailers.smtp.host'),
-            'mail.mailers.smtp.port' => (int) ($this->state['mail.smtp.port'] ?? config('mail.mailers.smtp.port')),
-            'mail.mailers.smtp.username' => $this->state['mail.smtp.username'] ?? config('mail.mailers.smtp.username'),
-            'mail.mailers.smtp.password' => $this->state['mail.smtp.password'] ?? config('mail.mailers.smtp.password'),
-            'mail.mailers.smtp.encryption' => $this->state['mail.smtp.encryption'] ?? config('mail.mailers.smtp.encryption'),
-        ]);
+        Mail::raw('This is a test email from System Settings.', function ($m) {
+            $m->to($this->test_email_to)->subject('Test Email');
+        });
 
-        try {
-            Mail::mailer('smtp')->raw("Test email from " . ($this->state['company.name'] ?? config('app.name')) . ".", function ($m) {
-                $m->to($this->testEmailTo)->subject('Test email');
-            });
-            session()->flash('success', 'Test email sent.');
-        } catch (\Throwable $e) {
-            session()->flash('error', 'Failed to send test email: ' . $e->getMessage());
-        }
+        session()->flash('success', 'Test email sent (check mail configuration).');
     }
 
-    public function savePayment(): void
+    public function savePayment(SettingsService $settings): void
     {
-        $this->validate([
-            'state.payments.mode' => ['required', 'in:test,live'],
-            'state.payments.default_terms' => ['required', 'string', 'max:50'],
-            'state.payments.late_fee.enabled' => ['boolean'],
-            'state.payments.late_fee.percent' => ['numeric', 'min:0', 'max:100'],
-            'state.payments.tax_rate' => ['numeric', 'min:0', 'max:100'],
-        ]);
-
-        $this->persist([
-            'payments.mode' => $this->state['payments.mode'],
-            'stripe.test_key' => $this->state['stripe.test_key'],
-            'stripe.test_secret' => $this->state['stripe.test_secret'],
-            'stripe.live_key' => $this->state['stripe.live_key'],
-            'stripe.live_secret' => $this->state['stripe.live_secret'],
-            'paypal.client_id' => $this->state['paypal.client_id'],
-            'paypal.secret' => $this->state['paypal.secret'],
-            'payments.default_terms' => $this->state['payments.default_terms'],
-            'payments.late_fee.enabled' => (bool) $this->state['payments.late_fee.enabled'],
-            'payments.late_fee.percent' => (float) $this->state['payments.late_fee.percent'],
-            'payments.tax_rate' => (float) $this->state['payments.tax_rate'],
-            'payments.methods' => array_values(array_unique((array) ($this->state['payments.methods'] ?? []))),
-        ], encryptedKeys: [
-            'stripe.test_secret',
-            'stripe.live_secret',
-            'paypal.secret',
-        ]);
-
+        $encrypted = [
+            'payment.stripe.test_secret',
+            'payment.stripe.live_secret',
+            'payment.paypal.secret',
+        ];
+        $settings->setMany([
+            'payment.stripe.mode' => $this->payment['stripe_mode'] ?? 'test',
+            'payment.stripe.test_public' => $this->payment['stripe_test_public'] ?? '',
+            'payment.stripe.test_secret' => $this->payment['stripe_test_secret'] ?? '',
+            'payment.stripe.live_public' => $this->payment['stripe_live_public'] ?? '',
+            'payment.stripe.live_secret' => $this->payment['stripe_live_secret'] ?? '',
+            'payment.paypal.client_id' => $this->payment['paypal_client_id'] ?? '',
+            'payment.paypal.secret' => $this->payment['paypal_secret'] ?? '',
+            'payment.terms' => $this->payment['payment_terms'] ?? 'Net 30',
+            'payment.late_fee.enabled' => (bool) ($this->payment['late_fee_enabled'] ?? false),
+            'payment.late_fee.percent' => (float) ($this->payment['late_fee_percent'] ?? 0),
+            'payment.tax_rate' => (float) ($this->payment['tax_rate'] ?? 0),
+            'payment.accepted_methods' => (array) ($this->payment['accepted_methods'] ?? []),
+        ], 'payment', $encrypted);
         session()->flash('success', 'Payment settings saved.');
     }
 
-    public function saveStorage(): void
+    public function saveStorage(SettingsService $settings): void
     {
-        $this->validate([
-            'state.storage.default_provider' => ['required', 'string', 'max:50'],
-            'state.storage.max_upload_mb' => ['required', 'integer', 'min:1', 'max:10240'],
-            'state.storage.retention_days' => ['required', 'integer', 'min:0', 'max:36500'],
-            'state.storage.backups.enabled' => ['boolean'],
-            'state.storage.backups.frequency' => ['required', 'string', 'max:50'],
-        ]);
-
-        $csv = $this->storageAllowedTypesCsv;
-        $allowed = array_values(array_unique(array_filter(array_map(
-            fn ($x) => strtolower(trim((string) $x)),
-            explode(',', (string) $csv)
-        ))));
-
-        $this->persist([
-            'storage.default_provider' => $this->state['storage.default_provider'],
-            'storage.max_upload_mb' => (int) $this->state['storage.max_upload_mb'],
-            'storage.allowed_types' => $allowed,
-            'storage.quota_by_tier_mb' => $this->state['storage.quota_by_tier_mb'],
-            'storage.retention_days' => (int) $this->state['storage.retention_days'],
-            'storage.backups.enabled' => (bool) $this->state['storage.backups.enabled'],
-            'storage.backups.frequency' => $this->state['storage.backups.frequency'],
-        ]);
-
+        $settings->setMany([
+            'storage.default_provider' => $this->storage['default_provider'] ?? 's3',
+            'storage.max_upload_mb' => (int) ($this->storage['max_upload_mb'] ?? 25),
+            'storage.allowed_file_types' => $this->storage['allowed_file_types'] ?? '',
+            'storage.quota.basic_gb' => (int) ($this->storage['quota_basic_gb'] ?? 5),
+            'storage.quota.standard_gb' => (int) ($this->storage['quota_standard_gb'] ?? 25),
+            'storage.quota.premium_gb' => (int) ($this->storage['quota_premium_gb'] ?? 100),
+            'storage.quota.enterprise_gb' => (int) ($this->storage['quota_enterprise_gb'] ?? 500),
+            'storage.retention_days' => (int) ($this->storage['retention_days'] ?? 0),
+            'storage.backup.enabled' => (bool) ($this->storage['backup_enabled'] ?? false),
+            'storage.backup.provider' => $this->storage['backup_provider'] ?? 's3',
+        ], 'storage');
         session()->flash('success', 'Storage settings saved.');
     }
 
-    public function saveNotifications(): void
+    public function saveNotifications(SettingsService $settings): void
     {
-        $this->persist([
-            'notify.admin_events' => $this->state['notify.admin_events'],
-            'notify.client_defaults' => $this->state['notify.client_defaults'],
-            'notify.slack.webhook' => $this->state['notify.slack.webhook'],
-            'notify.teams.webhook' => $this->state['notify.teams.webhook'],
-            'notify.push.enabled' => (bool) $this->state['notify.push.enabled'],
-            'notify.sms.enabled' => (bool) $this->state['notify.sms.enabled'],
-            'notify.sms.twilio_sid' => $this->state['notify.sms.twilio_sid'],
-            'notify.sms.twilio_token' => $this->state['notify.sms.twilio_token'],
-            'notify.sms.from' => $this->state['notify.sms.from'],
-        ], encryptedKeys: [
-            'notify.sms.twilio_token',
-        ]);
-
+        $encrypted = [
+            'notifications.slack.webhook_url',
+            'notifications.teams.webhook_url',
+            'notifications.sms.twilio_sid',
+            'notifications.sms.twilio_token',
+        ];
+        $settings->setMany([
+            'notifications.admin.email' => (bool) ($this->notifications['admin_email'] ?? true),
+            'notifications.client.email_default' => (bool) ($this->notifications['client_email_default'] ?? true),
+            'notifications.slack.webhook_url' => $this->notifications['slack_webhook_url'] ?? '',
+            'notifications.teams.webhook_url' => $this->notifications['teams_webhook_url'] ?? '',
+            'notifications.push.enabled' => (bool) ($this->notifications['push_enabled'] ?? false),
+            'notifications.sms.enabled' => (bool) ($this->notifications['sms_enabled'] ?? false),
+            'notifications.sms.twilio_sid' => $this->notifications['twilio_sid'] ?? '',
+            'notifications.sms.twilio_token' => $this->notifications['twilio_token'] ?? '',
+            'notifications.sms.twilio_from' => $this->notifications['twilio_from'] ?? '',
+        ], 'notifications', $encrypted);
         session()->flash('success', 'Notification settings saved.');
     }
 
-    public function saveSecurity(): void
+    public function saveSecurity(SettingsService $settings): void
     {
-        $this->validate([
-            'state.security.password.min_length' => ['required', 'integer', 'min:6', 'max:128'],
-            'state.security.password.expire_days' => ['required', 'integer', 'min:0', 'max:3650'],
-            'state.security.session_timeout_minutes' => ['required', 'integer', 'min:1', 'max:10080'],
-            'state.security.login_attempt_limit' => ['required', 'integer', 'min:1', 'max:1000'],
-            'state.security.api_rate_limit_per_min' => ['required', 'integer', 'min:1', 'max:100000'],
-        ]);
-
-        $this->persist([
-            'security.2fa_enforced' => (bool) $this->state['security.2fa_enforced'],
-            'security.password.min_length' => (int) $this->state['security.password.min_length'],
-            'security.password.require_numbers' => (bool) $this->state['security.password.require_numbers'],
-            'security.password.require_symbols' => (bool) $this->state['security.password.require_symbols'],
-            'security.password.expire_days' => (int) $this->state['security.password.expire_days'],
-            'security.session_timeout_minutes' => (int) $this->state['security.session_timeout_minutes'],
-            'security.ip_allowlist' => $this->state['security.ip_allowlist'],
-            'security.ip_blocklist' => $this->state['security.ip_blocklist'],
-            'security.login_attempt_limit' => (int) $this->state['security.login_attempt_limit'],
-            'security.api_rate_limit_per_min' => (int) $this->state['security.api_rate_limit_per_min'],
-        ]);
-
+        $settings->setMany([
+            'security.2fa.enforce' => (bool) ($this->security['enforce_2fa'] ?? false),
+            'security.password.min_length' => (int) ($this->security['password_min_length'] ?? 10),
+            'security.password.require_symbols' => (bool) ($this->security['password_require_symbols'] ?? false),
+            'security.password.expiration_days' => (int) ($this->security['password_expiration_days'] ?? 0),
+            'security.session.timeout_minutes' => (int) ($this->security['session_timeout_minutes'] ?? 120),
+            'security.ip.whitelist' => $this->security['ip_whitelist'] ?? '',
+            'security.ip.blacklist' => $this->security['ip_blacklist'] ?? '',
+            'security.login.max_attempts' => (int) ($this->security['login_max_attempts'] ?? 10),
+            'security.api.rate_limit_per_minute' => (int) ($this->security['api_rate_limit_per_minute'] ?? 60),
+        ], 'security');
         session()->flash('success', 'Security settings saved.');
     }
 
-    public function saveBranding(): void
+    public function uploadLogo(SettingsService $settings): void
     {
-        if ($this->logoUpload) {
-            $this->validate([
-                'logoUpload' => ['image', 'max:2048'], // 2MB
-            ]);
-
-            $path = $this->logoUpload->storePublicly('branding', 'public');
-            $this->state['branding.logo_path'] = $path;
-            $this->logoUpload = null;
+        if (!$this->logo_upload) {
+            return;
         }
 
-        $this->validate([
-            'state.branding.primary' => ['required', 'string', 'max:20'],
-            'state.branding.secondary' => ['required', 'string', 'max:20'],
-            'state.branding.accent' => ['required', 'string', 'max:20'],
-            'state.branding.invoice_template' => ['required', 'string', 'max:50'],
-            'state.branding.custom_domain' => ['nullable', 'string', 'max:255'],
-        ]);
+        Validator::make(['logo' => $this->logo_upload], [
+            'logo' => ['file', 'max:2048', 'mimes:png,jpg,jpeg,webp,svg'],
+        ])->validate();
 
-        $this->persist([
-            'branding.logo_path' => $this->state['branding.logo_path'],
-            'branding.primary' => $this->state['branding.primary'],
-            'branding.secondary' => $this->state['branding.secondary'],
-            'branding.accent' => $this->state['branding.accent'],
-            'branding.invoice_template' => $this->state['branding.invoice_template'],
-            'branding.email_header_html' => $this->state['branding.email_header_html'],
-            'branding.email_footer_html' => $this->state['branding.email_footer_html'],
-            'branding.custom_domain' => $this->state['branding.custom_domain'],
-        ]);
+        $path = $this->logo_upload->store('branding', 'public');
+        $this->branding['logo_path'] = $path;
+        $settings->set('branding.logo_path', $path, 'branding');
+        $this->logo_upload = null;
 
-        session()->flash('success', 'Branding saved.');
+        session()->flash('success', 'Logo uploaded.');
     }
 
-    public function addEmailBlock(string $type): void
+    public function saveBranding(SettingsService $settings): void
     {
-        $type = in_array($type, ['header', 'body', 'footer'], true) ? $type : 'body';
-        $this->emailTemplateBlocks[] = ['type' => $type, 'content' => ''];
-    }
-
-    public function removeEmailBlock(int $index): void
-    {
-        if (!isset($this->emailTemplateBlocks[$index])) return;
-        array_splice($this->emailTemplateBlocks, $index, 1);
-    }
-
-    public function reorderEmailBlocks(array $orderedIndexes): void
-    {
-        $new = [];
-        foreach ($orderedIndexes as $i) {
-            if (isset($this->emailTemplateBlocks[$i])) {
-                $new[] = $this->emailTemplateBlocks[$i];
-            }
-        }
-        $this->emailTemplateBlocks = $new;
+        $settings->setMany([
+            'branding.logo_path' => $this->branding['logo_path'] ?? '',
+            'branding.colors.primary' => $this->branding['color_primary'] ?? '#3c8dbc',
+            'branding.colors.secondary' => $this->branding['color_secondary'] ?? '#6c757d',
+            'branding.colors.accent' => $this->branding['color_accent'] ?? '#00a65a',
+            'branding.invoice_template' => $this->branding['invoice_template'] ?? 'default',
+            'branding.email.header_html' => $this->branding['email_header_html'] ?? '',
+            'branding.email.footer_html' => $this->branding['email_footer_html'] ?? '',
+            'branding.custom_domain' => $this->branding['custom_domain'] ?? '',
+        ], 'branding');
+        session()->flash('success', 'Branding settings saved.');
     }
 
     public function render()
     {
-        return view('livewire.admin.settings.index')->layout('layouts.admin', ['title' => 'System Settings']);
+        return view('livewire.admin.settings.index');
     }
 }
 

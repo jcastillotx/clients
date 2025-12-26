@@ -8,6 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // This project already defines `report_templates` in an earlier migration
+        // (`2024_01_01_000011_create_report_templates_table.php`). When both sets exist,
+        // avoid attempting to create the same table twice.
+        if (Schema::hasTable('report_templates')) {
+            return;
+        }
+
         Schema::create('report_templates', function (Blueprint $table) {
             $table->id();
             $table->string('name');

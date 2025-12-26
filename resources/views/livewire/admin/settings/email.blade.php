@@ -1,171 +1,159 @@
-<form wire:submit.prevent="saveEmail" class="vstack gap-3">
-    <div>
-        <div class="h3 mb-1">SMTP configuration</div>
-        <div class="text-muted small">Saved to the database. Password is stored encrypted.</div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-12 col-md-6">
-            <label class="form-label">From address</label>
-            <input class="form-control" wire:model.defer="state.mail.from_address">
-            @error('state.mail.from_address')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+<div class="row">
+    <div class="col-md-6">
+        <h5 class="mb-3">SMTP Configuration</h5>
+        <div class="form-group">
+            <label class="mb-1">Host</label>
+            <input class="form-control" wire:model.defer="email.smtp_host">
         </div>
-        <div class="col-12 col-md-6">
-            <label class="form-label">From name</label>
-            <input class="form-control" wire:model.defer="state.mail.from_name">
-            @error('state.mail.from_name')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+        <div class="form-group">
+            <label class="mb-1">Port</label>
+            <input type="number" class="form-control" wire:model.defer="email.smtp_port">
         </div>
-        <div class="col-12 col-md-6">
-            <label class="form-label">SMTP host</label>
-            <input class="form-control" wire:model.defer="state.mail.smtp.host">
-            @error('state.mail.smtp.host')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+        <div class="form-group">
+            <label class="mb-1">Username</label>
+            <input class="form-control" wire:model.defer="email.smtp_username">
         </div>
-        <div class="col-12 col-md-3">
-            <label class="form-label">Port</label>
-            <input type="number" class="form-control" wire:model.defer="state.mail.smtp.port">
-            @error('state.mail.smtp.port')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+        <div class="form-group">
+            <label class="mb-1">Password</label>
+            <input type="password" class="form-control" wire:model.defer="email.smtp_password">
         </div>
-        <div class="col-12 col-md-3">
-            <label class="form-label">Encryption</label>
-            <select class="form-select" wire:model.defer="state.mail.smtp.encryption">
-                <option value="">None</option>
+        <div class="form-group">
+            <label class="mb-1">Encryption</label>
+            <select class="form-control" wire:model.defer="email.smtp_encryption">
                 <option value="tls">TLS</option>
                 <option value="ssl">SSL</option>
+                <option value="">None</option>
             </select>
-            @error('state.mail.smtp.encryption')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
         </div>
-        <div class="col-12 col-md-6">
-            <label class="form-label">Username</label>
-            <input class="form-control" wire:model.defer="state.mail.smtp.username">
-            @error('state.mail.smtp.username')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+
+        <h5 class="mt-4 mb-3">From</h5>
+        <div class="form-group">
+            <label class="mb-1">From address</label>
+            <input class="form-control" wire:model.defer="email.from_address">
         </div>
-        <div class="col-12 col-md-6">
-            <label class="form-label">Password</label>
-            <input class="form-control" type="password" wire:model.defer="state.mail.smtp.password" autocomplete="new-password">
-            @error('state.mail.smtp.password')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+        <div class="form-group">
+            <label class="mb-1">From name</label>
+            <input class="form-control" wire:model.defer="email.from_name">
         </div>
     </div>
 
-    <hr class="my-2">
-
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Email signature</div>
-            <textarea class="form-control" rows="6" wire:model.defer="state.mail.signature" placeholder="Best regards,&#10;Company name"></textarea>
-            @error('state.mail.signature')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+    <div class="col-md-6">
+        <h5 class="mb-3">Email content</h5>
+        <div class="form-group">
+            <label class="mb-1">Signature</label>
+            <textarea class="form-control" rows="3" wire:model.defer="email.signature"></textarea>
         </div>
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Notification preferences</div>
-            <div class="text-muted small mb-2">Choose which events trigger email notifications by default.</div>
-            <div class="vstack gap-2">
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.mail.notify_events.request_created">
-                    <span class="form-check-label">Request created</span>
-                </label>
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.mail.notify_events.request_updated">
-                    <span class="form-check-label">Request updated</span>
-                </label>
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.mail.notify_events.invoice_created">
-                    <span class="form-check-label">Invoice created</span>
-                </label>
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.mail.notify_events.payment_received">
-                    <span class="form-check-label">Payment received</span>
-                </label>
+        <div class="form-group">
+            <label class="mb-1">Email template</label>
+            <div class="d-flex" style="gap: 8px;">
+                <button class="btn btn-outline-primary" wire:click="openEmailBuilder">
+                    <i class="fas fa-magic mr-1"></i> Open drag-and-drop builder
+                </button>
+                <button class="btn btn-outline-secondary" type="button" data-toggle="collapse" data-target="#rawTemplate">
+                    <i class="fas fa-code mr-1"></i> View raw HTML
+                </button>
+            </div>
+            <div class="collapse mt-2" id="rawTemplate">
+                <textarea class="form-control" rows="8" wire:model.defer="email.template_html"></textarea>
+            </div>
+            <small class="text-muted">Builder saves both design JSON + HTML. Raw HTML is optional.</small>
+        </div>
+
+        <h5 class="mt-4 mb-2">Notification preferences</h5>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="evt_invoice_paid" wire:model.defer="email.events_invoice_paid">
+            <label class="custom-control-label" for="evt_invoice_paid">Invoice paid</label>
+        </div>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="evt_request_created" wire:model.defer="email.events_request_created">
+            <label class="custom-control-label" for="evt_request_created">Request created</label>
+        </div>
+        <div class="custom-control custom-checkbox mb-3">
+            <input type="checkbox" class="custom-control-input" id="evt_contract_signed" wire:model.defer="email.events_contract_signed">
+            <label class="custom-control-label" for="evt_contract_signed">Contract signed</label>
+        </div>
+
+        <h5 class="mt-4 mb-2">Test email</h5>
+        <div class="input-group">
+            <input class="form-control" placeholder="test@example.com" wire:model.defer="test_email_to">
+            <div class="input-group-append">
+                <button class="btn btn-outline-primary" wire:click="sendTestEmail">Send</button>
+            </div>
+        </div>
+        <small class="text-muted">Requires mailer configuration in `.env`.</small>
+    </div>
+</div>
+
+<button class="btn btn-primary" wire:click="saveEmail">
+    <i class="fas fa-save mr-1"></i> Save Email Settings
+</button>
+
+<!-- Drag & drop email builder modal -->
+<div class="modal fade" id="emailBuilderModal" tabindex="-1" role="dialog" aria-hidden="true" wire:ignore.self>
+    <div class="modal-dialog modal-xl" role="document" style="max-width: 95%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Template Builder</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0" wire:ignore>
+                <div id="email-builder" style="height: 75vh;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveEmailTemplateBtn">
+                    <i class="fas fa-save mr-1"></i> Save Template
+                </button>
             </div>
         </div>
     </div>
-
-    <hr class="my-2">
-
-    <div>
-        <div class="h3 mb-1">Email templates editor (drag-and-drop)</div>
-        <div class="text-muted small">Minimal block-based editor: drag blocks to reorder, then edit HTML content.</div>
-    </div>
-
-    <div class="card bg-transparent border" id="email-blocks-editor">
-        <div class="card-body">
-            <div class="d-flex flex-wrap gap-2 mb-3">
-                <button class="btn btn-outline-secondary btn-sm" type="button" wire:click="addEmailBlock('header')">Add header block</button>
-                <button class="btn btn-outline-secondary btn-sm" type="button" wire:click="addEmailBlock('body')">Add body block</button>
-                <button class="btn btn-outline-secondary btn-sm" type="button" wire:click="addEmailBlock('footer')">Add footer block</button>
-            </div>
-
-            <div class="vstack gap-2">
-                @forelse($emailTemplateBlocks as $i => $block)
-                    <div class="border rounded p-2 email-block"
-                         draggable="true"
-                         data-block-index="{{ $i }}">
-                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                            <div class="fw-semibold">Block #{{ $i + 1 }} · {{ strtoupper($block['type'] ?? 'BODY') }}</div>
-                            <button class="btn btn-outline-danger btn-sm" type="button" wire:click="removeEmailBlock({{ $i }})">Remove</button>
-                        </div>
-                        <textarea class="form-control font-monospace" rows="5" wire:model.defer="emailTemplateBlocks.{{ $i }}.content"></textarea>
-                    </div>
-                @empty
-                    <div class="text-muted">No blocks yet.</div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <hr class="my-2">
-
-    <div>
-        <div class="h3 mb-1">Test email</div>
-        <div class="text-muted small">Uses the SMTP values currently filled in above (not necessarily saved yet).</div>
-    </div>
-
-    <div class="row g-3 align-items-end">
-        <div class="col-12 col-md-6">
-            <label class="form-label">Send test email to</label>
-            <input class="form-control" wire:model.defer="testEmailTo" placeholder="you@example.com">
-            @error('testEmailTo')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-        </div>
-        <div class="col-12 col-md-6 d-flex gap-2">
-            <button class="btn btn-outline-primary" type="button" wire:click="sendTestEmail">Send test email</button>
-            <button class="btn btn-primary ms-auto" type="submit">Save email settings</button>
-        </div>
-    </div>
-</form>
+</div>
 
 @push('scripts')
+    <!-- Unlayer Email Editor (drag-and-drop) -->
+    <script src="https://editor.unlayer.com/embed.js"></script>
     <script>
         (function () {
-            let draggingIndex = null;
+            let initialized = false;
+            let pendingDesign = null;
 
-            function getBlocks() {
-                return Array.from(document.querySelectorAll('#email-blocks-editor .email-block'));
+            function initEditor(design) {
+                pendingDesign = design || null;
+                if (!initialized) {
+                    unlayer.init({
+                        id: 'email-builder',
+                        displayMode: 'email'
+                    });
+                    initialized = true;
+                }
+                if (pendingDesign) {
+                    try { unlayer.loadDesign(pendingDesign); } catch (e) {}
+                } else {
+                    // Start with blank template if no design exists.
+                    try { unlayer.loadDesign({ body: { rows: [] } }); } catch (e) {}
+                }
             }
 
-            function bindDnD() {
-                const blocks = getBlocks();
-                blocks.forEach((el) => {
-                    el.addEventListener('dragstart', (e) => {
-                        draggingIndex = parseInt(el.dataset.blockIndex || '0', 10);
-                        e.dataTransfer && (e.dataTransfer.effectAllowed = 'move');
+            window.addEventListener('open-email-builder', function (e) {
+                const design = (e.detail && e.detail.design) ? e.detail.design : null;
+                $('#emailBuilderModal').modal('show');
+                // Give modal time to render container
+                setTimeout(function () { initEditor(design); }, 150);
+            });
+
+            document.addEventListener('click', function (evt) {
+                if (evt.target && evt.target.id === 'saveEmailTemplateBtn') {
+                    if (!initialized) return;
+                    unlayer.exportHtml(function (data) {
+                        const design = data.design;
+                        const html = data.html;
+                        // Save immediately server-side
+                        @this.call('saveEmailTemplate', design, html);
+                        $('#emailBuilderModal').modal('hide');
                     });
-                    el.addEventListener('dragover', (e) => e.preventDefault());
-                    el.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        const dropIndex = parseInt(el.dataset.blockIndex || '0', 10);
-                        if (draggingIndex === null || dropIndex === draggingIndex) return;
-
-                        const order = Array.from({ length: blocks.length }, (_, idx) => idx);
-                        const [moved] = order.splice(draggingIndex, 1);
-                        order.splice(dropIndex, 0, moved);
-
-                        draggingIndex = null;
-                        @this.call('reorderEmailBlocks', order);
-                    });
-                });
-            }
-
-            document.addEventListener('livewire:init', () => {
-                bindDnD();
-                Livewire.hook('morph.updated', () => bindDnD());
+                }
             });
         })();
     </script>

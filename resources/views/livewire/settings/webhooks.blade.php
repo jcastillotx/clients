@@ -1,178 +1,180 @@
-<div class="container-xl">
-    <div class="page-header d-print-none">
-        <div class="row align-items-center">
-            <div class="col">
-                <h2 class="page-title">Webhook Management</h2>
-                <div class="text-muted">Create endpoints, test delivery, and review history.</div>
-            </div>
-        </div>
-    </div>
+<x-app-layout>
+    <x-slot name="header">Webhook Integrations</x-slot>
 
-    <div class="row row-cards">
-        <div class="col-12 col-lg-5">
+    <div class="row">
+        <div class="col-lg-5">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Create webhook endpoint</h3>
+                    <h3 class="card-title"><i class="fas fa-plug mr-1"></i> Add Webhook Endpoint</h3>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Client</label>
-                        <select class="form-select" wire:model="clientId">
-                            <option value="">Select client…</option>
+                    @if (session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
+                    @if (session('error'))
+                        <div class="alert alert-danger">{{ session('error') }}</div>
+                    @endif
+
+                    <div class="form-group">
+                        <label class="mb-1">Client scope (optional)</label>
+                        <select class="form-control" wire:model.defer="client_id">
+                            <option value="">Global (all clients)</option>
                             @foreach($clients as $c)
                                 <option value="{{ $c->id }}">{{ $c->company_name }}</option>
                             @endforeach
                         </select>
-                        @error('clientId') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        <small class="text-muted">Global endpoints receive events for all clients.</small>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Event</label>
-                        <select class="form-select" wire:model="eventType">
-                            @foreach($supportedEvents as $ev)
+                    <div class="form-group">
+                        <label class="mb-1">Event</label>
+                        <select class="form-control" wire:model.defer="event_type">
+                            @foreach($this->eventOptions as $ev)
                                 <option value="{{ $ev }}">{{ $ev }}</option>
                             @endforeach
                         </select>
-                        @error('eventType') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Webhook URL</label>
-                        <input type="url" class="form-control" wire:model.defer="webhookUrl" placeholder="https://example.com/webhook">
-                        @error('webhookUrl') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                    <div class="form-group">
+                        <label class="mb-1">Format</label>
+                        <select class="form-control" wire:model.defer="format">
+                            <option value="generic">Generic (JSON)</option>
+                            <option value="zapier">Zapier</option>
+                            <option value="make">Make.com</option>
+                            <option value="slack">Slack</option>
+                            <option value="teams">Microsoft Teams</option>
+                        </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Secret (optional)</label>
-                        <input type="text" class="form-control" wire:model.defer="secret" placeholder="Used for HMAC signature verification">
-                        @error('secret') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                    <div class="form-group">
+                        <label class="mb-1">Webhook URL</label>
+                        <input class="form-control" wire:model.defer="webhook_url" placeholder="https://example.com/webhook">
                     </div>
 
-                    <label class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" wire:model="isActive">
-                        <span class="form-check-label">Active</span>
-                    </label>
-
-                    <button class="btn btn-primary" wire:click="createWebhook">Create</button>
-                </div>
-            </div>
-
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h3 class="card-title">Signing</h3>
-                </div>
-                <div class="card-body">
-                    <div class="text-muted small">
-                        Requests are signed with HMAC SHA-256:
-                        <div class="mt-2"><code>X-Webhook-Signature: sha256=HMAC(secret, timestamp + "." + rawBody)</code></div>
-                        <div class="mt-2"><code>X-Webhook-Timestamp</code>, <code>X-Webhook-Event</code>, <code>X-Webhook-Delivery</code></div>
+                    <div class="form-group">
+                        <label class="mb-1">Secret (optional)</label>
+                        <input class="form-control" wire:model.defer="secret" placeholder="leave blank to auto-generate">
+                        <small class="text-muted">Used to sign `X-Webhook-Signature` (HMAC SHA-256).</small>
                     </div>
+
+                    <div class="form-group">
+                        <label class="mb-1">Extra headers (JSON, optional)</label>
+                        <textarea class="form-control" rows="3" wire:model.defer="headers_json" placeholder='{"Authorization":"Bearer ..."}'></textarea>
+                    </div>
+
+                    <div class="custom-control custom-checkbox mb-3">
+                        <input type="checkbox" class="custom-control-input" id="is_active" wire:model.defer="is_active">
+                        <label class="custom-control-label" for="is_active">Active</label>
+                    </div>
+
+                    <button class="btn btn-primary" wire:click="createEndpoint">
+                        <i class="fas fa-plus mr-1"></i> Create
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-lg-7">
+        <div class="col-lg-7">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Endpoints</h3>
+                    <h3 class="card-title"><i class="fas fa-list mr-1"></i> Endpoints</h3>
                 </div>
-                <div class="table-responsive">
-                    <table class="table card-table table-vcenter">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Client</th>
-                                <th>Event</th>
-                                <th>URL</th>
-                                <th>Status</th>
-                                <th class="w-1"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($endpoints as $ep)
-                            <tr class="{{ $selectedEndpointId === $ep->id ? 'table-active' : '' }}">
-                                <td>{{ $ep->id }}</td>
-                                <td class="text-muted">#{{ $ep->client_id }}</td>
-                                <td><code>{{ $ep->event_type }}</code></td>
-                                <td class="text-truncate" style="max-width: 240px;">
-                                    <span title="{{ $ep->webhook_url }}">{{ $ep->webhook_url }}</span>
-                                </td>
-                                <td>
-                                    @if($ep->is_active)
-                                        <span class="badge bg-success">Active</span>
-                                    @else
-                                        <span class="badge bg-secondary">Disabled</span>
-                                    @endif
-                                </td>
-                                <td class="text-end">
-                                    <div class="btn-list flex-nowrap">
-                                        <button class="btn btn-sm" wire:click="selectEndpoint({{ $ep->id }})">History</button>
-                                        <button class="btn btn-sm btn-outline-primary" wire:click="testWebhook({{ $ep->id }})">Test</button>
-                                        <button class="btn btn-sm btn-outline-secondary" wire:click="toggleWebhook({{ $ep->id }})">
-                                            {{ $ep->is_active ? 'Disable' : 'Enable' }}
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" wire:click="deleteWebhook({{ $ep->id }})"
-                                            onclick="return confirm('Delete this webhook endpoint?')">
-                                            Delete
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="6" class="text-muted">No webhook endpoints yet.</td></tr>
-                        @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                <div class="card-footer">
-                    {{ $endpoints->links() }}
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Client</th>
+                                    <th>Event</th>
+                                    <th>Format</th>
+                                    <th>Status</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($endpoints as $ep)
+                                    <tr class="{{ $selectedEndpointId === $ep->id ? 'table-info' : '' }}">
+                                        <td>{{ $ep->id }}</td>
+                                        <td class="text-muted">{{ $ep->client?->company_name ?? 'Global' }}</td>
+                                        <td><code>{{ $ep->event_type }}</code></td>
+                                        <td class="text-muted">{{ $ep->format }}</td>
+                                        <td>
+                                            <span class="badge badge-{{ $ep->is_active ? 'success' : 'secondary' }}">
+                                                {{ $ep->is_active ? 'active' : 'disabled' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-right">
+                                            <button class="btn btn-sm btn-outline-info" wire:click="selectEndpoint({{ $ep->id }})">
+                                                <i class="fas fa-history"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-primary" wire:click="testEndpoint({{ $ep->id }})">
+                                                <i class="fas fa-vial"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" wire:click="toggleActive({{ $ep->id }})">
+                                                <i class="fas fa-power-off"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" wire:click="deleteEndpoint({{ $ep->id }})" onclick="return confirm('Delete this webhook?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="6" class="text-muted text-center py-4">No webhooks configured.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div class="card mt-3">
+            <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Delivery history @if($selectedEndpointId) <span class="text-muted">for endpoint #{{ $selectedEndpointId }}</span> @endif</h3>
+                    <h3 class="card-title"><i class="fas fa-clipboard-check mr-1"></i> Delivery History</h3>
+                    @if($selectedEndpointId)
+                        <div class="card-tools text-muted">Endpoint #{{ $selectedEndpointId }}</div>
+                    @endif
                 </div>
-                <div class="table-responsive">
-                    <table class="table card-table table-vcenter">
-                        <thead>
-                            <tr>
-                                <th>Delivery</th>
-                                <th>Event</th>
-                                <th>Status</th>
-                                <th>Attempts</th>
-                                <th>HTTP</th>
-                                <th>When</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($deliveries as $d)
-                            <tr>
-                                <td class="text-muted"><code>{{ $d->delivery_id }}</code></td>
-                                <td><code>{{ $d->event_type }}</code></td>
-                                <td>
-                                    @php
-                                        $badge = match($d->status) {
-                                            'succeeded' => 'bg-success',
-                                            'failed' => 'bg-danger',
-                                            'running' => 'bg-warning',
-                                            default => 'bg-secondary',
-                                        };
-                                    @endphp
-                                    <span class="badge {{ $badge }}">{{ $d->status }}</span>
-                                </td>
-                                <td>{{ $d->attempts }}</td>
-                                <td>{{ $d->response_status ?? '—' }}</td>
-                                <td class="text-muted">{{ $d->created_at?->diffForHumans() }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="6" class="text-muted">Select an endpoint to view recent deliveries.</td></tr>
-                        @endforelse
-                        </tbody>
-                    </table>
+                <div class="card-body p-0">
+                    @if(!$selectedEndpointId)
+                        <div class="p-3 text-muted">Select an endpoint to view recent deliveries.</div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>When</th>
+                                        <th>Event</th>
+                                        <th>Attempt</th>
+                                        <th>Status</th>
+                                        <th>HTTP</th>
+                                        <th>Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($logs as $l)
+                                        <tr>
+                                            <td class="text-muted">{{ $l->created_at?->toDayDateTimeString() }}</td>
+                                            <td><code>{{ $l->event_type }}</code></td>
+                                            <td>{{ $l->attempt }}</td>
+                                            <td>
+                                                <span class="badge badge-{{ $l->succeeded ? 'success' : 'danger' }}">
+                                                    {{ $l->succeeded ? 'ok' : 'failed' }}
+                                                </span>
+                                            </td>
+                                            <td class="text-muted">{{ $l->http_status ?? '—' }}</td>
+                                            <td class="text-muted">{{ $l->duration_ms ? $l->duration_ms . 'ms' : '—' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="6" class="text-muted text-center py-4">No deliveries yet.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
-</div>
+</x-app-layout>
 

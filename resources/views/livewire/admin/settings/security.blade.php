@@ -1,89 +1,58 @@
-<form wire:submit.prevent="saveSecurity" class="vstack gap-3">
-    <div>
-        <div class="h3 mb-1">Security settings</div>
-        <div class="text-muted small">Stored in DB (cached). Enforcement should be wired into auth/middleware.</div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Two-factor authentication</div>
-            <label class="form-check mt-2">
-                <input class="form-check-input" type="checkbox" wire:model.defer="state.security.2fa_enforced">
-                <span class="form-check-label">Enforce 2FA for admins</span>
-            </label>
-            <div class="text-muted small mt-1">Requires enforcement logic (e.g. middleware) to block non-2FA accounts.</div>
+<div class="row">
+    <div class="col-md-6">
+        <h5 class="mb-3">Authentication</h5>
+        <div class="custom-control custom-switch mb-3">
+            <input type="checkbox" class="custom-control-input" id="enforce_2fa" wire:model.defer="security.enforce_2fa">
+            <label class="custom-control-label" for="enforce_2fa">Enforce Two-Factor Authentication</label>
         </div>
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Session timeout</div>
-            <label class="form-label">Session timeout (minutes)</label>
-            <input type="number" class="form-control" wire:model.defer="state.security.session_timeout_minutes">
-            @error('state.security.session_timeout_minutes')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+        <div class="alert alert-info">
+            2FA enforcement is stored here; implementing the actual 2FA flow requires an authentication feature (e.g. TOTP) if not already present.
         </div>
-    </div>
 
-    <hr class="my-2">
-
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Password policy</div>
-            <div class="row g-2">
-                <div class="col-6">
-                    <label class="form-label">Min length</label>
-                    <input type="number" class="form-control" wire:model.defer="state.security.password.min_length">
-                    @error('state.security.password.min_length')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-6">
-                    <label class="form-label">Expiration (days)</label>
-                    <input type="number" class="form-control" wire:model.defer="state.security.password.expire_days">
-                    <div class="text-muted small mt-1">0 disables expiration.</div>
-                    @error('state.security.password.expire_days')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-12">
-                    <label class="form-check mt-1">
-                        <input class="form-check-input" type="checkbox" wire:model.defer="state.security.password.require_numbers">
-                        <span class="form-check-label">Require numbers</span>
-                    </label>
-                    <label class="form-check mt-1">
-                        <input class="form-check-input" type="checkbox" wire:model.defer="state.security.password.require_symbols">
-                        <span class="form-check-label">Require symbols</span>
-                    </label>
-                </div>
-            </div>
+        <h5 class="mt-4 mb-3">Password policy</h5>
+        <div class="form-group">
+            <label class="mb-1">Minimum length</label>
+            <input type="number" class="form-control" wire:model.defer="security.password_min_length" min="6" max="128">
         </div>
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Login / API limits</div>
-            <div class="row g-2">
-                <div class="col-6">
-                    <label class="form-label">Login attempt limit</label>
-                    <input type="number" class="form-control" wire:model.defer="state.security.login_attempt_limit">
-                    @error('state.security.login_attempt_limit')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-6">
-                    <label class="form-label">API rate limit (/min)</label>
-                    <input type="number" class="form-control" wire:model.defer="state.security.api_rate_limit_per_min">
-                    @error('state.security.api_rate_limit_per_min')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                </div>
-            </div>
+        <div class="custom-control custom-switch mb-2">
+            <input type="checkbox" class="custom-control-input" id="pw_symbols" wire:model.defer="security.password_require_symbols">
+            <label class="custom-control-label" for="pw_symbols">Require symbols</label>
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Expiration (days)</label>
+            <input type="number" class="form-control" wire:model.defer="security.password_expiration_days" min="0">
+            <small class="text-muted">0 = never expires</small>
         </div>
     </div>
 
-    <hr class="my-2">
-
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">IP allowlist</div>
-            <div class="text-muted small mb-2">One per line (CIDR allowed). Example: <code>203.0.113.0/24</code></div>
-            <textarea class="form-control" rows="6" wire:model.defer="state.security.ip_allowlist"></textarea>
+    <div class="col-md-6">
+        <h5 class="mb-3">Sessions & Limits</h5>
+        <div class="form-group">
+            <label class="mb-1">Session timeout (minutes)</label>
+            <input type="number" class="form-control" wire:model.defer="security.session_timeout_minutes" min="5" max="10080">
         </div>
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">IP blocklist</div>
-            <div class="text-muted small mb-2">One per line (CIDR allowed).</div>
-            <textarea class="form-control" rows="6" wire:model.defer="state.security.ip_blocklist"></textarea>
+        <div class="form-group">
+            <label class="mb-1">Login attempt limit</label>
+            <input type="number" class="form-control" wire:model.defer="security.login_max_attempts" min="1" max="100">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">API rate limit (per minute)</label>
+            <input type="number" class="form-control" wire:model.defer="security.api_rate_limit_per_minute" min="1" max="10000">
+        </div>
+
+        <h5 class="mt-4 mb-3">IP access</h5>
+        <div class="form-group">
+            <label class="mb-1">Whitelist (comma separated)</label>
+            <textarea class="form-control" rows="2" wire:model.defer="security.ip_whitelist" placeholder="1.2.3.4, 10.0.0.0/8"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Blacklist (comma separated)</label>
+            <textarea class="form-control" rows="2" wire:model.defer="security.ip_blacklist" placeholder="5.6.7.8, 192.168.1.0/24"></textarea>
         </div>
     </div>
+</div>
 
-    <div class="d-flex justify-content-end">
-        <button class="btn btn-primary" type="submit">Save security settings</button>
-    </div>
-</form>
+<button class="btn btn-primary" wire:click="saveSecurity">
+    <i class="fas fa-save mr-1"></i> Save Security Settings
+</button>
 

@@ -8,6 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // This project already defines `storage_connections` in an earlier migration
+        // (`2024_01_01_000014_create_storage_connections_tables.php`) with a richer schema.
+        // When both sets of migrations exist (e.g. after a merge), avoid trying to create
+        // the same table twice.
+        if (Schema::hasTable('storage_connections')) {
+            return;
+        }
+
         Schema::create('storage_connections', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();

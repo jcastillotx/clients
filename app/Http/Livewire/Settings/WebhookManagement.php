@@ -2,127 +2,159 @@
 
 namespace App\Http\Livewire\Settings;
 
+use App\Jobs\DeliverWebhookJob;
 use App\Models\Client;
-use App\Models\WebhookDelivery;
+use App\Models\WebhookDeliveryLog;
 use App\Models\WebhookEndpoint;
-use App\Services\WebhookService;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class WebhookManagement extends Component
 {
-    use WithPagination;
-
-    public ?int $clientId = null;
-    public string $eventType = 'request.created';
-    public string $webhookUrl = '';
+    public ?int $client_id = null;
+    public string $event_type = 'request.created';
+    public string $webhook_url = '';
     public string $secret = '';
-    public bool $isActive = true;
+    public bool $is_active = true;
+    public string $format = 'generic';
+    public string $headers_json = '';
 
     public ?int $selectedEndpointId = null;
 
-    public array $supportedEvents = [
-        'request.created',
-        'request.updated',
-        'request.completed',
-        'invoice.created',
-        'invoice.sent',
-        'invoice.paid',
-        'contract.created',
-        'contract.expiring',
-        'contract.signed',
-        'document.uploaded',
-        'document.shared',
-        'payment.received',
-        'payment.failed',
-    ];
-
-    protected function rules(): array
-    {
-        return [
-            'clientId' => ['required', 'integer', 'exists:clients,id'],
-            'eventType' => ['required', 'string', Rule::in($this->supportedEvents)],
-            'webhookUrl' => ['required', 'url', 'max:2048'],
-            'secret' => ['nullable', 'string', 'max:255'],
-            'isActive' => ['boolean'],
-        ];
-    }
-
     public function mount(): void
     {
-        $this->clientId = $this->clientId ?: (int) (Client::query()->orderBy('id')->value('id') ?? 0);
-        if ($this->clientId === 0) {
-            $this->clientId = null;
+        abort_unless(Auth::user()?->can('manage settings') || Auth::user()?->can('access admin panel'), 403);
+    }
+
+    public function createEndpoint(): void
+    {
+        $user = Auth::user();
+        abort_unless($user, 403);
+
+        $data = Validator::make([
+            'client_id' => $this->client_id,
+            'event_type' => $this->event_type,
+            'webhook_url' => $this->webhook_url,
+            'secret' => $this->secret,
+            'is_active' => $this->is_active,
+            'format' => $this->format,
+            'headers_json' => $this->headers_json,
+        ], [
+            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
+            'event_type' => ['required', 'string', 'max:100'],
+            'webhook_url' => ['required', 'url', 'max:2048'],
+            'secret' => ['nullable', 'string', 'max:255'],
+            'is_active' => ['boolean'],
+            'format' => ['required', 'in:generic,slack,teams,zapier,make'],
+            'headers_json' => ['nullable', 'string'],
+        ])->validate();
+
+        $headers = null;
+        if (trim((string) $data['headers_json']) !== '') {
+            $decoded = json_decode((string) $data['headers_json'], true);
+            abort_unless(is_array($decoded), 422, 'Headers must be valid JSON object.');
+            $headers = $decoded;
         }
-    }
 
-    public function selectEndpoint(int $endpointId): void
-    {
-        $this->selectedEndpointId = $endpointId;
-    }
-
-    public function createWebhook(): void
-    {
-        $data = $this->validate();
+        $secret = trim((string) ($data['secret'] ?? ''));
+        if ($secret === '') {
+            $secret = Str::random(40);
+        }
 
         WebhookEndpoint::create([
-            'client_id' => (int) $data['clientId'],
-            'event_type' => $data['eventType'],
-            'webhook_url' => $data['webhookUrl'],
-            'secret' => $data['secret'] ?: null,
-            'is_active' => (bool) $data['isActive'],
+            'client_id' => $data['client_id'] ?? null,
+            'event_type' => $data['event_type'],
+            'webhook_url' => $data['webhook_url'],
+            'secret' => $secret,
+            'is_active' => (bool) $data['is_active'],
+            'format' => $data['format'],
+            'headers' => $headers,
+            'created_by' => $user->id,
         ]);
 
-        $this->reset(['webhookUrl', 'secret']);
+        $this->reset(['webhook_url', 'secret', 'headers_json']);
         session()->flash('success', 'Webhook endpoint created.');
     }
 
-    public function toggleWebhook(int $endpointId): void
+    public function toggleActive(int $id): void
     {
-        $ep = WebhookEndpoint::query()->findOrFail($endpointId);
-        $ep->update(['is_active' => ! $ep->is_active]);
+        abort_unless(Auth::user(), 403);
+        $ep = WebhookEndpoint::query()->findOrFail($id);
+        $ep->update(['is_active' => !$ep->is_active]);
     }
 
-    public function deleteWebhook(int $endpointId): void
+    public function deleteEndpoint(int $id): void
     {
-        WebhookEndpoint::query()->whereKey($endpointId)->delete();
-        if ($this->selectedEndpointId === $endpointId) {
+        abort_unless(Auth::user(), 403);
+        $ep = WebhookEndpoint::query()->findOrFail($id);
+        $ep->delete();
+        if ($this->selectedEndpointId === $id) {
             $this->selectedEndpointId = null;
         }
+        session()->flash('success', 'Webhook deleted.');
     }
 
-    public function testWebhook(int $endpointId, WebhookService $webhooks): void
+    public function selectEndpoint(int $id): void
     {
-        $delivery = $webhooks->testWebhook($endpointId);
-        if ($delivery) {
-            $this->selectedEndpointId = $delivery->webhook_endpoint_id;
+        $this->selectedEndpointId = $id;
+    }
+
+    public function testEndpoint(int $id): void
+    {
+        abort_unless(Auth::user(), 403);
+        $ep = WebhookEndpoint::query()->findOrFail($id);
+
+        try {
+            DeliverWebhookJob::dispatchSync($ep->id, $ep->event_type, [
+                'test' => true,
+                'message' => 'Test webhook delivery from Kre8iv Designs Client Portal.',
+            ]);
+            session()->flash('success', 'Test webhook sent (check logs below).');
+        } catch (\Throwable $e) {
+            session()->flash('error', 'Test webhook failed: ' . $e->getMessage());
         }
+    }
+
+    public function getEventOptionsProperty(): array
+    {
+        return [
+            'request.created',
+            'request.updated',
+            'request.completed',
+            'invoice.created',
+            'invoice.sent',
+            'invoice.paid',
+            'contract.created',
+            'contract.expiring',
+            'contract.signed',
+            'document.uploaded',
+            'document.shared',
+            'payment.received',
+            'payment.failed',
+        ];
     }
 
     public function render()
     {
+        $endpoints = WebhookEndpoint::query()
+            ->with('client')
+            ->orderByDesc('id')
+            ->get();
+
         $clients = Client::query()->orderBy('company_name')->get(['id', 'company_name']);
 
-        $endpoints = WebhookEndpoint::query()
-            ->when($this->clientId, fn ($q) => $q->where('client_id', $this->clientId))
-            ->orderByDesc('id')
-            ->paginate(10);
-
-        $deliveries = collect();
+        $logs = collect();
         if ($this->selectedEndpointId) {
-            $deliveries = WebhookDelivery::query()
+            $logs = WebhookDeliveryLog::query()
                 ->where('webhook_endpoint_id', $this->selectedEndpointId)
-                ->orderByDesc('id')
+                ->latest('id')
                 ->limit(50)
                 ->get();
         }
 
-        return view('livewire.settings.webhooks', [
-            'clients' => $clients,
-            'endpoints' => $endpoints,
-            'deliveries' => $deliveries,
-        ])->layout('layouts.admin', ['title' => 'Webhooks']);
+        return view('livewire.settings.webhooks', compact('endpoints', 'clients', 'logs'));
     }
 }
 

@@ -5,18 +5,11 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Models\Invoice;
 use App\Models\Contract;
-use App\Models\Client;
-use App\Models\AutomationRule;
-use App\Models\ReportTemplate;
 use App\Models\StorageConnection;
-use App\Models\User;
-use App\Mail\InvoiceReminderMail;
-use App\Jobs\SyncStorageConnection;
-use App\Jobs\SendScheduledReport;
-use App\Models\Setting;
+use App\Services\AdminReports\ReportScheduleRunner;
+use App\Services\Storage\StorageSyncScheduler;
 use App\Services\AutomationEngine;
 use App\Services\WebhookService;
-use Illuminate\Support\Facades\Mail;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,266 +29,99 @@ Artisan::command('inspire', function () {
 
 // Check for overdue invoices daily
 Schedule::call(function () {
-    $engine = app(AutomationEngine::class);
-    $hasAutomation = AutomationRule::query()->where('is_active', true)->where('trigger', 'invoice.overdue')->exists();
-
-    Invoice::query()
-        ->where('status', 'sent')
+    Invoice::where('status', 'sent')
         ->where('due_date', '<', now())
-        ->with(['client'])
-        ->chunkById(200, function ($invoices) use ($engine, $hasAutomation) {
-            foreach ($invoices as $invoice) {
-                $invoice->update(['status' => 'overdue']);
-
-                $payload = [
-                    'event' => 'invoice.overdue',
-                    'client_id' => $invoice->client_id,
-                    'invoice' => [
-                        'id' => $invoice->id,
-                        'client_id' => $invoice->client_id,
-                        'invoice_number' => $invoice->invoice_number,
-                        'status' => $invoice->status,
-                        'amount' => (float) $invoice->amount,
-                        'due_date' => $invoice->due_date?->toDateString(),
-                    ],
-                ];
-
-                $engine->trigger('invoice.overdue', $payload);
-
-                // If automations exist, do not also send the built-in reminder here.
-                if (!$hasAutomation) {
-                    $recipients = User::query()
-                        ->where('client_id', $invoice->client_id)
-                        ->role(['client'])
-                        ->get();
-
-                    foreach ($recipients as $user) {
-                        if (!$user->email) continue;
-                        Mail::to($user->email)->queue(new InvoiceReminderMail($invoice, 'overdue'));
-                    }
-                }
-            }
-        });
+        ->update(['status' => 'overdue']);
 })->daily()->name('check-overdue-invoices');
 
-// Invoice reminders (daily)
+// Scheduled automation triggers
 Schedule::call(function () {
-    $today = now()->startOfDay();
-    $engine = app(AutomationEngine::class);
-    $hasDueSoonAutomation = AutomationRule::query()->where('is_active', true)->where('trigger', 'invoice.due_soon')->exists();
-    $hasOverdueAutomation = AutomationRule::query()->where('is_active', true)->where('trigger', 'invoice.overdue')->exists();
+    app(AutomationEngine::class)->run('schedule.daily', ['meta' => ['date' => now()->toDateString()]]);
+})->daily()->name('automation-schedule-daily');
 
-    // 7 days before due date (sent invoices only)
-    $dueSoonDate = $today->copy()->addDays(7)->toDateString();
-    $dueSoon = Invoice::query()
-        ->where('status', 'sent')
-        ->whereDate('due_date', $dueSoonDate)
-        ->whereNull('reminded_due_7_at')
-        ->with(['client'])
-        ->get();
-
-    foreach ($dueSoon as $invoice) {
-        $payload = [
-            'event' => 'invoice.due_soon',
-            'client_id' => $invoice->client_id,
-            'invoice' => [
-                'id' => $invoice->id,
-                'client_id' => $invoice->client_id,
-                'invoice_number' => $invoice->invoice_number,
-                'status' => $invoice->status,
-                'amount' => (float) $invoice->amount,
-                'due_date' => $invoice->due_date?->toDateString(),
-            ],
-        ];
-        $engine->trigger('invoice.due_soon', $payload);
-
-        if (!$hasDueSoonAutomation) {
-            $recipients = User::query()
-                ->where('client_id', $invoice->client_id)
-                ->role(['client'])
-                ->get();
-
-            foreach ($recipients as $user) {
-                if (!$user->email) continue;
-                Mail::to($user->email)->queue(new InvoiceReminderMail($invoice, 'due_soon'));
-            }
-        }
-
-        $invoice->update(['reminded_due_7_at' => now()]);
-    }
-
-    // 3 days after overdue (overdue invoices only)
-    $overdueDate = $today->copy()->subDays(3)->toDateString();
-    $overdue = Invoice::query()
-        ->where('status', 'overdue')
-        ->whereDate('due_date', $overdueDate)
-        ->whereNull('reminded_overdue_3_at')
-        ->with(['client'])
-        ->get();
-
-    foreach ($overdue as $invoice) {
-        $payload = [
-            'event' => 'invoice.overdue',
-            'client_id' => $invoice->client_id,
-            'invoice' => [
-                'id' => $invoice->id,
-                'client_id' => $invoice->client_id,
-                'invoice_number' => $invoice->invoice_number,
-                'status' => $invoice->status,
-                'amount' => (float) $invoice->amount,
-                'due_date' => $invoice->due_date?->toDateString(),
-            ],
-        ];
-        $engine->trigger('invoice.overdue', $payload);
-
-        if (!$hasOverdueAutomation) {
-            $recipients = User::query()
-                ->where('client_id', $invoice->client_id)
-                ->role(['client'])
-                ->get();
-
-            foreach ($recipients as $user) {
-                if (!$user->email) continue;
-                Mail::to($user->email)->queue(new InvoiceReminderMail($invoice, 'overdue'));
-            }
-        }
-
-        $invoice->update(['reminded_overdue_3_at' => now()]);
-    }
-})->daily()->name('invoice-reminders');
-
-// Contract expiring webhooks (daily)
 Schedule::call(function () {
-    $days = 30;
-    $webhooks = app(WebhookService::class);
-    $engine = app(AutomationEngine::class);
+    app(AutomationEngine::class)->run('schedule.weekly', ['meta' => ['date' => now()->toDateString()]]);
+})->weekly()->name('automation-schedule-weekly');
 
-    Contract::query()
-        ->active()
-        ->whereNotNull('end_date')
-        ->where('end_date', '<=', now()->addDays($days))
-        ->where('end_date', '>', now())
-        ->chunkById(200, function ($contracts) use ($webhooks, $engine) {
-            foreach ($contracts as $c) {
-                $webhooks->triggerWebhook('contract.expiring', [
-                    'id' => $c->id,
-                    'client_id' => $c->client_id,
-                    'title' => $c->title,
-                    'end_date' => $c->end_date?->toDateString(),
-                    'days_until_expiration' => $c->daysUntilExpiration(),
-                ], (int) $c->client_id);
+Schedule::call(function () {
+    app(AutomationEngine::class)->run('schedule.monthly', ['meta' => ['date' => now()->toDateString()]]);
+})->monthly()->name('automation-schedule-monthly');
 
-                $engine->trigger('contract.expiring', [
-                    'event' => 'contract.expiring',
-                    'client_id' => $c->client_id,
-                    'contract' => [
-                        'id' => $c->id,
-                        'client_id' => $c->client_id,
-                        'title' => $c->title,
-                        'end_date' => $c->end_date?->toDateString(),
-                        'days_until_expiration' => $c->daysUntilExpiration(),
-                    ],
-                ]);
-            }
-        });
+// Trigger contract expiring webhooks daily (simple daily reminder until expiration)
+Schedule::call(function () {
+    $contracts = Contract::expiringSoon(30)->get();
+    foreach ($contracts as $c) {
+        // Automation trigger
+        app(AutomationEngine::class)->run('contract.expiring', [
+            'contract' => $c->toArray(),
+            'client' => $c->client?->toArray(),
+        ], (int) $c->client_id);
+
+        app(WebhookService::class)->triggerWebhook('contract.expiring', [
+            'id' => $c->id,
+            'client_id' => $c->client_id,
+            'contract_number' => $c->contract_number,
+            'title' => $c->title,
+            'status' => $c->status,
+            'end_date' => optional($c->end_date)->toDateString(),
+            'days_until_expiration' => $c->days_until_expiration,
+        ], (int) $c->client_id);
+    }
 })->daily()->name('contract-expiring-webhooks');
 
-// Automation schedule triggers + storage quota checks + cleanup
+// Invoice due date approaching (7 days) automation trigger
 Schedule::call(function () {
-    $engine = app(AutomationEngine::class);
-
-    // Schedule-based triggers
-    $engine->trigger('schedule.daily', ['event' => 'schedule.daily', 'timestamp' => now()->toISOString()]);
-    if (now()->isMonday()) {
-        $engine->trigger('schedule.weekly', ['event' => 'schedule.weekly', 'timestamp' => now()->toISOString()]);
-    }
-    if ((int) now()->format('j') === 1) {
-        $engine->trigger('schedule.monthly', ['event' => 'schedule.monthly', 'timestamp' => now()->toISOString()]);
-    }
-
-    // Storage quota checks (per client against tier quota)
-    $quotaByTierMb = (array) Setting::getValue('storage.quota_by_tier_mb', []);
-    $quotaByTierBytes = collect($quotaByTierMb)->map(fn ($mb) => (int) $mb * 1024 * 1024)->all();
-
-    $clientUsage = Client::query()
-        ->leftJoin('storage_connections', function ($j) {
-            $j->on('storage_connections.client_id', '=', 'clients.id')
-                ->whereNull('storage_connections.deleted_at');
-        })
-        ->selectRaw('clients.id, clients.tier, SUM(COALESCE(storage_connections.storage_used,0)) as used')
-        ->groupBy('clients.id', 'clients.tier')
+    $cutoff = now()->addDays(7)->toDateString();
+    $invoices = Invoice::query()
+        ->whereIn('status', ['sent', 'overdue'])
+        ->whereDate('due_date', $cutoff)
         ->get();
 
-    foreach ($clientUsage as $row) {
-        $tier = (string) ($row->tier ?? 'standard');
-        $quota = (int) ($quotaByTierBytes[$tier] ?? 0);
-        $used = (int) ($row->used ?? 0);
-        if ($quota <= 0) continue;
-        $pct = ($used / $quota) * 100;
-        if ($pct < 80) continue;
-
-        $engine->trigger('storage.quota_reached', [
-            'event' => 'storage.quota_reached',
-            'client_id' => (int) $row->id,
-            'client' => [
-                'id' => (int) $row->id,
-                'tier' => $tier,
-            ],
-            'storage' => [
-                'used' => $used,
-                'quota' => $quota,
-                'pct' => (int) round($pct),
-            ],
-        ]);
+    foreach ($invoices as $inv) {
+        app(AutomationEngine::class)->run('invoice.due_approaching', [
+            'invoice' => $inv->toArray(),
+            'client' => $inv->client?->toArray(),
+            'meta' => ['days_before' => 7],
+        ], (int) $inv->client_id);
     }
+})->daily()->name('automation-invoice-due-approaching');
 
-    // Storage cleanup: delete temp files older than 7 days (documents/tmp)
-    try {
-        $disk = \Illuminate\Support\Facades\Storage::disk('documents');
-        $files = $disk->allFiles('tmp');
-        foreach ($files as $f) {
-            $ts = $disk->lastModified($f);
-            if ($ts && $ts < now()->subDays(7)->getTimestamp()) {
-                $disk->delete($f);
-            }
-        }
-    } catch (\Throwable $e) {
-        // ignore
-    }
-})->daily()->name('automation-schedules-and-storage');
-
-// Storage sync scheduler (every 15 minutes by default)
+// Storage quota reached automation trigger (>=80%)
 Schedule::call(function () {
-    $defaultFreq = (int) config('storage-providers.sync.frequency_minutes', 15);
-    $now = now();
-
     $connections = StorageConnection::query()
-        ->where('status', 'connected')
-        ->where('auto_sync_enabled', true)
+        ->where('status', 'active')
+        ->whereNotNull('quota_bytes')
         ->get();
 
     foreach ($connections as $conn) {
-        $freq = (int) ($conn->sync_frequency_minutes ?: $defaultFreq);
-        $due = !$conn->last_synced_at || $conn->last_synced_at->lte($now->copy()->subMinutes($freq));
-        if (!$due) {
+        $quota = (int) $conn->quota_bytes;
+        if ($quota <= 0) {
             continue;
         }
-
-        SyncStorageConnection::dispatch($conn->id, (int) config('storage-providers.sync.max_files_per_run', 500))
-            ->onQueue('default');
+        $used = (int) $conn->used_bytes;
+        $percent = (int) floor(($used / $quota) * 100);
+        if ($percent >= 80) {
+            app(AutomationEngine::class)->run('storage.quota_reached', [
+                'storage' => [
+                    'connection_id' => $conn->id,
+                    'provider' => $conn->provider,
+                    'name' => $conn->name,
+                    'used_bytes' => $used,
+                    'quota_bytes' => $quota,
+                    'percent' => $percent,
+                ],
+                'client' => $conn->client?->toArray(),
+            ], (int) $conn->client_id);
+        }
     }
-})->everyFifteenMinutes()->name('storage-sync');
+})->daily()->name('automation-storage-quota-reached');
 
-// Scheduled report delivery (daily)
+// Send scheduled admin reports (requires mail configuration)
 Schedule::call(function () {
-    $due = ReportTemplate::query()
-        ->where('is_active', true)
-        ->whereIn('schedule', ['daily', 'weekly', 'monthly'])
-        ->whereNotNull('next_send_at')
-        ->where('next_send_at', '<=', now())
-        ->get(['id']);
+    app(ReportScheduleRunner::class)->runDueSchedules();
+})->everyFiveMinutes()->name('send-scheduled-admin-reports');
 
-    foreach ($due as $tpl) {
-        SendScheduledReport::dispatch($tpl->id)->onQueue('default');
-    }
-})->daily()->name('scheduled-reports');
+// Auto-sync connected storage providers (requires queue worker)
+Schedule::call(function () {
+    app(StorageSyncScheduler::class)->dispatchDue();
+})->everyFiveMinutes()->name('storage-auto-sync');

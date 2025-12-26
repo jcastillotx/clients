@@ -1,94 +1,55 @@
-<form wire:submit.prevent="saveNotifications" class="vstack gap-3">
-    <div>
-        <div class="h3 mb-1">Notification settings</div>
-        <div class="text-muted small">Admin defaults, client defaults, Slack/Teams, push, SMS (Twilio optional).</div>
+<div class="row">
+    <div class="col-md-6">
+        <h5 class="mb-3">Defaults</h5>
+        <div class="custom-control custom-switch mb-2">
+            <input type="checkbox" class="custom-control-input" id="notif_admin_email" wire:model.defer="notifications.admin_email">
+            <label class="custom-control-label" for="notif_admin_email">Admin email notifications enabled</label>
+        </div>
+        <div class="custom-control custom-switch mb-3">
+            <input type="checkbox" class="custom-control-input" id="notif_client_email_default" wire:model.defer="notifications.client_email_default">
+            <label class="custom-control-label" for="notif_client_email_default">Client email notifications default</label>
+        </div>
+
+        <h5 class="mt-4 mb-3">Slack / Teams</h5>
+        <div class="form-group">
+            <label class="mb-1">Slack webhook URL</label>
+            <input class="form-control" wire:model.defer="notifications.slack_webhook_url">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Teams webhook URL</label>
+            <input class="form-control" wire:model.defer="notifications.teams_webhook_url">
+        </div>
+        <small class="text-muted">Integration execution is stored/configured here; event wiring can be added per module.</small>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Admin notification preferences</div>
-            <div class="vstack gap-2">
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.notify.admin_events.new_request">
-                    <span class="form-check-label">New request</span>
-                </label>
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.notify.admin_events.payment_failed">
-                    <span class="form-check-label">Payment failed</span>
-                </label>
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.notify.admin_events.storage_quota_80">
-                    <span class="form-check-label">Storage quota warning (80%)</span>
-                </label>
-            </div>
+    <div class="col-md-6">
+        <h5 class="mb-3">Push / SMS</h5>
+        <div class="custom-control custom-switch mb-2">
+            <input type="checkbox" class="custom-control-input" id="push_enabled" wire:model.defer="notifications.push_enabled">
+            <label class="custom-control-label" for="push_enabled">Push notifications enabled</label>
         </div>
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Client default preferences</div>
-            <div class="vstack gap-2">
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.notify.client_defaults.request_updates">
-                    <span class="form-check-label">Request updates</span>
-                </label>
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" wire:model.defer="state.notify.client_defaults.invoice_updates">
-                    <span class="form-check-label">Invoice updates</span>
-                </label>
-            </div>
+        <div class="custom-control custom-switch mb-3">
+            <input type="checkbox" class="custom-control-input" id="sms_enabled" wire:model.defer="notifications.sms_enabled">
+            <label class="custom-control-label" for="sms_enabled">SMS alerts enabled</label>
+        </div>
+
+        <h6 class="mt-3">Twilio (optional)</h6>
+        <div class="form-group">
+            <label class="mb-1">Account SID</label>
+            <input class="form-control" wire:model.defer="notifications.twilio_sid">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">Auth token</label>
+            <input type="password" class="form-control" wire:model.defer="notifications.twilio_token">
+        </div>
+        <div class="form-group">
+            <label class="mb-1">From number</label>
+            <input class="form-control" wire:model.defer="notifications.twilio_from" placeholder="+15551234567">
         </div>
     </div>
+</div>
 
-    <hr class="my-2">
-
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Slack integration</div>
-            <label class="form-label">Incoming webhook URL</label>
-            <input class="form-control" wire:model.defer="state.notify.slack.webhook" placeholder="https://hooks.slack.com/...">
-        </div>
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Teams integration</div>
-            <label class="form-label">Incoming webhook URL</label>
-            <input class="form-control" wire:model.defer="state.notify.teams.webhook" placeholder="https://outlook.office.com/webhook/...">
-        </div>
-    </div>
-
-    <hr class="my-2">
-
-    <div class="row g-3">
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">Push notifications</div>
-            <label class="form-check mt-2">
-                <input class="form-check-input" type="checkbox" wire:model.defer="state.notify.push.enabled">
-                <span class="form-check-label">Enable push notifications</span>
-            </label>
-            <div class="text-muted small mt-1">Provider configuration is application-specific.</div>
-        </div>
-        <div class="col-12 col-xl-6">
-            <div class="h3 mb-1">SMS alerts (Twilio optional)</div>
-            <label class="form-check mt-2">
-                <input class="form-check-input" type="checkbox" wire:model.defer="state.notify.sms.enabled">
-                <span class="form-check-label">Enable SMS alerts</span>
-            </label>
-            <div class="row g-2 mt-2">
-                <div class="col-12">
-                    <label class="form-label">Twilio SID</label>
-                    <input class="form-control" wire:model.defer="state.notify.sms.twilio_sid">
-                </div>
-                <div class="col-12">
-                    <label class="form-label">Twilio token</label>
-                    <input class="form-control" type="password" wire:model.defer="state.notify.sms.twilio_token" autocomplete="new-password">
-                    <div class="text-muted small mt-1">Stored encrypted.</div>
-                </div>
-                <div class="col-12">
-                    <label class="form-label">From number</label>
-                    <input class="form-control" wire:model.defer="state.notify.sms.from" placeholder="+15551234567">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="d-flex justify-content-end">
-        <button class="btn btn-primary" type="submit">Save notification settings</button>
-    </div>
-</form>
+<button class="btn btn-primary" wire:click="saveNotifications">
+    <i class="fas fa-save mr-1"></i> Save Notification Settings
+</button>
 

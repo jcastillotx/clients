@@ -3,69 +3,39 @@
 namespace App\Http\Livewire\Admin\Automation;
 
 use App\Models\AutomationRule;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class AutomationIndex extends Component
 {
-    use WithPagination;
-
-    protected string $paginationTheme = 'bootstrap';
-
-    public string $search = '';
-    public string $trigger = 'all';
-    public string $status = 'all'; // all|active|disabled
-
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingTrigger(): void { $this->resetPage(); }
-    public function updatingStatus(): void { $this->resetPage(); }
-
-    public function toggle(int $ruleId): void
+    public function mount(): void
     {
-        $rule = AutomationRule::query()->findOrFail($ruleId);
-        $rule->update(['is_active' => ! $rule->is_active]);
+        abort_unless(Auth::user()?->can('access admin panel'), 403);
     }
 
-    public function delete(int $ruleId): void
+    public function toggle(int $id): void
     {
-        AutomationRule::query()->whereKey($ruleId)->delete();
+        abort_unless(Auth::user()?->can('access admin panel'), 403);
+        $rule = AutomationRule::query()->findOrFail($id);
+        $rule->update(['is_active' => !$rule->is_active]);
+    }
+
+    public function delete(int $id): void
+    {
+        abort_unless(Auth::user()?->can('access admin panel'), 403);
+        AutomationRule::query()->whereKey($id)->delete();
         session()->flash('success', 'Automation deleted.');
     }
 
     public function render()
     {
-        $q = AutomationRule::query()->orderBy('trigger')->orderBy('run_order')->orderBy('id');
-
-        if ($this->search !== '') {
-            $s = '%' . $this->search . '%';
-            $q->where(function ($qq) use ($s) {
-                $qq->where('name', 'like', $s)->orWhere('description', 'like', $s)->orWhere('trigger', 'like', $s);
-            });
-        }
-
-        if ($this->trigger !== 'all') {
-            $q->where('trigger', $this->trigger);
-        }
-
-        if ($this->status === 'active') {
-            $q->where('is_active', true);
-        } elseif ($this->status === 'disabled') {
-            $q->where('is_active', false);
-        }
-
-        $rules = $q->paginate(20);
-
-        $triggers = AutomationRule::query()
-            ->select('trigger')
-            ->distinct()
+        $rules = AutomationRule::query()
             ->orderBy('trigger')
-            ->pluck('trigger')
-            ->all();
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get();
 
-        return view('livewire.admin.automation.index', [
-            'rules' => $rules,
-            'triggers' => $triggers,
-        ])->layout('layouts.admin', ['title' => 'Automation']);
+        return view('livewire.admin.automation.index', compact('rules'));
     }
 }
 

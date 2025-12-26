@@ -3,45 +3,47 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ScheduledReportMail extends Mailable implements ShouldQueue
+class ScheduledReportMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * @param  array<int, string>  $headings
-     * @param  array<int, array<int, mixed>>  $rows
-     */
     public function __construct(
-        public string $title,
-        public string $from,
-        public string $to,
-        public array $headings,
-        public array $rows,
-        public string $attachmentFilename,
-        public string $attachmentMime,
-        public string $attachmentContents,
-    ) {}
+        public readonly string $category,
+        public readonly array $payload,
+        private readonly string $pdfBytes,
+    ) {
+    }
 
-    public function build(): self
+    public function envelope(): Envelope
     {
-        return $this->subject('Scheduled report · ' . $this->title)
-            ->view('emails.scheduled-report', [
-                'title' => $this->title,
-                'from' => $this->from,
-                'to' => $this->to,
-            ])
-            ->text('emails.text.scheduled-report', [
-                'title' => $this->title,
-                'from' => $this->from,
-                'to' => $this->to,
-            ])
-            ->attachData($this->attachmentContents, $this->attachmentFilename, [
-                'mime' => $this->attachmentMime,
-            ]);
+        return new Envelope(
+            subject: sprintf('Scheduled Report: %s (%s)', ucfirst($this->category), now()->toDateString()),
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'admin.reports.emails.scheduled',
+            with: [
+                'category' => $this->category,
+                'meta' => $this->payload['meta'] ?? [],
+            ],
+        );
+    }
+
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromData(fn () => $this->pdfBytes, sprintf('report_%s.pdf', $this->category))
+                ->withMime('application/pdf'),
+        ];
     }
 }
 
