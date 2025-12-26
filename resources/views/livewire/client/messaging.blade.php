@@ -65,6 +65,18 @@
                     @endforelse
                 </div>
                 <div class="card-footer">
+                    @php
+                        $lastIncoming = optional($messages->where('sender_id', '!=', auth()->id())->last())->body ?? '';
+                        $ctx = [
+                            'conversation_id' => $conversationId,
+                            'participants' => $participants->pluck('name')->all(),
+                        ];
+                    @endphp
+                    <livewire:communication.smart-reply-box
+                        :clientMessage="$lastIncoming"
+                        :contextJson="json_encode($ctx)"
+                        :wire:key="'smart-reply-conv-'.$conversationId"
+                    />
                     <div class="input-group">
                         <input class="form-control" placeholder="Type a message..." wire:model.defer="message" wire:keydown.enter.prevent="send">
                         <div class="input-group-append">

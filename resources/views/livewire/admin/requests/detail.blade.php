@@ -74,6 +74,22 @@
                         </div>
                     </div>
 
+                    @php
+                        $lastClientMsg = optional($comments->firstWhere('is_internal', false))->comment ?? '';
+                        $ctx = [
+                            'request_id' => $request->id,
+                            'title' => $request->title,
+                            'type' => $request->type,
+                            'priority' => $request->priority,
+                            'status' => $request->status,
+                        ];
+                    @endphp
+                    <livewire:communication.smart-reply-box
+                        :clientMessage="$lastClientMsg"
+                        :contextJson="json_encode($ctx)"
+                        :wire:key="'smart-reply-request-'.$request->id"
+                    />
+
                     <div class="divide-y">
                         @forelse($comments as $c)
                             <div class="py-3 border-top">

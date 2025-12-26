@@ -47,26 +47,16 @@ class DocumentEmbeddingService
     public function embedText(string $content, array $options = []): ?array
     {
         $preferred = (string) ($options['provider'] ?? 'openai');
-        $model = (string) ($options['model'] ?? 'text-embedding-3-small');
 
         try {
-            $res = $this->providers->withFallback($preferred, function ($provider) use ($content, $options, $model) {
-                return $provider->generateEmbeddings([$content], [
-                    'model' => $model,
-                    'task_type' => 'embeddings',
-                    'timeout' => (int) ($options['timeout'] ?? 60),
-                    'task_id' => $options['task_id'] ?? null,
-                ]);
+            $res = $this->providers->withFallback($preferred, function ($provider) use ($content) {
+                /** @var array<int,float> $vec */
+                $vec = $provider->generateEmbeddings($content);
+                return ['embedding' => $vec];
             }, 'document_embeddings');
 
-            $vectors = $res['embeddings'] ?? null;
-            if (!is_array($vectors) || !isset($vectors[0]) || !is_array($vectors[0])) {
-                return null;
-            }
-
-            /** @var array<int,float> $vec */
-            $vec = array_map(fn ($v) => (float) $v, $vectors[0]);
-            return $vec;
+            $vec = $res['embedding'] ?? null;
+            return is_array($vec) ? array_map(fn ($v) => (float) $v, $vec) : null;
         } catch (\Throwable $e) {
             $msg = strtolower($e->getMessage());
             if (str_contains($msg, 'api key') || str_contains($msg, 'not configured')) {

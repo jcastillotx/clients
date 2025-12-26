@@ -22,6 +22,10 @@ class AdminRequestDetail extends Component
 {
     use WithFileUploads;
 
+    protected $listeners = [
+        'smart-reply-selected' => 'applySmartReply',
+    ];
+
     public ServiceRequest $request;
 
     public string $tab = 'overview';
@@ -146,6 +150,12 @@ class AdminRequestDetail extends Component
             'commented',
             'requests'
         );
+    }
+
+    public function applySmartReply(string $text): void
+    {
+        $this->newComment = $text;
+        $this->newCommentInternal = false;
     }
 
     public function uploadAttachments(): void
