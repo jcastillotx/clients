@@ -31,12 +31,16 @@ use App\Http\Livewire\Admin\Storage\StorageOverview;
 use App\Http\Livewire\Documents\DocumentWorkflow;
 use App\Http\Livewire\Documents\SmartDocumentBrowser;
 use App\Http\Livewire\Documents\DocumentTemplates;
+use App\Http\Livewire\Documents\DocumentAIAnalysis;
+use App\Http\Livewire\Documents\DocumentChat;
+use App\Http\Livewire\Documents\SummarizeDocument;
 use App\Http\Livewire\Client\ProjectDashboard;
 use App\Http\Livewire\Client\Messaging;
 use App\Http\Livewire\Client\KnowledgeBase;
 use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\AnalyticsDashboard;
 use App\Http\Livewire\Client\EstimateApproval;
+use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -116,6 +120,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
+    Route::get('/documents/{document}/ai', DocumentAIAnalysis::class)->name('documents.ai');
+    Route::get('/documents/{document}/chat', DocumentChat::class)->name('documents.chat');
+    Route::get('/documents/chat', DocumentChat::class)->name('documents.chat.all');
+    Route::get('/documents/{document}/summarize', SummarizeDocument::class)->name('documents.summarize');
     Route::get('/documents/{document}/open/{viewer?}', [DocumentViewerController::class, 'openDocument'])
         ->whereIn('viewer', ['office', 'google'])
         ->name('documents.viewer.document');
@@ -164,6 +172,9 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
         Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
         Route::get('/requests/{request}', AdminRequestDetail::class)->name('requests.show');
         Route::get('/requests/{request}/estimator', AdminProjectEstimator::class)->name('requests.estimator');
+
+        // Contracts (AI)
+        Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');
 
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');

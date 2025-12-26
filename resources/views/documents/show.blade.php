@@ -40,6 +40,15 @@
                     <a href="{{ route('documents.download', $document) }}" class="btn btn-primary">
                         <i class="fas fa-download mr-1"></i> Download
                     </a>
+                    <a href="{{ route('documents.ai', $document) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-robot mr-1"></i> AI Analysis
+                    </a>
+                    <a href="{{ route('documents.chat', $document) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-comments mr-1"></i> Chat
+                    </a>
+                    <a href="{{ route('documents.summarize', $document) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-align-left mr-1"></i> Summarize
+                    </a>
                     @if($document->isPdf() || $document->isImage())
                     <a href="{{ route('documents.view', $document) }}" class="btn btn-outline-primary" target="_blank">
                         <i class="fas fa-eye mr-1"></i> View in Browser
