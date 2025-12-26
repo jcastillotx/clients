@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Avoid duplicate Sanctum migrations if another `personal_access_tokens`
+        // migration already exists in this repo (e.g. after merges).
+        if (Schema::hasTable('personal_access_tokens')) {
+            return;
+        }
+
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
             $table->morphs('tokenable');

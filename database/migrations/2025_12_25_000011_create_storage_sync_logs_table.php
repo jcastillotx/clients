@@ -8,6 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // This project already defines `storage_sync_logs` in an earlier migration
+        // (`2024_01_01_000015_create_storage_files_and_sync_tables.php`).
+        // When both sets exist (e.g. after a merge), avoid creating it twice.
+        if (Schema::hasTable('storage_sync_logs')) {
+            return;
+        }
+
         Schema::create('storage_sync_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('storage_connection_id')->constrained('storage_connections')->cascadeOnDelete();

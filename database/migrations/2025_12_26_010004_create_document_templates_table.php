@@ -8,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // The repo already creates `document_templates` in the earlier document workflow
+        // migration set. Avoid creating the table twice after merges.
+        if (Schema::hasTable('document_templates')) {
+            return;
+        }
+
         Schema::create('document_templates', function (Blueprint $table) {
             $table->id();
             $table->string('name');

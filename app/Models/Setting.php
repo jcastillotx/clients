@@ -43,6 +43,38 @@ class Setting extends Model
         return json_decode($raw, true);
     }
 
+    public static function getValue(string $key, mixed $default = null): mixed
+    {
+        $row = static::query()->where('key', $key)->first();
+        if (!$row) {
+            return $default;
+        }
+
+        $val = $row->decoded();
+        return $val === null ? $default : $val;
+    }
+
+    public static function setValue(string $key, mixed $value, bool $encrypt = false, ?int $updatedBy = null, ?string $group = null): self
+    {
+        $encoded = static::encodeValue($value);
+        $isEncrypted = $encrypt === true;
+        $stored = $isEncrypted ? Crypt::encryptString($encoded) : $encoded;
+
+        /** @var self $row */
+        $row = static::query()->firstOrNew(['key' => $key]);
+        $row->value = $stored;
+        $row->is_encrypted = $isEncrypted;
+        if ($group !== null) {
+            $row->group = $group;
+        }
+        if ($updatedBy !== null) {
+            $row->updated_by = $updatedBy;
+        }
+        $row->save();
+
+        return $row;
+    }
+
     public static function encodeValue(mixed $value): string
     {
         return json_encode($value, JSON_THROW_ON_ERROR);

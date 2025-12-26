@@ -8,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // This project already defines `settings` in an earlier migration
+        // (`2024_01_01_000017_create_settings_table.php`). Avoid creating it twice.
+        if (Schema::hasTable('settings')) {
+            return;
+        }
+
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();

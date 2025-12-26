@@ -8,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // The repo already creates `document_versions` in the earlier document workflow
+        // migration set. Avoid creating the table twice after merges.
+        if (Schema::hasTable('document_versions')) {
+            return;
+        }
+
         Schema::create('document_versions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->constrained('documents')->cascadeOnDelete();

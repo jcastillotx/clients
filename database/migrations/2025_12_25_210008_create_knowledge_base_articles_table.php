@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Superseded by the newer knowledge base schema in `2025_12_26_030200_create_knowledge_base_tables.php`
+        // (categories + articles + feedback). Keeping both would attempt to create the same
+        // `knowledge_base_articles` table twice with different columns.
+        return;
+
         Schema::create('knowledge_base_articles', function (Blueprint $table) {
             $table->id();
             $table->string('title');
