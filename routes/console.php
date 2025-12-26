@@ -12,6 +12,10 @@ use App\Services\AutomationEngine;
 use App\Services\WebhookService;
 use App\Services\AI\RequestEmbeddingService;
 use App\Models\Request as ServiceRequest;
+use App\Jobs\Analytics\UpdateClientHealthScoresJob;
+use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
+use App\Jobs\Analytics\GenerateMonthlyRevenueForecastJob;
+use App\Jobs\Analytics\GenerateQuarterlyBusinessIntelligenceReportJob;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +131,26 @@ Schedule::call(function () {
 Schedule::call(function () {
     app(StorageSyncScheduler::class)->dispatchDue();
 })->everyFiveMinutes()->name('storage-auto-sync');
+
+// AI analytics: update client health scores daily
+Schedule::call(function () {
+    UpdateClientHealthScoresJob::dispatch();
+})->daily()->name('ai-analytics-client-health-daily');
+
+// AI analytics: weekly trends report
+Schedule::call(function () {
+    GenerateWeeklyTrendReportJob::dispatch();
+})->weekly()->name('ai-analytics-weekly-trends');
+
+// AI analytics: monthly forecast report
+Schedule::call(function () {
+    GenerateMonthlyRevenueForecastJob::dispatch();
+})->monthly()->name('ai-analytics-monthly-forecast');
+
+// AI analytics: quarterly business intelligence report
+Schedule::call(function () {
+    GenerateQuarterlyBusinessIntelligenceReportJob::dispatch();
+})->quarterly()->name('ai-analytics-quarterly-bi');
 
 /*
 |--------------------------------------------------------------------------

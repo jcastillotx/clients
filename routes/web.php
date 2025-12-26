@@ -43,6 +43,9 @@ use App\Http\Livewire\Client\EstimateApproval;
 use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
 use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
 use App\Http\Livewire\Communication\EmailDraftAssistant;
+use App\Http\Livewire\Admin\Analytics\AIInsightsDashboard as AdminAIInsightsDashboard;
+use App\Http\Livewire\Admin\Analytics\PredictiveCharts as AdminPredictiveCharts;
+use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMonitor;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -182,6 +185,11 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
 
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
+
+        // AI analytics
+        Route::get('/analytics/ai-insights', AdminAIInsightsDashboard::class)->name('analytics.ai-insights')->middleware('permission:view reports');
+        Route::get('/analytics/predictive', AdminPredictiveCharts::class)->name('analytics.predictive')->middleware('permission:view reports');
+        Route::get('/analytics/client-health', AdminClientHealthMonitor::class)->name('analytics.client-health')->middleware('permission:view reports');
 
         // Export endpoints
         Route::get('/reports/export/{category}/{format}', [AdminReportExportController::class, 'export'])
