@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\DatabaseNotification;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -101,6 +102,15 @@ class User extends Authenticatable
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    public function unreadNotificationsCount(): int
+    {
+        return DatabaseNotification::query()
+            ->where('notifiable_type', static::class)
+            ->where('notifiable_id', $this->id)
+            ->whereNull('read_at')
+            ->count();
     }
 
     /**

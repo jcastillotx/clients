@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Models\Invoice;
 use App\Services\AdminReports\ReportScheduleRunner;
+use App\Services\Storage\StorageSyncScheduler;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,3 +34,8 @@ Schedule::call(function () {
 Schedule::call(function () {
     app(ReportScheduleRunner::class)->runDueSchedules();
 })->everyFiveMinutes()->name('send-scheduled-admin-reports');
+
+// Auto-sync connected storage providers (requires queue worker)
+Schedule::call(function () {
+    app(StorageSyncScheduler::class)->dispatchDue();
+})->everyFiveMinutes()->name('storage-auto-sync');

@@ -10,6 +10,10 @@ use App\Http\Controllers\RequestController;
 use App\Http\Controllers\Admin\AdminReportExportController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
+use App\Http\Livewire\Storage\StorageDashboard;
+use App\Http\Livewire\Storage\UnifiedFileBrowser;
+use App\Http\Livewire\Storage\StorageSettings;
+use App\Http\Livewire\Admin\Storage\StorageOverview;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,6 +78,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Storage (client unified interface)
+    Route::get('/storage', StorageDashboard::class)->name('storage.dashboard');
+    Route::get('/storage/browser', UnifiedFileBrowser::class)->name('storage.browser');
+    Route::get('/storage/settings', StorageSettings::class)->name('storage.settings');
+
 });
 
 /*
@@ -93,6 +102,11 @@ Route::middleware(['auth', 'verified', 'permission:view reports'])
             ->whereIn('category', ['financial', 'clients', 'requests', 'performance', 'storage'])
             ->whereIn('format', ['csv', 'xlsx', 'pdf'])
             ->name('reports.export');
+
+        // Admin storage overview
+        Route::middleware(['permission:access admin panel'])->group(function () {
+            Route::get('/storage/overview', StorageOverview::class)->name('storage.overview');
+        });
     });
 
 /*

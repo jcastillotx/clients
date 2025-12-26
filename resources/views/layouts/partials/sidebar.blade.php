@@ -104,6 +104,37 @@
                     </a>
                 </li>
 
+                <!-- Storage -->
+                <li class="nav-item {{ request()->routeIs('storage.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('storage.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-cloud"></i>
+                        <p>
+                            Storage
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('storage.dashboard') }}" class="nav-link {{ request()->routeIs('storage.dashboard') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('storage.browser') }}" class="nav-link {{ request()->routeIs('storage.browser') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>File Browser</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('storage.settings') }}" class="nav-link {{ request()->routeIs('storage.settings') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Settings</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
                 @can('view reports')
                 <li class="nav-header">ADMIN</li>
                 <li class="nav-item">
@@ -112,6 +143,15 @@
                         <p>Reporting</p>
                     </a>
                 </li>
+
+                @can('access admin panel')
+                <li class="nav-item">
+                    <a href="{{ route('admin.storage.overview') }}" class="nav-link {{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-database"></i>
+                        <p>Storage Overview</p>
+                    </a>
+                </li>
+                @endcan
                 @endcan
 
                 <li class="nav-header">ACCOUNT</li>
