@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,16 +22,24 @@ class Document extends Model
     protected $fillable = [
         'client_id',
         'request_id',
+        'invoice_id',
+        'contract_id',
         'uploaded_by',
         'title',
         'description',
         'filename',
         'original_filename',
         'file_path',
+        'thumbnail_path',
         'mime_type',
         'file_size',
         'category',
+        'tags',
         'is_public',
+        'workflow_status',
+        'review_requested_at',
+        'review_decided_at',
+        'current_version_id',
     ];
 
     /**
@@ -37,13 +47,26 @@ class Document extends Model
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'file_size' => 'integer',
-            'is_public' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'file_size' => 'integer',
+        'is_public' => 'boolean',
+        'tags' => 'array',
+        'workflow_status' => 'string',
+        'review_requested_at' => 'datetime',
+        'review_decided_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array<int, string>
+     */
+    protected $dates = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     /**
      * Get the client that owns the document.
@@ -61,6 +84,16 @@ class Document extends Model
         return $this->belongsTo(Request::class);
     }
 
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
+    }
+
     /**
      * Get the user who uploaded the document.
      */
@@ -69,12 +102,40 @@ class Document extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    public function syncedFile(): HasOne
+    {
+        return $this->hasOne(SyncedFile::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(DocumentComment::class)->orderBy('created_at');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(DocumentVersion::class)->orderByDesc('version')->orderByDesc('id');
+    }
+
+    public function permissions(): HasMany
+    {
+        return $this->hasMany(DocumentPermission::class);
+    }
+
     /**
      * Get the file URL.
      */
     public function getUrlAttribute(): string
     {
-        return Storage::disk('documents')->url($this->file_path);
+        return route('documents.download', $this);
+    }
+
+    /**
+     * Download URL accessor.
+     */
+    public function getDownloadUrlAttribute(): string
+    {
+        return $this->url;
     }
 
     /**
@@ -165,7 +226,14 @@ class Document extends Model
             if (!$document->isForceDeleting()) {
                 return;
             }
-            Storage::disk('documents')->delete($document->file_path);
+            try {
+                Storage::disk('documents')->delete($document->file_path);
+                if ($document->thumbnail_path) {
+                    Storage::disk('documents')->delete($document->thumbnail_path);
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
         });
     }
 }

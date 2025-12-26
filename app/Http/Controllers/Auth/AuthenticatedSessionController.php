@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\LoginHistory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,14 +40,17 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        // Check if user is active
-        if (!$user->is_active) {
+        // Check if user is active (supports both legacy is_active + new status)
+        $status = $user->status ?? ($user->is_active ? 'active' : 'inactive');
+        if (!$user->is_active || $status !== 'active') {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             return back()->withErrors([
-                'email' => 'Your account has been deactivated. Please contact support.',
+                'email' => $status === 'suspended'
+                    ? 'Your account has been suspended. Please contact support.'
+                    : 'Your account is not active. Please contact support.',
             ])->onlyInput('email');
         }
 
@@ -64,6 +68,18 @@ class AuthenticatedSessionController extends Controller
         // Update last login
         $user->update(['last_login_at' => now()]);
 
+        // Store login history
+        try {
+            LoginHistory::create([
+                'user_id' => $user->id,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'logged_in_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
         // Log the activity
         ActivityLog::log(
             'Logged in',
@@ -73,7 +89,11 @@ class AuthenticatedSessionController extends Controller
             'auth'
         );
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $defaultRedirect = ($user->isAdmin() || $user->isStaff())
+            ? route('admin.dashboard', absolute: false)
+            : route('dashboard', absolute: false);
+
+        return redirect()->intended($defaultRedirect);
     }
 
     /**

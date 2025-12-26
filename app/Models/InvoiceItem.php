@@ -24,20 +24,22 @@ class InvoiceItem extends Model
         'sort_order',
     ];
 
+    protected $casts = [
+        'quantity' => 'decimal:2',
+        'unit_price' => 'decimal:2',
+        'total' => 'decimal:2',
+        'sort_order' => 'integer',
+    ];
+
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be mutated to dates.
      *
-     * @return array<string, string>
+     * @var array<int, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'quantity' => 'decimal:2',
-            'unit_price' => 'decimal:2',
-            'total' => 'decimal:2',
-            'sort_order' => 'integer',
-        ];
-    }
+    protected $dates = [
+        'created_at',
+        'updated_at',
+    ];
 
     /**
      * Get the invoice that owns the item.

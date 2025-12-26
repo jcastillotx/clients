@@ -5,6 +5,13 @@
 
     RewriteEngine On
 
+    # ---------------------------------------------------------------------
+    # HTTPS Redirect (supports reverse proxies via X-Forwarded-Proto)
+    # ---------------------------------------------------------------------
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -18,4 +25,29 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# -------------------------------------------------------------------------
+# Basic hardening (Apache 2.4+)
+# -------------------------------------------------------------------------
+
+# Do not expose hidden files / sensitive config if accidentally placed under public/
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(\.env|\.git|\.svn|\.hg|\.htaccess|composer\.(json|lock)|package\.json|vite\.config\.js)$">
+        Require all denied
+    </FilesMatch>
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # HSTS (only applied when request is HTTPS)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 </IfModule>

@@ -1,0 +1,14 @@
+## cPanel Cron Jobs
+
+### Laravel Scheduler (every minute)
+
+```cron
+* * * * * cd /home/USERNAME/apps/client-portal/current && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
+```
+
+### Optional: queue worker via cron (NOT recommended vs Supervisor)
+
+```cron
+* * * * * cd /home/USERNAME/apps/client-portal/current && /usr/bin/php artisan queue:work --stop-when-empty --sleep=1 --tries=3 >> /dev/null 2>&1
+```
+
