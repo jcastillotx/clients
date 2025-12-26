@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Payment;
+use App\Services\AutomationEngine;
 use App\Services\WebhookService;
 
 class PaymentObserver
@@ -24,6 +25,12 @@ class PaymentObserver
         $clientId = (int) $payment->client_id;
 
         if ($payment->status === 'succeeded') {
+            app(AutomationEngine::class)->run('payment.received', [
+                'payment' => $payment->toArray(),
+                'client' => $payment->client?->toArray(),
+                'invoice' => $payment->invoice?->toArray(),
+            ], $clientId);
+
             app(WebhookService::class)->triggerWebhook('payment.received', [
                 'id' => $payment->id,
                 'client_id' => $payment->client_id,
@@ -38,6 +45,12 @@ class PaymentObserver
         }
 
         if ($payment->status === 'failed') {
+            app(AutomationEngine::class)->run('payment.failed', [
+                'payment' => $payment->toArray(),
+                'client' => $payment->client?->toArray(),
+                'invoice' => $payment->invoice?->toArray(),
+            ], $clientId);
+
             app(WebhookService::class)->triggerWebhook('payment.failed', [
                 'id' => $payment->id,
                 'client_id' => $payment->client_id,

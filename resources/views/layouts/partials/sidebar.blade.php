@@ -195,6 +195,12 @@
                         <p>Webhooks</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.automation.index') }}" class="nav-link {{ request()->routeIs('admin.automation.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-robot"></i>
+                        <p>Automation</p>
+                    </a>
+                </li>
                 @endcan
                 @endcan
                 @endcan

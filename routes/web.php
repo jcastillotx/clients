@@ -15,6 +15,9 @@ use App\Http\Controllers\Documents\DocumentVersionController;
 use App\Http\Controllers\Documents\DocumentViewerController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
+use App\Http\Livewire\Admin\Automation\AutomationIndex;
+use App\Http\Livewire\Admin\Automation\AutomationBuilder;
+use App\Http\Livewire\Admin\Automation\AutomationLogs;
 use App\Http\Livewire\Settings\WebhookManagement;
 use App\Http\Livewire\Storage\StorageDashboard;
 use App\Http\Livewire\Storage\StorageConflicts;
@@ -156,6 +159,11 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
 
         // Webhooks
         Route::get('/webhooks', WebhookManagement::class)->name('webhooks.index')->middleware('permission:manage settings');
+
+        // Automation
+        Route::get('/automation', AutomationIndex::class)->name('automation.index');
+        Route::get('/automation/builder/{rule?}', AutomationBuilder::class)->name('automation.builder');
+        Route::get('/automation/logs', AutomationLogs::class)->name('automation.logs');
     });
 
 /*

@@ -3,12 +3,18 @@
 namespace App\Observers;
 
 use App\Models\Request as ServiceRequest;
+use App\Services\AutomationEngine;
 use App\Services\WebhookService;
 
 class RequestObserver
 {
     public function created(ServiceRequest $request): void
     {
+        app(AutomationEngine::class)->run('request.created', [
+            'request' => $request->toArray(),
+            'client' => $request->client?->toArray(),
+        ], (int) $request->client_id);
+
         app(WebhookService::class)->triggerWebhook('request.created', [
             'id' => $request->id,
             'client_id' => $request->client_id,
@@ -22,6 +28,12 @@ class RequestObserver
 
     public function updated(ServiceRequest $request): void
     {
+        app(AutomationEngine::class)->run('request.updated', [
+            'request' => $request->toArray(),
+            'client' => $request->client?->toArray(),
+            'meta' => ['changes' => $request->getChanges()],
+        ], (int) $request->client_id);
+
         app(WebhookService::class)->triggerWebhook('request.updated', [
             'id' => $request->id,
             'client_id' => $request->client_id,
@@ -34,6 +46,11 @@ class RequestObserver
         ], (int) $request->client_id);
 
         if ($request->wasChanged('status') && $request->status === 'completed') {
+            app(AutomationEngine::class)->run('request.completed', [
+                'request' => $request->toArray(),
+                'client' => $request->client?->toArray(),
+            ], (int) $request->client_id);
+
             app(WebhookService::class)->triggerWebhook('request.completed', [
                 'id' => $request->id,
                 'client_id' => $request->client_id,

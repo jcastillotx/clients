@@ -3,12 +3,18 @@
 namespace App\Observers;
 
 use App\Models\Document;
+use App\Services\AutomationEngine;
 use App\Services\WebhookService;
 
 class DocumentObserver
 {
     public function created(Document $document): void
     {
+        app(AutomationEngine::class)->run('document.uploaded', [
+            'document' => $document->toArray(),
+            'client' => $document->client?->toArray(),
+        ], (int) $document->client_id);
+
         app(WebhookService::class)->triggerWebhook('document.uploaded', [
             'id' => $document->id,
             'client_id' => $document->client_id,
