@@ -189,6 +189,7 @@
         </div>
         <div class="card-footer text-muted small">
             To enable labor-cost profit estimates, set the system setting <code>billing.hourly_rate</code>.
+            For true Profit &amp; Loss (real expenses/costs), we’ll need an expenses/costs model + table (today this report can only compute revenue/refunds/receivables from existing schema, plus optional estimated labor cost).
         </div>
     </div>
 
