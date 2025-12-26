@@ -14,6 +14,7 @@ class SyncedFile extends Model
         'storage_connection_id',
         'document_id',
         'request_id',
+        'invoice_id',
         'contract_id',
         'provider_file_id',
         'file_name',

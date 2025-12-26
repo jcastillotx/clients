@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,8 @@ class Document extends Model
     protected $fillable = [
         'client_id',
         'request_id',
+        'invoice_id',
+        'contract_id',
         'uploaded_by',
         'title',
         'description',
@@ -31,7 +34,12 @@ class Document extends Model
         'mime_type',
         'file_size',
         'category',
+        'tags',
         'is_public',
+        'workflow_status',
+        'review_requested_at',
+        'review_decided_at',
+        'current_version_id',
     ];
 
     /**
@@ -42,6 +50,10 @@ class Document extends Model
     protected $casts = [
         'file_size' => 'integer',
         'is_public' => 'boolean',
+        'tags' => 'array',
+        'workflow_status' => 'string',
+        'review_requested_at' => 'datetime',
+        'review_decided_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
 
@@ -72,6 +84,16 @@ class Document extends Model
         return $this->belongsTo(Request::class);
     }
 
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
+    }
+
     /**
      * Get the user who uploaded the document.
      */
@@ -83,6 +105,21 @@ class Document extends Model
     public function syncedFile(): HasOne
     {
         return $this->hasOne(SyncedFile::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(DocumentComment::class)->orderBy('created_at');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(DocumentVersion::class)->orderByDesc('version')->orderByDesc('id');
+    }
+
+    public function permissions(): HasMany
+    {
+        return $this->hasMany(DocumentPermission::class);
     }
 
     /**
