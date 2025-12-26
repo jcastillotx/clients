@@ -46,6 +46,9 @@ use App\Http\Livewire\Communication\EmailDraftAssistant;
 use App\Http\Livewire\Admin\Analytics\AIInsightsDashboard as AdminAIInsightsDashboard;
 use App\Http\Livewire\Admin\Analytics\PredictiveCharts as AdminPredictiveCharts;
 use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMonitor;
+use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
+use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
+use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -159,6 +162,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/knowledge-base', KnowledgeBase::class)->name('client.knowledge-base');
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
     Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
+
+    // Research & consultation tools
+    Route::get('/research', ResearchAssistantTool::class)->name('research.assistant');
+    Route::get('/research/technical', TechnicalAdvisorTool::class)->name('research.technical');
+    Route::get('/research/monitor', IndustryMonitorTool::class)->name('research.monitor');
 
 });
 
