@@ -19,30 +19,72 @@ class InvoiceGeneratorAITest extends TestCase
     {
         $client = Client::factory()->create();
 
-        $inv1 = Invoice::factory()->create([
+        $inv1 = Invoice::withoutEvents(fn () => Invoice::query()->create([
             'client_id' => $client->id,
+            'request_id' => null,
+            'invoice_number' => 'INV-TEST-0001',
+            'subtotal' => 0,
+            'tax_rate' => 0,
+            'tax_amount' => 0,
+            'discount' => 0,
+            'amount' => 0,
             'issue_date' => '2025-01-01',
+            'due_date' => '2025-01-31',
             'paid_at' => Carbon::parse('2025-01-11'),
-        ]);
-        $inv2 = Invoice::factory()->create([
+            'status' => 'paid',
+            'notes' => null,
+            'terms' => null,
+            'pdf_path' => null,
+            'template' => 'classic',
+        ]));
+        $inv2 = Invoice::withoutEvents(fn () => Invoice::query()->create([
             'client_id' => $client->id,
+            'request_id' => null,
+            'invoice_number' => 'INV-TEST-0002',
+            'subtotal' => 0,
+            'tax_rate' => 0,
+            'tax_amount' => 0,
+            'discount' => 0,
+            'amount' => 0,
             'issue_date' => '2025-02-01',
+            'due_date' => '2025-03-03',
             'paid_at' => Carbon::parse('2025-02-21'),
-        ]);
+            'status' => 'paid',
+            'notes' => null,
+            'terms' => null,
+            'pdf_path' => null,
+            'template' => 'classic',
+        ]));
 
         $this->assertNotNull($inv1->paid_at);
         $this->assertNotNull($inv2->paid_at);
 
-        $invoice = Invoice::factory()->create([
+        $invoice = Invoice::withoutEvents(fn () => Invoice::query()->create([
             'client_id' => $client->id,
+            'request_id' => null,
+            'invoice_number' => 'INV-TEST-0003',
+            'subtotal' => 0,
+            'tax_rate' => 0,
+            'tax_amount' => 0,
+            'discount' => 0,
+            'amount' => 0,
             'issue_date' => '2025-03-01',
             'due_date' => '2025-03-15',
-        ]);
+            'paid_at' => null,
+            'status' => 'sent',
+            'notes' => null,
+            'terms' => null,
+            'pdf_path' => null,
+            'template' => 'classic',
+        ]));
+        $invoice->refresh();
+        $this->assertSame('2025-03-01', $invoice->issue_date?->toDateString());
 
         $safety = \Mockery::mock(AISafetyService::class);
         $svc = new InvoiceGeneratorAI($safety);
 
         $out = $svc->predictPayment($invoice, $client);
+        $this->assertSame(15, (int) ($out['_history']['avg_days_to_pay'] ?? 0));
         $this->assertSame('2025-03-16', $out['predicted_payment_date']); // avg(10,20)=15 days
         $this->assertArrayHasKey('recommended_reminders', $out);
     }

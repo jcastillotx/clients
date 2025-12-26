@@ -65,6 +65,8 @@ use App\Http\Livewire\AI\PromptTemplateManager as AdminPromptTemplates;
 use App\Http\Livewire\AI\KnowledgeBase as AdminKnowledgeBase;
 use App\Http\Livewire\AI\WorkflowBuilder as AdminWorkflowBuilder;
 use App\Http\Livewire\AI\ClientAssistantChat as ClientAssistantChat;
+use App\Http\Livewire\Technical\CodeReviewer as AdminCodeReviewer;
+use App\Http\Livewire\Technical\ArchitectureAdvisor as AdminArchitectureAdvisor;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -239,6 +241,10 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
         Route::get('/ai/prompt-templates', AdminPromptTemplates::class)->name('ai.prompt-templates');
         Route::get('/ai/knowledge-base', AdminKnowledgeBase::class)->name('ai.knowledge-base');
         Route::get('/ai/workflows', AdminWorkflowBuilder::class)->name('ai.workflows');
+
+        // Technical tools
+        Route::get('/technical/code-review', AdminCodeReviewer::class)->name('technical.code-review');
+        Route::get('/technical/architecture', AdminArchitectureAdvisor::class)->name('technical.architecture');
 
         // Export endpoints
         Route::get('/reports/export/{category}/{format}', [AdminReportExportController::class, 'export'])
