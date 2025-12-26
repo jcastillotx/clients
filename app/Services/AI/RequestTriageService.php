@@ -47,6 +47,7 @@ class RequestTriageService
                 'client_id' => $request->client_id,
                 'user_id' => $request->created_by,
                 'timeout' => (int) ($options['timeout'] ?? 60),
+                'task_id' => $options['task_id'] ?? null,
             ]);
         }, 'triage_request');
 

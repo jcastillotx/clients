@@ -131,6 +131,8 @@
         </div>
 
         <div class="col-12 col-xl-4">
+            <livewire:admin.requests.a-i-request-analysis :request="$request" />
+
             <div class="card mb-3">
                 <div class="card-header">
                     <div class="card-title">Assignment</div>
