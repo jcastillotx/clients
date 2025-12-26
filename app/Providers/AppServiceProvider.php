@@ -12,10 +12,12 @@ use Livewire\Livewire;
 use App\Models\Setting;
 use App\Models\Document;
 use App\Models\Contract;
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Request as ServiceRequest;
 use App\Observers\ContractWebhookObserver;
+use App\Observers\ClientWebhookObserver;
 use App\Observers\DocumentWebhookObserver;
 use App\Observers\InvoiceWebhookObserver;
 use App\Observers\PaymentWebhookObserver;
@@ -87,6 +89,9 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('admin.reports.performance', \App\Http\Livewire\Admin\Reports\PerformanceReport::class);
         Livewire::component('admin.reports.storage', \App\Http\Livewire\Admin\Reports\StorageReport::class);
         Livewire::component('admin.settings.system', \App\Http\Livewire\Admin\Settings\SystemSettings::class);
+        Livewire::component('admin.automation.index', \App\Http\Livewire\Admin\Automation\AutomationIndex::class);
+        Livewire::component('admin.automation.builder', \App\Http\Livewire\Admin\Automation\AutomationBuilder::class);
+        Livewire::component('admin.automation.logs', \App\Http\Livewire\Admin\Automation\AutomationLogs::class);
         Livewire::component('settings.webhooks', \App\Http\Livewire\Settings\WebhookManagement::class);
 
         // Custom Blade directives for client portal
@@ -113,5 +118,6 @@ class AppServiceProvider extends ServiceProvider
         Document::observe(DocumentWebhookObserver::class);
         Payment::observe(PaymentWebhookObserver::class);
         Contract::observe(ContractWebhookObserver::class);
+        Client::observe(ClientWebhookObserver::class);
     }
 }

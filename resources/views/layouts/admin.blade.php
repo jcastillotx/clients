@@ -93,6 +93,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.automation*') ? 'active' : '' }}" href="{{ route('admin.automation.index') }}">
+                            <span class="nav-link-title">Automation</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}" href="{{ route('admin.settings') }}">
                             <span class="nav-link-title">System Settings</span>
                         </a>

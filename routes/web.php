@@ -37,6 +37,9 @@ use App\Http\Livewire\Admin\Reports\CustomReportBuilder as AdminCustomReportBuil
 use App\Http\Livewire\Admin\Reports\PerformanceReport as AdminPerformanceReport;
 use App\Http\Livewire\Admin\Reports\StorageReport as AdminStorageReport;
 use App\Http\Livewire\Admin\Settings\SystemSettings as AdminSystemSettings;
+use App\Http\Livewire\Admin\Automation\AutomationIndex as AdminAutomationIndex;
+use App\Http\Livewire\Admin\Automation\AutomationBuilder as AdminAutomationBuilder;
+use App\Http\Livewire\Admin\Automation\AutomationLogs as AdminAutomationLogs;
 use App\Http\Livewire\Settings\WebhookManagement;
 use App\Http\Livewire\Storage\ConnectDropbox;
 use App\Http\Livewire\Storage\ConnectGoogleDrive;
@@ -195,6 +198,11 @@ Route::middleware(['auth', 'verified', 'ensure.admin'])
         Route::get('/reports/storage', AdminStorageReport::class)->name('reports.storage');
         Route::get('/settings', AdminSystemSettings::class)->name('settings');
         Route::get('/settings/webhooks', WebhookManagement::class)->name('settings.webhooks');
+
+        // Automation
+        Route::get('/automation', AdminAutomationIndex::class)->name('automation.index');
+        Route::get('/automation/builder/{rule?}', AdminAutomationBuilder::class)->name('automation.builder');
+        Route::get('/automation/logs', AdminAutomationLogs::class)->name('automation.logs');
     });
 
 /*
