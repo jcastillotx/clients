@@ -11,6 +11,7 @@ use App\Services\Storage\StorageSyncScheduler;
 use App\Services\AutomationEngine;
 use App\Services\WebhookService;
 use App\Services\AI\RequestEmbeddingService;
+use App\Services\Marketing\Scheduling\WebsiteAuditScheduleRunner;
 use App\Models\Request as ServiceRequest;
 use App\Jobs\Analytics\UpdateClientHealthScoresJob;
 use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
@@ -126,6 +127,11 @@ Schedule::call(function () {
 Schedule::call(function () {
     app(ReportScheduleRunner::class)->runDueSchedules();
 })->everyFiveMinutes()->name('send-scheduled-admin-reports');
+
+// Run scheduled website audits (requires queue worker)
+Schedule::call(function () {
+    app(WebsiteAuditScheduleRunner::class)->runDueSchedules();
+})->everyFiveMinutes()->name('run-scheduled-website-audits');
 
 // Auto-sync connected storage providers (requires queue worker)
 Schedule::call(function () {

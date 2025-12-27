@@ -13,6 +13,7 @@ use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Controllers\Documents\DocumentShareController;
 use App\Http\Controllers\Documents\DocumentVersionController;
 use App\Http\Controllers\Documents\DocumentViewerController;
+use App\Http\Controllers\Marketing\WebsiteAuditController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Admin\Automation\AutomationIndex;
@@ -52,6 +53,8 @@ use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMo
 use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
 use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
 use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
+use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
+use App\Http\Livewire\Marketing\AuditResults as MarketingAuditResults;
 use App\Http\Livewire\Admin\AI\AIProviderManagement as AdminAIProviderManagement;
 use App\Http\Livewire\Admin\AI\AIProviderForm as AdminAIProviderForm;
 use App\Http\Livewire\Admin\AI\AITaskConfiguration as AdminAITaskConfiguration;
@@ -219,6 +222,13 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
 
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
+
+        // Marketing: Website auditing (MVP UI)
+        Route::prefix('marketing')->name('marketing.')->group(function () {
+            Route::get('/website-auditor', MarketingWebsiteAuditor::class)->name('website-auditor');
+            Route::get('/audit-results', MarketingAuditResults::class)->name('audit-results');
+            Route::get('/website-audits/{websiteAudit}/pdf', [WebsiteAuditController::class, 'pdf'])->name('website-audits.pdf');
+        });
 
         // AI analytics
         Route::get('/analytics/ai-insights', AdminAIInsightsDashboard::class)->name('analytics.ai-insights')->middleware('permission:view reports');
