@@ -126,7 +126,10 @@ use App\Http\Livewire\Technical\CodeReviewer as AdminCodeReviewer;
 use App\Http\Livewire\Technical\ArchitectureAdvisor as AdminArchitectureAdvisor;
 use App\Http\Livewire\Admin\BrandMonitoring\Dashboard as AdminBrandMonitoringDashboard;
 use App\Http\Livewire\Admin\BrandMonitoring\ApiStatus as AdminBrandMonitoringApiStatus;
+use App\Http\Livewire\Admin\Social\PostCreator;
+use App\Http\Livewire\Admin\Social\PostManager;
 use App\Http\Livewire\Client\BrandMonitoring\MyMentions as ClientMyMentions;
+use App\Http\Livewire\Client\Social\PendingApprovals;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -291,6 +294,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('client.brand-monitoring.my-mentions')
         ->middleware('feature:brand_monitoring');
 
+    // Social Media Management
+    Route::prefix('social')->name('social.')->group(function () {
+        Route::get('/pending-approvals', PendingApprovals::class)->name('pending-approvals');
+    });
+
     Route::get('/privacy', PrivacyCenter::class)->name('client.privacy');
     Route::get('/privacy/requests/{privacyRequest}/download', [PrivacyExportController::class, 'download'])->name('privacy.export.download');
     Route::get('/proposals/{proposal}', ProposalViewer::class)->name('client.proposals.view');
@@ -403,6 +411,13 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::prefix('brand-monitoring')->name('brand-monitoring.')->group(function () {
             Route::get('/', AdminBrandMonitoringDashboard::class)->name('dashboard');
             Route::get('/api-status', AdminBrandMonitoringApiStatus::class)->name('api-status');
+        });
+
+        // Social Media Management
+        Route::prefix('social')->name('social.')->group(function () {
+            Route::get('/posts', PostManager::class)->name('posts');
+            Route::get('/posts/create', PostCreator::class)->name('posts.create');
+            Route::get('/posts/{post}/edit', PostCreator::class)->name('posts.edit');
         });
 
         // AI analytics
