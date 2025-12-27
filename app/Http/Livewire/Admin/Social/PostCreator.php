@@ -248,7 +248,11 @@ class PostCreator extends Component
                 ],
             ]);
 
-            // TODO: Send notification to client
+            // Notify client users
+            $clientUsers = $post->client->users()->where('is_active', true)->get();
+            foreach ($clientUsers as $user) {
+                $user->notify(new \App\Notifications\SocialPostPendingApproval($post));
+            }
 
             session()->flash('success', 'Post submitted for client approval!');
             return redirect()->route('admin.social.posts');

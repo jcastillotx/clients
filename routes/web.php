@@ -128,8 +128,11 @@ use App\Http\Livewire\Admin\BrandMonitoring\Dashboard as AdminBrandMonitoringDas
 use App\Http\Livewire\Admin\BrandMonitoring\ApiStatus as AdminBrandMonitoringApiStatus;
 use App\Http\Livewire\Admin\Social\PostCreator;
 use App\Http\Livewire\Admin\Social\PostManager;
+use App\Http\Livewire\Admin\Social\ContentCalendar;
 use App\Http\Livewire\Client\BrandMonitoring\MyMentions as ClientMyMentions;
 use App\Http\Livewire\Client\Social\PendingApprovals;
+use App\Http\Livewire\Client\Social\AccountManager as SocialAccountManager;
+use App\Http\Controllers\OAuth\SocialOAuthController;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -297,6 +300,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Social Media Management
     Route::prefix('social')->name('social.')->group(function () {
         Route::get('/pending-approvals', PendingApprovals::class)->name('pending-approvals');
+        Route::get('/accounts', SocialAccountManager::class)->name('accounts');
+    });
+
+    // OAuth Routes (must be authenticated but not client-specific)
+    Route::prefix('oauth')->name('oauth.')->group(function () {
+        Route::get('/facebook', [SocialOAuthController::class, 'facebookRedirect'])->name('facebook.redirect');
+        Route::get('/facebook/callback', [SocialOAuthController::class, 'facebookCallback'])->name('facebook.callback');
+        Route::get('/linkedin', [SocialOAuthController::class, 'linkedinRedirect'])->name('linkedin.redirect');
+        Route::get('/linkedin/callback', [SocialOAuthController::class, 'linkedinCallback'])->name('linkedin.callback');
+        Route::delete('/disconnect/{platform}', [SocialOAuthController::class, 'disconnect'])->name('disconnect');
     });
 
     Route::get('/privacy', PrivacyCenter::class)->name('client.privacy');
@@ -418,6 +431,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/posts', PostManager::class)->name('posts');
             Route::get('/posts/create', PostCreator::class)->name('posts.create');
             Route::get('/posts/{post}/edit', PostCreator::class)->name('posts.edit');
+            Route::get('/content-calendar', ContentCalendar::class)->name('content-calendar');
         });
 
         // AI analytics

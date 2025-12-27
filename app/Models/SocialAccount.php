@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Crypt;
@@ -13,15 +14,27 @@ class SocialAccount extends Model
         'platform',
         'account_name',
         'account_id',
+        'account_username',
+        'account_email',
+        'profile_picture_url',
         'access_token',
+        'refresh_token',
+        'token_expires_at',
         'is_connected',
+        'connected_at',
+        'last_token_refresh',
         'last_post_at',
+        'scopes',
         'meta',
     ];
 
     protected $casts = [
         'is_connected' => 'boolean',
+        'token_expires_at' => 'datetime',
+        'connected_at' => 'datetime',
+        'last_token_refresh' => 'datetime',
         'last_post_at' => 'datetime',
+        'scopes' => 'array',
         'meta' => 'array',
     ];
 
@@ -30,6 +43,7 @@ class SocialAccount extends Model
         return $this->belongsTo(Client::class);
     }
 
+    // Access token encryption
     public function setAccessTokenAttribute(?string $value): void
     {
         $this->attributes['access_token'] = $value !== null && $value !== '' ? Crypt::encryptString($value) : null;
@@ -43,6 +57,160 @@ class SocialAccount extends Model
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    // Refresh token encryption
+    public function setRefreshTokenAttribute(?string $value): void
+    {
+        $this->attributes['refresh_token'] = $value !== null && $value !== '' ? Crypt::encryptString($value) : null;
+    }
+
+    public function getRefreshTokenAttribute(?string $value): ?string
+    {
+        if (!$value) return null;
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Check if the access token is expired or about to expire
+     */
+    public function isTokenExpired(): bool
+    {
+        if (!$this->token_expires_at) {
+            return false;
+        }
+
+        // Consider token expired if it expires within the next 5 minutes
+        return Carbon::now()->addMinutes(5)->greaterThan($this->token_expires_at);
+    }
+
+    /**
+     * Check if the account needs token refresh
+     */
+    public function needsTokenRefresh(): bool
+    {
+        return $this->is_connected && $this->isTokenExpired() && $this->refresh_token;
+    }
+
+    /**
+     * Mark account as connected with OAuth data
+     */
+    public function markAsConnected(array $oauthData): void
+    {
+        $this->update([
+            'access_token' => $oauthData['access_token'],
+            'refresh_token' => $oauthData['refresh_token'] ?? null,
+            'token_expires_at' => $oauthData['expires_at'] ?? null,
+            'is_connected' => true,
+            'connected_at' => now(),
+            'scopes' => $oauthData['scopes'] ?? null,
+            'meta' => array_merge($this->meta ?? [], [
+                'last_connection_ip' => request()->ip(),
+                'last_connection_user_agent' => request()->userAgent(),
+            ]),
+        ]);
+    }
+
+    /**
+     * Mark account as disconnected
+     */
+    public function disconnect(): void
+    {
+        $this->update([
+            'access_token' => null,
+            'refresh_token' => null,
+            'token_expires_at' => null,
+            'is_connected' => false,
+        ]);
+    }
+
+    /**
+     * Update tokens after refresh
+     */
+    public function updateTokens(string $accessToken, ?string $refreshToken = null, ?Carbon $expiresAt = null): void
+    {
+        $data = [
+            'access_token' => $accessToken,
+            'last_token_refresh' => now(),
+        ];
+
+        if ($refreshToken) {
+            $data['refresh_token'] = $refreshToken;
+        }
+
+        if ($expiresAt) {
+            $data['token_expires_at'] = $expiresAt;
+        }
+
+        $this->update($data);
+    }
+
+    /**
+     * Get platform icon for UI
+     */
+    public function getPlatformIconAttribute(): string
+    {
+        return match($this->platform) {
+            'facebook' => 'fab fa-facebook',
+            'instagram' => 'fab fa-instagram',
+            'linkedin' => 'fab fa-linkedin',
+            'x', 'twitter' => 'fab fa-x-twitter',
+            'tiktok' => 'fab fa-tiktok',
+            'pinterest' => 'fab fa-pinterest',
+            default => 'fas fa-share-alt',
+        };
+    }
+
+    /**
+     * Get platform color for UI
+     */
+    public function getPlatformColorAttribute(): string
+    {
+        return match($this->platform) {
+            'facebook' => '#1877F2',
+            'instagram' => '#E4405F',
+            'linkedin' => '#0A66C2',
+            'x', 'twitter' => '#000000',
+            'tiktok' => '#000000',
+            'pinterest' => '#BD081C',
+            default => '#6c757d',
+        };
+    }
+
+    /**
+     * Get connection status badge class
+     */
+    public function getStatusBadgeClassAttribute(): string
+    {
+        if (!$this->is_connected) {
+            return 'badge-secondary';
+        }
+
+        if ($this->isTokenExpired()) {
+            return 'badge-warning';
+        }
+
+        return 'badge-success';
+    }
+
+    /**
+     * Get connection status text
+     */
+    public function getStatusTextAttribute(): string
+    {
+        if (!$this->is_connected) {
+            return 'Not Connected';
+        }
+
+        if ($this->isTokenExpired()) {
+            return 'Token Expired';
+        }
+
+        return 'Connected';
     }
 }
 

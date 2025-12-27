@@ -354,3 +354,15 @@ Schedule::call(function () {
         ]);
     }
 })->everyThirtyMinutes()->name('brand-monitoring-sentiment-analysis');
+
+/*
+|--------------------------------------------------------------------------
+| Social Media Publishing
+|--------------------------------------------------------------------------
+*/
+
+// Publish scheduled social media posts
+Schedule::command('social:publish-scheduled')
+    ->everyFiveMinutes()
+    ->name('social-media-publish-scheduled');
+
