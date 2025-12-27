@@ -5,6 +5,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Livewire\Onboarding\OnboardingWizard;
+use App\Http\Livewire\Proposals\ProposalViewer;
+use App\Http\Livewire\WhiteLabel\ClientReportDashboard;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\Admin\AdminReportExportController;
@@ -53,6 +56,10 @@ use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMo
 use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
 use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
 use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
+use App\Http\Livewire\WhiteLabel\WhiteLabelConfigurator;
+use App\Http\Livewire\WhiteLabel\ReportCustomizer;
+use App\Http\Livewire\Proposals\ProposalBuilder;
+use App\Http\Livewire\Proposals\ProposalAnalytics;
 use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
 use App\Http\Livewire\Marketing\AuditResults as MarketingAuditResults;
 use App\Http\Livewire\Admin\AI\AIProviderManagement as AdminAIProviderManagement;
@@ -184,6 +191,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/knowledge-base', KnowledgeBase::class)->name('client.knowledge-base');
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
     Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
+    Route::get('/onboarding', OnboardingWizard::class)->name('client.onboarding');
 
     // Research & consultation tools
     Route::get('/research', ResearchAssistantTool::class)->name('research.assistant');
@@ -192,6 +200,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Client AI assistant
     Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
+    Route::get('/reports', ClientReportDashboard::class)->name('client.reports');
+    Route::get('/proposals/{proposal}', ProposalViewer::class)->name('client.proposals.view');
 
     // PWA push notification subscriptions (per-user)
     Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
@@ -227,6 +237,12 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
 
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
+        Route::get('/white-label', WhiteLabelConfigurator::class)->name('white-label')->middleware('permission:manage settings');
+        Route::get('/client-reports', ReportCustomizer::class)->name('client-reports')->middleware('permission:manage settings');
+
+        // Proposals
+        Route::get('/proposals/builder/{proposal?}', ProposalBuilder::class)->name('proposals.builder');
+        Route::get('/proposals/analytics/{proposal}', ProposalAnalytics::class)->name('proposals.analytics');
 
         // Marketing: Website auditing (MVP UI)
         Route::prefix('marketing')->name('marketing.')->group(function () {
