@@ -124,6 +124,9 @@ use App\Http\Livewire\Storage\DropboxBrowser;
 use App\Http\Livewire\Storage\GoogleDriveBrowser;
 use App\Http\Livewire\Technical\CodeReviewer as AdminCodeReviewer;
 use App\Http\Livewire\Technical\ArchitectureAdvisor as AdminArchitectureAdvisor;
+use App\Http\Livewire\Admin\BrandMonitoring\Dashboard as AdminBrandMonitoringDashboard;
+use App\Http\Livewire\Admin\BrandMonitoring\ApiStatus as AdminBrandMonitoringApiStatus;
+use App\Http\Livewire\Client\BrandMonitoring\MyMentions as ClientMyMentions;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -282,6 +285,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
     Route::get('/reports', ClientReportDashboard::class)->name('client.reports');
     Route::get('/reports/archive', ClientReportArchive::class)->name('client.reports.archive');
+
+    // Brand monitoring
+    Route::get('/brand-monitoring/my-mentions', ClientMyMentions::class)->name('client.brand-monitoring.my-mentions');
+
     Route::get('/privacy', PrivacyCenter::class)->name('client.privacy');
     Route::get('/privacy/requests/{privacyRequest}/download', [PrivacyExportController::class, 'download'])->name('privacy.export.download');
     Route::get('/proposals/{proposal}', ProposalViewer::class)->name('client.proposals.view');
@@ -388,6 +395,12 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/website-auditor', MarketingWebsiteAuditor::class)->name('website-auditor');
             Route::get('/audit-results', MarketingAuditResults::class)->name('audit-results');
             Route::get('/website-audits/{websiteAudit}/pdf', [WebsiteAuditController::class, 'pdf'])->name('website-audits.pdf');
+        });
+
+        // Brand monitoring
+        Route::prefix('brand-monitoring')->name('brand-monitoring.')->group(function () {
+            Route::get('/', AdminBrandMonitoringDashboard::class)->name('dashboard');
+            Route::get('/api-status', AdminBrandMonitoringApiStatus::class)->name('api-status');
         });
 
         // AI analytics
