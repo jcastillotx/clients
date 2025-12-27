@@ -10,6 +10,7 @@ A self-service client management portal built with Laravel 11, Livewire 3, and A
 - **Invoice Display & Payments** - View invoices with Stripe payment integration
 - **Document Library** - Upload and download documents
 - **Activity Logging** - Complete audit trail for all actions
+- **Marketing Toolkit (MVP scaffolding)** - Website audits, SEO/brand/content/campaign/reputation data models + scheduled runners (feature flags via config/env)
 
 ## Tech Stack
 
@@ -20,6 +21,7 @@ A self-service client management portal built with Laravel 11, Livewire 3, and A
 - **Authorization**: Spatie Laravel Permission
 - **Payments**: Stripe PHP SDK
 - **PDF Generation**: DomPDF
+- **HTTP clients**: Laravel HTTP Client + Guzzle (provider integrations)
 
 ## Requirements
 
@@ -255,6 +257,59 @@ Runs automatically via scheduler, or manually:
 ```bash
 php artisan schedule:run
 ```
+
+## Marketing Toolkit (Audits, SEO, Brand, Content, Campaigns)
+
+This repo includes a **Marketing module** (under `app/Services/Marketing/`) that provides:
+
+- **Website auditing**: crawl + SEO/performance/security/mobile/accessibility checks with optional AI recommendations.
+- **SEO monitoring scaffolding**: keyword tracking tables, rankings history, backlink tables, recommendation tracking.
+- **Brand audit + brand guide scaffolding**: brand audits, assets, competitors, and digital brand guide data structures.
+- **Content planning scaffolding**: content calendar, themes, templates, and social account connections.
+- **Campaign management scaffolding**: campaigns, links/UTMs, assets, metrics history.
+- **Unified analytics scaffolding**: normalized `marketing_metrics` plus dashboard + scheduled report tables.
+- **Leads, assets, reviews scaffolding**: leads + nurture sequences, centralized asset rows, review storage.
+
+### Scheduler / Queue requirements
+
+Marketing workflows rely on:
+
+- **Laravel scheduler** (`php artisan schedule:run`) for periodic runners (every 5 minutes).
+- **Queue worker** for long-running audits and external API calls.
+
+The scheduler is already wired in `routes/console.php` for:
+- `send-scheduled-admin-reports`
+- `run-scheduled-website-audits`
+
+### Key environment variables
+
+Website auditing + integrations (see `config/website-auditor.php`):
+
+```env
+# Crawl behavior
+WEBSITE_AUDIT_MAX_PAGES=50
+WEBSITE_AUDIT_RESPECT_ROBOTS=true
+WEBSITE_AUDIT_MAX_LINK_CHECKS=200
+
+# Google PageSpeed Insights (optional)
+GOOGLE_PAGESPEED_API_KEY=
+
+# Provider placeholders (optional)
+WEBPAGETEST_API_KEY=
+GTMETRIX_EMAIL=
+GTMETRIX_API_KEY=
+AHREFS_API_KEY=
+SEMRUSH_API_KEY=
+MOZ_ACCESS_ID=
+MOZ_SECRET_KEY=
+```
+
+### Admin UI (Website Auditor MVP)
+
+If you have `permission:access admin panel`:
+- Website auditor: `/admin/marketing/website-auditor`
+- Audit results: `/admin/marketing/audit-results`
+- PDF export: available per completed audit in results table
 
 ## Support
 
