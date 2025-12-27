@@ -52,5 +52,26 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('status', function ($expression) {
             return "<?php echo ucfirst(str_replace('_', ' ', $expression)); ?>";
         });
+
+        // Feature-gating directives
+        Blade::if('feature', function (string $feature) {
+            $user = auth()->user();
+            return $user && $user->client && $user->client->hasFeature($feature);
+        });
+
+        Blade::if('anyFeature', function (...$features) {
+            $user = auth()->user();
+            return $user && $user->client && $user->client->hasAnyFeature($features);
+        });
+
+        Blade::if('allFeatures', function (...$features) {
+            $user = auth()->user();
+            return $user && $user->client && $user->client->hasAllFeatures($features);
+        });
+
+        Blade::if('premiumTier', function () {
+            $user = auth()->user();
+            return $user && $user->client && $user->client->isPremiumTier();
+        });
     }
 }
