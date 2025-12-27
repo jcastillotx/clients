@@ -1,9 +1,8 @@
 # API Documentation
 
 ## In-app interactive docs
-- Admin-only wrapper: `/api/documentation`
-- Scramble UI: `/docs/api`
-- OpenAPI JSON: `/docs/api.json`
+- Interactive docs (admin-only): `/api/documentation` (alias: `/docs/api`)
+- OpenAPI JSON (admin-only): `/api/documentation.json` (alias: `/docs/api.json`)
 
 ## Authentication
 - API uses **Laravel Sanctum** personal access tokens.

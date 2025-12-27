@@ -13,6 +13,7 @@ use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\Admin\AdminReportExportController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Storage\StorageFileController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Controllers\Documents\DocumentShareController;
@@ -138,6 +139,22 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
     })
     ->name('api.documentation.json');
 
+// Backwards-compatible aliases (docs reference /docs/api)
+Route::middleware(['auth', 'verified', 'permission:access admin panel'])
+    ->get('/docs/api', function (Generator $generator) {
+        $config = Scramble::configure();
+        $spec = $generator($config);
+        return view('api-docs', compact('spec', 'config'));
+    })
+    ->name('docs.api');
+
+Route::middleware(['auth', 'verified', 'permission:access admin panel'])
+    ->get('/docs/api.json', function (Generator $generator) {
+        $config = Scramble::configure();
+        return response()->json($generator($config), options: JSON_PRETTY_PRINT);
+    })
+    ->name('docs.api.json');
+
 /*
 |--------------------------------------------------------------------------
 | Webhook Routes (No CSRF)
@@ -256,6 +273,10 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        // Dashboard
+        Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('index');
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
         // Requests
         Route::get('/requests', AdminRequestManagement::class)->name('requests.index');
         Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
