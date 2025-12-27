@@ -139,9 +139,21 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('client.onboarding') }}" class="nav-link {{ request()->routeIs('client.onboarding') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-list-check"></i>
+                        <p>Onboarding</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('client.messaging') }}" class="nav-link {{ request()->routeIs('client.messaging') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-comments"></i>
                         <p>Messages</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.meetings') }}" class="nav-link {{ request()->routeIs('client.meetings') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-calendar"></i>
+                        <p>Meetings</p>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -157,9 +169,27 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('client.privacy') }}" class="nav-link {{ request()->routeIs('client.privacy') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Privacy</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('client.analytics') }}" class="nav-link {{ request()->routeIs('client.analytics') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-chart-pie"></i>
                         <p>Analytics</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.reports') }}" class="nav-link {{ request()->routeIs('client.reports') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>Reports</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.reports.archive') }}" class="nav-link {{ request()->routeIs('client.reports.archive') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-archive"></i>
+                        <p>Report Archive</p>
                     </a>
                 </li>
                 @endif
@@ -204,10 +234,185 @@
                 @can('view reports')
                 <li class="nav-header">ADMIN</li>
                 <li class="nav-item">
+                    <a href="{{ route('admin.messages') }}" class="nav-link {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-comments"></i>
+                        <p>Messages</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('admin.reports.dashboard') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <p>Reporting</p>
                     </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.security.privacy-requests') }}" class="nav-link {{ request()->routeIs('admin.security.privacy-requests') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Privacy Requests</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.security.overview') }}" class="nav-link {{ request()->routeIs('admin.security.overview') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-shield-alt"></i>
+                        <p>Security Settings</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('admin.projects.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-stopwatch"></i>
+                        <p>
+                            Projects
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.time') }}" class="nav-link {{ request()->routeIs('admin.projects.time') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Time Tracker</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.time-approvals') }}" class="nav-link {{ request()->routeIs('admin.projects.time-approvals') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Time Approvals</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.budgets') }}" class="nav-link {{ request()->routeIs('admin.projects.budgets') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Budgets</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.board') }}" class="nav-link {{ request()->routeIs('admin.projects.board') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Task Board</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.timeline') }}" class="nav-link {{ request()->routeIs('admin.projects.timeline') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Timeline</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.workload') }}" class="nav-link {{ request()->routeIs('admin.projects.workload') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Team Workload</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('admin.proposals.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.proposals.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-file-signature"></i>
+                        <p>
+                            Proposals
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.proposals.builder') }}" class="nav-link {{ request()->routeIs('admin.proposals.builder') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Builder</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.meetings') }}" class="nav-link {{ request()->routeIs('admin.meetings') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>Meetings</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('admin.feedback.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.feedback.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-poll"></i>
+                        <p>
+                            Feedback
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.feedback.surveys') }}" class="nav-link {{ request()->routeIs('admin.feedback.surveys') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Surveys</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.feedback.testimonials') }}" class="nav-link {{ request()->routeIs('admin.feedback.testimonials') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Testimonials</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('admin.account.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.account.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-handshake"></i>
+                        <p>
+                            Account Mgmt
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.account.health') }}" class="nav-link {{ request()->routeIs('admin.account.health') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Health</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.account.qbrs') }}" class="nav-link {{ request()->routeIs('admin.account.qbrs') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>QBRs</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.account.renewals') }}" class="nav-link {{ request()->routeIs('admin.account.renewals') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Renewals</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.account.upsells') }}" class="nav-link {{ request()->routeIs('admin.account.upsells') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Upsells</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-friends"></i>
+                        <p>
+                            Partners
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.partners') }}" class="nav-link {{ request()->routeIs('admin.partners') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Partners</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.referrals') }}" class="nav-link {{ request()->routeIs('admin.referrals') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Referrals</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
                 @can('access admin panel')
@@ -247,6 +452,13 @@
                     <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-user-cog"></i>
                         <p>Profile Settings</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('two-factor.setup') }}" class="nav-link {{ request()->routeIs('two-factor.setup') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-shield-alt"></i>
+                        <p>Two-factor (2FA)</p>
                     </a>
                 </li>
 

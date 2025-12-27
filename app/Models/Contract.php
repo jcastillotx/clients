@@ -36,6 +36,7 @@ class Contract extends Model
         'signed_by',
         'signature_ip',
         'signature_data',
+        'meta',
     ];
 
     /**
@@ -49,6 +50,7 @@ class Contract extends Model
         'value' => 'decimal:2',
         'signed_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'meta' => 'array',
     ];
 
     /**

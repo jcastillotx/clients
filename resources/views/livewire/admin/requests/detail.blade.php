@@ -34,7 +34,12 @@
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="card-title mb-0">Workflow</div>
-                    <div class="text-muted small">One-click status updates</div>
+                    <div class="d-flex flex-wrap" style="gap:8px;">
+                        <div class="text-muted small">One-click status updates</div>
+                        <button class="btn btn-sm btn-outline-secondary" wire:click="convertToProject">
+                            <i class="fas fa-project-diagram mr-1"></i> Convert to project
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body d-flex flex-wrap gap-2">
                     <button class="btn btn-outline-info" wire:click="setStatus('in_review')">Move to Review</button>

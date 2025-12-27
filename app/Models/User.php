@@ -35,6 +35,9 @@ class User extends Authenticatable
         'status',
         'last_login_at',
         'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
     ];
 
     /**
@@ -45,6 +48,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected $casts = [
@@ -54,6 +59,7 @@ class User extends Authenticatable
         'status' => 'string',
         'last_login_at' => 'datetime',
         'two_factor_enabled' => 'boolean',
+        'two_factor_confirmed_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
 

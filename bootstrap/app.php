@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\ResolveWhiteLabelClient::class,
+        ]);
+
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
@@ -20,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'ensure.client' => \App\Http\Middleware\EnsureUserIsClient::class,
             'ensure.admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'token.any_ability' => \App\Http\Middleware\EnsureTokenHasAnyAbility::class,
+            'admin.ip_allowlist' => \App\Http\Middleware\EnsureAdminIpAllowlisted::class,
+            'admin.2fa' => \App\Http\Middleware\EnsureTwoFactorEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

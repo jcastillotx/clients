@@ -9,6 +9,13 @@
 
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#3c8dbc">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <meta name="vapid-public-key" content="{{ config('pwa.vapid_public_key') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,6 +59,29 @@
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
+        <!-- PWA offline indicator -->
+        <div id="offline-indicator" class="alert alert-warning alert-dismissible fade show d-none m-2" role="status" style="position: sticky; top: 0; z-index: 1050;">
+            <i class="fas fa-wifi mr-2"></i>
+            You’re offline. Some actions will be queued.
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <!-- PWA install prompt -->
+        <div id="pwa-install-banner" class="alert alert-info d-none m-2" role="status" style="position: sticky; top: 0; z-index: 1050;">
+            <div class="d-flex align-items-center justify-content-between" style="gap: 12px;">
+                <div>
+                    <strong>Install the portal</strong>
+                    <div class="small text-muted">Get an app-like experience and offline support.</div>
+                </div>
+                <div class="d-flex" style="gap: 8px;">
+                    <button id="pwa-install-btn" type="button" class="btn btn-sm btn-primary">Install</button>
+                    <button id="pwa-install-dismiss" type="button" class="btn btn-sm btn-outline-secondary">Not now</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Navbar -->
         @include('layouts.partials.navbar')
 

@@ -17,10 +17,17 @@ class Message extends Model
         'body',
         'type',
         'meta',
+        'mentions',
+        'is_pinned',
+        'pinned_at',
+        'pinned_by',
     ];
 
     protected $casts = [
         'meta' => 'array',
+        'mentions' => 'array',
+        'is_pinned' => 'boolean',
+        'pinned_at' => 'datetime',
     ];
 
     public function conversation(): BelongsTo
@@ -31,6 +38,11 @@ class Message extends Model
     public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function pinnedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pinned_by');
     }
 
     public function reads(): HasMany

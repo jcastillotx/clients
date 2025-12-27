@@ -146,6 +146,21 @@ body {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+    /* Touch-friendly tap targets */
+    .btn,
+    .nav-link,
+    .list-group-item,
+    .dropdown-item {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Avoid hover "lift" on touch devices */
+    .btn:hover {
+        transform: none;
+    }
+
     .info-box {
         min-height: 80px;
     }
@@ -158,6 +173,11 @@ body {
         display: block;
         margin-top: 0.5rem;
     }
+}
+
+/* Offline indicator should stay visible */
+#offline-indicator {
+    border-radius: 0.75rem;
 }
 
 /* Print styles */

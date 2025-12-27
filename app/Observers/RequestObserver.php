@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\Feedback\SendProjectCompletionSurveyJob;
 use App\Jobs\Ai\AnalyzeRequestJob;
 use App\Models\Request as ServiceRequest;
 use App\Services\AutomationEngine;
@@ -57,6 +58,12 @@ class RequestObserver
         ], (int) $request->client_id);
 
         if ($request->wasChanged('status') && $request->status === 'completed') {
+            try {
+                SendProjectCompletionSurveyJob::dispatch($request->id);
+            } catch (\Throwable) {
+                // ignore
+            }
+
             app(AutomationEngine::class)->run('request.completed', [
                 'request' => $request->toArray(),
                 'client' => $request->client?->toArray(),

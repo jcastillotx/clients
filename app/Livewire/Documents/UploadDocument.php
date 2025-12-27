@@ -30,11 +30,14 @@ class UploadDocument extends Component
         ];
     }
 
-    protected $messages = [
-        'title.required' => 'Please enter a title for the document.',
-        'file.required' => 'Please select a file to upload.',
-        'file.max' => 'The file size must not exceed ' . (config('client-portal.max_upload_size') / 1024) . 'MB.',
-    ];
+    protected function messages(): array
+    {
+        return [
+            'title.required' => 'Please enter a title for the document.',
+            'file.required' => 'Please select a file to upload.',
+            'file.max' => 'The file size must not exceed ' . (config('client-portal.max_upload_size') / 1024) . 'MB.',
+        ];
+    }
 
     public function save()
     {

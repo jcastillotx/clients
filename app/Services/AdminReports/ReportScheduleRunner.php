@@ -3,10 +3,13 @@
 namespace App\Services\AdminReports;
 
 use App\Mail\ScheduledReportMail;
+use App\Models\ReportDelivery;
 use App\Models\ReportSchedule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ReportScheduleRunner
 {
@@ -42,6 +45,28 @@ class ReportScheduleRunner
                     'payload' => $payload,
                 ])->setPaper('a4', 'portrait')->output();
 
+                $filename = sprintf(
+                    'report_%s_%s_%s.pdf',
+                    Str::slug($category),
+                    (string) ($payload['meta']['start'] ?? now()->subDays(30)->toDateString()),
+                    (string) ($payload['meta']['end'] ?? now()->toDateString()),
+                );
+                $path = 'scheduled/' . $schedule->id . '/' . $filename;
+                Storage::disk('reports')->put($path, $pdf);
+
+                $delivery = ReportDelivery::create([
+                    'report_schedule_id' => $schedule->id,
+                    'report_template_id' => $schedule->report_template_id,
+                    'client_id' => $filters['client_id'] ?? null,
+                    'category' => $category,
+                    'meta' => $payload['meta'] ?? null,
+                    'disk' => 'reports',
+                    'path' => $path,
+                    'recipients' => (array) $schedule->recipients,
+                    'generated_at' => now(),
+                    'status' => 'generated',
+                ]);
+
                 foreach ((array) $schedule->recipients as $recipient) {
                     Mail::to($recipient)->send(new ScheduledReportMail(
                         category: $category,
@@ -49,6 +74,11 @@ class ReportScheduleRunner
                         pdfBytes: $pdf,
                     ));
                 }
+
+                $delivery->update([
+                    'sent_at' => now(),
+                    'status' => 'sent',
+                ]);
 
                 $schedule->update([
                     'last_run_at' => now(),
@@ -60,6 +90,24 @@ class ReportScheduleRunner
                     'schedule_id' => $schedule->id,
                     'error' => $e->getMessage(),
                 ]);
+
+                try {
+                    ReportDelivery::create([
+                        'report_schedule_id' => $schedule->id,
+                        'report_template_id' => $schedule->report_template_id,
+                        'client_id' => null,
+                        'category' => $schedule->template?->config['category'] ?? null,
+                        'meta' => null,
+                        'disk' => 'reports',
+                        'path' => 'scheduled/' . $schedule->id . '/failed_' . Str::uuid() . '.txt',
+                        'recipients' => (array) $schedule->recipients,
+                        'generated_at' => now(),
+                        'status' => 'failed',
+                        'error' => $e->getMessage(),
+                    ]);
+                } catch (\Throwable) {
+                    // ignore secondary failure
+                }
 
                 $schedule->update([
                     'last_run_at' => now(),

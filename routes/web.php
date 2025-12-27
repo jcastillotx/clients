@@ -5,6 +5,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PrivacyExportController;
+use App\Http\Livewire\Onboarding\OnboardingWizard;
+use App\Http\Livewire\Proposals\ProposalViewer;
+use App\Http\Livewire\WhiteLabel\ClientReportDashboard;
+use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\Admin\AdminReportExportController;
@@ -15,6 +20,7 @@ use App\Http\Controllers\Documents\DocumentVersionController;
 use App\Http\Controllers\Documents\DocumentViewerController;
 use App\Http\Controllers\Marketing\WebsiteAuditController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
+use App\Http\Livewire\Admin\Reports\ReportDeliveries as AdminReportDeliveries;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Admin\Automation\AutomationIndex;
 use App\Http\Livewire\Admin\Automation\AutomationBuilder;
@@ -44,6 +50,13 @@ use App\Http\Livewire\Client\KnowledgeBase;
 use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\AnalyticsDashboard;
 use App\Http\Livewire\Client\EstimateApproval;
+use App\Http\Livewire\Communication\MeetingScheduler;
+use App\Http\Livewire\Feedback\FeedbackCollector;
+use App\Http\Livewire\Security\TwoFactorSetup;
+use App\Http\Livewire\Security\PrivacyCenter;
+use App\Http\Livewire\Admin\Security\PrivacyRequests as AdminPrivacyRequests;
+use App\Http\Livewire\Admin\Security\SecurityOverview as AdminSecurityOverview;
+use App\Http\Livewire\Communication\MessagingHub;
 use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
 use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
 use App\Http\Livewire\Communication\EmailDraftAssistant;
@@ -53,6 +66,27 @@ use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMo
 use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
 use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
 use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
+use App\Http\Livewire\Research\CompetitorMonitor as CompetitorMonitorTool;
+use App\Http\Livewire\Research\IndustryInsights as IndustryInsightsTool;
+use App\Http\Livewire\WhiteLabel\WhiteLabelConfigurator;
+use App\Http\Livewire\WhiteLabel\ReportCustomizer;
+use App\Http\Livewire\Proposals\ProposalBuilder;
+use App\Http\Livewire\Proposals\ProposalAnalytics;
+use App\Http\Livewire\Projects\TimeTracker as AdminTimeTracker;
+use App\Http\Livewire\Projects\TaskBoard as AdminTaskBoard;
+use App\Http\Livewire\Projects\ProjectTimeline as AdminProjectTimeline;
+use App\Http\Livewire\Projects\TeamWorkload as AdminTeamWorkload;
+use App\Http\Livewire\Projects\TaskDetail as AdminTaskDetail;
+use App\Http\Livewire\Projects\TimeApprovals as AdminTimeApprovals;
+use App\Http\Livewire\Projects\ProjectBudgets as AdminProjectBudgets;
+use App\Http\Livewire\Feedback\SurveyBuilder;
+use App\Http\Livewire\Feedback\TestimonialManager;
+use App\Http\Livewire\AccountManagement\AccountHealthDashboard;
+use App\Http\Livewire\AccountManagement\QBRBuilder;
+use App\Http\Livewire\AccountManagement\RenewalManager;
+use App\Http\Livewire\AccountManagement\UpsellTracker;
+use App\Http\Livewire\Partners\PartnerManager;
+use App\Http\Livewire\Partners\ReferralDashboard;
 use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
 use App\Http\Livewire\Marketing\AuditResults as MarketingAuditResults;
 use App\Http\Livewire\Admin\AI\AIProviderManagement as AdminAIProviderManagement;
@@ -73,6 +107,7 @@ use App\Http\Livewire\Technical\ArchitectureAdvisor as AdminArchitectureAdvisor;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PushSubscriptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -170,6 +205,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Two-factor setup
+    Route::get('/two-factor/setup', TwoFactorSetup::class)->name('two-factor.setup');
+
     // Storage (client unified interface)
     Route::get('/storage', StorageDashboard::class)->name('storage.dashboard');
     Route::get('/storage/browser', UnifiedFileBrowser::class)->name('storage.browser');
@@ -183,14 +221,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/knowledge-base', KnowledgeBase::class)->name('client.knowledge-base');
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
     Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
+    Route::get('/onboarding', OnboardingWizard::class)->name('client.onboarding');
+    Route::get('/meetings', MeetingScheduler::class)->name('client.meetings');
 
     // Research & consultation tools
     Route::get('/research', ResearchAssistantTool::class)->name('research.assistant');
     Route::get('/research/technical', TechnicalAdvisorTool::class)->name('research.technical');
     Route::get('/research/monitor', IndustryMonitorTool::class)->name('research.monitor');
+    Route::get('/research/competitors', CompetitorMonitorTool::class)->name('research.competitors');
+    Route::get('/research/insights', IndustryInsightsTool::class)->name('research.insights');
 
     // Client AI assistant
     Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
+    Route::get('/reports', ClientReportDashboard::class)->name('client.reports');
+    Route::get('/reports/archive', ClientReportArchive::class)->name('client.reports.archive');
+    Route::get('/privacy', PrivacyCenter::class)->name('client.privacy');
+    Route::get('/privacy/requests/{privacyRequest}/download', [PrivacyExportController::class, 'download'])->name('privacy.export.download');
+    Route::get('/proposals/{proposal}', ProposalViewer::class)->name('client.proposals.view');
+    Route::get('/surveys/respond/{token}', FeedbackCollector::class)->name('client.surveys.respond');
+
+    // PWA push notification subscriptions (per-user)
+    Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
+    Route::delete('/push/unsubscribe', [PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe');
 
 });
 
@@ -200,7 +252,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified', 'permission:access admin panel'])
+Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.ip_allowlist', 'admin.2fa'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -219,9 +271,43 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
         Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');
         Route::get('/meeting-notes', AdminMeetingNotes::class)->name('meeting-notes');
         Route::get('/communication/email-assistant', EmailDraftAssistant::class)->name('communication.email-assistant');
+        Route::get('/messages', MessagingHub::class)->name('messages');
+        Route::get('/security/privacy-requests', AdminPrivacyRequests::class)->name('security.privacy-requests')->middleware('permission:manage settings');
+        Route::get('/security', AdminSecurityOverview::class)->name('security.overview')->middleware('permission:manage settings');
 
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
+        Route::get('/reports/deliveries', AdminReportDeliveries::class)->name('reports.deliveries')->middleware('permission:view reports');
+        Route::get('/white-label', WhiteLabelConfigurator::class)->name('white-label')->middleware('permission:manage settings');
+        Route::get('/client-reports', ReportCustomizer::class)->name('client-reports')->middleware('permission:manage settings');
+
+        // Proposals
+        Route::get('/proposals/builder/{proposal?}', ProposalBuilder::class)->name('proposals.builder');
+        Route::get('/proposals/analytics/{proposal}', ProposalAnalytics::class)->name('proposals.analytics');
+        Route::get('/meetings', MeetingScheduler::class)->name('meetings');
+
+        // Projects & time tracking
+        Route::get('/projects/time', AdminTimeTracker::class)->name('projects.time');
+        Route::get('/projects/board', AdminTaskBoard::class)->name('projects.board');
+        Route::get('/projects/timeline', AdminProjectTimeline::class)->name('projects.timeline');
+        Route::get('/projects/workload', AdminTeamWorkload::class)->name('projects.workload');
+        Route::get('/projects/tasks/{task}', AdminTaskDetail::class)->name('projects.tasks.show');
+        Route::get('/projects/time-approvals', AdminTimeApprovals::class)->name('projects.time-approvals');
+        Route::get('/projects/budgets', AdminProjectBudgets::class)->name('projects.budgets');
+
+        // Feedback
+        Route::get('/feedback/surveys', SurveyBuilder::class)->name('feedback.surveys');
+        Route::get('/feedback/testimonials', TestimonialManager::class)->name('feedback.testimonials');
+
+        // Account management
+        Route::get('/account/health', AccountHealthDashboard::class)->name('account.health');
+        Route::get('/account/qbrs', QBRBuilder::class)->name('account.qbrs');
+        Route::get('/account/renewals', RenewalManager::class)->name('account.renewals');
+        Route::get('/account/upsells', UpsellTracker::class)->name('account.upsells');
+
+        // Partners & referrals
+        Route::get('/partners', PartnerManager::class)->name('partners');
+        Route::get('/referrals', ReferralDashboard::class)->name('referrals');
 
         // Marketing: Website auditing (MVP UI)
         Route::prefix('marketing')->name('marketing.')->group(function () {

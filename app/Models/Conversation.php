@@ -14,12 +14,17 @@ class Conversation extends Model
 
     protected $fillable = [
         'client_id',
+        'context_type',
+        'context_id',
         'title',
         'is_closed',
+        'last_message_at',
     ];
 
     protected $casts = [
         'is_closed' => 'boolean',
+        'context_id' => 'integer',
+        'last_message_at' => 'datetime',
     ];
 
     public function client(): BelongsTo
