@@ -13,6 +13,10 @@ class Survey extends Model
 
     protected $fillable = [
         'client_id',
+        'request_id',
+        'type',
+        'responses',
+        'submitted_at',
         'name',
         'description',
         'is_active',
@@ -23,6 +27,8 @@ class Survey extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'anonymous_allowed' => 'boolean',
+        'responses' => 'array',
+        'submitted_at' => 'datetime',
     ];
 
     public function client(): BelongsTo

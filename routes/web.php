@@ -47,6 +47,9 @@ use App\Http\Livewire\Client\KnowledgeBase;
 use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\AnalyticsDashboard;
 use App\Http\Livewire\Client\EstimateApproval;
+use App\Http\Livewire\Communication\MeetingScheduler;
+use App\Http\Livewire\Feedback\FeedbackCollector;
+use App\Http\Livewire\Security\TwoFactorSetup;
 use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
 use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
 use App\Http\Livewire\Communication\EmailDraftAssistant;
@@ -56,10 +59,24 @@ use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMo
 use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
 use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
 use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
+use App\Http\Livewire\Research\CompetitorMonitor as CompetitorMonitorTool;
+use App\Http\Livewire\Research\IndustryInsights as IndustryInsightsTool;
 use App\Http\Livewire\WhiteLabel\WhiteLabelConfigurator;
 use App\Http\Livewire\WhiteLabel\ReportCustomizer;
 use App\Http\Livewire\Proposals\ProposalBuilder;
 use App\Http\Livewire\Proposals\ProposalAnalytics;
+use App\Http\Livewire\Projects\TimeTracker as AdminTimeTracker;
+use App\Http\Livewire\Projects\TaskBoard as AdminTaskBoard;
+use App\Http\Livewire\Projects\ProjectTimeline as AdminProjectTimeline;
+use App\Http\Livewire\Projects\TeamWorkload as AdminTeamWorkload;
+use App\Http\Livewire\Feedback\SurveyBuilder;
+use App\Http\Livewire\Feedback\TestimonialManager;
+use App\Http\Livewire\AccountManagement\AccountHealthDashboard;
+use App\Http\Livewire\AccountManagement\QBRBuilder;
+use App\Http\Livewire\AccountManagement\RenewalManager;
+use App\Http\Livewire\AccountManagement\UpsellTracker;
+use App\Http\Livewire\Partners\PartnerManager;
+use App\Http\Livewire\Partners\ReferralDashboard;
 use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
 use App\Http\Livewire\Marketing\AuditResults as MarketingAuditResults;
 use App\Http\Livewire\Admin\AI\AIProviderManagement as AdminAIProviderManagement;
@@ -178,6 +195,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Two-factor setup
+    Route::get('/two-factor/setup', TwoFactorSetup::class)->name('two-factor.setup');
+
     // Storage (client unified interface)
     Route::get('/storage', StorageDashboard::class)->name('storage.dashboard');
     Route::get('/storage/browser', UnifiedFileBrowser::class)->name('storage.browser');
@@ -192,16 +212,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
     Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
     Route::get('/onboarding', OnboardingWizard::class)->name('client.onboarding');
+    Route::get('/meetings', MeetingScheduler::class)->name('client.meetings');
 
     // Research & consultation tools
     Route::get('/research', ResearchAssistantTool::class)->name('research.assistant');
     Route::get('/research/technical', TechnicalAdvisorTool::class)->name('research.technical');
     Route::get('/research/monitor', IndustryMonitorTool::class)->name('research.monitor');
+    Route::get('/research/competitors', CompetitorMonitorTool::class)->name('research.competitors');
+    Route::get('/research/insights', IndustryInsightsTool::class)->name('research.insights');
 
     // Client AI assistant
     Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
     Route::get('/reports', ClientReportDashboard::class)->name('client.reports');
     Route::get('/proposals/{proposal}', ProposalViewer::class)->name('client.proposals.view');
+    Route::get('/surveys/respond/{token}', FeedbackCollector::class)->name('client.surveys.respond');
 
     // PWA push notification subscriptions (per-user)
     Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
@@ -215,7 +239,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified', 'permission:access admin panel'])
+Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.ip_allowlist', 'admin.2fa'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -243,6 +267,27 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
         // Proposals
         Route::get('/proposals/builder/{proposal?}', ProposalBuilder::class)->name('proposals.builder');
         Route::get('/proposals/analytics/{proposal}', ProposalAnalytics::class)->name('proposals.analytics');
+        Route::get('/meetings', MeetingScheduler::class)->name('meetings');
+
+        // Projects & time tracking
+        Route::get('/projects/time', AdminTimeTracker::class)->name('projects.time');
+        Route::get('/projects/board', AdminTaskBoard::class)->name('projects.board');
+        Route::get('/projects/timeline', AdminProjectTimeline::class)->name('projects.timeline');
+        Route::get('/projects/workload', AdminTeamWorkload::class)->name('projects.workload');
+
+        // Feedback
+        Route::get('/feedback/surveys', SurveyBuilder::class)->name('feedback.surveys');
+        Route::get('/feedback/testimonials', TestimonialManager::class)->name('feedback.testimonials');
+
+        // Account management
+        Route::get('/account/health', AccountHealthDashboard::class)->name('account.health');
+        Route::get('/account/qbrs', QBRBuilder::class)->name('account.qbrs');
+        Route::get('/account/renewals', RenewalManager::class)->name('account.renewals');
+        Route::get('/account/upsells', UpsellTracker::class)->name('account.upsells');
+
+        // Partners & referrals
+        Route::get('/partners', PartnerManager::class)->name('partners');
+        Route::get('/referrals', ReferralDashboard::class)->name('referrals');
 
         // Marketing: Website auditing (MVP UI)
         Route::prefix('marketing')->name('marketing.')->group(function () {

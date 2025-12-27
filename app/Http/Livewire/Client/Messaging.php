@@ -8,7 +8,9 @@ use App\Models\MessageAttachment;
 use App\Models\MessageRead;
 use App\Models\User;
 use App\Events\MessageSent;
+use App\Notifications\UserMentionedInMessageNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -21,6 +23,8 @@ class Messaging extends Component
     public string $message = '';
     public $upload;
     public string $search = '';
+    public ?int $newConversationRequestId = null;
+    public string $newConversationTitle = '';
 
     protected $listeners = [
         'message-received' => '$refresh',
@@ -83,11 +87,14 @@ class Messaging extends Component
 
         abort_unless(trim($this->message) !== '' || $this->upload, 422, 'Message or file required.');
 
+        $mentions = $this->resolveMentions($conv);
+
         $msg = Message::create([
             'conversation_id' => $conv->id,
             'sender_id' => $user->id,
             'body' => trim($this->message) !== '' ? $this->message : null,
             'type' => $this->upload ? 'file' : 'text',
+            'mentions' => $mentions ?: null,
         ]);
 
         if ($this->upload) {
@@ -111,6 +118,15 @@ class Messaging extends Component
         ]);
 
         $this->reset(['message', 'upload']);
+        $conv->update(['last_message_at' => now()]);
+
+        // Notify mentioned users (best-effort)
+        if (!empty($mentions)) {
+            $targets = User::query()->whereIn('id', $mentions)->get();
+            if ($targets->isNotEmpty()) {
+                Notification::send($targets, new UserMentionedInMessageNotification($msg));
+            }
+        }
 
         // Best-effort: notify JS to broadcast refresh (Echo listener)
         try {
@@ -120,6 +136,91 @@ class Messaging extends Component
         }
 
         $this->dispatch('message-sent', conversationId: $conv->id);
+    }
+
+    public function togglePin(int $messageId): void
+    {
+        $user = Auth::user();
+        abort_unless($user && $user->isClient(), 403);
+        abort_unless($this->conversationId, 422);
+
+        $conv = Conversation::query()->where('client_id', $user->client_id)->findOrFail($this->conversationId);
+
+        $msg = Message::query()
+            ->where('conversation_id', $conv->id)
+            ->findOrFail($messageId);
+
+        $pin = !$msg->is_pinned;
+        $msg->update([
+            'is_pinned' => $pin,
+            'pinned_at' => $pin ? now() : null,
+            'pinned_by' => $pin ? $user->id : null,
+        ]);
+    }
+
+    public function createConversation(): void
+    {
+        $user = Auth::user();
+        abort_unless($user && $user->isClient(), 403);
+
+        Validator::make([
+            'title' => $this->newConversationTitle,
+            'requestId' => $this->newConversationRequestId,
+        ], [
+            'title' => ['required', 'string', 'max:255'],
+            'requestId' => ['nullable', 'integer'],
+        ])->validate();
+
+        $conv = Conversation::create([
+            'client_id' => $user->client_id,
+            'context_type' => $this->newConversationRequestId ? 'request' : 'general',
+            'context_id' => $this->newConversationRequestId ?: null,
+            'title' => trim($this->newConversationTitle),
+            'is_closed' => false,
+            'last_message_at' => null,
+        ]);
+        $conv->participants()->syncWithoutDetaching([$user->id => ['role' => 'client']]);
+
+        $staff = User::query()->whereNull('client_id')->limit(3)->pluck('id')->all();
+        foreach ($staff as $sid) {
+            $conv->participants()->syncWithoutDetaching([$sid => ['role' => 'staff']]);
+        }
+
+        $this->conversationId = $conv->id;
+        $this->reset(['newConversationTitle', 'newConversationRequestId']);
+        session()->flash('success', 'Conversation created.');
+    }
+
+    /**
+     * @return array<int,int>
+     */
+    protected function resolveMentions(Conversation $conv): array
+    {
+        $body = (string) $this->message;
+        if ($body === '') return [];
+
+        preg_match_all('/@([A-Za-z0-9_\\.\\-]+)/', $body, $m);
+        $tokens = array_unique(array_map('strtolower', $m[1] ?? []));
+        if (empty($tokens)) return [];
+
+        $participants = $conv->participants()->get(['users.id', 'users.name']);
+        $byName = [];
+        foreach ($participants as $p) {
+            $byName[strtolower(str_replace(' ', '', (string) $p->name))] = (int) $p->id;
+        }
+
+        $ids = [];
+        foreach ($tokens as $t) {
+            if ($t === 'all') {
+                foreach ($participants as $p) $ids[] = (int) $p->id;
+                continue;
+            }
+            $key = strtolower(str_replace(' ', '', $t));
+            if (isset($byName[$key])) $ids[] = (int) $byName[$key];
+        }
+
+        $ids = array_values(array_unique(array_filter($ids)));
+        return $ids;
     }
 
     public function applySmartReply(string $text): void
@@ -159,6 +260,7 @@ class Messaging extends Component
 
         $conversations = Conversation::query()
             ->where('client_id', $user->client_id)
+            ->orderByDesc('last_message_at')
             ->orderByDesc('id')
             ->get();
 
@@ -189,7 +291,13 @@ class Messaging extends Component
             }
         }
 
-        return view('livewire.client.messaging', compact('conversations', 'messages', 'participants'));
+        $requests = \App\Models\Request::query()
+            ->where('client_id', $user->client_id)
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get(['id', 'title']);
+
+        return view('livewire.client.messaging', compact('conversations', 'messages', 'participants', 'requests'));
     }
 }
 

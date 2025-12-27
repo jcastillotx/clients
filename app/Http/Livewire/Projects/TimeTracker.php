@@ -6,6 +6,7 @@ use App\Models\Request as ServiceRequest;
 use App\Models\Task;
 use App\Models\TimeEntry;
 use App\Services\Marketing\TimeTrackingService;
+use App\Services\Projects\ProjectBudgetService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
@@ -48,7 +49,7 @@ class TimeTracker extends Component
         session()->flash('success', 'Timer started.');
     }
 
-    public function stop(TimeTrackingService $svc): void
+    public function stop(TimeTrackingService $svc, ProjectBudgetService $budgets): void
     {
         $user = Auth::user();
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
@@ -61,12 +62,16 @@ class TimeTracker extends Component
 
         if ($running) {
             $svc->stopTimer($running);
+            if ($running->request_id) {
+                $req = ServiceRequest::query()->find($running->request_id);
+                if ($req) $budgets->recalcForRequest($req);
+            }
         }
 
         session()->flash('success', 'Timer stopped.');
     }
 
-    public function addManual(): void
+    public function addManual(ProjectBudgetService $budgets): void
     {
         $user = Auth::user();
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
@@ -95,6 +100,9 @@ class TimeTracker extends Component
             'is_billable' => (bool) $this->isBillable,
             'status' => 'pending',
         ]);
+
+        $req = ServiceRequest::query()->find((int) $this->requestId);
+        if ($req) $budgets->recalcForRequest($req);
 
         session()->flash('success', 'Manual time entry added.');
     }

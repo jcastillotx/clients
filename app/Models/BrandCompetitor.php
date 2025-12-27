@@ -28,5 +28,10 @@ class BrandCompetitor extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
+    public function monitorings()
+    {
+        return $this->hasMany(CompetitorMonitoring::class, 'competitor_id')->latest('id');
+    }
 }
 

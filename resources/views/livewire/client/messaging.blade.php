@@ -9,12 +9,38 @@
                 </div>
                 <div class="card-body">
                     <input class="form-control mb-2" placeholder="Search messages..." wire:model.live.debounce.300ms="search">
+                    <button class="btn btn-sm btn-outline-primary mb-2" data-toggle="collapse" data-target="#newConversation">
+                        <i class="fas fa-plus mr-1"></i> New conversation
+                    </button>
+                    <div class="collapse mb-2" id="newConversation">
+                        <div class="border rounded p-2">
+                            <div class="form-group mb-2">
+                                <label class="mb-1 small text-muted">Title</label>
+                                <input class="form-control form-control-sm" wire:model.defer="newConversationTitle" placeholder="e.g. Website updates">
+                            </div>
+                            <div class="form-group mb-2">
+                                <label class="mb-1 small text-muted">Related request (optional)</label>
+                                <select class="form-control form-control-sm" wire:model.defer="newConversationRequestId">
+                                    <option value="">None</option>
+                                    @foreach($requests as $r)
+                                        <option value="{{ $r->id }}">#{{ $r->id }} — {{ $r->title }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button class="btn btn-sm btn-primary" wire:click="createConversation">
+                                Create
+                            </button>
+                        </div>
+                    </div>
                     <div class="list-group">
                         @foreach($conversations as $c)
                             <a href="#" class="list-group-item list-group-item-action {{ $conversationId === $c->id ? 'active' : '' }}"
                                wire:click.prevent="selectConversation({{ $c->id }})">
                                 <div class="font-weight-bold">{{ $c->title ?? 'Conversation #' . $c->id }}</div>
-                                <div class="small text-muted">{{ $c->is_closed ? 'closed' : 'open' }}</div>
+                                <div class="small text-muted">
+                                    {{ $c->context_type === 'request' && $c->context_id ? 'Request #' . $c->context_id . ' · ' : '' }}
+                                    {{ $c->is_closed ? 'closed' : 'open' }}
+                                </div>
                             </a>
                         @endforeach
                     </div>
@@ -55,8 +81,16 @@
                                         </a>
                                     </div>
                                 @endforeach
-                                <div class="small text-muted mt-1">
-                                    {{ $mine ? 'Read by ' . $readCount : '' }}
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div class="small text-muted">
+                                        {{ $mine ? 'Read by ' . $readCount : '' }}
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-xs btn-outline-secondary" wire:click="togglePin({{ $m->id }})">
+                                            <i class="fas fa-thumbtack"></i>
+                                            {{ $m->is_pinned ? 'Unpin' : 'Pin' }}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
