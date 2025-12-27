@@ -12,9 +12,13 @@ use App\Http\Livewire\WhiteLabel\ClientReportDashboard;
 use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\RequestAttachmentController;
 use App\Http\Controllers\Admin\AdminReportExportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Storage\StorageFileController;
+use App\Http\Controllers\Storage\DropboxOAuthController;
+use App\Http\Controllers\Storage\GoogleDriveOAuthController;
+use App\Http\Controllers\Storage\GoogleDriveDownloadController;
 use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Controllers\Documents\DocumentShareController;
 use App\Http\Controllers\Documents\DocumentVersionController;
@@ -193,6 +197,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Service Requests
     Route::resource('requests', RequestController::class);
+    Route::get('/requests/{request}/attachments/{attachment}/download', [RequestAttachmentController::class, 'download'])
+        ->name('requests.attachments.download');
     Route::get('/requests/{request}/estimate', EstimateApproval::class)->name('client.requests.estimate');
 
     // Contracts
@@ -246,6 +252,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/storage/settings', StorageSettings::class)->name('storage.settings');
     Route::get('/storage/conflicts', StorageConflicts::class)->name('storage.conflicts');
     Route::get('/storage/files/{storageFile}/download', [StorageFileController::class, 'download'])->name('storage.files.download');
+
+    // Storage OAuth + downloads
+    Route::get('/storage/dropbox/authorize', [DropboxOAuthController::class, 'authorize'])->name('storage.dropbox.authorize');
+    Route::get('/storage/dropbox/callback', [DropboxOAuthController::class, 'callback'])->name('storage.dropbox.callback');
+
+    Route::get('/storage/google/authorize', [GoogleDriveOAuthController::class, 'authorize'])->name('storage.google-drive.authorize');
+    Route::get('/storage/google/callback', [GoogleDriveOAuthController::class, 'callback'])->name('storage.google-drive.callback');
+
+    Route::get('/storage/google-drive/{connection}/download', [GoogleDriveDownloadController::class, 'download'])->name('storage.google-drive.download');
 
     // Client advanced features
     Route::get('/projects', ProjectDashboard::class)->name('client.projects');
