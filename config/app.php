@@ -81,4 +81,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted Proxies
+    |--------------------------------------------------------------------------
+    |
+    | Set to '*' to trust all proxies (Cloudflare, load balancers).
+    | Or provide comma-separated IP addresses/CIDR ranges.
+    |
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES', '*'),
+
 ];

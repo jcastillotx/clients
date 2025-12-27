@@ -19,16 +19,6 @@ class TrustProxies extends Middleware
      *
      * @var int
      */
-    protected $headers = Request::HEADER_X_FORWARDED_FOR
-        | Request::HEADER_X_FORWARDED_HOST
-        | Request::HEADER_X_FORWARDED_PORT
-        | Request::HEADER_X_FORWARDED_PROTO
-        | Request::HEADER_X_FORWARDED_PREFIX
-        | Request::HEADER_X_FORWARDED_AWS_ELB;
-
-    public function __construct()
-    {
-        $this->proxies = env('TRUSTED_PROXIES', '*');
     protected $headers =
         Request::HEADER_X_FORWARDED_FOR |
         Request::HEADER_X_FORWARDED_HOST |
@@ -38,18 +28,13 @@ class TrustProxies extends Middleware
 
     public function __construct()
     {
-        // Trust all proxies in production if behind Cloudflare/load balancer
-        // Or set specific proxy IPs via TRUSTED_PROXIES env variable
-        $trustedProxies = env('TRUSTED_PROXIES');
+        $trustedProxies = config('app.trusted_proxies');
 
         if ($trustedProxies === '*') {
-            // Trust all proxies (use with caution - only if behind known CDN/LB)
             $this->proxies = '*';
         } elseif ($trustedProxies) {
-            // Trust specific proxy IPs (comma-separated)
             $this->proxies = array_map('trim', explode(',', $trustedProxies));
         } else {
-            // Default: don't trust any proxies (most secure)
             $this->proxies = null;
         }
     }

@@ -26,7 +26,7 @@ class DropboxWebhookController extends Controller
      */
     public function handle(Request $request): Response
     {
-        $secret = (string) env('DROPBOX_APP_SECRET', '');
+        $secret = (string) config('services.dropbox.app_secret', '');
         if ($secret === '') {
             return response('Dropbox webhook not configured.', 500);
         }

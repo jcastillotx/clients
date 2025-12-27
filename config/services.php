@@ -57,4 +57,31 @@ return [
         'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
     ],
 
+    'twitter' => [
+        'client_id' => env('TWITTER_CLIENT_ID'),
+        'client_secret' => env('TWITTER_CLIENT_SECRET'),
+    ],
+
+    'pinterest' => [
+        'client_id' => env('PINTEREST_CLIENT_ID'),
+        'client_secret' => env('PINTEREST_CLIENT_SECRET'),
+    ],
+
+    'tiktok' => [
+        'client_key' => env('TIKTOK_CLIENT_KEY'),
+        'client_secret' => env('TIKTOK_CLIENT_SECRET'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dropbox Integration
+    |--------------------------------------------------------------------------
+    */
+
+    'dropbox' => [
+        'app_key' => env('DROPBOX_APP_KEY'),
+        'app_secret' => env('DROPBOX_APP_SECRET'),
+        'redirect_uri' => env('DROPBOX_REDIRECT_URI'),
+    ],
+
 ];
