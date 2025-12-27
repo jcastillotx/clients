@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivityWithContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
-use App\Models\Concerns\LogsActivityWithContext;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -130,7 +130,7 @@ class Invoice extends Model
      */
     public function getPdfUrlAttribute(): ?string
     {
-        if (!$this->pdf_path) {
+        if (! $this->pdf_path) {
             return null;
         }
 
@@ -229,7 +229,7 @@ class Invoice extends Model
      */
     public function getDaysUntilDueAttribute(): ?int
     {
-        if (!$this->due_date) {
+        if (! $this->due_date) {
             return null;
         }
 
@@ -317,7 +317,7 @@ class Invoice extends Model
         $prefix = config('client-portal.invoice.prefix', 'INV-');
         $year = now()->format('Y');
         $month = now()->format('m');
-        
+
         $lastInvoice = static::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->orderBy('id', 'desc')
@@ -334,16 +334,16 @@ class Invoice extends Model
     protected static function booted(): void
     {
         static::creating(function (Invoice $invoice) {
-            if (!$invoice->invoice_number) {
+            if (! $invoice->invoice_number) {
                 $invoice->invoice_number = static::generateInvoiceNumber();
             }
-            if (!$invoice->issue_date) {
+            if (! $invoice->issue_date) {
                 $invoice->issue_date = now();
             }
-            if (!$invoice->due_date) {
+            if (! $invoice->due_date) {
                 $invoice->due_date = now()->addDays(30);
             }
-            if (!$invoice->template) {
+            if (! $invoice->template) {
                 $invoice->template = 'classic';
             }
         });

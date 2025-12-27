@@ -29,4 +29,3 @@ class QbrMeeting extends Model
         return $this->belongsTo(Client::class);
     }
 }
-

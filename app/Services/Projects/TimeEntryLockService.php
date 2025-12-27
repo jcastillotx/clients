@@ -16,6 +16,7 @@ class TimeEntryLockService
     public function isLocked(User $user, Carbon $date): bool
     {
         $ws = $this->weekStart($date)->toDateString();
+
         return TimeEntryLock::query()
             ->where('user_id', $user->id)
             ->where('week_start', $ws)
@@ -33,4 +34,3 @@ class TimeEntryLockService
         );
     }
 }
-

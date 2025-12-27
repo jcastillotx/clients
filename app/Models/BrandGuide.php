@@ -64,4 +64,3 @@ class BrandGuide extends Model
         return $this->hasMany(BrandTemplate::class);
     }
 }
-

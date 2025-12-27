@@ -57,4 +57,3 @@ class ApiV1AuthTest extends TestCase
         ])->assertForbidden();
     }
 }
-

@@ -22,7 +22,7 @@ class RequestAttachmentController extends Controller
             abort(403, 'You do not have access to this attachment.');
         }
 
-        if (!Storage::disk('attachments')->exists($attachment->file_path)) {
+        if (! Storage::disk('attachments')->exists($attachment->file_path)) {
             abort(404, 'Attachment file not found.');
         }
 
@@ -40,4 +40,3 @@ class RequestAttachmentController extends Controller
         );
     }
 }
-

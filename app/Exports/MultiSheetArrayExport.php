@@ -23,4 +23,3 @@ class MultiSheetArrayExport implements WithMultipleSheets
         );
     }
 }
-

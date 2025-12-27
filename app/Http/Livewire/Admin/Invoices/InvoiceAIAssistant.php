@@ -9,6 +9,7 @@ use Livewire\Component;
 class InvoiceAIAssistant extends Component
 {
     public int $invoiceId;
+
     public bool $editable = false;
 
     public ?Invoice $invoice = null;
@@ -43,9 +44,9 @@ class InvoiceAIAssistant extends Component
 
         // Staff can only access invoices for assigned clients
         $user = auth()->user();
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $allowed = $user->assignedClientIds();
-            if (!in_array((int) $this->invoice->client_id, $allowed, true)) {
+            if (! in_array((int) $this->invoice->client_id, $allowed, true)) {
                 abort(403, 'You do not have access to this invoice.');
             }
         }
@@ -54,8 +55,9 @@ class InvoiceAIAssistant extends Component
     public function generateFromRequest(InvoiceGeneratorAI $ai): void
     {
         $this->loadInvoice();
-        if (!$this->invoice?->request) {
+        if (! $this->invoice?->request) {
             session()->flash('error', 'This invoice is not linked to a request.');
+
             return;
         }
 
@@ -68,18 +70,22 @@ class InvoiceAIAssistant extends Component
     public function applyGenerated(InvoiceGeneratorAI $ai): void
     {
         $this->loadInvoice();
-        if (!$this->editable) {
+        if (! $this->editable) {
             session()->flash('error', 'This invoice is not editable.');
+
             return;
         }
-        if (!$this->generated || empty($this->generated['items'])) {
+        if (! $this->generated || empty($this->generated['items'])) {
             session()->flash('error', 'No generated items to apply.');
+
             return;
         }
 
         $items = [];
         foreach ((array) $this->generated['items'] as $row) {
-            if (!is_array($row)) continue;
+            if (! is_array($row)) {
+                continue;
+            }
             $items[] = [
                 'description' => (string) ($row['description'] ?? ''),
                 'quantity' => (float) ($row['quantity'] ?? 0),
@@ -88,7 +94,7 @@ class InvoiceAIAssistant extends Component
         }
 
         $notes = null;
-        if (!empty($this->generated['notes_for_client'])) {
+        if (! empty($this->generated['notes_for_client'])) {
             $notes = (string) $this->generated['notes_for_client'];
         }
 
@@ -117,8 +123,9 @@ class InvoiceAIAssistant extends Component
     public function predictPayment(InvoiceGeneratorAI $ai): void
     {
         $this->loadInvoice();
-        if (!$this->invoice?->client) {
+        if (! $this->invoice?->client) {
             session()->flash('error', 'Missing client.');
+
             return;
         }
         $this->prediction = $ai->predictPayment($this->invoice, $this->invoice->client);
@@ -128,8 +135,9 @@ class InvoiceAIAssistant extends Component
     public function suggestPlan(InvoiceGeneratorAI $ai): void
     {
         $this->loadInvoice();
-        if (!$this->invoice?->client) {
+        if (! $this->invoice?->client) {
             session()->flash('error', 'Missing client.');
+
             return;
         }
         $this->paymentPlan = $ai->suggestPaymentPlan($this->invoice, $this->invoice->client, [
@@ -141,12 +149,14 @@ class InvoiceAIAssistant extends Component
     public function draftDisputeResponse(InvoiceGeneratorAI $ai): void
     {
         $this->loadInvoice();
-        if (!$this->invoice?->client) {
+        if (! $this->invoice?->client) {
             session()->flash('error', 'Missing client.');
+
             return;
         }
         if (trim($this->disputeText) === '') {
             session()->flash('error', 'Enter the client’s dispute message first.');
+
             return;
         }
 
@@ -161,4 +171,3 @@ class InvoiceAIAssistant extends Component
         return view('livewire.admin.invoices.ai-assistant');
     }
 }
-

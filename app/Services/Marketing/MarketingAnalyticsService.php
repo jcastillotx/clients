@@ -9,12 +9,10 @@ use Illuminate\Support\Arr;
 
 class MarketingAnalyticsService
 {
-    public function __construct(private readonly AIProviderManager $ai)
-    {
-    }
+    public function __construct(private readonly AIProviderManager $ai) {}
 
     /**
-     * @param array{from:string,to:string} $dateRange
+     * @param  array{from:string,to:string}  $dateRange
      * @return array<string,mixed>
      */
     public function aggregateAllMetrics(Client $client, array $dateRange): array
@@ -48,7 +46,7 @@ class MarketingAnalyticsService
     }
 
     /**
-     * @param array<string,mixed> $metrics
+     * @param  array<string,mixed>  $metrics
      * @return array<string,mixed>
      */
     public function generateInsights(Client $client, array $metrics): array
@@ -80,11 +78,13 @@ class MarketingAnalyticsService
     protected function tryParseJson(string $text): ?array
     {
         $text = trim($text);
-        if ($text === '') return null;
+        if ($text === '') {
+            return null;
+        }
         $text = preg_replace('/^```(?:json)?\s*/i', '', $text) ?? $text;
         $text = preg_replace('/\s*```$/', '', $text) ?? $text;
         $decoded = json_decode($text, true);
+
         return is_array($decoded) ? $decoded : null;
     }
 }
-

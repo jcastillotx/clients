@@ -9,6 +9,7 @@ use Livewire\Component;
 class AutomationLogs extends Component
 {
     public ?string $trigger = '';
+
     public ?int $ruleId = null;
 
     protected array $queryString = [
@@ -33,4 +34,3 @@ class AutomationLogs extends Component
         return view('livewire.admin.automation.logs', compact('runs'));
     }
 }
-

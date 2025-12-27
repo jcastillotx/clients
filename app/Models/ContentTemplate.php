@@ -28,4 +28,3 @@ class ContentTemplate extends Model
         return $this->belongsTo(Client::class);
     }
 }
-

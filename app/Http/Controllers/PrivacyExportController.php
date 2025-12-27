@@ -20,7 +20,6 @@ class PrivacyExportController extends Controller
         $path = (string) ($meta['path'] ?? '');
         abort_unless($path !== '', 404);
 
-        return Storage::disk($disk)->download($path, 'data_export_' . $privacyRequest->id . '.json');
+        return Storage::disk($disk)->download($path, 'data_export_'.$privacyRequest->id.'.json');
     }
 }
-

@@ -12,8 +12,7 @@ class BrandAuditorService
 {
     public function __construct(
         private readonly AIProviderManager $ai,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string,mixed>
@@ -59,7 +58,9 @@ class BrandAuditorService
 
             // Persist inconsistencies (best-effort)
             foreach ((array) ($report['visual']['inconsistencies'] ?? []) as $row) {
-                if (!is_array($row)) continue;
+                if (! is_array($row)) {
+                    continue;
+                }
                 BrandInconsistency::create([
                     'brand_audit_id' => $audit->id,
                     'category' => 'visual',
@@ -155,7 +156,7 @@ class BrandAuditorService
     }
 
     /**
-     * @param array<int, array<string,mixed>|string> $competitors
+     * @param  array<int, array<string,mixed>|string>  $competitors
      * @return array<string,mixed>
      */
     public function competitiveBrandAnalysis(Client $client, array $competitors): array
@@ -196,6 +197,7 @@ class BrandAuditorService
         $perception = (int) ($competitive['perception_score'] ?? 75);
 
         $overall = (int) round(($visualScore + $messagingScore + $consistency + $perception) / 4);
+
         return [
             'overall' => max(0, min(100, $overall)),
             'visual' => max(0, min(100, $visualScore)),
@@ -208,11 +210,13 @@ class BrandAuditorService
     protected function tryParseJson(string $text): ?array
     {
         $text = trim($text);
-        if ($text === '') return null;
+        if ($text === '') {
+            return null;
+        }
         $text = preg_replace('/^```(?:json)?\s*/i', '', $text) ?? $text;
         $text = preg_replace('/\s*```$/', '', $text) ?? $text;
         $decoded = json_decode($text, true);
+
         return is_array($decoded) ? $decoded : null;
     }
 }
-

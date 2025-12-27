@@ -43,4 +43,3 @@ class AuditPage extends Model
         return $this->belongsTo(WebsiteAudit::class, 'website_audit_id');
     }
 }
-

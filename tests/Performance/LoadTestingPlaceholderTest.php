@@ -14,4 +14,3 @@ class LoadTestingPlaceholderTest extends TestCase
         $this->markTestSkipped('Example placeholder: use k6/Locust/JMeter for concurrent user load testing (see scripts/).');
     }
 }
-

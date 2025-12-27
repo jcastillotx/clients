@@ -46,11 +46,12 @@ class Setting extends Model
     public static function getValue(string $key, mixed $default = null): mixed
     {
         $row = static::query()->where('key', $key)->first();
-        if (!$row) {
+        if (! $row) {
             return $default;
         }
 
         $val = $row->decoded();
+
         return $val === null ? $default : $val;
     }
 
@@ -80,4 +81,3 @@ class Setting extends Model
         return json_encode($value, JSON_THROW_ON_ERROR);
     }
 }
-

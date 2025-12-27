@@ -26,4 +26,3 @@ class LeadNurtureSequence extends Model
         return $this->belongsTo(Client::class);
     }
 }
-

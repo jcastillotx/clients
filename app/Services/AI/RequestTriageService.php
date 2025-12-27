@@ -7,16 +7,13 @@ use App\Models\Request as ServiceRequest;
 use App\Models\RequestAttachment;
 use App\Models\User;
 use App\Services\AI\Prompts\RequestTriagePrompt;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class RequestTriageService
 {
     public function __construct(
         protected AIProviderManager $providers
-    ) {
-    }
+    ) {}
 
     /**
      * Analyze a newly submitted request and return structured triage output.
@@ -126,10 +123,14 @@ class RequestTriageService
             $score -= min(6.0, $openAssigned / 2.0);
 
             $reason = [];
-            if ($relationship) $reason[] = 'Already assigned to this client';
+            if ($relationship) {
+                $reason[] = 'Already assigned to this client';
+            }
             $reason[] = "Open workload: {$openAssigned}";
             $reason[] = "Completed requests: {$completed}";
-            if ($sameTypeCompleted > 0) $reason[] = "Completed {$sameTypeCompleted} similar ({$request->type}) requests";
+            if ($sameTypeCompleted > 0) {
+                $reason[] = "Completed {$sameTypeCompleted} similar ({$request->type}) requests";
+            }
 
             $suggestions[] = [
                 'user_id' => (int) $u->id,
@@ -140,6 +141,7 @@ class RequestTriageService
         }
 
         usort($suggestions, fn ($a, $b) => $b['score'] <=> $a['score']);
+
         return array_slice($suggestions, 0, 3);
     }
 
@@ -213,10 +215,14 @@ class RequestTriageService
     public function suggestSimilarPastRequests(ServiceRequest $request): array
     {
         $clientId = (int) $request->client_id;
-        if ($clientId <= 0) return [];
+        if ($clientId <= 0) {
+            return [];
+        }
 
-        $terms = $this->keywordsFromText($request->title . ' ' . $request->description);
-        if ($terms === []) return [];
+        $terms = $this->keywordsFromText($request->title.' '.$request->description);
+        if ($terms === []) {
+            return [];
+        }
 
         $q = ServiceRequest::query()
             ->where('client_id', $clientId)
@@ -226,8 +232,8 @@ class RequestTriageService
         // Basic OR LIKE across top terms.
         $q->where(function ($qq) use ($terms) {
             foreach (array_slice($terms, 0, 5) as $t) {
-                $qq->orWhere('title', 'like', '%' . $t . '%')
-                    ->orWhere('description', 'like', '%' . $t . '%');
+                $qq->orWhere('title', 'like', '%'.$t.'%')
+                    ->orWhere('description', 'like', '%'.$t.'%');
             }
         });
 
@@ -263,6 +269,7 @@ class RequestTriageService
     protected function normalizePriority(string $priority): string
     {
         $p = strtolower(trim($priority));
+
         return in_array($p, ['low', 'medium', 'high', 'urgent'], true) ? $p : 'medium';
     }
 
@@ -274,10 +281,14 @@ class RequestTriageService
     protected function parseJsonFromText(string $text): array
     {
         $text = trim($text);
-        if ($text === '') return [];
+        if ($text === '') {
+            return [];
+        }
 
         $decoded = json_decode($text, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         // Try to extract the first {...} block.
         $start = strpos($text, '{');
@@ -285,7 +296,9 @@ class RequestTriageService
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($text, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
         return [];
@@ -304,17 +317,22 @@ class RequestTriageService
         $out = [];
         foreach ($parts as $p) {
             $p = trim($p);
-            if ($p === '' || strlen($p) < 4) continue;
-            if (in_array($p, $stop, true)) continue;
+            if ($p === '' || strlen($p) < 4) {
+                continue;
+            }
+            if (in_array($p, $stop, true)) {
+                continue;
+            }
             $out[] = $p;
         }
 
         $out = array_values(array_unique($out));
+
         return array_slice($out, 0, 12);
     }
 
     /**
-     * @param array<int, array{user_id:int, name:string, score:float, reasoning:string}> $assignment
+     * @param  array<int, array{user_id:int, name:string, score:float, reasoning:string}>  $assignment
      */
     protected function formatInternalNote(array $triage, array $assignment): string
     {
@@ -324,38 +342,48 @@ class RequestTriageService
 
         $lines[] = '';
         $lines[] = 'Suggested classification:';
-        $lines[] = '- category: ' . (string) ($triage['category'] ?? '');
-        $lines[] = '- subcategory: ' . (string) ($triage['subcategory'] ?? '');
-        $lines[] = '- request_type: ' . (string) ($triage['suggested_request_type'] ?? '');
-        $lines[] = '- priority: ' . (string) ($triage['suggested_priority'] ?? '');
-        $lines[] = '- complexity: ' . (string) ($triage['complexity_score'] ?? '');
-        $lines[] = '- estimated_hours: ' . (string) ($triage['estimated_hours'] ?? '');
+        $lines[] = '- category: '.(string) ($triage['category'] ?? '');
+        $lines[] = '- subcategory: '.(string) ($triage['subcategory'] ?? '');
+        $lines[] = '- request_type: '.(string) ($triage['suggested_request_type'] ?? '');
+        $lines[] = '- priority: '.(string) ($triage['suggested_priority'] ?? '');
+        $lines[] = '- complexity: '.(string) ($triage['complexity_score'] ?? '');
+        $lines[] = '- estimated_hours: '.(string) ($triage['estimated_hours'] ?? '');
 
         $kw = (array) ($triage['keywords'] ?? []);
-        if ($kw !== []) $lines[] = '- keywords: ' . implode(', ', array_map('strval', $kw));
+        if ($kw !== []) {
+            $lines[] = '- keywords: '.implode(', ', array_map('strval', $kw));
+        }
 
         $skills = (array) ($triage['required_skills'] ?? []);
-        if ($skills !== []) $lines[] = '- skills: ' . implode(', ', array_map('strval', $skills));
+        if ($skills !== []) {
+            $lines[] = '- skills: '.implode(', ', array_map('strval', $skills));
+        }
 
         $issues = (array) ($triage['potential_issues'] ?? []);
         if ($issues !== []) {
             $lines[] = '';
             $lines[] = 'Potential issues:';
-            foreach ($issues as $i) $lines[] = '- ' . (string) $i;
+            foreach ($issues as $i) {
+                $lines[] = '- '.(string) $i;
+            }
         }
 
         $amb = (array) ($triage['ambiguities'] ?? []);
         if ($amb !== []) {
             $lines[] = '';
             $lines[] = 'Ambiguities / missing info:';
-            foreach ($amb as $a) $lines[] = '- ' . (string) $a;
+            foreach ($amb as $a) {
+                $lines[] = '- '.(string) $a;
+            }
         }
 
         $qs = (array) ($triage['next_questions_for_client'] ?? []);
         if ($qs !== []) {
             $lines[] = '';
             $lines[] = 'Suggested questions for client:';
-            foreach ($qs as $q) $lines[] = '- ' . (string) $q;
+            foreach ($qs as $q) {
+                $lines[] = '- '.(string) $q;
+            }
         }
 
         if ($assignment !== []) {
@@ -387,8 +415,7 @@ class RequestTriageService
                 'user_agent' => null,
             ]);
         } catch (\Throwable $e) {
-            Log::warning('Failed to write AI triage internal note: ' . $e->getMessage());
+            Log::warning('Failed to write AI triage internal note: '.$e->getMessage());
         }
     }
 }
-

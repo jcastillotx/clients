@@ -38,4 +38,3 @@ class PaymentModelTest extends TestCase
         $this->assertNotNull($invoice->paid_at);
     }
 }
-

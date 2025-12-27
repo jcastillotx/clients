@@ -7,26 +7,36 @@ use App\Models\Client;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class ClientCreate extends Component
 {
     public string $company_name = '';
+
     public string $contact_name = '';
+
     public string $email = '';
+
     public ?string $phone = null;
+
     public ?string $address = null;
+
     public ?string $city = null;
+
     public ?string $state = null;
+
     public ?string $zip_code = null;
+
     public string $country = 'US';
 
     public string $tier = 'basic';
+
     public string $status = 'active';
 
     public ?string $stripe_customer_id = null;
+
     public ?string $notes = null;
 
     public bool $sendPasswordSetLink = true;
@@ -116,6 +126,7 @@ class ClientCreate extends Component
         ));
 
         session()->flash('success', 'Client created. Welcome email sent.');
+
         return redirect()->route('admin.clients.show', $client);
     }
 
@@ -127,4 +138,3 @@ class ClientCreate extends Component
         ])->layout('layouts.admin', ['title' => 'Add Client']);
     }
 }
-

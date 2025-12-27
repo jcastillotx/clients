@@ -13,7 +13,9 @@ class PromptTemplateService
     public function resolveActiveVersion(string $key): ?PromptTemplateVersion
     {
         $tpl = PromptTemplate::query()->where('key', $key)->where('status', 'active')->first();
-        if (!$tpl) return null;
+        if (! $tpl) {
+            return null;
+        }
 
         return PromptTemplateVersion::query()
             ->where('prompt_template_id', $tpl->id)
@@ -31,8 +33,9 @@ class PromptTemplateService
         foreach ($vars as $k => $v) {
             $key = (string) $k;
             $val = is_scalar($v) || $v === null ? (string) ($v ?? '') : json_encode($v, JSON_UNESCAPED_SLASHES);
-            $out = str_replace('{{' . $key . '}}', $val, $out);
+            $out = str_replace('{{'.$key.'}}', $val, $out);
         }
+
         return $out;
     }
 
@@ -42,11 +45,10 @@ class PromptTemplateService
     public function systemPrompt(string $key, array $vars = [], ?string $default = null): string
     {
         $v = $this->resolveActiveVersion($key);
-        if (!$v) {
+        if (! $v) {
             return $default ?? '';
         }
 
         return $this->render((string) $v->system_prompt, $vars);
     }
 }
-

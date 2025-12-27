@@ -27,4 +27,3 @@ class PromptTemplate extends Model
         return $this->hasMany(PromptTemplateVersion::class, 'prompt_template_id')->orderByDesc('version');
     }
 }
-

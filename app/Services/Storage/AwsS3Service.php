@@ -8,7 +8,6 @@ use App\Models\SyncedFile;
 use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -24,15 +23,14 @@ class AwsS3Service implements StorageProviderInterface
 
     protected ?StorageConnection $connection = null;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function useConnection(StorageConnection $connection): static
     {
         $this->connection = $connection;
         $this->credentials = (array) ($connection->credentials ?? []);
         $this->client = $this->makeClient($this->credentials);
+
         return $this;
     }
 
@@ -62,7 +60,8 @@ class AwsS3Service implements StorageProviderInterface
     {
         $p = trim((string) $prefix);
         $p = trim($p, '/');
-        return $p === '' ? '' : ($p . '/');
+
+        return $p === '' ? '' : ($p.'/');
     }
 
     /**
@@ -72,12 +71,13 @@ class AwsS3Service implements StorageProviderInterface
     {
         $bucket = (string) ($this->credentials['bucket'] ?? $this->credentials['bucket_name'] ?? '');
         $base = $this->normalizePrefix($this->credentials['folder_path'] ?? $this->credentials['prefix'] ?? '');
+
         return ['bucket' => $bucket, 'base_prefix' => $base];
     }
 
     protected function ensureReady(): void
     {
-        if (!$this->client) {
+        if (! $this->client) {
             $this->client = $this->makeClient($this->credentials);
         }
     }
@@ -86,6 +86,7 @@ class AwsS3Service implements StorageProviderInterface
     {
         if ($e instanceof AwsException) {
             $code = (string) $e->getAwsErrorCode();
+
             return match ($code) {
                 'InvalidAccessKeyId', 'SignatureDoesNotMatch' => 'Invalid AWS credentials. Please verify Access Key and Secret Key.',
                 'AccessDenied' => 'Access denied. Please ensure the IAM user has permissions for the bucket.',
@@ -101,7 +102,7 @@ class AwsS3Service implements StorageProviderInterface
     {
         $required = ['access_key_id', 'secret_access_key', 'region', 'bucket'];
         foreach ($required as $key) {
-            if (!isset($credentials[$key]) || trim((string) $credentials[$key]) === '') {
+            if (! isset($credentials[$key]) || trim((string) $credentials[$key]) === '') {
                 throw new RuntimeException("Missing required credential: {$key}");
             }
         }
@@ -131,7 +132,7 @@ class AwsS3Service implements StorageProviderInterface
 
         // Persist to DB unless explicitly disabled
         $save = (bool) ($credentials['save'] ?? true);
-        if (!$save) {
+        if (! $save) {
             return true;
         }
 
@@ -176,6 +177,7 @@ class AwsS3Service implements StorageProviderInterface
         $this->credentials = [];
         $this->client = null;
         $this->connection = null;
+
         return true;
     }
 
@@ -187,7 +189,7 @@ class AwsS3Service implements StorageProviderInterface
     public function uploadFile(mixed $file, string $path): array
     {
         $this->ensureReady();
-        if (!$this->connection) {
+        if (! $this->connection) {
             throw new RuntimeException('No storage connection selected.');
         }
 
@@ -199,7 +201,7 @@ class AwsS3Service implements StorageProviderInterface
 
         $dir = $this->normalizePrefix($path);
         $base = $meta['base_prefix'];
-        $prefix = $base . $dir;
+        $prefix = $base.$dir;
 
         $originalName = null;
         $mime = null;
@@ -214,16 +216,16 @@ class AwsS3Service implements StorageProviderInterface
             $sourcePath = method_exists($file, 'getRealPath') ? $file->getRealPath() : null;
         }
 
-        if (!$originalName) {
+        if (! $originalName) {
             throw new RuntimeException('Unsupported file type for upload.');
         }
 
-        $key = $prefix . $originalName;
+        $key = $prefix.$originalName;
         if ($sourcePath && is_file($sourcePath)) {
             $stream = fopen($sourcePath, 'rb');
         }
 
-        if (!$stream) {
+        if (! $stream) {
             throw new RuntimeException('Unable to read uploaded file.');
         }
 
@@ -239,7 +241,9 @@ class AwsS3Service implements StorageProviderInterface
             throw new RuntimeException($this->friendlyAwsError($e));
         } finally {
             try {
-                if (is_resource($stream)) fclose($stream);
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
             } catch (\Throwable $e) {
                 // ignore
             }
@@ -287,6 +291,7 @@ class AwsS3Service implements StorageProviderInterface
                 'Key' => $fileId,
             ]);
             $req = $this->client->createPresignedRequest($cmd, '+60 minutes');
+
             return (string) $req->getUri();
         } catch (\Throwable $e) {
             throw new RuntimeException($this->friendlyAwsError($e));
@@ -337,7 +342,7 @@ class AwsS3Service implements StorageProviderInterface
             throw new RuntimeException('Folder name is required.');
         }
 
-        $key = $base . $parent . $folder . '/';
+        $key = $base.$parent.$folder.'/';
 
         try {
             $this->client->putObject([
@@ -398,7 +403,7 @@ class AwsS3Service implements StorageProviderInterface
                 }
 
                 $token = $result['NextContinuationToken'] ?? null;
-            } while (!empty($result['IsTruncated']));
+            } while (! empty($result['IsTruncated']));
         } catch (\Throwable $e) {
             throw new RuntimeException($this->friendlyAwsError($e));
         }
@@ -429,7 +434,7 @@ class AwsS3Service implements StorageProviderInterface
 
         $base = $meta['base_prefix'];
         $dir = trim($path, '/');
-        $prefix = $base . ($dir === '' ? '' : ($dir . '/'));
+        $prefix = $base.($dir === '' ? '' : ($dir.'/'));
 
         try {
             $args = [
@@ -450,7 +455,9 @@ class AwsS3Service implements StorageProviderInterface
         $folders = [];
         foreach (($result['CommonPrefixes'] ?? []) as $cp) {
             $pfx = (string) ($cp['Prefix'] ?? '');
-            if ($pfx === $prefix) continue;
+            if ($pfx === $prefix) {
+                continue;
+            }
             $name = trim(Str::after($pfx, $prefix), '/');
             $folders[] = [
                 'id' => $pfx,
@@ -465,8 +472,12 @@ class AwsS3Service implements StorageProviderInterface
         $files = [];
         foreach (($result['Contents'] ?? []) as $obj) {
             $key = (string) ($obj['Key'] ?? '');
-            if ($key === '' || $key === $prefix) continue;
-            if (str_ends_with($key, '/')) continue; // folder marker
+            if ($key === '' || $key === $prefix) {
+                continue;
+            }
+            if (str_ends_with($key, '/')) {
+                continue;
+            } // folder marker
             $files[] = [
                 'id' => $key,
                 'name' => basename($key),
@@ -509,6 +520,7 @@ class AwsS3Service implements StorageProviderInterface
         }
 
         $lm = $res['LastModified'] ?? null;
+
         return [
             'size' => (int) ($res['ContentLength'] ?? 0),
             'modified_at' => $lm ? Carbon::parse($lm)->toISOString() : null,
@@ -516,4 +528,3 @@ class AwsS3Service implements StorageProviderInterface
         ];
     }
 }
-

@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
+use App\Services\AI\AIProviderManager;
 use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use App\Services\AI\AIProviderManager;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(AIProviderManager::class, fn () => new AIProviderManager());
+        $this->app->singleton(AIProviderManager::class, fn () => new AIProviderManager);
     }
 
     /**
@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('api-token', function (Request $request) {
             $token = $request->user()?->currentAccessToken();
-            $key = $token ? 'token:' . $token->id : 'ip:' . $request->ip();
+            $key = $token ? 'token:'.$token->id : 'ip:'.$request->ip();
 
             // Default: 60 req/min per token
             return Limit::perMinute(60)->by($key);
@@ -51,6 +51,31 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::directive('status', function ($expression) {
             return "<?php echo ucfirst(str_replace('_', ' ', $expression)); ?>";
+        });
+
+        // Feature-gating directives
+        Blade::if('feature', function (string $feature) {
+            $user = auth()->user();
+
+            return $user && $user->client && $user->client->hasFeature($feature);
+        });
+
+        Blade::if('anyFeature', function (...$features) {
+            $user = auth()->user();
+
+            return $user && $user->client && $user->client->hasAnyFeature($features);
+        });
+
+        Blade::if('allFeatures', function (...$features) {
+            $user = auth()->user();
+
+            return $user && $user->client && $user->client->hasAllFeatures($features);
+        });
+
+        Blade::if('premiumTier', function () {
+            $user = auth()->user();
+
+            return $user && $user->client && $user->client->isPremiumTier();
         });
     }
 }

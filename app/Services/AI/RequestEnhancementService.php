@@ -9,8 +9,7 @@ class RequestEnhancementService
 {
     public function __construct(
         protected AIProviderManager $providers
-    ) {
-    }
+    ) {}
 
     /**
      * Identify vague/incomplete info and generate clarifying questions for the client.
@@ -143,21 +142,27 @@ USR;
     protected function parseJsonFromText(string $text): array
     {
         $text = trim($text);
-        if ($text === '') return [];
+        if ($text === '') {
+            return [];
+        }
 
         $decoded = json_decode($text, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($text, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
         Log::warning('AI enhancement returned non-JSON output.');
+
         return [];
     }
 }
-

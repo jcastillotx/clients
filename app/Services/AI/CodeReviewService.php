@@ -6,12 +6,10 @@ use App\Services\AI\Prompts\CodeReviewPrompts;
 
 class CodeReviewService
 {
-    public function __construct(protected AISafetyService $safety)
-    {
-    }
+    public function __construct(protected AISafetyService $safety) {}
 
     /**
-     * @param array<int,array{path:string,content:string,language?:string}> $codeFiles
+     * @param  array<int,array{path:string,content:string,language?:string}>  $codeFiles
      * @return array<string,mixed>
      */
     public function reviewCode(array $codeFiles, array $options = []): array
@@ -43,6 +41,7 @@ class CodeReviewService
                     'quality_score' => $res['quality_score'] ?? null,
                     'review_queue_id' => $res['review_queue_id'] ?? null,
                 ];
+
                 return $data;
             }
         } catch (\Throwable) {
@@ -75,6 +74,7 @@ class CodeReviewService
             ]);
 
             $data = $this->parseJson((string) ($res['text'] ?? ''));
+
             return is_array($data) ? $data : ['error' => 'Unable to parse documentation JSON.'];
         } catch (\Throwable $e) {
             return [
@@ -82,7 +82,7 @@ class CodeReviewService
                 'api_docs_md' => '',
                 'inline_comment_suggestions' => [],
                 'public_interfaces' => [],
-                'assumptions' => ['AI not configured: ' . $e->getMessage()],
+                'assumptions' => ['AI not configured: '.$e->getMessage()],
                 '_meta' => ['fallback' => true],
             ];
         }
@@ -98,7 +98,7 @@ class CodeReviewService
         $provider = (string) ($options['provider'] ?? 'claude');
         $messages = [
             ['role' => 'system', 'content' => CodeReviewPrompts::architectureSystem()],
-            ['role' => 'user', 'content' => "Review this architecture document:\n\n" . $designDoc],
+            ['role' => 'user', 'content' => "Review this architecture document:\n\n".$designDoc],
         ];
 
         try {
@@ -112,6 +112,7 @@ class CodeReviewService
                 'user_query' => $options['user_query'] ?? 'Architecture review',
             ]);
             $data = $this->parseJson((string) ($res['text'] ?? ''));
+
             return is_array($data) ? $data : ['error' => 'Unable to parse architecture JSON.'];
         } catch (\Throwable $e) {
             return [
@@ -137,7 +138,7 @@ class CodeReviewService
         $provider = (string) ($options['provider'] ?? 'claude');
         $messages = [
             ['role' => 'system', 'content' => CodeReviewPrompts::debugSystem()],
-            ['role' => 'user', 'content' => "Analyze these logs:\n\n" . $logs],
+            ['role' => 'user', 'content' => "Analyze these logs:\n\n".$logs],
         ];
 
         try {
@@ -151,13 +152,14 @@ class CodeReviewService
                 'user_query' => $options['user_query'] ?? 'Debug logs',
             ]);
             $data = $this->parseJson((string) ($res['text'] ?? ''));
+
             return is_array($data) ? $data : ['error' => 'Unable to parse debug JSON.'];
         } catch (\Throwable $e) {
             return [
                 'suspected_root_causes' => [],
                 'recommended_fixes' => [],
                 'debug_steps' => [],
-                'notes' => 'AI unavailable: ' . $e->getMessage(),
+                'notes' => 'AI unavailable: '.$e->getMessage(),
                 '_meta' => ['fallback' => true],
             ];
         }
@@ -166,7 +168,7 @@ class CodeReviewService
     /**
      * Code generation assistant (boilerplate/endpoints/tests/migrations).
      *
-     * @param array<string,mixed> $spec
+     * @param  array<string,mixed>  $spec
      * @return array<string,mixed>
      */
     public function generateCode(array $spec, array $options = []): array
@@ -174,7 +176,7 @@ class CodeReviewService
         $provider = (string) ($options['provider'] ?? 'openai');
         $messages = [
             ['role' => 'system', 'content' => CodeReviewPrompts::codegenSystem()],
-            ['role' => 'user', 'content' => "Generate code from this spec (JSON):\n" . json_encode($spec, JSON_UNESCAPED_SLASHES)],
+            ['role' => 'user', 'content' => "Generate code from this spec (JSON):\n".json_encode($spec, JSON_UNESCAPED_SLASHES)],
         ];
 
         try {
@@ -188,11 +190,12 @@ class CodeReviewService
                 'user_query' => $options['user_query'] ?? 'Generate code',
             ]);
             $data = $this->parseJson((string) ($res['text'] ?? ''));
+
             return is_array($data) ? $data : ['error' => 'Unable to parse codegen JSON.'];
         } catch (\Throwable $e) {
             return [
                 'files' => [],
-                'notes' => ['AI unavailable: ' . $e->getMessage()],
+                'notes' => ['AI unavailable: '.$e->getMessage()],
                 'tests' => [],
                 'migrations' => [],
                 'config_changes' => [],
@@ -204,7 +207,7 @@ class CodeReviewService
     /**
      * Tech stack recommendation based on requirements.
      *
-     * @param array<string,mixed> $requirements
+     * @param  array<string,mixed>  $requirements
      * @return array<string,mixed>
      */
     public function recommendTechStack(array $requirements, array $options = []): array
@@ -212,7 +215,7 @@ class CodeReviewService
         $provider = (string) ($options['provider'] ?? 'claude');
         $messages = [
             ['role' => 'system', 'content' => CodeReviewPrompts::stackSystem()],
-            ['role' => 'user', 'content' => "Recommend a tech stack for these requirements (JSON):\n" . json_encode($requirements, JSON_UNESCAPED_SLASHES)],
+            ['role' => 'user', 'content' => "Recommend a tech stack for these requirements (JSON):\n".json_encode($requirements, JSON_UNESCAPED_SLASHES)],
         ];
 
         try {
@@ -226,6 +229,7 @@ class CodeReviewService
                 'user_query' => $options['user_query'] ?? 'Tech stack recommendation',
             ]);
             $data = $this->parseJson((string) ($res['text'] ?? ''));
+
             return is_array($data) ? $data : ['error' => 'Unable to parse stack JSON.'];
         } catch (\Throwable $e) {
             return [
@@ -247,21 +251,28 @@ class CodeReviewService
     protected function parseJson(string $text): ?array
     {
         $t = trim($text);
-        if ($t === '') return null;
+        if ($t === '') {
+            return null;
+        }
         $decoded = json_decode($t, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
         $start = strpos($t, '{');
         $end = strrpos($t, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($t, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
+
         return null;
     }
 
     /**
-     * @param array<int,array{path:string,content:string,language?:string}> $codeFiles
+     * @param  array<int,array{path:string,content:string,language?:string}>  $codeFiles
      * @return array<string,mixed>
      */
     protected function fallbackReview(array $codeFiles): array
@@ -299,4 +310,3 @@ class CodeReviewService
         ];
     }
 }
-

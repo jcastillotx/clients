@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name') }}</title>
+    <title>{{ config('branding.company.name') }} - Client Portal</title>
+
+    <link rel="icon" href="/{{ config('branding.logo.favicon') }}">
+    <link rel="apple-touch-icon" href="/{{ config('branding.logo.icon') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    @if(config('branding.typography.google_fonts'))
+    <link href="https://fonts.googleapis.com/css2?family={{ config('branding.typography.google_fonts') }}&display=swap" rel="stylesheet">
+    @endif
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -20,21 +25,40 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- Brand Custom CSS -->
+    @if(file_exists(public_path(config('branding.custom_css'))))
+    <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
+    @endif
+
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: {{ config('branding.typography.font_secondary') }};
         }
         .login-page {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            @if(config('branding.auth.background_style') === 'gradient')
+            background: linear-gradient(135deg, {{ config('branding.colors.primary') }} 0%, {{ config('branding.colors.primary_dark') }} 100%);
+            @elseif(config('branding.auth.background_style') === 'image' && config('branding.auth.background_image'))
+            background: url('/{{ config('branding.auth.background_image') }}') no-repeat center center;
+            background-size: cover;
+            @else
+            background-color: {{ config('branding.auth.background_color') }};
+            @endif
         }
         .login-box {
             width: 400px;
         }
         .login-card-body {
-            border-radius: 10px;
+            border-radius: {{ config('branding.design.border_radius_lg') }};
+            box-shadow: {{ config('branding.design.shadow_lg') }};
         }
         .login-logo a {
             color: white;
+            font-family: {{ config('branding.typography.font_primary') }};
+            font-weight: 700;
+        }
+        .login-logo img {
+            max-width: {{ config('branding.logo.width') }}px;
+            height: auto;
         }
     </style>
 </head>

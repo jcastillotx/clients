@@ -15,15 +15,18 @@ class MeetingNotes extends Component
     public $audio;
 
     public string $purpose = '';
+
     public string $participants = ''; // comma separated
 
     public ?AiTask $latestTask = null;
+
     public ?array $output = null;
 
     public function queueTranscription(): void
     {
-        if (!$this->audio) {
+        if (! $this->audio) {
             session()->flash('error', 'Please upload an audio file.');
+
             return;
         }
 
@@ -67,4 +70,3 @@ class MeetingNotes extends Component
         ])->layout('layouts.admin', ['title' => 'Meeting Notes']);
     }
 }
-

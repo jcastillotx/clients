@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 class CampaignManagerService
 {
     /**
-     * @param array<string,mixed> $campaignData
+     * @param  array<string,mixed>  $campaignData
      */
     public function createCampaign(Client $client, array $campaignData): Campaign
     {
@@ -76,7 +76,7 @@ class CampaignManagerService
     /**
      * Create a tracked campaign link with UTM parameters.
      *
-     * @param array{utm_source?:?string,utm_medium?:?string,utm_campaign?:?string} $utm
+     * @param  array{utm_source?:?string,utm_medium?:?string,utm_campaign?:?string}  $utm
      */
     public function createTrackedLink(Campaign $campaign, string $originalUrl, array $utm = []): CampaignLink
     {
@@ -99,4 +99,3 @@ class CampaignManagerService
         return $link;
     }
 }
-

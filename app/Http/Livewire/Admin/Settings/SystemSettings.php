@@ -16,14 +16,21 @@ class SystemSettings extends Component
     public string $tab = 'general';
 
     public array $general = [];
+
     public array $email = [];
+
     public array $payment = [];
+
     public array $storage = [];
+
     public array $notifications = [];
+
     public array $security = [];
+
     public array $branding = [];
 
     public ?string $test_email_to = null;
+
     public $logo_upload;
 
     public function mount(SettingsService $settings): void
@@ -371,7 +378,7 @@ class SystemSettings extends Component
 
     public function uploadLogo(SettingsService $settings): void
     {
-        if (!$this->logo_upload) {
+        if (! $this->logo_upload) {
             return;
         }
 
@@ -407,4 +414,3 @@ class SystemSettings extends Component
         return view('livewire.admin.settings.index');
     }
 }
-

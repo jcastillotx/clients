@@ -17,8 +17,7 @@ class ContractGeneratorService
 {
     public function __construct(
         protected AIProviderManager $providers
-    ) {
-    }
+    ) {}
 
     /**
      * Generate contract HTML from a template body + context.
@@ -107,7 +106,7 @@ class ContractGeneratorService
         ]);
 
         $bytes = $pdf->output();
-        $path = 'generated/' . $contract->contract_number . '-' . Str::slug($title) . '.pdf';
+        $path = 'generated/'.$contract->contract_number.'-'.Str::slug($title).'.pdf';
         Storage::disk('contracts')->put($path, $bytes);
         $contract->update(['file_path' => $path]);
 
@@ -120,18 +119,24 @@ class ContractGeneratorService
     protected function parseJsonFromText(string $text): array
     {
         $text = trim($text);
-        if ($text === '') return [];
+        if ($text === '') {
+            return [];
+        }
         $decoded = json_decode($text, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($text, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
+
         return [];
     }
 }
-

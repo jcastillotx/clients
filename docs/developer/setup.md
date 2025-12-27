@@ -25,7 +25,6 @@ php artisan test
 ```
 
 ## API docs
-- Interactive docs: `/api/documentation` (admin-only in app)
-- Scramble UI: `/docs/api`
-- OpenAPI JSON: `/docs/api.json`
+- Interactive docs (admin-only): `/api/documentation` (alias: `/docs/api`)
+- OpenAPI JSON (admin-only): `/api/documentation.json` (alias: `/docs/api.json`)
 

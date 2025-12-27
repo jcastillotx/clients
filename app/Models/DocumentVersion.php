@@ -55,4 +55,3 @@ class DocumentVersion extends Model
         }
     }
 }
-

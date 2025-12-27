@@ -36,4 +36,3 @@ class PaymentService
         return $payment->fresh();
     }
 }
-

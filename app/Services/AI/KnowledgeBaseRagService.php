@@ -11,8 +11,7 @@ class KnowledgeBaseRagService
         protected DocumentEmbeddingService $embeddings,
         protected DocumentSemanticSearchService $search,
         protected DocumentTextExtractor $extractor
-    ) {
-    }
+    ) {}
 
     /**
      * Retrieve top matching knowledge base documents for a query.
@@ -22,10 +21,14 @@ class KnowledgeBaseRagService
     public function retrieve(string $query, int $limit = 4): array
     {
         $kbIds = KnowledgeBaseDocument::query()->pluck('document_id')->all();
-        if (empty($kbIds)) return [];
+        if (empty($kbIds)) {
+            return [];
+        }
 
         $vec = $this->embeddings->embedText($query, ['provider' => 'openai']);
-        if (!$vec) return [];
+        if (! $vec) {
+            return [];
+        }
 
         $ranked = $this->search->findSimilarByEmbedding($vec, limit: max(1, $limit), candidateLimit: 1200);
         $ids = array_values(array_unique(array_map(fn ($r) => (int) $r['document_id'], $ranked)));
@@ -34,12 +37,14 @@ class KnowledgeBaseRagService
         $out = [];
         foreach ($ranked as $r) {
             $id = (int) $r['document_id'];
-            if (!in_array($id, $kbIds, true)) {
+            if (! in_array($id, $kbIds, true)) {
                 continue;
             }
             /** @var Document|null $doc */
             $doc = $docs->get($id);
-            if (!$doc) continue;
+            if (! $doc) {
+                continue;
+            }
 
             $snippet = $this->snippetFor($doc);
             $out[] = [
@@ -47,7 +52,9 @@ class KnowledgeBaseRagService
                 'score' => (float) $r['score'],
                 'snippet' => $snippet,
             ];
-            if (count($out) >= $limit) break;
+            if (count($out) >= $limit) {
+                break;
+            }
         }
 
         return $out;
@@ -63,7 +70,7 @@ class KnowledgeBaseRagService
         if (mb_strlen($text) > $maxChars) {
             $text = mb_substr($text, 0, $maxChars);
         }
+
         return $text;
     }
 }
-

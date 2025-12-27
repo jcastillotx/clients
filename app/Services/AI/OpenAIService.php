@@ -2,11 +2,10 @@
 
 namespace App\Services\AI;
 
+use Illuminate\Support\Str;
 use OpenAI;
 use OpenAI\Client;
 use OpenAI\Exceptions\ErrorException;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class OpenAIService extends BaseAIService
@@ -14,7 +13,7 @@ class OpenAIService extends BaseAIService
     protected ?Client $client = null;
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     public function configure(array $config): static
     {
@@ -38,7 +37,7 @@ class OpenAIService extends BaseAIService
 
     public function chat(array $messages, array $options = []): array
     {
-        if (!$this->client) {
+        if (! $this->client) {
             throw new RuntimeException('OpenAI API key is not configured.');
         }
 
@@ -103,7 +102,7 @@ class OpenAIService extends BaseAIService
 
     public function streamChat(array $messages, array $options = []): \Generator
     {
-        if (!$this->client) {
+        if (! $this->client) {
             throw new RuntimeException('OpenAI API key is not configured.');
         }
 
@@ -135,7 +134,7 @@ class OpenAIService extends BaseAIService
 
     public function generateEmbeddings(string $text): array
     {
-        if (!$this->client) {
+        if (! $this->client) {
             throw new RuntimeException('OpenAI API key is not configured.');
         }
 
@@ -149,6 +148,7 @@ class OpenAIService extends BaseAIService
 
         /** @var array<int, float> $vec */
         $vec = $res->embeddings[0]->embedding ?? [];
+
         return $vec;
     }
 
@@ -168,7 +168,9 @@ class OpenAIService extends BaseAIService
                 $models = $this->client->models()->list();
                 $ids = [];
                 foreach ($models->data as $m) {
-                    if (!empty($m->id)) $ids[] = (string) $m->id;
+                    if (! empty($m->id)) {
+                        $ids[] = (string) $m->id;
+                    }
                 }
                 if ($ids !== []) {
                     return array_values(array_unique($ids));
@@ -183,13 +185,14 @@ class OpenAIService extends BaseAIService
 
     public function validateApiKey(): bool
     {
-        if (!$this->client) {
+        if (! $this->client) {
             return false;
         }
 
         try {
             // Lightweight: list models.
             $this->client->models()->list();
+
             return true;
         } catch (\Throwable) {
             return false;
@@ -199,7 +202,7 @@ class OpenAIService extends BaseAIService
     /**
      * Cost calculation based on OpenAI pricing table in config.
      *
-     * @param array{input:int, output:int, total:int} $tokens
+     * @param  array{input:int, output:int, total:int}  $tokens
      */
     protected function estimateCostForModel(string $model, array $tokens): float
     {
@@ -207,7 +210,7 @@ class OpenAIService extends BaseAIService
 
         // Normalize e.g. "gpt-4-0125-preview" -> match by prefix.
         $key = $model;
-        if (!array_key_exists($key, $pricing)) {
+        if (! array_key_exists($key, $pricing)) {
             foreach ($pricing as $k => $_) {
                 if (Str::startsWith($model, $k)) {
                     $key = $k;
@@ -239,7 +242,7 @@ class OpenAIService extends BaseAIService
                 $isRate = str_contains($msg, 'Rate limit') || str_contains($msg, '429') || str_contains($msg, 'rate_limit');
                 $isTimeout = str_contains(strtolower($msg), 'timeout');
 
-                if ($i >= ($attempts - 1) || (!$isRate && !$isTimeout && !($e instanceof ErrorException))) {
+                if ($i >= ($attempts - 1) || (! $isRate && ! $isTimeout && ! ($e instanceof ErrorException))) {
                     throw $e;
                 }
 
@@ -252,17 +255,18 @@ class OpenAIService extends BaseAIService
     }
 
     /**
-     * @param array<int, array{role:string, content:string}> $messages
+     * @param  array<int, array{role:string, content:string}>  $messages
      */
     protected function extractUserMessage(array $messages): ?string
     {
         for ($i = count($messages) - 1; $i >= 0; $i--) {
             if (($messages[$i]['role'] ?? null) === 'user') {
                 $c = $messages[$i]['content'] ?? null;
+
                 return is_string($c) ? $c : null;
             }
         }
+
         return null;
     }
 }
-

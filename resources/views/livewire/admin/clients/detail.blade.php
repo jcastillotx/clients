@@ -144,7 +144,7 @@
 
         @if($tab === 'invoices')
             <div class="d-flex justify-content-end mb-2">
-                <a href="{{ route('admin.invoices') }}" class="btn btn-outline-primary">Create Invoice</a>
+                <a href="{{ route('admin.invoices.create') }}" class="btn btn-outline-primary">Create Invoice</a>
             </div>
             <div class="table-responsive">
                 <table class="table table-vcenter">

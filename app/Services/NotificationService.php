@@ -25,6 +25,7 @@ class NotificationService
         if ($type === 'created') {
             $recipients = User::query()->role(['super_admin', 'admin'])->get();
             $this->queueToUsers($recipients, new RequestCreatedNotification($request));
+
             return;
         }
 
@@ -37,6 +38,7 @@ class NotificationService
                 ->get();
 
             $this->queueToUsers($recipients, new RequestUpdatedNotification($request, $oldStatus, $newStatus));
+
             return;
         }
 
@@ -73,7 +75,7 @@ class NotificationService
         $payment->loadMissing('invoice', 'invoice.client');
 
         $invoice = $payment->invoice;
-        if (!$invoice) {
+        if (! $invoice) {
             return;
         }
 
@@ -107,7 +109,7 @@ class NotificationService
         }
 
         foreach ($users as $user) {
-            if (!$user->email) {
+            if (! $user->email) {
                 continue;
             }
 
@@ -115,4 +117,3 @@ class NotificationService
         }
     }
 }
-

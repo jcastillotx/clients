@@ -40,4 +40,3 @@ class InvoiceIndex extends Component
         ]);
     }
 }
-

@@ -11,8 +11,11 @@ class DocumentList extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $category = '';
+
     public string $sortField = 'created_at';
+
     public string $sortDirection = 'desc';
 
     protected $queryString = [
@@ -56,8 +59,8 @@ class DocumentList extends Component
             })
             ->when($this->search, function ($q) {
                 $q->where(function ($query) {
-                    $query->where('title', 'like', '%' . $this->search . '%')
-                        ->orWhere('original_filename', 'like', '%' . $this->search . '%');
+                    $query->where('title', 'like', '%'.$this->search.'%')
+                        ->orWhere('original_filename', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->category, function ($q) {

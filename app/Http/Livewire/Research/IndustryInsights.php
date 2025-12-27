@@ -10,9 +10,13 @@ use Livewire\Component;
 class IndustryInsights extends Component
 {
     public string $industry = '';
+
     public string $insightType = 'news';
+
     public string $title = '';
+
     public string $content = '';
+
     public string $sourceUrl = '';
 
     public function add(): void
@@ -59,4 +63,3 @@ class IndustryInsights extends Component
         ]);
     }
 }
-

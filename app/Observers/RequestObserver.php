@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
-use App\Jobs\Feedback\SendProjectCompletionSurveyJob;
 use App\Jobs\Ai\AnalyzeRequestJob;
+use App\Jobs\Feedback\SendProjectCompletionSurveyJob;
 use App\Models\Request as ServiceRequest;
 use App\Services\AutomationEngine;
 use App\Services\WebhookService;
@@ -78,4 +78,3 @@ class RequestObserver
         }
     }
 }
-

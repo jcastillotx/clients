@@ -8,12 +8,10 @@ use Illuminate\Support\Str;
 
 class SEOAnalyzerService
 {
-    public function __construct(private readonly AIProviderManager $ai)
-    {
-    }
+    public function __construct(private readonly AIProviderManager $ai) {}
 
     /**
-     * @param array<int,string> $keywords
+     * @param  array<int,string>  $keywords
      * @return array<string,mixed>
      */
     public function keywordAnalysis(string $url, array $keywords): array
@@ -60,7 +58,7 @@ class SEOAnalyzerService
     }
 
     /**
-     * @param array<int,string> $competitorUrls
+     * @param  array<int,string>  $competitorUrls
      * @return array<string,mixed>
      */
     public function competitorKeywordGap(string $clientUrl, array $competitorUrls): array
@@ -169,7 +167,7 @@ class SEOAnalyzerService
     }
 
     /**
-     * @param array<string,mixed> $businessInfo
+     * @param  array<string,mixed>  $businessInfo
      * @return array<string,mixed>
      */
     public function localSEOAudit(array $businessInfo): array
@@ -195,10 +193,13 @@ class SEOAnalyzerService
     protected function normalizeUrl(string $url): string
     {
         $url = trim($url);
-        if ($url === '') return $url;
-        if (!Str::startsWith($url, ['http://', 'https://'])) {
-            $url = 'https://' . $url;
+        if ($url === '') {
+            return $url;
         }
+        if (! Str::startsWith($url, ['http://', 'https://'])) {
+            $url = 'https://'.$url;
+        }
+
         return $url;
     }
 
@@ -218,8 +219,10 @@ class SEOAnalyzerService
 
     protected function extractVisibleText(string $html): string
     {
-        if ($html === '') return '';
-        $doc = new \DOMDocument();
+        if ($html === '') {
+            return '';
+        }
+        $doc = new \DOMDocument;
         libxml_use_internal_errors(true);
         $doc->loadHTML($html);
         libxml_clear_errors();
@@ -229,50 +232,65 @@ class SEOAnalyzerService
         }
         $text = $doc->textContent ?? '';
         $text = preg_replace('/\s+/', ' ', $text) ?? $text;
+
         return trim($text);
     }
 
     protected function extractTagText(string $html, string $tag): ?string
     {
-        if ($html === '') return null;
-        $doc = new \DOMDocument();
+        if ($html === '') {
+            return null;
+        }
+        $doc = new \DOMDocument;
         libxml_use_internal_errors(true);
         $doc->loadHTML($html);
         libxml_clear_errors();
         $nodes = $doc->getElementsByTagName($tag);
-        if ($nodes->length < 1) return null;
+        if ($nodes->length < 1) {
+            return null;
+        }
         $t = trim((string) $nodes->item(0)?->textContent);
+
         return $t !== '' ? $t : null;
     }
 
     protected function extractFirstHeading(string $html, int $level): ?string
     {
-        $tag = 'h' . max(1, min(6, $level));
+        $tag = 'h'.max(1, min(6, $level));
+
         return $this->extractTagText($html, $tag);
     }
 
     protected function wordCount(string $text): int
     {
         $text = trim($text);
-        if ($text === '') return 0;
+        if ($text === '') {
+            return 0;
+        }
+
         return count(preg_split('/\s+/u', $text) ?: []);
     }
 
     protected function countOccurrences(string $text, string $needle): int
     {
-        if ($needle === '') return 0;
+        if ($needle === '') {
+            return 0;
+        }
         $text = mb_strtolower($text);
         $needle = mb_strtolower($needle);
+
         return substr_count($text, $needle);
     }
 
     /**
-     * @param array<int,string> $keywords
+     * @param  array<int,string>  $keywords
      * @return array<int,string>
      */
     protected function lsiSuggestions(string $url, array $keywords, string $pageText): array
     {
-        if (empty($keywords)) return [];
+        if (empty($keywords)) {
+            return [];
+        }
         $prompt = [
             'url' => $url,
             'target_keywords' => $keywords,
@@ -293,6 +311,7 @@ class SEOAnalyzerService
             }, taskType: 'seo_lsi_suggestions');
 
             $json = $this->tryParseJson((string) ($res['text'] ?? ''));
+
             return is_array($json) ? array_values(array_filter(array_map('strval', $json))) : [];
         } catch (\Throwable) {
             return [];
@@ -302,7 +321,9 @@ class SEOAnalyzerService
     protected function fleschReadingEase(string $text): ?float
     {
         $text = trim($text);
-        if ($text === '') return null;
+        if ($text === '') {
+            return null;
+        }
 
         $sentences = max(1, preg_match_all('/[.!?]+/u', $text));
         $words = max(1, $this->wordCount($text));
@@ -319,20 +340,25 @@ class SEOAnalyzerService
         $count = 0;
         foreach ($words as $w) {
             $w = trim($w);
-            if ($w === '') continue;
+            if ($w === '') {
+                continue;
+            }
             $count += max(1, preg_match_all('/[aeiouy]+/u', $w));
         }
+
         return $count;
     }
 
     protected function tryParseJson(string $text): ?array
     {
         $text = trim($text);
-        if ($text === '') return null;
+        if ($text === '') {
+            return null;
+        }
         $text = preg_replace('/^```(?:json)?\s*/i', '', $text) ?? $text;
         $text = preg_replace('/\s*```$/', '', $text) ?? $text;
         $decoded = json_decode($text, true);
+
         return is_array($decoded) ? $decoded : null;
     }
 }
-

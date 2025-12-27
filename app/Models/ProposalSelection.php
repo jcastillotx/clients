@@ -24,4 +24,3 @@ class ProposalSelection extends Model
         return $this->belongsTo(Proposal::class);
     }
 }
-

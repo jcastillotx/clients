@@ -66,6 +66,7 @@ class PushNotificationService
         foreach ($webPush->flush() as $report) {
             if ($report->isSuccess()) {
                 $sent++;
+
                 continue;
             }
 
@@ -80,4 +81,3 @@ class PushNotificationService
         return ['sent' => $sent, 'failed' => $failed];
     }
 }
-

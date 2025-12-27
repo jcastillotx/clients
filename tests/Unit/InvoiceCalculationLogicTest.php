@@ -77,4 +77,3 @@ class InvoiceCalculationLogicTest extends TestCase
         $this->assertEquals(70.00, (float) $invoice->balance_due);
     }
 }
-

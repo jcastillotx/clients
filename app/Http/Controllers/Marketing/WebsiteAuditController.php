@@ -22,8 +22,8 @@ class WebsiteAuditController extends Controller
             'report' => (array) ($websiteAudit->report ?? []),
         ])->setPaper('a4', 'portrait');
 
-        $filename = 'website-audit-' . $websiteAudit->id . '.pdf';
-        return response()->streamDownload(fn () => print($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
+        $filename = 'website-audit-'.$websiteAudit->id.'.pdf';
+
+        return response()->streamDownload(fn () => print ($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
     }
 }
-

@@ -11,9 +11,7 @@ class UserMentionedInMessageNotification extends Notification implements ShouldQ
 {
     use Queueable;
 
-    public function __construct(public Message $message)
-    {
-    }
+    public function __construct(public Message $message) {}
 
     public function via($notifiable): array
     {
@@ -32,4 +30,3 @@ class UserMentionedInMessageNotification extends Notification implements ShouldQ
         ];
     }
 }
-

@@ -10,7 +10,9 @@ use Livewire\Component;
 class WebsiteAuditor extends Component
 {
     public string $website_url = '';
+
     public int $max_pages = 25;
+
     public bool $use_ai = true;
 
     public function runAudit(): void
@@ -37,4 +39,3 @@ class WebsiteAuditor extends Component
         return view('livewire.marketing.website-auditor');
     }
 }
-

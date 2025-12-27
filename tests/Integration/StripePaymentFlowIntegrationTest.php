@@ -13,7 +13,7 @@ class StripePaymentFlowIntegrationTest extends TestCase
 
     public function test_can_create_and_confirm_payment_intent_in_stripe_test_mode(): void
     {
-        if (!getenv('RUN_INTEGRATION_TESTS')) {
+        if (! getenv('RUN_INTEGRATION_TESTS')) {
             $this->markTestSkipped('Set RUN_INTEGRATION_TESTS=1 to run external integration tests.');
         }
 
@@ -34,4 +34,3 @@ class StripePaymentFlowIntegrationTest extends TestCase
         $this->assertContains($pi->status, ['succeeded', 'requires_action', 'requires_capture', 'processing']);
     }
 }
-

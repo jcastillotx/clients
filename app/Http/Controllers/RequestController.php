@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Request;
-use App\Models\ActivityLog;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class RequestController extends Controller

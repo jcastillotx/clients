@@ -21,8 +21,11 @@ class RequestEdit extends Component
     public ServiceRequest $request;
 
     public string $title = '';
+
     public string $type = '';
+
     public string $priority = '';
+
     public string $description = '';
 
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
@@ -39,8 +42,8 @@ class RequestEdit extends Component
 
         return [
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'in:' . $types],
-            'priority' => ['required', 'in:' . $priorities],
+            'type' => ['required', 'in:'.$types],
+            'priority' => ['required', 'in:'.$priorities],
             'description' => ['required', 'string'],
             'files' => ['array'],
             'files.*' => ['file', "max:{$maxKb}", 'mimes:pdf,doc,docx,jpg,jpeg,png'],
@@ -56,7 +59,7 @@ class RequestEdit extends Component
     {
         $this->authorizeClientAccess($request);
 
-        if (!in_array($request->status, ['draft', 'pending'], true)) {
+        if (! in_array($request->status, ['draft', 'pending'], true)) {
             abort(403);
         }
 
@@ -97,7 +100,7 @@ class RequestEdit extends Component
         $user = auth()->user();
         $this->authorizeClientAccess($this->request);
 
-        if (!in_array($this->request->status, ['draft', 'pending'], true)) {
+        if (! in_array($this->request->status, ['draft', 'pending'], true)) {
             abort(403);
         }
 
@@ -109,7 +112,7 @@ class RequestEdit extends Component
         ]);
 
         // Delete removed attachments (model hook deletes the file from storage)
-        if (!empty($this->removedAttachmentIds)) {
+        if (! empty($this->removedAttachmentIds)) {
             RequestAttachment::query()
                 ->where('request_id', $this->request->id)
                 ->whereIn('id', $this->removedAttachmentIds)
@@ -119,14 +122,14 @@ class RequestEdit extends Component
 
         // Add new attachments
         foreach ($this->files as $file) {
-            $filename = (string) Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('requests/' . $this->request->id, $filename, 'attachments');
+            $filename = (string) Str::uuid().'.'.$file->getClientOriginalExtension();
+            $path = $file->storeAs('requests/'.$this->request->id, $filename, 'attachments');
 
             $thumbnailPath = null;
             if (str_starts_with((string) $file->getMimeType(), 'image/')) {
                 $thumb = app(ThumbnailService::class)->makeJpegThumbnailFromFile($file->getRealPath(), 640);
                 if ($thumb) {
-                    $thumbnailPath = 'requests/' . $this->request->id . '/thumbnails/' . (string) Str::uuid() . '.jpg';
+                    $thumbnailPath = 'requests/'.$this->request->id.'/thumbnails/'.(string) Str::uuid().'.jpg';
                     Storage::disk('attachments')->put($thumbnailPath, $thumb);
                 }
             }
@@ -178,4 +181,3 @@ class RequestEdit extends Component
         ]);
     }
 }
-

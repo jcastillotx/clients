@@ -38,4 +38,3 @@ class DocumentPermission extends Model
         return $this->morphTo('subject');
     }
 }
-

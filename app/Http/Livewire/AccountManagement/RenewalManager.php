@@ -9,8 +9,11 @@ use Livewire\Component;
 class RenewalManager extends Component
 {
     public int $days = 90;
+
     public ?int $editingId = null;
+
     public string $renewalStage = '';
+
     public string $renewalNotes = '';
 
     public function edit(int $contractId): void
@@ -57,4 +60,3 @@ class RenewalManager extends Component
         ]);
     }
 }
-

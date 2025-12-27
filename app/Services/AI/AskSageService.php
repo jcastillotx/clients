@@ -18,7 +18,7 @@ class AskSageService extends HttpJsonProviderService
 
         return match ($mode) {
             'x-api-key' => ['x-api-key' => $key],
-            default => ['Authorization' => 'Bearer ' . $key],
+            default => ['Authorization' => 'Bearer '.$key],
         };
     }
 
@@ -47,4 +47,3 @@ class AskSageService extends HttpJsonProviderService
         ];
     }
 }
-

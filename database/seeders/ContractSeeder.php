@@ -10,6 +10,12 @@ class ContractSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->environment('production')) {
+            $this->command?->warn('Skipping ContractSeeder in production (demo data).');
+
+            return;
+        }
+
         $clients = Client::query()->take(3)->get();
         if ($clients->isEmpty()) {
             $clients = Client::factory()->count(3)->active()->create();
@@ -23,4 +29,3 @@ class ContractSeeder extends Seeder
         }
     }
 }
-

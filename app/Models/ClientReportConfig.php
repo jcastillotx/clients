@@ -27,4 +27,3 @@ class ClientReportConfig extends Model
         return $this->belongsTo(Client::class);
     }
 }
-

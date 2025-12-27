@@ -33,4 +33,3 @@ class AuditIssue extends Model
         return $this->belongsTo(WebsiteAudit::class, 'website_audit_id');
     }
 }
-

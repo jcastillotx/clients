@@ -50,4 +50,3 @@ class ReportDelivery extends Model
         return Storage::disk($this->disk)->url($this->path);
     }
 }
-

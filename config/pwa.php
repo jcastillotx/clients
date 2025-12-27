@@ -22,4 +22,3 @@ return [
     */
     'default_ttl' => (int) env('PWA_PUSH_TTL', 3600),
 ];
-

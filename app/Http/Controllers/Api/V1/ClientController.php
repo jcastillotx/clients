@@ -15,7 +15,7 @@ class ClientController extends Controller
     {
         $user = $request->user();
         abort_unless($user, 401);
-        abort_unless(!$user->isClient() && $user->can('access admin panel'), 403);
+        abort_unless(! $user->isClient() && $user->can('access admin panel'), 403);
 
         $data = Validator::make($request->all(), [
             'company_name' => ['required', 'string', 'max:255'],
@@ -55,4 +55,3 @@ class ClientController extends Controller
         ]);
     }
 }
-

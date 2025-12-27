@@ -27,4 +27,3 @@ class CompetitorMonitoring extends Model
         return $this->belongsTo(BrandCompetitor::class, 'competitor_id');
     }
 }
-

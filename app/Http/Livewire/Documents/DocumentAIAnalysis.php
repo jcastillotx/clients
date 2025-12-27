@@ -12,9 +12,11 @@ class DocumentAIAnalysis extends Component
     public Document $document;
 
     public string $forceType = ''; // contract|invoice|technical|unknown
+
     public string $language = 'en';
 
     public ?AiTask $latestTask = null;
+
     public ?array $analysis = null;
 
     public function mount(Document $document): void
@@ -34,10 +36,10 @@ class DocumentAIAnalysis extends Component
 
     public function refreshLatest(): void
     {
-        $needle = '"document_id":' . (int) $this->document->id;
+        $needle = '"document_id":'.(int) $this->document->id;
         $this->latestTask = AiTask::query()
             ->where('task_type', 'analyze_document')
-            ->where('input_data', 'like', '%' . $needle . '%')
+            ->where('input_data', 'like', '%'.$needle.'%')
             ->orderByDesc('id')
             ->first();
 
@@ -64,4 +66,3 @@ class DocumentAIAnalysis extends Component
         ]);
     }
 }
-

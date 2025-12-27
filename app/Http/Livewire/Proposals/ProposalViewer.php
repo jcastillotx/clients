@@ -16,11 +16,14 @@ class ProposalViewer extends Component
     public Proposal $proposal;
 
     public string $selectedTier = 'better';
+
     public array $selectedAddons = [];
 
     // Signature
     public string $signerName = '';
+
     public string $signatureData = '';
+
     public bool $agree = false;
 
     public function mount(Proposal $proposal): void
@@ -53,9 +56,13 @@ class ProposalViewer extends Component
         $addons = (array) ($pricing['addons'] ?? []);
         $addonTotal = 0.0;
         foreach ($addons as $a) {
-            if (!is_array($a)) continue;
+            if (! is_array($a)) {
+                continue;
+            }
             $key = (string) ($a['key'] ?? '');
-            if ($key === '' || !in_array($key, $this->selectedAddons, true)) continue;
+            if ($key === '' || ! in_array($key, $this->selectedAddons, true)) {
+                continue;
+            }
             $addonTotal += (float) (($a['amount'] ?? null) ?: 0);
         }
 
@@ -102,6 +109,7 @@ class ProposalViewer extends Component
         $onboarding->createOnboardingWorkflow($user->client);
 
         session()->flash('success', 'Proposal signed and accepted. Next: onboarding.');
+
         return redirect()->route('client.onboarding');
     }
 
@@ -117,4 +125,3 @@ class ProposalViewer extends Component
         ]);
     }
 }
-

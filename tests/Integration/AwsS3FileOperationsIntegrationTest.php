@@ -12,7 +12,7 @@ class AwsS3FileOperationsIntegrationTest extends TestCase
 
     public function test_can_connect_to_s3_and_list_objects_in_test_bucket(): void
     {
-        if (!getenv('RUN_INTEGRATION_TESTS')) {
+        if (! getenv('RUN_INTEGRATION_TESTS')) {
             $this->markTestSkipped('Set RUN_INTEGRATION_TESTS=1 to run external integration tests.');
         }
 
@@ -41,4 +41,3 @@ class AwsS3FileOperationsIntegrationTest extends TestCase
         $this->assertIsArray($files);
     }
 }
-

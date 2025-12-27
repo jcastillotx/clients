@@ -10,7 +10,6 @@ use App\Models\StorageFile;
 use App\Models\StorageTag;
 use App\Services\Documents\DocumentAccessService;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -20,16 +19,22 @@ use Livewire\Component;
 class SmartDocumentBrowser extends Component
 {
     public string $search = '';
+
     public string $provider = ''; // local|s3|dropbox|drive
+
     public string $fileType = '';
+
     public string $linkedEntity = ''; // request|invoice|contract
+
     public ?int $tagId = null;
 
     public array $selected = []; // ["document:1", "storage_file:2"]
 
     // bulk link
     public string $bulkLinkType = 'request';
+
     public ?int $bulkLinkId = null;
+
     public string $bulkPurpose = 'supporting';
 
     // bulk tag
@@ -194,7 +199,7 @@ class SmartDocumentBrowser extends Component
             'created_by' => $user->id,
         ]);
 
-        session()->flash('success', 'Share link created: ' . route('documents.share.download', $share->token));
+        session()->flash('success', 'Share link created: '.route('documents.share.download', $share->token));
     }
 
     public function render()
@@ -219,14 +224,14 @@ class SmartDocumentBrowser extends Component
             ->when($this->provider, fn ($q) => $q->where('provider', $this->provider))
             ->when($this->search, function ($q) {
                 $q->where(function ($qq) {
-                    $qq->where('filename', 'like', '%' . $this->search . '%')
-                        ->orWhere('title', 'like', '%' . $this->search . '%');
+                    $qq->where('filename', 'like', '%'.$this->search.'%')
+                        ->orWhere('title', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->fileType, function ($q) {
                 $q->where(function ($qq) {
-                    $qq->where('mime_type', 'like', $this->fileType . '%')
-                        ->orWhere('filename', 'like', '%.' . $this->fileType);
+                    $qq->where('mime_type', 'like', $this->fileType.'%')
+                        ->orWhere('filename', 'like', '%.'.$this->fileType);
                 });
             })
             ->orderByDesc('modified_at')
@@ -236,7 +241,7 @@ class SmartDocumentBrowser extends Component
         // Hydrate minimal view models
         $items = collect($rows)->map(function ($r) {
             return (object) [
-                'key' => $r->item_type . ':' . $r->id,
+                'key' => $r->item_type.':'.$r->id,
                 'item_type' => $r->item_type,
                 'id' => (int) $r->id,
                 'title' => $r->title,
@@ -259,7 +264,7 @@ class SmartDocumentBrowser extends Component
                 ->where('linkable_type', $wantedType)
                 ->select(['source_type', 'source_id'])
                 ->get()
-                ->map(fn ($l) => ($l->source_type === Document::class ? 'document:' : 'storage_file:') . $l->source_id)
+                ->map(fn ($l) => ($l->source_type === Document::class ? 'document:' : 'storage_file:').$l->source_id)
                 ->flip();
             $items = $items->filter(fn ($i) => isset($linked[$i->key]))->values();
         }
@@ -269,8 +274,8 @@ class SmartDocumentBrowser extends Component
             $docIds = DB::table('document_tag')->where('storage_tag_id', $tagId)->pluck('document_id')->all();
             $sfIds = DB::table('storage_file_tag')->where('storage_tag_id', $tagId)->pluck('storage_file_id')->all();
             $allowed = collect(array_merge(
-                array_map(fn ($id) => 'document:' . $id, $docIds),
-                array_map(fn ($id) => 'storage_file:' . $id, $sfIds),
+                array_map(fn ($id) => 'document:'.$id, $docIds),
+                array_map(fn ($id) => 'storage_file:'.$id, $sfIds),
             ))->flip();
             $items = $items->filter(fn ($i) => isset($allowed[$i->key]))->values();
         }
@@ -295,4 +300,3 @@ class SmartDocumentBrowser extends Component
         ]);
     }
 }
-

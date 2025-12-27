@@ -101,6 +101,7 @@ class RequestWebhookObserver
                 'title' => $req->title,
             ], (int) $req->client_id);
             $this->automations->trigger('request.completed', $payload);
+
             return;
         }
 
@@ -126,4 +127,3 @@ class RequestWebhookObserver
         $this->automations->trigger('request.updated', $payload);
     }
 }
-

@@ -13,13 +13,19 @@ class ConnectS3 extends Component
     public ?int $client_id = null;
 
     public string $access_key_id = '';
+
     public string $secret_access_key = '';
+
     public string $region = 'us-east-1';
+
     public string $bucket = '';
+
     public string $folder_path = '';
+
     public bool $is_primary = true;
 
     public string $testMessage = '';
+
     public string $testError = '';
 
     public function mount(): void
@@ -99,6 +105,7 @@ class ConnectS3 extends Component
             return redirect()->route('admin.storage.s3.connect');
         } catch (\Throwable $e) {
             $this->testError = $e->getMessage();
+
             return null;
         }
     }
@@ -131,4 +138,3 @@ class ConnectS3 extends Component
         ])->layout('layouts.admin', ['title' => 'Connect AWS S3']);
     }
 }
-

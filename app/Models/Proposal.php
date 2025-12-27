@@ -73,4 +73,3 @@ class Proposal extends Model
         return $this->hasMany(ProposalSelection::class);
     }
 }
-

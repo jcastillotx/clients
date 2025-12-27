@@ -12,9 +12,7 @@ class EstimateSentForApprovalNotification extends Notification implements Should
 {
     use Queueable;
 
-    public function __construct(public RequestEstimate $estimate)
-    {
-    }
+    public function __construct(public RequestEstimate $estimate) {}
 
     public function via($notifiable): array
     {
@@ -27,12 +25,11 @@ class EstimateSentForApprovalNotification extends Notification implements Should
         $url = route('client.requests.estimate', $req);
 
         return (new MailMessage)
-            ->subject('Estimate ready for approval · Request #' . $req->id)
+            ->subject('Estimate ready for approval · Request #'.$req->id)
             ->greeting('Hello!')
             ->line('Your project estimate is ready to review.')
             ->line("Request: {$req->title}")
             ->action('Review & approve estimate', $url)
-            ->line('— ' . config('app.name'));
+            ->line('— '.config('app.name'));
     }
 }
-

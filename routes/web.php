@@ -1,113 +1,141 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminReportExportController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\InvoiceController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\PrivacyExportController;
-use App\Http\Livewire\Onboarding\OnboardingWizard;
-use App\Http\Livewire\Proposals\ProposalViewer;
-use App\Http\Livewire\WhiteLabel\ClientReportDashboard;
-use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RequestController;
-use App\Http\Controllers\Admin\AdminReportExportController;
-use App\Http\Controllers\Storage\StorageFileController;
-use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Controllers\Documents\DocumentShareController;
 use App\Http\Controllers\Documents\DocumentVersionController;
 use App\Http\Controllers\Documents\DocumentViewerController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Marketing\WebsiteAuditController;
-use App\Http\Livewire\Admin\Reports\ReportDashboard;
-use App\Http\Livewire\Admin\Reports\ReportDeliveries as AdminReportDeliveries;
-use App\Http\Livewire\Admin\Settings\SystemSettings;
-use App\Http\Livewire\Admin\Automation\AutomationIndex;
-use App\Http\Livewire\Admin\Automation\AutomationBuilder;
-use App\Http\Livewire\Admin\Automation\AutomationLogs;
-use App\Http\Livewire\Admin\Requests\AdminRequestManagement;
-use App\Http\Livewire\Admin\Requests\AdminRequestDetail;
-use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
-use App\Http\Livewire\Admin\Requests\ProjectEstimator as AdminProjectEstimator;
-use App\Http\Livewire\Admin\Invoices\AdminInvoiceManagement as AdminInvoiceManagement;
-use App\Http\Livewire\Admin\Invoices\InvoiceCreate as AdminInvoiceCreate;
-use App\Http\Livewire\Admin\Invoices\InvoiceEdit as AdminInvoiceEdit;
-use App\Http\Livewire\Settings\WebhookManagement;
-use App\Http\Livewire\Storage\StorageDashboard;
-use App\Http\Livewire\Storage\StorageConflicts;
-use App\Http\Livewire\Storage\UnifiedFileBrowser;
-use App\Http\Livewire\Storage\StorageSettings;
-use App\Http\Livewire\Admin\Storage\StorageOverview;
-use App\Http\Livewire\Documents\DocumentWorkflow;
-use App\Http\Livewire\Documents\SmartDocumentBrowser;
-use App\Http\Livewire\Documents\DocumentTemplates;
-use App\Http\Livewire\Documents\DocumentAIAnalysis;
-use App\Http\Livewire\Documents\DocumentChat;
-use App\Http\Livewire\Documents\SummarizeDocument;
-use App\Http\Livewire\Client\ProjectDashboard;
-use App\Http\Livewire\Client\Messaging;
-use App\Http\Livewire\Client\KnowledgeBase;
-use App\Http\Livewire\Client\NotificationsCenter;
-use App\Http\Livewire\Client\AnalyticsDashboard;
-use App\Http\Livewire\Client\EstimateApproval;
-use App\Http\Livewire\Communication\MeetingScheduler;
-use App\Http\Livewire\Feedback\FeedbackCollector;
-use App\Http\Livewire\Security\TwoFactorSetup;
-use App\Http\Livewire\Security\PrivacyCenter;
-use App\Http\Livewire\Admin\Security\PrivacyRequests as AdminPrivacyRequests;
-use App\Http\Livewire\Admin\Security\SecurityOverview as AdminSecurityOverview;
-use App\Http\Livewire\Communication\MessagingHub;
-use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
-use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
-use App\Http\Livewire\Communication\EmailDraftAssistant;
-use App\Http\Livewire\Admin\Analytics\AIInsightsDashboard as AdminAIInsightsDashboard;
-use App\Http\Livewire\Admin\Analytics\PredictiveCharts as AdminPredictiveCharts;
-use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMonitor;
-use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
-use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
-use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
-use App\Http\Livewire\Research\CompetitorMonitor as CompetitorMonitorTool;
-use App\Http\Livewire\Research\IndustryInsights as IndustryInsightsTool;
-use App\Http\Livewire\WhiteLabel\WhiteLabelConfigurator;
-use App\Http\Livewire\WhiteLabel\ReportCustomizer;
-use App\Http\Livewire\Proposals\ProposalBuilder;
-use App\Http\Livewire\Proposals\ProposalAnalytics;
-use App\Http\Livewire\Projects\TimeTracker as AdminTimeTracker;
-use App\Http\Livewire\Projects\TaskBoard as AdminTaskBoard;
-use App\Http\Livewire\Projects\ProjectTimeline as AdminProjectTimeline;
-use App\Http\Livewire\Projects\TeamWorkload as AdminTeamWorkload;
-use App\Http\Livewire\Projects\TaskDetail as AdminTaskDetail;
-use App\Http\Livewire\Projects\TimeApprovals as AdminTimeApprovals;
-use App\Http\Livewire\Projects\ProjectBudgets as AdminProjectBudgets;
-use App\Http\Livewire\Feedback\SurveyBuilder;
-use App\Http\Livewire\Feedback\TestimonialManager;
+use App\Http\Controllers\OAuth\SocialOAuthController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PrivacyExportController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\RequestAttachmentController;
+use App\Http\Controllers\RequestController;
+use App\Http\Controllers\Storage\DropboxOAuthController;
+use App\Http\Controllers\Storage\GoogleDriveDownloadController;
+use App\Http\Controllers\Storage\GoogleDriveOAuthController;
+use App\Http\Controllers\Storage\StorageFileController;
+use App\Http\Controllers\Webhook\StripeWebhookController;
 use App\Http\Livewire\AccountManagement\AccountHealthDashboard;
 use App\Http\Livewire\AccountManagement\QBRBuilder;
 use App\Http\Livewire\AccountManagement\RenewalManager;
 use App\Http\Livewire\AccountManagement\UpsellTracker;
-use App\Http\Livewire\Partners\PartnerManager;
-use App\Http\Livewire\Partners\ReferralDashboard;
-use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
-use App\Http\Livewire\Marketing\AuditResults as MarketingAuditResults;
-use App\Http\Livewire\Admin\AI\AIProviderManagement as AdminAIProviderManagement;
+use App\Http\Livewire\Admin\AI\AIAuditLog as AdminAIAuditLog;
 use App\Http\Livewire\Admin\AI\AIProviderForm as AdminAIProviderForm;
+use App\Http\Livewire\Admin\AI\AIProviderManagement as AdminAIProviderManagement;
+use App\Http\Livewire\Admin\AI\AIQualityMetrics as AdminAIQualityMetrics;
+use App\Http\Livewire\Admin\AI\AIReviewQueue as AdminAIReviewQueue;
+use App\Http\Livewire\Admin\AI\AISafetyDashboard as AdminAISafetyDashboard;
 use App\Http\Livewire\Admin\AI\AITaskConfiguration as AdminAITaskConfiguration;
 use App\Http\Livewire\Admin\AI\AIUsageDashboard as AdminAIUsageDashboard;
-use App\Http\Livewire\Admin\AI\AIAuditLog as AdminAIAuditLog;
-use App\Http\Livewire\Admin\AI\AISafetyDashboard as AdminAISafetyDashboard;
-use App\Http\Livewire\Admin\AI\AIReviewQueue as AdminAIReviewQueue;
-use App\Http\Livewire\Admin\AI\AIQualityMetrics as AdminAIQualityMetrics;
+use App\Http\Livewire\Admin\Analytics\AIInsightsDashboard as AdminAIInsightsDashboard;
+use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMonitor;
+use App\Http\Livewire\Admin\Analytics\PredictiveCharts as AdminPredictiveCharts;
+use App\Http\Livewire\Admin\Automation\AutomationBuilder;
+use App\Http\Livewire\Admin\Automation\AutomationIndex;
+use App\Http\Livewire\Admin\Automation\AutomationLogs;
+use App\Http\Livewire\Admin\BrandMonitoring\ApiStatus as AdminBrandMonitoringApiStatus;
+use App\Http\Livewire\Admin\BrandMonitoring\Dashboard as AdminBrandMonitoringDashboard;
+use App\Http\Livewire\Admin\Clients\ClientCreate;
+use App\Http\Livewire\Admin\Clients\ClientDetail;
+use App\Http\Livewire\Admin\Clients\ClientEdit;
+use App\Http\Livewire\Admin\Clients\ClientManagement;
+use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
+use App\Http\Livewire\Admin\Invoices\AdminInvoiceManagement;
+use App\Http\Livewire\Admin\Invoices\InvoiceCreate as AdminInvoiceCreate;
+use App\Http\Livewire\Admin\Invoices\InvoiceEdit as AdminInvoiceEdit;
+use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
+use App\Http\Livewire\Admin\Reports\ReportDashboard;
+use App\Http\Livewire\Admin\Reports\ReportDeliveries as AdminReportDeliveries;
+use App\Http\Livewire\Admin\Requests\AdminRequestDetail;
+use App\Http\Livewire\Admin\Requests\AdminRequestManagement;
+use App\Http\Livewire\Admin\Requests\ProjectEstimator as AdminProjectEstimator;
+use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
+use App\Http\Livewire\Admin\Security\PrivacyRequests as AdminPrivacyRequests;
+use App\Http\Livewire\Admin\Security\SecurityOverview as AdminSecurityOverview;
+use App\Http\Livewire\Admin\Settings\SystemSettings;
+use App\Http\Livewire\Admin\Social\ContentCalendar;
+use App\Http\Livewire\Admin\Social\PostCreator;
+use App\Http\Livewire\Admin\Social\PostManager;
+use App\Http\Livewire\Admin\Storage\StorageOverview;
+use App\Http\Livewire\Admin\Users\Permissions as AdminUserPermissions;
+use App\Http\Livewire\Admin\Users\UserCreate;
+use App\Http\Livewire\Admin\Users\UserEdit;
+use App\Http\Livewire\Admin\Users\UserManagement;
 use App\Http\Livewire\AI\AIAssistantChat as AdminAssistantChat;
-use App\Http\Livewire\AI\PromptTemplateManager as AdminPromptTemplates;
+use App\Http\Livewire\AI\ClientAssistantChat;
 use App\Http\Livewire\AI\KnowledgeBase as AdminKnowledgeBase;
+use App\Http\Livewire\AI\PromptTemplateManager as AdminPromptTemplates;
 use App\Http\Livewire\AI\WorkflowBuilder as AdminWorkflowBuilder;
-use App\Http\Livewire\AI\ClientAssistantChat as ClientAssistantChat;
-use App\Http\Livewire\Technical\CodeReviewer as AdminCodeReviewer;
+use App\Http\Livewire\Client\AnalyticsDashboard;
+use App\Http\Livewire\Client\BrandMonitoring\MyMentions as ClientMyMentions;
+use App\Http\Livewire\Client\EstimateApproval;
+use App\Http\Livewire\Client\KnowledgeBase;
+use App\Http\Livewire\Client\Messaging;
+use App\Http\Livewire\Client\NotificationsCenter;
+use App\Http\Livewire\Client\ProjectDashboard;
+use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
+use App\Http\Livewire\Client\Social\AccountManager as SocialAccountManager;
+use App\Http\Livewire\Client\Social\PendingApprovals;
+use App\Http\Livewire\Communication\EmailDraftAssistant;
+use App\Http\Livewire\Communication\MeetingScheduler;
+use App\Http\Livewire\Communication\MessagingHub;
+use App\Http\Livewire\Documents\DocumentAIAnalysis;
+use App\Http\Livewire\Documents\DocumentChat;
+use App\Http\Livewire\Documents\DocumentTemplates;
+use App\Http\Livewire\Documents\DocumentWorkflow;
+use App\Http\Livewire\Documents\SmartDocumentBrowser;
+use App\Http\Livewire\Documents\SummarizeDocument;
+use App\Http\Livewire\Feedback\FeedbackCollector;
+use App\Http\Livewire\Feedback\SurveyBuilder;
+use App\Http\Livewire\Feedback\TestimonialManager;
+use App\Http\Livewire\Marketing\AuditResults as MarketingAuditResults;
+use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
+use App\Http\Livewire\Onboarding\OnboardingWizard;
+use App\Http\Livewire\Partners\PartnerManager;
+use App\Http\Livewire\Partners\ReferralDashboard;
+use App\Http\Livewire\Projects\ProjectBudgets as AdminProjectBudgets;
+use App\Http\Livewire\Projects\ProjectTimeline as AdminProjectTimeline;
+use App\Http\Livewire\Projects\TaskBoard as AdminTaskBoard;
+use App\Http\Livewire\Projects\TaskDetail as AdminTaskDetail;
+use App\Http\Livewire\Projects\TeamWorkload as AdminTeamWorkload;
+use App\Http\Livewire\Projects\TimeApprovals as AdminTimeApprovals;
+use App\Http\Livewire\Projects\TimeTracker as AdminTimeTracker;
+use App\Http\Livewire\Proposals\ProposalAnalytics;
+use App\Http\Livewire\Proposals\ProposalBuilder;
+use App\Http\Livewire\Proposals\ProposalViewer;
+use App\Http\Livewire\Research\CompetitorMonitor as CompetitorMonitorTool;
+use App\Http\Livewire\Research\IndustryInsights as IndustryInsightsTool;
+use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
+use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
+use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
+use App\Http\Livewire\Security\PrivacyCenter;
+use App\Http\Livewire\Security\TwoFactorSetup;
+use App\Http\Livewire\Settings\WebhookManagement;
+use App\Http\Livewire\Storage\ConnectDropbox;
+use App\Http\Livewire\Storage\ConnectGoogleDrive;
+use App\Http\Livewire\Storage\ConnectS3;
+use App\Http\Livewire\Storage\DropboxBrowser;
+use App\Http\Livewire\Storage\GoogleDriveBrowser;
+use App\Http\Livewire\Storage\S3Browser;
+use App\Http\Livewire\Storage\StorageConflicts;
+use App\Http\Livewire\Storage\StorageDashboard;
+use App\Http\Livewire\Storage\StorageSettings;
+use App\Http\Livewire\Storage\UnifiedFileBrowser;
 use App\Http\Livewire\Technical\ArchitectureAdvisor as AdminArchitectureAdvisor;
+use App\Http\Livewire\Technical\CodeReviewer as AdminCodeReviewer;
+use App\Http\Livewire\WhiteLabel\ClientReportDashboard;
+use App\Http\Livewire\WhiteLabel\ReportCustomizer;
+use App\Http\Livewire\WhiteLabel\WhiteLabelConfigurator;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PushSubscriptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +155,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
     ->get('/api/documentation', function (Generator $generator) {
         $config = Scramble::configure();
         $spec = $generator($config);
+
         return view('api-docs', compact('spec', 'config'));
     })
     ->name('api.documentation');
@@ -134,9 +163,28 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
 Route::middleware(['auth', 'verified', 'permission:access admin panel'])
     ->get('/api/documentation.json', function (Generator $generator) {
         $config = Scramble::configure();
+
         return response()->json($generator($config), options: JSON_PRETTY_PRINT);
     })
     ->name('api.documentation.json');
+
+// Backwards-compatible aliases (docs reference /docs/api)
+Route::middleware(['auth', 'verified', 'permission:access admin panel'])
+    ->get('/docs/api', function (Generator $generator) {
+        $config = Scramble::configure();
+        $spec = $generator($config);
+
+        return view('api-docs', compact('spec', 'config'));
+    })
+    ->name('docs.api');
+
+Route::middleware(['auth', 'verified', 'permission:access admin panel'])
+    ->get('/docs/api.json', function (Generator $generator) {
+        $config = Scramble::configure();
+
+        return response()->json($generator($config), options: JSON_PRETTY_PRINT);
+    })
+    ->name('docs.api.json');
 
 /*
 |--------------------------------------------------------------------------
@@ -161,6 +209,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Service Requests
     Route::resource('requests', RequestController::class);
+    Route::get('/requests/{request}/attachments/{attachment}/download', [RequestAttachmentController::class, 'download'])
+        ->name('requests.attachments.download');
     Route::get('/requests/{request}/estimate', EstimateApproval::class)->name('client.requests.estimate');
 
     // Contracts
@@ -215,6 +265,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/storage/conflicts', StorageConflicts::class)->name('storage.conflicts');
     Route::get('/storage/files/{storageFile}/download', [StorageFileController::class, 'download'])->name('storage.files.download');
 
+    // Storage OAuth + downloads
+    Route::get('/storage/dropbox/authorize', [DropboxOAuthController::class, 'authorize'])->name('storage.dropbox.authorize');
+    Route::get('/storage/dropbox/callback', [DropboxOAuthController::class, 'callback'])->name('storage.dropbox.callback');
+
+    Route::get('/storage/google/authorize', [GoogleDriveOAuthController::class, 'authorize'])->name('storage.google-drive.authorize');
+    Route::get('/storage/google/callback', [GoogleDriveOAuthController::class, 'callback'])->name('storage.google-drive.callback');
+
+    Route::get('/storage/google-drive/{connection}/download', [GoogleDriveDownloadController::class, 'download'])->name('storage.google-drive.download');
+
     // Client advanced features
     Route::get('/projects', ProjectDashboard::class)->name('client.projects');
     Route::get('/messages', Messaging::class)->name('client.messaging');
@@ -235,6 +294,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
     Route::get('/reports', ClientReportDashboard::class)->name('client.reports');
     Route::get('/reports/archive', ClientReportArchive::class)->name('client.reports.archive');
+
+    // Brand monitoring (requires brand_monitoring feature)
+    Route::get('/brand-monitoring/my-mentions', ClientMyMentions::class)
+        ->name('client.brand-monitoring.my-mentions')
+        ->middleware('feature:brand_monitoring');
+
+    // Social Media Management
+    Route::prefix('social')->name('social.')->group(function () {
+        Route::get('/pending-approvals', PendingApprovals::class)->name('pending-approvals');
+        Route::get('/accounts', SocialAccountManager::class)->name('accounts');
+    });
+
+    // OAuth Routes (must be authenticated but not client-specific)
+    Route::prefix('oauth')->name('oauth.')->group(function () {
+        Route::get('/facebook', [SocialOAuthController::class, 'facebookRedirect'])->name('facebook.redirect');
+        Route::get('/facebook/callback', [SocialOAuthController::class, 'facebookCallback'])->name('facebook.callback');
+        Route::get('/linkedin', [SocialOAuthController::class, 'linkedinRedirect'])->name('linkedin.redirect');
+        Route::get('/linkedin/callback', [SocialOAuthController::class, 'linkedinCallback'])->name('linkedin.callback');
+        Route::delete('/disconnect/{platform}', [SocialOAuthController::class, 'disconnect'])->name('disconnect');
+    });
+
     Route::get('/privacy', PrivacyCenter::class)->name('client.privacy');
     Route::get('/privacy/requests/{privacyRequest}/download', [PrivacyExportController::class, 'download'])->name('privacy.export.download');
     Route::get('/proposals/{proposal}', ProposalViewer::class)->name('client.proposals.view');
@@ -256,6 +336,22 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        // Dashboard
+        Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('index');
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        // Clients
+        Route::get('/clients', ClientManagement::class)->name('clients.index')->middleware('permission:view_any_client');
+        Route::get('/clients/create', ClientCreate::class)->name('clients.create')->middleware('permission:create_client');
+        Route::get('/clients/{client}', ClientDetail::class)->name('clients.show')->middleware('permission:view_client');
+        Route::get('/clients/{client}/edit', ClientEdit::class)->name('clients.edit')->middleware('permission:update_client');
+
+        // Users & permissions
+        Route::get('/users', UserManagement::class)->name('users.index')->middleware('permission:view_any_user');
+        Route::get('/users/create', UserCreate::class)->name('users.create')->middleware('permission:create_user');
+        Route::get('/users/{user}/edit', UserEdit::class)->name('users.edit')->middleware('permission:update_user');
+        Route::get('/users/permissions', AdminUserPermissions::class)->name('users.permissions')->middleware('permission:manage_permissions');
+
         // Requests
         Route::get('/requests', AdminRequestManagement::class)->name('requests.index');
         Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
@@ -276,7 +372,8 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/security', AdminSecurityOverview::class)->name('security.overview')->middleware('permission:manage settings');
 
         // Reports
-        Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
+        Route::get('/reports', ReportDashboard::class)->name('reports')->middleware('permission:view reports');
+        Route::get('/reports/dashboard', fn () => redirect()->route('admin.reports'))->name('reports.dashboard')->middleware('permission:view reports');
         Route::get('/reports/deliveries', AdminReportDeliveries::class)->name('reports.deliveries')->middleware('permission:view reports');
         Route::get('/white-label', WhiteLabelConfigurator::class)->name('white-label')->middleware('permission:manage settings');
         Route::get('/client-reports', ReportCustomizer::class)->name('client-reports')->middleware('permission:manage settings');
@@ -309,11 +406,35 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/partners', PartnerManager::class)->name('partners');
         Route::get('/referrals', ReferralDashboard::class)->name('referrals');
 
+        // Storage management (admin/staff)
+        Route::get('/storage', StorageOverview::class)->name('storage');
+        Route::get('/storage/overview', fn () => redirect()->route('admin.storage'))->name('storage.overview');
+        Route::get('/storage/s3/connect', ConnectS3::class)->name('storage.s3.connect');
+        Route::get('/storage/s3/browse/{connection?}', S3Browser::class)->name('storage.s3.browse');
+        Route::get('/storage/dropbox/connect', ConnectDropbox::class)->name('storage.dropbox.connect');
+        Route::get('/storage/dropbox/browse/{connection?}', DropboxBrowser::class)->name('storage.dropbox.browse');
+        Route::get('/storage/google-drive/connect', ConnectGoogleDrive::class)->name('storage.google-drive.connect');
+        Route::get('/storage/google-drive/browse/{connection?}', GoogleDriveBrowser::class)->name('storage.google-drive.browse');
+
         // Marketing: Website auditing (MVP UI)
         Route::prefix('marketing')->name('marketing.')->group(function () {
             Route::get('/website-auditor', MarketingWebsiteAuditor::class)->name('website-auditor');
             Route::get('/audit-results', MarketingAuditResults::class)->name('audit-results');
             Route::get('/website-audits/{websiteAudit}/pdf', [WebsiteAuditController::class, 'pdf'])->name('website-audits.pdf');
+        });
+
+        // Brand monitoring (admin views - no feature check needed, admins see all clients)
+        Route::prefix('brand-monitoring')->name('brand-monitoring.')->group(function () {
+            Route::get('/', AdminBrandMonitoringDashboard::class)->name('dashboard');
+            Route::get('/api-status', AdminBrandMonitoringApiStatus::class)->name('api-status');
+        });
+
+        // Social Media Management
+        Route::prefix('social')->name('social.')->group(function () {
+            Route::get('/posts', PostManager::class)->name('posts');
+            Route::get('/posts/create', PostCreator::class)->name('posts.create');
+            Route::get('/posts/{post}/edit', PostCreator::class)->name('posts.edit');
+            Route::get('/content-calendar', ContentCalendar::class)->name('content-calendar');
         });
 
         // AI analytics
@@ -350,18 +471,27 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             ->middleware('permission:view reports');
 
         // Admin storage overview
-        Route::get('/storage/overview', StorageOverview::class)->name('storage.overview');
+        // (handled above)
 
         // System settings
-        Route::get('/settings', SystemSettings::class)->name('settings.index')->middleware('permission:manage settings');
+        Route::get('/settings', SystemSettings::class)->name('settings')->middleware('permission:manage settings');
+        Route::get('/settings/index', fn () => redirect()->route('admin.settings'))->name('settings.index')->middleware('permission:manage settings');
 
         // Webhooks
         Route::get('/webhooks', WebhookManagement::class)->name('webhooks.index')->middleware('permission:manage settings');
+        Route::get('/settings/webhooks', fn () => redirect()->route('admin.webhooks.index'))->name('settings.webhooks')->middleware('permission:manage settings');
 
         // Automation
         Route::get('/automation', AutomationIndex::class)->name('automation.index');
         Route::get('/automation/builder/{rule?}', AutomationBuilder::class)->name('automation.builder');
         Route::get('/automation/logs', AutomationLogs::class)->name('automation.logs');
+
+        // Activity log (uses the main app layout for Tailwind styles)
+        Route::get('/activity', fn () => view('admin.activity'))->name('activity')->middleware('permission:access admin panel');
+
+        // Convenience redirects for legacy links in templates
+        Route::get('/documents', fn () => redirect()->route('documents.index'))->name('documents');
+        Route::get('/contracts', fn () => redirect()->route('contracts.index'))->name('contracts');
     });
 
 /*

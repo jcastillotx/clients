@@ -2,23 +2,27 @@
 
 namespace App\Livewire\Requests;
 
+use App\Models\ActivityLog;
 use App\Models\Request;
 use App\Models\RequestAttachment;
-use App\Models\ActivityLog;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class CreateRequest extends Component
 {
     use WithFileUploads;
 
     public string $title = '';
+
     public string $description = '';
+
     public string $type = 'support';
+
     public string $priority = 'medium';
+
     public ?string $due_date = null;
+
     public array $attachments = [];
 
     protected function rules(): array
@@ -26,10 +30,10 @@ class CreateRequest extends Component
         return [
             'title' => 'required|string|max:255',
             'description' => 'required|string|min:20',
-            'type' => 'required|in:' . implode(',', array_keys(config('client-portal.request_types'))),
-            'priority' => 'required|in:' . implode(',', array_keys(config('client-portal.request_priorities'))),
+            'type' => 'required|in:'.implode(',', array_keys(config('client-portal.request_types'))),
+            'priority' => 'required|in:'.implode(',', array_keys(config('client-portal.request_priorities'))),
             'due_date' => 'nullable|date|after:today',
-            'attachments.*' => 'nullable|file|max:' . config('client-portal.max_upload_size'),
+            'attachments.*' => 'nullable|file|max:'.config('client-portal.max_upload_size'),
         ];
     }
 
@@ -58,9 +62,9 @@ class CreateRequest extends Component
 
         // Handle attachments
         foreach ($this->attachments as $file) {
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs(
-                'requests/' . $request->id,
+                'requests/'.$request->id,
                 $filename,
                 'attachments'
             );

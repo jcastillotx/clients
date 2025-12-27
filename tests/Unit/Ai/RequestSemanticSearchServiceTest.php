@@ -9,7 +9,7 @@ class RequestSemanticSearchServiceTest extends TestCase
 {
     public function test_cosine_similarity_orders_vectors_as_expected(): void
     {
-        $svc = new RequestSemanticSearchService();
+        $svc = new RequestSemanticSearchService;
 
         $a = [1, 0, 0];
         $b = [1, 0, 0];
@@ -21,7 +21,7 @@ class RequestSemanticSearchServiceTest extends TestCase
 
     public function test_variance_stats_returns_median_ratio(): void
     {
-        $svc = new RequestSemanticSearchService();
+        $svc = new RequestSemanticSearchService;
 
         $stats = $svc->varianceStats([
             ['estimated_hours' => 10.0, 'actual_hours' => 12.0], // 1.2
@@ -33,4 +33,3 @@ class RequestSemanticSearchServiceTest extends TestCase
         $this->assertEqualsWithDelta(1.2, (float) $stats['median_ratio'], 1e-9);
     }
 }
-

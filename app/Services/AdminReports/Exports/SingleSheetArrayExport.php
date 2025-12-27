@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 class SingleSheetArrayExport implements FromCollection, WithHeadings, WithTitle
 {
     private array $rows;
+
     private array $headings;
 
     public function __construct(private readonly string $title, array $rows)
@@ -30,7 +31,7 @@ class SingleSheetArrayExport implements FromCollection, WithHeadings, WithTitle
 
     public function collection(): Collection
     {
-        if (!$this->rows) {
+        if (! $this->rows) {
             return collect([['(no data)' => '(no data)']]);
         }
 
@@ -39,4 +40,3 @@ class SingleSheetArrayExport implements FromCollection, WithHeadings, WithTitle
         });
     }
 }
-

@@ -25,4 +25,3 @@ class SecurityOverview extends Component
         ])->layout('layouts.admin', ['title' => 'Security settings']);
     }
 }
-

@@ -6,13 +6,11 @@ use App\Services\AI\AIProviderManager;
 
 class WebsiteAuditAiInsightsService
 {
-    public function __construct(private readonly AIProviderManager $ai)
-    {
-    }
+    public function __construct(private readonly AIProviderManager $ai) {}
 
     /**
-     * @param array<string,mixed> $report
-     * @param array{client_id?:?int, preferred_provider?:string, model?:?string} $options
+     * @param  array<string,mixed>  $report
+     * @param  array{client_id?:?int, preferred_provider?:string, model?:?string}  $options
      * @return array{summary:string, recommendations:array<int,array<string,mixed>>, roadmap:array<int,array<string,mixed>>, roi:array<string,mixed>, raw:?array<string,mixed>}
      */
     public function generate(array $report, array $options = []): array
@@ -59,7 +57,7 @@ class WebsiteAuditAiInsightsService
     }
 
     /**
-     * @param array<string,mixed> $report
+     * @param  array<string,mixed>  $report
      */
     protected function buildPrompt(array $report): string
     {
@@ -103,14 +101,16 @@ PROMPT;
     protected function tryParseJson(string $text): ?array
     {
         $text = trim($text);
-        if ($text === '') return null;
+        if ($text === '') {
+            return null;
+        }
 
         // Common: model wraps JSON in fences; strip them.
         $text = preg_replace('/^```(?:json)?\s*/i', '', $text) ?? $text;
         $text = preg_replace('/\s*```$/', '', $text) ?? $text;
 
         $decoded = json_decode($text, true);
+
         return is_array($decoded) ? $decoded : null;
     }
 }
-

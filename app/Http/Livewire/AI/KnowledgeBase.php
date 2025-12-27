@@ -33,6 +33,7 @@ class KnowledgeBase extends Component
         if ($exists) {
             KnowledgeBaseDocument::query()->where('document_id', $documentId)->delete();
             session()->flash('success', 'Removed from knowledge base.');
+
             return;
         }
 
@@ -50,7 +51,9 @@ class KnowledgeBase extends Component
     protected function authorizeAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->can('access admin panel')) abort(403);
+        if (! $u || ! $u->can('access admin panel')) {
+            abort(403);
+        }
     }
 
     public function render()
@@ -62,7 +65,7 @@ class KnowledgeBase extends Component
         $docs = Document::query()
             ->orderByDesc('id')
             ->when(trim($this->search) !== '', function ($q) {
-                $s = '%' . trim($this->search) . '%';
+                $s = '%'.trim($this->search).'%';
                 $q->where('title', 'like', $s)->orWhere('original_filename', 'like', $s);
             })
             ->paginate(20);
@@ -73,4 +76,3 @@ class KnowledgeBase extends Component
         ])->layout('layouts.admin', ['title' => 'AI Knowledge Base']);
     }
 }
-

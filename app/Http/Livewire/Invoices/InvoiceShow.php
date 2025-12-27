@@ -34,4 +34,3 @@ class InvoiceShow extends Component
         return view('livewire.invoices.show');
     }
 }
-

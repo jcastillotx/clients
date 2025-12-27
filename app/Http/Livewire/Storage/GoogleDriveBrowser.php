@@ -15,9 +15,11 @@ class GoogleDriveBrowser extends Component
     use WithFileUploads;
 
     public ?StorageConnection $connection = null;
+
     public ?int $connectionId = null;
 
     public string $folderId = '';
+
     public string $search = '';
 
     /** @var array<int, array<string, mixed>> */
@@ -32,9 +34,13 @@ class GoogleDriveBrowser extends Component
     public string $newFolderName = '';
 
     public bool $linkModalOpen = false;
+
     public string $linkFileId = '';
+
     public string $linkFileName = '';
+
     public string $linkFileMime = '';
+
     public ?int $linkDocumentId = null;
 
     public function mount(?int $connection = null, ?string $folder = null): void
@@ -62,13 +68,13 @@ class GoogleDriveBrowser extends Component
         }
 
         $conn = $q->first();
-        if (!$conn) {
+        if (! $conn) {
             abort(404, 'Google Drive connection not found.');
         }
 
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $allowed = $user->assignedClientIds();
-            if (!in_array((int) $conn->client_id, $allowed, true)) {
+            if (! in_array((int) $conn->client_id, $allowed, true)) {
                 abort(403, 'You do not have access to this client storage.');
             }
         }
@@ -81,7 +87,7 @@ class GoogleDriveBrowser extends Component
         $this->connectionId = $conn->id;
     }
 
-    public function refreshListing(GoogleDriveService $drive = null): void
+    public function refreshListing(?GoogleDriveService $drive = null): void
     {
         $drive ??= app(GoogleDriveService::class);
         $drive->useConnection($this->connection);
@@ -127,7 +133,7 @@ class GoogleDriveBrowser extends Component
     public function upload(GoogleDriveService $drive): void
     {
         $this->validate([
-            'uploads.*' => ['file', 'max:' . (int) (config('client-portal.max_document_upload_size', 51200))],
+            'uploads.*' => ['file', 'max:'.(int) (config('client-portal.max_document_upload_size', 51200))],
         ]);
 
         $drive->useConnection($this->connection);
@@ -229,4 +235,3 @@ class GoogleDriveBrowser extends Component
         ])->layout('layouts.admin', ['title' => 'Google Drive Browser']);
     }
 }
-

@@ -32,10 +32,10 @@ class DocumentShareController extends Controller
             $source->loadMissing('connection');
             $disk = $source->connection?->disk;
             abort_unless($disk, 404);
+
             return Storage::disk($disk)->download($source->path, $source->filename);
         }
 
         abort(404);
     }
 }
-

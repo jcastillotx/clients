@@ -19,16 +19,25 @@ class TaskDetail extends Component
     public Task $task;
 
     public string $title = '';
+
     public string $description = '';
+
     public string $status = 'todo';
+
     public string $priority = 'normal';
+
     public ?int $assignedTo = null;
+
     public ?string $startDate = null;
+
     public ?string $dueDate = null;
+
     public ?int $dependsOnTaskId = null;
+
     public string $estimatedHours = '';
 
     public string $newComment = '';
+
     public bool $newCommentInternal = true;
 
     public $upload;
@@ -127,8 +136,8 @@ class TaskDetail extends Component
         ])->validate();
 
         $file = $this->upload;
-        $filename = (string) Str::uuid() . '_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $file->getClientOriginalName());
-        $path = $file->storeAs('tasks/' . $this->task->id, $filename, 'attachments');
+        $filename = (string) Str::uuid().'_'.preg_replace('/[^A-Za-z0-9._-]/', '_', $file->getClientOriginalName());
+        $path = $file->storeAs('tasks/'.$this->task->id, $filename, 'attachments');
 
         TaskAttachment::create([
             'task_id' => $this->task->id,
@@ -164,4 +173,3 @@ class TaskDetail extends Component
         return view('livewire.projects.task-detail', compact('assignees', 'otherTasks', 'comments', 'attachments'));
     }
 }
-

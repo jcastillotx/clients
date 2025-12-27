@@ -30,7 +30,7 @@ class SyncStorageConnection implements ShouldQueue
     public function handle(): void
     {
         $connection = StorageConnection::query()->with('client')->find($this->connectionId);
-        if (!$connection) {
+        if (! $connection) {
             return;
         }
 
@@ -141,7 +141,7 @@ class SyncStorageConnection implements ShouldQueue
         $processed = 0;
         $seen = [];
 
-        while (!empty($queue) && $processed < $this->maxFiles) {
+        while (! empty($queue) && $processed < $this->maxFiles) {
             $folderId = array_shift($queue);
             if (isset($seen[$folderId])) {
                 continue;
@@ -150,18 +150,24 @@ class SyncStorageConnection implements ShouldQueue
 
             // Add subfolders.
             foreach ($svc->listFolders($folderId) as $f) {
-                if ($processed >= $this->maxFiles) break;
+                if ($processed >= $this->maxFiles) {
+                    break;
+                }
                 $id = (string) ($f['id'] ?? '');
-                if ($id !== '' && !isset($seen[$id])) {
+                if ($id !== '' && ! isset($seen[$id])) {
                     $queue[] = $id;
                 }
             }
 
             // Upsert files.
             foreach ($svc->listFiles($folderId) as $f) {
-                if ($processed >= $this->maxFiles) break;
+                if ($processed >= $this->maxFiles) {
+                    break;
+                }
                 $id = (string) ($f['id'] ?? '');
-                if ($id === '') continue;
+                if ($id === '') {
+                    continue;
+                }
 
                 SyncedFile::query()->updateOrCreate(
                     [
@@ -195,7 +201,7 @@ class SyncStorageConnection implements ShouldQueue
         $processed = 0;
         $stack = [['path' => '', 'token' => null]];
 
-        while (!empty($stack) && $processed < $this->maxFiles) {
+        while (! empty($stack) && $processed < $this->maxFiles) {
             $frame = array_pop($stack);
             $path = (string) ($frame['path'] ?? '');
             $token = $frame['token'] ?? null;
@@ -205,16 +211,22 @@ class SyncStorageConnection implements ShouldQueue
             // Queue subfolders.
             foreach (($page['folders'] ?? []) as $folder) {
                 $name = (string) ($folder['name'] ?? '');
-                if ($name === '') continue;
-                $sub = trim(($path === '' ? $name : ($path . '/' . $name)), '/');
+                if ($name === '') {
+                    continue;
+                }
+                $sub = trim(($path === '' ? $name : ($path.'/'.$name)), '/');
                 $stack[] = ['path' => $sub, 'token' => null];
             }
 
             // Upsert files.
             foreach (($page['files'] ?? []) as $f) {
-                if ($processed >= $this->maxFiles) break;
+                if ($processed >= $this->maxFiles) {
+                    break;
+                }
                 $id = (string) ($f['id'] ?? '');
-                if ($id === '') continue;
+                if ($id === '') {
+                    continue;
+                }
 
                 SyncedFile::query()->updateOrCreate(
                     [
@@ -281,7 +293,7 @@ class SyncStorageConnection implements ShouldQueue
             if ($strategy === 'prefer_primary' && $primaryConnectionId > 0) {
                 $winner = $files->firstWhere('storage_connection_id', $primaryConnectionId);
             }
-            if (!$winner) {
+            if (! $winner) {
                 $winner = $files->sortByDesc(function (SyncedFile $f) {
                     return $f->last_modified_at?->getTimestamp()
                         ?? $f->synced_at?->getTimestamp()
@@ -308,4 +320,3 @@ class SyncStorageConnection implements ShouldQueue
         }
     }
 }
-

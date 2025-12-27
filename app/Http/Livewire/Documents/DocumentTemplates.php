@@ -15,14 +15,20 @@ use Livewire\Component;
 class DocumentTemplates extends Component
 {
     public string $name = '';
+
     public string $category = 'general';
+
     public string $body = '';
+
     public string $variables_csv = 'client_name, client_email, company_name';
 
     // generate
     public ?int $generate_client_id = null;
+
     public ?int $generate_template_id = null;
+
     public string $generate_destination = 'local'; // local|connection:{id}
+
     public string $generate_title = '';
 
     public function mount(): void
@@ -77,8 +83,8 @@ class DocumentTemplates extends Component
 
         $rendered = $this->renderTemplate($tpl->body ?? '', $client);
 
-        $filename = Str::slug($this->generate_title) . '.html';
-        $path = 'generated/' . now()->format('Ymd_His') . '_' . $filename;
+        $filename = Str::slug($this->generate_title).'.html';
+        $path = 'generated/'.now()->format('Ymd_His').'_'.$filename;
 
         $providerDisk = null;
         $providerLabel = 'Local';
@@ -131,6 +137,7 @@ class DocumentTemplates extends Component
         // Simple {{var}} replacement
         return preg_replace_callback('/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/', function ($m) use ($vars) {
             $k = $m[1];
+
             return isset($vars[$k]) ? e((string) $vars[$k]) : $m[0];
         }, $body) ?? $body;
     }
@@ -148,12 +155,11 @@ class DocumentTemplates extends Component
                 ->orderByDesc('is_primary')
                 ->get()
                 ->map(fn ($c) => [
-                    'value' => 'connection:' . $c->id,
-                    'label' => "{$c->name} (" . strtoupper($c->provider) . ")",
+                    'value' => 'connection:'.$c->id,
+                    'label' => "{$c->name} (".strtoupper($c->provider).')',
                 ]);
         }
 
         return view('livewire.documents.templates', compact('templates', 'clients', 'connections'));
     }
 }
-

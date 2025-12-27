@@ -13,6 +13,7 @@ use Livewire\Component;
 class TimeApprovals extends Component
 {
     public ?int $userId = null;
+
     public string $weekStart = ''; // Y-m-d
 
     public function mount(TimeEntryLockService $locks): void
@@ -84,7 +85,9 @@ class TimeApprovals extends Component
         $isLocked = false;
         if ($this->userId) {
             $target = User::query()->find($this->userId);
-            if ($target) $isLocked = $locks->isLocked($target, $ws);
+            if ($target) {
+                $isLocked = $locks->isLocked($target, $ws);
+            }
         }
 
         $lockRow = ($this->userId)
@@ -94,4 +97,3 @@ class TimeApprovals extends Component
         return view('livewire.projects.time-approvals', compact('users', 'entries', 'ws', 'isLocked', 'lockRow'));
     }
 }
-

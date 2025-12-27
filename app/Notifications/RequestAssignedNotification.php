@@ -24,15 +24,14 @@ class RequestAssignedNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Request assigned · #' . $this->request->id)
+            ->subject('Request assigned · #'.$this->request->id)
             ->greeting('Hello!')
             ->line('A request has been assigned to you.')
-            ->line("Client: " . ($this->request->client?->company_name ?? ('Client #' . $this->request->client_id)))
+            ->line('Client: '.($this->request->client?->company_name ?? ('Client #'.$this->request->client_id)))
             ->line("Title: {$this->request->title}")
             ->line("Priority: {$this->request->priority}")
             ->line("Status: {$this->request->status}")
             ->action('View request', route('admin.requests.show', $this->request))
-            ->line('— ' . config('app.name'));
+            ->line('— '.config('app.name'));
     }
 }
-

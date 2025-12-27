@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Webhook;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Stripe\Webhook;
 use Stripe\Exception\SignatureVerificationException;
+use Stripe\Webhook;
 
 class StripeWebhookController extends Controller
 {
@@ -31,7 +31,7 @@ class StripeWebhookController extends Controller
         } catch (SignatureVerificationException $e) {
             return response('Invalid signature', 400);
         } catch (\Exception $e) {
-            return response('Webhook error: ' . $e->getMessage(), 400);
+            return response('Webhook error: '.$e->getMessage(), 400);
         }
 
         // Handle the event
@@ -63,13 +63,13 @@ class StripeWebhookController extends Controller
     {
         $invoiceId = $paymentIntent->metadata->invoice_id ?? null;
 
-        if (!$invoiceId) {
+        if (! $invoiceId) {
             return;
         }
 
         $invoice = Invoice::find($invoiceId);
 
-        if (!$invoice) {
+        if (! $invoice) {
             return;
         }
 
@@ -83,6 +83,7 @@ class StripeWebhookController extends Controller
                     $paymentIntent->latest_charge
                 );
             }
+
             return;
         }
 

@@ -54,4 +54,3 @@ class SyncedFile extends Model
         return $this->belongsTo(Contract::class);
     }
 }
-

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Contract;
 use App\Models\ActivityLog;
-use Illuminate\Http\Request;
+use App\Models\Contract;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ContractController extends Controller
@@ -39,7 +39,7 @@ class ContractController extends Controller
     {
         $this->authorizeClientAccess($contract);
 
-        if (!$contract->file_path || !Storage::disk('contracts')->exists($contract->file_path)) {
+        if (! $contract->file_path || ! Storage::disk('contracts')->exists($contract->file_path)) {
             abort(404, 'Contract file not found.');
         }
 
@@ -53,7 +53,7 @@ class ContractController extends Controller
 
         return Storage::disk('contracts')->download(
             $contract->file_path,
-            $contract->title . '.pdf'
+            $contract->title.'.pdf'
         );
     }
 
@@ -64,7 +64,7 @@ class ContractController extends Controller
     {
         $this->authorizeClientAccess($contract);
 
-        if (!$contract->isPendingSignature()) {
+        if (! $contract->isPendingSignature()) {
             return back()->with('error', 'This contract cannot be signed.');
         }
 

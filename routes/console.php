@@ -1,23 +1,27 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schedule;
-use App\Models\Invoice;
-use App\Models\Contract;
-use App\Models\StorageConnection;
-use App\Services\AdminReports\ReportScheduleRunner;
-use App\Services\Storage\StorageSyncScheduler;
-use App\Services\AutomationEngine;
-use App\Services\WebhookService;
-use App\Services\AI\RequestEmbeddingService;
-use App\Services\Marketing\Scheduling\WebsiteAuditScheduleRunner;
-use App\Models\Request as ServiceRequest;
-use App\Jobs\Analytics\UpdateClientHealthScoresJob;
-use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
 use App\Jobs\Analytics\GenerateMonthlyRevenueForecastJob;
 use App\Jobs\Analytics\GenerateQuarterlyBusinessIntelligenceReportJob;
+use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
+use App\Jobs\Analytics\UpdateClientHealthScoresJob;
 use App\Jobs\Security\PurgeOldAuditLogsJob;
+use App\Models\Contract;
+use App\Models\Invoice;
+use App\Models\Request as ServiceRequest;
+use App\Models\StorageConnection;
+use App\Models\User;
+use App\Services\AdminReports\ReportScheduleRunner;
+use App\Services\AI\RequestEmbeddingService;
+use App\Services\AutomationEngine;
+use App\Services\Marketing\Scheduling\WebsiteAuditScheduleRunner;
+use App\Services\Storage\StorageSyncScheduler;
+use App\Services\WebhookService;
+use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +32,75 @@ use App\Jobs\Security\PurgeOldAuditLogsJob;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
+
+/*
+|--------------------------------------------------------------------------
+| Production bootstrap utilities
+|--------------------------------------------------------------------------
+*/
+
+Artisan::command('portal:bootstrap-admin {email : Admin email address} {--name=Admin User} {--password=} {--force : Update password if user already exists}', function () {
+    $email = (string) $this->argument('email');
+    $name = (string) $this->option('name');
+    $password = (string) ($this->option('password') ?? '');
+
+    if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $this->error('Invalid email address.');
+
+        return 1;
+    }
+
+    if ($password === '') {
+        // Generate a strong password if not provided (prints once to console).
+        $password = Str::password(24);
+        $this->warn('No password provided. Generated a password (store it securely):');
+        $this->line($password);
+    }
+
+    if (mb_strlen($password) < 16) {
+        $this->error('Password must be at least 16 characters.');
+
+        return 1;
+    }
+
+    // Ensure roles/permissions exist (idempotent).
+    $this->call('db:seed', [
+        '--class' => RoleAndPermissionSeeder::class,
+        '--force' => true,
+    ]);
+
+    $user = User::query()->where('email', $email)->first();
+    $force = (bool) $this->option('force');
+
+    if ($user) {
+        if (! $force) {
+            $this->error("User already exists: {$email}. Re-run with --force to update name/password.");
+
+            return 1;
+        }
+
+        $user->fill([
+            'name' => $name !== '' ? $name : ($user->name ?? 'Admin User'),
+            'password' => Hash::make($password),
+            'email_verified_at' => $user->email_verified_at ?? now(),
+            'is_active' => true,
+        ])->save();
+    } else {
+        $user = User::create([
+            'name' => $name !== '' ? $name : 'Admin User',
+            'email' => $email,
+            'password' => Hash::make($password),
+            'email_verified_at' => now(),
+            'is_active' => true,
+        ]);
+    }
+
+    $user->assignRole('admin');
+
+    $this->info("Admin ready: {$email}");
+
+    return 0;
+})->purpose('Create/repair the initial admin account (safe for production)');
 
 /*
 |--------------------------------------------------------------------------
@@ -196,3 +269,103 @@ Artisan::command('ai:embeddings:backfill {--limit=200} {--provider=openai} {--mo
 
     $this->info("Done. Embedded={$count}, skipped={$skipped}.");
 })->purpose('Backfill semantic embeddings for past requests');
+
+/*
+|--------------------------------------------------------------------------
+| Brand Monitoring - Free API Integrations
+|--------------------------------------------------------------------------
+*/
+
+// Monitor news mentions (NewsAPI + Google News RSS)
+Schedule::call(function () {
+    $newsService = app(\App\Services\BrandMonitoring\NewsMonitoringService::class);
+
+    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+        try {
+            $newsService->searchNewsAPI($client);
+            $newsService->searchGoogleNewsRSS($client);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('News monitoring failed', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+})->hourly()->name('brand-monitoring-news');
+
+// Monitor reviews (Yelp + Google Places)
+Schedule::call(function () {
+    $reviewService = app(\App\Services\BrandMonitoring\ReviewMonitoringService::class);
+
+    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+        try {
+            $reviewService->getYelpReviews($client);
+            $reviewService->getGooglePlacesReviews($client);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Review monitoring failed', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+})->everySixHours()->name('brand-monitoring-reviews');
+
+// Monitor social media (Reddit, YouTube, Twitter RSS)
+Schedule::call(function () {
+    $socialService = app(\App\Services\BrandMonitoring\SocialMonitoringService::class);
+
+    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+        try {
+            $socialService->searchReddit($client);
+            $socialService->searchYouTube($client);
+            $socialService->searchTwitterRSS($client);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Social monitoring failed', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+})->everyThirtyMinutes()->name('brand-monitoring-social');
+
+// Monitor web mentions (Google Custom Search, Bing)
+Schedule::call(function () {
+    $webService = app(\App\Services\BrandMonitoring\WebMentionService::class);
+
+    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+        try {
+            $webService->searchGoogle($client);
+            $webService->searchBing($client);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Web mention monitoring failed', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+})->everyTwoHours()->name('brand-monitoring-web-mentions');
+
+// Batch sentiment analysis (runs every 30 minutes)
+Schedule::call(function () {
+    $sentimentService = app(\App\Services\BrandMonitoring\SentimentAnalysisService::class);
+
+    try {
+        $result = $sentimentService->analyzePendingSentiments();
+        \Illuminate\Support\Facades\Log::info('Sentiment analysis completed', $result);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Sentiment analysis failed', [
+            'error' => $e->getMessage(),
+        ]);
+    }
+})->everyThirtyMinutes()->name('brand-monitoring-sentiment-analysis');
+
+/*
+|--------------------------------------------------------------------------
+| Social Media Publishing
+|--------------------------------------------------------------------------
+*/
+
+// Publish scheduled social media posts
+Schedule::command('social:publish-scheduled')
+    ->everyFiveMinutes()
+    ->name('social-media-publish-scheduled');

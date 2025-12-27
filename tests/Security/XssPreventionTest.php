@@ -32,4 +32,3 @@ class XssPreventionTest extends TestCase
         $resp->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false);
     }
 }
-

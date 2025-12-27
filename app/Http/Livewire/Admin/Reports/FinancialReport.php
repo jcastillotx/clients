@@ -3,9 +3,9 @@
 namespace App\Http\Livewire\Admin\Reports;
 
 use App\Exports\ArrayExport;
-use App\Models\RequestTimeEntry;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\RequestTimeEntry;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,8 +17,11 @@ use Maatwebsite\Excel\Facades\Excel;
 class FinancialReport extends Component
 {
     public string $range = 'last_12_months'; // last_12_months|ytd|this_year|custom
+
     public string $from = '';
+
     public string $to = '';
+
     public string $revenueGroup = 'month'; // month|quarter|year
 
     /** @var array<string, mixed> */
@@ -80,18 +83,21 @@ class FinancialReport extends Component
         if ($this->range === 'last_12_months') {
             $this->from = $today->copy()->subMonths(11)->startOfMonth()->toDateString();
             $this->to = $today->copy()->endOfMonth()->toDateString();
+
             return;
         }
 
         if ($this->range === 'ytd') {
             $this->from = $today->copy()->startOfYear()->toDateString();
             $this->to = $today->copy()->toDateString();
+
             return;
         }
 
         if ($this->range === 'this_year') {
             $this->from = $today->copy()->startOfYear()->toDateString();
             $this->to = $today->copy()->endOfYear()->toDateString();
+
             return;
         }
 
@@ -141,7 +147,7 @@ class FinancialReport extends Component
             'quarter' => [
                 "(strftime('%Y', processed_at) || '-Q' || (((CAST(strftime('%m', processed_at) AS INTEGER)-1)/3)+1))",
                 "CONCAT(YEAR(processed_at), '-Q', QUARTER(processed_at))",
-                'period'
+                'period',
             ],
             default => ["strftime('%Y-%m', processed_at)", "DATE_FORMAT(processed_at, '%Y-%m')", 'period'],
         };
@@ -226,7 +232,9 @@ class FinancialReport extends Component
             }
 
             $balance = max(0, (float) $inv->amount - (float) ($inv->total_paid ?? 0));
-            if ($balance <= 0) continue;
+            if ($balance <= 0) {
+                continue;
+            }
 
             $bucket = '90+';
             foreach ($buckets as $k => [$min, $max]) {
@@ -237,7 +245,7 @@ class FinancialReport extends Component
             }
 
             $cid = (int) $inv->client_id;
-            $byClient[$cid]['client'] = $inv->client?->company_name ?? ('Client #' . $cid);
+            $byClient[$cid]['client'] = $inv->client?->company_name ?? ('Client #'.$cid);
             $byClient[$cid]['0-30'] = ($byClient[$cid]['0-30'] ?? 0) + ($bucket === '0-30' ? $balance : 0);
             $byClient[$cid]['31-60'] = ($byClient[$cid]['31-60'] ?? 0) + ($bucket === '31-60' ? $balance : 0);
             $byClient[$cid]['61-90'] = ($byClient[$cid]['61-90'] ?? 0) + ($bucket === '61-90' ? $balance : 0);
@@ -292,6 +300,7 @@ class FinancialReport extends Component
                 'quarter' => 'quarter',
                 default => 'month',
             };
+
             return $this->exportRows($headings, $rows, "revenue-by-{$suffix}-{$this->from}-{$this->to}", $format);
         }
 
@@ -305,6 +314,7 @@ class FinancialReport extends Component
                 (float) ($r['90+'] ?? 0),
                 (float) ($r['total'] ?? 0),
             ], $this->invoiceAging);
+
             return $this->exportRows($headings, $rows, "invoice-aging-{$this->from}-{$this->to}", $format, [
                 'title' => 'Invoice aging report',
             ]);
@@ -314,22 +324,28 @@ class FinancialReport extends Component
             $headings = ['Metric', 'Value'];
             $rows = array_map(function ($r) {
                 $v = $r['value'];
-                if ($v === null) $v = 'N/A';
+                if ($v === null) {
+                    $v = 'N/A';
+                }
+
                 return [$r['label'], $v];
             }, $this->profitAndLoss);
+
             return $this->exportRows($headings, $rows, "profit-loss-{$this->from}-{$this->to}", $format, [
                 'title' => 'Profit & Loss (summary)',
             ]);
         }
 
         session()->flash('error', 'Unknown export.');
+
         return null;
     }
 
     protected function exportRows(array $headings, array $rows, string $baseName, string $format, array $pdfMeta = [])
     {
         if ($format === 'csv') {
-            $filename = $baseName . '.csv';
+            $filename = $baseName.'.csv';
+
             return response()->streamDownload(function () use ($headings, $rows) {
                 $out = fopen('php://output', 'w');
                 fputcsv($out, $headings);
@@ -341,12 +357,13 @@ class FinancialReport extends Component
         }
 
         if ($format === 'xlsx' || $format === 'excel') {
-            $filename = $baseName . '.xlsx';
+            $filename = $baseName.'.xlsx';
+
             return Excel::download(new ArrayExport($headings, $rows), $filename);
         }
 
         if ($format === 'pdf') {
-            $filename = $baseName . '.pdf';
+            $filename = $baseName.'.pdf';
             $pdf = Pdf::loadView('admin.reports.export-pdf', [
                 'title' => (string) ($pdfMeta['title'] ?? 'Report'),
                 'from' => $this->from,
@@ -354,10 +371,12 @@ class FinancialReport extends Component
                 'headings' => $headings,
                 'rows' => $rows,
             ]);
-            return response()->streamDownload(fn () => print($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
+
+            return response()->streamDownload(fn () => print ($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
         }
 
         session()->flash('error', 'Unsupported export format.');
+
         return null;
     }
 
@@ -374,4 +393,3 @@ class FinancialReport extends Component
         ])->layout('layouts.admin', ['title' => 'Financial Reports']);
     }
 }
-

@@ -54,4 +54,3 @@ class ClientIsolationTest extends TestCase
             ->assertForbidden();
     }
 }
-

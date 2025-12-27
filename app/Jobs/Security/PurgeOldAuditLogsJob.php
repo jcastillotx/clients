@@ -27,4 +27,3 @@ class PurgeOldAuditLogsJob implements ShouldQueue
         }
     }
 }
-

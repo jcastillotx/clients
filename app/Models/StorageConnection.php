@@ -80,7 +80,7 @@ class StorageConnection extends Model
 
     public function getQuotaPercentAttribute(): ?float
     {
-        if (!$this->quota_bytes || $this->quota_bytes <= 0) {
+        if (! $this->quota_bytes || $this->quota_bytes <= 0) {
             return null;
         }
 
@@ -91,7 +91,7 @@ class StorageConnection extends Model
     {
         $folders = Arr::get($this->settings, 'folders', []);
         $folders = is_string($folders) ? array_filter(array_map('trim', explode(',', $folders))) : (array) $folders;
+
         return array_values(array_filter($folders, fn ($f) => $f !== null && $f !== ''));
     }
 }
-

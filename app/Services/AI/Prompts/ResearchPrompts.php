@@ -36,6 +36,7 @@ SYS;
     public static function researchUser(string $topic, string $depth, ?string $region = null): string
     {
         $regionLine = $region ? "Region focus: {$region}\n" : '';
+
         return "Topic: {$topic}\nDepth: {$depth}\n{$regionLine}Return JSON in the schema.";
     }
 
@@ -91,7 +92,7 @@ SYS;
             'region' => $region,
         ];
 
-        return "Client JSON:\n" . json_encode($ctx) . "\n\nCompetitors (names): {$comp}\nReturn JSON in the schema.";
+        return "Client JSON:\n".json_encode($ctx)."\n\nCompetitors (names): {$comp}\nReturn JSON in the schema.";
     }
 
     public static function marketSystem(): string
@@ -122,7 +123,7 @@ SYS;
 
     public static function marketUser(string $industry, ?string $region): string
     {
-        return "Industry: {$industry}\nRegion: " . ($region ?: 'null') . "\nReturn JSON in the schema.";
+        return "Industry: {$industry}\nRegion: ".($region ?: 'null')."\nReturn JSON in the schema.";
     }
 
     public static function seoSystem(): string
@@ -148,7 +149,7 @@ SYS;
 
     public static function seoUser(string $topic, string $audience, ?string $region = null): string
     {
-        return "Topic: {$topic}\nAudience: {$audience}\nRegion: " . ($region ?: 'none') . "\nReturn JSON in the schema.";
+        return "Topic: {$topic}\nAudience: {$audience}\nRegion: ".($region ?: 'none')."\nReturn JSON in the schema.";
     }
 
     public static function creativeSystem(): string
@@ -165,4 +166,3 @@ Schema:
 SYS;
     }
 }
-

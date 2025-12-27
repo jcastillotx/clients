@@ -14,6 +14,12 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->environment('production')) {
+            $this->command?->warn('Skipping UserSeeder in production (prevents default credentials).');
+
+            return;
+        }
+
         // Create admin user
         $admin = User::firstOrCreate(
             ['email' => 'admin@kre8ivdesigns.com'],

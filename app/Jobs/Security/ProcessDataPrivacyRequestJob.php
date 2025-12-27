@@ -20,26 +20,25 @@ class ProcessDataPrivacyRequestJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public int $privacyRequestId)
-    {
-    }
+    public function __construct(public int $privacyRequestId) {}
 
     public function handle(): void
     {
         $req = DataPrivacyRequest::query()->with('user')->find($this->privacyRequestId);
-        if (!$req || $req->status !== 'pending') {
+        if (! $req || $req->status !== 'pending') {
             return;
         }
 
         $user = $req->user;
-        if (!$user) {
+        if (! $user) {
             $req->update(['status' => 'rejected', 'notes' => 'User not found', 'processed_at' => now()]);
+
             return;
         }
 
         if ($req->type === 'export') {
             $payload = $this->buildExportPayload($user);
-            $path = 'privacy/' . $req->id . '/export_' . now()->format('Ymd_His') . '.json';
+            $path = 'privacy/'.$req->id.'/export_'.now()->format('Ymd_His').'.json';
             $bytes = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             Storage::disk('exports')->put($path, $bytes ?: '{}');
 
@@ -52,12 +51,13 @@ class ProcessDataPrivacyRequestJob implements ShouldQueue
                     'bytes' => $bytes ? strlen($bytes) : 2,
                 ],
             ]);
+
             return;
         }
 
         if ($req->type === 'delete') {
             // MVP: soft-delete the user and anonymize basic fields.
-            $anonEmail = 'deleted+' . $user->id . '+' . Str::random(8) . '@example.invalid';
+            $anonEmail = 'deleted+'.$user->id.'+'.Str::random(8).'@example.invalid';
 
             $user->tokens()->delete();
             $user->forceFill([
@@ -83,6 +83,7 @@ class ProcessDataPrivacyRequestJob implements ShouldQueue
                     'action' => 'user_soft_deleted',
                 ],
             ]);
+
             return;
         }
 
@@ -119,4 +120,3 @@ class ProcessDataPrivacyRequestJob implements ShouldQueue
         ];
     }
 }
-

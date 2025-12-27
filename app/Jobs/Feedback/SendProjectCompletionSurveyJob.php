@@ -19,14 +19,14 @@ class SendProjectCompletionSurveyJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public int $requestId)
-    {
-    }
+    public function __construct(public int $requestId) {}
 
     public function handle(): void
     {
         $req = ServiceRequest::query()->with('client.users')->find($this->requestId);
-        if (!$req || !$req->client) return;
+        if (! $req || ! $req->client) {
+            return;
+        }
 
         // Find or create a per-client post-project survey
         $survey = Survey::query()->firstOrCreate(
@@ -44,7 +44,7 @@ class SendProjectCompletionSurveyJob implements ShouldQueue
         );
 
         // Ensure minimal questions exist
-        if (!$survey->questions()->exists()) {
+        if (! $survey->questions()->exists()) {
             SurveyQuestion::create([
                 'survey_id' => $survey->id,
                 'type' => 'nps',
@@ -88,4 +88,3 @@ class SendProjectCompletionSurveyJob implements ShouldQueue
         }
     }
 }
-

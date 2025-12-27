@@ -19,4 +19,3 @@ return [
         's3_per_gb_month' => env('S3_COST_PER_GB_MONTH', 0.023),
     ],
 ];
-

@@ -14,9 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class InvoiceGeneratorAI
 {
-    public function __construct(protected AISafetyService $safety)
-    {
-    }
+    public function __construct(protected AISafetyService $safety) {}
 
     /**
      * @return array<string,mixed>
@@ -71,6 +69,7 @@ class InvoiceGeneratorAI
                     'quality_score' => $res['quality_score'] ?? null,
                     'review_queue_id' => $res['review_queue_id'] ?? null,
                 ];
+
                 return $this->normalizeGeneratedInvoice($data, $rate);
             }
         } catch (\Throwable) {
@@ -119,7 +118,7 @@ class InvoiceGeneratorAI
                 'timeout' => 180,
                 'client_id' => $client?->id,
                 'user_id' => $options['user_id'] ?? null,
-                'user_query' => 'Review invoice #' . $invoice->id,
+                'user_query' => 'Review invoice #'.$invoice->id,
                 'estimated_project_cost_usd' => (float) $invoice->amount,
             ]);
 
@@ -130,6 +129,7 @@ class InvoiceGeneratorAI
                     'quality_score' => $res['quality_score'] ?? null,
                     'review_queue_id' => $res['review_queue_id'] ?? null,
                 ];
+
                 return $data;
             }
         } catch (\Throwable) {
@@ -179,6 +179,7 @@ class InvoiceGeneratorAI
                     'quality_score' => $res['quality_score'] ?? null,
                     'review_queue_id' => $res['review_queue_id'] ?? null,
                 ];
+
                 return $data;
             }
         } catch (\Throwable) {
@@ -264,7 +265,7 @@ class InvoiceGeneratorAI
 
         $messages = [
             ['role' => 'system', 'content' => InvoicePrompts::disputeSystem()],
-            ['role' => 'user', 'content' => "Analyze this invoice dispute and draft a diplomatic response.\n\nJSON:\n" . json_encode($payload, JSON_UNESCAPED_SLASHES)],
+            ['role' => 'user', 'content' => "Analyze this invoice dispute and draft a diplomatic response.\n\nJSON:\n".json_encode($payload, JSON_UNESCAPED_SLASHES)],
         ];
 
         try {
@@ -278,6 +279,7 @@ class InvoiceGeneratorAI
                 'estimated_project_cost_usd' => (float) $invoice->amount,
             ]);
             $data = $this->parseJson((string) ($res['text'] ?? ''));
+
             return is_array($data) ? $data : ['error' => (string) ($res['text'] ?? 'Unable to analyze.')];
         } catch (\Throwable $e) {
             return ['error' => $e->getMessage()];
@@ -328,7 +330,7 @@ class InvoiceGeneratorAI
     /**
      * Apply generated items to an invoice (replace existing).
      *
-     * @param array<int,array{description:string,quantity:float,unit_price:float}> $items
+     * @param  array<int,array{description:string,quantity:float,unit_price:float}>  $items
      */
     public function applyItemsToInvoice(Invoice $invoice, array $items, float $discount = 0.0, float $taxRate = 0.0, ?string $notes = null): void
     {
@@ -367,16 +369,23 @@ class InvoiceGeneratorAI
     protected function parseJson(string $text): ?array
     {
         $t = trim($text);
-        if ($t === '') return null;
+        if ($t === '') {
+            return null;
+        }
         $decoded = json_decode($t, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
         $start = strpos($t, '{');
         $end = strrpos($t, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($t, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
+
         return null;
     }
 
@@ -385,12 +394,18 @@ class InvoiceGeneratorAI
         $items = $data['items'] ?? [];
         $norm = [];
         foreach (is_array($items) ? $items : [] as $row) {
-            if (!is_array($row)) continue;
+            if (! is_array($row)) {
+                continue;
+            }
             $desc = trim((string) ($row['description'] ?? ''));
             $qty = (float) ($row['quantity'] ?? 0);
             $unit = (float) ($row['unit_price'] ?? 0);
-            if ($desc === '' || $qty <= 0) continue;
-            if ($unit <= 0) $unit = $defaultRate;
+            if ($desc === '' || $qty <= 0) {
+                continue;
+            }
+            if ($unit <= 0) {
+                $unit = $defaultRate;
+            }
             $norm[] = [
                 'description' => $desc,
                 'quantity' => round($qty, 2),
@@ -414,16 +429,18 @@ class InvoiceGeneratorAI
         $data['items'] = $norm;
         $data['discount'] = (float) ($data['discount'] ?? 0);
         $data['tax_rate'] = (float) ($data['tax_rate'] ?? 0);
+
         return $data;
     }
 
     protected function fallbackGeneratedInvoice(ServiceRequest $request, float $rate, float $hours): array
     {
         $qty = $hours > 0 ? $hours : 1;
+
         return [
             'currency' => 'USD',
             'items' => [[
-                'description' => 'Services: ' . $request->title,
+                'description' => 'Services: '.$request->title,
                 'quantity' => round($qty, 2),
                 'unit_price' => round($rate, 2),
                 'accounting_category' => 'Services',
@@ -444,9 +461,12 @@ class InvoiceGeneratorAI
     protected function servicesCatalog(?Client $client): array
     {
         $catalog = Setting::getValue('billing.services_catalog', null);
-        if (is_array($catalog) && !empty($catalog)) return $catalog;
+        if (is_array($catalog) && ! empty($catalog)) {
+            return $catalog;
+        }
 
         $rate = $this->hourlyRateForClient($client);
+
         return [
             ['name' => 'Web development (hourly)', 'unit' => 'hour', 'default_rate' => $rate, 'accounting_category' => 'Services', 'tax_category' => null],
             ['name' => 'Design (hourly)', 'unit' => 'hour', 'default_rate' => $rate, 'accounting_category' => 'Services', 'tax_category' => null],
@@ -458,7 +478,9 @@ class InvoiceGeneratorAI
     protected function hourlyRateForClient(?Client $client): float
     {
         $base = (float) (Setting::getValue('billing.hourly_rate', 100) ?? 100);
-        if (!$client) return $base;
+        if (! $client) {
+            return $base;
+        }
         $tier = strtolower((string) ($client->tier ?? ''));
         $multipliers = (array) (Setting::getValue('billing.tier_rate_multipliers', [
             'basic' => 1.0,
@@ -467,19 +489,27 @@ class InvoiceGeneratorAI
             'enterprise' => 1.25,
         ]) ?? []);
         $m = isset($multipliers[$tier]) ? (float) $multipliers[$tier] : 1.0;
+
         return round($base * $m, 2);
     }
 
     protected function bestHours(ServiceRequest $request): float
     {
         $actual = (float) ($request->actual_hours ?? 0);
-        if ($actual > 0) return $actual;
+        if ($actual > 0) {
+            return $actual;
+        }
         $estimated = (float) ($request->estimated_hours ?? 0);
-        if ($estimated > 0) return $estimated;
+        if ($estimated > 0) {
+            return $estimated;
+        }
         if ($request->relationLoaded('timeEntries')) {
             $sum = (float) $request->timeEntries->sum('hours');
-            if ($sum > 0) return $sum;
+            if ($sum > 0) {
+                return $sum;
+            }
         }
+
         return 0.0;
     }
 
@@ -498,8 +528,8 @@ class InvoiceGeneratorAI
         if (abs($calcTotal - (float) $invoice->amount) > 0.02) {
             $issues[] = [
                 'label' => 'Total mismatch',
-                'expected' => '$' . number_format($calcTotal, 2),
-                'actual' => '$' . number_format((float) $invoice->amount, 2),
+                'expected' => '$'.number_format($calcTotal, 2),
+                'actual' => '$'.number_format((float) $invoice->amount, 2),
                 'severity' => 'high',
             ];
         }
@@ -519,7 +549,7 @@ class InvoiceGeneratorAI
                 $days[] = Carbon::parse($inv->issue_date)->diffInDays(Carbon::parse($inv->paid_at));
             }
         }
-        $avg = !empty($days) ? (int) round(array_sum($days) / count($days)) : null;
+        $avg = ! empty($days) ? (int) round(array_sum($days) / count($days)) : null;
 
         return [
             'paid_invoice_count' => count($days),
@@ -527,4 +557,3 @@ class InvoiceGeneratorAI
         ];
     }
 }
-

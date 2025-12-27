@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('documents') || !Schema::hasTable('document_versions')) {
+        if (! Schema::hasTable('documents') || ! Schema::hasTable('document_versions')) {
             return;
         }
 
@@ -46,4 +46,3 @@ return new class extends Migration
         // no-op (data migration)
     }
 };
-

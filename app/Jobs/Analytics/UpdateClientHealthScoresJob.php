@@ -27,4 +27,3 @@ class UpdateClientHealthScoresJob implements ShouldQueue
         }
     }
 }
-

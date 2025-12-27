@@ -16,8 +16,7 @@ class ProjectEstimationService
         protected RequestEmbeddingService $embeddings,
         protected RequestSemanticSearchService $semantic,
         protected CostCalculationService $costs
-    ) {
-    }
+    ) {}
 
     /**
      * Generate a scoped estimate with tasks/hours, cost range, and risk factors.
@@ -150,18 +149,20 @@ class ProjectEstimationService
     /**
      * Generate a professional SOW document using a company template.
      *
-     * @param array<string, mixed> $estimate
+     * @param  array<string, mixed>  $estimate
      */
     public function generateSOW(ServiceRequest $request, array $estimate): string
     {
         $request->loadMissing(['client']);
 
-        $clientName = $request->client?->company_name ?? ('Client #' . (int) $request->client_id);
+        $clientName = $request->client?->company_name ?? ('Client #'.(int) $request->client_id);
         $tasks = is_array($estimate['tasks'] ?? null) ? $estimate['tasks'] : [];
 
         $deliverables = [];
         foreach ($tasks as $t) {
-            if (!is_array($t) || empty($t['name'])) continue;
+            if (! is_array($t) || empty($t['name'])) {
+                continue;
+            }
             $deliverables[] = (string) $t['name'];
         }
         if (empty($deliverables)) {
@@ -171,9 +172,15 @@ class ProjectEstimationService
         $assumptions = [];
         $outOfScope = [];
         foreach ($tasks as $t) {
-            if (!is_array($t)) continue;
-            foreach (($t['assumptions'] ?? []) as $a) $assumptions[] = (string) $a;
-            foreach (($t['out_of_scope'] ?? []) as $o) $outOfScope[] = (string) $o;
+            if (! is_array($t)) {
+                continue;
+            }
+            foreach (($t['assumptions'] ?? []) as $a) {
+                $assumptions[] = (string) $a;
+            }
+            foreach (($t['out_of_scope'] ?? []) as $o) {
+                $outOfScope[] = (string) $o;
+            }
         }
         $assumptions = array_values(array_unique(array_filter($assumptions)));
         $outOfScope = array_values(array_unique(array_filter($outOfScope)));
@@ -184,11 +191,13 @@ class ProjectEstimationService
         $hourlyRate = (float) (($estimate['base_rate'] ?? $estimate['hourly_rate'] ?? null) ?: Setting::getValue('billing.hourly_rate', 100));
 
         $objectives = trim((string) ($request->description ?? ''));
-        if ($objectives === '') $objectives = 'Objectives to be confirmed.';
+        if ($objectives === '') {
+            $objectives = 'Objectives to be confirmed.';
+        }
 
         // Keep it simple: we store as plain text; if you want richer markdown later we can add an AI "polish" pass.
         $scopeMarkdown = '';
-        if (!empty($estimate['notes_for_admin'])) {
+        if (! empty($estimate['notes_for_admin'])) {
             $scopeMarkdown = e((string) $estimate['notes_for_admin']);
         }
         $scopeMarkdown = nl2br($scopeMarkdown);
@@ -219,8 +228,8 @@ class ProjectEstimationService
                 'high' => (string) ($cost['high'] ?? '0.00'),
             ],
             'tasks' => $tasks,
-            'assumptions' => !empty($assumptions) ? $assumptions : ['Assumptions to be confirmed.'],
-            'outOfScope' => !empty($outOfScope) ? $outOfScope : ['Out of scope items to be confirmed.'],
+            'assumptions' => ! empty($assumptions) ? $assumptions : ['Assumptions to be confirmed.'],
+            'outOfScope' => ! empty($outOfScope) ? $outOfScope : ['Out of scope items to be confirmed.'],
             'risks' => $estimate['risk_factors'] ?? ['Risks to be confirmed.'],
         ])->render();
     }
@@ -240,7 +249,7 @@ class ProjectEstimationService
         if ($vec) {
             $ranked = $this->semantic->findSimilarByEmbedding($vec, 5, 500, $request->id);
             $ids = array_map(fn ($r) => (int) $r['request_id'], $ranked);
-            if (!empty($ids)) {
+            if (! empty($ids)) {
                 $rows = ServiceRequest::query()
                     ->whereIn('id', $ids)
                     ->get(['id', 'title', 'type', 'priority', 'estimated_hours', 'actual_hours'])
@@ -249,7 +258,9 @@ class ProjectEstimationService
                 $out = [];
                 foreach ($ranked as $r) {
                     $row = $rows->get((int) $r['request_id']);
-                    if (!$row) continue;
+                    if (! $row) {
+                        continue;
+                    }
                     $out[] = [
                         'id' => (int) $row->id,
                         'title' => (string) $row->title,
@@ -260,6 +271,7 @@ class ProjectEstimationService
                         'similarity' => (float) $r['score'],
                     ];
                 }
+
                 return $out;
             }
         }
@@ -269,7 +281,7 @@ class ProjectEstimationService
         $kw = array_slice($kw, 0, 6);
         $q = ServiceRequest::query()->where('id', '!=', $request->id);
         foreach ($kw as $w) {
-            $q->orWhere('title', 'like', '%' . $w . '%')->orWhere('description', 'like', '%' . $w . '%');
+            $q->orWhere('title', 'like', '%'.$w.'%')->orWhere('description', 'like', '%'.$w.'%');
         }
 
         return $q->orderByDesc('id')->limit(5)->get(['id', 'title', 'type', 'priority', 'estimated_hours', 'actual_hours'])
@@ -285,18 +297,21 @@ class ProjectEstimationService
     }
 
     /**
-     * @param array<int, mixed> $tasks
+     * @param  array<int, mixed>  $tasks
      * @return array{low:float, mid:float, high:float}
      */
     protected function computeTotals(array $tasks): array
     {
         $sum = ['low' => 0.0, 'mid' => 0.0, 'high' => 0.0];
         foreach ($tasks as $t) {
-            if (!is_array($t)) continue;
+            if (! is_array($t)) {
+                continue;
+            }
             $sum['low'] += (float) ($t['hours_low'] ?? 0);
             $sum['mid'] += (float) ($t['hours_mid'] ?? 0);
             $sum['high'] += (float) ($t['hours_high'] ?? 0);
         }
+
         return $sum;
     }
 
@@ -322,21 +337,27 @@ class ProjectEstimationService
     protected function parseJsonFromText(string $text): array
     {
         $text = trim($text);
-        if ($text === '') return [];
+        if ($text === '') {
+            return [];
+        }
 
         $decoded = json_decode($text, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($text, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
         Log::warning('AI estimation returned non-JSON output.');
+
         return [];
     }
 }
-

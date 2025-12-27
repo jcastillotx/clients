@@ -12,6 +12,7 @@ use Livewire\Component;
 class EstimateApproval extends Component
 {
     public ServiceRequest $request;
+
     public RequestEstimate $estimate;
 
     /** @var array<int, array<string, mixed>> */
@@ -60,7 +61,7 @@ class EstimateApproval extends Component
         $this->estimate->refresh();
 
         // Ensure SOW contract exists.
-        if (!$this->estimate->sow_contract_id) {
+        if (! $this->estimate->sow_contract_id) {
             $estimateData = (array) ($this->estimate->estimate_data ?? []);
             $pricingData = (array) ($this->estimate->pricing_data ?? []);
             if (empty($pricingData)) {
@@ -98,8 +99,12 @@ class EstimateApproval extends Component
     {
         $included = [];
         foreach ($this->tasks as $i => $t) {
-            if (!is_array($t)) continue;
-            if (!($t['optional'] ?? false)) continue;
+            if (! is_array($t)) {
+                continue;
+            }
+            if (! ($t['optional'] ?? false)) {
+                continue;
+            }
             $included[(string) $i] = (bool) ($t['included'] ?? true);
         }
 
@@ -112,18 +117,21 @@ class EstimateApproval extends Component
     }
 
     /**
-     * @param array<int, array<string, mixed>> $tasks
-     * @param array<string, mixed> $selections
+     * @param  array<int, array<string, mixed>>  $tasks
+     * @param  array<string, mixed>  $selections
      * @return array<int, array<string, mixed>>
      */
     protected function applyStoredSelections(array $tasks, array $selections): array
     {
         $inc = is_array($selections['included'] ?? null) ? $selections['included'] : [];
         foreach ($tasks as $i => &$t) {
-            if (!is_array($t)) continue;
+            if (! is_array($t)) {
+                continue;
+            }
             $optional = (bool) ($t['optional'] ?? false);
-            if (!$optional) {
+            if (! $optional) {
                 $t['included'] = true;
+
                 continue;
             }
             $key = (string) $i;
@@ -134,11 +142,12 @@ class EstimateApproval extends Component
             }
         }
         unset($t);
+
         return $tasks;
     }
 
     /**
-     * @param array<string,mixed> $estimateData
+     * @param  array<string,mixed>  $estimateData
      * @return array<string,mixed>
      */
     protected function buildPricingData(CostCalculationService $costs, array $estimateData): array
@@ -149,8 +158,12 @@ class EstimateApproval extends Component
 
         $sum = ['low' => 0.0, 'mid' => 0.0, 'high' => 0.0];
         foreach ($this->tasks as $t) {
-            if (!is_array($t)) continue;
-            if (!($t['included'] ?? true)) continue;
+            if (! is_array($t)) {
+                continue;
+            }
+            if (! ($t['included'] ?? true)) {
+                continue;
+            }
             $sum['low'] += (float) ($t['hours_low'] ?? 0);
             $sum['mid'] += (float) ($t['hours_mid'] ?? 0);
             $sum['high'] += (float) ($t['hours_high'] ?? 0);
@@ -189,4 +202,3 @@ class EstimateApproval extends Component
         ]);
     }
 }
-

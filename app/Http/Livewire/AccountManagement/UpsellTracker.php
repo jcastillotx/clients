@@ -10,11 +10,14 @@ use Livewire\Component;
 class UpsellTracker extends Component
 {
     public ?int $clientId = null;
+
     public string $opportunitiesJson = '[]';
 
     public function loadClient(): void
     {
-        if (!$this->clientId) return;
+        if (! $this->clientId) {
+            return;
+        }
         $row = AccountHealth::query()->firstOrNew(['client_id' => $this->clientId]);
         $this->opportunitiesJson = json_encode((array) ($row->opportunities ?? []), JSON_PRETTY_PRINT);
     }
@@ -26,7 +29,9 @@ class UpsellTracker extends Component
         abort_unless($this->clientId, 422);
 
         $opps = json_decode($this->opportunitiesJson ?: '[]', true);
-        if (!is_array($opps)) $opps = [];
+        if (! is_array($opps)) {
+            $opps = [];
+        }
 
         AccountHealth::updateOrCreate(
             ['client_id' => $this->clientId],
@@ -49,4 +54,3 @@ class UpsellTracker extends Component
         ]);
     }
 }
-

@@ -9,6 +9,7 @@ use Livewire\Component;
 class PricingOptimizer extends Component
 {
     public int $invoiceId;
+
     public bool $editable = false;
 
     public ?Invoice $invoice = null;
@@ -29,9 +30,9 @@ class PricingOptimizer extends Component
 
         // Staff can only access invoices for assigned clients
         $user = auth()->user();
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $allowed = $user->assignedClientIds();
-            if (!in_array((int) $this->invoice->client_id, $allowed, true)) {
+            if (! in_array((int) $this->invoice->client_id, $allowed, true)) {
                 abort(403, 'You do not have access to this invoice.');
             }
         }
@@ -40,8 +41,9 @@ class PricingOptimizer extends Component
     public function optimize(InvoiceGeneratorAI $ai): void
     {
         $this->loadInvoice();
-        if (!$this->invoice?->client) {
+        if (! $this->invoice?->client) {
             session()->flash('error', 'Missing client.');
+
             return;
         }
 
@@ -55,13 +57,15 @@ class PricingOptimizer extends Component
     public function applySuggestedDiscount(): void
     {
         $this->loadInvoice();
-        if (!$this->editable) {
+        if (! $this->editable) {
             session()->flash('error', 'This invoice is not editable.');
+
             return;
         }
         $disc = (float) (($this->pricing['suggested_discount']['amount'] ?? 0));
         if ($disc <= 0) {
             session()->flash('error', 'No discount suggested.');
+
             return;
         }
 
@@ -80,4 +84,3 @@ class PricingOptimizer extends Component
         return view('livewire.admin.invoices.pricing-optimizer');
     }
 }
-

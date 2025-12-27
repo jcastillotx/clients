@@ -15,8 +15,7 @@ class RequestActivityNotification extends Notification implements ShouldQueue
     public function __construct(
         public Request $request,
         public string $action // created|updated
-    ) {
-    }
+    ) {}
 
     /**
      * @param  mixed  $notifiable
@@ -37,7 +36,7 @@ class RequestActivityNotification extends Notification implements ShouldQueue
 
         $url = null;
         try {
-            if (method_exists($notifiable, 'isClient') && !$notifiable->isClient()) {
+            if (method_exists($notifiable, 'isClient') && ! $notifiable->isClient()) {
                 $url = route('admin.requests.show', $this->request);
             } else {
                 $url = route('requests.show', $this->request);
@@ -47,7 +46,7 @@ class RequestActivityNotification extends Notification implements ShouldQueue
         }
 
         return (new MailMessage)
-            ->subject($title . ' · #' . $this->request->id)
+            ->subject($title.' · #'.$this->request->id)
             ->greeting('Hello!')
             ->line("A request was {$this->action}.")
             ->line("Title: {$this->request->title}")
@@ -55,7 +54,6 @@ class RequestActivityNotification extends Notification implements ShouldQueue
             ->line("Priority: {$this->request->priority}")
             ->line("Status: {$this->request->status}")
             ->action('View request', $url)
-            ->line('— ' . config('app.name'));
+            ->line('— '.config('app.name'));
     }
 }
-

@@ -17,11 +17,12 @@ class AnalyzeDocumentJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     /** @var array<int,int> */
     public array $backoff = [60, 180, 420];
 
     /**
-     * @param array{force_type?:string, language?:string, provider?:string, model?:string} $options
+     * @param  array{force_type?:string, language?:string, provider?:string, model?:string}  $options
      */
     public function __construct(public int $documentId, public array $options = [])
     {
@@ -32,7 +33,9 @@ class AnalyzeDocumentJob implements ShouldQueue
     {
         /** @var Document|null $doc */
         $doc = Document::query()->with(['client', 'request'])->find($this->documentId);
-        if (!$doc) return;
+        if (! $doc) {
+            return;
+        }
 
         $task = AiTask::create([
             'task_type' => 'analyze_document',
@@ -61,7 +64,7 @@ class AnalyzeDocumentJob implements ShouldQueue
                 'completed_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            Log::warning('AnalyzeDocumentJob failed: ' . $e->getMessage(), ['document_id' => $doc->id]);
+            Log::warning('AnalyzeDocumentJob failed: '.$e->getMessage(), ['document_id' => $doc->id]);
             $task->update([
                 'status' => 'failed',
                 'output_data' => ['error' => $e->getMessage()],
@@ -76,4 +79,3 @@ class AnalyzeDocumentJob implements ShouldQueue
         }
     }
 }
-

@@ -20,6 +20,20 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append([
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
+        // Trust proxies for proper client IP detection behind load balancers/CDNs
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXIES') === '*'
+                ? '*'
+                : (env('TRUSTED_PROXIES')
+                    ? array_map('trim', explode(',', env('TRUSTED_PROXIES')))
+                    : null
+                ),
+            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB
+        );
 
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\ResolveWhiteLabelClient::class,
@@ -34,6 +48,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'token.any_ability' => \App\Http\Middleware\EnsureTokenHasAnyAbility::class,
             'admin.ip_allowlist' => \App\Http\Middleware\EnsureAdminIpAllowlisted::class,
             'admin.2fa' => \App\Http\Middleware\EnsureTwoFactorEnabled::class,
+            'feature' => \App\Http\Middleware\RequiresFeature::class,
+            'feature.any' => \App\Http\Middleware\RequiresAnyFeature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

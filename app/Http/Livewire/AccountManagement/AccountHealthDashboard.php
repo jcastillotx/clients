@@ -14,9 +14,11 @@ class AccountHealthDashboard extends Component
     public ?int $clientId = null;
 
     public string $riskFactorsJson = '[]';
+
     public string $opportunitiesJson = '[]';
 
     public string $milestoneName = '';
+
     public ?string $milestoneTargetDate = null;
 
     public function mount(): void
@@ -27,7 +29,9 @@ class AccountHealthDashboard extends Component
 
     public function loadClient(): void
     {
-        if (!$this->clientId) return;
+        if (! $this->clientId) {
+            return;
+        }
         $health = AccountHealth::query()->firstOrNew(['client_id' => $this->clientId]);
         $this->riskFactorsJson = json_encode((array) ($health->risk_factors ?? []), JSON_PRETTY_PRINT);
         $this->opportunitiesJson = json_encode((array) ($health->opportunities ?? []), JSON_PRETTY_PRINT);
@@ -91,4 +95,3 @@ class AccountHealthDashboard extends Component
         return view('livewire.account-management.account-health-dashboard', compact('clients', 'client', 'snapshot', 'health', 'milestones'));
     }
 }
-

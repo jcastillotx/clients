@@ -46,7 +46,7 @@ class AIProviderManagement extends Component
     protected function authorizeSuperAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->hasRole('super_admin')) {
+        if (! $u || ! $u->hasRole('super_admin')) {
             abort(403, 'Only super admins can manage AI providers.');
         }
     }
@@ -54,9 +54,12 @@ class AIProviderManagement extends Component
     public function maskKey(?string $key): string
     {
         $k = trim((string) $key);
-        if ($k === '') return '—';
+        if ($k === '') {
+            return '—';
+        }
         $last = substr($k, -4);
-        return '••••••••' . ($last ? " {$last}" : '');
+
+        return '••••••••'.($last ? " {$last}" : '');
     }
 
     public function render()
@@ -73,4 +76,3 @@ class AIProviderManagement extends Component
         ])->layout('layouts.admin', ['title' => 'AI Providers']);
     }
 }
-

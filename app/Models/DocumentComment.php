@@ -31,4 +31,3 @@ class DocumentComment extends Model
         return $this->belongsTo(User::class);
     }
 }
-

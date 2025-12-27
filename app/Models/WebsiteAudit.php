@@ -46,4 +46,3 @@ class WebsiteAudit extends Model
         return $this->hasMany(AuditPage::class);
     }
 }
-

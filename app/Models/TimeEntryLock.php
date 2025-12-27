@@ -29,4 +29,3 @@ class TimeEntryLock extends Model
         return $this->belongsTo(User::class, 'locked_by');
     }
 }
-

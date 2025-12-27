@@ -27,4 +27,3 @@ class Partner extends Model
         return $this->hasMany(Referral::class);
     }
 }
-

@@ -11,9 +11,13 @@ use Livewire\Component;
 class PartnerManager extends Component
 {
     public string $name = '';
+
     public string $email = '';
+
     public string $code = '';
+
     public string $commissionRate = '10.00';
+
     public bool $isActive = true;
 
     public function mount(): void
@@ -56,7 +60,7 @@ class PartnerManager extends Component
         $u = Auth::user();
         abort_unless($u && ($u->isAdmin() || $u->isStaff()), 403);
         $p = Partner::query()->findOrFail($id);
-        $p->update(['is_active' => !$p->is_active]);
+        $p->update(['is_active' => ! $p->is_active]);
     }
 
     public function render()
@@ -65,7 +69,7 @@ class PartnerManager extends Component
         abort_unless($u && ($u->isAdmin() || $u->isStaff()), 403);
 
         $partners = Partner::query()->orderByDesc('id')->limit(200)->get();
+
         return view('livewire.partners.partner-manager', compact('partners'));
     }
 }
-

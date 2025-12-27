@@ -55,4 +55,3 @@ SYS;
         return "Generate a meeting agenda.\n\nContext JSON:\n{$payload}";
     }
 }
-

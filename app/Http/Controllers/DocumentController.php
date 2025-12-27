@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
 use App\Models\ActivityLog;
+use App\Models\Document;
 use App\Services\Documents\DocumentAccessService;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
-    public function __construct(private readonly DocumentAccessService $access)
-    {
-    }
+    public function __construct(private readonly DocumentAccessService $access) {}
+
     /**
      * Display a listing of the documents.
      */
@@ -41,7 +40,7 @@ class DocumentController extends Controller
     {
         $this->authorizeDownload($document);
 
-        if (!Storage::disk('documents')->exists($document->file_path)) {
+        if (! Storage::disk('documents')->exists($document->file_path)) {
             abort(404, 'Document file not found.');
         }
 
@@ -66,7 +65,7 @@ class DocumentController extends Controller
     {
         $this->authorizeView($document);
 
-        if (!Storage::disk('documents')->exists($document->file_path)) {
+        if (! Storage::disk('documents')->exists($document->file_path)) {
             abort(404, 'Document file not found.');
         }
 
@@ -75,7 +74,7 @@ class DocumentController extends Controller
 
         return response($file, 200)
             ->header('Content-Type', $mimeType)
-            ->header('Content-Disposition', 'inline; filename="' . $document->original_filename . '"');
+            ->header('Content-Disposition', 'inline; filename="'.$document->original_filename.'"');
     }
 
     /**

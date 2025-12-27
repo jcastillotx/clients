@@ -23,45 +23,87 @@ class AdminInvoiceManagement extends Component
 
     // Invoice filters
     public string $status = 'all';
+
     public ?int $clientId = null;
+
     public ?string $dateFrom = null;
+
     public ?string $dateTo = null;
+
     public string $paymentStatus = 'all'; // all|unpaid|partial|paid|overdue|refunded
 
     // Payments filters
     public string $paymentMethod = 'all';
+
     public string $paymentState = 'all'; // all|pending|processing|succeeded|failed|refunded|cancelled
 
     // Manual payment modal
     public bool $showPaymentModal = false;
+
     public ?int $payInvoiceId = null;
+
     public string $payAmount = '';
+
     public string $payMethod = 'check';
+
     public string $payTransactionId = '';
+
     public ?string $payProcessedAt = null; // datetime-local
+
     public bool $paySendReceipt = true;
 
-    public function updatingTab(): void { $this->resetPage(); }
-    public function updatingStatus(): void { $this->resetPage(); }
-    public function updatingClientId(): void { $this->resetPage(); }
-    public function updatingDateFrom(): void { $this->resetPage(); }
-    public function updatingDateTo(): void { $this->resetPage(); }
-    public function updatingPaymentStatus(): void { $this->resetPage(); }
-    public function updatingPaymentMethod(): void { $this->resetPage(); }
-    public function updatingPaymentState(): void { $this->resetPage(); }
+    public function updatingTab(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingClientId(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateFrom(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateTo(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPaymentStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPaymentMethod(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPaymentState(): void
+    {
+        $this->resetPage();
+    }
 
     protected function invoicesQuery(): Builder
     {
         $user = auth()->user();
         $staffClientIds = [];
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $staffClientIds = $user->assignedClientIds();
         }
 
         $q = Invoice::query()
             ->with('client')
             ->withSum(['payments as total_paid' => fn ($p) => $p->where('status', 'succeeded')], 'amount')
-            ->when(!empty($staffClientIds), fn ($qq) => $qq->whereIn('client_id', $staffClientIds))
+            ->when(! empty($staffClientIds), fn ($qq) => $qq->whereIn('client_id', $staffClientIds))
             ->when($this->clientId, fn ($qq) => $qq->where('client_id', $this->clientId))
             ->when($this->status !== 'all', fn ($qq) => $qq->where('status', $this->status))
             ->when($this->dateFrom, fn ($qq) => $qq->whereDate('issue_date', '>=', $this->dateFrom))
@@ -85,13 +127,13 @@ class AdminInvoiceManagement extends Component
     {
         $user = auth()->user();
         $staffClientIds = [];
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $staffClientIds = $user->assignedClientIds();
         }
 
         return Payment::query()
             ->with(['invoice', 'client'])
-            ->when(!empty($staffClientIds), fn ($q) => $q->whereIn('client_id', $staffClientIds))
+            ->when(! empty($staffClientIds), fn ($q) => $q->whereIn('client_id', $staffClientIds))
             ->when($this->clientId, fn ($q) => $q->where('client_id', $this->clientId))
             ->when($this->paymentMethod !== 'all', fn ($q) => $q->where('payment_method', $this->paymentMethod))
             ->when($this->paymentState !== 'all', fn ($q) => $q->where('status', $this->paymentState))
@@ -197,7 +239,7 @@ class AdminInvoiceManagement extends Component
     {
         $rows = $this->invoicesQuery()->limit(5000)->get();
 
-        $filename = 'invoices-' . now()->format('Y-m-d_His') . '.csv';
+        $filename = 'invoices-'.now()->format('Y-m-d_His').'.csv';
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
@@ -224,7 +266,8 @@ class AdminInvoiceManagement extends Component
         $brand = (array) config('client-portal.invoice.branding', []);
 
         $pdf = Pdf::loadView('admin.invoices.export-list-pdf', compact('invoices', 'brand'));
-        return response()->streamDownload(fn () => print($pdf->output()), 'invoices-' . now()->format('Y-m-d_His') . '.pdf');
+
+        return response()->streamDownload(fn () => print ($pdf->output()), 'invoices-'.now()->format('Y-m-d_His').'.pdf');
     }
 
     public function render()
@@ -286,4 +329,3 @@ class AdminInvoiceManagement extends Component
         ])->layout('layouts.admin', ['title' => 'Invoices & Payments']);
     }
 }
-

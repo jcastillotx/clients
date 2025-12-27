@@ -14,7 +14,9 @@ use Maatwebsite\Excel\Facades\Excel;
 class ClientReport extends Component
 {
     public string $range = 'last_12_months';
+
     public string $from = '';
+
     public string $to = '';
 
     /** @var array<string, mixed> */
@@ -52,12 +54,16 @@ class ClientReport extends Component
 
     public function updatedFrom(): void
     {
-        if ($this->range === 'custom') $this->load();
+        if ($this->range === 'custom') {
+            $this->load();
+        }
     }
 
     public function updatedTo(): void
     {
-        if ($this->range === 'custom') $this->load();
+        if ($this->range === 'custom') {
+            $this->load();
+        }
     }
 
     protected function hydrateRange(): void
@@ -66,20 +72,27 @@ class ClientReport extends Component
         if ($this->range === 'last_12_months') {
             $this->from = $today->copy()->subMonths(11)->startOfMonth()->toDateString();
             $this->to = $today->copy()->endOfMonth()->toDateString();
+
             return;
         }
         if ($this->range === 'ytd') {
             $this->from = $today->copy()->startOfYear()->toDateString();
             $this->to = $today->copy()->toDateString();
+
             return;
         }
         if ($this->range === 'this_year') {
             $this->from = $today->copy()->startOfYear()->toDateString();
             $this->to = $today->copy()->endOfYear()->toDateString();
+
             return;
         }
-        if ($this->from === '') $this->from = $today->copy()->subDays(30)->toDateString();
-        if ($this->to === '') $this->to = $today->copy()->toDateString();
+        if ($this->from === '') {
+            $this->from = $today->copy()->subDays(30)->toDateString();
+        }
+        if ($this->to === '') {
+            $this->to = $today->copy()->toDateString();
+        }
     }
 
     public function load(): void
@@ -90,7 +103,7 @@ class ClientReport extends Component
         // Retention approximation: clients created before range start that had any activity within range.
         $existingBefore = Client::query()->whereDate('created_at', '<', $this->from)->pluck('id')->all();
         $activeInRange = [];
-        if (!empty($existingBefore)) {
+        if (! empty($existingBefore)) {
             $activeInRange = ActivityLog::query()
                 ->whereIn('client_id', $existingBefore)
                 ->whereDate('created_at', '>=', $this->from)
@@ -99,7 +112,7 @@ class ClientReport extends Component
                 ->pluck('client_id')
                 ->all();
         }
-        $retention = !empty($existingBefore) ? (count($activeInRange) / count($existingBefore)) : 0;
+        $retention = ! empty($existingBefore) ? (count($activeInRange) / count($existingBefore)) : 0;
 
         // Client lifetime value (LTV): total succeeded payments per client (all-time).
         $ltvRows = Payment::query()
@@ -239,44 +252,52 @@ class ClientReport extends Component
         if ($kind === 'top_clients') {
             $headings = ['Client', 'Tier', 'Status', 'Revenue', 'Requests'];
             $rows = array_map(fn ($r) => [$r['client'], $r['tier'], $r['status'], $r['revenue'], $r['requests']], $this->topClients);
+
             return $this->exportRows($headings, $rows, "top-clients-{$this->from}-{$this->to}", $format, 'Top clients');
         }
 
         if ($kind === 'churn_risk') {
             $headings = ['Client', 'Tier', 'Status', 'Last activity'];
             $rows = array_map(fn ($r) => [$r['client'], $r['tier'], $r['status'], $r['last_activity'] ?? ''], $this->churnRisk);
+
             return $this->exportRows($headings, $rows, "churn-risk-{$this->from}-{$this->to}", $format, 'Churn risk');
         }
 
         if ($kind === 'ltv') {
             $headings = ['Client', 'Tier', 'Lifetime value'];
             $rows = array_map(fn ($r) => [$r['client'], $r['tier'], $r['ltv']], $this->lifetimeValue);
+
             return $this->exportRows($headings, $rows, "client-ltv-{$this->from}-{$this->to}", $format, 'Client lifetime value');
         }
 
         session()->flash('error', 'Unknown export.');
+
         return null;
     }
 
     protected function exportRows(array $headings, array $rows, string $baseName, string $format, string $title)
     {
         if ($format === 'csv') {
-            $filename = $baseName . '.csv';
+            $filename = $baseName.'.csv';
+
             return response()->streamDownload(function () use ($headings, $rows) {
                 $out = fopen('php://output', 'w');
                 fputcsv($out, $headings);
-                foreach ($rows as $r) fputcsv($out, $r);
+                foreach ($rows as $r) {
+                    fputcsv($out, $r);
+                }
                 fclose($out);
             }, $filename, ['Content-Type' => 'text/csv']);
         }
 
         if ($format === 'xlsx' || $format === 'excel') {
-            $filename = $baseName . '.xlsx';
+            $filename = $baseName.'.xlsx';
+
             return Excel::download(new ArrayExport($headings, $rows), $filename);
         }
 
         if ($format === 'pdf') {
-            $filename = $baseName . '.pdf';
+            $filename = $baseName.'.pdf';
             $pdf = Pdf::loadView('admin.reports.export-pdf', [
                 'title' => $title,
                 'from' => $this->from,
@@ -284,10 +305,12 @@ class ClientReport extends Component
                 'headings' => $headings,
                 'rows' => $rows,
             ]);
-            return response()->streamDownload(fn () => print($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
+
+            return response()->streamDownload(fn () => print ($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
         }
 
         session()->flash('error', 'Unsupported export format.');
+
         return null;
     }
 
@@ -304,4 +327,3 @@ class ClientReport extends Component
         ])->layout('layouts.admin', ['title' => 'Client Reports']);
     }
 }
-

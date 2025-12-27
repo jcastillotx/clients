@@ -144,7 +144,7 @@ class ActivityLog extends Activity
         $changes = [];
 
         foreach ($new as $key => $value) {
-            if (!isset($old[$key]) || $old[$key] !== $value) {
+            if (! isset($old[$key]) || $old[$key] !== $value) {
                 $changes[$key] = [
                     'old' => $old[$key] ?? null,
                     'new' => $value,

@@ -9,13 +9,17 @@ use Livewire\Component;
 class AITaskConfiguration extends Component
 {
     public array $taskModels = [];
+
     public string $fallbackOrderCsv = 'openai,openrouter,claude,perplexity,asksage';
 
     public bool $globalEnabled = true;
+
     public array $featureToggles = [];
 
     public ?string $monthlyBudgetUsd = null;
+
     public string $alertPct = '0.8';
+
     public bool $disableWhenExceeded = false;
 
     public function mount(): void
@@ -36,7 +40,7 @@ class AITaskConfiguration extends Component
         }
 
         $fallback = Setting::getValue('ai.fallback.order', null);
-        if (is_array($fallback) && !empty($fallback)) {
+        if (is_array($fallback) && ! empty($fallback)) {
             $this->fallbackOrderCsv = implode(',', array_values(array_map('strval', $fallback)));
         }
 
@@ -68,7 +72,7 @@ class AITaskConfiguration extends Component
     protected function authorizeAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->can('access admin panel')) {
+        if (! $u || ! $u->can('access admin panel')) {
             abort(403);
         }
     }
@@ -105,4 +109,3 @@ class AITaskConfiguration extends Component
         ])->layout('layouts.admin', ['title' => 'AI Task Configuration']);
     }
 }
-

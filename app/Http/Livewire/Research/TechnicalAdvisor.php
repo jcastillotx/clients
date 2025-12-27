@@ -12,6 +12,7 @@ class TechnicalAdvisor extends Component
     public string $inputJson = '{"overview":"","architecture":"","components":[],"data_flows":[],"security":"","scaling":"","availability":"","constraints":""}';
 
     public array $result = [];
+
     public ?string $error = null;
 
     public function run(TechnicalAdvisorService $svc): void
@@ -21,7 +22,7 @@ class TechnicalAdvisor extends Component
 
         try {
             $payload = json_decode($this->inputJson, true);
-            if (!is_array($payload)) {
+            if (! is_array($payload)) {
                 $payload = ['text' => $this->inputJson];
             }
 
@@ -39,4 +40,3 @@ class TechnicalAdvisor extends Component
             ->layout('layouts.app', ['title' => 'Technical Advisor']);
     }
 }
-

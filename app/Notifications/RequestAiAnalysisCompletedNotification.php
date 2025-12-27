@@ -12,9 +12,7 @@ class RequestAiAnalysisCompletedNotification extends Notification implements Sho
 {
     use Queueable;
 
-    public function __construct(public Request $request)
-    {
-    }
+    public function __construct(public Request $request) {}
 
     public function via($notifiable): array
     {
@@ -26,12 +24,11 @@ class RequestAiAnalysisCompletedNotification extends Notification implements Sho
         $url = route('admin.requests.show', $this->request);
 
         return (new MailMessage)
-            ->subject('AI analysis complete · Request #' . $this->request->id)
+            ->subject('AI analysis complete · Request #'.$this->request->id)
             ->greeting('Hello!')
             ->line('AI analysis is ready for a new/updated request.')
             ->line("Title: {$this->request->title}")
             ->action('Review AI analysis', $url)
-            ->line('— ' . config('app.name'));
+            ->line('— '.config('app.name'));
     }
 }
-

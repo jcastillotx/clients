@@ -52,7 +52,7 @@ SYS;
     }
 
     /**
-     * @param array{text:string,method:string,warnings:array<int,string>} $extraction
+     * @param  array{text:string,method:string,warnings:array<int,string>}  $extraction
      */
     public static function contractUser(Document $doc, string $text, string $standardChecklist, array $extraction): string
     {
@@ -104,8 +104,8 @@ SYS;
     }
 
     /**
-     * @param array<string,mixed>|null $estimateData
-     * @param array{text:string,method:string,warnings:array<int,string>} $extraction
+     * @param  array<string,mixed>|null  $estimateData
+     * @param  array{text:string,method:string,warnings:array<int,string>}  $extraction
      */
     public static function invoiceUser(Document $doc, string $text, ?array $estimateData, array $extraction): string
     {
@@ -150,7 +150,7 @@ SYS;
     }
 
     /**
-     * @param array{text:string,method:string,warnings:array<int,string>} $extraction
+     * @param  array{text:string,method:string,warnings:array<int,string>}  $extraction
      */
     public static function technicalUser(Document $doc, string $text, array $extraction): string
     {
@@ -176,6 +176,7 @@ USR;
     public static function summarySystem(string $language): string
     {
         $language = trim($language) ?: 'en';
+
         return <<<SYS
 You are a document summarization assistant. Output must be in language: {$language}.
 Return ONLY valid JSON. No markdown. No extra keys.
@@ -190,7 +191,7 @@ SYS;
     }
 
     /**
-     * @param array{text:string,method:string,warnings:array<int,string>} $extraction
+     * @param  array{text:string,method:string,warnings:array<int,string>}  $extraction
      */
     public static function summaryUser(Document $doc, string $text, array $extraction): string
     {
@@ -213,4 +214,3 @@ Document text:
 USR;
     }
 }
-

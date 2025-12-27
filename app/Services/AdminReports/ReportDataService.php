@@ -39,7 +39,7 @@ class ReportDataService
             ],
         };
 
-        if (!empty($metrics)) {
+        if (! empty($metrics)) {
             $payload = $this->filterPayload($payload, $category, $metrics);
         }
 
@@ -102,7 +102,7 @@ class ReportDataService
         foreach ($metrics as $metricKey) {
             $metricKey = (string) $metricKey;
             $spec = $metricMap[$category][$metricKey] ?? null;
-            if (!$spec) {
+            if (! $spec) {
                 continue;
             }
             $allowedChartKeys = array_merge($allowedChartKeys, $spec['charts'] ?? []);
@@ -112,11 +112,11 @@ class ReportDataService
         $allowedChartKeys = array_values(array_unique($allowedChartKeys));
         $allowedTableNames = array_values(array_unique($allowedTableNames));
 
-        if (!empty($allowedChartKeys)) {
+        if (! empty($allowedChartKeys)) {
             $payload['charts'] = array_intersect_key((array) ($payload['charts'] ?? []), array_flip($allowedChartKeys));
         }
 
-        if (!empty($allowedTableNames)) {
+        if (! empty($allowedTableNames)) {
             $payload['tables'] = array_intersect_key((array) ($payload['tables'] ?? []), array_flip($allowedTableNames));
         }
 
@@ -496,7 +496,7 @@ class ReportDataService
         $avgCompletion = ServiceRequest::query()
             ->whereNotNull('completed_at')
             ->whereBetween('completed_at', [$start, $end])
-            ->selectRaw("type, AVG(TIMESTAMPDIFF(MINUTE, COALESCE(started_at, created_at), completed_at)) as avg_minutes, COUNT(*) as completed_count")
+            ->selectRaw('type, AVG(TIMESTAMPDIFF(MINUTE, COALESCE(started_at, created_at), completed_at)) as avg_minutes, COUNT(*) as completed_count')
             ->groupBy('type')
             ->orderByDesc('completed_count')
             ->get()
@@ -768,4 +768,3 @@ class ReportDataService
         return array_values(array_unique(array_map('intval', array_merge($fromRequests, $fromInvoices, $fromDocuments))));
     }
 }
-

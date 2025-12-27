@@ -14,8 +14,11 @@ class AIAuditLog extends Component
     protected string $paginationTheme = 'bootstrap';
 
     public string $status = '';
+
     public string $provider = '';
+
     public string $taskType = '';
+
     public string $q = '';
 
     /** @var array<int, int|string|null> */
@@ -24,10 +27,25 @@ class AIAuditLog extends Component
     /** @var array<int, string|null> */
     public array $ratingNotes = [];
 
-    public function updatingStatus(): void { $this->resetPage(); }
-    public function updatingProvider(): void { $this->resetPage(); }
-    public function updatingTaskType(): void { $this->resetPage(); }
-    public function updatingQ(): void { $this->resetPage(); }
+    public function updatingStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingProvider(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTaskType(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingQ(): void
+    {
+        $this->resetPage();
+    }
 
     public function saveRating(int $taskId): void
     {
@@ -38,6 +56,7 @@ class AIAuditLog extends Component
         $rating = $rating !== null ? (int) $rating : null;
         if ($rating !== null && ($rating < 1 || $rating > 5)) {
             session()->flash('error', 'Rating must be 1-5.');
+
             return;
         }
 
@@ -56,7 +75,7 @@ class AIAuditLog extends Component
     protected function authorizeAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->can('access admin panel')) {
+        if (! $u || ! $u->can('access admin panel')) {
             abort(403);
         }
     }
@@ -67,11 +86,17 @@ class AIAuditLog extends Component
 
         $query = AiTask::query()->orderByDesc('id');
 
-        if ($this->status !== '') $query->where('status', $this->status);
-        if ($this->provider !== '') $query->where('provider_used', $this->provider);
-        if ($this->taskType !== '') $query->where('task_type', $this->taskType);
+        if ($this->status !== '') {
+            $query->where('status', $this->status);
+        }
+        if ($this->provider !== '') {
+            $query->where('provider_used', $this->provider);
+        }
+        if ($this->taskType !== '') {
+            $query->where('task_type', $this->taskType);
+        }
         if (trim($this->q) !== '') {
-            $s = '%' . trim($this->q) . '%';
+            $s = '%'.trim($this->q).'%';
             $query->where(function ($qq) use ($s) {
                 $qq->where('task_type', 'like', $s)
                     ->orWhere('provider_used', 'like', $s)
@@ -101,11 +126,15 @@ class AIAuditLog extends Component
 
     public function previewJson(mixed $data, int $max = 260): string
     {
-        if ($data === null) return '';
+        if ($data === null) {
+            return '';
+        }
         $s = json_encode($data, JSON_UNESCAPED_SLASHES);
-        if (!is_string($s)) return '';
+        if (! is_string($s)) {
+            return '';
+        }
         $s = trim($s);
-        return strlen($s) > $max ? (substr($s, 0, $max) . '…') : $s;
+
+        return strlen($s) > $max ? (substr($s, 0, $max).'…') : $s;
     }
 }
-

@@ -28,4 +28,3 @@ class ContentTheme extends Model
         return $this->belongsTo(Client::class);
     }
 }
-

@@ -15,8 +15,7 @@ class StorageSyncFailed extends Notification implements ShouldQueue
     public function __construct(
         public readonly StorageConnection $connection,
         public readonly string $message,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -43,4 +42,3 @@ class StorageSyncFailed extends Notification implements ShouldQueue
         ];
     }
 }
-

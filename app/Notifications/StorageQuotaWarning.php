@@ -15,8 +15,7 @@ class StorageQuotaWarning extends Notification implements ShouldQueue
     public function __construct(
         public readonly StorageConnection $connection,
         public readonly int $percent,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -45,4 +44,3 @@ class StorageQuotaWarning extends Notification implements ShouldQueue
         ];
     }
 }
-

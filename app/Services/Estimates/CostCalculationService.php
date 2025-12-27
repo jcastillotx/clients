@@ -53,7 +53,9 @@ class CostCalculationService
     public function defaultBaseRate(): float
     {
         $hourly = (float) Setting::getValue('billing.hourly_rate', 0);
-        if ($hourly > 0) return $hourly;
+        if ($hourly > 0) {
+            return $hourly;
+        }
 
         $card = Setting::getValue('billing.rate_card', null);
         if (is_array($card) && isset($card['default']) && is_numeric($card['default'])) {
@@ -69,6 +71,7 @@ class CostCalculationService
         if (is_numeric($pct)) {
             return max(0.0, (float) $pct);
         }
+
         return 0.2;
     }
 
@@ -95,7 +98,9 @@ class CostCalculationService
     protected function applyTierToRate(float $baseRate, ?string $tier): float
     {
         $tier = $tier ? strtolower($tier) : null;
-        if (!$tier) return $baseRate;
+        if (! $tier) {
+            return $baseRate;
+        }
 
         $card = Setting::getValue('billing.rate_card', null);
         if (is_array($card)) {
@@ -113,4 +118,3 @@ class CostCalculationService
         return $baseRate;
     }
 }
-

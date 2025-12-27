@@ -14,7 +14,9 @@ class StorageOverview extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $provider = '';
+
     public string $status = '';
 
     protected array $queryString = [
@@ -28,9 +30,20 @@ class StorageOverview extends Component
         abort_unless(Auth::user()?->can('access admin panel'), 403);
     }
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingProvider(): void { $this->resetPage(); }
-    public function updatingStatus(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingProvider(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatus(): void
+    {
+        $this->resetPage();
+    }
 
     public function render()
     {
@@ -40,8 +53,8 @@ class StorageOverview extends Component
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
             ->when($this->search, function ($q) {
                 $q->whereHas('client', function ($cq) {
-                    $cq->where('company_name', 'like', '%' . $this->search . '%');
-                })->orWhere('name', 'like', '%' . $this->search . '%');
+                    $cq->where('company_name', 'like', '%'.$this->search.'%');
+                })->orWhere('name', 'like', '%'.$this->search.'%');
             })
             ->orderByDesc('updated_at');
 
@@ -70,4 +83,3 @@ class StorageOverview extends Component
         return view('livewire.admin.storage.overview', compact('connections', 'stats', 'lastFailures', 's3Rate'));
     }
 }
-

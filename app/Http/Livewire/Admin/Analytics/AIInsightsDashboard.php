@@ -46,4 +46,3 @@ class AIInsightsDashboard extends Component
         ])->layout('layouts.admin', ['title' => 'AI Insights']);
     }
 }
-

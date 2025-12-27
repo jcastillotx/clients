@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivityWithContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\ValidationException;
-use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -165,7 +165,7 @@ class Request extends Model
      */
     public function isOpen(): bool
     {
-        return !in_array($this->status, ['completed', 'cancelled']);
+        return ! in_array($this->status, ['completed', 'cancelled']);
     }
 
     /**
@@ -173,7 +173,7 @@ class Request extends Model
      */
     public function isOverdue(): bool
     {
-        if (!$this->due_date) {
+        if (! $this->due_date) {
             return false;
         }
 
@@ -274,6 +274,7 @@ class Request extends Model
     public function scopeForClient($query, int|Client $client)
     {
         $clientId = $client instanceof Client ? $client->id : $client;
+
         return $query->where('client_id', $clientId);
     }
 
@@ -311,7 +312,7 @@ class Request extends Model
     protected static function booted(): void
     {
         static::updating(function (Request $request) {
-            if (!$request->isDirty('status')) {
+            if (! $request->isDirty('status')) {
                 return;
             }
 

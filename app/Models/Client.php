@@ -2,19 +2,21 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasFeatures;
+use App\Models\Concerns\LogsActivityWithContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Client extends Model
 {
     use HasFactory, SoftDeletes;
+    use HasFeatures;
     use LogsActivity;
     use LogsActivityWithContext;
 
@@ -39,6 +41,8 @@ class Client extends Model
         'tier',
         'stripe_customer_id',
         'notes',
+        'enabled_features',
+        'meta',
     ];
 
     /**
@@ -50,6 +54,8 @@ class Client extends Model
         'status' => 'string',
         'tier' => 'string',
         'deleted_at' => 'datetime',
+        'enabled_features' => 'array',
+        'meta' => 'array',
     ];
 
     /**

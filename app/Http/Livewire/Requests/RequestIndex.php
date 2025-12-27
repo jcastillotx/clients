@@ -13,7 +13,9 @@ class RequestIndex extends Component
     protected string $paginationTheme = 'tailwind';
 
     public string $search = '';
+
     public string $status = '';
+
     public string $type = '';
 
     public function updatingSearch(): void
@@ -42,7 +44,7 @@ class RequestIndex extends Component
                 abort(403);
             }
 
-            if (!in_array($request->status, ['draft', 'pending'], true)) {
+            if (! in_array($request->status, ['draft', 'pending'], true)) {
                 abort(403);
             }
         }
@@ -59,7 +61,7 @@ class RequestIndex extends Component
 
         $query = ServiceRequest::query()
             ->when($user->isClient(), fn ($q) => $q->where('client_id', $user->client_id))
-            ->when($this->search, fn ($q) => $q->where('title', 'like', '%' . $this->search . '%'))
+            ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
             ->when($this->type, fn ($q) => $q->where('type', $this->type))
             ->latest();
@@ -71,4 +73,3 @@ class RequestIndex extends Component
         ]);
     }
 }
-

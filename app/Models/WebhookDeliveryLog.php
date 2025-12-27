@@ -34,4 +34,3 @@ class WebhookDeliveryLog extends Model
         return $this->belongsTo(WebhookEndpoint::class, 'webhook_endpoint_id');
     }
 }
-

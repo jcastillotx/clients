@@ -18,11 +18,11 @@ class AutomationEngine
     /**
      * Execute all matching automations for a trigger.
      *
-     * @param array $context Example:
-     *  [
-     *    'request' => $request->toArray(),
-     *    'client' => $request->client?->toArray(),
-     *  ]
+     * @param  array  $context  Example:
+     *                          [
+     *                          'request' => $request->toArray(),
+     *                          'client' => $request->client?->toArray(),
+     *                          ]
      */
     public function run(string $trigger, array $context = [], ?int $clientId = null): array
     {
@@ -55,8 +55,9 @@ class AutomationEngine
                 $run->matched = $matched;
                 $run->save();
 
-                if (!$matched) {
+                if (! $matched) {
                     $results[] = ['rule_id' => $rule->id, 'matched' => false, 'succeeded' => true];
+
                     continue;
                 }
 
@@ -93,11 +94,12 @@ class AutomationEngine
             }
 
             $results = array_map(fn ($r) => $this->evaluateConditions($r, $context), $rules);
-            return $op === 'or' ? in_array(true, $results, true) : !in_array(false, $results, true);
+
+            return $op === 'or' ? in_array(true, $results, true) : ! in_array(false, $results, true);
         }
 
         // single rule: {field, operator, value}
-        if (!is_array($conditions)) {
+        if (! is_array($conditions)) {
             return true;
         }
 
@@ -116,7 +118,7 @@ class AutomationEngine
             'not_equals', 'neq' => $actual != $expected,
             'strict_equals' => $actual === $expected,
             'in' => in_array($actual, (array) $expected, false),
-            'not_in' => !in_array($actual, (array) $expected, false),
+            'not_in' => ! in_array($actual, (array) $expected, false),
             'contains' => is_string($actual) && str_contains($actual, (string) $expected),
             'gt' => is_numeric($actual) && is_numeric($expected) && $actual > $expected,
             'gte' => is_numeric($actual) && is_numeric($expected) && $actual >= $expected,
@@ -134,6 +136,7 @@ class AutomationEngine
         if ($path === '') {
             return null;
         }
+
         return Arr::get($context, $path);
     }
 
@@ -149,7 +152,7 @@ class AutomationEngine
             } catch (\Throwable $e) {
                 $fail++;
                 ActivityLog::log(
-                    'Automation action failed: ' . $e->getMessage(),
+                    'Automation action failed: '.$e->getMessage(),
                     null,
                     ['action' => $action, 'context' => $this->safeContext($context)],
                     'automation_action_failed',
@@ -183,7 +186,7 @@ class AutomationEngine
     protected function actionSendEmail(array $config, array $context): void
     {
         $to = $this->renderTemplate((string) ($config['to'] ?? ''), $context);
-        if ($to === '' || !str_contains($to, '@')) {
+        if ($to === '' || ! str_contains($to, '@')) {
             // convenience: allow "client" to mean client email
             if (($config['to'] ?? null) === 'client') {
                 $to = (string) Arr::get($context, 'client.email', '');
@@ -207,7 +210,8 @@ class AutomationEngine
 
         if ($channel === 'sms') {
             // placeholder: log-only
-            ActivityLog::log('Automation SMS: ' . $message, null, ['to' => $config['to'] ?? null], 'automation_sms', 'automation');
+            ActivityLog::log('Automation SMS: '.$message, null, ['to' => $config['to'] ?? null], 'automation_sms', 'automation');
+
             return;
         }
 
@@ -315,6 +319,7 @@ class AutomationEngine
             if (is_array($v) || is_object($v)) {
                 return json_encode($v, JSON_UNESCAPED_SLASHES) ?: '';
             }
+
             return (string) ($v ?? '');
         }, $template) ?? $template;
     }
@@ -329,7 +334,7 @@ class AutomationEngine
                 $out[$k] = $context[$k];
             }
         }
+
         return $out ?: $context;
     }
 }
-

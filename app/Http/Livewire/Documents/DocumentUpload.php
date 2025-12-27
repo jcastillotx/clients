@@ -18,7 +18,9 @@ class DocumentUpload extends Component
     use WithFileUploads;
 
     public string $title = '';
+
     public string $category = 'misc';
+
     public $file;
 
     protected function rules(): array
@@ -28,7 +30,7 @@ class DocumentUpload extends Component
 
         return [
             'title' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'in:' . $categories],
+            'category' => ['required', 'in:'.$categories],
             'file' => ['required', 'file', "max:{$maxKb}", 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip'],
         ];
     }
@@ -42,19 +44,19 @@ class DocumentUpload extends Component
     {
         $user = auth()->user();
 
-        if (!$user->can('upload_document')) {
+        if (! $user->can('upload_document')) {
             abort(403);
         }
 
-        if (!$user->client_id) {
+        if (! $user->client_id) {
             abort(403);
         }
 
         $this->validate();
 
-        $filename = (string) Str::uuid() . '.' . $this->file->getClientOriginalExtension();
+        $filename = (string) Str::uuid().'.'.$this->file->getClientOriginalExtension();
         $path = $this->file->storeAs(
-            'clients/' . $user->client_id . '/documents',
+            'clients/'.$user->client_id.'/documents',
             $filename,
             'documents'
         );
@@ -63,7 +65,7 @@ class DocumentUpload extends Component
         if (str_starts_with((string) $this->file->getMimeType(), 'image/')) {
             $thumb = app(ThumbnailService::class)->makeJpegThumbnailFromFile($this->file->getRealPath(), 640);
             if ($thumb) {
-                $thumbnailPath = 'clients/' . $user->client_id . '/documents/thumbnails/' . (string) Str::uuid() . '.jpg';
+                $thumbnailPath = 'clients/'.$user->client_id.'/documents/thumbnails/'.(string) Str::uuid().'.jpg';
                 Storage::disk('documents')->put($thumbnailPath, $thumb);
             }
         }
@@ -109,4 +111,3 @@ class DocumentUpload extends Component
         ]);
     }
 }
-

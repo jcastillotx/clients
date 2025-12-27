@@ -13,30 +13,30 @@ return new class extends Migration
         // ensure the expected columns exist and create the delivery log table if missing.
         if (Schema::hasTable('webhook_endpoints')) {
             Schema::table('webhook_endpoints', function (Blueprint $table) {
-                if (!Schema::hasColumn('webhook_endpoints', 'event_type')) {
+                if (! Schema::hasColumn('webhook_endpoints', 'event_type')) {
                     $table->string('event_type')->after('client_id');
                 }
-                if (!Schema::hasColumn('webhook_endpoints', 'webhook_url')) {
+                if (! Schema::hasColumn('webhook_endpoints', 'webhook_url')) {
                     $table->string('webhook_url');
                 }
-                if (!Schema::hasColumn('webhook_endpoints', 'secret')) {
+                if (! Schema::hasColumn('webhook_endpoints', 'secret')) {
                     $table->text('secret')->nullable();
                 }
-                if (!Schema::hasColumn('webhook_endpoints', 'is_active')) {
+                if (! Schema::hasColumn('webhook_endpoints', 'is_active')) {
                     $table->boolean('is_active')->default(true);
                 }
-                if (!Schema::hasColumn('webhook_endpoints', 'format')) {
+                if (! Schema::hasColumn('webhook_endpoints', 'format')) {
                     $table->string('format')->default('generic');
                 }
-                if (!Schema::hasColumn('webhook_endpoints', 'headers')) {
+                if (! Schema::hasColumn('webhook_endpoints', 'headers')) {
                     $table->json('headers')->nullable();
                 }
-                if (!Schema::hasColumn('webhook_endpoints', 'created_by')) {
+                if (! Schema::hasColumn('webhook_endpoints', 'created_by')) {
                     $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
                 }
             });
 
-            if (!Schema::hasTable('webhook_delivery_logs')) {
+            if (! Schema::hasTable('webhook_delivery_logs')) {
                 Schema::create('webhook_delivery_logs', function (Blueprint $table) {
                     $table->id();
                     $table->foreignId('webhook_endpoint_id')->constrained('webhook_endpoints')->cascadeOnDelete();
@@ -100,4 +100,3 @@ return new class extends Migration
         Schema::dropIfExists('webhook_endpoints');
     }
 };
-

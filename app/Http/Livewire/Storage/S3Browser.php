@@ -6,7 +6,6 @@ use App\Models\Document;
 use App\Models\StorageConnection;
 use App\Models\SyncedFile;
 use App\Services\Storage\AwsS3Service;
-use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -15,14 +14,18 @@ class S3Browser extends Component
     use WithFileUploads;
 
     public ?int $connectionId = null;
+
     public ?StorageConnection $connection = null;
 
     public string $path = '';
+
     public string $search = '';
 
     public ?string $nextToken = null;
+
     /** @var array<int, array<string, mixed>> */
     public array $folders = [];
+
     /** @var array<int, array<string, mixed>> */
     public array $files = [];
 
@@ -33,9 +36,13 @@ class S3Browser extends Component
 
     // Link-to-document modal
     public bool $showLinkModal = false;
+
     public ?string $linkFileId = null;
+
     public ?int $linkDocumentId = null;
+
     public string $linkMessage = '';
+
     public string $linkError = '';
 
     public function mount(?int $connection = null, ?string $path = null): void
@@ -61,14 +68,14 @@ class S3Browser extends Component
         }
 
         $conn = $q->first();
-        if (!$conn) {
+        if (! $conn) {
             abort(404, 'S3 connection not found.');
         }
 
         // Staff scoping: staff can only browse assigned clients
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $allowed = $user->assignedClientIds();
-            if (!in_array((int) $conn->client_id, $allowed, true)) {
+            if (! in_array((int) $conn->client_id, $allowed, true)) {
                 abort(403, 'You do not have access to this client storage.');
             }
         }
@@ -111,7 +118,7 @@ class S3Browser extends Component
 
     public function loadMore(): void
     {
-        if (!$this->nextToken) {
+        if (! $this->nextToken) {
             return;
         }
         $svc = app(AwsS3Service::class)->useConnection($this->connection);
@@ -124,7 +131,9 @@ class S3Browser extends Component
     public function applySearchFilter(): void
     {
         $q = trim($this->search);
-        if ($q === '') return;
+        if ($q === '') {
+            return;
+        }
 
         $needle = mb_strtolower($q);
         $this->files = array_values(array_filter($this->files, fn ($f) => str_contains(mb_strtolower((string) ($f['name'] ?? '')), $needle)));
@@ -158,6 +167,7 @@ class S3Browser extends Component
         $name = trim($this->newFolderName);
         if ($name === '') {
             session()->flash('error', 'Folder name is required.');
+
             return;
         }
 
@@ -170,6 +180,7 @@ class S3Browser extends Component
     public function download(string $fileId, AwsS3Service $s3)
     {
         $url = $s3->useConnection($this->connection)->downloadFile($fileId);
+
         return redirect()->away($url);
     }
 
@@ -194,12 +205,14 @@ class S3Browser extends Component
         $this->linkMessage = '';
         $this->linkError = '';
 
-        if (!$this->linkFileId) {
+        if (! $this->linkFileId) {
             $this->linkError = 'Missing file.';
+
             return;
         }
-        if (!$this->linkDocumentId) {
+        if (! $this->linkDocumentId) {
             $this->linkError = 'Please select a document.';
+
             return;
         }
 
@@ -238,9 +251,10 @@ class S3Browser extends Component
         $crumbs = [['label' => 'Root', 'path' => '']];
         $acc = '';
         foreach ($parts as $p) {
-            $acc = $acc === '' ? $p : ($acc . '/' . $p);
+            $acc = $acc === '' ? $p : ($acc.'/'.$p);
             $crumbs[] = ['label' => $p, 'path' => $acc];
         }
+
         return $crumbs;
     }
 
@@ -259,4 +273,3 @@ class S3Browser extends Component
         ])->layout('layouts.admin', ['title' => 'S3 Browser']);
     }
 }
-

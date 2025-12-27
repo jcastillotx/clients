@@ -9,16 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         // Laravel default notifications table might not exist in all environments.
-        if (!Schema::hasTable('notifications')) {
+        if (! Schema::hasTable('notifications')) {
             return;
         }
 
         Schema::table('notifications', function (Blueprint $table) {
-            if (!Schema::hasColumn('notifications', 'category')) {
+            if (! Schema::hasColumn('notifications', 'category')) {
                 $table->string('category')->nullable()->after('type');
                 $table->index('category');
             }
-            if (!Schema::hasColumn('notifications', 'priority')) {
+            if (! Schema::hasColumn('notifications', 'priority')) {
                 $table->enum('priority', ['low', 'normal', 'high'])->default('normal')->after('category');
                 $table->index('priority');
             }
@@ -27,7 +27,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('notifications')) {
+        if (! Schema::hasTable('notifications')) {
             return;
         }
 
@@ -43,4 +43,3 @@ return new class extends Migration
         });
     }
 };
-

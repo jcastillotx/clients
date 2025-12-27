@@ -16,6 +16,7 @@ class DocumentChat extends Component
     public ?Document $document = null; // optional: restrict to single doc
 
     public string $question = '';
+
     public array $messages = [];
 
     public ?AiConversation $conversation = null;
@@ -32,7 +33,7 @@ class DocumentChat extends Component
             'user_id' => auth()->id(),
             'context_type' => $document ? 'document' : 'general',
             'context_id' => $document?->id,
-            'title' => $document ? ('Chat: ' . ($document->title ?? $document->original_filename)) : 'Document chat',
+            'title' => $document ? ('Chat: '.($document->title ?? $document->original_filename)) : 'Document chat',
         ]);
 
         $this->messages = [];
@@ -49,7 +50,9 @@ class DocumentChat extends Component
     public function send(AIProviderManager $ai, DocumentEmbeddingService $emb, DocumentSemanticSearchService $search, DocumentTextExtractor $extractor): void
     {
         $q = trim($this->question);
-        if ($q === '') return;
+        if ($q === '') {
+            return;
+        }
 
         $this->messages[] = ['role' => 'user', 'content' => $q];
         AiMessage::create([
@@ -60,7 +63,7 @@ class DocumentChat extends Component
 
         $context = $this->buildContext($q, $emb, $search, $extractor);
 
-        $system = "You are a helpful assistant. Answer questions using ONLY the provided document context. If context is insufficient, say what is missing.";
+        $system = 'You are a helpful assistant. Answer questions using ONLY the provided document context. If context is insufficient, say what is missing.';
 
         $res = $ai->withFallback($this->document ? 'claude' : 'openai', function ($provider) use ($system, $q, $context) {
             return $provider->chat([
@@ -93,12 +96,13 @@ class DocumentChat extends Component
         if ($this->document) {
             $ex = $extractor->extractFromStorage('documents', (string) $this->document->file_path, $this->document->mime_type, $this->document->original_filename);
             $text = (string) ($ex['text'] ?? '');
+
             return $this->clip($text, 20000);
         }
 
         // Cross-document: embed question and pick top docs that have embeddings.
         $qVec = $emb->embedText($question, ['provider' => 'openai', 'model' => 'text-embedding-3-small', 'timeout' => 45]);
-        if (!$qVec) {
+        if (! $qVec) {
             return '(No embeddings available for semantic retrieval.)';
         }
 
@@ -113,10 +117,12 @@ class DocumentChat extends Component
         $parts = [];
         foreach ($ranked as $r) {
             $doc = $docs->get((int) $r['document_id']);
-            if (!$doc) continue;
+            if (! $doc) {
+                continue;
+            }
             $this->authorizeAccess($doc);
             $ex = $extractor->extractFromStorage('documents', (string) $doc->file_path, $doc->mime_type, $doc->original_filename);
-            $parts[] = "=== Document #{$doc->id} ({$doc->original_filename}) similarity=" . number_format((float) $r['score'], 3) . " ===\n" .
+            $parts[] = "=== Document #{$doc->id} ({$doc->original_filename}) similarity=".number_format((float) $r['score'], 3)." ===\n".
                 $this->clip((string) ($ex['text'] ?? ''), 8000);
         }
 
@@ -126,9 +132,14 @@ class DocumentChat extends Component
     protected function clip(string $text, int $maxChars): string
     {
         $text = trim($text);
-        if ($text === '') return '(No text extracted from document.)';
-        if (mb_strlen($text) <= $maxChars) return $text;
-        return mb_substr($text, 0, $maxChars) . "\n\n...(truncated)...";
+        if ($text === '') {
+            return '(No text extracted from document.)';
+        }
+        if (mb_strlen($text) <= $maxChars) {
+            return $text;
+        }
+
+        return mb_substr($text, 0, $maxChars)."\n\n...(truncated)...";
     }
 
     public function render()
@@ -139,4 +150,3 @@ class DocumentChat extends Component
         ]);
     }
 }
-

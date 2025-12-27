@@ -17,8 +17,11 @@ class StorageDashboard extends Component
 
     // connect new
     public string $new_provider = 's3';
+
     public string $new_name = '';
+
     public string $new_disk = '';
+
     public ?int $new_quota_gb = null;
 
     public function mount(): void
@@ -44,7 +47,7 @@ class StorageDashboard extends Component
 
         $quotaBytes = $this->new_quota_gb ? (int) $this->new_quota_gb * 1024 * 1024 * 1024 : null;
 
-        $isFirst = !StorageConnection::query()->where('client_id', $this->clientId)->exists();
+        $isFirst = ! StorageConnection::query()->where('client_id', $this->clientId)->exists();
 
         StorageConnection::create([
             'client_id' => $this->clientId,
@@ -99,6 +102,7 @@ class StorageDashboard extends Component
     {
         $c = StorageConnection::query()->findOrFail($id);
         abort_unless($c->client_id === $this->clientId, 403);
+
         return $c;
     }
 
@@ -142,4 +146,3 @@ class StorageDashboard extends Component
         return view('livewire.storage.dashboard', compact('connections', 'stats', 'primary', 'settings', 'recentSyncLogs', 'conflicts'));
     }
 }
-

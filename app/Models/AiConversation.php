@@ -45,4 +45,3 @@ class AiConversation extends Model
         return $this->hasMany(AiMessage::class, 'ai_conversation_id')->orderBy('id');
     }
 }
-

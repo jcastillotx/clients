@@ -15,8 +15,11 @@ class DropboxBrowser extends Component
     use WithFileUploads;
 
     public ?StorageConnection $connection = null;
+
     public ?int $connectionId = null;
+
     public string $path = '';
+
     public string $search = '';
 
     /** @var array<int, array<string, mixed>> */
@@ -29,9 +32,13 @@ class DropboxBrowser extends Component
 
     // Link-to-document modal
     public bool $linkModalOpen = false;
+
     public string $linkFilePath = '';
+
     public string $linkFileId = '';
+
     public string $linkFileName = '';
+
     public ?int $linkDocumentId = null;
 
     public function mount(?int $connection = null, ?string $path = null): void
@@ -57,14 +64,14 @@ class DropboxBrowser extends Component
         }
 
         $conn = $q->first();
-        if (!$conn) {
+        if (! $conn) {
             abort(404, 'Dropbox connection not found.');
         }
 
         // Staff scoping: staff can only browse assigned clients.
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $allowed = $user->assignedClientIds();
-            if (!in_array((int) $conn->client_id, $allowed, true)) {
+            if (! in_array((int) $conn->client_id, $allowed, true)) {
                 abort(403, 'You do not have access to this client storage.');
             }
         }
@@ -78,7 +85,7 @@ class DropboxBrowser extends Component
         $this->connectionId = $conn->id;
     }
 
-    public function refreshListing(DropboxService $dropbox = null): void
+    public function refreshListing(?DropboxService $dropbox = null): void
     {
         $dropbox ??= app(DropboxService::class);
         $dropbox->useConnection($this->connection);
@@ -92,14 +99,14 @@ class DropboxBrowser extends Component
 
         // Sort folders first, then files.
         $this->items = collect($items)->sortBy(function ($i) {
-            return (($i['type'] ?? '') === 'folder') ? '0_' . ($i['name'] ?? '') : '1_' . ($i['name'] ?? '');
+            return (($i['type'] ?? '') === 'folder') ? '0_'.($i['name'] ?? '') : '1_'.($i['name'] ?? '');
         })->values()->all();
     }
 
     public function openFolder(string $folderPath): void
     {
         $folderPath = trim($folderPath, '/');
-        $this->path = trim(($this->path ? $this->path . '/' : '') . $folderPath, '/');
+        $this->path = trim(($this->path ? $this->path.'/' : '').$folderPath, '/');
         $this->refreshListing();
     }
 
@@ -129,14 +136,14 @@ class DropboxBrowser extends Component
     public function upload(DropboxService $dropbox): void
     {
         $this->validate([
-            'uploads.*' => ['file', 'max:' . (int) (config('client-portal.max_document_upload_size', 51200))],
+            'uploads.*' => ['file', 'max:'.(int) (config('client-portal.max_document_upload_size', 51200))],
         ]);
 
         $dropbox->useConnection($this->connection);
 
         foreach ($this->uploads as $file) {
             $name = $file->getClientOriginalName();
-            $target = trim(($this->path ? $this->path . '/' : '') . $name, '/');
+            $target = trim(($this->path ? $this->path.'/' : '').$name, '/');
             $dropbox->uploadFile($file, $target);
         }
 
@@ -237,4 +244,3 @@ class DropboxBrowser extends Component
         ])->layout('layouts.admin', ['title' => 'Dropbox Browser']);
     }
 }
-

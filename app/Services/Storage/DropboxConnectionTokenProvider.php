@@ -20,6 +20,7 @@ class DropboxConnectionTokenProvider implements RefreshableTokenProvider
     public function getToken(): string
     {
         $creds = (array) ($this->connection->credentials ?? []);
+
         return (string) ($creds['access_token'] ?? '');
     }
 
@@ -46,11 +47,12 @@ class DropboxConnectionTokenProvider implements RefreshableTokenProvider
             if ($status === 401) {
                 $this->connection->update(['status' => 'error']);
             }
+
             return false;
         }
 
         // Only attempt refresh on expiry or auth failure.
-        if (!($isExpired || $status === 401)) {
+        if (! ($isExpired || $status === 401)) {
             return false;
         }
 
@@ -62,8 +64,9 @@ class DropboxConnectionTokenProvider implements RefreshableTokenProvider
                     'refresh_token' => $refreshToken,
                 ]);
 
-            if (!$resp->successful()) {
+            if (! $resp->successful()) {
                 $this->connection->update(['status' => 'error']);
+
                 return false;
             }
 
@@ -71,6 +74,7 @@ class DropboxConnectionTokenProvider implements RefreshableTokenProvider
             $newAccessToken = (string) ($body['access_token'] ?? '');
             if ($newAccessToken === '') {
                 $this->connection->update(['status' => 'error']);
+
                 return false;
             }
 
@@ -91,8 +95,8 @@ class DropboxConnectionTokenProvider implements RefreshableTokenProvider
             return true;
         } catch (\Throwable $e) {
             $this->connection->update(['status' => 'error']);
+
             return false;
         }
     }
 }
-

@@ -2,8 +2,6 @@
 
 namespace App\Services\AI;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -25,7 +23,7 @@ class OpenRouterService extends HttpJsonProviderService
         }
 
         $complexity = (string) ($options['complexity'] ?? 'low');
-        $map = (array) config('ai-providers.routing.complexity_models.' . $complexity, []);
+        $map = (array) config('ai-providers.routing.complexity_models.'.$complexity, []);
         $m = $map['openrouter'] ?? null;
         if (is_string($m) && $m !== '') {
             return $m;
@@ -37,7 +35,7 @@ class OpenRouterService extends HttpJsonProviderService
     protected function authHeaders(): array
     {
         return [
-            'Authorization' => 'Bearer ' . (string) ($this->config['api_key'] ?? ''),
+            'Authorization' => 'Bearer '.(string) ($this->config['api_key'] ?? ''),
         ];
     }
 
@@ -68,6 +66,7 @@ class OpenRouterService extends HttpJsonProviderService
     {
         // Inject chosen model and let base HTTP handler do retries + logging.
         $options['model'] = $this->chooseModel($options);
+
         return parent::chat($messages, $options);
     }
 
@@ -80,7 +79,7 @@ class OpenRouterService extends HttpJsonProviderService
         if ($apiKey === '') {
             throw new RuntimeException('OpenRouter API key is not configured.');
         }
-        if (!$this->http) {
+        if (! $this->http) {
             $this->configure($this->config);
         }
 
@@ -105,7 +104,7 @@ class OpenRouterService extends HttpJsonProviderService
         $body = $resp->getBody();
         $buffer = '';
 
-        while (!$body->eof()) {
+        while (! $body->eof()) {
             $buffer .= $body->read(4096);
             while (($pos = strpos($buffer, "\n\n")) !== false) {
                 $event = substr($buffer, 0, $pos);
@@ -113,11 +112,17 @@ class OpenRouterService extends HttpJsonProviderService
 
                 foreach (explode("\n", $event) as $line) {
                     $line = trim($line);
-                    if (!str_starts_with($line, 'data:')) continue;
+                    if (! str_starts_with($line, 'data:')) {
+                        continue;
+                    }
                     $json = trim(substr($line, 5));
-                    if ($json === '' || $json === '[DONE]') continue;
+                    if ($json === '' || $json === '[DONE]') {
+                        continue;
+                    }
                     $data = json_decode($json, true);
-                    if (!is_array($data)) continue;
+                    if (! is_array($data)) {
+                        continue;
+                    }
                     $delta = $data['choices'][0]['delta']['content'] ?? null;
                     if (is_string($delta) && $delta !== '') {
                         yield ['delta' => $delta];
@@ -127,4 +132,3 @@ class OpenRouterService extends HttpJsonProviderService
         }
     }
 }
-

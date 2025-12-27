@@ -12,18 +12,15 @@ class PaymentReceivedNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Payment $payment)
-    {
-    }
+    public function __construct(public Payment $payment) {}
 
     public function build(): self
     {
         $invoiceNumber = $this->payment->invoice?->invoice_number ?? 'Invoice';
 
         return $this
-            ->subject('Payment receipt · ' . $invoiceNumber)
+            ->subject('Payment receipt · '.$invoiceNumber)
             ->view('emails.payment-received', ['payment' => $this->payment])
             ->text('emails.text.payment-received', ['payment' => $this->payment]);
     }
 }
-

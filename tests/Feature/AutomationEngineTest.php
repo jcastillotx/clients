@@ -60,4 +60,3 @@ class AutomationEngineTest extends TestCase
         ]);
     }
 }
-

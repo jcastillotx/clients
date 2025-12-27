@@ -26,7 +26,7 @@ class InvoicePaymentProcessingTest extends TestCase
         config()->set('services.stripe.key', 'pk_test_dummy');
 
         // Mock Stripe\PaymentIntent::retrieve (static) without doing network I/O.
-        $pi = new \stdClass();
+        $pi = new \stdClass;
         $pi->id = 'pi_test_123';
         $pi->status = 'succeeded';
         $pi->latest_charge = 'ch_test_123';
@@ -77,4 +77,3 @@ class InvoicePaymentProcessingTest extends TestCase
         $this->assertTrue($payment->isSuccessful());
     }
 }
-
