@@ -15,18 +15,23 @@ class Task extends Model
         'assigned_to',
         'status',
         'priority',
+        'start_date',
         'due_date',
         'estimated_hours',
         'actual_hours',
         'parent_task_id',
+        'depends_on_task_id',
         'order',
+        'meta',
     ];
 
     protected $casts = [
+        'start_date' => 'date',
         'due_date' => 'date',
         'estimated_hours' => 'decimal:2',
         'actual_hours' => 'decimal:2',
         'order' => 'integer',
+        'meta' => 'array',
     ];
 
     public function request(): BelongsTo
@@ -44,9 +49,24 @@ class Task extends Model
         return $this->belongsTo(Task::class, 'parent_task_id');
     }
 
+    public function dependsOn(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'depends_on_task_id');
+    }
+
     public function children(): HasMany
     {
         return $this->hasMany(Task::class, 'parent_task_id')->orderBy('order')->orderBy('id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TaskComment::class)->latest('id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TaskAttachment::class)->latest('id');
     }
 
     public function timeEntries(): HasMany

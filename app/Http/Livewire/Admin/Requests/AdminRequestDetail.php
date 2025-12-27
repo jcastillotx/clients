@@ -11,6 +11,7 @@ use App\Models\RequestTimeEntry;
 use App\Models\User;
 use App\Notifications\RequestAssignedNotification;
 use App\Services\ThumbnailService;
+use App\Services\Projects\ProjectConversionService;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -126,6 +127,16 @@ class AdminRequestDetail extends Component
             'updated',
             'requests'
         );
+    }
+
+    public function convertToProject(ProjectConversionService $svc): void
+    {
+        $res = $svc->convert($this->request);
+        if (($res['ok'] ?? false) === true) {
+            session()->flash('success', 'Converted to project. Seeded tasks: ' . (int) ($res['seeded_tasks'] ?? 0));
+        } else {
+            session()->flash('error', 'Project conversion failed.');
+        }
     }
 
     public function addComment(): void

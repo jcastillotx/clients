@@ -18,6 +18,9 @@ class TimeEntry extends Model
         'is_billable',
         'hourly_rate',
         'status',
+        'approved_by',
+        'approved_at',
+        'billed_at',
     ];
 
     protected $casts = [
@@ -26,6 +29,8 @@ class TimeEntry extends Model
         'duration_minutes' => 'integer',
         'is_billable' => 'boolean',
         'hourly_rate' => 'decimal:2',
+        'approved_at' => 'datetime',
+        'billed_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -41,6 +46,11 @@ class TimeEntry extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }
 
