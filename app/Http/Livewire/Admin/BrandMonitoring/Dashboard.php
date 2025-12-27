@@ -44,6 +44,10 @@ class Dashboard extends Component
         $this->resetPage();
     }
 
+    public $showResponseModal = false;
+    public $respondingToMention = null;
+    public $responseNotes = '';
+
     public function clearFilters()
     {
         $this->selectedClient = null;
@@ -53,6 +57,35 @@ class Dashboard extends Component
         $this->dateFrom = now()->subDays(7)->format('Y-m-d');
         $this->dateTo = now()->format('Y-m-d');
         $this->resetPage();
+    }
+
+    public function openResponseModal(int $mentionId)
+    {
+        $this->respondingToMention = BrandMention::find($mentionId);
+        $this->responseNotes = '';
+        $this->showResponseModal = true;
+    }
+
+    public function closeResponseModal()
+    {
+        $this->showResponseModal = false;
+        $this->respondingToMention = null;
+        $this->responseNotes = '';
+    }
+
+    public function markAsResponded()
+    {
+        if (!$this->respondingToMention) {
+            return;
+        }
+
+        $this->respondingToMention->markAsResponded(
+            Auth::id(),
+            $this->responseNotes ?: null
+        );
+
+        session()->flash('success', 'Mention marked as responded.');
+        $this->closeResponseModal();
     }
 
     public function render()
@@ -100,6 +133,14 @@ class Dashboard extends Component
 
         $platforms = ['news', 'google_news', 'yelp', 'google', 'reddit', 'youtube', 'x', 'web'];
 
+        // Count negative mentions that need response
+        $needsAttentionCount = BrandMention::query()
+            ->when($this->selectedClient, fn ($q) => $q->where('client_id', $this->selectedClient))
+            ->where('sentiment', 'negative')
+            ->whereNull('responded_at')
+            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo.' 23:59:59'])
+            ->count();
+
         return view('livewire.admin.brand-monitoring.dashboard', [
             'mentions' => $mentions,
             'totalMentions' => $totalMentions,
@@ -107,6 +148,7 @@ class Dashboard extends Component
             'platformBreakdown' => $platformBreakdown,
             'clients' => $clients,
             'platforms' => $platforms,
+            'needsAttentionCount' => $needsAttentionCount,
         ]);
     }
 }

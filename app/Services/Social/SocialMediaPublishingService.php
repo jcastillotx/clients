@@ -4,6 +4,9 @@ namespace App\Services\Social;
 
 use App\Models\ContentCalendarItem;
 use App\Models\SocialAccount;
+use App\Services\Social\BlueskyService;
+use App\Services\Social\PinterestOAuthService;
+use App\Services\Social\TwitterOAuthService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -56,6 +59,9 @@ class SocialMediaPublishingService
             $result = match ($post->platform) {
                 'facebook' => $this->publishToFacebook($post, $account),
                 'linkedin' => $this->publishToLinkedIn($post, $account),
+                'twitter', 'x' => $this->publishToTwitter($post, $account),
+                'bluesky' => $this->publishToBluesky($post, $account),
+                'pinterest' => $this->publishToPinterest($post, $account),
                 default => throw new \Exception('Unsupported platform: '.$post->platform),
             };
 
@@ -298,6 +304,97 @@ class SocialMediaPublishingService
             'post_id' => $postId,
             'url' => $postId ? "https://www.linkedin.com/feed/update/{$postId}" : null,
         ];
+    }
+
+    /**
+     * Publish post to Twitter/X
+     */
+    protected function publishToTwitter(ContentCalendarItem $post, SocialAccount $account): array
+    {
+        $content = $post->content_text;
+        if ($post->hashtags) {
+            $content .= "\n\n" . $post->hashtags;
+        }
+
+        // Truncate to 280 characters if needed
+        if (mb_strlen($content) > 280) {
+            $content = mb_substr($content, 0, 277) . '...';
+        }
+
+        $twitterService = new TwitterOAuthService();
+        
+        // Upload media if present
+        $mediaIds = [];
+        if (!empty($post->media_urls) && is_array($post->media_urls)) {
+            foreach (array_slice($post->media_urls, 0, 4) as $mediaUrl) {
+                $mediaId = $twitterService->uploadMedia($account, $mediaUrl);
+                if ($mediaId) {
+                    $mediaIds[] = $mediaId;
+                }
+            }
+        }
+
+        return $twitterService->createTweet($account, $content, !empty($mediaIds) ? $mediaIds : null);
+    }
+
+    /**
+     * Publish post to Bluesky
+     */
+    protected function publishToBluesky(ContentCalendarItem $post, SocialAccount $account): array
+    {
+        $content = $post->content_text;
+        if ($post->hashtags) {
+            $content .= "\n\n" . $post->hashtags;
+        }
+
+        // Bluesky has a 300 character limit
+        if (mb_strlen($content) > 300) {
+            $content = mb_substr($content, 0, 297) . '...';
+        }
+
+        $blueskyService = new BlueskyService();
+        
+        return $blueskyService->createPost(
+            $account,
+            $content,
+            $post->media_urls ?? null
+        );
+    }
+
+    /**
+     * Publish post to Pinterest
+     */
+    protected function publishToPinterest(ContentCalendarItem $post, SocialAccount $account): array
+    {
+        // Pinterest requires an image
+        if (empty($post->media_urls) || !is_array($post->media_urls)) {
+            return [
+                'success' => false,
+                'error' => 'Pinterest requires at least one image to create a pin',
+            ];
+        }
+
+        $pinterestService = new PinterestOAuthService();
+        
+        // Get boards and use the first one (or a configured default)
+        $boards = $pinterestService->getBoards($account);
+        if (empty($boards)) {
+            return [
+                'success' => false,
+                'error' => 'No Pinterest boards found. Please create a board first.',
+            ];
+        }
+
+        $boardId = $post->meta['pinterest_board_id'] ?? $boards[0]['id'];
+
+        return $pinterestService->createPin(
+            $account,
+            $boardId,
+            $post->title,
+            $post->content_text . ($post->hashtags ? "\n\n" . $post->hashtags : ''),
+            $post->media_urls[0],
+            $post->meta['link'] ?? null
+        );
     }
 
     /**

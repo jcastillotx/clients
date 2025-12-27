@@ -256,4 +256,34 @@ class Client extends Model
     {
         return $query->where('tier', $tier);
     }
+
+    /**
+     * Get brand monitoring keywords for this client.
+     * Returns configured keywords or defaults to company name.
+     *
+     * @return array<string>
+     */
+    public function getBrandKeywords(): array
+    {
+        $keywords = $this->meta['brand_keywords'] ?? [];
+        
+        if (empty($keywords)) {
+            // Default to company name if no keywords configured
+            return array_filter([$this->company_name]);
+        }
+        
+        return is_array($keywords) ? $keywords : [$keywords];
+    }
+
+    /**
+     * Set brand monitoring keywords for this client.
+     *
+     * @param array<string> $keywords
+     */
+    public function setBrandKeywords(array $keywords): void
+    {
+        $meta = $this->meta ?? [];
+        $meta['brand_keywords'] = array_values(array_filter(array_map('trim', $keywords)));
+        $this->update(['meta' => $meta]);
+    }
 }

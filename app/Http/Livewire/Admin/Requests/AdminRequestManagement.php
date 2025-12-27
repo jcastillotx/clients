@@ -304,6 +304,34 @@ class AdminRequestManagement extends Component
         $types = config('client-portal.request_types', []);
         $priorities = config('client-portal.request_priorities', []);
 
+        // Status summary counts for dashboard cards
+        $statusCounts = ServiceRequest::query()
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Priority counts
+        $priorityCounts = ServiceRequest::query()
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->selectRaw('priority, COUNT(*) as count')
+            ->groupBy('priority')
+            ->pluck('count', 'priority')
+            ->toArray();
+
+        // Overdue count
+        $overdueCount = ServiceRequest::query()
+            ->open()
+            ->whereNotNull('due_date')
+            ->where('due_date', '<', now())
+            ->count();
+
+        // Unassigned count
+        $unassignedCount = ServiceRequest::query()
+            ->open()
+            ->whereNull('assigned_to')
+            ->count();
+
         if ($this->viewMode === 'kanban') {
             $columns = ! empty($this->statuses) ? $this->statuses : array_keys($statuses);
             $boards = [];
@@ -332,6 +360,10 @@ class AdminRequestManagement extends Component
             'priorities' => $priorities,
             'clientOptions' => $this->clientOptions,
             'staffOptions' => $this->staffOptions,
+            'statusCounts' => $statusCounts,
+            'priorityCounts' => $priorityCounts,
+            'overdueCount' => $overdueCount,
+            'unassignedCount' => $unassignedCount,
         ])->layout('layouts.admin', ['title' => 'Requests']);
     }
 }

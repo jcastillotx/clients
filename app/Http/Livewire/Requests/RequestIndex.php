@@ -58,18 +58,32 @@ class RequestIndex extends Component
     public function render()
     {
         $user = auth()->user();
+        $clientId = $user->isClient() ? $user->client_id : null;
 
         $query = ServiceRequest::query()
-            ->when($user->isClient(), fn ($q) => $q->where('client_id', $user->client_id))
+            ->when($clientId, fn ($q) => $q->where('client_id', $clientId))
             ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
             ->when($this->type, fn ($q) => $q->where('type', $this->type))
             ->latest();
 
+        // Status summary counts for the client
+        $statusCounts = [];
+        if ($clientId) {
+            $statusCounts = ServiceRequest::query()
+                ->where('client_id', $clientId)
+                ->selectRaw('status, COUNT(*) as count')
+                ->groupBy('status')
+                ->pluck('count', 'status')
+                ->toArray();
+        }
+
         return view('livewire.requests.index', [
             'requests' => $query->paginate(15),
             'statuses' => array_keys(config('client-portal.request_statuses', [])),
+            'statusLabels' => config('client-portal.request_statuses', []),
             'types' => array_keys(config('client-portal.request_types', [])),
+            'statusCounts' => $statusCounts,
         ]);
     }
 }

@@ -146,10 +146,19 @@
                                             <h5 class="card-title">{{ $details['name'] }}</h5>
                                             <p class="card-text text-muted">{{ $details['description'] }}</p>
 
-                                            @if($details['disabled'] ?? false)
+                                            @if($details['comingSoon'] ?? false)
                                                 <span class="badge badge-warning">Coming Soon</span>
+                                            @elseif($details['requiresConfig'] ?? false)
+                                                <span class="badge badge-secondary">Not Configured</span>
+                                                <small class="d-block text-muted mt-1">Contact admin to enable</small>
+                                            @elseif($details['customConnect'] ?? false)
+                                                <button wire:click="openBlueskyModal"
+                                                        class="btn btn-primary btn-block">
+                                                    <i class="fas fa-link mr-1"></i>
+                                                    Connect {{ $details['name'] }}
+                                                </button>
                                             @else
-                                                <a href="{{ route('oauth.' . $platform . '.redirect') }}"
+                                                <a href="{{ route($details['route'] ?? 'oauth.' . $platform . '.redirect') }}"
                                                    class="btn btn-primary btn-block">
                                                     <i class="fas fa-link mr-1"></i>
                                                     Connect {{ $details['name'] }}
@@ -209,4 +218,77 @@
             </div>
         </div>
     </div>
+
+    <!-- Bluesky Connection Modal -->
+    @if($showBlueskyModal)
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-cloud mr-2" style="color: #0085FF;"></i>
+                            Connect Bluesky Account
+                        </h5>
+                        <button type="button" class="close" wire:click="closeBlueskyModal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <strong>App Password Required</strong><br>
+                            Bluesky uses app passwords for third-party access. Create one at:
+                            <a href="https://bsky.app/settings/app-passwords" target="_blank" class="alert-link">
+                                bsky.app/settings/app-passwords
+                            </a>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="blueskyHandle">Bluesky Handle</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">@</span>
+                                </div>
+                                <input type="text"
+                                       id="blueskyHandle"
+                                       wire:model.defer="blueskyHandle"
+                                       class="form-control @error('blueskyHandle') is-invalid @enderror"
+                                       placeholder="yourhandle.bsky.social">
+                            </div>
+                            @error('blueskyHandle')
+                                <span class="text-danger small">{{ $message }}</span>
+                            @enderror
+                            <small class="text-muted">Enter your full handle (e.g., yourname.bsky.social)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="blueskyAppPassword">App Password</label>
+                            <input type="password"
+                                   id="blueskyAppPassword"
+                                   wire:model.defer="blueskyAppPassword"
+                                   class="form-control @error('blueskyAppPassword') is-invalid @enderror"
+                                   placeholder="xxxx-xxxx-xxxx-xxxx">
+                            @error('blueskyAppPassword')
+                                <span class="text-danger small">{{ $message }}</span>
+                            @enderror
+                            <small class="text-muted">This is NOT your main password. Create an app password in Bluesky settings.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="closeBlueskyModal">
+                            Cancel
+                        </button>
+                        <button type="button"
+                                class="btn btn-primary"
+                                wire:click="connectBluesky"
+                                wire:loading.attr="disabled">
+                            <i class="fas fa-link mr-1" wire:loading.remove wire:target="connectBluesky"></i>
+                            <i class="fas fa-spinner fa-spin mr-1" wire:loading wire:target="connectBluesky"></i>
+                            Connect Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

@@ -4,10 +4,13 @@ namespace App\Http\Livewire\Admin\Settings;
 
 use App\Services\Settings\SettingsService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Stripe\Stripe;
+use Stripe\Account as StripeAccount;
 
 class SystemSettings extends Component
 {
@@ -28,6 +31,10 @@ class SystemSettings extends Component
     public array $security = [];
 
     public array $branding = [];
+
+    public array $integrations = [];
+
+    public array $integrationStatus = [];
 
     public ?string $test_email_to = null;
 
@@ -217,9 +224,286 @@ class SystemSettings extends Component
 
     public function setTab(string $tab): void
     {
-        $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding'];
+        $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding', 'integrations'];
         if (in_array($tab, $allowed, true)) {
             $this->tab = $tab;
+            if ($tab === 'integrations') {
+                $this->loadIntegrationStatus();
+            }
+        }
+    }
+
+    public function loadIntegrationStatus(): void
+    {
+        $this->integrationStatus = [];
+
+        // Stripe
+        $stripeKey = config('services.stripe.secret') ?: ($this->payment['stripe_mode'] === 'live'
+            ? $this->payment['stripe_live_secret']
+            : $this->payment['stripe_test_secret']);
+        $this->integrationStatus['stripe'] = [
+            'configured' => !empty($stripeKey),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
+        // OpenAI
+        $this->integrationStatus['openai'] = [
+            'configured' => !empty(config('ai-providers.providers.openai.api_key')),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
+        // Dropbox (OAuth)
+        $dropboxConfigured = !empty(config('services.dropbox.app_key')) && !empty(config('services.dropbox.app_secret'));
+        $this->integrationStatus['dropbox'] = [
+            'configured' => $dropboxConfigured,
+            'connected' => false,
+            'message' => null,
+            'can_connect' => $dropboxConfigured,
+            'oauth_url' => $dropboxConfigured ? route('storage.dropbox.authorize') : null,
+        ];
+
+        // Google Drive (OAuth)
+        $googleConfigured = !empty(config('storage-providers.google_drive.client_id')) && !empty(config('storage-providers.google_drive.client_secret'));
+        $this->integrationStatus['google_drive'] = [
+            'configured' => $googleConfigured,
+            'connected' => false,
+            'message' => null,
+            'can_connect' => $googleConfigured,
+            'oauth_url' => $googleConfigured ? route('storage.google-drive.authorize') : null,
+        ];
+
+        // NewsAPI
+        $this->integrationStatus['newsapi'] = [
+            'configured' => !empty(config('brand-monitoring.news.newsapi.api_key')),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
+        // YouTube
+        $this->integrationStatus['youtube'] = [
+            'configured' => !empty(config('brand-monitoring.social.youtube.api_key')),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
+        // Yelp
+        $this->integrationStatus['yelp'] = [
+            'configured' => !empty(config('brand-monitoring.reviews.yelp.api_key')),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
+        // Google Places
+        $this->integrationStatus['google_places'] = [
+            'configured' => !empty(config('brand-monitoring.reviews.google_places.api_key')),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
+        // Twilio
+        $this->integrationStatus['twilio'] = [
+            'configured' => !empty($this->notifications['twilio_sid']) && !empty($this->notifications['twilio_token']),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
+        // Slack
+        $this->integrationStatus['slack'] = [
+            'configured' => !empty($this->notifications['slack_webhook_url']),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
+        // Facebook (OAuth)
+        $facebookConfigured = !empty(config('services.facebook.client_id')) && !empty(config('services.facebook.client_secret'));
+        $this->integrationStatus['facebook'] = [
+            'configured' => $facebookConfigured,
+            'connected' => false,
+            'message' => null,
+            'can_connect' => $facebookConfigured,
+            'oauth_url' => $facebookConfigured ? route('oauth.facebook.redirect') : null,
+        ];
+
+        // LinkedIn (OAuth)
+        $linkedinConfigured = !empty(config('services.linkedin.client_id')) && !empty(config('services.linkedin.client_secret'));
+        $this->integrationStatus['linkedin'] = [
+            'configured' => $linkedinConfigured,
+            'connected' => false,
+            'message' => null,
+            'can_connect' => $linkedinConfigured,
+            'oauth_url' => $linkedinConfigured ? route('oauth.linkedin.redirect') : null,
+        ];
+    }
+
+    public function testIntegration(string $service): void
+    {
+        $this->loadIntegrationStatus();
+
+        try {
+            switch ($service) {
+                case 'stripe':
+                    $stripeKey = config('services.stripe.secret') ?: ($this->payment['stripe_mode'] === 'live'
+                        ? $this->payment['stripe_live_secret']
+                        : $this->payment['stripe_test_secret']);
+                    if (empty($stripeKey)) {
+                        $this->integrationStatus['stripe']['message'] = 'API key not configured';
+                        return;
+                    }
+                    Stripe::setApiKey($stripeKey);
+                    $account = StripeAccount::retrieve();
+                    $this->integrationStatus['stripe']['connected'] = true;
+                    $this->integrationStatus['stripe']['message'] = 'Connected: ' . ($account->business_profile?->name ?? $account->id);
+                    break;
+
+                case 'openai':
+                    $apiKey = config('ai-providers.providers.openai.api_key');
+                    if (empty($apiKey)) {
+                        $this->integrationStatus['openai']['message'] = 'API key not configured';
+                        return;
+                    }
+                    $response = Http::withToken($apiKey)
+                        ->timeout(10)
+                        ->get('https://api.openai.com/v1/models');
+                    if ($response->successful()) {
+                        $this->integrationStatus['openai']['connected'] = true;
+                        $this->integrationStatus['openai']['message'] = 'Connected successfully';
+                    } else {
+                        $this->integrationStatus['openai']['message'] = 'Connection failed: ' . $response->status();
+                    }
+                    break;
+
+                case 'newsapi':
+                    $apiKey = config('brand-monitoring.news.newsapi.api_key');
+                    if (empty($apiKey)) {
+                        $this->integrationStatus['newsapi']['message'] = 'API key not configured';
+                        return;
+                    }
+                    $response = Http::timeout(10)
+                        ->get('https://newsapi.org/v2/top-headlines', [
+                            'apiKey' => $apiKey,
+                            'country' => 'us',
+                            'pageSize' => 1,
+                        ]);
+                    if ($response->successful()) {
+                        $this->integrationStatus['newsapi']['connected'] = true;
+                        $this->integrationStatus['newsapi']['message'] = 'Connected successfully';
+                    } else {
+                        $this->integrationStatus['newsapi']['message'] = 'Connection failed: ' . ($response->json('message') ?? $response->status());
+                    }
+                    break;
+
+                case 'youtube':
+                    $apiKey = config('brand-monitoring.social.youtube.api_key');
+                    if (empty($apiKey)) {
+                        $this->integrationStatus['youtube']['message'] = 'API key not configured';
+                        return;
+                    }
+                    $response = Http::timeout(10)
+                        ->get('https://www.googleapis.com/youtube/v3/search', [
+                            'part' => 'snippet',
+                            'q' => 'test',
+                            'maxResults' => 1,
+                            'key' => $apiKey,
+                        ]);
+                    if ($response->successful()) {
+                        $this->integrationStatus['youtube']['connected'] = true;
+                        $this->integrationStatus['youtube']['message'] = 'Connected successfully';
+                    } else {
+                        $this->integrationStatus['youtube']['message'] = 'Connection failed: ' . ($response->json('error.message') ?? $response->status());
+                    }
+                    break;
+
+                case 'yelp':
+                    $apiKey = config('brand-monitoring.reviews.yelp.api_key');
+                    if (empty($apiKey)) {
+                        $this->integrationStatus['yelp']['message'] = 'API key not configured';
+                        return;
+                    }
+                    $response = Http::withToken($apiKey)
+                        ->timeout(10)
+                        ->get('https://api.yelp.com/v3/businesses/search', [
+                            'term' => 'coffee',
+                            'location' => 'NYC',
+                            'limit' => 1,
+                        ]);
+                    if ($response->successful()) {
+                        $this->integrationStatus['yelp']['connected'] = true;
+                        $this->integrationStatus['yelp']['message'] = 'Connected successfully';
+                    } else {
+                        $this->integrationStatus['yelp']['message'] = 'Connection failed: ' . ($response->json('error.description') ?? $response->status());
+                    }
+                    break;
+
+                case 'google_places':
+                    $apiKey = config('brand-monitoring.reviews.google_places.api_key');
+                    if (empty($apiKey)) {
+                        $this->integrationStatus['google_places']['message'] = 'API key not configured';
+                        return;
+                    }
+                    $response = Http::timeout(10)
+                        ->get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [
+                            'input' => 'Google',
+                            'inputtype' => 'textquery',
+                            'fields' => 'place_id',
+                            'key' => $apiKey,
+                        ]);
+                    if ($response->successful() && ($response->json('status') === 'OK' || $response->json('status') === 'ZERO_RESULTS')) {
+                        $this->integrationStatus['google_places']['connected'] = true;
+                        $this->integrationStatus['google_places']['message'] = 'Connected successfully';
+                    } else {
+                        $this->integrationStatus['google_places']['message'] = 'Connection failed: ' . ($response->json('error_message') ?? $response->json('status') ?? $response->status());
+                    }
+                    break;
+
+                case 'slack':
+                    $webhookUrl = $this->notifications['slack_webhook_url'] ?? '';
+                    if (empty($webhookUrl)) {
+                        $this->integrationStatus['slack']['message'] = 'Webhook URL not configured';
+                        return;
+                    }
+                    // Just validate URL format - don't actually send
+                    if (filter_var($webhookUrl, FILTER_VALIDATE_URL) && str_contains($webhookUrl, 'hooks.slack.com')) {
+                        $this->integrationStatus['slack']['connected'] = true;
+                        $this->integrationStatus['slack']['message'] = 'Webhook URL configured';
+                    } else {
+                        $this->integrationStatus['slack']['message'] = 'Invalid webhook URL format';
+                    }
+                    break;
+
+                case 'twilio':
+                    $sid = $this->notifications['twilio_sid'] ?? '';
+                    $token = $this->notifications['twilio_token'] ?? '';
+                    if (empty($sid) || empty($token)) {
+                        $this->integrationStatus['twilio']['message'] = 'Credentials not configured';
+                        return;
+                    }
+                    $response = Http::withBasicAuth($sid, $token)
+                        ->timeout(10)
+                        ->get("https://api.twilio.com/2010-04-01/Accounts/{$sid}.json");
+                    if ($response->successful()) {
+                        $this->integrationStatus['twilio']['connected'] = true;
+                        $this->integrationStatus['twilio']['message'] = 'Connected: ' . ($response->json('friendly_name') ?? $sid);
+                    } else {
+                        $this->integrationStatus['twilio']['message'] = 'Connection failed: ' . $response->status();
+                    }
+                    break;
+
+                default:
+                    $this->integrationStatus[$service]['message'] = 'Test not available for this service';
+            }
+        } catch (\Throwable $e) {
+            $this->integrationStatus[$service]['message'] = 'Error: ' . $e->getMessage();
+            $this->integrationStatus[$service]['connected'] = false;
         }
     }
 

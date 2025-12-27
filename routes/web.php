@@ -213,6 +213,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('requests.attachments.download');
     Route::get('/requests/{request}/estimate', EstimateApproval::class)->name('client.requests.estimate');
 
+    // Project Estimate Request (AI-powered)
+    Route::get('/estimate', \App\Http\Livewire\Client\EstimateRequest::class)->name('client.estimate');
+
     // Contracts
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
     Route::get('/contracts/{contract}', [ContractController::class, 'show'])->name('contracts.show');
@@ -312,6 +315,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/facebook/callback', [SocialOAuthController::class, 'facebookCallback'])->name('facebook.callback');
         Route::get('/linkedin', [SocialOAuthController::class, 'linkedinRedirect'])->name('linkedin.redirect');
         Route::get('/linkedin/callback', [SocialOAuthController::class, 'linkedinCallback'])->name('linkedin.callback');
+        Route::get('/twitter', [SocialOAuthController::class, 'twitterRedirect'])->name('twitter.redirect');
+        Route::get('/twitter/callback', [SocialOAuthController::class, 'twitterCallback'])->name('twitter.callback');
+        Route::get('/pinterest', [SocialOAuthController::class, 'pinterestRedirect'])->name('pinterest.redirect');
+        Route::get('/pinterest/callback', [SocialOAuthController::class, 'pinterestCallback'])->name('pinterest.callback');
+        Route::get('/tiktok', [SocialOAuthController::class, 'tiktokRedirect'])->name('tiktok.redirect');
+        Route::get('/tiktok/callback', [SocialOAuthController::class, 'tiktokCallback'])->name('tiktok.callback');
+        Route::post('/bluesky/connect', [SocialOAuthController::class, 'blueskyConnect'])->name('bluesky.connect');
         Route::delete('/disconnect/{platform}', [SocialOAuthController::class, 'disconnect'])->name('disconnect');
     });
 
@@ -373,6 +383,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
 
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports')->middleware('permission:view reports');
+        Route::get('/workload', \App\Http\Livewire\Admin\WorkloadDashboard::class)->name('workload')->middleware('permission:view reports');
         Route::get('/reports/dashboard', fn () => redirect()->route('admin.reports'))->name('reports.dashboard')->middleware('permission:view reports');
         Route::get('/reports/deliveries', AdminReportDeliveries::class)->name('reports.deliveries')->middleware('permission:view reports');
         Route::get('/white-label', WhiteLabelConfigurator::class)->name('white-label')->middleware('permission:manage settings');

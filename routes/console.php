@@ -282,8 +282,9 @@ Schedule::call(function () {
 
     foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
         try {
-            $newsService->searchNewsAPI($client);
-            $newsService->searchGoogleNewsRSS($client);
+            $keywords = $client->getBrandKeywords();
+            $newsService->searchNewsAPI($client, $keywords);
+            $newsService->searchGoogleNewsRSS($client, $keywords);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('News monitoring failed', [
                 'client_id' => $client->id,
@@ -316,9 +317,10 @@ Schedule::call(function () {
 
     foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
         try {
-            $socialService->searchReddit($client);
-            $socialService->searchYouTube($client);
-            $socialService->searchTwitterRSS($client);
+            $keywords = $client->getBrandKeywords();
+            $socialService->searchReddit($client, $keywords);
+            $socialService->searchYouTube($client, $keywords);
+            $socialService->searchTwitterRSS($client, $keywords);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Social monitoring failed', [
                 'client_id' => $client->id,
@@ -334,8 +336,9 @@ Schedule::call(function () {
 
     foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
         try {
-            $webService->searchGoogle($client);
-            $webService->searchBing($client);
+            $keywords = $client->getBrandKeywords();
+            $webService->searchGoogle($client, $keywords);
+            $webService->searchBing($client, $keywords);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Web mention monitoring failed', [
                 'client_id' => $client->id,

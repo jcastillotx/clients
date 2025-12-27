@@ -2,11 +2,127 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <div>
             <div class="page-pretitle">Admin</div>
-            <h2 class="page-title mb-0">Requests</h2>
+            <h2 class="page-title mb-0">All Requests</h2>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('admin.requests.create') }}" class="btn btn-primary">Create Request</a>
             <button type="button" class="btn btn-outline-secondary" wire:click="$set('viewMode','kanban')">Kanban</button>
+        </div>
+    </div>
+
+    <!-- Status Summary Cards -->
+    <div class="row row-deck row-cards mb-3">
+        @php
+            $totalRequests = array_sum($statusCounts ?? []);
+            $openRequests = ($statusCounts['pending'] ?? 0) + ($statusCounts['in_review'] ?? 0) + ($statusCounts['approved'] ?? 0) + ($statusCounts['in_progress'] ?? 0) + ($statusCounts['on_hold'] ?? 0);
+        @endphp
+
+        <div class="col-6 col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <i class="fas fa-list"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">{{ $totalRequests }}</div>
+                            <div class="text-muted">Total</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-info text-white avatar">
+                                <i class="fas fa-spinner"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">{{ $openRequests }}</div>
+                            <div class="text-muted">Open</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-warning text-white avatar">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">{{ $statusCounts['pending'] ?? 0 }}</div>
+                            <div class="text-muted">Pending</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-sm-4 col-lg-2">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-cyan text-white avatar">
+                                <i class="fas fa-tasks"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">{{ $statusCounts['in_progress'] ?? 0 }}</div>
+                            <div class="text-muted">In Progress</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-sm-4 col-lg-2">
+            <div class="card card-sm {{ ($overdueCount ?? 0) > 0 ? 'border-danger' : '' }}">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-danger text-white avatar">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium {{ ($overdueCount ?? 0) > 0 ? 'text-danger' : '' }}">{{ $overdueCount ?? 0 }}</div>
+                            <div class="text-muted">Overdue</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-sm-4 col-lg-2">
+            <div class="card card-sm {{ ($unassignedCount ?? 0) > 0 ? 'border-warning' : '' }}">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-secondary text-white avatar">
+                                <i class="fas fa-user-slash"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium {{ ($unassignedCount ?? 0) > 0 ? 'text-warning' : '' }}">{{ $unassignedCount ?? 0 }}</div>
+                            <div class="text-muted">Unassigned</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

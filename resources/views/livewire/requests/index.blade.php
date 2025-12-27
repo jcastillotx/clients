@@ -3,12 +3,49 @@
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <div class="text-sm text-slate-500">Service Requests</div>
-            <div class="text-xl font-semibold text-slate-900">Manage requests</div>
+            <div class="text-xl font-semibold text-slate-900">My Requests</div>
         </div>
         <a href="{{ route('requests.create') }}" class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
             New Request
         </a>
     </div>
+
+    <!-- Status Summary Cards -->
+    @if(!empty($statusCounts))
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            @php
+                $statusColors = [
+                    'pending' => ['bg' => 'bg-amber-50', 'text' => 'text-amber-700', 'border' => 'border-amber-200', 'icon' => 'clock'],
+                    'in_review' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-700', 'border' => 'border-blue-200', 'icon' => 'eye'],
+                    'approved' => ['bg' => 'bg-indigo-50', 'text' => 'text-indigo-700', 'border' => 'border-indigo-200', 'icon' => 'check-circle'],
+                    'in_progress' => ['bg' => 'bg-cyan-50', 'text' => 'text-cyan-700', 'border' => 'border-cyan-200', 'icon' => 'refresh-cw'],
+                    'on_hold' => ['bg' => 'bg-slate-50', 'text' => 'text-slate-600', 'border' => 'border-slate-200', 'icon' => 'pause-circle'],
+                    'completed' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'border' => 'border-emerald-200', 'icon' => 'check'],
+                    'cancelled' => ['bg' => 'bg-rose-50', 'text' => 'text-rose-700', 'border' => 'border-rose-200', 'icon' => 'x-circle'],
+                ];
+                $totalRequests = array_sum($statusCounts);
+            @endphp
+
+            <!-- Total Card -->
+            <button wire:click="$set('status', '')"
+                    class="rounded-xl border {{ $status === '' ? 'border-slate-900 ring-2 ring-slate-900' : 'border-slate-200' }} bg-white p-4 text-left transition hover:shadow-md">
+                <div class="text-2xl font-bold text-slate-900">{{ $totalRequests }}</div>
+                <div class="text-xs font-medium text-slate-500">Total Requests</div>
+            </button>
+
+            @foreach($statusLabels as $key => $label)
+                @php
+                    $count = $statusCounts[$key] ?? 0;
+                    $colors = $statusColors[$key] ?? ['bg' => 'bg-slate-50', 'text' => 'text-slate-600', 'border' => 'border-slate-200'];
+                @endphp
+                <button wire:click="$set('status', '{{ $key }}')"
+                        class="rounded-xl border {{ $status === $key ? 'border-slate-900 ring-2 ring-slate-900' : $colors['border'] }} {{ $colors['bg'] }} p-4 text-left transition hover:shadow-md">
+                    <div class="text-2xl font-bold {{ $colors['text'] }}">{{ $count }}</div>
+                    <div class="text-xs font-medium {{ $colors['text'] }}">{{ $label }}</div>
+                </button>
+            @endforeach
+        </div>
+    @endif
 
     <!-- Filters -->
     <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

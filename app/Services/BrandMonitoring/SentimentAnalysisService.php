@@ -3,8 +3,11 @@
 namespace App\Services\BrandMonitoring;
 
 use App\Models\BrandMention;
+use App\Models\User;
+use App\Notifications\NegativeBrandMentionAlert;
 use App\Services\AI\AIProviderManager;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Batch Sentiment Analysis using existing AI providers
@@ -83,24 +86,40 @@ class SentimentAnalysisService
 
             $response = $this->parseResponse($result['text'] ?? '');
 
-            // Update mentions with sentiment
+            // Update mentions with sentiment and send alerts for negative ones
             $analyzed = 0;
+            $negativeMentions = [];
+            
             foreach ($response as $item) {
                 $mentionId = $item['mention_id'] ?? null;
                 $sentiment = $item['sentiment'] ?? 'neutral';
+                $normalizedSentiment = $this->normalizeSentiment($sentiment);
 
                 if ($mentionId) {
                     BrandMention::where('id', $mentionId)->update([
-                        'sentiment' => $this->normalizeSentiment($sentiment),
+                        'sentiment' => $normalizedSentiment,
                     ]);
                     $analyzed++;
+                    
+                    // Track negative mentions for alerts
+                    if ($normalizedSentiment === 'negative') {
+                        $negativeMentions[] = $mentionId;
+                    }
                 }
+            }
+            
+            // Send alerts for negative mentions
+            $alertsSent = 0;
+            if (!empty($negativeMentions) && config('brand-monitoring.alerts.negative_mentions.enabled', true)) {
+                $alertsSent = $this->sendNegativeMentionAlerts($negativeMentions);
             }
 
             return [
                 'success' => true,
                 'analyzed' => $analyzed,
                 'total' => count($mentions),
+                'negative_found' => count($negativeMentions),
+                'alerts_sent' => $alertsSent,
                 'cost_estimate_usd' => $this->estimateCost($result),
             ];
 
@@ -198,5 +217,64 @@ PROMPT;
     public function analyzeSingle(BrandMention $mention): array
     {
         return $this->analyzeBatch([$mention]);
+    }
+
+    /**
+     * Send alerts for negative brand mentions
+     *
+     * @param array<int> $mentionIds
+     * @return int Number of alerts sent
+     */
+    protected function sendNegativeMentionAlerts(array $mentionIds): int
+    {
+        $alertsSent = 0;
+        
+        $mentions = BrandMention::with('client')
+            ->whereIn('id', $mentionIds)
+            ->get();
+        
+        foreach ($mentions as $mention) {
+            if (!$mention->client) {
+                continue;
+            }
+            
+            $clientName = $mention->client->company_name ?? 'Unknown Client';
+            
+            // Get users to notify: admins + staff assigned to this client
+            $usersToNotify = User::query()
+                ->where('is_active', true)
+                ->where(function ($q) use ($mention) {
+                    $q->whereHas('roles', function ($r) {
+                        $r->whereIn('name', ['super_admin', 'admin']);
+                    })
+                    ->orWhereHas('assignedClients', function ($c) use ($mention) {
+                        $c->where('clients.id', $mention->client_id);
+                    });
+                })
+                ->get();
+            
+            if ($usersToNotify->isEmpty()) {
+                continue;
+            }
+            
+            try {
+                Notification::send($usersToNotify, new NegativeBrandMentionAlert($mention, $clientName));
+                $alertsSent += $usersToNotify->count();
+                
+                Log::info('Negative brand mention alert sent', [
+                    'mention_id' => $mention->id,
+                    'client_id' => $mention->client_id,
+                    'platform' => $mention->platform,
+                    'users_notified' => $usersToNotify->count(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to send negative mention alert', [
+                    'mention_id' => $mention->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+        
+        return $alertsSent;
     }
 }
