@@ -57,8 +57,8 @@
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <a href="{{ route('admin.clients.create') }}" class="btn btn-primary">Create Client</a>
-                        <a href="{{ route('admin.invoices') }}" class="btn btn-outline-primary">Create Invoice</a>
-                        <a href="{{ route('admin.requests') }}" class="btn btn-outline-primary">Assign Request</a>
+                        <a href="{{ route('admin.invoices.create') }}" class="btn btn-outline-primary">Create Invoice</a>
+                        <a href="{{ route('admin.requests.index') }}" class="btn btn-outline-primary">Assign Request</a>
                     </div>
                 </div>
             </div>

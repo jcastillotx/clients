@@ -17,6 +17,9 @@ This is an **operator checklist** for your specific production environment (itâ€
   - [ ] Run `php artisan migrate` on staging with a production-like DB
   - [ ] Confirm any enum/constraint changes are compatible
   - [ ] Confirm rollback plan
+- [ ] **Initial admin bootstrap plan**
+  - [ ] Seed roles/permissions only: `php artisan db:seed --class=Database\\Seeders\\RoleAndPermissionSeeder --force`
+  - [ ] Create initial admin: `php artisan portal:bootstrap-admin you@yourdomain.com --name="Your Name" --password="use-a-strong-password"`
 - [ ] **Stripe live API keys configured**
   - [ ] `STRIPE_KEY`, `STRIPE_SECRET`, `STRIPE_WEBHOOK_SECRET`
   - [ ] Webhook endpoint configured: `/webhooks/stripe`
