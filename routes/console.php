@@ -265,3 +265,92 @@ Artisan::command('ai:embeddings:backfill {--limit=200} {--provider=openai} {--mo
 
     $this->info("Done. Embedded={$count}, skipped={$skipped}.");
 })->purpose('Backfill semantic embeddings for past requests');
+
+/*
+|--------------------------------------------------------------------------
+| Brand Monitoring - Free API Integrations
+|--------------------------------------------------------------------------
+*/
+
+// Monitor news mentions (NewsAPI + Google News RSS)
+Schedule::call(function () {
+    $newsService = app(\App\Services\BrandMonitoring\NewsMonitoringService::class);
+
+    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+        try {
+            $newsService->searchNewsAPI($client);
+            $newsService->searchGoogleNewsRSS($client);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('News monitoring failed', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+})->hourly()->name('brand-monitoring-news');
+
+// Monitor reviews (Yelp + Google Places)
+Schedule::call(function () {
+    $reviewService = app(\App\Services\BrandMonitoring\ReviewMonitoringService::class);
+
+    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+        try {
+            $reviewService->getYelpReviews($client);
+            $reviewService->getGooglePlacesReviews($client);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Review monitoring failed', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+})->everySixHours()->name('brand-monitoring-reviews');
+
+// Monitor social media (Reddit, YouTube, Twitter RSS)
+Schedule::call(function () {
+    $socialService = app(\App\Services\BrandMonitoring\SocialMonitoringService::class);
+
+    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+        try {
+            $socialService->searchReddit($client);
+            $socialService->searchYouTube($client);
+            $socialService->searchTwitterRSS($client);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Social monitoring failed', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+})->everyThirtyMinutes()->name('brand-monitoring-social');
+
+// Monitor web mentions (Google Custom Search, Bing)
+Schedule::call(function () {
+    $webService = app(\App\Services\BrandMonitoring\WebMentionService::class);
+
+    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+        try {
+            $webService->searchGoogle($client);
+            $webService->searchBing($client);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Web mention monitoring failed', [
+                'client_id' => $client->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+})->everyTwoHours()->name('brand-monitoring-web-mentions');
+
+// Batch sentiment analysis (runs every 30 minutes)
+Schedule::call(function () {
+    $sentimentService = app(\App\Services\BrandMonitoring\SentimentAnalysisService::class);
+
+    try {
+        $result = $sentimentService->analyzePendingSentiments();
+        \Illuminate\Support\Facades\Log::info('Sentiment analysis completed', $result);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Sentiment analysis failed', [
+            'error' => $e->getMessage(),
+        ]);
+    }
+})->everyThirtyMinutes()->name('brand-monitoring-sentiment-analysis');
