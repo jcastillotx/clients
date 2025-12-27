@@ -160,4 +160,3 @@ return [
         'max_cost_per_day_usd' => (float) env('AI_MAX_COST_PER_DAY_USD', 50.00),
     ],
 ];
-

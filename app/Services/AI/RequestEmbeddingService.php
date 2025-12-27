@@ -10,8 +10,7 @@ class RequestEmbeddingService
 {
     public function __construct(
         protected AIProviderManager $providers
-    ) {
-    }
+    ) {}
 
     public function contentForEmbedding(ServiceRequest $request): string
     {
@@ -45,17 +44,20 @@ class RequestEmbeddingService
             $res = $this->providers->withFallback($preferred, function ($provider) use ($content) {
                 /** @var array<int,float> $vec */
                 $vec = $provider->generateEmbeddings($content);
+
                 return ['embedding' => $vec];
             }, 'request_embeddings');
 
             $vec = $res['embedding'] ?? null;
+
             return is_array($vec) ? array_map(fn ($v) => (float) $v, $vec) : null;
         } catch (\Throwable $e) {
             $msg = strtolower($e->getMessage());
             if (str_contains($msg, 'api key') || str_contains($msg, 'not configured')) {
                 return null;
             }
-            Log::info('Embedding generation failed: ' . $e->getMessage());
+            Log::info('Embedding generation failed: '.$e->getMessage());
+
             return null;
         }
     }
@@ -84,7 +86,7 @@ class RequestEmbeddingService
             'timeout' => $options['timeout'] ?? null,
             'task_id' => $options['task_id'] ?? null,
         ]);
-        if (!$vec) {
+        if (! $vec) {
             return null;
         }
 
@@ -97,4 +99,3 @@ class RequestEmbeddingService
         ]);
     }
 }
-

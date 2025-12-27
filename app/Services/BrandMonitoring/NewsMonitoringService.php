@@ -4,9 +4,9 @@ namespace App\Services\BrandMonitoring;
 
 use App\Models\BrandMention;
 use App\Models\Client;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * News & Press Monitoring using free APIs
@@ -22,7 +22,7 @@ class NewsMonitoringService
      */
     public function searchNewsAPI(Client $client, array $keywords = []): array
     {
-        if (!config('brand-monitoring.news.newsapi.enabled')) {
+        if (! config('brand-monitoring.news.newsapi.enabled')) {
             return ['skipped' => true, 'reason' => 'NewsAPI disabled'];
         }
 
@@ -31,7 +31,7 @@ class NewsMonitoringService
             return ['error' => 'NewsAPI key not configured'];
         }
 
-        $keywords = !empty($keywords) ? $keywords : [$client->company_name];
+        $keywords = ! empty($keywords) ? $keywords : [$client->company_name];
         $mentions = [];
 
         foreach ($keywords as $keyword) {
@@ -47,11 +47,12 @@ class NewsMonitoringService
                         'from' => now()->subDays(7)->toIso8601String(),
                     ]);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     Log::warning('NewsAPI request failed', [
                         'status' => $response->status(),
                         'keyword' => $keyword,
                     ]);
+
                     continue;
                 }
 
@@ -61,7 +62,7 @@ class NewsMonitoringService
                 foreach ($articles as $article) {
                     $mention = $this->storeMention($client, [
                         'platform' => 'news',
-                        'mention_text' => ($article['title'] ?? '') . "\n\n" . ($article['description'] ?? ''),
+                        'mention_text' => ($article['title'] ?? '')."\n\n".($article['description'] ?? ''),
                         'author' => $article['author'] ?? $article['source']['name'] ?? 'Unknown',
                         'url' => $article['url'] ?? null,
                         'posted_at' => isset($article['publishedAt'])
@@ -100,20 +101,20 @@ class NewsMonitoringService
      */
     public function searchGoogleNewsRSS(Client $client, array $keywords = []): array
     {
-        if (!config('brand-monitoring.news.google_news_rss.enabled')) {
+        if (! config('brand-monitoring.news.google_news_rss.enabled')) {
             return ['skipped' => true, 'reason' => 'Google News RSS disabled'];
         }
 
-        $keywords = !empty($keywords) ? $keywords : [$client->company_name];
+        $keywords = ! empty($keywords) ? $keywords : [$client->company_name];
         $mentions = [];
 
         foreach ($keywords as $keyword) {
             try {
-                $url = 'https://news.google.com/rss/search?q=' . urlencode($keyword) . '&hl=en-US&gl=US&ceid=US:en';
+                $url = 'https://news.google.com/rss/search?q='.urlencode($keyword).'&hl=en-US&gl=US&ceid=US:en';
 
                 $response = Http::timeout(15)->get($url);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     continue;
                 }
 
@@ -168,7 +169,7 @@ class NewsMonitoringService
     protected function storeMention(Client $client, array $data): ?BrandMention
     {
         // Deduplicate by URL
-        if (!empty($data['url'])) {
+        if (! empty($data['url'])) {
             $existing = BrandMention::where('client_id', $client->id)
                 ->where('url', $data['url'])
                 ->first();

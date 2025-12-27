@@ -43,4 +43,3 @@ class PrivacyRequests extends Component
         ])->layout('layouts.admin', ['title' => 'Privacy requests']);
     }
 }
-

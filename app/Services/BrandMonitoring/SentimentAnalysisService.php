@@ -16,8 +16,7 @@ class SentimentAnalysisService
 {
     public function __construct(
         private readonly AIProviderManager $ai
-    ) {
-    }
+    ) {}
 
     /**
      * Analyze sentiment for all unanalyzed mentions in batch
@@ -45,7 +44,7 @@ class SentimentAnalysisService
     /**
      * Analyze sentiment for a batch of mentions
      *
-     * @param array<BrandMention> $mentions
+     * @param  array<BrandMention>  $mentions
      */
     public function analyzeBatch(array $mentions): array
     {
@@ -156,6 +155,7 @@ PROMPT;
         $text = preg_replace('/\s*```$/', '', $text) ?? $text;
 
         $decoded = json_decode($text, true);
+
         return is_array($decoded) ? $decoded : [];
     }
 
@@ -166,7 +166,7 @@ PROMPT;
     {
         $sentiment = strtolower(trim($sentiment));
 
-        return match($sentiment) {
+        return match ($sentiment) {
             'positive', 'pos' => 'positive',
             'negative', 'neg' => 'negative',
             default => 'neutral',

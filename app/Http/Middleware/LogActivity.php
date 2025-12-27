@@ -16,7 +16,7 @@ class LogActivity
         $response = $next($request);
 
         // Log page views for authenticated users
-        if ($request->user() && $request->isMethod('GET') && !$request->ajax()) {
+        if ($request->user() && $request->isMethod('GET') && ! $request->ajax()) {
             // You can add activity logging here if needed
             // ActivityLog::log('Viewed: ' . $request->path());
         }

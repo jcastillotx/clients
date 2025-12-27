@@ -11,13 +11,21 @@ use Livewire\Component;
 class MeetingScheduler extends Component
 {
     public ?int $requestId = null;
+
     public string $meetingType = 'kickoff';
+
     public string $title = '';
+
     public string $scheduledAt = '';
+
     public int $durationMinutes = 30;
+
     public string $agenda = '';
+
     public string $meetingLink = '';
+
     public string $status = 'requested';
+
     public ?int $editingMeetingId = null;
 
     public function mount(): void
@@ -146,6 +154,7 @@ class MeetingScheduler extends Component
 
         // staff/admin view
         $meetings = Meeting::query()->with('client')->orderByDesc('created_at')->limit(200)->get();
+
         return view('livewire.communication.meeting-scheduler', [
             'mode' => 'admin',
             'requests' => collect(),
@@ -153,4 +162,3 @@ class MeetingScheduler extends Component
         ]);
     }
 }
-

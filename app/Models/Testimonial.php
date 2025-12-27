@@ -34,4 +34,3 @@ class Testimonial extends Model
         return $this->belongsTo(Request::class);
     }
 }
-

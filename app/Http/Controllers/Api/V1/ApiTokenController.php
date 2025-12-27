@@ -32,7 +32,7 @@ class ApiTokenController extends Controller
 
         // Only staff can mint admin tokens
         if (in_array('admin', $abilities, true)) {
-            abort_unless(!$user->isClient() && $user->can('access admin panel'), 403);
+            abort_unless(! $user->isClient() && $user->can('access admin panel'), 403);
         }
 
         $token = $user->createToken($data['name'], $abilities);
@@ -43,4 +43,3 @@ class ApiTokenController extends Controller
         ]);
     }
 }
-

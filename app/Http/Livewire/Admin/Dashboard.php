@@ -16,16 +16,23 @@ use Livewire\Component;
 class Dashboard extends Component
 {
     public int $activeClients = 0;
+
     public array $openRequestsByStatus = [];
+
     public float $outstandingInvoiceAmount = 0.0;
+
     public float $revenueThisMonth = 0.0;
+
     public float $revenueLastMonth = 0.0;
+
     public int $activeContracts = 0;
 
     public array $requestStatusChart = [];
+
     public array $revenueTrendChart = [];
 
     public array $topClients = [];
+
     public array $overdueInvoices = [];
 
     public array $recentActivity = [];
@@ -116,7 +123,7 @@ class Dashboard extends Component
                 ->get()
                 ->map(fn ($p) => [
                     'client_id' => $p->client_id,
-                    'company' => $p->client?->company_name ?? ('Client #' . $p->client_id),
+                    'company' => $p->client?->company_name ?? ('Client #'.$p->client_id),
                     'total' => (float) $p->total,
                 ])
                 ->toArray();
@@ -147,7 +154,7 @@ class Dashboard extends Component
                     'description' => $a->description,
                     'when' => $a->created_at?->diffForHumans(),
                     'user' => $a->user?->name ?? 'System',
-                    'client' => $a->client?->company_name ?? ($a->client_id ? ('Client #' . $a->client_id) : null),
+                    'client' => $a->client?->company_name ?? ($a->client_id ? ('Client #'.$a->client_id) : null),
                     'log' => $a->log_name,
                 ])
                 ->toArray();
@@ -185,4 +192,3 @@ class Dashboard extends Component
         return view('livewire.admin.dashboard');
     }
 }
-

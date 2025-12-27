@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivityWithContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -89,7 +89,7 @@ class Contract extends Model
      */
     public function getFileUrlAttribute(): ?string
     {
-        if (!$this->file_path) {
+        if (! $this->file_path) {
             return null;
         }
 
@@ -117,7 +117,7 @@ class Contract extends Model
      */
     public function isExpired(): bool
     {
-        if (!$this->end_date) {
+        if (! $this->end_date) {
             return false;
         }
 
@@ -168,7 +168,7 @@ class Contract extends Model
      */
     public function getDaysUntilExpirationAttribute(): ?int
     {
-        if (!$this->end_date) {
+        if (! $this->end_date) {
             return null;
         }
 
@@ -237,7 +237,7 @@ class Contract extends Model
     protected static function booted(): void
     {
         static::creating(function (Contract $contract) {
-            if (!$contract->contract_number) {
+            if (! $contract->contract_number) {
                 $contract->contract_number = static::generateContractNumber();
             }
         });

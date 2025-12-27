@@ -30,4 +30,3 @@ class MessageRead extends Model
         return $this->belongsTo(User::class);
     }
 }
-

@@ -12,15 +12,21 @@ use Livewire\Component;
 class ConnectGoogleDrive extends Component
 {
     public ?int $client_id = null;
+
     public string $folder_id = '';
+
     public string $sync_mode = 'bidirectional'; // bidirectional|upload_only|download_only
+
     public bool $is_primary = true;
 
     public ?int $connection_id = null;
+
     public string $account_email = '';
+
     public string $status = '';
 
     public string $share_folder_with = ''; // comma-separated emails
+
     public string $share_role = 'writer'; // writer|reader
 
     public function mount(): void
@@ -55,7 +61,7 @@ class ConnectGoogleDrive extends Component
         $this->account_email = '';
         $this->status = '';
 
-        if (!$this->client_id) {
+        if (! $this->client_id) {
             return;
         }
 
@@ -64,7 +70,7 @@ class ConnectGoogleDrive extends Component
             ->where('provider', 'google_drive')
             ->first();
 
-        if (!$conn) {
+        if (! $conn) {
             return;
         }
 
@@ -85,8 +91,9 @@ class ConnectGoogleDrive extends Component
             ->where('provider', 'google_drive')
             ->first();
 
-        if (!$conn) {
+        if (! $conn) {
             session()->flash('error', 'Connect Google Drive first, then configure settings.');
+
             return;
         }
 
@@ -124,7 +131,7 @@ class ConnectGoogleDrive extends Component
                 }
                 session()->flash('success', 'Settings saved and folder sharing updated.');
             } catch (\Throwable $e) {
-                session()->flash('error', 'Settings saved, but sharing failed: ' . $e->getMessage());
+                session()->flash('error', 'Settings saved, but sharing failed: '.$e->getMessage());
             }
         } else {
             session()->flash('success', 'Google Drive settings saved.');
@@ -157,4 +164,3 @@ class ConnectGoogleDrive extends Component
         ])->layout('layouts.admin', ['title' => 'Connect Google Drive']);
     }
 }
-

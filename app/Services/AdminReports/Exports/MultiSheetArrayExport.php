@@ -7,9 +7,7 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 class MultiSheetArrayExport implements WithMultipleSheets
 {
-    public function __construct(private readonly array $payload)
-    {
-    }
+    public function __construct(private readonly array $payload) {}
 
     public function sheets(): array
     {
@@ -27,4 +25,3 @@ class MultiSheetArrayExport implements WithMultipleSheets
         return $sheets;
     }
 }
-

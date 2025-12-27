@@ -9,7 +9,6 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Request as ServiceRequest;
 use App\Services\NotificationService;
-use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -18,11 +17,15 @@ class InvoiceCreate extends Component
     public ?int $client_id = null;
 
     public bool $autoNumber = true;
+
     public string $invoice_number = '';
+
     public ?string $issue_date = null; // YYYY-MM-DD
+
     public ?string $due_date = null;   // YYYY-MM-DD
 
     public ?int $request_id = null;
+
     public ?int $contract_id = null;
 
     public string $template = 'classic';
@@ -31,9 +34,11 @@ class InvoiceCreate extends Component
     public array $items = [];
 
     public string $tax_rate = '';
+
     public string $discount = '';
 
     public string $notes = '';
+
     public string $terms = '';
 
     public function mount(): void
@@ -112,12 +117,14 @@ class InvoiceCreate extends Component
     public function getTaxAmountProperty(): float
     {
         $rate = (float) ($this->tax_rate === '' ? 0 : $this->tax_rate);
+
         return round($this->subtotal * ($rate / 100), 2);
     }
 
     public function getTotalProperty(): float
     {
         $discount = (float) ($this->discount === '' ? 0 : $this->discount);
+
         return max(0, round($this->subtotal + $this->taxAmount - $discount, 2));
     }
 
@@ -129,13 +136,13 @@ class InvoiceCreate extends Component
         // Constrain request/contract linkage to selected client (avoid cross-client linking)
         if ($data['request_id']) {
             $req = ServiceRequest::query()->where('client_id', $client->id)->find($data['request_id']);
-            if (!$req) {
+            if (! $req) {
                 throw \Illuminate\Validation\ValidationException::withMessages(['request_id' => 'Selected request does not belong to this client.']);
             }
         }
         if ($data['contract_id']) {
             $contract = Contract::query()->where('client_id', $client->id)->find($data['contract_id']);
-            if (!$contract) {
+            if (! $contract) {
                 throw \Illuminate\Validation\ValidationException::withMessages(['contract_id' => 'Selected contract does not belong to this client.']);
             }
         }
@@ -192,6 +199,7 @@ class InvoiceCreate extends Component
     {
         $invoice = $this->createInvoice('draft', false, $notifications);
         session()->flash('success', 'Invoice saved as draft.');
+
         return redirect()->route('admin.invoices.edit', $invoice);
     }
 
@@ -199,6 +207,7 @@ class InvoiceCreate extends Component
     {
         $invoice = $this->createInvoice('sent', true, $notifications);
         session()->flash('success', 'Invoice sent to client.');
+
         return redirect()->route('admin.invoices.edit', $invoice);
     }
 
@@ -206,12 +215,12 @@ class InvoiceCreate extends Component
     {
         $user = auth()->user();
         $staffClientIds = [];
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $staffClientIds = $user->assignedClientIds();
         }
 
         $clients = Client::query()
-            ->when(!empty($staffClientIds), fn ($q) => $q->whereIn('id', $staffClientIds))
+            ->when(! empty($staffClientIds), fn ($q) => $q->whereIn('id', $staffClientIds))
             ->orderBy('company_name')
             ->get(['id', 'company_name']);
 
@@ -233,4 +242,3 @@ class InvoiceCreate extends Component
         ])->layout('layouts.admin', ['title' => 'Create Invoice']);
     }
 }
-

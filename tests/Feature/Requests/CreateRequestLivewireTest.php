@@ -47,4 +47,3 @@ class CreateRequestLivewireTest extends TestCase
         Storage::disk('attachments')->assertExists($attachment->file_path);
     }
 }
-

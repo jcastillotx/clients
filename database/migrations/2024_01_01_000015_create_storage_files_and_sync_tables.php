@@ -93,4 +93,3 @@ return new class extends Migration
         Schema::dropIfExists('storage_files');
     }
 };
-

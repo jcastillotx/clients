@@ -3,8 +3,8 @@
 namespace App\Http\Livewire\Projects;
 
 use App\Models\Request as ServiceRequest;
-use App\Models\Task;
 use App\Models\RequestEstimate;
+use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
@@ -12,7 +12,9 @@ use Livewire\Component;
 class TaskBoard extends Component
 {
     public ?int $requestId = null;
+
     public string $newTitle = '';
+
     public string $newDescription = '';
 
     public function mount(): void
@@ -62,9 +64,13 @@ class TaskBoard extends Component
         $tasks = (array) ($estimate?->estimate_data['tasks'] ?? []);
         $order = 0;
         foreach ($tasks as $t) {
-            if (!is_array($t)) continue;
+            if (! is_array($t)) {
+                continue;
+            }
             $name = trim((string) ($t['name'] ?? ''));
-            if ($name === '') continue;
+            if ($name === '') {
+                continue;
+            }
 
             Task::firstOrCreate(
                 [
@@ -127,4 +133,3 @@ class TaskBoard extends Component
         ]);
     }
 }
-

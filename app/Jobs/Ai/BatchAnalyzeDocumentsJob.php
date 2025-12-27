@@ -14,8 +14,8 @@ class BatchAnalyzeDocumentsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * @param array<int,int> $documentIds
-     * @param array{force_type?:string, language?:string} $options
+     * @param  array<int,int>  $documentIds
+     * @param  array{force_type?:string, language?:string}  $options
      */
     public function __construct(public array $documentIds, public array $options = [])
     {
@@ -36,7 +36,9 @@ class BatchAnalyzeDocumentsJob implements ShouldQueue
         ]);
 
         foreach ($this->documentIds as $id) {
-            if (!is_int($id) && !ctype_digit((string) $id)) continue;
+            if (! is_int($id) && ! ctype_digit((string) $id)) {
+                continue;
+            }
             AnalyzeDocumentJob::dispatch((int) $id, $this->options);
         }
 
@@ -49,4 +51,3 @@ class BatchAnalyzeDocumentsJob implements ShouldQueue
         ]);
     }
 }
-

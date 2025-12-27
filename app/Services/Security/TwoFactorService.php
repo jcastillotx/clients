@@ -16,6 +16,7 @@ class TwoFactorService
         for ($i = 0; $i < $length; $i++) {
             $secret .= $alphabet[random_int(0, strlen($alphabet) - 1)];
         }
+
         return $secret;
     }
 
@@ -23,13 +24,14 @@ class TwoFactorService
     {
         $issuerEnc = rawurlencode($issuer);
         $labelEnc = rawurlencode($label);
+
         return "otpauth://totp/{$issuerEnc}:{$labelEnc}?secret={$secret}&issuer={$issuerEnc}&algorithm=SHA1&digits=6&period=30";
     }
 
     public function verifyCode(string $secret, string $code, int $window = 1): bool
     {
         $code = preg_replace('/\s+/', '', $code);
-        if (!is_string($code) || !preg_match('/^\d{6}$/', $code)) {
+        if (! is_string($code) || ! preg_match('/^\d{6}$/', $code)) {
             return false;
         }
 
@@ -39,6 +41,7 @@ class TwoFactorService
                 return true;
             }
         }
+
         return false;
     }
 
@@ -51,13 +54,14 @@ class TwoFactorService
         for ($i = 0; $i < $count; $i++) {
             $codes[] = strtoupper(Str::random(10));
         }
+
         return $codes;
     }
 
     private function totp(string $secret, int $counter): string
     {
         $key = $this->base32Decode($secret);
-        $binCounter = pack('N*', 0) . pack('N*', $counter);
+        $binCounter = pack('N*', 0).pack('N*', $counter);
         $hash = hash_hmac('sha1', $binCounter, $key, true);
 
         $offset = ord($hash[19]) & 0x0F;
@@ -68,6 +72,7 @@ class TwoFactorService
             (ord($hash[$offset + 3]) & 0xFF);
 
         $otp = $truncated % 1000000;
+
         return str_pad((string) $otp, 6, '0', STR_PAD_LEFT);
     }
 
@@ -80,16 +85,20 @@ class TwoFactorService
         $bits = '';
         foreach (str_split($b32) as $c) {
             $v = strpos($alphabet, $c);
-            if ($v === false) continue;
+            if ($v === false) {
+                continue;
+            }
             $bits .= str_pad(decbin($v), 5, '0', STR_PAD_LEFT);
         }
 
         $out = '';
         foreach (str_split($bits, 8) as $byte) {
-            if (strlen($byte) < 8) continue;
+            if (strlen($byte) < 8) {
+                continue;
+            }
             $out .= chr(bindec($byte));
         }
+
         return $out;
     }
 }
-

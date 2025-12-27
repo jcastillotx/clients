@@ -51,7 +51,9 @@ class SocialAccount extends Model
 
     public function getAccessTokenAttribute(?string $value): ?string
     {
-        if (!$value) return null;
+        if (! $value) {
+            return null;
+        }
         try {
             return Crypt::decryptString($value);
         } catch (\Throwable) {
@@ -67,7 +69,9 @@ class SocialAccount extends Model
 
     public function getRefreshTokenAttribute(?string $value): ?string
     {
-        if (!$value) return null;
+        if (! $value) {
+            return null;
+        }
         try {
             return Crypt::decryptString($value);
         } catch (\Throwable) {
@@ -80,7 +84,7 @@ class SocialAccount extends Model
      */
     public function isTokenExpired(): bool
     {
-        if (!$this->token_expires_at) {
+        if (! $this->token_expires_at) {
             return false;
         }
 
@@ -154,7 +158,7 @@ class SocialAccount extends Model
      */
     public function getPlatformIconAttribute(): string
     {
-        return match($this->platform) {
+        return match ($this->platform) {
             'facebook' => 'fab fa-facebook',
             'instagram' => 'fab fa-instagram',
             'linkedin' => 'fab fa-linkedin',
@@ -170,7 +174,7 @@ class SocialAccount extends Model
      */
     public function getPlatformColorAttribute(): string
     {
-        return match($this->platform) {
+        return match ($this->platform) {
             'facebook' => '#1877F2',
             'instagram' => '#E4405F',
             'linkedin' => '#0A66C2',
@@ -186,7 +190,7 @@ class SocialAccount extends Model
      */
     public function getStatusBadgeClassAttribute(): string
     {
-        if (!$this->is_connected) {
+        if (! $this->is_connected) {
             return 'badge-secondary';
         }
 
@@ -202,7 +206,7 @@ class SocialAccount extends Model
      */
     public function getStatusTextAttribute(): string
     {
-        if (!$this->is_connected) {
+        if (! $this->is_connected) {
             return 'Not Connected';
         }
 
@@ -213,4 +217,3 @@ class SocialAccount extends Model
         return 'Connected';
     }
 }
-

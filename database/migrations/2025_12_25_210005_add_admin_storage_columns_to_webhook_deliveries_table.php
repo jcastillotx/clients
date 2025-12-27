@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('webhook_deliveries', function (Blueprint $table) {
             // Requested schema fields (already present in current design, but ensure delivered_at exists)
-            if (!Schema::hasColumn('webhook_deliveries', 'delivered_at')) {
+            if (! Schema::hasColumn('webhook_deliveries', 'delivered_at')) {
                 $table->timestamp('delivered_at')->nullable()->after('response_body');
                 $table->index(['webhook_endpoint_id', 'delivered_at'], 'webhook_deliveries_endpoint_delivered_idx');
             }
@@ -27,4 +27,3 @@ return new class extends Migration
         });
     }
 };
-

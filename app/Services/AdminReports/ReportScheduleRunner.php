@@ -13,9 +13,7 @@ use Illuminate\Support\Str;
 
 class ReportScheduleRunner
 {
-    public function __construct(private readonly ReportDataService $data)
-    {
-    }
+    public function __construct(private readonly ReportDataService $data) {}
 
     public function runDueSchedules(): void
     {
@@ -51,7 +49,7 @@ class ReportScheduleRunner
                     (string) ($payload['meta']['start'] ?? now()->subDays(30)->toDateString()),
                     (string) ($payload['meta']['end'] ?? now()->toDateString()),
                 );
-                $path = 'scheduled/' . $schedule->id . '/' . $filename;
+                $path = 'scheduled/'.$schedule->id.'/'.$filename;
                 Storage::disk('reports')->put($path, $pdf);
 
                 $delivery = ReportDelivery::create([
@@ -99,7 +97,7 @@ class ReportScheduleRunner
                         'category' => $schedule->template?->config['category'] ?? null,
                         'meta' => null,
                         'disk' => 'reports',
-                        'path' => 'scheduled/' . $schedule->id . '/failed_' . Str::uuid() . '.txt',
+                        'path' => 'scheduled/'.$schedule->id.'/failed_'.Str::uuid().'.txt',
                         'recipients' => (array) $schedule->recipients,
                         'generated_at' => now(),
                         'status' => 'failed',
@@ -127,4 +125,3 @@ class ReportScheduleRunner
         };
     }
 }
-

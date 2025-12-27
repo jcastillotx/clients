@@ -49,4 +49,3 @@ class AutomationRuleEvaluationTest extends TestCase
         ], $ctx));
     }
 }
-

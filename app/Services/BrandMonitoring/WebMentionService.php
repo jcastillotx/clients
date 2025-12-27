@@ -21,7 +21,7 @@ class WebMentionService
      */
     public function searchGoogle(Client $client, array $keywords = []): array
     {
-        if (!config('brand-monitoring.web_mentions.google_search.enabled')) {
+        if (! config('brand-monitoring.web_mentions.google_search.enabled')) {
             return ['skipped' => true, 'reason' => 'Google Search disabled'];
         }
 
@@ -32,7 +32,7 @@ class WebMentionService
             return ['error' => 'Google Custom Search not configured'];
         }
 
-        $keywords = !empty($keywords) ? $keywords : [$client->company_name];
+        $keywords = ! empty($keywords) ? $keywords : [$client->company_name];
         $mentions = [];
 
         foreach ($keywords as $keyword) {
@@ -47,11 +47,12 @@ class WebMentionService
                     'sort' => 'date', // Sort by date
                 ]);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     Log::warning('Google Search failed', [
                         'status' => $response->status(),
                         'keyword' => $keyword,
                     ]);
+
                     continue;
                 }
 
@@ -61,7 +62,7 @@ class WebMentionService
                 foreach ($items as $item) {
                     $mention = $this->storeMention($client, [
                         'platform' => 'web',
-                        'mention_text' => ($item['title'] ?? '') . "\n\n" . ($item['snippet'] ?? ''),
+                        'mention_text' => ($item['title'] ?? '')."\n\n".($item['snippet'] ?? ''),
                         'author' => $item['displayLink'] ?? parse_url($item['link'] ?? '', PHP_URL_HOST),
                         'url' => $item['link'] ?? null,
                         'posted_at' => now(), // Google CSE doesn't return publish dates easily
@@ -98,7 +99,7 @@ class WebMentionService
      */
     public function searchBing(Client $client, array $keywords = []): array
     {
-        if (!config('brand-monitoring.web_mentions.bing_search.enabled')) {
+        if (! config('brand-monitoring.web_mentions.bing_search.enabled')) {
             return ['skipped' => true, 'reason' => 'Bing Search disabled'];
         }
 
@@ -108,7 +109,7 @@ class WebMentionService
             return ['error' => 'Bing Search API key not configured'];
         }
 
-        $keywords = !empty($keywords) ? $keywords : [$client->company_name];
+        $keywords = ! empty($keywords) ? $keywords : [$client->company_name];
         $mentions = [];
 
         foreach ($keywords as $keyword) {
@@ -123,11 +124,12 @@ class WebMentionService
                     'textFormat' => 'Raw',
                 ]);
 
-                if (!$response->successful()) {
+                if (! $response->successful()) {
                     Log::warning('Bing Search failed', [
                         'status' => $response->status(),
                         'keyword' => $keyword,
                     ]);
+
                     continue;
                 }
 
@@ -137,7 +139,7 @@ class WebMentionService
                 foreach ($webPages as $page) {
                     $mention = $this->storeMention($client, [
                         'platform' => 'web',
-                        'mention_text' => ($page['name'] ?? '') . "\n\n" . ($page['snippet'] ?? ''),
+                        'mention_text' => ($page['name'] ?? '')."\n\n".($page['snippet'] ?? ''),
                         'author' => $page['displayUrl'] ?? parse_url($page['url'] ?? '', PHP_URL_HOST),
                         'url' => $page['url'] ?? null,
                         'posted_at' => isset($page['dateLastCrawled'])
@@ -176,7 +178,7 @@ class WebMentionService
     protected function storeMention(Client $client, array $data): ?BrandMention
     {
         // Deduplicate by URL
-        if (!empty($data['url'])) {
+        if (! empty($data['url'])) {
             $existing = BrandMention::where('client_id', $client->id)
                 ->where('url', $data['url'])
                 ->first();

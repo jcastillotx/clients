@@ -2,19 +2,22 @@
 
 namespace App\Livewire\Documents;
 
-use App\Models\Document;
 use App\Models\ActivityLog;
+use App\Models\Document;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Str;
 
 class UploadDocument extends Component
 {
     use WithFileUploads;
 
     public string $title = '';
+
     public string $description = '';
+
     public string $category = 'other';
+
     public $file;
 
     protected function rules(): array
@@ -25,7 +28,7 @@ class UploadDocument extends Component
         return [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'category' => 'required|in:' . implode(',', array_keys(config('client-portal.document_categories'))),
+            'category' => 'required|in:'.implode(',', array_keys(config('client-portal.document_categories'))),
             'file' => "required|file|max:{$maxSize}|mimes:{$allowedTypes}",
         ];
     }
@@ -35,7 +38,7 @@ class UploadDocument extends Component
         return [
             'title.required' => 'Please enter a title for the document.',
             'file.required' => 'Please select a file to upload.',
-            'file.max' => 'The file size must not exceed ' . (config('client-portal.max_upload_size') / 1024) . 'MB.',
+            'file.max' => 'The file size must not exceed '.(config('client-portal.max_upload_size') / 1024).'MB.',
         ];
     }
 
@@ -44,10 +47,10 @@ class UploadDocument extends Component
         $this->validate();
 
         $user = auth()->user();
-        $filename = Str::uuid() . '.' . $this->file->getClientOriginalExtension();
-        
+        $filename = Str::uuid().'.'.$this->file->getClientOriginalExtension();
+
         $path = $this->file->storeAs(
-            'clients/' . $user->client_id,
+            'clients/'.$user->client_id,
             $filename,
             'documents'
         );

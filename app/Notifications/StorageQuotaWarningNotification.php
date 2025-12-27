@@ -40,8 +40,8 @@ class StorageQuotaWarningNotification extends Notification implements ShouldQueu
             ? "Your {$provider} storage is {$percent}% full."
             : "Your {$provider} storage is running low.";
 
-        return (new MailMessage())
-            ->subject('Storage quota warning · ' . config('app.name'))
+        return (new MailMessage)
+            ->subject('Storage quota warning · '.config('app.name'))
             ->greeting('Heads up')
             ->line($line)
             ->line('Consider freeing up space or increasing your storage quota to avoid sync issues.')
@@ -49,4 +49,3 @@ class StorageQuotaWarningNotification extends Notification implements ShouldQueu
             ->line('If you have questions, reply to this email.');
     }
 }
-

@@ -45,4 +45,3 @@ Route::prefix('v1')
             ->middleware('token.any_ability:write,admin')
             ->name('api.v1.documents.upload');
     });
-

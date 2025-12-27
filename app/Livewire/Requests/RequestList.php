@@ -11,10 +11,15 @@ class RequestList extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $status = '';
+
     public string $type = '';
+
     public string $priority = '';
+
     public string $sortField = 'created_at';
+
     public string $sortDirection = 'desc';
 
     protected $queryString = [
@@ -70,8 +75,8 @@ class RequestList extends Component
             })
             ->when($this->search, function ($q) {
                 $q->where(function ($query) {
-                    $query->where('title', 'like', '%' . $this->search . '%')
-                        ->orWhere('description', 'like', '%' . $this->search . '%');
+                    $query->where('title', 'like', '%'.$this->search.'%')
+                        ->orWhere('description', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->status, function ($q) {

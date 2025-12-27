@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('clients', function (Blueprint $table) {
-            if (!Schema::hasColumn('clients', 'enabled_features')) {
+            if (! Schema::hasColumn('clients', 'enabled_features')) {
                 $table->json('enabled_features')->nullable()->after('notes');
             }
         });
@@ -20,7 +20,7 @@ return new class extends Migration
         Schema::table('contracts', function (Blueprint $table) {
             // Meta already exists, we'll use it for feature configuration
             // Add a contract_type field to easily categorize contracts
-            if (!Schema::hasColumn('contracts', 'contract_type')) {
+            if (! Schema::hasColumn('contracts', 'contract_type')) {
                 $table->string('contract_type')->default('standard')->after('title');
             }
         });

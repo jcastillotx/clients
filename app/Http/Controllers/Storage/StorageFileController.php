@@ -24,11 +24,10 @@ class StorageFileController extends Controller
         }
 
         $diskName = $connection->disk;
-        if (!$diskName) {
+        if (! $diskName) {
             abort(404, 'Storage disk is not configured for this connection.');
         }
 
         return Storage::disk($diskName)->download($storageFile->path, $storageFile->filename);
     }
 }
-

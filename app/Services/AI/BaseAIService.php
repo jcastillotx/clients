@@ -16,11 +16,12 @@ abstract class BaseAIService implements AIProviderInterface
     protected array $config = [];
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     public function configure(array $config): static
     {
         $this->config = $config;
+
         return $this;
     }
 
@@ -52,8 +53,8 @@ abstract class BaseAIService implements AIProviderInterface
     /**
      * Persist + log a provider interaction (best-effort).
      *
-     * @param array<string, mixed> $meta
-     * @param array<string, mixed> $result
+     * @param  array<string, mixed>  $meta
+     * @param  array<string, mixed>  $result
      */
     protected function recordInteraction(array $meta, array $result): void
     {
@@ -152,14 +153,14 @@ abstract class BaseAIService implements AIProviderInterface
             }
         } catch (\Throwable $e) {
             // Never break core flows due to logging/persistence.
-            Log::warning('AI interaction logging failed: ' . $e->getMessage());
+            Log::warning('AI interaction logging failed: '.$e->getMessage());
         }
     }
 
     public function analyzeDocument(string $content, array $instructions = []): array
     {
         $system = (string) ($instructions['system'] ?? 'Analyze the provided document. Return structured JSON.');
-        $user = (string) ($instructions['user'] ?? 'Analyze this document:\n\n' . $content);
+        $user = (string) ($instructions['user'] ?? 'Analyze this document:\n\n'.$content);
 
         return $this->chat([
             ['role' => 'system', 'content' => $system],
@@ -171,10 +172,10 @@ abstract class BaseAIService implements AIProviderInterface
     {
         $res = $this->chat([['role' => 'user', 'content' => $prompt]], $options);
         $text = $res['text'] ?? $res['content'] ?? null;
-        if (!is_string($text)) {
+        if (! is_string($text)) {
             throw new RuntimeException('Provider did not return text.');
         }
+
         return $text;
     }
 }
-

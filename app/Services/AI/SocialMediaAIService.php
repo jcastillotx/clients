@@ -2,9 +2,6 @@
 
 namespace App\Services\AI;
 
-use App\Models\Client;
-use App\Models\ContentCalendarItem;
-use App\Services\AI\AIProviderManager;
 use Illuminate\Support\Facades\Log;
 
 class SocialMediaAIService
@@ -16,10 +13,9 @@ class SocialMediaAIService
     /**
      * Generate social media post content using AI
      *
-     * @param string $prompt User's content idea or topic
-     * @param string $platform Target platform (facebook, instagram, linkedin, x, tiktok)
-     * @param array $options Additional options (tone, length, hashtags, emoji usage, etc.)
-     * @return array
+     * @param  string  $prompt  User's content idea or topic
+     * @param  string  $platform  Target platform (facebook, instagram, linkedin, x, tiktok)
+     * @param  array  $options  Additional options (tone, length, hashtags, emoji usage, etc.)
      */
     public function generatePost(string $prompt, string $platform, array $options = []): array
     {
@@ -39,7 +35,7 @@ class SocialMediaAIService
             Log::error('AI social media generation failed', [
                 'prompt' => $prompt,
                 'platform' => $platform,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -49,11 +45,7 @@ class SocialMediaAIService
     /**
      * Generate multiple variations of a post
      *
-     * @param string $prompt
-     * @param string $platform
-     * @param int $count Number of variations to generate
-     * @param array $options
-     * @return array
+     * @param  int  $count  Number of variations to generate
      */
     public function generateVariations(string $prompt, string $platform, int $count = 3, array $options = []): array
     {
@@ -71,10 +63,9 @@ class SocialMediaAIService
     /**
      * Adapt existing content for different platform
      *
-     * @param string $content Original content
-     * @param string $fromPlatform Original platform
-     * @param string $toPlatform Target platform
-     * @return array
+     * @param  string  $content  Original content
+     * @param  string  $fromPlatform  Original platform
+     * @param  string  $toPlatform  Target platform
      */
     public function adaptForPlatform(string $content, string $fromPlatform, string $toPlatform): array
     {
@@ -107,10 +98,9 @@ Return a JSON response with:
     /**
      * Generate hashtags for content
      *
-     * @param string $content Post content
-     * @param string $platform Target platform
-     * @param int $count Number of hashtags to generate
-     * @return array
+     * @param  string  $content  Post content
+     * @param  string  $platform  Target platform
+     * @param  int  $count  Number of hashtags to generate
      */
     public function generateHashtags(string $content, string $platform, int $count = 5): array
     {
@@ -119,7 +109,7 @@ Return a JSON response with:
             'x' => '1-2 hashtags recommended',
             'linkedin' => '3-5 hashtags recommended',
             'facebook' => '1-3 hashtags recommended',
-            'tiktok' => '3-5 hashtags recommended'
+            'tiktok' => '3-5 hashtags recommended',
         ];
 
         $platformGuidance = $hashtagLimits[$platform] ?? '3-5 hashtags recommended';
@@ -154,23 +144,20 @@ Mix of:
 
     /**
      * Analyze content sentiment and suggest improvements
-     *
-     * @param string $content
-     * @return array
      */
     public function analyzeAndImprove(string $content): array
     {
-        $systemPrompt = "You are a social media content analyst. Analyze the post and provide actionable feedback.
+        $systemPrompt = 'You are a social media content analyst. Analyze the post and provide actionable feedback.
 
 Return JSON:
 {
-    \"sentiment\": \"positive|neutral|negative\",
-    \"engagement_score\": 1-10,
-    \"readability_score\": 1-10,
-    \"strengths\": [\"strength1\", \"strength2\"],
-    \"improvements\": [\"suggestion1\", \"suggestion2\"],
-    \"improved_version\": \"optional improved text\"
-}";
+    "sentiment": "positive|neutral|negative",
+    "engagement_score": 1-10,
+    "readability_score": 1-10,
+    "strengths": ["strength1", "strength2"],
+    "improvements": ["suggestion1", "suggestion2"],
+    "improved_version": "optional improved text"
+}';
 
         $userPrompt = "Analyze this social media post:\n\n{$content}";
 
@@ -181,15 +168,14 @@ Return JSON:
         );
 
         $cleaned = $this->cleanJsonResponse($response);
+
         return json_decode($cleaned, true) ?? [];
     }
 
     /**
      * Generate image captions/descriptions
      *
-     * @param string $imageContext Description of the image
-     * @param string $platform
-     * @return string
+     * @param  string  $imageContext  Description of the image
      */
     public function generateImageCaption(string $imageContext, string $platform): string
     {
@@ -213,11 +199,6 @@ Return just the caption text.";
 
     /**
      * Suggest best posting times
-     *
-     * @param string $platform
-     * @param string $targetAudience
-     * @param string $timezone
-     * @return array
      */
     public function suggestPostingTimes(string $platform, string $targetAudience = 'general', string $timezone = 'America/New_York'): array
     {
@@ -244,6 +225,7 @@ Return JSON with 3-5 best times:
         );
 
         $cleaned = $this->cleanJsonResponse($response);
+
         return json_decode($cleaned, true) ?? [];
     }
 
@@ -257,7 +239,7 @@ Return JSON with 3-5 best times:
             'instagram' => 'Instagram: Visual-first, trendy, authentic. 138-150 characters in caption. Heavy emoji usage. Story-driven.',
             'linkedin' => 'LinkedIn: Professional, thought leadership. 150-300 words. Minimal emojis. Industry insights and value.',
             'x' => 'X/Twitter: Concise, timely, witty. Max 280 characters. 1-2 hashtags. News and trending topics.',
-            'tiktok' => 'TikTok: Casual, entertaining, trendy. Short and punchy. Heavy emoji and slang usage. Call-to-action focused.'
+            'tiktok' => 'TikTok: Casual, entertaining, trendy. Short and punchy. Heavy emoji and slang usage. Call-to-action focused.',
         ];
 
         $platformGuide = $platformGuides[$platform] ?? 'General social media platform.';
@@ -272,19 +254,19 @@ Return JSON with 3-5 best times:
 Platform Guidelines: {$platformGuide}
 
 Tone: {$tone}
-Hashtags: " . ($includeHashtags ? 'Include relevant hashtags' : 'No hashtags') . "
-Emojis: " . ($includeEmoji ? 'Use appropriately' : 'Avoid emojis') . "
-Call-to-Action: " . ($includeCallToAction ? 'Include engaging CTA' : 'No CTA needed') . "
+Hashtags: ".($includeHashtags ? 'Include relevant hashtags' : 'No hashtags').'
+Emojis: '.($includeEmoji ? 'Use appropriately' : 'Avoid emojis').'
+Call-to-Action: '.($includeCallToAction ? 'Include engaging CTA' : 'No CTA needed').'
 
 Return JSON format:
 {
-    \"content\": \"main post text\",
-    \"hashtags\": [\"hashtag1\", \"hashtag2\"],
-    \"caption\": \"optional image caption\",
-    \"cta\": \"call to action text\"
+    "content": "main post text",
+    "hashtags": ["hashtag1", "hashtag2"],
+    "caption": "optional image caption",
+    "cta": "call to action text"
 }
 
-Make the content engaging, on-brand, and optimized for maximum engagement.";
+Make the content engaging, on-brand, and optimized for maximum engagement.';
     }
 
     /**
@@ -292,7 +274,7 @@ Make the content engaging, on-brand, and optimized for maximum engagement.";
      */
     protected function buildUserPrompt(string $prompt, array $options): string
     {
-        $context = "";
+        $context = '';
 
         if (isset($options['brand_voice'])) {
             $context .= "Brand Voice: {$options['brand_voice']}\n";
@@ -323,13 +305,13 @@ Make the content engaging, on-brand, and optimized for maximum engagement.";
         $cleaned = $this->cleanJsonResponse($response);
         $data = json_decode($cleaned, true);
 
-        if (!$data) {
+        if (! $data) {
             // Fallback if JSON parsing fails
             return [
                 'content' => $response,
                 'hashtags' => [],
                 'caption' => '',
-                'cta' => ''
+                'cta' => '',
             ];
         }
 
@@ -338,7 +320,7 @@ Make the content engaging, on-brand, and optimized for maximum engagement.";
             'hashtags' => $data['hashtags'] ?? [],
             'caption' => $data['caption'] ?? '',
             'cta' => $data['cta'] ?? '',
-            'meta' => $data['meta'] ?? []
+            'meta' => $data['meta'] ?? [],
         ];
     }
 
@@ -362,7 +344,7 @@ Make the content engaging, on-brand, and optimized for maximum engagement.";
      */
     protected function getMaxTokens(string $platform): int
     {
-        return match($platform) {
+        return match ($platform) {
             'x' => 100,        // Short tweets
             'instagram' => 300, // Short captions
             'facebook' => 400,  // Medium posts

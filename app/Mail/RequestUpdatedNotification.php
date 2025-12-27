@@ -16,13 +16,12 @@ class RequestUpdatedNotification extends Mailable implements ShouldQueue
         public Request $request,
         public ?string $oldStatus = null,
         public ?string $newStatus = null,
-    ) {
-    }
+    ) {}
 
     public function build(): self
     {
         return $this
-            ->subject('Request update · #' . $this->request->id)
+            ->subject('Request update · #'.$this->request->id)
             ->view('emails.request-updated', [
                 'request' => $this->request,
                 'oldStatus' => $this->oldStatus,
@@ -35,4 +34,3 @@ class RequestUpdatedNotification extends Mailable implements ShouldQueue
             ]);
     }
 }
-

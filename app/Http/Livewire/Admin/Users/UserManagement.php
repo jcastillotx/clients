@@ -14,19 +14,32 @@ class UserManagement extends Component
     protected string $paginationTheme = 'bootstrap';
 
     public string $search = '';
+
     public string $role = 'all'; // all|super_admin|admin|staff|client
+
     public string $status = 'all'; // all|active|inactive|suspended
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingRole(): void { $this->resetPage(); }
-    public function updatingStatus(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRole(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatus(): void
+    {
+        $this->resetPage();
+    }
 
     protected function baseQuery(): Builder
     {
         return User::query()
             ->with(['roles', 'client'])
             ->when($this->search, function ($q) {
-                $s = '%' . $this->search . '%';
+                $s = '%'.$this->search.'%';
                 $q->where(function ($qq) use ($s) {
                     $qq->where('name', 'like', $s)
                         ->orWhere('email', 'like', $s);
@@ -40,7 +53,7 @@ class UserManagement extends Component
     public function toggleActive(int $userId): void
     {
         $user = User::query()->findOrFail($userId);
-        $new = !((bool) $user->is_active);
+        $new = ! ((bool) $user->is_active);
         $user->update([
             'is_active' => $new,
             'status' => $new ? 'active' : 'inactive',
@@ -57,4 +70,3 @@ class UserManagement extends Component
         ])->layout('layouts.admin', ['title' => 'Users']);
     }
 }
-

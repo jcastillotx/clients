@@ -8,24 +8,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('project_milestones')) {
+        if (! Schema::hasTable('project_milestones')) {
             return;
         }
 
         Schema::table('project_milestones', function (Blueprint $table) {
             // Add request-linked milestone fields (requested schema) while keeping
             // existing project-linked milestone fields.
-            if (!Schema::hasColumn('project_milestones', 'request_id')) {
+            if (! Schema::hasColumn('project_milestones', 'request_id')) {
                 $table->foreignId('request_id')->nullable()->after('project_id')->constrained('requests')->nullOnDelete();
                 $table->index(['request_id']);
             }
-            if (!Schema::hasColumn('project_milestones', 'title')) {
+            if (! Schema::hasColumn('project_milestones', 'title')) {
                 $table->string('title')->nullable()->after('request_id');
             }
-            if (!Schema::hasColumn('project_milestones', 'description')) {
+            if (! Schema::hasColumn('project_milestones', 'description')) {
                 $table->text('description')->nullable()->after('title');
             }
-            if (!Schema::hasColumn('project_milestones', 'status')) {
+            if (! Schema::hasColumn('project_milestones', 'status')) {
                 $table->string('status')->default('pending')->after('due_date');
                 $table->index(['status']);
             }
@@ -37,7 +37,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('project_milestones')) {
+        if (! Schema::hasTable('project_milestones')) {
             return;
         }
 
@@ -60,4 +60,3 @@ return new class extends Migration
         });
     }
 };
-

@@ -24,13 +24,13 @@ class DocumentUploadController extends Controller
             'file' => ['required', 'file', 'max:51200'], // 50MB
         ]);
 
-        if (!$isAdmin && $user?->client_id) {
+        if (! $isAdmin && $user?->client_id) {
             abort_unless((int) $data['client_id'] === (int) $user->client_id, 403);
         }
 
         $file = $request->file('file');
         $original = $file->getClientOriginalName();
-        $filename = uniqid('doc_', true) . '_' . preg_replace('/[^A-Za-z0-9._-]+/', '_', $original);
+        $filename = uniqid('doc_', true).'_'.preg_replace('/[^A-Za-z0-9._-]+/', '_', $original);
 
         $path = Storage::disk('documents')->putFileAs(
             date('Y/m'),
@@ -56,4 +56,3 @@ class DocumentUploadController extends Controller
         return response()->json(['data' => $doc], 201);
     }
 }
-

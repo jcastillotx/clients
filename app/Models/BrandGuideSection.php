@@ -27,4 +27,3 @@ class BrandGuideSection extends Model
         return $this->belongsTo(BrandGuide::class, 'brand_guide_id');
     }
 }
-

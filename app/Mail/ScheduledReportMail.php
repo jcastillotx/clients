@@ -17,8 +17,7 @@ class ScheduledReportMail extends Mailable
         public readonly string $category,
         public readonly array $payload,
         private readonly string $pdfBytes,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {
@@ -46,4 +45,3 @@ class ScheduledReportMail extends Mailable
         ];
     }
 }
-

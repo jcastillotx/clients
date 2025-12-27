@@ -30,4 +30,3 @@ class ProjectDeliverable extends Model
         return $this->belongsTo(Project::class);
     }
 }
-

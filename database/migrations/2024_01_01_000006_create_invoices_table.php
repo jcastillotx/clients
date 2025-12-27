@@ -30,7 +30,7 @@ return new class extends Migration
                 'paid',
                 'overdue',
                 'cancelled',
-                'refunded'
+                'refunded',
             ])->default('draft');
             $table->text('notes')->nullable();
             $table->text('terms')->nullable();

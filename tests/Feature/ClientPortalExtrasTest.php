@@ -8,7 +8,6 @@ use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\KnowledgeBaseArticle;
 use App\Models\KnowledgeBaseCategory;
-use App\Models\KnowledgeBaseFeedback;
 use App\Models\Message;
 use App\Models\MessageRead;
 use App\Models\User;
@@ -83,4 +82,3 @@ class ClientPortalExtrasTest extends TestCase
         );
     }
 }
-

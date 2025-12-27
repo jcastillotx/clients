@@ -24,6 +24,7 @@ class DocumentWorkflow extends Component
     public Document $document;
 
     public string $commentBody = '';
+
     public bool $commentInternal = false;
 
     // versioning
@@ -31,17 +32,24 @@ class DocumentWorkflow extends Component
 
     // linking
     public string $linkTargetType = 'request';
+
     public ?int $linkTargetId = null;
+
     public string $linkPurpose = 'supporting';
 
     public ?int $linkStorageFileId = null;
 
     // compare
     public ?int $compareA = null;
+
     public ?int $compareB = null;
+
     public ?string $compareTextA = null;
+
     public ?string $compareTextB = null;
+
     public array $diffA = [];
+
     public array $diffB = [];
 
     public function mount(Document $document): void
@@ -109,7 +117,7 @@ class DocumentWorkflow extends Component
         DocumentComment::create([
             'document_id' => $this->document->id,
             'user_id' => Auth::id(),
-            'body' => 'Rejected: ' . $this->commentBody,
+            'body' => 'Rejected: '.$this->commentBody,
             'is_internal' => false,
         ]);
         $this->commentBody = '';
@@ -156,7 +164,7 @@ class DocumentWorkflow extends Component
         // Persist old current file as a version if version 1 doesn't exist yet
         $current = $this->document;
         $existingV1 = DocumentVersion::query()->where('document_id', $current->id)->where('version', 1)->exists();
-        if (!$existingV1) {
+        if (! $existingV1) {
             DocumentVersion::create([
                 'document_id' => $current->id,
                 'version' => 1,
@@ -296,8 +304,8 @@ class DocumentWorkflow extends Component
         $this->diffA = [];
         $this->diffB = [];
         if ($this->compareTextA && $this->compareTextB
-            && !str_starts_with($this->compareTextA, '(')
-            && !str_starts_with($this->compareTextB, '(')
+            && ! str_starts_with($this->compareTextA, '(')
+            && ! str_starts_with($this->compareTextB, '(')
         ) {
             [$this->diffA, $this->diffB] = $this->buildSideBySideDiff($this->compareTextA, $this->compareTextB);
         }
@@ -325,13 +333,13 @@ class DocumentWorkflow extends Component
 
     protected function readTextVersion(?DocumentVersion $v): ?string
     {
-        if (!$v) {
+        if (! $v) {
             return null;
         }
         $mime = strtolower((string) $v->mime_type);
         $isText = str_starts_with($mime, 'text/')
             || in_array(strtolower(pathinfo($v->original_filename, PATHINFO_EXTENSION)), ['txt', 'md', 'csv', 'json', 'xml', 'html'], true);
-        if (!$isText) {
+        if (! $isText) {
             return '(Comparison not available for this file type.)';
         }
         try {
@@ -339,6 +347,7 @@ class DocumentWorkflow extends Component
             if (strlen($bytes) > 200_000) {
                 return '(File too large to compare.)';
             }
+
             return $bytes;
         } catch (\Throwable) {
             return '(Unable to read file contents.)';
@@ -386,4 +395,3 @@ class DocumentWorkflow extends Component
         return view('livewire.documents.workflow', compact('comments', 'versions', 'links', 'availableStorageFiles'));
     }
 }
-

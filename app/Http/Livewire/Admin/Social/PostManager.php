@@ -14,10 +14,15 @@ class PostManager extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $selectedClient = '';
+
     public $selectedPlatform = '';
+
     public $selectedStatus = '';
+
     public $search = '';
+
     public $dateFrom = '';
+
     public $dateTo = '';
 
     protected $queryString = [
@@ -85,6 +90,7 @@ class PostManager extends Component
         $newPost->save();
 
         session()->flash('success', 'Post duplicated successfully.');
+
         return redirect()->route('admin.social.posts.edit', $newPost->id);
     }
 
@@ -107,10 +113,10 @@ class PostManager extends Component
         }
 
         if ($this->search) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('title', 'like', "%{$this->search}%")
-                  ->orWhere('content_text', 'like', "%{$this->search}%")
-                  ->orWhere('hashtags', 'like', "%{$this->search}%");
+                    ->orWhere('content_text', 'like', "%{$this->search}%")
+                    ->orWhere('hashtags', 'like', "%{$this->search}%");
             });
         }
 

@@ -33,4 +33,3 @@ class RequestTimeEntry extends Model
         return $this->belongsTo(User::class);
     }
 }
-

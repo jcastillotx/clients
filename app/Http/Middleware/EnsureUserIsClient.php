@@ -15,11 +15,10 @@ class EnsureUserIsClient
     {
         $user = $request->user();
 
-        if (!$user || !$user->isClient()) {
+        if (! $user || ! $user->isClient()) {
             abort(403);
         }
 
         return $next($request);
     }
 }
-

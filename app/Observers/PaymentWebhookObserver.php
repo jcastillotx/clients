@@ -15,7 +15,7 @@ class PaymentWebhookObserver
 
     public function updated(Payment $payment): void
     {
-        if (!$payment->wasChanged('status')) {
+        if (! $payment->wasChanged('status')) {
             return;
         }
 
@@ -68,4 +68,3 @@ class PaymentWebhookObserver
         }
     }
 }
-

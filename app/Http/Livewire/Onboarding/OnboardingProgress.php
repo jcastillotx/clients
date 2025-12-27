@@ -24,4 +24,3 @@ class OnboardingProgress extends Component
         ]);
     }
 }
-

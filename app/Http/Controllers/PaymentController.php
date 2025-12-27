@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\ActivityLog;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Stripe\Stripe;
-use Stripe\PaymentIntent;
 use Stripe\Exception\ApiErrorException;
+use Stripe\PaymentIntent;
+use Stripe\Stripe;
 
 class PaymentController extends Controller
 {
@@ -29,7 +29,7 @@ class PaymentController extends Controller
     {
         $this->authorizeClientAccess($invoice);
 
-        if (!$invoice->canBePaid()) {
+        if (! $invoice->canBePaid()) {
             abort(400, 'This invoice cannot be paid.');
         }
 
@@ -50,7 +50,7 @@ class PaymentController extends Controller
     {
         $this->authorizeClientAccess($invoice);
 
-        if (!$invoice->canBePaid()) {
+        if (! $invoice->canBePaid()) {
             return back()->with('error', 'This invoice cannot be paid.');
         }
 
@@ -96,7 +96,7 @@ class PaymentController extends Controller
             return back()->with('error', 'Payment was not completed. Please try again.');
 
         } catch (ApiErrorException $e) {
-            return back()->with('error', 'Payment failed: ' . $e->getMessage());
+            return back()->with('error', 'Payment failed: '.$e->getMessage());
         }
     }
 

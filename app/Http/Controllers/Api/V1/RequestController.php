@@ -78,11 +78,11 @@ class RequestController extends Controller
         $status = $data['status'];
 
         $updates = ['status' => $status];
-        if ($status === 'completed' && !$requestModel->completed_at) {
+        if ($status === 'completed' && ! $requestModel->completed_at) {
             $updates['completed_at'] = now();
         }
 
-        if ($status === 'in_progress' && !$requestModel->started_at) {
+        if ($status === 'in_progress' && ! $requestModel->started_at) {
             $updates['started_at'] = now();
         }
 
@@ -93,4 +93,3 @@ class RequestController extends Controller
         ]);
     }
 }
-

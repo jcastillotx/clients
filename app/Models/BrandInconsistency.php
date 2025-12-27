@@ -27,4 +27,3 @@ class BrandInconsistency extends Model
         return $this->belongsTo(BrandAudit::class, 'brand_audit_id');
     }
 }
-

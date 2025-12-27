@@ -25,7 +25,7 @@ SYS;
     }
 
     /**
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $context
      */
     public static function draftEmailUser(array $context, string $purpose, string $tone): string
     {
@@ -66,8 +66,8 @@ SYS;
     }
 
     /**
-     * @param array<int, array{role:string, content:string}> $history
-     * @param array<string,mixed> $context
+     * @param  array<int, array{role:string, content:string}>  $history
+     * @param  array<string,mixed>  $context
      */
     public static function smartRepliesUser(string $clientMessage, array $context, array $history = []): string
     {
@@ -163,4 +163,3 @@ SYS;
         return "Target language: {$targetLanguage}\n\nText:\n{$text}";
     }
 }
-

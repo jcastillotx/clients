@@ -14,6 +14,7 @@ class InvoiceSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command?->warn('Skipping InvoiceSeeder in production (demo data).');
+
             return;
         }
 
@@ -55,4 +56,3 @@ class InvoiceSeeder extends Seeder
             });
     }
 }
-

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invoice;
 use App\Models\ActivityLog;
-use Illuminate\View\View;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
@@ -46,7 +46,7 @@ class InvoiceController extends Controller
         $invoice->load(['client', 'items']);
 
         // Generate PDF if not exists
-        if (!$invoice->pdf_path || !Storage::disk('invoices')->exists($invoice->pdf_path)) {
+        if (! $invoice->pdf_path || ! Storage::disk('invoices')->exists($invoice->pdf_path)) {
             $this->generatePdf($invoice);
         }
 
@@ -60,7 +60,7 @@ class InvoiceController extends Controller
 
         return Storage::disk('invoices')->download(
             $invoice->pdf_path,
-            $invoice->invoice_number . '.pdf'
+            $invoice->invoice_number.'.pdf'
         );
     }
 
@@ -76,7 +76,7 @@ class InvoiceController extends Controller
         $brand = $this->invoiceBranding();
         $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'brand'));
 
-        return $pdf->stream($invoice->invoice_number . '.pdf');
+        return $pdf->stream($invoice->invoice_number.'.pdf');
     }
 
     /**
@@ -87,8 +87,8 @@ class InvoiceController extends Controller
         $brand = $this->invoiceBranding();
         $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'brand'));
 
-        $filename = $invoice->invoice_number . '.pdf';
-        $path = 'generated/' . $filename;
+        $filename = $invoice->invoice_number.'.pdf';
+        $path = 'generated/'.$filename;
 
         Storage::disk('invoices')->put($path, $pdf->output());
 

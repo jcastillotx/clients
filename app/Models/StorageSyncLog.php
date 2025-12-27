@@ -35,4 +35,3 @@ class StorageSyncLog extends Model
         return $this->belongsTo(StorageConnection::class, 'storage_connection_id');
     }
 }
-

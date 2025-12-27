@@ -25,7 +25,7 @@ class TriageRequestJob implements ShouldQueue
     {
         /** @var ServiceRequest|null $request */
         $request = ServiceRequest::query()->with(['client', 'creator', 'attachments'])->find($this->requestId);
-        if (!$request) {
+        if (! $request) {
             return;
         }
 
@@ -60,7 +60,7 @@ class TriageRequestJob implements ShouldQueue
 
             $triage->applyTriage($request->fresh(), $analysis);
         } catch (\Throwable $e) {
-            Log::warning('AI request triage failed: ' . $e->getMessage(), [
+            Log::warning('AI request triage failed: '.$e->getMessage(), [
                 'request_id' => $request->id,
             ]);
 
@@ -74,4 +74,3 @@ class TriageRequestJob implements ShouldQueue
         }
     }
 }
-

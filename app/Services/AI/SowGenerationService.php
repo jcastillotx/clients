@@ -18,14 +18,13 @@ class SowGenerationService
     public function __construct(
         protected AIProviderManager $providers,
         protected CostCalculationService $costs
-    ) {
-    }
+    ) {}
 
     /**
      * Draft SOW narrative sections via AI.
      *
-     * @param array<string,mixed> $estimate
-     * @param array<string,mixed> $pricing
+     * @param  array<string,mixed>  $estimate
+     * @param  array<string,mixed>  $pricing
      * @return array<string,string>
      */
     public function draftSowSections(ServiceRequest $request, array $estimate, array $pricing, array $options = []): array
@@ -97,26 +96,26 @@ class SowGenerationService
     /**
      * Generate a branded SOW PDF and create a Contract in pending_signature status.
      *
-     * @param array<string,mixed> $estimateData
-     * @param array<string,mixed> $pricingData
-     * @param array<string,string> $sections
+     * @param  array<string,mixed>  $estimateData
+     * @param  array<string,mixed>  $pricingData
+     * @param  array<string,string>  $sections
      */
     public function generateSowContract(ServiceRequest $request, RequestEstimate $estimate, array $estimateData, array $pricingData, array $sections = []): Contract
     {
         $request->loadMissing(['client']);
         $client = $request->client;
-        if (!$client) {
+        if (! $client) {
             throw new \RuntimeException('Cannot generate SOW: request has no client.');
         }
 
-        $title = 'Statement of Work — ' . $request->title;
+        $title = 'Statement of Work — '.$request->title;
 
         $midTotal = (float) (($pricingData['totals']['mid']['total'] ?? null) ?: ($pricingData['cost_range']['mid'] ?? 0));
 
         $contract = Contract::create([
             'client_id' => $client->id,
             'title' => $title,
-            'description' => 'SOW generated from project estimate for Request #' . $request->id,
+            'description' => 'SOW generated from project estimate for Request #'.$request->id,
             'value' => $midTotal,
             'status' => 'pending_signature',
             'start_date' => now()->toDateString(),
@@ -135,7 +134,7 @@ class SowGenerationService
         ]);
 
         $bytes = $pdf->output();
-        $path = 'sows/' . $contract->contract_number . '-' . Str::slug($request->title) . '.pdf';
+        $path = 'sows/'.$contract->contract_number.'-'.Str::slug($request->title).'.pdf';
         Storage::disk('contracts')->put($path, $bytes);
 
         $contract->update(['file_path' => $path]);
@@ -153,21 +152,27 @@ class SowGenerationService
     protected function parseJsonFromText(string $text): array
     {
         $text = trim($text);
-        if ($text === '') return [];
+        if ($text === '') {
+            return [];
+        }
 
         $decoded = json_decode($text, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($text, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
         Log::warning('AI SOW returned non-JSON output.');
+
         return [];
     }
 }
-

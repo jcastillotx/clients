@@ -14,24 +14,40 @@ class PostCreator extends Component
 
     // Post fields
     public $client_id;
+
     public $title = '';
+
     public $platform = 'facebook';
+
     public $content_text = '';
+
     public $hashtags = '';
+
     public $campaign_tag = '';
+
     public $media_urls = [];
+
     public $scheduled_for;
 
     // AI fields
     public $ai_prompt = '';
+
     public $ai_tone = 'professional';
+
     public $ai_include_hashtags = true;
+
     public $ai_include_emoji = true;
+
     public $ai_include_cta = true;
+
     public $ai_target_audience = '';
+
     public $ai_keywords = '';
+
     public $ai_generating = false;
+
     public $ai_variations = [];
+
     public $show_ai_panel = false;
 
     // Media upload
@@ -39,7 +55,9 @@ class PostCreator extends Component
 
     // UI state
     public $character_count = 0;
+
     public $character_limit = 2000;
+
     public $saving = false;
 
     protected $rules = [
@@ -69,7 +87,7 @@ class PostCreator extends Component
 
     protected function updateCharacterLimit()
     {
-        $this->character_limit = match($this->platform) {
+        $this->character_limit = match ($this->platform) {
             'x', 'twitter' => 280,
             'facebook' => 63206,
             'instagram' => 2200,
@@ -81,7 +99,7 @@ class PostCreator extends Component
 
     public function toggleAIPanel()
     {
-        $this->show_ai_panel = !$this->show_ai_panel;
+        $this->show_ai_panel = ! $this->show_ai_panel;
     }
 
     public function generateWithAI()
@@ -129,7 +147,7 @@ class PostCreator extends Component
 
             session()->flash('ai_success', 'Generated 3 AI variations! Select one below.');
         } catch (\Exception $e) {
-            session()->flash('ai_error', 'AI generation failed: ' . $e->getMessage());
+            session()->flash('ai_error', 'AI generation failed: '.$e->getMessage());
         } finally {
             $this->ai_generating = false;
         }
@@ -142,12 +160,12 @@ class PostCreator extends Component
 
             $this->content_text = $variation['content'];
 
-            if (!empty($variation['hashtags'])) {
-                $this->hashtags = implode(' ', array_map(fn($h) => "#{$h}", $variation['hashtags']));
+            if (! empty($variation['hashtags'])) {
+                $this->hashtags = implode(' ', array_map(fn ($h) => "#{$h}", $variation['hashtags']));
             }
 
             if (empty($this->title)) {
-                $this->title = substr($variation['content'], 0, 100) . (strlen($variation['content']) > 100 ? '...' : '');
+                $this->title = substr($variation['content'], 0, 100).(strlen($variation['content']) > 100 ? '...' : '');
             }
 
             $this->character_count = mb_strlen($this->content_text);
@@ -161,6 +179,7 @@ class PostCreator extends Component
     {
         if (empty($this->content_text)) {
             session()->flash('error', 'Please write some content first.');
+
             return;
         }
 
@@ -168,11 +187,11 @@ class PostCreator extends Component
             $aiService = app(SocialMediaAIService::class);
             $hashtags = $aiService->generateHashtags($this->content_text, $this->platform, 5);
 
-            $this->hashtags = implode(' ', array_map(fn($h) => "#{$h}", $hashtags));
+            $this->hashtags = implode(' ', array_map(fn ($h) => "#{$h}", $hashtags));
 
             session()->flash('success', 'Hashtags generated!');
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to generate hashtags: ' . $e->getMessage());
+            session()->flash('error', 'Failed to generate hashtags: '.$e->getMessage());
         }
     }
 
@@ -180,6 +199,7 @@ class PostCreator extends Component
     {
         if (empty($this->content_text)) {
             session()->flash('error', 'Please write some content first.');
+
             return;
         }
 
@@ -189,7 +209,7 @@ class PostCreator extends Component
 
             $this->emit('showAnalysis', $analysis);
         } catch (\Exception $e) {
-            session()->flash('error', 'Analysis failed: ' . $e->getMessage());
+            session()->flash('error', 'Analysis failed: '.$e->getMessage());
         }
     }
 
@@ -217,9 +237,10 @@ class PostCreator extends Component
             ]);
 
             session()->flash('success', 'Draft saved successfully!');
+
             return redirect()->route('admin.social.posts');
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to save draft: ' . $e->getMessage());
+            session()->flash('error', 'Failed to save draft: '.$e->getMessage());
         } finally {
             $this->saving = false;
         }
@@ -255,9 +276,10 @@ class PostCreator extends Component
             }
 
             session()->flash('success', 'Post submitted for client approval!');
+
             return redirect()->route('admin.social.posts');
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to submit for approval: ' . $e->getMessage());
+            session()->flash('error', 'Failed to submit for approval: '.$e->getMessage());
         } finally {
             $this->saving = false;
         }

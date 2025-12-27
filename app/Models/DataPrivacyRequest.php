@@ -26,4 +26,3 @@ class DataPrivacyRequest extends Model
         return $this->belongsTo(User::class);
     }
 }
-

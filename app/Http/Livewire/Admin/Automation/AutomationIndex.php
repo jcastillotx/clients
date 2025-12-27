@@ -17,7 +17,7 @@ class AutomationIndex extends Component
     {
         abort_unless(Auth::user()?->can('access admin panel'), 403);
         $rule = AutomationRule::query()->findOrFail($id);
-        $rule->update(['is_active' => !$rule->is_active]);
+        $rule->update(['is_active' => ! $rule->is_active]);
     }
 
     public function delete(int $id): void
@@ -38,4 +38,3 @@ class AutomationIndex extends Component
         return view('livewire.admin.automation.index', compact('rules'));
     }
 }
-

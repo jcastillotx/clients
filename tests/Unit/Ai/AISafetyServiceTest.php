@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Ai;
 
-use App\Services\AI\AISafetyService;
 use App\Services\AI\AIProviderManager;
+use App\Services\AI\AISafetyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -33,4 +33,3 @@ class AISafetyServiceTest extends TestCase
         $this->assertContains('potential_secret_leak', $m['flags']);
     }
 }
-

@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::table('webhook_endpoints', function (Blueprint $table) {
             // Requested schema fields (kept alongside existing columns)
-            if (!Schema::hasColumn('webhook_endpoints', 'url')) {
+            if (! Schema::hasColumn('webhook_endpoints', 'url')) {
                 $table->string('url')->nullable()->after('event_type');
             }
-            if (!Schema::hasColumn('webhook_endpoints', 'last_triggered_at')) {
+            if (! Schema::hasColumn('webhook_endpoints', 'last_triggered_at')) {
                 $table->timestamp('last_triggered_at')->nullable()->after('is_active');
             }
 
@@ -34,4 +34,3 @@ return new class extends Migration
         });
     }
 };
-

@@ -40,7 +40,7 @@ class StripeWebhookSignatureTest extends TestCase
         ], JSON_UNESCAPED_SLASHES);
 
         $timestamp = time();
-        $signedPayload = $timestamp . '.' . $payload;
+        $signedPayload = $timestamp.'.'.$payload;
         $sig = hash_hmac('sha256', $signedPayload, (string) config('services.stripe.webhook_secret'));
         $header = "t={$timestamp},v1={$sig}";
 
@@ -61,4 +61,3 @@ class StripeWebhookSignatureTest extends TestCase
         $this->assertSame('paid', $invoice->status);
     }
 }
-

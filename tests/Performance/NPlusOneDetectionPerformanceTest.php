@@ -16,7 +16,7 @@ class NPlusOneDetectionPerformanceTest extends TestCase
 
     public function test_request_show_page_query_count_budget_example(): void
     {
-        if (!getenv('RUN_PERFORMANCE_TESTS')) {
+        if (! getenv('RUN_PERFORMANCE_TESTS')) {
             $this->markTestSkipped('Set RUN_PERFORMANCE_TESTS=1 to run performance tests.');
         }
 
@@ -51,4 +51,3 @@ class NPlusOneDetectionPerformanceTest extends TestCase
         $this->assertLessThan(60, $queries, "Request show triggered {$queries} queries (possible N+1).");
     }
 }
-

@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'status')) {
+            if (! Schema::hasColumn('users', 'status')) {
                 $table->enum('status', ['active', 'inactive', 'suspended'])->default('active')->after('is_active');
                 $table->index('status');
             }
 
-            if (!Schema::hasColumn('users', 'two_factor_enabled')) {
+            if (! Schema::hasColumn('users', 'two_factor_enabled')) {
                 $table->boolean('two_factor_enabled')->default(false)->after('last_login_at');
                 $table->index('two_factor_enabled');
             }
@@ -35,4 +35,3 @@ return new class extends Migration
         });
     }
 };
-

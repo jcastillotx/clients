@@ -36,6 +36,7 @@ class SettingsService
         foreach ($defaultsByKey as $key => $default) {
             $out[$key] = $all[$key] ?? $default;
         }
+
         return $out;
     }
 
@@ -71,4 +72,3 @@ class SettingsService
         Cache::forget(self::CACHE_KEY);
     }
 }
-

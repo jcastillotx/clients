@@ -10,13 +10,19 @@ use Livewire\Component;
 class IndustryMonitor extends Component
 {
     public string $title = '';
+
     public string $industry = '';
+
     public ?string $region = null;
+
     public string $keywordsCsv = '';
+
     public string $cadence = 'weekly';
 
     public ?int $lastReportId = null;
+
     public array $lastReportPayload = [];
+
     public ?string $error = null;
 
     public function createMonitor(): void
@@ -24,7 +30,7 @@ class IndustryMonitor extends Component
         $keywords = array_values(array_filter(array_map('trim', explode(',', $this->keywordsCsv))));
 
         $m = IndustryMonitorModel::create([
-            'title' => $this->title ?: ($this->industry . ' monitor'),
+            'title' => $this->title ?: ($this->industry.' monitor'),
             'client_id' => Auth::user()?->client_id,
             'created_by' => Auth::id(),
             'industry' => $this->industry,
@@ -37,7 +43,7 @@ class IndustryMonitor extends Component
         $this->runMonitor($m->id);
     }
 
-    public function runMonitor(int $monitorId, ResearchAssistantService $svc = null): void
+    public function runMonitor(int $monitorId, ?ResearchAssistantService $svc = null): void
     {
         $this->error = null;
         $this->lastReportPayload = [];
@@ -78,4 +84,3 @@ class IndustryMonitor extends Component
         ])->layout('layouts.app', ['title' => 'Industry Monitor']);
     }
 }
-

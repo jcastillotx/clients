@@ -55,4 +55,3 @@ class ClientAiQuestion extends Model
         return $this->belongsTo(Request::class, 'request_id');
     }
 }
-

@@ -2,12 +2,12 @@
 
 namespace App\Http\Livewire\Client;
 
+use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\MessageRead;
 use App\Models\User;
-use App\Events\MessageSent;
 use App\Notifications\UserMentionedInMessageNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -21,10 +21,15 @@ class Messaging extends Component
     use WithFileUploads;
 
     public ?int $conversationId = null;
+
     public string $message = '';
+
     public $upload;
+
     public string $search = '';
+
     public ?int $newConversationRequestId = null;
+
     public string $newConversationTitle = '';
 
     protected $listeners = [
@@ -43,7 +48,7 @@ class Messaging extends Component
             ->orderByDesc('id')
             ->first();
 
-        if (!$conv) {
+        if (! $conv) {
             $conv = Conversation::create([
                 'client_id' => $user->client_id,
                 'title' => 'Support Chat',
@@ -122,7 +127,7 @@ class Messaging extends Component
         $conv->update(['last_message_at' => now()]);
 
         // Notify mentioned users (best-effort)
-        if (!empty($mentions)) {
+        if (! empty($mentions)) {
             $targets = User::query()->whereIn('id', $mentions)->get();
             if ($targets->isNotEmpty()) {
                 Notification::send($targets, new UserMentionedInMessageNotification($msg));
@@ -151,7 +156,7 @@ class Messaging extends Component
             ->where('conversation_id', $conv->id)
             ->findOrFail($messageId);
 
-        $pin = !$msg->is_pinned;
+        $pin = ! $msg->is_pinned;
         $msg->update([
             'is_pinned' => $pin,
             'pinned_at' => $pin ? now() : null,
@@ -196,7 +201,9 @@ class Messaging extends Component
     {
         $user = Auth::user();
         abort_unless($user && $user->isClient(), 403);
-        if (!$this->conversationId) return;
+        if (! $this->conversationId) {
+            return;
+        }
 
         Cache::put("conv:{$this->conversationId}:typing:{$user->id}", now()->toISOString(), now()->addSeconds(10));
     }
@@ -207,11 +214,15 @@ class Messaging extends Component
     protected function resolveMentions(Conversation $conv): array
     {
         $body = (string) $this->message;
-        if ($body === '') return [];
+        if ($body === '') {
+            return [];
+        }
 
         preg_match_all('/@([A-Za-z0-9_\\.\\-]+)/', $body, $m);
         $tokens = array_unique(array_map('strtolower', $m[1] ?? []));
-        if (empty($tokens)) return [];
+        if (empty($tokens)) {
+            return [];
+        }
 
         $participants = $conv->participants()->get(['users.id', 'users.name']);
         $byName = [];
@@ -222,14 +233,20 @@ class Messaging extends Component
         $ids = [];
         foreach ($tokens as $t) {
             if ($t === 'all') {
-                foreach ($participants as $p) $ids[] = (int) $p->id;
+                foreach ($participants as $p) {
+                    $ids[] = (int) $p->id;
+                }
+
                 continue;
             }
             $key = strtolower(str_replace(' ', '', $t));
-            if (isset($byName[$key])) $ids[] = (int) $byName[$key];
+            if (isset($byName[$key])) {
+                $ids[] = (int) $byName[$key];
+            }
         }
 
         $ids = array_values(array_unique(array_filter($ids)));
+
         return $ids;
     }
 
@@ -242,7 +259,7 @@ class Messaging extends Component
     {
         $user = Auth::user();
         abort_unless($user && $user->isClient(), 403);
-        if (!$this->conversationId) {
+        if (! $this->conversationId) {
             return;
         }
 
@@ -299,7 +316,7 @@ class Messaging extends Component
                 $messages = Message::query()
                     ->where('conversation_id', $conv->id)
                     ->when($this->search, function ($q) {
-                        $q->where('body', 'like', '%' . $this->search . '%');
+                        $q->where('body', 'like', '%'.$this->search.'%');
                     })
                     ->with(['sender', 'attachments', 'reads'])
                     ->orderBy('id', 'asc')
@@ -311,7 +328,9 @@ class Messaging extends Component
 
                 // typing indicator
                 foreach ($participants as $p) {
-                    if ((int) $p->id === (int) $user->id) continue;
+                    if ((int) $p->id === (int) $user->id) {
+                        continue;
+                    }
                     if (Cache::has("conv:{$conv->id}:typing:{$p->id}")) {
                         $typingNames[] = (string) $p->name;
                     }
@@ -328,4 +347,3 @@ class Messaging extends Component
         return view('livewire.client.messaging', compact('conversations', 'messages', 'participants', 'requests', 'pinned', 'typingNames'));
     }
 }
-

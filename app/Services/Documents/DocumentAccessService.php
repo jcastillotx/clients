@@ -10,7 +10,7 @@ class DocumentAccessService
 {
     public function canView(User $user, Document $document): bool
     {
-        if (!$user->isClient()) {
+        if (! $user->isClient()) {
             return true;
         }
 
@@ -19,12 +19,13 @@ class DocumentAccessService
         }
 
         $perm = $this->userPermission($user, $document);
+
         return $perm ? (bool) $perm->can_view : true; // default allow within client
     }
 
     public function canDownload(User $user, Document $document): bool
     {
-        if (!$user->isClient()) {
+        if (! $user->isClient()) {
             return true;
         }
 
@@ -33,12 +34,13 @@ class DocumentAccessService
         }
 
         $perm = $this->userPermission($user, $document);
+
         return $perm ? (bool) $perm->can_download : true;
     }
 
     public function canUploadNewVersion(User $user, Document $document): bool
     {
-        if (!$user->isClient()) {
+        if (! $user->isClient()) {
             return true;
         }
 
@@ -47,6 +49,7 @@ class DocumentAccessService
         }
 
         $perm = $this->userPermission($user, $document);
+
         return $perm ? (bool) $perm->can_upload_version : false; // default deny for client
     }
 
@@ -65,4 +68,3 @@ class DocumentAccessService
             ->first();
     }
 }
-

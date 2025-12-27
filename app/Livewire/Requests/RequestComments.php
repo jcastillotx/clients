@@ -2,14 +2,15 @@
 
 namespace App\Livewire\Requests;
 
+use App\Models\ActivityLog;
 use App\Models\Request;
 use App\Models\RequestComment;
-use App\Models\ActivityLog;
 use Livewire\Component;
 
 class RequestComments extends Component
 {
     public Request $request;
+
     public string $newComment = '';
 
     protected $rules = [

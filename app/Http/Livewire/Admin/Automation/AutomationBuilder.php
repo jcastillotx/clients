@@ -20,13 +20,18 @@ class AutomationBuilder extends Component
     public ?int $ruleId = null;
 
     public string $name = '';
+
     public string $description = '';
+
     public string $trigger = 'request.created';
+
     public bool $is_active = true;
+
     public int $sort_order = 0;
 
     // Condition group: operator + rules[]
     public string $conditions_operator = 'and';
+
     public array $conditions = []; // each: [field, operator, value]
 
     // Actions: each: [type, config]
@@ -235,6 +240,7 @@ class AutomationBuilder extends Component
     protected function ctxFromRequest(array $meta): array
     {
         $req = ServiceRequest::query()->with('client')->latest('id')->first();
+
         return [
             'meta' => $meta,
             'request' => $req?->toArray() ?? ['id' => 0, 'priority' => 'urgent', 'status' => 'pending', 'title' => 'Sample Request'],
@@ -245,6 +251,7 @@ class AutomationBuilder extends Component
     protected function ctxFromInvoice(array $meta): array
     {
         $inv = Invoice::query()->with('client')->latest('id')->first();
+
         return [
             'meta' => $meta,
             'invoice' => $inv?->toArray() ?? ['id' => 0, 'status' => 'sent', 'amount' => 100, 'due_date' => now()->addDays(7)->toDateString()],
@@ -255,6 +262,7 @@ class AutomationBuilder extends Component
     protected function ctxFromContract(array $meta): array
     {
         $c = Contract::query()->with('client')->latest('id')->first();
+
         return [
             'meta' => $meta,
             'contract' => $c?->toArray() ?? ['id' => 0, 'status' => 'active', 'end_date' => now()->addDays(30)->toDateString()],
@@ -265,6 +273,7 @@ class AutomationBuilder extends Component
     protected function ctxFromDocument(array $meta): array
     {
         $d = Document::query()->with('client')->latest('id')->first();
+
         return [
             'meta' => $meta,
             'document' => $d?->toArray() ?? ['id' => 0, 'title' => 'Sample Doc', 'original_filename' => 'sample.pdf'],
@@ -275,6 +284,7 @@ class AutomationBuilder extends Component
     protected function ctxFromPayment(array $meta): array
     {
         $p = Payment::query()->with(['client', 'invoice'])->latest('id')->first();
+
         return [
             'meta' => $meta,
             'payment' => $p?->toArray() ?? ['id' => 0, 'status' => 'succeeded', 'amount' => 50],
@@ -286,6 +296,7 @@ class AutomationBuilder extends Component
     protected function ctxFromClient(array $meta): array
     {
         $c = Client::query()->latest('id')->first();
+
         return [
             'meta' => $meta,
             'client' => $c?->toArray() ?? ['id' => 0, 'tier' => 'basic', 'company_name' => 'Sample Co', 'email' => 'client@example.com'],
@@ -296,6 +307,7 @@ class AutomationBuilder extends Component
     {
         // keep it simple (storage module exists, but not required for test run UI)
         $c = Client::query()->latest('id')->first();
+
         return [
             'meta' => $meta,
             'client' => $c?->toArray(),
@@ -312,4 +324,3 @@ class AutomationBuilder extends Component
         ]);
     }
 }
-

@@ -42,4 +42,3 @@ class GenerateWeeklyTrendReportJob implements ShouldQueue
         ]);
     }
 }
-

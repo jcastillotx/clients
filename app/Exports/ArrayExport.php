@@ -26,4 +26,3 @@ class ArrayExport implements FromArray, WithHeadings
         return $this->rows;
     }
 }
-

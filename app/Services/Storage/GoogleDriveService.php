@@ -10,7 +10,6 @@ use Google\Service\Drive as GoogleDrive;
 use Google\Service\Drive\DriveFile;
 use Google\Service\Oauth2 as GoogleOauth2;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
@@ -21,7 +20,9 @@ class GoogleDriveService implements StorageProviderInterface
     protected array $credentials = [];
 
     protected ?StorageConnection $connection = null;
+
     protected ?GoogleClient $client = null;
+
     protected ?GoogleDrive $drive = null;
 
     public function useConnection(StorageConnection $connection): static
@@ -31,6 +32,7 @@ class GoogleDriveService implements StorageProviderInterface
         $this->client = $this->makeClient($this->credentials);
         $this->drive = new GoogleDrive($this->client);
         $this->refreshIfNeeded();
+
         return $this;
     }
 
@@ -38,6 +40,7 @@ class GoogleDriveService implements StorageProviderInterface
     {
         $client = $this->makeClient([]);
         $client->setState($state);
+
         return $client->createAuthUrl();
     }
 
@@ -56,7 +59,7 @@ class GoogleDriveService implements StorageProviderInterface
         $client = $this->makeClient([]);
         $token = $client->fetchAccessTokenWithAuthCode($code);
         if (isset($token['error'])) {
-            throw new RuntimeException('Google OAuth token exchange failed: ' . (string) ($token['error_description'] ?? $token['error']));
+            throw new RuntimeException('Google OAuth token exchange failed: '.(string) ($token['error_description'] ?? $token['error']));
         }
 
         $accessToken = (string) ($token['access_token'] ?? '');
@@ -116,6 +119,7 @@ class GoogleDriveService implements StorageProviderInterface
         }
 
         $this->useConnection($connection);
+
         return true;
     }
 
@@ -135,6 +139,7 @@ class GoogleDriveService implements StorageProviderInterface
         $this->connection = null;
         $this->client = null;
         $this->drive = null;
+
         return true;
     }
 
@@ -224,7 +229,7 @@ class GoogleDriveService implements StorageProviderInterface
     public function uploadFile(mixed $file, string $path): array
     {
         $this->ensureReady();
-        if (!$this->connection) {
+        if (! $this->connection) {
             throw new RuntimeException('Google Drive connection not loaded.');
         }
 
@@ -317,7 +322,7 @@ class GoogleDriveService implements StorageProviderInterface
             fwrite($tmp, $resp);
         } elseif (method_exists($resp, 'getBody')) {
             $body = $resp->getBody();
-            while (!$body->eof()) {
+            while (! $body->eof()) {
                 fwrite($tmp, $body->read(1024 * 1024));
             }
         } else {
@@ -352,7 +357,7 @@ class GoogleDriveService implements StorageProviderInterface
             fwrite($tmp, $resp);
         } elseif (method_exists($resp, 'getBody')) {
             $body = $resp->getBody();
-            while (!$body->eof()) {
+            while (! $body->eof()) {
                 fwrite($tmp, $body->read(1024 * 1024));
             }
         } else {
@@ -370,7 +375,7 @@ class GoogleDriveService implements StorageProviderInterface
 
         return [
             'stream' => $tmp,
-            'file_name' => Str::finish($name, '.' . $ext),
+            'file_name' => Str::finish($name, '.'.$ext),
             'mime_type' => $exportMime,
         ];
     }
@@ -384,7 +389,7 @@ class GoogleDriveService implements StorageProviderInterface
     public function deleteFile(string $fileId): bool
     {
         $this->ensureReady();
-        if (!$this->connection) {
+        if (! $this->connection) {
             throw new RuntimeException('Google Drive connection not loaded.');
         }
 
@@ -426,6 +431,7 @@ class GoogleDriveService implements StorageProviderInterface
     {
         $this->ensureReady();
         $meta = $this->drive->files->get($fileId, ['fields' => 'webViewLink']);
+
         return $meta->getWebViewLink() ?: null;
     }
 
@@ -473,8 +479,8 @@ class GoogleDriveService implements StorageProviderInterface
 
     protected function ensureReady(): void
     {
-        if (!$this->client || !$this->drive) {
-            if (!$this->connection) {
+        if (! $this->client || ! $this->drive) {
+            if (! $this->connection) {
                 throw new RuntimeException('Google Drive connection not loaded.');
             }
             $this->useConnection($this->connection);
@@ -496,7 +502,7 @@ class GoogleDriveService implements StorageProviderInterface
             throw new RuntimeException('Google Drive OAuth is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI.');
         }
 
-        $client = new GoogleClient();
+        $client = new GoogleClient;
         $client->setClientId($id);
         $client->setClientSecret($secret);
         $client->setRedirectUri($redirect);
@@ -509,7 +515,7 @@ class GoogleDriveService implements StorageProviderInterface
             \Google\Service\Oauth2::USERINFO_EMAIL,
         ]);
 
-        if (!empty($token)) {
+        if (! empty($token)) {
             $client->setAccessToken($token);
         }
 
@@ -518,22 +524,23 @@ class GoogleDriveService implements StorageProviderInterface
 
     protected function refreshIfNeeded(): void
     {
-        if (!$this->connection || !$this->client) {
+        if (! $this->connection || ! $this->client) {
             return;
         }
 
         $token = $this->buildTokenArrayFromCredentials($this->credentials);
-        if (!empty($token)) {
+        if (! empty($token)) {
             $this->client->setAccessToken($token);
         }
 
-        if (!$this->client->isAccessTokenExpired()) {
+        if (! $this->client->isAccessTokenExpired()) {
             return;
         }
 
         $refreshToken = (string) ($this->credentials['refresh_token'] ?? '');
         if ($refreshToken === '') {
             $this->connection->update(['status' => 'error']);
+
             return;
         }
 
@@ -541,6 +548,7 @@ class GoogleDriveService implements StorageProviderInterface
             $newToken = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
             if (isset($newToken['error'])) {
                 $this->connection->update(['status' => 'error']);
+
                 return;
             }
 
@@ -593,6 +601,7 @@ class GoogleDriveService implements StorageProviderInterface
     protected function baseFolderId(): ?string
     {
         $id = trim((string) ($this->credentials['folder_id'] ?? ''));
+
         return $id !== '' ? $id : null;
     }
 }

@@ -15,4 +15,3 @@ class VerifyCsrfTokenForTests extends \Illuminate\Foundation\Http\Middleware\Ver
         return false;
     }
 }
-

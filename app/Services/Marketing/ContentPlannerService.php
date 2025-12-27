@@ -9,12 +9,10 @@ use Illuminate\Support\Arr;
 
 class ContentPlannerService
 {
-    public function __construct(private readonly AIProviderManager $ai)
-    {
-    }
+    public function __construct(private readonly AIProviderManager $ai) {}
 
     /**
-     * @param array<int,string> $channels
+     * @param  array<int,string>  $channels
      * @return array<string,mixed>
      */
     public function generateContentCalendar(Client $client, string $duration, array $channels, array $options = []): array
@@ -52,7 +50,9 @@ class ContentPlannerService
         $saved = 0;
         if ($persist) {
             foreach ($items as $i) {
-                if (!is_array($i)) continue;
+                if (! is_array($i)) {
+                    continue;
+                }
                 ContentCalendarItem::create([
                     'client_id' => $client->id,
                     'title' => (string) ($i['title'] ?? 'Content'),
@@ -110,11 +110,13 @@ class ContentPlannerService
     protected function tryParseJson(string $text): ?array
     {
         $text = trim($text);
-        if ($text === '') return null;
+        if ($text === '') {
+            return null;
+        }
         $text = preg_replace('/^```(?:json)?\s*/i', '', $text) ?? $text;
         $text = preg_replace('/\s*```$/', '', $text) ?? $text;
         $decoded = json_decode($text, true);
+
         return is_array($decoded) ? $decoded : null;
     }
 }
-

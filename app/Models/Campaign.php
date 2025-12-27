@@ -57,4 +57,3 @@ class Campaign extends Model
         return $this->hasMany(CampaignAsset::class);
     }
 }
-

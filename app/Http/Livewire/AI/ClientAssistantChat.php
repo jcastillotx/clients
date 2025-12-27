@@ -15,8 +15,11 @@ use Livewire\Component;
 class ClientAssistantChat extends Component
 {
     public ?int $conversationId = null;
+
     public string $message = '';
+
     public array $messages = [];
+
     public ?string $error = null;
 
     public bool $needsHuman = false;
@@ -28,6 +31,7 @@ class ClientAssistantChat extends Component
         $this->conversationId = $conversation;
         if ($this->conversationId) {
             $this->loadConversation();
+
             return;
         }
 
@@ -44,7 +48,9 @@ class ClientAssistantChat extends Component
 
     public function loadConversation(): void
     {
-        if (!$this->conversationId) return;
+        if (! $this->conversationId) {
+            return;
+        }
 
         $rows = AiMessage::query()
             ->where('ai_conversation_id', $this->conversationId)
@@ -65,7 +71,9 @@ class ClientAssistantChat extends Component
 
         $this->error = null;
         $text = trim($this->message);
-        if ($text === '' || !$this->conversationId) return;
+        if ($text === '' || ! $this->conversationId) {
+            return;
+        }
         $this->message = '';
 
         AiMessage::create([
@@ -99,7 +107,7 @@ SYS;
 
         $history = $this->promptHistory(12);
         $messages = array_merge(
-            [['role' => 'system', 'content' => $system . "\n\nKnowledge base:\n" . $kbBlock]],
+            [['role' => 'system', 'content' => $system."\n\nKnowledge base:\n".$kbBlock]],
             $history,
             [['role' => 'user', 'content' => $text]]
         );
@@ -159,7 +167,9 @@ SYS;
     public function feedback(int $messageId, string $rating): void
     {
         $this->authorizeClient();
-        if (!in_array($rating, ['up', 'down'], true)) return;
+        if (! in_array($rating, ['up', 'down'], true)) {
+            return;
+        }
 
         $msg = AiMessage::query()->findOrFail($messageId);
         AiMessageFeedback::create([
@@ -177,7 +187,9 @@ SYS;
 
     protected function promptHistory(int $maxMessages): array
     {
-        if (!$this->conversationId) return [];
+        if (! $this->conversationId) {
+            return [];
+        }
         $rows = AiMessage::query()
             ->where('ai_conversation_id', $this->conversationId)
             ->whereIn('role', ['user', 'assistant'])
@@ -192,21 +204,26 @@ SYS;
 
     protected function formatKbContext(array $kb): string
     {
-        if (empty($kb)) return '(none)';
+        if (empty($kb)) {
+            return '(none)';
+        }
         $lines = [];
         foreach ($kb as $row) {
             $doc = $row['document'];
             $lines[] = '---';
             $lines[] = ($doc->title ?: $doc->original_filename);
-            $lines[] = 'Snippet: ' . trim((string) $row['snippet']);
+            $lines[] = 'Snippet: '.trim((string) $row['snippet']);
         }
+
         return implode("\n", $lines);
     }
 
     protected function authorizeClient(): void
     {
         $u = Auth::user();
-        if (!$u) abort(403);
+        if (! $u) {
+            abort(403);
+        }
     }
 
     public function render()
@@ -217,4 +234,3 @@ SYS;
             ->layout('layouts.app', ['title' => 'AI Assistant']);
     }
 }
-

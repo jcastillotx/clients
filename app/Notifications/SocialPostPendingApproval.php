@@ -27,11 +27,11 @@ class SocialPostPendingApproval extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject('New Social Media Post Awaiting Your Approval')
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('A new social media post is ready for your review and approval.')
-            ->line('**Platform:** ' . ucfirst($this->post->platform))
-            ->line('**Title:** ' . $this->post->title)
-            ->line('**Preview:** ' . Str::limit($this->post->content_text, 100))
+            ->line('**Platform:** '.ucfirst($this->post->platform))
+            ->line('**Title:** '.$this->post->title)
+            ->line('**Preview:** '.Str::limit($this->post->content_text, 100))
             ->action('Review & Approve Post', $url)
             ->line('Please review the post and either approve it or request changes.')
             ->line('Thank you!');

@@ -26,4 +26,3 @@ class KnowledgeBaseDocument extends Model
         return $this->belongsTo(Document::class);
     }
 }
-

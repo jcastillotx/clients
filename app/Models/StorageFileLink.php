@@ -28,4 +28,3 @@ class StorageFileLink extends Model
         return $this->morphTo();
     }
 }
-

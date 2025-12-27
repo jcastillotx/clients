@@ -11,6 +11,7 @@ class SignContract extends Component
     public Contract $contract;
 
     public string $signature = '';
+
     public bool $agreeTerms = false;
 
     public function mount(Contract $contract): void
@@ -31,8 +32,9 @@ class SignContract extends Component
     {
         $this->authorizeClientAccess($this->contract);
 
-        if (!$this->contract->isPendingSignature() || $this->contract->isSigned()) {
+        if (! $this->contract->isPendingSignature() || $this->contract->isSigned()) {
             $this->addError('signature', 'This contract cannot be signed.');
+
             return;
         }
 
@@ -68,4 +70,3 @@ class SignContract extends Component
         ]);
     }
 }
-

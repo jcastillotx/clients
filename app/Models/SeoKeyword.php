@@ -41,4 +41,3 @@ class SeoKeyword extends Model
         return $this->hasMany(KeywordRanking::class, 'seo_keyword_id');
     }
 }
-

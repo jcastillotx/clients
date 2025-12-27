@@ -45,7 +45,7 @@ class DocumentShare extends Model
         if ($this->max_downloads !== null && $this->downloads >= $this->max_downloads) {
             return true;
         }
+
         return false;
     }
 }
-

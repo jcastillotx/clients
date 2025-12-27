@@ -17,20 +17,33 @@ class ClientEdit extends Component
     protected string $paginationTheme = 'bootstrap';
 
     public Client $client;
+
     public ?User $primaryUser = null;
 
     public string $company_name = '';
+
     public string $contact_name = '';
+
     public string $email = '';
+
     public ?string $phone = null;
+
     public ?string $address = null;
+
     public ?string $city = null;
+
     public ?string $state = null;
+
     public ?string $zip_code = null;
+
     public string $country = 'US';
+
     public string $tier = 'basic';
+
     public string $status = 'active';
+
     public ?string $stripe_customer_id = null;
+
     public ?string $notes = null;
 
     public string $tab = 'overview';
@@ -83,7 +96,9 @@ class ClientEdit extends Component
 
     public function updated(string $property): void
     {
-        if ($property === 'tab') return;
+        if ($property === 'tab') {
+            return;
+        }
         $this->validateOnly($property);
     }
 
@@ -118,14 +133,16 @@ class ClientEdit extends Component
         }
 
         session()->flash('success', 'Client updated.');
+
         return redirect()->route('admin.clients.show', $this->client);
     }
 
     public function sendPasswordReset(): void
     {
         $user = $this->primaryUser ?? $this->client->users()->orderBy('id')->first();
-        if (!$user) {
+        if (! $user) {
             session()->flash('error', 'No linked user found.');
+
             return;
         }
 
@@ -148,4 +165,3 @@ class ClientEdit extends Component
         ])->layout('layouts.admin', ['title' => 'Edit Client']);
     }
 }
-

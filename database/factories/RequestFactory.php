@@ -34,4 +34,3 @@ class RequestFactory extends Factory
         ];
     }
 }
-

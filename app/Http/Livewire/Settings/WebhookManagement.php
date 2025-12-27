@@ -14,11 +14,17 @@ use Livewire\Component;
 class WebhookManagement extends Component
 {
     public ?int $client_id = null;
+
     public string $event_type = 'request.created';
+
     public string $webhook_url = '';
+
     public string $secret = '';
+
     public bool $is_active = true;
+
     public string $format = 'generic';
+
     public string $headers_json = '';
 
     public ?int $selectedEndpointId = null;
@@ -82,7 +88,7 @@ class WebhookManagement extends Component
     {
         abort_unless(Auth::user(), 403);
         $ep = WebhookEndpoint::query()->findOrFail($id);
-        $ep->update(['is_active' => !$ep->is_active]);
+        $ep->update(['is_active' => ! $ep->is_active]);
     }
 
     public function deleteEndpoint(int $id): void
@@ -113,7 +119,7 @@ class WebhookManagement extends Component
             ]);
             session()->flash('success', 'Test webhook sent (check logs below).');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Test webhook failed: ' . $e->getMessage());
+            session()->flash('error', 'Test webhook failed: '.$e->getMessage());
         }
     }
 
@@ -157,4 +163,3 @@ class WebhookManagement extends Component
         return view('livewire.settings.webhooks', compact('endpoints', 'clients', 'logs'));
     }
 }
-

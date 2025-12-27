@@ -38,4 +38,3 @@ class AdminClientCrudApiTest extends TestCase
             ->assertJsonPath('data.email', 'acme@example.com');
     }
 }
-

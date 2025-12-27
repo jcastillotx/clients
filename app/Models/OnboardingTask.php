@@ -34,4 +34,3 @@ class OnboardingTask extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 }
-

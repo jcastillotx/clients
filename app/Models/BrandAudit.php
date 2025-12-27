@@ -41,4 +41,3 @@ class BrandAudit extends Model
         return $this->hasMany(BrandInconsistency::class);
     }
 }
-

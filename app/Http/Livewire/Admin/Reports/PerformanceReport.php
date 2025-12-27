@@ -13,7 +13,9 @@ use Maatwebsite\Excel\Facades\Excel;
 class PerformanceReport extends Component
 {
     public string $range = 'last_12_months';
+
     public string $from = '';
+
     public string $to = '';
 
     /** @var array<string,mixed> */
@@ -48,12 +50,16 @@ class PerformanceReport extends Component
 
     public function updatedFrom(): void
     {
-        if ($this->range === 'custom') $this->load();
+        if ($this->range === 'custom') {
+            $this->load();
+        }
     }
 
     public function updatedTo(): void
     {
-        if ($this->range === 'custom') $this->load();
+        if ($this->range === 'custom') {
+            $this->load();
+        }
     }
 
     protected function hydrateRange(): void
@@ -62,20 +68,27 @@ class PerformanceReport extends Component
         if ($this->range === 'last_12_months') {
             $this->from = $today->copy()->subMonths(11)->startOfMonth()->toDateString();
             $this->to = $today->copy()->endOfMonth()->toDateString();
+
             return;
         }
         if ($this->range === 'ytd') {
             $this->from = $today->copy()->startOfYear()->toDateString();
             $this->to = $today->copy()->toDateString();
+
             return;
         }
         if ($this->range === 'this_year') {
             $this->from = $today->copy()->startOfYear()->toDateString();
             $this->to = $today->copy()->endOfYear()->toDateString();
+
             return;
         }
-        if ($this->from === '') $this->from = $today->copy()->subDays(30)->toDateString();
-        if ($this->to === '') $this->to = $today->copy()->toDateString();
+        if ($this->from === '') {
+            $this->from = $today->copy()->subDays(30)->toDateString();
+        }
+        if ($this->to === '') {
+            $this->to = $today->copy()->toDateString();
+        }
     }
 
     public function load(): void
@@ -175,7 +188,7 @@ class PerformanceReport extends Component
             ->get();
         $userMap = User::query()->whereIn('id', $work->pluck('assigned_to')->all())->pluck('name', 'id');
         $this->staffWorkload = $work->map(fn ($r) => [
-            'staff' => (string) ($userMap[$r->assigned_to] ?? ('User #' . $r->assigned_to)),
+            'staff' => (string) ($userMap[$r->assigned_to] ?? ('User #'.$r->assigned_to)),
             'open_requests' => (int) $r->total,
         ])->values()->all();
 
@@ -201,32 +214,38 @@ class PerformanceReport extends Component
         if ($kind === 'staff_workload') {
             $headings = ['Staff', 'Open requests'];
             $rows = array_map(fn ($r) => [$r['staff'], $r['open_requests']], $this->staffWorkload);
+
             return $this->exportRows($headings, $rows, "staff-workload-{$this->from}-{$this->to}", $format, 'Staff workload');
         }
 
         session()->flash('error', 'Unknown export.');
+
         return null;
     }
 
     protected function exportRows(array $headings, array $rows, string $baseName, string $format, string $title)
     {
         if ($format === 'csv') {
-            $filename = $baseName . '.csv';
+            $filename = $baseName.'.csv';
+
             return response()->streamDownload(function () use ($headings, $rows) {
                 $out = fopen('php://output', 'w');
                 fputcsv($out, $headings);
-                foreach ($rows as $r) fputcsv($out, $r);
+                foreach ($rows as $r) {
+                    fputcsv($out, $r);
+                }
                 fclose($out);
             }, $filename, ['Content-Type' => 'text/csv']);
         }
 
         if ($format === 'xlsx' || $format === 'excel') {
-            $filename = $baseName . '.xlsx';
+            $filename = $baseName.'.xlsx';
+
             return Excel::download(new ArrayExport($headings, $rows), $filename);
         }
 
         if ($format === 'pdf') {
-            $filename = $baseName . '.pdf';
+            $filename = $baseName.'.pdf';
             $pdf = Pdf::loadView('admin.reports.export-pdf', [
                 'title' => $title,
                 'from' => $this->from,
@@ -234,10 +253,12 @@ class PerformanceReport extends Component
                 'headings' => $headings,
                 'rows' => $rows,
             ]);
-            return response()->streamDownload(fn () => print($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
+
+            return response()->streamDownload(fn () => print ($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
         }
 
         session()->flash('error', 'Unsupported export format.');
+
         return null;
     }
 
@@ -253,4 +274,3 @@ class PerformanceReport extends Component
         ])->layout('layouts.admin', ['title' => 'Performance Reports']);
     }
 }
-

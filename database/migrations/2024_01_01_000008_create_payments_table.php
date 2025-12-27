@@ -26,7 +26,7 @@ return new class extends Migration
                 'succeeded',
                 'failed',
                 'refunded',
-                'cancelled'
+                'cancelled',
             ])->default('pending');
             $table->text('failure_reason')->nullable();
             $table->json('metadata')->nullable();

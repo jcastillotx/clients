@@ -28,4 +28,3 @@ class DocumentObserver
         ], (int) $document->client_id);
     }
 }
-

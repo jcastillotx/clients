@@ -12,9 +12,7 @@ class DocumentUploadedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Document $document)
-    {
-    }
+    public function __construct(public Document $document) {}
 
     /**
      * @param  mixed  $notifiable
@@ -28,14 +26,13 @@ class DocumentUploadedNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('New document uploaded · ' . $this->document->title)
+            ->subject('New document uploaded · '.$this->document->title)
             ->greeting('Hello!')
             ->line('A client uploaded a new document.')
-            ->line('Title: ' . $this->document->title)
-            ->line('Category: ' . $this->document->category)
-            ->line('Client ID: ' . $this->document->client_id)
+            ->line('Title: '.$this->document->title)
+            ->line('Category: '.$this->document->category)
+            ->line('Client ID: '.$this->document->client_id)
             ->action('View document', route('documents.show', $this->document))
-            ->line('— ' . config('app.name'));
+            ->line('— '.config('app.name'));
     }
 }
-

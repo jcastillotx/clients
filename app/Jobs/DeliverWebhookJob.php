@@ -21,8 +21,7 @@ class DeliverWebhookJob implements ShouldQueue
         public int $endpointId,
         public string $eventType,
         public array $payload,
-    ) {
-    }
+    ) {}
 
     public function backoff(): array
     {
@@ -32,7 +31,7 @@ class DeliverWebhookJob implements ShouldQueue
     public function handle(): void
     {
         $endpoint = WebhookEndpoint::query()->find($this->endpointId);
-        if (!$endpoint || !$endpoint->is_active) {
+        if (! $endpoint || ! $endpoint->is_active) {
             return;
         }
 
@@ -43,7 +42,7 @@ class DeliverWebhookJob implements ShouldQueue
             $bodyJson = json_encode(['event' => $this->eventType, 'data' => $this->payload], JSON_UNESCAPED_SLASHES) ?: '{}';
         }
 
-        $signature = hash_hmac('sha256', $timestamp . '.' . $bodyJson, (string) $endpoint->secret);
+        $signature = hash_hmac('sha256', $timestamp.'.'.$bodyJson, (string) $endpoint->secret);
 
         $headers = array_merge([
             'Content-Type' => 'application/json',
@@ -76,8 +75,8 @@ class DeliverWebhookJob implements ShouldQueue
                 'delivered_at' => $ok ? now() : null,
             ]);
 
-            if (!$ok) {
-                throw new \RuntimeException('Webhook delivery failed with status ' . $resp->status());
+            if (! $ok) {
+                throw new \RuntimeException('Webhook delivery failed with status '.$resp->status());
             }
         } catch (\Throwable $e) {
             $durationMs = (int) round((microtime(true) - $started) * 1000);
@@ -103,7 +102,7 @@ class DeliverWebhookJob implements ShouldQueue
     {
         return match ($endpoint->format) {
             'slack' => [
-                'text' => "[{$event}] " . ($data['title'] ?? $data['invoice_number'] ?? $data['id'] ?? 'Event'),
+                'text' => "[{$event}] ".($data['title'] ?? $data['invoice_number'] ?? $data['id'] ?? 'Event'),
             ],
             'teams' => [
                 '@type' => 'MessageCard',
@@ -125,7 +124,7 @@ class DeliverWebhookJob implements ShouldQueue
         if (mb_strlen($s) <= $max) {
             return $s;
         }
-        return mb_substr($s, 0, $max) . '...';
+
+        return mb_substr($s, 0, $max).'...';
     }
 }
-

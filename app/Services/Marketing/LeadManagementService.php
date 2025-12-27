@@ -10,7 +10,7 @@ use App\Models\User;
 class LeadManagementService
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     public function captureLead(array $data, string $source): Lead
     {
@@ -35,6 +35,7 @@ class LeadManagementService
         ]);
 
         $lead->update(['score' => $this->scoreLead($lead)]);
+
         return $lead;
     }
 
@@ -42,10 +43,18 @@ class LeadManagementService
     {
         // Basic heuristic scoring. Production would incorporate behavioral + engagement.
         $score = 0;
-        if ($lead->email) $score += 20;
-        if ($lead->phone) $score += 15;
-        if ($lead->company) $score += 15;
-        if ($lead->source) $score += 10;
+        if ($lead->email) {
+            $score += 20;
+        }
+        if ($lead->phone) {
+            $score += 15;
+        }
+        if ($lead->company) {
+            $score += 15;
+        }
+        if ($lead->source) {
+            $score += 10;
+        }
 
         $activityCount = $lead->activities()->count();
         $score += min(40, $activityCount * 5);
@@ -77,4 +86,3 @@ class LeadManagementService
         ]);
     }
 }
-

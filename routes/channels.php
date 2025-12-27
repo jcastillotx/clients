@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('conversation.{conversationId}', function ($user, int $conversationId) {
     $conv = Conversation::query()->find($conversationId);
-    if (!$conv) {
+    if (! $conv) {
         return false;
     }
 
@@ -16,4 +16,3 @@ Broadcast::channel('conversation.{conversationId}', function ($user, int $conver
 
     return $conv->participants()->where('users.id', $user->id)->exists();
 });
-

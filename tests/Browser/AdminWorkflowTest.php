@@ -14,7 +14,7 @@ class AdminWorkflowTest extends DuskTestCase
 
     public function test_admin_workflow_smoke_can_login_and_view_admin_pages(): void
     {
-        if (!env('RUN_DUSK_TESTS')) {
+        if (! env('RUN_DUSK_TESTS')) {
             $this->markTestSkipped('Set RUN_DUSK_TESTS=1 to run browser tests.');
         }
 
@@ -46,4 +46,3 @@ class AdminWorkflowTest extends DuskTestCase
         });
     }
 }
-

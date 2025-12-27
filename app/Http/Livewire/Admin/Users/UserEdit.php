@@ -6,7 +6,6 @@ use App\Models\Client;
 use App\Models\LoginHistory;
 use App\Models\User;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -22,11 +21,15 @@ class UserEdit extends Component
     public User $user;
 
     public string $name = '';
+
     public string $email = '';
+
     public string $status = 'active';
+
     public bool $two_factor_enabled = false;
 
     public string $role = 'staff';
+
     public bool $confirmRoleDowngrade = false;
 
     public ?int $client_id = null;
@@ -36,6 +39,7 @@ class UserEdit extends Component
 
     /** @var array<int, int> */
     public array $assignedClientIds = [];
+
     public string $staffAssignmentRole = 'account_manager';
 
     public function mount(User $user): void
@@ -125,14 +129,16 @@ class UserEdit extends Component
         $data = $this->validate();
 
         $currentRole = $this->user->roles->pluck('name')->first() ?? 'staff';
-        if ($this->isDowngrade($currentRole, $data['role']) && !$data['confirmRoleDowngrade']) {
+        if ($this->isDowngrade($currentRole, $data['role']) && ! $data['confirmRoleDowngrade']) {
             session()->flash('error', 'Please confirm role downgrade before saving.');
+
             return;
         }
 
         // If role is client, ensure client_id is set
-        if ($data['role'] === 'client' && !$data['client_id']) {
+        if ($data['role'] === 'client' && ! $data['client_id']) {
             session()->flash('error', 'Client users must be linked to a client.');
+
             return;
         }
 
@@ -187,4 +193,3 @@ class UserEdit extends Component
         ])->layout('layouts.admin', ['title' => 'Edit User']);
     }
 }
-

@@ -13,11 +13,11 @@ class GoogleDriveOAuthAndFileOperationsIntegrationTest extends TestCase
 
     public function test_google_drive_oauth_connect_and_list_files(): void
     {
-        if (!getenv('RUN_INTEGRATION_TESTS')) {
+        if (! getenv('RUN_INTEGRATION_TESTS')) {
             $this->markTestSkipped('Set RUN_INTEGRATION_TESTS=1 to run external integration tests.');
         }
 
-        if (!getenv('GOOGLE_CLIENT_ID') || !getenv('GOOGLE_CLIENT_SECRET') || !getenv('GOOGLE_REDIRECT_URI')) {
+        if (! getenv('GOOGLE_CLIENT_ID') || ! getenv('GOOGLE_CLIENT_SECRET') || ! getenv('GOOGLE_REDIRECT_URI')) {
             $this->markTestSkipped('Missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI.');
         }
 
@@ -41,4 +41,3 @@ class GoogleDriveOAuthAndFileOperationsIntegrationTest extends TestCase
         $this->assertIsArray($files);
     }
 }
-

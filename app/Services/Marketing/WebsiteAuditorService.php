@@ -19,8 +19,7 @@ class WebsiteAuditorService
         private readonly WebsiteCrawler $crawler,
         private readonly WebsiteAuditScorer $scorer,
         private readonly WebsiteAuditAiInsightsService $aiInsights,
-    ) {
-    }
+    ) {}
 
     /**
      * Perform a comprehensive audit.
@@ -170,7 +169,7 @@ class WebsiteAuditorService
     /**
      * Technical SEO audit.
      *
-     * @param array<string,mixed>|null $crawl
+     * @param  array<string,mixed>|null  $crawl
      * @return array<string,mixed>
      */
     public function technicalSEOAudit(string $url, ?array $crawl = null): array
@@ -192,7 +191,7 @@ class WebsiteAuditorService
         $sitemapUrls = (array) ($robots['sitemap'] ?? []);
         if (empty($sitemapUrls)) {
             // Try default location
-            $sitemapUrls = [rtrim($this->origin($url), '/') . '/sitemap.xml'];
+            $sitemapUrls = [rtrim($this->origin($url), '/').'/sitemap.xml'];
         }
 
         $sitemap = $this->fetchSitemapUrls($sitemapUrls);
@@ -215,9 +214,13 @@ class WebsiteAuditorService
 
         foreach ($pages as $p) {
             $pageUrl = (string) ($p['url'] ?? '');
-            if ($pageUrl === '') continue;
+            if ($pageUrl === '') {
+                continue;
+            }
             $status = (int) ($p['status_code'] ?? 0);
-            if ($status >= 400) continue;
+            if ($status >= 400) {
+                continue;
+            }
 
             $title = trim((string) ($p['title'] ?? ''));
             $desc = trim((string) ($p['meta_description'] ?? ''));
@@ -225,11 +228,21 @@ class WebsiteAuditorService
             $hasCanonical = (bool) ($p['has_canonical'] ?? false);
             $hasSchema = (bool) ($p['has_schema'] ?? false);
 
-            if ($title === '') $missingTitle++;
-            if ($desc === '') $missingDesc++;
-            if ($h1 === '') $missingH1++;
-            if (!$hasCanonical) $missingCanonical++;
-            if (!$hasSchema) $missingSchema++;
+            if ($title === '') {
+                $missingTitle++;
+            }
+            if ($desc === '') {
+                $missingDesc++;
+            }
+            if ($h1 === '') {
+                $missingH1++;
+            }
+            if (! $hasCanonical) {
+                $missingCanonical++;
+            }
+            if (! $hasSchema) {
+                $missingSchema++;
+            }
 
             if ($title !== '') {
                 $titles[$title][] = $pageUrl;
@@ -238,7 +251,7 @@ class WebsiteAuditorService
                 $descs[$desc][] = $pageUrl;
             }
 
-            $text = $this->normalizeTextForHash((string) ($p['title'] ?? '') . "\n" . (string) ($p['meta_description'] ?? '') . "\n" . json_encode($p['headers_structure'] ?? [], JSON_UNESCAPED_SLASHES));
+            $text = $this->normalizeTextForHash((string) ($p['title'] ?? '')."\n".(string) ($p['meta_description'] ?? '')."\n".json_encode($p['headers_structure'] ?? [], JSON_UNESCAPED_SLASHES));
             $hash = $text !== '' ? sha1($text) : null;
             if ($hash) {
                 if (isset($contentHashes[$hash])) {
@@ -251,7 +264,9 @@ class WebsiteAuditorService
             $imgs = (array) data_get($p, 'images.items', []);
             foreach ($imgs as $img) {
                 $hasAlt = (bool) ($img['has_alt'] ?? false);
-                if (!$hasAlt) $imagesMissingAlt++;
+                if (! $hasAlt) {
+                    $imagesMissingAlt++;
+                }
             }
         }
 
@@ -321,7 +336,7 @@ class WebsiteAuditorService
     /**
      * Performance audit.
      *
-     * @param array<string,mixed>|null $crawl
+     * @param  array<string,mixed>|null  $crawl
      * @return array<string,mixed>
      */
     public function performanceAudit(string $url, ?array $crawl = null): array
@@ -340,16 +355,24 @@ class WebsiteAuditorService
         $requests = []; // not available from server-side crawl; placeholder
         $ttfb = [];
         foreach ($pages as $p) {
-            if (($p['status_code'] ?? 0) < 200 || ($p['status_code'] ?? 0) >= 400) continue;
-            if (isset($p['load_time_ms'])) $loadTimes[] = (int) $p['load_time_ms'];
-            if (isset($p['page_size_kb'])) $sizes[] = (int) $p['page_size_kb'];
-            if (isset($p['ttfb_ms'])) $ttfb[] = (int) $p['ttfb_ms'];
+            if (($p['status_code'] ?? 0) < 200 || ($p['status_code'] ?? 0) >= 400) {
+                continue;
+            }
+            if (isset($p['load_time_ms'])) {
+                $loadTimes[] = (int) $p['load_time_ms'];
+            }
+            if (isset($p['page_size_kb'])) {
+                $sizes[] = (int) $p['page_size_kb'];
+            }
+            if (isset($p['ttfb_ms'])) {
+                $ttfb[] = (int) $p['ttfb_ms'];
+            }
         }
 
-        $avgLoad = !empty($loadTimes) ? (int) round(array_sum($loadTimes) / count($loadTimes)) : null;
+        $avgLoad = ! empty($loadTimes) ? (int) round(array_sum($loadTimes) / count($loadTimes)) : null;
         $p95Load = $this->percentile($loadTimes, 95);
-        $avgTtfb = !empty($ttfb) ? (int) round(array_sum($ttfb) / count($ttfb)) : null;
-        $avgSize = !empty($sizes) ? (int) round(array_sum($sizes) / count($sizes)) : null;
+        $avgTtfb = ! empty($ttfb) ? (int) round(array_sum($ttfb) / count($ttfb)) : null;
+        $avgSize = ! empty($sizes) ? (int) round(array_sum($sizes) / count($sizes)) : null;
 
         if ($avgLoad !== null && $avgLoad > 2500) {
             $issues[] = $this->issue('critical', 'performance', 'slow_load_time', "Average page load time is high (~{$avgLoad}ms).", null, 'Optimize server response, caching, images, and render-blocking assets.', ['scope' => 'many_pages']);
@@ -379,7 +402,7 @@ class WebsiteAuditorService
         }
 
         // Caching/CDN detection (best-effort via headers on first page)
-        $firstHeaders = !empty($pages) && is_array($pages[0]) ? (array) ($pages[0]['headers'] ?? []) : [];
+        $firstHeaders = ! empty($pages) && is_array($pages[0]) ? (array) ($pages[0]['headers'] ?? []) : [];
         $cdn = $this->detectCdnFromHeaders($firstHeaders);
         $cache = $this->cacheSignalsFromHeaders($firstHeaders);
         if (($cache['has_cache_control'] ?? false) === false) {
@@ -392,7 +415,7 @@ class WebsiteAuditorService
                 'load_time_ms_p95' => $p95Load,
                 'ttfb_ms' => $avgTtfb,
                 'total_page_size_kb_avg' => $avgSize,
-                'num_requests' => !empty($requests) ? (int) round(array_sum($requests) / count($requests)) : null,
+                'num_requests' => ! empty($requests) ? (int) round(array_sum($requests) / count($requests)) : null,
                 'cwv' => $cwv,
                 'psi' => $psi,
                 'cache' => $cache,
@@ -403,14 +426,14 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string,mixed> $crawl
+     * @param  array<string,mixed>  $crawl
      * @return array<string,mixed>
      */
     protected function securityAudit(string $url, array $crawl): array
     {
         $issues = [];
         $pages = (array) ($crawl['pages'] ?? []);
-        $firstHeaders = !empty($pages) && is_array($pages[0]) ? (array) ($pages[0]['headers'] ?? []) : [];
+        $firstHeaders = ! empty($pages) && is_array($pages[0]) ? (array) ($pages[0]['headers'] ?? []) : [];
 
         $ssl = $this->sslCertificateCheck($url);
         if (($ssl['ok'] ?? false) === false) {
@@ -436,7 +459,7 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string,mixed> $perf
+     * @param  array<string,mixed>  $perf
      * @return array<string,mixed>
      */
     protected function mobileAudit(string $url, array $crawl, array $perf): array
@@ -446,9 +469,13 @@ class WebsiteAuditorService
 
         $viewportMissing = 0;
         foreach ($pages as $p) {
-            if (($p['status_code'] ?? 0) >= 400) continue;
+            if (($p['status_code'] ?? 0) >= 400) {
+                continue;
+            }
             $vp = trim((string) ($p['mobile_viewport'] ?? ''));
-            if ($vp === '') $viewportMissing++;
+            if ($vp === '') {
+                $viewportMissing++;
+            }
         }
 
         if ($viewportMissing > 0) {
@@ -475,7 +502,7 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string,mixed> $perf
+     * @param  array<string,mixed>  $perf
      * @return array<string,mixed>
      */
     protected function accessibilityAudit(string $url, array $crawl, array $perf): array
@@ -487,7 +514,9 @@ class WebsiteAuditorService
         foreach ($pages as $p) {
             $imgs = (array) data_get($p, 'images.items', []);
             foreach ($imgs as $img) {
-                if (!(bool) ($img['has_alt'] ?? false)) $missingAltImgs++;
+                if (! (bool) ($img['has_alt'] ?? false)) {
+                    $missingAltImgs++;
+                }
             }
         }
         if ($missingAltImgs > 0) {
@@ -514,8 +543,8 @@ class WebsiteAuditorService
     /**
      * Persist normalized pages and issues into DB tables.
      *
-     * @param array<string,mixed> $crawl
-     * @param array<string,mixed> $report
+     * @param  array<string,mixed>  $crawl
+     * @param  array<string,mixed>  $report
      */
     protected function persistPagesAndIssues(WebsiteAudit $audit, array $crawl, array $report): void
     {
@@ -525,7 +554,9 @@ class WebsiteAuditorService
         $pages = (array) ($crawl['pages'] ?? []);
         foreach ($pages as $p) {
             $url = (string) ($p['url'] ?? '');
-            if ($url === '') continue;
+            if ($url === '') {
+                continue;
+            }
 
             AuditPage::create([
                 'website_audit_id' => $audit->id,
@@ -548,7 +579,9 @@ class WebsiteAuditorService
 
         $issues = (array) ($report['issues'] ?? []);
         foreach ($issues as $issue) {
-            if (!is_array($issue)) continue;
+            if (! is_array($issue)) {
+                continue;
+            }
             $row = $this->normalizeIssueForDb($issue);
             AuditIssue::create([
                 'website_audit_id' => $audit->id,
@@ -586,16 +619,20 @@ class WebsiteAuditorService
             $sb = (string) ($b['severity'] ?? 'info');
             $ra = $rank[$sa] ?? 99;
             $rb = $rank[$sb] ?? 99;
-            if ($ra !== $rb) return $ra <=> $rb;
+            if ($ra !== $rb) {
+                return $ra <=> $rb;
+            }
+
             return strcmp((string) ($a['category'] ?? ''), (string) ($b['category'] ?? ''));
         });
+
         return $issues;
     }
 
     /**
      * Normalize severity labels to spec: critical,error,warning,info (plus internal high/medium/low).
      *
-     * @param array<int, array<string,mixed>> $issues
+     * @param  array<int, array<string,mixed>>  $issues
      * @return array<int, array<string,mixed>>
      */
     protected function normalizeIssueSeverities(array $issues): array
@@ -612,6 +649,7 @@ class WebsiteAuditorService
             $i['priority_score'] = $this->priorityScore($sev);
         }
         unset($i);
+
         return $issues;
     }
 
@@ -627,7 +665,7 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string,mixed> $issue
+     * @param  array<string,mixed>  $issue
      * @return array{severity:string, category:string, issue_type:string, description:string, affected_url:?string, recommendation:?string, priority_score:?int, meta:?array}
      */
     protected function normalizeIssueForDb(array $issue): array
@@ -654,13 +692,16 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string, mixed> $perf
+     * @param  array<string, mixed>  $perf
      * @return array<int, string>
      */
     protected function apiSourcesUsed(array $perf): array
     {
         $sources = [];
-        if (data_get($perf, 'metrics.psi.available')) $sources[] = 'google_pagespeed_insights';
+        if (data_get($perf, 'metrics.psi.available')) {
+            $sources[] = 'google_pagespeed_insights';
+        }
+
         return $sources;
     }
 
@@ -680,10 +721,13 @@ class WebsiteAuditorService
     protected function normalizeStartUrl(string $url): string
     {
         $url = trim($url);
-        if ($url === '') return $url;
-        if (!Str::startsWith($url, ['http://', 'https://'])) {
-            $url = 'https://' . $url;
+        if ($url === '') {
+            return $url;
         }
+        if (! Str::startsWith($url, ['http://', 'https://'])) {
+            $url = 'https://'.$url;
+        }
+
         return $url;
     }
 
@@ -695,13 +739,13 @@ class WebsiteAuditorService
     protected function guardAgainstUnsafeUrl(string $url): void
     {
         $parts = parse_url($url);
-        if (!is_array($parts)) {
+        if (! is_array($parts)) {
             throw new \InvalidArgumentException('Invalid URL.');
         }
 
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
         $host = (string) ($parts['host'] ?? '');
-        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
+        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
             throw new \InvalidArgumentException('URL must be http(s) with a valid host.');
         }
 
@@ -715,12 +759,13 @@ class WebsiteAuditorService
             if ($this->isPrivateOrReservedIp($host)) {
                 throw new \InvalidArgumentException('Refusing to audit private/reserved IP ranges.');
             }
+
             return;
         }
 
         // Best-effort DNS resolve and check first A record.
         $records = @dns_get_record($host, DNS_A);
-        if (is_array($records) && !empty($records)) {
+        if (is_array($records) && ! empty($records)) {
             $ip = (string) ($records[0]['ip'] ?? '');
             if ($ip !== '' && $this->isPrivateOrReservedIp($ip)) {
                 throw new \InvalidArgumentException('Refusing to audit hosts resolving to private/reserved IP ranges.');
@@ -740,14 +785,17 @@ class WebsiteAuditorService
         $scheme = (string) ($parts['scheme'] ?? 'https');
         $host = (string) ($parts['host'] ?? '');
         $port = $parts['port'] ?? null;
-        if ($host === '') return $url;
+        if ($host === '') {
+            return $url;
+        }
         $isDefault = ($scheme === 'https' && (int) $port === 443) || ($scheme === 'http' && (int) $port === 80);
-        $portPart = ($port && !$isDefault) ? (':' . (int) $port) : '';
+        $portPart = ($port && ! $isDefault) ? (':'.(int) $port) : '';
+
         return "{$scheme}://{$host}{$portPart}";
     }
 
     /**
-     * @param array<string,mixed> $crawl
+     * @param  array<string,mixed>  $crawl
      * @return array{count:int, examples:array<int,array{from:string,to:string,status:?int}>}
      */
     protected function checkBrokenInternalLinks(array $crawl, int $limit = 200): array
@@ -761,11 +809,17 @@ class WebsiteAuditorService
             $from = (string) ($p['url'] ?? '');
             $internal = (array) data_get($p, 'links.internal', []);
             foreach ($internal as $to) {
-                if ($checks >= $limit) break 2;
+                if ($checks >= $limit) {
+                    break 2;
+                }
                 $to = (string) $to;
-                if ($to === '') continue;
+                if ($to === '') {
+                    continue;
+                }
                 $host = (string) (parse_url($to, PHP_URL_HOST) ?? '');
-                if ($host === '' || strtolower($host) !== strtolower($baseHost)) continue;
+                if ($host === '' || strtolower($host) !== strtolower($baseHost)) {
+                    continue;
+                }
 
                 $checks++;
                 try {
@@ -789,24 +843,30 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<int,string> $sitemapUrls
+     * @param  array<int,string>  $sitemapUrls
      * @return array{fetched:bool, urls:array<int,string>}
      */
     protected function fetchSitemapUrls(array $sitemapUrls): array
     {
         foreach ($sitemapUrls as $u) {
             $u = trim((string) $u);
-            if ($u === '') continue;
+            if ($u === '') {
+                continue;
+            }
             try {
                 $resp = Http::timeout(15)->get($u);
-                if (!$resp->successful()) continue;
+                if (! $resp->successful()) {
+                    continue;
+                }
                 $xml = (string) $resp->body();
                 $urls = $this->extractLocFromSitemapXml($xml);
+
                 return ['fetched' => true, 'urls' => $urls];
             } catch (\Throwable) {
                 continue;
             }
         }
+
         return ['fetched' => false, 'urls' => []];
     }
 
@@ -818,15 +878,20 @@ class WebsiteAuditorService
         $urls = [];
         try {
             $sx = @simplexml_load_string($xml);
-            if ($sx === false) return [];
+            if ($sx === false) {
+                return [];
+            }
             $locs = $sx->xpath('//url/loc') ?: [];
             foreach ($locs as $loc) {
                 $u = trim((string) $loc);
-                if ($u !== '') $urls[] = $u;
+                if ($u !== '') {
+                    $urls[] = $u;
+                }
             }
         } catch (\Throwable) {
             return [];
         }
+
         return array_values(array_unique($urls));
     }
 
@@ -853,18 +918,18 @@ class WebsiteAuditorService
             ]);
 
             $client = @stream_socket_client("ssl://{$host}:443", $errno, $errstr, 10, STREAM_CLIENT_CONNECT, $ctx);
-            if (!$client) {
+            if (! $client) {
                 return ['ok' => false, 'expires_at' => null, 'issuer' => null, 'subject' => null];
             }
 
             $params = stream_context_get_params($client);
             $cert = $params['options']['ssl']['peer_certificate'] ?? null;
-            if (!$cert) {
+            if (! $cert) {
                 return ['ok' => false, 'expires_at' => null, 'issuer' => null, 'subject' => null];
             }
 
             $parsed = openssl_x509_parse($cert);
-            if (!is_array($parsed)) {
+            if (! is_array($parsed)) {
                 return ['ok' => false, 'expires_at' => null, 'issuer' => null, 'subject' => null];
             }
 
@@ -884,7 +949,7 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string, array<int,string>> $headers
+     * @param  array<string, array<int,string>>  $headers
      * @return array{missing:array<int,string>, present:array<int,string>, has_hsts:bool}
      */
     protected function securityHeadersFromResponseHeaders(array $headers): array
@@ -921,7 +986,7 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string, array<int,string>> $headers
+     * @param  array<string, array<int,string>>  $headers
      * @return array{has_cache_control:bool, cache_control:?string, etag:bool}
      */
     protected function cacheSignalsFromHeaders(array $headers): array
@@ -946,7 +1011,7 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string, array<int,string>> $headers
+     * @param  array<string, array<int,string>>  $headers
      * @return array{detected:bool, provider:?string, evidence:?string}
      */
     protected function detectCdnFromHeaders(array $headers): array
@@ -969,6 +1034,7 @@ class WebsiteAuditorService
         if (str_contains($server, 'fastly') || str_contains($via, 'fastly')) {
             return ['detected' => true, 'provider' => 'fastly', 'evidence' => 'server/via'];
         }
+
         return ['detected' => false, 'provider' => null, 'evidence' => null];
     }
 
@@ -992,16 +1058,17 @@ class WebsiteAuditorService
             try {
                 $endpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
                 $categories = ['PERFORMANCE', 'ACCESSIBILITY', 'SEO', 'BEST_PRACTICES'];
-                $query = 'url=' . rawurlencode($url)
-                    . '&key=' . rawurlencode($key)
-                    . '&strategy=' . rawurlencode($strategy);
+                $query = 'url='.rawurlencode($url)
+                    .'&key='.rawurlencode($key)
+                    .'&strategy='.rawurlencode($strategy);
                 foreach ($categories as $c) {
-                    $query .= '&category=' . rawurlencode($c);
+                    $query .= '&category='.rawurlencode($c);
                 }
 
-                $resp = Http::timeout(60)->get($endpoint . '?' . $query);
-                if (!$resp->successful()) {
-                    $out[$strategy] = ['error' => 'HTTP ' . $resp->status()];
+                $resp = Http::timeout(60)->get($endpoint.'?'.$query);
+                if (! $resp->successful()) {
+                    $out[$strategy] = ['error' => 'HTTP '.$resp->status()];
+
                     continue;
                 }
                 $raw = $resp->json();
@@ -1017,7 +1084,7 @@ class WebsiteAuditorService
     /**
      * Keep only the subset we care about to avoid huge payloads.
      *
-     * @param array<string,mixed> $raw
+     * @param  array<string,mixed>  $raw
      * @return array<string,mixed>
      */
     protected function normalizePsiResponse(array $raw): array
@@ -1028,6 +1095,7 @@ class WebsiteAuditorService
 
         $metric = function (string $id) use ($audits) {
             $row = (array) ($audits[$id] ?? []);
+
             return [
                 'score' => $row['score'] ?? null,
                 'displayValue' => $row['displayValue'] ?? null,
@@ -1060,7 +1128,7 @@ class WebsiteAuditorService
     }
 
     /**
-     * @param array<string,mixed> $psi
+     * @param  array<string,mixed>  $psi
      * @return array{lcp_ms:?int, fcp_ms:?int, cls:?float, fid_ms:?int, tbt_ms:?int}
      */
     protected function extractCwvFromPsi(array $psi): array
@@ -1087,7 +1155,7 @@ class WebsiteAuditorService
     /**
      * Heuristic: flag images with no alt AND likely large by file extension/URL (no byte size known).
      *
-     * @param array<string,mixed> $crawl
+     * @param  array<string,mixed>  $crawl
      * @return array{count:int, examples:array<int,array{page:string,src:?string}>}
      */
     protected function findLargeImagesHeuristic(array $crawl): array
@@ -1100,11 +1168,15 @@ class WebsiteAuditorService
             $imgs = (array) data_get($p, 'images.items', []);
             foreach ($imgs as $img) {
                 $src = (string) ($img['src_resolved'] ?? $img['src'] ?? '');
-                if ($src === '') continue;
+                if ($src === '') {
+                    continue;
+                }
                 // crude: common unoptimized patterns
-                if (preg_match('/\.(png|jpg|jpeg)(\?|$)/i', $src) && !preg_match('/(w=|width=|resize=|format=webp|\.webp|\.avif)/i', $src)) {
+                if (preg_match('/\.(png|jpg|jpeg)(\?|$)/i', $src) && ! preg_match('/(w=|width=|resize=|format=webp|\.webp|\.avif)/i', $src)) {
                     $examples[] = ['page' => $pageUrl, 'src' => $src];
-                    if (count($examples) >= 25) break 2;
+                    if (count($examples) >= 25) {
+                        break 2;
+                    }
                 }
             }
         }
@@ -1118,10 +1190,13 @@ class WebsiteAuditorService
     protected function percentile(array $values, int $p): ?int
     {
         $values = array_values(array_filter($values, fn ($v) => is_numeric($v)));
-        if (empty($values)) return null;
+        if (empty($values)) {
+            return null;
+        }
         sort($values);
         $idx = (int) round((($p / 100) * (count($values) - 1)));
         $idx = max(0, min(count($values) - 1, $idx));
+
         return (int) $values[$idx];
     }
 
@@ -1130,23 +1205,37 @@ class WebsiteAuditorService
         $s = strip_tags($s);
         $s = strtolower($s);
         $s = preg_replace('/\s+/', ' ', $s) ?? $s;
+
         return trim($s);
     }
 
     protected function asInt(mixed $v): ?int
     {
-        if ($v === null) return null;
-        if (is_int($v)) return $v;
-        if (is_numeric($v)) return (int) round((float) $v);
+        if ($v === null) {
+            return null;
+        }
+        if (is_int($v)) {
+            return $v;
+        }
+        if (is_numeric($v)) {
+            return (int) round((float) $v);
+        }
+
         return null;
     }
 
     protected function asFloat(mixed $v): ?float
     {
-        if ($v === null) return null;
-        if (is_float($v)) return $v;
-        if (is_numeric($v)) return (float) $v;
+        if ($v === null) {
+            return null;
+        }
+        if (is_float($v)) {
+            return $v;
+        }
+        if (is_numeric($v)) {
+            return (float) $v;
+        }
+
         return null;
     }
 }
-

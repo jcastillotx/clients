@@ -43,4 +43,3 @@ class WebhookEndpoint extends Model
         return $this->hasMany(WebhookDeliveryLog::class)->latest('id');
     }
 }
-

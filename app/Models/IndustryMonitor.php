@@ -45,4 +45,3 @@ class IndustryMonitor extends Model
         return $this->belongsTo(AiInsightReport::class, 'last_report_id');
     }
 }
-

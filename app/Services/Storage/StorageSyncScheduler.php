@@ -19,7 +19,7 @@ class StorageSyncScheduler
 
         foreach ($connections as $connection) {
             $settings = ClientStorageSetting::query()->firstOrCreate(['client_id' => $connection->client_id]);
-            if (!$settings->auto_sync_enabled) {
+            if (! $settings->auto_sync_enabled) {
                 continue;
             }
 
@@ -29,7 +29,7 @@ class StorageSyncScheduler
                 default => $connection->last_sync_at === null || $connection->last_sync_at->lte(now()->subDay()),
             };
 
-            if (!$due) {
+            if (! $due) {
                 continue;
             }
 
@@ -40,4 +40,3 @@ class StorageSyncScheduler
         return $count;
     }
 }
-

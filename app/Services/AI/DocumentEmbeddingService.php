@@ -11,8 +11,7 @@ class DocumentEmbeddingService
     public function __construct(
         protected AIProviderManager $providers,
         protected DocumentTextExtractor $extractor
-    ) {
-    }
+    ) {}
 
     public function contentHash(string $content): string
     {
@@ -32,13 +31,13 @@ class DocumentEmbeddingService
         }
 
         $prefix = trim(implode("\n", array_filter([
-            'Client: ' . ($document->client?->company_name ?? ''),
-            'Title: ' . ($document->title ?? ''),
-            'Filename: ' . ($document->original_filename ?? ''),
-            'Mime: ' . ($document->mime_type ?? ''),
+            'Client: '.($document->client?->company_name ?? ''),
+            'Title: '.($document->title ?? ''),
+            'Filename: '.($document->original_filename ?? ''),
+            'Mime: '.($document->mime_type ?? ''),
         ])));
 
-        return trim($prefix . "\n\n" . $text);
+        return trim($prefix."\n\n".$text);
     }
 
     /**
@@ -52,17 +51,20 @@ class DocumentEmbeddingService
             $res = $this->providers->withFallback($preferred, function ($provider) use ($content) {
                 /** @var array<int,float> $vec */
                 $vec = $provider->generateEmbeddings($content);
+
                 return ['embedding' => $vec];
             }, 'document_embeddings');
 
             $vec = $res['embedding'] ?? null;
+
             return is_array($vec) ? array_map(fn ($v) => (float) $v, $vec) : null;
         } catch (\Throwable $e) {
             $msg = strtolower($e->getMessage());
             if (str_contains($msg, 'api key') || str_contains($msg, 'not configured')) {
                 return null;
             }
-            Log::info('Document embedding generation failed: ' . $e->getMessage());
+            Log::info('Document embedding generation failed: '.$e->getMessage());
+
             return null;
         }
     }
@@ -92,7 +94,9 @@ class DocumentEmbeddingService
             'timeout' => $options['timeout'] ?? null,
             'task_id' => $options['task_id'] ?? null,
         ]);
-        if (!$vec) return null;
+        if (! $vec) {
+            return null;
+        }
 
         return DocumentEmbedding::create([
             'document_id' => $document->id,
@@ -103,4 +107,3 @@ class DocumentEmbeddingService
         ]);
     }
 }
-

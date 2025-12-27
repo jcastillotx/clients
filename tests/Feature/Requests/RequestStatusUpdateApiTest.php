@@ -60,4 +60,3 @@ class RequestStatusUpdateApiTest extends TestCase
             ->assertForbidden();
     }
 }
-

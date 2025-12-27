@@ -112,7 +112,7 @@ class ContentCalendarItem extends Model
     /**
      * Mark as failed
      */
-    public function markAsFailed(string $reason = null): void
+    public function markAsFailed(?string $reason = null): void
     {
         $meta = $this->meta ?? [];
         if ($reason) {
@@ -170,7 +170,7 @@ class ContentCalendarItem extends Model
      */
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'draft' => 'secondary',
             'pending_approval' => 'warning',
             'approved' => 'success',
@@ -187,7 +187,7 @@ class ContentCalendarItem extends Model
      */
     public function getPlatformIconAttribute(): string
     {
-        return match($this->platform) {
+        return match ($this->platform) {
             'facebook' => 'fab fa-facebook',
             'instagram' => 'fab fa-instagram',
             'linkedin' => 'fab fa-linkedin',
@@ -203,7 +203,7 @@ class ContentCalendarItem extends Model
      */
     public function getCharacterLimitAttribute(): int
     {
-        return match($this->platform) {
+        return match ($this->platform) {
             'x', 'twitter' => 280,
             'facebook' => 63206,
             'instagram' => 2200,
@@ -251,4 +251,3 @@ class ContentCalendarItem extends Model
         return $query->where('platform', $platform);
     }
 }
-

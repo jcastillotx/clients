@@ -7,15 +7,17 @@ use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Request as ServiceRequest;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class Dashboard extends Component
 {
     public int $activeRequests = 0;
+
     public int $pendingInvoices = 0;
+
     public int $activeContracts = 0;
 
     /** @var \Illuminate\Support\Collection<int, \App\Models\ActivityLog> */
@@ -41,13 +43,14 @@ class Dashboard extends Component
         $user = auth()->user();
 
         $clientId = $user?->client_id;
-        if (!$clientId) {
+        if (! $clientId) {
             $this->recentActivity = collect();
             $this->upcomingInvoices = collect();
             $this->upcomingContracts = collect();
             $this->requestStatusChart = ['labels' => [], 'values' => []];
             $this->invoiceTrendChart = ['labels' => [], 'billed' => [], 'paid' => []];
             $this->monthlySpendChart = ['labels' => [], 'values' => []];
+
             return;
         }
 
@@ -197,4 +200,3 @@ class Dashboard extends Component
         return view('livewire.dashboard');
     }
 }
-

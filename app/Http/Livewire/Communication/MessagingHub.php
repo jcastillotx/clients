@@ -18,8 +18,11 @@ class MessagingHub extends Component
     use WithFileUploads;
 
     public ?int $conversationId = null;
+
     public string $message = '';
+
     public $upload;
+
     public string $search = '';
 
     public function mount(): void
@@ -40,7 +43,9 @@ class MessagingHub extends Component
     {
         $user = Auth::user();
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
-        if (!$this->conversationId) return;
+        if (! $this->conversationId) {
+            return;
+        }
         Cache::put("conv:{$this->conversationId}:typing:{$user->id}", now()->toISOString(), now()->addSeconds(10));
     }
 
@@ -110,7 +115,7 @@ class MessagingHub extends Component
         abort_unless($this->conversationId, 422);
 
         $msg = Message::query()->where('conversation_id', $this->conversationId)->findOrFail($messageId);
-        $pin = !$msg->is_pinned;
+        $pin = ! $msg->is_pinned;
         $msg->update([
             'is_pinned' => $pin,
             'pinned_at' => $pin ? now() : null,
@@ -121,7 +126,9 @@ class MessagingHub extends Component
     protected function markVisibleAsRead(): void
     {
         $user = Auth::user();
-        if (!$user || !$this->conversationId) return;
+        if (! $user || ! $this->conversationId) {
+            return;
+        }
 
         $messages = Message::query()
             ->where('conversation_id', $this->conversationId)
@@ -172,7 +179,7 @@ class MessagingHub extends Component
 
                 $messages = Message::query()
                     ->where('conversation_id', $conv->id)
-                    ->when($this->search, fn ($q) => $q->where('body', 'like', '%' . $this->search . '%'))
+                    ->when($this->search, fn ($q) => $q->where('body', 'like', '%'.$this->search.'%'))
                     ->with(['sender', 'attachments', 'reads'])
                     ->orderBy('id', 'asc')
                     ->limit(300)
@@ -181,7 +188,9 @@ class MessagingHub extends Component
                 $this->markVisibleAsRead();
 
                 foreach ($participants as $p) {
-                    if ((int) $p->id === (int) $user->id) continue;
+                    if ((int) $p->id === (int) $user->id) {
+                        continue;
+                    }
                     if (Cache::has("conv:{$conv->id}:typing:{$p->id}")) {
                         $typingNames[] = (string) $p->name;
                     }
@@ -192,4 +201,3 @@ class MessagingHub extends Component
         return view('livewire.communication.messaging-hub', compact('conversations', 'messages', 'participants', 'pinned', 'typingNames'));
     }
 }
-

@@ -8,10 +8,13 @@ use Livewire\Component;
 class ArchitectureAdvisor extends Component
 {
     public string $provider = 'claude';
+
     public string $model = '';
 
     public string $designDoc = '';
+
     public string $requirementsJson = '';
+
     public string $errorLogs = '';
 
     /** @var array<string,mixed>|null */
@@ -51,8 +54,9 @@ class ArchitectureAdvisor extends Component
     public function recommendStack(CodeReviewService $svc): void
     {
         $req = json_decode($this->requirementsJson, true);
-        if (!is_array($req)) {
+        if (! is_array($req)) {
             session()->flash('error', 'Requirements JSON is invalid.');
+
             return;
         }
 
@@ -70,6 +74,7 @@ class ArchitectureAdvisor extends Component
     {
         if (trim($this->errorLogs) === '') {
             session()->flash('error', 'Paste logs first.');
+
             return;
         }
 
@@ -88,4 +93,3 @@ class ArchitectureAdvisor extends Component
         return view('livewire.technical.architecture-advisor');
     }
 }
-

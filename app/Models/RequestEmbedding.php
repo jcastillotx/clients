@@ -28,4 +28,3 @@ class RequestEmbedding extends Model
         return $this->belongsTo(Request::class);
     }
 }
-

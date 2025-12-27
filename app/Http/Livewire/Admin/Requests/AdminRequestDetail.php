@@ -10,8 +10,8 @@ use App\Models\RequestComment;
 use App\Models\RequestTimeEntry;
 use App\Models\User;
 use App\Notifications\RequestAssignedNotification;
-use App\Services\ThumbnailService;
 use App\Services\Projects\ProjectConversionService;
+use App\Services\ThumbnailService;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -30,19 +30,24 @@ class AdminRequestDetail extends Component
     public ServiceRequest $request;
 
     public string $tab = 'overview';
+
     public bool $showInternal = false;
 
     public ?int $assigned_to = null;
+
     public ?string $due_date = null;
 
     public string $newComment = '';
+
     public bool $newCommentInternal = false;
 
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
     public array $files = [];
 
     public string $timeHours = '';
+
     public string $timeNote = '';
+
     public ?string $timeLoggedAt = null; // datetime-local string
 
     public function mount(ServiceRequest $request): void
@@ -55,6 +60,7 @@ class AdminRequestDetail extends Component
     protected function rules(): array
     {
         $maxKb = (int) config('client-portal.max_upload_size', 10240);
+
         return [
             'assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')],
             'due_date' => ['nullable', 'date'],
@@ -70,7 +76,9 @@ class AdminRequestDetail extends Component
 
     public function updated(string $property): void
     {
-        if (in_array($property, ['tab', 'showInternal'], true)) return;
+        if (in_array($property, ['tab', 'showInternal'], true)) {
+            return;
+        }
         $this->validateOnly($property);
     }
 
@@ -107,13 +115,15 @@ class AdminRequestDetail extends Component
     public function setStatus(string $status): void
     {
         $allowed = array_keys(config('client-portal.request_statuses', []));
-        if (!in_array($status, $allowed, true)) return;
+        if (! in_array($status, $allowed, true)) {
+            return;
+        }
 
         $updates = ['status' => $status];
-        if ($status === 'in_progress' && !$this->request->started_at) {
+        if ($status === 'in_progress' && ! $this->request->started_at) {
             $updates['started_at'] = now();
         }
-        if ($status === 'completed' && !$this->request->completed_at) {
+        if ($status === 'completed' && ! $this->request->completed_at) {
             $updates['completed_at'] = now();
         }
 
@@ -133,7 +143,7 @@ class AdminRequestDetail extends Component
     {
         $res = $svc->convert($this->request);
         if (($res['ok'] ?? false) === true) {
-            session()->flash('success', 'Converted to project. Seeded tasks: ' . (int) ($res['seeded_tasks'] ?? 0));
+            session()->flash('success', 'Converted to project. Seeded tasks: '.(int) ($res['seeded_tasks'] ?? 0));
         } else {
             session()->flash('error', 'Project conversion failed.');
         }
@@ -142,7 +152,9 @@ class AdminRequestDetail extends Component
     public function addComment(): void
     {
         $this->validateOnly('newComment');
-        if (trim($this->newComment) === '') return;
+        if (trim($this->newComment) === '') {
+            return;
+        }
 
         RequestComment::create([
             'request_id' => $this->request->id,
@@ -174,14 +186,14 @@ class AdminRequestDetail extends Component
         $this->validate();
 
         foreach ($this->files as $file) {
-            $filename = (string) Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('requests/' . $this->request->id, $filename, 'attachments');
+            $filename = (string) Str::uuid().'.'.$file->getClientOriginalExtension();
+            $path = $file->storeAs('requests/'.$this->request->id, $filename, 'attachments');
 
             $thumbnailPath = null;
             if (str_starts_with((string) $file->getMimeType(), 'image/')) {
                 $thumb = app(ThumbnailService::class)->makeJpegThumbnailFromFile($file->getRealPath(), 640);
                 if ($thumb) {
-                    $thumbnailPath = 'requests/' . $this->request->id . '/thumbnails/' . (string) Str::uuid() . '.jpg';
+                    $thumbnailPath = 'requests/'.$this->request->id.'/thumbnails/'.(string) Str::uuid().'.jpg';
                     Storage::disk('attachments')->put($thumbnailPath, $thumb);
                 }
             }
@@ -207,7 +219,9 @@ class AdminRequestDetail extends Component
     public function addTimeEntry(): void
     {
         $this->validateOnly('timeHours');
-        if ($this->timeHours === '') return;
+        if ($this->timeHours === '') {
+            return;
+        }
 
         $loggedAt = $this->timeLoggedAt ? \Carbon\Carbon::parse($this->timeLoggedAt) : now();
 
@@ -234,7 +248,7 @@ class AdminRequestDetail extends Component
     {
         $comments = RequestComment::query()
             ->where('request_id', $this->request->id)
-            ->when(!$this->showInternal, fn ($q) => $q->where('is_internal', false))
+            ->when(! $this->showInternal, fn ($q) => $q->where('is_internal', false))
             ->with('user')
             ->latest()
             ->get();
@@ -269,7 +283,6 @@ class AdminRequestDetail extends Component
             'timeEntries' => $timeEntries,
             'staffOptions' => $staffOptions,
             'relatedDocuments' => $relatedDocuments,
-        ])->layout('layouts.admin', ['title' => 'Request #' . $this->request->id]);
+        ])->layout('layouts.admin', ['title' => 'Request #'.$this->request->id]);
     }
 }
-

@@ -16,11 +16,12 @@ class TranscribeMeetingJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     /** @var array<int,int> */
     public array $backoff = [60, 180, 420];
 
     /**
-     * @param array{participants?:array<int,string>, purpose?:string, language?:string} $options
+     * @param  array{participants?:array<int,string>, purpose?:string, language?:string}  $options
      */
     public function __construct(public string $audioPath, public array $options = [])
     {
@@ -51,7 +52,7 @@ class TranscribeMeetingJob implements ShouldQueue
                 'completed_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            Log::warning('TranscribeMeetingJob failed: ' . $e->getMessage());
+            Log::warning('TranscribeMeetingJob failed: '.$e->getMessage());
             $task->update([
                 'status' => 'failed',
                 'output_data' => ['error' => $e->getMessage()],
@@ -66,4 +67,3 @@ class TranscribeMeetingJob implements ShouldQueue
         }
     }
 }
-

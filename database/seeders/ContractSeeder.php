@@ -12,6 +12,7 @@ class ContractSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command?->warn('Skipping ContractSeeder in production (demo data).');
+
             return;
         }
 
@@ -28,4 +29,3 @@ class ContractSeeder extends Seeder
         }
     }
 }
-

@@ -3,7 +3,6 @@
 namespace App\Http\Livewire\Client\Social;
 
 use App\Models\ContentCalendarItem;
-use App\Models\ContentFeedback;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,8 +13,11 @@ class PendingApprovals extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $selectedPost = null;
+
     public $feedbackText = '';
+
     public $editedContent = '';
+
     public $showFeedbackModal = false;
 
     protected $rules = [
@@ -35,8 +37,9 @@ class PendingApprovals extends Component
         $post = ContentCalendarItem::forClient(auth()->user()->client_id)
             ->findOrFail($postId);
 
-        if (!$post->isPendingApproval()) {
+        if (! $post->isPendingApproval()) {
             session()->flash('error', 'This post is not pending approval.');
+
             return;
         }
 
@@ -90,8 +93,9 @@ class PendingApprovals extends Component
             'feedbackText' => 'required|string|min:10',
         ]);
 
-        if (!$this->selectedPost || !$this->selectedPost->isPendingApproval()) {
+        if (! $this->selectedPost || ! $this->selectedPost->isPendingApproval()) {
             session()->flash('error', 'This post is not pending approval.');
+
             return;
         }
 
@@ -133,8 +137,9 @@ class PendingApprovals extends Component
             'feedbackText' => 'required|string|min:10',
         ]);
 
-        if (!$this->selectedPost) {
+        if (! $this->selectedPost) {
             session()->flash('error', 'No post selected.');
+
             return;
         }
 

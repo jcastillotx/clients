@@ -12,16 +12,15 @@ class WebsiteAuditCriticalIssuesMail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     /**
-     * @param array<string,mixed> $scores
-     * @param array<int,array{category:string,issue_type:string,description:string,affected_url:?string}> $newCriticalIssues
+     * @param  array<string,mixed>  $scores
+     * @param  array<int,array{category:string,issue_type:string,description:string,affected_url:?string}>  $newCriticalIssues
      */
     public function __construct(
         public string $websiteUrl,
         public int $auditId,
         public array $scores,
         public array $newCriticalIssues,
-    ) {
-    }
+    ) {}
 
     public function build(): self
     {
@@ -42,4 +41,3 @@ class WebsiteAuditCriticalIssuesMail extends Mailable implements ShouldQueue
             ]);
     }
 }
-

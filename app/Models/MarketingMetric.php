@@ -29,4 +29,3 @@ class MarketingMetric extends Model
         return $this->belongsTo(Client::class);
     }
 }
-

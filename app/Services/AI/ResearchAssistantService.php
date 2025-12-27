@@ -13,9 +13,7 @@ use App\Services\AI\Prompts\ResearchPrompts;
 
 class ResearchAssistantService
 {
-    public function __construct(protected AIProviderManager $providers, protected AISafetyService $safety)
-    {
-    }
+    public function __construct(protected AIProviderManager $providers, protected AISafetyService $safety) {}
 
     /**
      * Web-grounded research report using Perplexity (with fallback).
@@ -42,13 +40,13 @@ class ResearchAssistantService
         $json = $this->parseJsonBestEffort((string) ($res['text'] ?? ''));
 
         // Enrich sources if provider returned citations separately.
-        if (is_array($json) && empty($json['sources']) && !empty($res['sources'])) {
+        if (is_array($json) && empty($json['sources']) && ! empty($res['sources'])) {
             $json['sources'] = $res['sources'];
         }
 
         if (is_array($json)) {
             $fc = $this->safety->factCheck($json);
-            if (!$fc['passed']) {
+            if (! $fc['passed']) {
                 $json['_safety'] = ['fact_check' => $fc];
             }
         }
@@ -166,7 +164,7 @@ class ResearchAssistantService
     {
         $messages = [
             ['role' => 'system', 'content' => ResearchPrompts::creativeSystem()],
-            ['role' => 'user', 'content' => "Creative brief JSON:\n" . json_encode($brief, JSON_UNESCAPED_SLASHES) . "\nReturn JSON in the schema."],
+            ['role' => 'user', 'content' => "Creative brief JSON:\n".json_encode($brief, JSON_UNESCAPED_SLASHES)."\nReturn JSON in the schema."],
         ];
 
         $res = $this->providers->withFallback('openai', function ($provider) use ($messages) {
@@ -214,7 +212,7 @@ class ResearchAssistantService
 
         $messages = [
             ['role' => 'system', 'content' => ResearchPrompts::researchSystem()],
-            ['role' => 'user', 'content' => "Answer this business question with citations where possible.\n\nQuestion: {$question}\n\nContext JSON:\n" . json_encode($context, JSON_UNESCAPED_SLASHES)],
+            ['role' => 'user', 'content' => "Answer this business question with citations where possible.\n\nQuestion: {$question}\n\nContext JSON:\n".json_encode($context, JSON_UNESCAPED_SLASHES)],
         ];
 
         $res = $this->providers->withFallback('perplexity', function ($provider) use ($messages) {
@@ -227,7 +225,7 @@ class ResearchAssistantService
         $payload = $this->parseJsonBestEffort((string) ($res['text'] ?? ''));
 
         $answerText = is_array($payload)
-            ? (($payload['executive_summary'] ?? '') . "\n\n" . $this->bullets($payload['recommended_next_steps'] ?? []))
+            ? (($payload['executive_summary'] ?? '')."\n\n".$this->bullets($payload['recommended_next_steps'] ?? []))
             : (string) ($res['text'] ?? '');
 
         $tokens = (array) ($res['tokens'] ?? []);
@@ -299,8 +297,12 @@ class ResearchAssistantService
     public function runIndustryMonitor(IndustryMonitor $monitor, array $options = []): AiInsightReport
     {
         $topic = "{$monitor->industry} industry trends";
-        if (!empty($monitor->region)) $topic .= " in {$monitor->region}";
-        if (!empty($monitor->keywords)) $topic .= ' (keywords: ' . implode(', ', (array) $monitor->keywords) . ')';
+        if (! empty($monitor->region)) {
+            $topic .= " in {$monitor->region}";
+        }
+        if (! empty($monitor->keywords)) {
+            $topic .= ' (keywords: '.implode(', ', (array) $monitor->keywords).')';
+        }
 
         $data = $this->conductResearch($topic, 'standard', ['region' => $monitor->region]);
 
@@ -332,33 +334,43 @@ class ResearchAssistantService
     protected function normalizeDepth(string $depth): string
     {
         $d = strtolower(trim($depth));
+
         return in_array($d, ['quick', 'standard', 'deep'], true) ? $d : 'standard';
     }
 
     protected function parseJsonBestEffort(string $text): ?array
     {
         $t = trim($text);
-        if ($t === '') return null;
+        if ($t === '') {
+            return null;
+        }
 
         // Try direct decode
         $decoded = json_decode($t, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         // Try extracting the first JSON object.
         $start = strpos($t, '{');
         $end = strrpos($t, '}');
-        if ($start === false || $end === false || $end <= $start) return null;
+        if ($start === false || $end === false || $end <= $start) {
+            return null;
+        }
 
         $slice = substr($t, $start, $end - $start + 1);
         $decoded = json_decode($slice, true);
+
         return is_array($decoded) ? $decoded : null;
     }
 
     protected function bullets(array $items): string
     {
         $items = array_values(array_filter(array_map(fn ($x) => is_string($x) ? trim($x) : '', $items)));
-        if (empty($items)) return '';
+        if (empty($items)) {
+            return '';
+        }
+
         return implode("\n", array_map(fn ($x) => "- {$x}", $items));
     }
 }
-

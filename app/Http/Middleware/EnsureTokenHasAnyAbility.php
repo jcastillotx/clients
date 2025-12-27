@@ -11,12 +11,12 @@ class EnsureTokenHasAnyAbility
     public function handle(Request $request, Closure $next, string ...$abilities): Response
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             abort(401);
         }
 
         $token = $user->currentAccessToken();
-        if (!$token) {
+        if (! $token) {
             abort(401);
         }
 
@@ -30,4 +30,3 @@ class EnsureTokenHasAnyAbility
         abort(403);
     }
 }
-

@@ -29,4 +29,3 @@ class KeywordRanking extends Model
         return $this->belongsTo(SeoKeyword::class, 'seo_keyword_id');
     }
 }
-

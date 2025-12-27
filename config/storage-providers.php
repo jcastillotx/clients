@@ -101,4 +101,3 @@ return [
         'max_files_per_run' => env('STORAGE_SYNC_MAX_FILES_PER_RUN', 500),
     ],
 ];
-

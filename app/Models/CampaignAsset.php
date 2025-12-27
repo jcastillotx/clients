@@ -32,4 +32,3 @@ class CampaignAsset extends Model
         return $this->morphTo(__FUNCTION__, 'asset_type', 'asset_id');
     }
 }
-

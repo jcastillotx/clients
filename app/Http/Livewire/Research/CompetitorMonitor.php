@@ -13,6 +13,7 @@ use Livewire\Component;
 class CompetitorMonitor extends Component
 {
     public string $competitorName = '';
+
     public string $websiteUrl = '';
 
     public function addCompetitor(): void
@@ -106,4 +107,3 @@ class CompetitorMonitor extends Component
         ]);
     }
 }
-

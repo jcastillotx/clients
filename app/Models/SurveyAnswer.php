@@ -26,4 +26,3 @@ class SurveyAnswer extends Model
         return $this->belongsTo(SurveyQuestion::class, 'question_id');
     }
 }
-

@@ -2,8 +2,6 @@
 
 namespace App\Services\AI;
 
-use RuntimeException;
-
 /**
  * Perplexity provider (web-grounded research).
  *
@@ -15,7 +13,7 @@ class PerplexityService extends HttpJsonProviderService
     protected function authHeaders(): array
     {
         return [
-            'Authorization' => 'Bearer ' . (string) ($this->config['api_key'] ?? ''),
+            'Authorization' => 'Bearer '.(string) ($this->config['api_key'] ?? ''),
         ];
     }
 
@@ -67,4 +65,3 @@ class PerplexityService extends HttpJsonProviderService
         ];
     }
 }
-

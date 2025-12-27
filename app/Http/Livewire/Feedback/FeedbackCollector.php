@@ -11,6 +11,7 @@ use Livewire\Component;
 class FeedbackCollector extends Component
 {
     public string $token;
+
     public array $answers = []; // question_id => value
 
     public function mount(string $token): void
@@ -31,11 +32,13 @@ class FeedbackCollector extends Component
             ->firstOrFail();
 
         abort_unless((int) $resp->client_id === (int) $user->client_id, 403);
-        abort_unless(!$resp->submitted_at, 422);
+        abort_unless(! $resp->submitted_at, 422);
 
         // Validate required questions
         foreach ($resp->survey->questions as $q) {
-            if (!$q->is_required) continue;
+            if (! $q->is_required) {
+                continue;
+            }
             $val = $this->answers[$q->id] ?? null;
             Validator::make(['v' => $val], ['v' => ['required']])->validate();
         }
@@ -74,4 +77,3 @@ class FeedbackCollector extends Component
         ]);
     }
 }
-

@@ -28,4 +28,3 @@ class StorageManagerTest extends TestCase
         app(StorageManager::class)->provider('nope');
     }
 }
-

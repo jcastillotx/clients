@@ -44,14 +44,14 @@ SYS;
     }
 
     /**
-     * @param array<int, array<string, mixed>> $similarProjects
-     * @param array{count:int, median_ratio:float|null} $variance
+     * @param  array<int, array<string, mixed>>  $similarProjects
+     * @param  array{count:int, median_ratio:float|null}  $variance
      */
     public static function userPrompt(array $request, array $similarProjects, array $variance, float $hourlyRate): string
     {
         $varianceLine = $variance['median_ratio'] === null
             ? 'No variance stats available.'
-            : ('Median actual/estimated ratio from similar projects: ' . number_format((float) $variance['median_ratio'], 2) . ' (n=' . (int) $variance['count'] . ').');
+            : ('Median actual/estimated ratio from similar projects: '.number_format((float) $variance['median_ratio'], 2).' (n='.(int) $variance['count'].').');
 
         $json = json_encode([
             'request' => $request,
@@ -70,4 +70,3 @@ Context JSON:
 USR;
     }
 }
-

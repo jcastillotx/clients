@@ -28,4 +28,3 @@ class DocumentLink extends Model
         return $this->morphTo('linkable');
     }
 }
-

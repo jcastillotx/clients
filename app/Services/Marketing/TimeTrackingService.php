@@ -79,4 +79,3 @@ class TimeTrackingService
             ->all();
     }
 }
-

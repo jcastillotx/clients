@@ -11,9 +11,13 @@ use Livewire\Component;
 class ReportCustomizer extends Component
 {
     public ?int $clientId = null;
+
     public array $visibleMetrics = [];
+
     public string $reportFrequency = 'monthly';
+
     public string $deliveryMethod = 'email';
+
     public string $recipientsCsv = '';
 
     public function mount(): void
@@ -24,7 +28,9 @@ class ReportCustomizer extends Component
 
     public function loadClient(): void
     {
-        if (!$this->clientId) return;
+        if (! $this->clientId) {
+            return;
+        }
         $cfg = ClientReportConfig::query()->firstOrNew(['client_id' => $this->clientId]);
         $this->visibleMetrics = (array) ($cfg->visible_metrics ?? []);
         $this->reportFrequency = (string) ($cfg->report_frequency ?? 'monthly');
@@ -83,10 +89,10 @@ class ReportCustomizer extends Component
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
 
         $clients = Client::query()->orderBy('company_name')->limit(250)->get(['id', 'company_name']);
+
         return view('livewire.white-label.report-customizer', [
             'clients' => $clients,
             'availableMetrics' => $this->availableMetricKeys(),
         ]);
     }
 }
-

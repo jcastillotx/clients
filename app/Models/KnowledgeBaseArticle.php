@@ -39,4 +39,3 @@ class KnowledgeBaseArticle extends Model
         return $this->hasMany(KnowledgeBaseFeedback::class, 'article_id');
     }
 }
-

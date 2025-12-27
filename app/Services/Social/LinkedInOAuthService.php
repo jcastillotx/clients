@@ -2,7 +2,6 @@
 
 namespace App\Services\Social;
 
-use App\Models\Client;
 use App\Models\SocialAccount;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -11,7 +10,9 @@ use Illuminate\Support\Facades\Log;
 class LinkedInOAuthService implements OAuthServiceInterface
 {
     protected string $clientId;
+
     protected string $clientSecret;
+
     protected string $redirectUri;
 
     public function __construct()
@@ -62,7 +63,7 @@ class LinkedInOAuthService implements OAuthServiceInterface
         ]);
 
         if ($tokenResponse->failed()) {
-            throw new \Exception('Failed to exchange code for access token: ' . $tokenResponse->body());
+            throw new \Exception('Failed to exchange code for access token: '.$tokenResponse->body());
         }
 
         $tokenData = $tokenResponse->json();
@@ -74,7 +75,7 @@ class LinkedInOAuthService implements OAuthServiceInterface
             ->get('https://api.linkedin.com/v2/userinfo');
 
         if ($profileResponse->failed()) {
-            throw new \Exception('Failed to fetch user profile: ' . $profileResponse->body());
+            throw new \Exception('Failed to fetch user profile: '.$profileResponse->body());
         }
 
         $profile = $profileResponse->json();
@@ -115,10 +116,11 @@ class LinkedInOAuthService implements OAuthServiceInterface
      */
     public function refreshToken(SocialAccount $account): bool
     {
-        if (!$account->refresh_token) {
+        if (! $account->refresh_token) {
             Log::warning('LinkedIn refresh token not available', [
                 'account_id' => $account->id,
             ]);
+
             return false;
         }
 
@@ -135,6 +137,7 @@ class LinkedInOAuthService implements OAuthServiceInterface
                     'account_id' => $account->id,
                     'response' => $response->body(),
                 ]);
+
                 return false;
             }
 
@@ -157,6 +160,7 @@ class LinkedInOAuthService implements OAuthServiceInterface
                 'account_id' => $account->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -182,6 +186,7 @@ class LinkedInOAuthService implements OAuthServiceInterface
         }
 
         $account->disconnect();
+
         return true;
     }
 
@@ -194,7 +199,7 @@ class LinkedInOAuthService implements OAuthServiceInterface
             ->get('https://api.linkedin.com/v2/userinfo');
 
         if ($response->failed()) {
-            throw new \Exception('Failed to fetch user profile: ' . $response->body());
+            throw new \Exception('Failed to fetch user profile: '.$response->body());
         }
 
         return $response->json();

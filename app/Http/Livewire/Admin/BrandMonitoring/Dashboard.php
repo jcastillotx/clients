@@ -13,10 +13,15 @@ class Dashboard extends Component
     use WithPagination;
 
     public $selectedClient = null;
+
     public $selectedPlatform = '';
+
     public $selectedSentiment = '';
+
     public $dateFrom = '';
+
     public $dateTo = '';
+
     public $searchTerm = '';
 
     protected $queryString = [
@@ -53,14 +58,14 @@ class Dashboard extends Component
     public function render()
     {
         $query = BrandMention::with('client')
-            ->when($this->selectedClient, fn($q) => $q->where('client_id', $this->selectedClient))
-            ->when($this->selectedPlatform, fn($q) => $q->where('platform', $this->selectedPlatform))
-            ->when($this->selectedSentiment, fn($q) => $q->where('sentiment', $this->selectedSentiment))
-            ->when($this->dateFrom, fn($q) => $q->whereDate('posted_at', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn($q) => $q->whereDate('posted_at', '<=', $this->dateTo))
-            ->when($this->searchTerm, fn($q) => $q->where(function($query) {
-                $query->where('mention_text', 'like', '%' . $this->searchTerm . '%')
-                      ->orWhere('author', 'like', '%' . $this->searchTerm . '%');
+            ->when($this->selectedClient, fn ($q) => $q->where('client_id', $this->selectedClient))
+            ->when($this->selectedPlatform, fn ($q) => $q->where('platform', $this->selectedPlatform))
+            ->when($this->selectedSentiment, fn ($q) => $q->where('sentiment', $this->selectedSentiment))
+            ->when($this->dateFrom, fn ($q) => $q->whereDate('posted_at', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->whereDate('posted_at', '<=', $this->dateTo))
+            ->when($this->searchTerm, fn ($q) => $q->where(function ($query) {
+                $query->where('mention_text', 'like', '%'.$this->searchTerm.'%')
+                    ->orWhere('author', 'like', '%'.$this->searchTerm.'%');
             }))
             ->orderByDesc('posted_at');
 
@@ -68,21 +73,21 @@ class Dashboard extends Component
 
         // Analytics
         $totalMentions = BrandMention::query()
-            ->when($this->selectedClient, fn($q) => $q->where('client_id', $this->selectedClient))
-            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo . ' 23:59:59'])
+            ->when($this->selectedClient, fn ($q) => $q->where('client_id', $this->selectedClient))
+            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo.' 23:59:59'])
             ->count();
 
         $sentimentBreakdown = BrandMention::query()
-            ->when($this->selectedClient, fn($q) => $q->where('client_id', $this->selectedClient))
-            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo . ' 23:59:59'])
+            ->when($this->selectedClient, fn ($q) => $q->where('client_id', $this->selectedClient))
+            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo.' 23:59:59'])
             ->selectRaw('sentiment, COUNT(*) as count')
             ->groupBy('sentiment')
             ->pluck('count', 'sentiment')
             ->toArray();
 
         $platformBreakdown = BrandMention::query()
-            ->when($this->selectedClient, fn($q) => $q->where('client_id', $this->selectedClient))
-            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo . ' 23:59:59'])
+            ->when($this->selectedClient, fn ($q) => $q->where('client_id', $this->selectedClient))
+            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo.' 23:59:59'])
             ->selectRaw('platform, COUNT(*) as count')
             ->groupBy('platform')
             ->orderByDesc('count')

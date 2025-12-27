@@ -14,7 +14,7 @@ class DocumentAnalysisServiceDetectionTest extends TestCase
             extractor: $this->createStub(\App\Services\AI\DocumentTextExtractor::class)
         );
 
-        $type = $svc->detectDocumentType("THIS AGREEMENT is made between the parties. Term and termination apply.", 'my-contract.pdf', 'application/pdf');
+        $type = $svc->detectDocumentType('THIS AGREEMENT is made between the parties. Term and termination apply.', 'my-contract.pdf', 'application/pdf');
         $this->assertSame('contract', $type);
     }
 
@@ -36,8 +36,7 @@ class DocumentAnalysisServiceDetectionTest extends TestCase
             extractor: $this->createStub(\App\Services\AI\DocumentTextExtractor::class)
         );
 
-        $type = $svc->detectDocumentType("Technical requirements: API endpoints, dependencies, framework choices.", 'spec.txt', 'text/plain');
+        $type = $svc->detectDocumentType('Technical requirements: API endpoints, dependencies, framework choices.', 'spec.txt', 'text/plain');
         $this->assertSame('technical', $type);
     }
 }
-

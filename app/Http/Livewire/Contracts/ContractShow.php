@@ -30,4 +30,3 @@ class ContractShow extends Component
         return view('livewire.contracts.show');
     }
 }
-

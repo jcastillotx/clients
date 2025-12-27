@@ -15,9 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class PredictiveAnalyticsService
 {
-    public function __construct(protected AIProviderManager $providers)
-    {
-    }
+    public function __construct(protected AIProviderManager $providers) {}
 
     /**
      * Forecast revenue for next N months.
@@ -147,9 +145,15 @@ class PredictiveAnalyticsService
         $score = 100;
         $score -= (int) round($risk * 50);
         $score -= min(25, (int) round($openAmount > 0 ? 10 : 0));
-        if (strtolower((string) $client->tier) === 'premium') $score += 5;
-        if (strtolower((string) $client->tier) === 'enterprise') $score += 8;
-        if ($paidLast90 > 0) $score += 5;
+        if (strtolower((string) $client->tier) === 'premium') {
+            $score += 5;
+        }
+        if (strtolower((string) $client->tier) === 'enterprise') {
+            $score += 8;
+        }
+        if ($paidLast90 > 0) {
+            $score += 5;
+        }
 
         $score = max(0, min(100, (int) $score));
         $level = $score < 45 ? 'high' : ($score < 70 ? 'medium' : 'low');
@@ -231,8 +235,9 @@ class PredictiveAnalyticsService
         $unassigned = 0;
         foreach ($open as $r) {
             $hours = (float) ($r->estimated_hours ?? 0);
-            if (!$r->assigned_to) {
+            if (! $r->assigned_to) {
                 $unassigned++;
+
                 continue;
             }
             $uid = (int) $r->assigned_to;
@@ -258,7 +263,7 @@ class PredictiveAnalyticsService
         if ($unassigned > 0) {
             $suggestions[] = "There are {$unassigned} unassigned open requests. Assign or triage them to prevent delays.";
         }
-        if (!empty($bottlenecks)) {
+        if (! empty($bottlenecks)) {
             $suggestions[] = 'Bottleneck detected: at least one staff member has >= 40 estimated hours of open work.';
         }
         if ($unassigned > 10 || count($bottlenecks) >= 2) {
@@ -284,7 +289,7 @@ class PredictiveAnalyticsService
         $ctx = json_encode($payload, JSON_UNESCAPED_SLASHES);
         $messages = [
             ['role' => 'system', 'content' => 'You are an analytics assistant. Write a concise executive summary with insights and recommendations.'],
-            ['role' => 'user', 'content' => $prompt . "\n\nData JSON:\n" . $ctx],
+            ['role' => 'user', 'content' => $prompt."\n\nData JSON:\n".$ctx],
         ];
 
         try {
@@ -336,7 +341,7 @@ class PredictiveAnalyticsService
             $modelUsed = $res['model'] ?? null;
             $cost = $res['estimated_cost'] ?? null;
         } catch (\Throwable $e) {
-            $narrative = 'Market analysis failed: ' . $e->getMessage();
+            $narrative = 'Market analysis failed: '.$e->getMessage();
             $payload = ['topic' => $topic];
         }
 
@@ -375,7 +380,7 @@ class PredictiveAnalyticsService
                 'severity' => 'warning',
                 'client_id' => (int) $row->client_id,
                 'title' => 'High request volume',
-                'message' => 'Client created ' . (int) $row->cnt . ' requests in the last 7 days.',
+                'message' => 'Client created '.(int) $row->cnt.' requests in the last 7 days.',
                 'data' => ['count_7d' => (int) $row->cnt],
             ]);
         }
@@ -407,10 +412,15 @@ class PredictiveAnalyticsService
 
     protected function normalizeMonths(int|string $timeframe, int $default): int
     {
-        if (is_int($timeframe)) return max(1, min(24, $timeframe));
+        if (is_int($timeframe)) {
+            return max(1, min(24, $timeframe));
+        }
         $t = strtolower(trim((string) $timeframe));
         $t = rtrim($t, 'm');
-        if (ctype_digit($t)) return max(1, min(24, (int) $t));
+        if (ctype_digit($t)) {
+            return max(1, min(24, (int) $t));
+        }
+
         return $default;
     }
 
@@ -444,6 +454,7 @@ class PredictiveAnalyticsService
             $out[] = ['month' => $key, 'value' => (float) ($map[$key] ?? 0.0)];
             $cur->addMonth();
         }
+
         return $out;
     }
 
@@ -476,6 +487,7 @@ class PredictiveAnalyticsService
             $out[] = ['month' => $key, 'value' => (float) ($map[$key] ?? 0.0)];
             $cur->addMonth();
         }
+
         return $out;
     }
 
@@ -484,7 +496,7 @@ class PredictiveAnalyticsService
      * - seasonality index by month-of-year from history
      * - trend from last 6 months slope
      *
-     * @param array<int, array{month:string,value:float}> $series
+     * @param  array<int, array{month:string,value:float}>  $series
      * @return array<int, array{month:string, predicted:float, ci80_low:float, ci80_high:float}>
      */
     protected function seasonalForecast(array $series, int $monthsAhead): array
@@ -546,18 +558,22 @@ class PredictiveAnalyticsService
             ];
             $cur->addMonth();
         }
+
         return $out;
     }
 
     protected function stddev(array $values): float
     {
         $n = count($values);
-        if ($n < 2) return 0.0;
+        if ($n < 2) {
+            return 0.0;
+        }
         $mean = array_sum($values) / $n;
         $v = 0.0;
         foreach ($values as $x) {
             $v += ($x - $mean) * ($x - $mean);
         }
+
         return sqrt($v / ($n - 1));
     }
 
@@ -583,12 +599,14 @@ class PredictiveAnalyticsService
     }
 
     /**
-     * @param array<int, array{month:string,predicted:float,ci80_low:float,ci80_high:float}> $forecast
+     * @param  array<int, array{month:string,predicted:float,ci80_low:float,ci80_high:float}>  $forecast
      */
     protected function applyPipelineBoost(array $forecast, array $pipeline): array
     {
         $openInvoices = (float) ($pipeline['open_invoices_due_within_window'] ?? 0);
-        if ($openInvoices <= 0) return $forecast;
+        if ($openInvoices <= 0) {
+            return $forecast;
+        }
 
         // Spread a conservative portion across the window.
         $boost = ($openInvoices * 0.35) / max(1, count($forecast));
@@ -598,6 +616,7 @@ class PredictiveAnalyticsService
             $f['ci80_high'] += $boost * 1.0;
         }
         unset($f);
+
         return $forecast;
     }
 
@@ -618,7 +637,7 @@ class PredictiveAnalyticsService
             $actions[] = 'Keep engagement steady: share monthly outcomes and upcoming opportunities.';
         }
 
-        if (!empty($signals['overdue_invoices'])) {
+        if (! empty($signals['overdue_invoices'])) {
             $actions[] = 'Address overdue billing promptly and confirm any blockers on their side.';
         }
 
@@ -661,4 +680,3 @@ class PredictiveAnalyticsService
         };
     }
 }
-

@@ -15,11 +15,15 @@ class StorageConflicts extends Component
     use WithPagination;
 
     public ?int $clientId = null;
+
     public string $search = '';
+
     public string $resolution = 'unresolved';
 
     public ?int $selectedConflictId = null;
+
     public ?int $chosen_connection_id = null;
+
     public string $chosen_path = '';
 
     protected array $queryString = [
@@ -34,8 +38,15 @@ class StorageConflicts extends Component
         $this->clientId = $user->client_id;
     }
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingResolution(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingResolution(): void
+    {
+        $this->resetPage();
+    }
 
     public function select(int $conflictId): void
     {
@@ -122,6 +133,7 @@ class StorageConflicts extends Component
     {
         $c = StorageSyncConflict::query()->findOrFail($id);
         abort_unless((int) $c->client_id === (int) $this->clientId, 403);
+
         return $c;
     }
 
@@ -130,7 +142,7 @@ class StorageConflicts extends Component
         $query = StorageSyncConflict::query()
             ->where('client_id', $this->clientId)
             ->when($this->resolution, fn ($q) => $q->where('resolution', $this->resolution))
-            ->when($this->search, fn ($q) => $q->where('filename', 'like', '%' . $this->search . '%'))
+            ->when($this->search, fn ($q) => $q->where('filename', 'like', '%'.$this->search.'%'))
             ->orderByDesc('id');
 
         $conflicts = $query->paginate(20);
@@ -140,4 +152,3 @@ class StorageConflicts extends Component
         ]);
     }
 }
-

@@ -30,7 +30,7 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()->withErrors([
                 'email' => __('auth.failed'),
             ])->onlyInput('email');
@@ -42,7 +42,7 @@ class AuthenticatedSessionController extends Controller
 
         // Check if user is active (supports both legacy is_active + new status)
         $status = $user->status ?? ($user->is_active ? 'active' : 'inactive');
-        if (!$user->is_active || $status !== 'active') {
+        if (! $user->is_active || $status !== 'active') {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -55,7 +55,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         // Check if client user belongs to an active client
-        if ($user->isClient() && $user->client && !$user->client->isActive()) {
+        if ($user->isClient() && $user->client && ! $user->client->isActive()) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

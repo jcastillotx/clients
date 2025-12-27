@@ -63,4 +63,3 @@ interface AIProviderInterface
      */
     public function validateApiKey(): bool;
 }
-

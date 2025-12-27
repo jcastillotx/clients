@@ -13,11 +13,15 @@ use Livewire\Component;
 class ContractGenerator extends Component
 {
     public ?int $clientId = null;
+
     public ?int $projectId = null;
+
     public ?int $requestId = null;
+
     public ?int $templateId = null;
 
     public string $title = '';
+
     public string $html = '';
 
     public ?int $contractId = null;
@@ -34,7 +38,7 @@ class ContractGenerator extends Component
             'provider' => 'perplexity',
         ]);
 
-        $this->title = $this->title !== '' ? $this->title : ('Contract — ' . $client->company_name);
+        $this->title = $this->title !== '' ? $this->title : ('Contract — '.$client->company_name);
         $this->html = $res['html'];
 
         session()->flash('success', 'Contract draft generated.');
@@ -45,6 +49,7 @@ class ContractGenerator extends Component
         $client = Client::query()->findOrFail($this->clientId);
         if (trim($this->title) === '' || trim($this->html) === '') {
             session()->flash('error', 'Generate a draft first.');
+
             return;
         }
 
@@ -70,4 +75,3 @@ class ContractGenerator extends Component
         ])->layout('layouts.admin', ['title' => 'Contract Generator']);
     }
 }
-

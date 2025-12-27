@@ -41,7 +41,7 @@ SYS;
     }
 
     /**
-     * @param array<int,array{path:string,content:string,language?:string}> $codeFiles
+     * @param  array<int,array{path:string,content:string,language?:string}>  $codeFiles
      */
     public static function reviewUser(array $codeFiles, array $context = []): string
     {
@@ -56,7 +56,7 @@ SYS;
             }, $codeFiles),
         ];
 
-        return "Review these code files.\n\nJSON:\n" . json_encode($payload, JSON_UNESCAPED_SLASHES) . "\n\nReturn JSON in the schema.";
+        return "Review these code files.\n\nJSON:\n".json_encode($payload, JSON_UNESCAPED_SLASHES)."\n\nReturn JSON in the schema.";
     }
 
     public static function docsSystem(): string
@@ -79,7 +79,8 @@ SYS;
     public static function docsUser(string $code, array $context = []): string
     {
         $payload = ['context' => $context, 'code' => $code];
-        return "Generate documentation for this codebase snippet.\n\nJSON:\n" . json_encode($payload, JSON_UNESCAPED_SLASHES) . "\n\nReturn JSON in the schema.";
+
+        return "Generate documentation for this codebase snippet.\n\nJSON:\n".json_encode($payload, JSON_UNESCAPED_SLASHES)."\n\nReturn JSON in the schema.";
     }
 
     public static function architectureSystem(): string
@@ -155,4 +156,3 @@ Schema:
 SYS;
     }
 }
-

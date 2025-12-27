@@ -62,4 +62,3 @@ class PredictiveAnalyticsServiceTest extends TestCase
         $this->assertArrayHasKey('breakdown', $out);
     }
 }
-

@@ -15,7 +15,7 @@ class StorageConnectionWorkflowTest extends DuskTestCase
 
     public function test_storage_settings_smoke_page_renders_for_client(): void
     {
-        if (!env('RUN_DUSK_TESTS')) {
+        if (! env('RUN_DUSK_TESTS')) {
             $this->markTestSkipped('Set RUN_DUSK_TESTS=1 to run browser tests.');
         }
 
@@ -42,4 +42,3 @@ class StorageConnectionWorkflowTest extends DuskTestCase
         });
     }
 }
-

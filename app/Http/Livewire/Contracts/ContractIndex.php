@@ -33,4 +33,3 @@ class ContractIndex extends Component
         ]);
     }
 }
-

@@ -27,4 +27,3 @@ class AuditResults extends Component
         return view('livewire.marketing.audit-results', compact('audits'));
     }
 }
-
