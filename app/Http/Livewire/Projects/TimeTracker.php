@@ -118,7 +118,7 @@ class TimeTracker extends Component
             'tasks' => $tasks,
             'running' => $running,
             'recent' => $recent,
-        ])->layout('layouts.admin', ['title' => 'Time Tracker']);
+        ]);
     }
 }
 

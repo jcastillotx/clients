@@ -1,7 +1,9 @@
-<div class="container-fluid">
+<x-app-layout>
+    <x-slot name="header">Proposal analytics</x-slot>
+
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Proposal Analytics</h3>
+            <h3 class="card-title"><i class="fas fa-chart-bar mr-1"></i> Proposal Analytics</h3>
         </div>
         <div class="card-body">
             @if(!$proposal)
@@ -51,7 +53,7 @@
 
                 <div class="card mt-3">
                     <div class="card-header">
-                        <h3 class="card-title">Recent views</h3>
+                        <h3 class="card-title"><i class="fas fa-eye mr-1"></i> Recent views</h3>
                     </div>
                     <div class="card-body p-0">
                         <table class="table table-striped mb-0">
@@ -68,6 +70,9 @@
                                         <td>{{ $v->ip_address }}</td>
                                     </tr>
                                 @endforeach
+                                @if($proposal->views->isEmpty())
+                                    <tr><td colspan="2" class="text-muted p-3">No views yet.</td></tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>
@@ -75,7 +80,7 @@
 
                 <div class="card mt-3">
                     <div class="card-header">
-                        <h3 class="card-title">Selections</h3>
+                        <h3 class="card-title"><i class="fas fa-mouse-pointer mr-1"></i> Selections</h3>
                     </div>
                     <div class="card-body p-0">
                         <table class="table table-striped mb-0">
@@ -94,6 +99,9 @@
                                         <td>${{ number_format((float)($s->total_amount ?? 0), 2) }}</td>
                                     </tr>
                                 @endforeach
+                                @if($proposal->selections->isEmpty())
+                                    <tr><td colspan="3" class="text-muted p-3">No selections yet.</td></tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>
@@ -101,5 +109,5 @@
             @endif
         </div>
     </div>
-</div>
+</x-app-layout>
 

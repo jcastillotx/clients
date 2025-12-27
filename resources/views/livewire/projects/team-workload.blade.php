@@ -1,7 +1,9 @@
-<div class="container-fluid">
+<x-app-layout>
+    <x-slot name="header">Team workload</x-slot>
+
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Team workload</h3>
+            <h3 class="card-title"><i class="fas fa-users mr-1"></i> Team workload</h3>
         </div>
         <div class="card-body p-0">
             <table class="table table-striped mb-0">
@@ -26,9 +28,12 @@
                             <td>{{ $r['hours_this_week'] }}</td>
                         </tr>
                     @endforeach
+                    @if(empty($rows))
+                        <tr><td colspan="6" class="text-muted p-3">No users found.</td></tr>
+                    @endif
                 </tbody>
             </table>
         </div>
     </div>
-</div>
+</x-app-layout>
 

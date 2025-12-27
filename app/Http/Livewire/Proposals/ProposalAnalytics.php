@@ -26,7 +26,7 @@ class ProposalAnalytics extends Component
 
         return view('livewire.proposals.proposal-analytics', [
             'proposal' => $proposal,
-        ])->layout('layouts.admin', ['title' => 'Proposal Analytics']);
+        ]);
     }
 }
 

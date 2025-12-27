@@ -143,7 +143,7 @@ class ProposalBuilder extends Component
         return view('livewire.proposals.proposal-builder', [
             'requests' => $requests,
             'proposal' => $proposal,
-        ])->layout('layouts.admin', ['title' => 'Proposal Builder']);
+        ]);
     }
 }
 

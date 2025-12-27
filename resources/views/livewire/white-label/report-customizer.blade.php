@@ -1,11 +1,13 @@
-<div class="container-fluid">
+<x-app-layout>
+    <x-slot name="header">Client report settings</x-slot>
+
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Client Report Customizer</h3>
+            <h3 class="card-title"><i class="fas fa-sliders-h mr-1"></i> Report Customizer</h3>
         </div>
         <div class="card-body">
             <div class="form-group">
-                <label>Client</label>
+                <label class="mb-1">Client</label>
                 <select class="form-control" wire:model="clientId" wire:change="loadClient">
                     <option value="">Select…</option>
                     @foreach($clients as $c)
@@ -16,7 +18,7 @@
 
             <div class="form-row">
                 <div class="col-md-4">
-                    <label>Frequency</label>
+                    <label class="mb-1">Frequency</label>
                     <select class="form-control" wire:model.defer="reportFrequency">
                         <option value="daily">daily</option>
                         <option value="weekly">weekly</option>
@@ -25,7 +27,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label>Delivery</label>
+                    <label class="mb-1">Delivery</label>
                     <select class="form-control" wire:model.defer="deliveryMethod">
                         <option value="email">email</option>
                         <option value="portal">portal</option>
@@ -33,7 +35,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label>Recipients (CSV)</label>
+                    <label class="mb-1">Recipients (CSV)</label>
                     <input class="form-control" wire:model.defer="recipientsCsv" placeholder="client@company.com, ...">
                 </div>
             </div>
@@ -49,8 +51,8 @@
                 @endforeach
             </div>
 
-            <button class="btn btn-primary mt-3" wire:click="save">Save</button>
+            <button class="btn btn-primary mt-3" wire:click="save"><i class="fas fa-save mr-1"></i> Save</button>
         </div>
     </div>
-</div>
+</x-app-layout>
 

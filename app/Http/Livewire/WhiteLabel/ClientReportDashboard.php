@@ -31,7 +31,7 @@ class ClientReportDashboard extends Component
             'whiteLabel' => $cfg,
             'reportCfg' => $reportCfg,
             'payload' => $payload,
-        ])->layout('layouts.app', ['title' => 'Reports']);
+        ]);
     }
 }
 

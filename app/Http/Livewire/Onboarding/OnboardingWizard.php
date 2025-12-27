@@ -119,7 +119,7 @@ class OnboardingWizard extends Component
         return view('livewire.onboarding.onboarding-wizard', [
             'workflow' => $workflow,
             'questionnaire' => $questionnaire,
-        ])->layout('layouts.app', ['title' => 'Onboarding']);
+        ]);
     }
 }
 

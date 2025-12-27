@@ -36,7 +36,7 @@ class ProjectTimeline extends Component
         return view('livewire.projects.project-timeline', [
             'requests' => $requests,
             'tasks' => $tasks,
-        ])->layout('layouts.admin', ['title' => 'Project Timeline']);
+        ]);
     }
 }
 

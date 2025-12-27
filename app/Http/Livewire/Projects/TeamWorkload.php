@@ -45,7 +45,7 @@ class TeamWorkload extends Component
 
         return view('livewire.projects.team-workload', [
             'rows' => $rows,
-        ])->layout('layouts.admin', ['title' => 'Team Workload']);
+        ]);
     }
 }
 

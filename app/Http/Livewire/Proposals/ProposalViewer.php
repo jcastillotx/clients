@@ -96,7 +96,7 @@ class ProposalViewer extends Component
             'content' => $content,
             'pricing' => $pricing,
             'total' => $this->totalAmount(),
-        ])->layout('layouts.app', ['title' => 'Proposal']);
+        ]);
     }
 }
 

@@ -124,7 +124,7 @@ class TaskBoard extends Component
         return view('livewire.projects.task-board', [
             'requests' => $requests,
             'board' => $board,
-        ])->layout('layouts.admin', ['title' => 'Task Board']);
+        ]);
     }
 }
 

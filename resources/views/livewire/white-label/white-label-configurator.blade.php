@@ -1,13 +1,15 @@
-<div class="container-fluid">
+<x-app-layout>
+    <x-slot name="header">White label</x-slot>
+
     <div class="row">
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">White Label Configurator</h3>
+                    <h3 class="card-title"><i class="fas fa-palette mr-1"></i> White Label Configurator</h3>
                 </div>
                 <div class="card-body">
                     <div class="form-group">
-                        <label>Client</label>
+                        <label class="mb-1">Client</label>
                         <select class="form-control" wire:model="clientId" wire:change="loadClient">
                             <option value="">Select…</option>
                             @foreach($clients as $c)
@@ -17,33 +19,34 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Custom domain</label>
+                        <label class="mb-1">Custom domain</label>
                         <input class="form-control" placeholder="reports.clientdomain.com" wire:model.defer="customDomain">
+                        <small class="text-muted">Point DNS CNAME to your portal host, then enable Active.</small>
                     </div>
 
                     <div class="form-group">
-                        <label>Company name</label>
+                        <label class="mb-1">Company name</label>
                         <input class="form-control" wire:model.defer="companyName">
                     </div>
 
                     <div class="form-group">
-                        <label>Logo URL</label>
+                        <label class="mb-1">Logo URL</label>
                         <input class="form-control" wire:model.defer="logoUrl">
                     </div>
 
                     <div class="form-row">
                         <div class="col">
-                            <label>Primary color</label>
+                            <label class="mb-1">Primary color</label>
                             <input class="form-control" wire:model.defer="primaryColor">
                         </div>
                         <div class="col">
-                            <label>Secondary color</label>
+                            <label class="mb-1">Secondary color</label>
                             <input class="form-control" wire:model.defer="secondaryColor">
                         </div>
                     </div>
 
                     <div class="form-group mt-2">
-                        <label>Footer text</label>
+                        <label class="mb-1">Footer text</label>
                         <textarea class="form-control" rows="2" wire:model.defer="footerText"></textarea>
                     </div>
 
@@ -52,7 +55,7 @@
                         <label class="form-check-label" for="wlActive">Active</label>
                     </div>
 
-                    <button class="btn btn-primary mt-3" wire:click="save">Save</button>
+                    <button class="btn btn-primary mt-3" wire:click="save"><i class="fas fa-save mr-1"></i> Save</button>
                 </div>
             </div>
         </div>
@@ -60,7 +63,7 @@
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Preview</h3>
+                    <h3 class="card-title"><i class="fas fa-eye mr-1"></i> Preview</h3>
                 </div>
                 <div class="card-body">
                     <div class="border rounded p-3" style="font-family: {{ $fontFamily }};">
@@ -70,12 +73,12 @@
                         </div>
                         <div class="text-muted small mt-1">Domain: {{ $customDomain ?: '(not set)' }}</div>
                         <hr>
-                        <div class="text-muted">Footer:</div>
+                        <div class="text-muted small">Footer</div>
                         <div>{{ $footerText ?: '(none)' }}</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</x-app-layout>
 

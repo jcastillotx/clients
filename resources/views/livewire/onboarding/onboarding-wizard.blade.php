@@ -46,7 +46,7 @@
                             @endphp
                             @if($key)
                                 <div class="mb-3">
-                                    <label class="form-label font-weight-bold">{{ $label }} @if($required)<span class="text-danger">*</span>@endif</label>
+                                    <label class="font-weight-bold mb-1">{{ $label }} @if($required)<span class="text-danger">*</span>@endif</label>
 
                                     @if($type === 'textarea')
                                         <textarea class="form-control" rows="3" wire:model.defer="answers.{{ $key }}"></textarea>
@@ -72,7 +72,7 @@
                             @endif
                         @endforeach
 
-                        <div class="d-flex" style="gap: 8px;">
+                        <div class="d-flex flex-wrap" style="gap: 8px;">
                             <button class="btn btn-outline-secondary" wire:click="saveProgress">Save progress</button>
                             <button class="btn btn-primary" wire:click="submitQuestionnaire">Submit</button>
                         </div>

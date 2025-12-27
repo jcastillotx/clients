@@ -92,7 +92,7 @@ class WhiteLabelConfigurator extends Component
         $clients = Client::query()->orderBy('company_name')->limit(250)->get(['id', 'company_name']);
         return view('livewire.white-label.white-label-configurator', [
             'clients' => $clients,
-        ])->layout('layouts.admin', ['title' => 'White Label Configurator']);
+        ]);
     }
 }
 

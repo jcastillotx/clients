@@ -72,7 +72,7 @@ class QuestionnaireBuilder extends Component
 
         return view('livewire.onboarding.questionnaire-builder', [
             'existing' => $existing,
-        ])->layout('layouts.admin', ['title' => 'Questionnaire Builder']);
+        ]);
     }
 }
 

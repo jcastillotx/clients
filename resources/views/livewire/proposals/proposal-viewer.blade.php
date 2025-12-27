@@ -46,6 +46,9 @@
                                         <span class="text-muted">— ${{ number_format((float)($t['amount'] ?? 0), 2) }}</span>
                                     </label>
                                 @endforeach
+                                @if(empty($tiers))
+                                    <div class="text-muted">No tiers configured yet.</div>
+                                @endif
                             </div>
                             <div class="col-md-6">
                                 <div class="font-weight-bold mb-2">Optional add-ons</div>

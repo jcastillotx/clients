@@ -86,7 +86,7 @@ class ReportCustomizer extends Component
         return view('livewire.white-label.report-customizer', [
             'clients' => $clients,
             'availableMetrics' => $this->availableMetricKeys(),
-        ])->layout('layouts.admin', ['title' => 'Client Report Customizer']);
+        ]);
     }
 }
 

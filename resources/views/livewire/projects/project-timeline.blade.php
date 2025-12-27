@@ -1,7 +1,9 @@
-<div class="container-fluid">
+<x-app-layout>
+    <x-slot name="header">Project timeline</x-slot>
+
     <div class="card mb-3">
         <div class="card-body">
-            <label>Request</label>
+            <label class="mb-1">Request</label>
             <select class="form-control" wire:model="requestId">
                 <option value="">Select…</option>
                 @foreach($requests as $r)
@@ -13,7 +15,7 @@
 
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Timeline</h3>
+            <h3 class="card-title"><i class="fas fa-stream mr-1"></i> Timeline</h3>
         </div>
         <div class="card-body p-0">
             <table class="table table-striped mb-0">
@@ -41,5 +43,5 @@
             </table>
         </div>
     </div>
-</div>
+</x-app-layout>
 

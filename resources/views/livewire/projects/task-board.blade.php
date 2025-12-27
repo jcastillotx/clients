@@ -1,9 +1,11 @@
-<div class="container-fluid">
+<x-app-layout>
+    <x-slot name="header">Task board</x-slot>
+
     <div class="card mb-3">
         <div class="card-body">
             <div class="form-row">
                 <div class="col-md-8">
-                    <label>Request</label>
+                    <label class="mb-1">Request</label>
                     <select class="form-control" wire:model="requestId">
                         <option value="">Select…</option>
                         @foreach($requests as $r)
@@ -12,7 +14,9 @@
                     </select>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
-                    <button class="btn btn-outline-secondary w-100" wire:click="seedFromEstimate" @if(!$requestId) disabled @endif>Seed from estimate</button>
+                    <button class="btn btn-outline-secondary w-100" wire:click="seedFromEstimate" @if(!$requestId) disabled @endif>
+                        <i class="fas fa-seedling mr-1"></i> Seed from estimate
+                    </button>
                 </div>
             </div>
         </div>
@@ -23,7 +27,7 @@
             <div class="col-md-3">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">{{ $label }}</h3>
+                        <h3 class="card-title"><i class="fas fa-columns mr-1"></i> {{ $label }}</h3>
                     </div>
                     <div class="card-body">
                         @foreach($board[$key] as $t)
@@ -35,7 +39,7 @@
                                 <div class="mt-2 d-flex flex-wrap" style="gap: 6px;">
                                     @foreach(['todo','in_progress','blocked','done'] as $s)
                                         @if($s !== $key)
-                                            <button class="btn btn-xs btn-outline-secondary" wire:click="moveTask({{ $t->id }}, '{{ $s }}')">{{ $s }}</button>
+                                            <button class="btn btn-sm btn-outline-secondary" wire:click="moveTask({{ $t->id }}, '{{ $s }}')">{{ $s }}</button>
                                         @endif
                                     @endforeach
                                 </div>
@@ -52,16 +56,16 @@
 
     <div class="card mt-3">
         <div class="card-header">
-            <h3 class="card-title">Add task</h3>
+            <h3 class="card-title"><i class="fas fa-plus mr-1"></i> Add task</h3>
         </div>
         <div class="card-body">
             <div class="form-row">
                 <div class="col-md-4">
-                    <label>Title</label>
+                    <label class="mb-1">Title</label>
                     <input class="form-control" wire:model.defer="newTitle">
                 </div>
                 <div class="col-md-6">
-                    <label>Description</label>
+                    <label class="mb-1">Description</label>
                     <input class="form-control" wire:model.defer="newDescription">
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
@@ -70,5 +74,5 @@
             </div>
         </div>
     </div>
-</div>
+</x-app-layout>
 

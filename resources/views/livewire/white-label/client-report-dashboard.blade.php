@@ -5,6 +5,7 @@
         $brandName = $whiteLabel?->company_name ?: (auth()->user()?->client?->company_name ?? config('app.name'));
         $primary = $whiteLabel?->primary_color ?: '#3c8dbc';
         $footer = $whiteLabel?->footer_text ?: '';
+        $tables = (array)($payload['tables'] ?? []);
     @endphp
 
     <div class="card">
@@ -12,30 +13,26 @@
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <div class="text-muted small">Executive dashboard</div>
-                    <h3 class="mb-0">{{ $brandName }}</h3>
+                    <div class="h4 mb-0">{{ $brandName }}</div>
+                    <div class="text-muted small">
+                        Showing only configured metrics.
+                        @if(!empty($payload['meta']['start']) && !empty($payload['meta']['end']))
+                            · Range: {{ $payload['meta']['start'] }} → {{ $payload['meta']['end'] }}
+                        @endif
+                    </div>
                 </div>
-                <div>
+                <div class="text-right">
                     <span class="badge" style="background: {{ $primary }}; color: #fff;">White-labeled</span>
+                    <div class="text-muted small mt-1">Updated: {{ now()->toDateTimeString() }}</div>
                 </div>
             </div>
-            <hr>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Snapshot</h5>
-                    <div class="text-muted small">Showing only configured metrics.</div>
-                </div>
-                <div class="col-md-6 text-md-right">
-                    <div class="text-muted small">Last updated: {{ now()->toDateTimeString() }}</div>
-                </div>
-            </div>
-
-            <pre class="mt-3" style="max-height: 320px; overflow:auto; background:#f8f9fa; padding:12px; border-radius:10px;">{{ json_encode($payload, JSON_PRETTY_PRINT) }}</pre>
-
-            @if($footer)
-                <div class="mt-3 text-muted small">{{ $footer }}</div>
-            @endif
         </div>
     </div>
+
+    @include('livewire.admin.reports._tables', ['tables' => $tables])
+
+    @if($footer)
+        <div class="text-muted small mt-2">{{ $footer }}</div>
+    @endif
 </x-app-layout>
 
