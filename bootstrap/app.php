@@ -13,6 +13,21 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Trust proxies for proper client IP detection behind load balancers/CDNs
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXIES') === '*'
+                ? '*'
+                : (env('TRUSTED_PROXIES')
+                    ? array_map('trim', explode(',', env('TRUSTED_PROXIES')))
+                    : null
+                ),
+            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
+                     \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB
+        );
+
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\ResolveWhiteLabelClient::class,
         ]);
