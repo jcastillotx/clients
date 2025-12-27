@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('description');
             $table->string('type')->default('support');
             $table->enum('status', [
+                'draft',
                 'pending',
                 'in_review',
                 'approved',

@@ -181,6 +181,9 @@
                     </div>
                 </div>
             </div>
+
+            <livewire:admin.invoices.invoice-a-i-assistant :invoiceId="$invoice->id" :editable="$editable" />
+            <livewire:admin.invoices.pricing-optimizer :invoiceId="$invoice->id" :editable="$editable" />
         </div>
     </div>
 

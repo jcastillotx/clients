@@ -42,6 +42,9 @@ echo "==> Installing dependencies"
 cd "$NEW_RELEASE"
 composer install --no-dev --prefer-dist --optimize-autoloader
 
+echo "==> Permissions"
+chmod -R 775 "$NEW_RELEASE/storage" "$NEW_RELEASE/bootstrap/cache" || true
+
 echo "==> Running migrations"
 php artisan migrate --force
 
@@ -52,6 +55,9 @@ php artisan view:cache
 
 echo "==> Switching current symlink"
 ln -sfn "$NEW_RELEASE" "$APP_ROOT/current"
+
+echo "==> Signaling workers"
+php artisan queue:restart || true
 
 echo "==> Done. Current release is now: $TS"
 echo "Tip: restart queue workers if needed (Supervisor)."

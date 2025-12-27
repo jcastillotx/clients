@@ -10,6 +10,7 @@
         </div>
         <div class="d-flex flex-wrap gap-2 align-items-center">
             <span class="badge bg-{{ $request->status_color }}">{{ $statusLabels[$request->status] ?? $request->status }}</span>
+            <a href="{{ route('admin.requests.estimator', $request) }}" class="btn btn-outline-primary">Estimator</a>
             <a href="{{ route('admin.requests.index') }}" class="btn btn-outline-secondary">Back</a>
         </div>
     </div>
@@ -73,6 +74,22 @@
                         </div>
                     </div>
 
+                    @php
+                        $lastClientMsg = optional($comments->firstWhere('is_internal', false))->comment ?? '';
+                        $ctx = [
+                            'request_id' => $request->id,
+                            'title' => $request->title,
+                            'type' => $request->type,
+                            'priority' => $request->priority,
+                            'status' => $request->status,
+                        ];
+                    @endphp
+                    <livewire:communication.smart-reply-box
+                        :clientMessage="$lastClientMsg"
+                        :contextJson="json_encode($ctx)"
+                        :wire:key="'smart-reply-request-'.$request->id"
+                    />
+
                     <div class="divide-y">
                         @forelse($comments as $c)
                             <div class="py-3 border-top">
@@ -131,6 +148,8 @@
         </div>
 
         <div class="col-12 col-xl-4">
+            <livewire:admin.requests.a-i-request-analysis :request="$request" />
+
             <div class="card mb-3">
                 <div class="card-header">
                     <div class="card-title">Assignment</div>

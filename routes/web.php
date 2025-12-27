@@ -18,6 +18,13 @@ use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Admin\Automation\AutomationIndex;
 use App\Http\Livewire\Admin\Automation\AutomationBuilder;
 use App\Http\Livewire\Admin\Automation\AutomationLogs;
+use App\Http\Livewire\Admin\Requests\AdminRequestManagement;
+use App\Http\Livewire\Admin\Requests\AdminRequestDetail;
+use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
+use App\Http\Livewire\Admin\Requests\ProjectEstimator as AdminProjectEstimator;
+use App\Http\Livewire\Admin\Invoices\AdminInvoiceManagement as AdminInvoiceManagement;
+use App\Http\Livewire\Admin\Invoices\InvoiceCreate as AdminInvoiceCreate;
+use App\Http\Livewire\Admin\Invoices\InvoiceEdit as AdminInvoiceEdit;
 use App\Http\Livewire\Settings\WebhookManagement;
 use App\Http\Livewire\Storage\StorageDashboard;
 use App\Http\Livewire\Storage\StorageConflicts;
@@ -27,11 +34,39 @@ use App\Http\Livewire\Admin\Storage\StorageOverview;
 use App\Http\Livewire\Documents\DocumentWorkflow;
 use App\Http\Livewire\Documents\SmartDocumentBrowser;
 use App\Http\Livewire\Documents\DocumentTemplates;
+use App\Http\Livewire\Documents\DocumentAIAnalysis;
+use App\Http\Livewire\Documents\DocumentChat;
+use App\Http\Livewire\Documents\SummarizeDocument;
 use App\Http\Livewire\Client\ProjectDashboard;
 use App\Http\Livewire\Client\Messaging;
 use App\Http\Livewire\Client\KnowledgeBase;
 use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\AnalyticsDashboard;
+use App\Http\Livewire\Client\EstimateApproval;
+use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
+use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
+use App\Http\Livewire\Communication\EmailDraftAssistant;
+use App\Http\Livewire\Admin\Analytics\AIInsightsDashboard as AdminAIInsightsDashboard;
+use App\Http\Livewire\Admin\Analytics\PredictiveCharts as AdminPredictiveCharts;
+use App\Http\Livewire\Admin\Analytics\ClientHealthMonitor as AdminClientHealthMonitor;
+use App\Http\Livewire\Research\ResearchAssistant as ResearchAssistantTool;
+use App\Http\Livewire\Research\TechnicalAdvisor as TechnicalAdvisorTool;
+use App\Http\Livewire\Research\IndustryMonitor as IndustryMonitorTool;
+use App\Http\Livewire\Admin\AI\AIProviderManagement as AdminAIProviderManagement;
+use App\Http\Livewire\Admin\AI\AIProviderForm as AdminAIProviderForm;
+use App\Http\Livewire\Admin\AI\AITaskConfiguration as AdminAITaskConfiguration;
+use App\Http\Livewire\Admin\AI\AIUsageDashboard as AdminAIUsageDashboard;
+use App\Http\Livewire\Admin\AI\AIAuditLog as AdminAIAuditLog;
+use App\Http\Livewire\Admin\AI\AISafetyDashboard as AdminAISafetyDashboard;
+use App\Http\Livewire\Admin\AI\AIReviewQueue as AdminAIReviewQueue;
+use App\Http\Livewire\Admin\AI\AIQualityMetrics as AdminAIQualityMetrics;
+use App\Http\Livewire\AI\AIAssistantChat as AdminAssistantChat;
+use App\Http\Livewire\AI\PromptTemplateManager as AdminPromptTemplates;
+use App\Http\Livewire\AI\KnowledgeBase as AdminKnowledgeBase;
+use App\Http\Livewire\AI\WorkflowBuilder as AdminWorkflowBuilder;
+use App\Http\Livewire\AI\ClientAssistantChat as ClientAssistantChat;
+use App\Http\Livewire\Technical\CodeReviewer as AdminCodeReviewer;
+use App\Http\Livewire\Technical\ArchitectureAdvisor as AdminArchitectureAdvisor;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
@@ -88,6 +123,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Service Requests
     Route::resource('requests', RequestController::class);
+    Route::get('/requests/{request}/estimate', EstimateApproval::class)->name('client.requests.estimate');
 
     // Contracts
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
@@ -110,6 +146,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
+    Route::get('/documents/{document}/ai', DocumentAIAnalysis::class)->name('documents.ai');
+    Route::get('/documents/{document}/chat', DocumentChat::class)->name('documents.chat');
+    Route::get('/documents/chat', DocumentChat::class)->name('documents.chat.all');
+    Route::get('/documents/{document}/summarize', SummarizeDocument::class)->name('documents.summarize');
     Route::get('/documents/{document}/open/{viewer?}', [DocumentViewerController::class, 'openDocument'])
         ->whereIn('viewer', ['office', 'google'])
         ->name('documents.viewer.document');
@@ -141,6 +181,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
     Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
 
+    // Research & consultation tools
+    Route::get('/research', ResearchAssistantTool::class)->name('research.assistant');
+    Route::get('/research/technical', TechnicalAdvisorTool::class)->name('research.technical');
+    Route::get('/research/monitor', IndustryMonitorTool::class)->name('research.monitor');
+
+    // Client AI assistant
+    Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
+
 });
 
 /*
@@ -153,8 +201,50 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        // Requests
+        Route::get('/requests', AdminRequestManagement::class)->name('requests.index');
+        Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
+        Route::get('/requests/{request}', AdminRequestDetail::class)->name('requests.show');
+        Route::get('/requests/{request}/estimator', AdminProjectEstimator::class)->name('requests.estimator');
+
+        // Invoices
+        Route::get('/invoices', AdminInvoiceManagement::class)->name('invoices.index');
+        Route::get('/invoices/create', AdminInvoiceCreate::class)->name('invoices.create');
+        Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit');
+
+        // Contracts (AI)
+        Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');
+        Route::get('/meeting-notes', AdminMeetingNotes::class)->name('meeting-notes');
+        Route::get('/communication/email-assistant', EmailDraftAssistant::class)->name('communication.email-assistant');
+
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
+
+        // AI analytics
+        Route::get('/analytics/ai-insights', AdminAIInsightsDashboard::class)->name('analytics.ai-insights')->middleware('permission:view reports');
+        Route::get('/analytics/predictive', AdminPredictiveCharts::class)->name('analytics.predictive')->middleware('permission:view reports');
+        Route::get('/analytics/client-health', AdminClientHealthMonitor::class)->name('analytics.client-health')->middleware('permission:view reports');
+
+        // AI admin
+        Route::get('/ai/providers', AdminAIProviderManagement::class)->name('ai.providers');
+        Route::get('/ai/providers/create', AdminAIProviderForm::class)->name('ai.providers.create');
+        Route::get('/ai/providers/{provider}', AdminAIProviderForm::class)->name('ai.providers.edit');
+        Route::get('/ai/tasks', AdminAITaskConfiguration::class)->name('ai.tasks');
+        Route::get('/ai/usage', AdminAIUsageDashboard::class)->name('ai.usage');
+        Route::get('/ai/audit', AdminAIAuditLog::class)->name('ai.audit');
+        Route::get('/ai/safety', AdminAISafetyDashboard::class)->name('ai.safety');
+        Route::get('/ai/review-queue', AdminAIReviewQueue::class)->name('ai.review-queue');
+        Route::get('/ai/quality', AdminAIQualityMetrics::class)->name('ai.quality');
+
+        // AI assistant & training tools
+        Route::get('/ai/assistant', AdminAssistantChat::class)->name('ai.assistant');
+        Route::get('/ai/prompt-templates', AdminPromptTemplates::class)->name('ai.prompt-templates');
+        Route::get('/ai/knowledge-base', AdminKnowledgeBase::class)->name('ai.knowledge-base');
+        Route::get('/ai/workflows', AdminWorkflowBuilder::class)->name('ai.workflows');
+
+        // Technical tools
+        Route::get('/technical/code-review', AdminCodeReviewer::class)->name('technical.code-review');
+        Route::get('/technical/architecture', AdminArchitectureAdvisor::class)->name('technical.architecture');
 
         // Export endpoints
         Route::get('/reports/export/{category}/{format}', [AdminReportExportController::class, 'export'])

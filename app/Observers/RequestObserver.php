@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\Ai\AnalyzeRequestJob;
 use App\Models\Request as ServiceRequest;
 use App\Services\AutomationEngine;
 use App\Services\WebhookService;
@@ -10,6 +11,16 @@ class RequestObserver
 {
     public function created(ServiceRequest $request): void
     {
+        // AI triage workflow (async). Runs best-effort; does nothing if AI isn't configured.
+        try {
+            // Only triage client-created requests.
+            if ((int) ($request->client_id ?? 0) > 0 && (int) ($request->created_by ?? 0) > 0) {
+                AnalyzeRequestJob::dispatch($request->id);
+            }
+        } catch (\Throwable) {
+            // ignore
+        }
+
         app(AutomationEngine::class)->run('request.created', [
             'request' => $request->toArray(),
             'client' => $request->client?->toArray(),

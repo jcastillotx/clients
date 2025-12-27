@@ -18,6 +18,9 @@ class RolePermissionSeeder extends Seeder
 
         // Create permissions (requested naming)
         $permissions = [
+            // Admin shell access
+            'access admin panel',
+
             // Clients
             'view_any_client',
             'view_client',
@@ -61,78 +64,105 @@ class RolePermissionSeeder extends Seeder
             'manage_permissions',
 
             // Settings
+            // (Keep both legacy + newer names; code uses "manage settings")
             'view_settings',
             'update_settings',
+            'manage settings',
+
+            // Documents (admin helpers; some UI gates on this)
+            'manage documents',
+
+            // Reporting (route middleware uses this)
+            'view reports',
         ];
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+        // Support both the session ("web") and token ("sanctum") guards so
+        // permission checks work consistently for API tokens.
+        $guards = ['web', 'sanctum'];
+
+        foreach ($guards as $guard) {
+            foreach ($permissions as $permission) {
+                Permission::firstOrCreate([
+                    'name' => $permission,
+                    'guard_name' => $guard,
+                ]);
+            }
         }
 
         // Create roles and assign permissions
 
-        $allPermissions = Permission::all();
+        foreach ($guards as $guard) {
+            $allPermissions = Permission::query()->where('guard_name', $guard)->get();
 
-        // super_admin - full access
-        $superAdminRole = Role::firstOrCreate(['name' => 'super_admin']);
-        $superAdminRole->syncPermissions($allPermissions);
+            // super_admin - full access
+            $superAdminRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => $guard]);
+            $superAdminRole->syncPermissions($allPermissions);
 
-        // admin - full access
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $adminRole->syncPermissions($allPermissions);
+            // admin - full access
+            $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => $guard]);
+            $adminRole->syncPermissions($allPermissions);
 
-        // staff - operational access
-        $staffRole = Role::firstOrCreate(['name' => 'staff']);
-        $staffRole->syncPermissions([
-            // Clients
-            'view_any_client',
-            'view_client',
-            'create_client',
-            'update_client',
+            // staff - operational access
+            $staffRole = Role::firstOrCreate(['name' => 'staff', 'guard_name' => $guard]);
+            $staffRole->syncPermissions([
+                'access admin panel',
 
-            // Requests
-            'view_any_request',
-            'view_request',
-            'create_request',
-            'update_request',
-            'delete_request',
+                // Clients
+                'view_any_client',
+                'view_client',
+                'create_client',
+                'update_client',
 
-            // Invoices
-            'view_any_invoice',
-            'view_invoice',
-            'create_invoice',
-            'update_invoice',
-            'process_payment',
+                // Requests
+                'view_any_request',
+                'view_request',
+                'create_request',
+                'update_request',
+                'delete_request',
 
-            // Contracts
-            'view_any_contract',
-            'view_contract',
-            'create_contract',
-            'update_contract',
+                // Invoices
+                'view_any_invoice',
+                'view_invoice',
+                'create_invoice',
+                'update_invoice',
+                'process_payment',
 
-            // Documents
-            'view_any_document',
-            'view_document',
-            'upload_document',
-            'delete_document',
+                // Contracts
+                'view_any_contract',
+                'view_contract',
+                'create_contract',
+                'update_contract',
 
-            // Users (limited)
-            'view_any_user',
-            'view_user',
-        ]);
+                // Documents
+                'view_any_document',
+                'view_document',
+                'upload_document',
+                'delete_document',
 
-        // Client role - limited access
-        $clientRole = Role::firstOrCreate(['name' => 'client']);
-        $clientRole->syncPermissions([
-            'view_client',
-            'view_request',
-            'create_request',
-            'update_request',
-            'view_contract',
-            'view_invoice',
-            'process_payment',
-            'view_document',
-            'upload_document',
-        ]);
+                // Users (limited)
+                'view_any_user',
+                'view_user',
+
+                // Settings (limited)
+                'manage settings',
+
+                // Reporting
+                'view reports',
+            ]);
+
+            // Client role - limited access
+            $clientRole = Role::firstOrCreate(['name' => 'client', 'guard_name' => $guard]);
+            $clientRole->syncPermissions([
+                'view_client',
+                'view_request',
+                'create_request',
+                'update_request',
+                'view_contract',
+                'view_invoice',
+                'process_payment',
+                'view_document',
+                'upload_document',
+            ]);
+        }
     }
 }

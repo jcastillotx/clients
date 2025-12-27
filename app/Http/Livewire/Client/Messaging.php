@@ -24,6 +24,7 @@ class Messaging extends Component
 
     protected $listeners = [
         'message-received' => '$refresh',
+        'smart-reply-selected' => 'applySmartReply',
     ];
 
     public function mount(): void
@@ -119,6 +120,11 @@ class Messaging extends Component
         }
 
         $this->dispatch('message-sent', conversationId: $conv->id);
+    }
+
+    public function applySmartReply(string $text): void
+    {
+        $this->message = $text;
     }
 
     public function markVisibleAsRead(): void

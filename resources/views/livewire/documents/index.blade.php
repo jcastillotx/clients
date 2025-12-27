@@ -77,6 +77,9 @@
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{{ $document->created_at->format('M d, Y') }}</td>
                             <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
                                 <div class="flex justify-end gap-2">
+                                    <a href="{{ route('documents.ai', $document) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:py-1.5 sm:text-xs">
+                                        AI
+                                    </a>
                                     @if($document->isPdf() || $document->isImage())
                                         <a href="{{ route('documents.view', $document) }}" target="_blank" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 sm:py-1.5 sm:text-xs">
                                             Preview

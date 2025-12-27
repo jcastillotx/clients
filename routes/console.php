@@ -10,6 +10,12 @@ use App\Services\AdminReports\ReportScheduleRunner;
 use App\Services\Storage\StorageSyncScheduler;
 use App\Services\AutomationEngine;
 use App\Services\WebhookService;
+use App\Services\AI\RequestEmbeddingService;
+use App\Models\Request as ServiceRequest;
+use App\Jobs\Analytics\UpdateClientHealthScoresJob;
+use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
+use App\Jobs\Analytics\GenerateMonthlyRevenueForecastJob;
+use App\Jobs\Analytics\GenerateQuarterlyBusinessIntelligenceReportJob;
 
 /*
 |--------------------------------------------------------------------------
@@ -125,3 +131,56 @@ Schedule::call(function () {
 Schedule::call(function () {
     app(StorageSyncScheduler::class)->dispatchDue();
 })->everyFiveMinutes()->name('storage-auto-sync');
+
+// AI analytics: update client health scores daily
+Schedule::call(function () {
+    UpdateClientHealthScoresJob::dispatch();
+})->daily()->name('ai-analytics-client-health-daily');
+
+// AI analytics: weekly trends report
+Schedule::call(function () {
+    GenerateWeeklyTrendReportJob::dispatch();
+})->weekly()->name('ai-analytics-weekly-trends');
+
+// AI analytics: monthly forecast report
+Schedule::call(function () {
+    GenerateMonthlyRevenueForecastJob::dispatch();
+})->monthly()->name('ai-analytics-monthly-forecast');
+
+// AI analytics: quarterly business intelligence report
+Schedule::call(function () {
+    GenerateQuarterlyBusinessIntelligenceReportJob::dispatch();
+})->quarterly()->name('ai-analytics-quarterly-bi');
+
+/*
+|--------------------------------------------------------------------------
+| AI / Embeddings Utilities
+|--------------------------------------------------------------------------
+*/
+
+Artisan::command('ai:embeddings:backfill {--limit=200} {--provider=openai} {--model=text-embedding-3-small}', function () {
+    $limit = (int) $this->option('limit');
+    $provider = (string) $this->option('provider');
+    $model = (string) $this->option('model');
+
+    $svc = app(RequestEmbeddingService::class);
+
+    $count = 0;
+    $skipped = 0;
+    $q = ServiceRequest::query()->orderByDesc('id')->limit(max(1, $limit));
+    foreach ($q->cursor() as $req) {
+        $row = $svc->upsertRequestEmbedding($req, [
+            'provider' => $provider,
+            'model' => $model,
+            'timeout' => 45,
+        ]);
+        if ($row) {
+            $count++;
+            $this->line("Embedded request #{$req->id}");
+        } else {
+            $skipped++;
+        }
+    }
+
+    $this->info("Done. Embedded={$count}, skipped={$skipped}.");
+})->purpose('Backfill semantic embeddings for past requests');
