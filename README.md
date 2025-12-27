@@ -26,6 +26,7 @@ A self-service client management portal built with Laravel 11, Livewire 3, and A
 ## Requirements
 
 - PHP 8.2+
+- PHP extensions: `mbstring`, `xml`, `curl`, `zip`, `gd` (Excel exports), `sqlite3` (tests)
 - Composer 2.x
 - Node.js 18+ & NPM
 - MySQL 8.0+
@@ -43,6 +44,13 @@ cd client-portal
 
 ```bash
 composer install
+```
+
+If you see an error about `bootstrap/cache` not being writable, ensure it exists and is writable:
+
+```bash
+mkdir -p bootstrap/cache
+chmod -R 775 bootstrap/cache
 ```
 
 ### 3. Install Node Dependencies
@@ -89,6 +97,30 @@ php artisan serve
 ```
 
 Visit `http://localhost:8000`
+
+## Development
+
+### Code style (Pint)
+
+```bash
+./vendor/bin/pint
+```
+
+Check formatting without modifying files:
+
+```bash
+./vendor/bin/pint --test
+```
+
+### Running tests
+
+```bash
+php artisan test
+```
+
+Notes:
+- The PHPUnit config is set up to use **SQLite in-memory** by default, so you typically don’t need to configure a database just to run tests.
+- Some tests may emit **warnings** when optional integration credentials are not present (for example, Stripe/S3/Drive/Dropbox). These are treated as warnings (not failures) so local/CI runs can still pass without external service configuration.
 
 ## Default Login Credentials
 
@@ -198,7 +230,7 @@ Add to cPanel Cron Jobs (run every minute):
 
 ## Stripe Configuration
 
-1. Create a Stripe account at https://stripe.com
+1. Create a Stripe account at `https://stripe.com`
 2. Get API keys from Dashboard → Developers → API keys
 3. Add to `.env`:
    ```
