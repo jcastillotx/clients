@@ -92,13 +92,19 @@ Visit `http://localhost:8000`
 
 ## Default Login Credentials
 
-After running seeders:
+After running seeders (local/dev only):
 
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@kre8ivdesigns.com | password |
 | Staff | staff@kre8ivdesigns.com | password |
 | Client | client@demo.com | password |
+
+**Do not use these seeders/credentials in production.** In production, create the initial admin via:
+
+```bash
+php artisan portal:bootstrap-admin admin@yourdomain.com --name="Your Name" --password="use-a-strong-password"
+```
 
 ## Directory Structure
 
@@ -160,7 +166,7 @@ Via SSH or cPanel Terminal:
 
 ```bash
 php artisan migrate --force
-php artisan db:seed --force
+php artisan db:seed --class=Database\\Seeders\\RoleAndPermissionSeeder --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

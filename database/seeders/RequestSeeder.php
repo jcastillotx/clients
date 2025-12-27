@@ -11,6 +11,11 @@ class RequestSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->environment('production')) {
+            $this->command?->warn('Skipping RequestSeeder in production (demo data).');
+            return;
+        }
+
         $clients = Client::query()->take(3)->get();
         if ($clients->isEmpty()) {
             $clients = Client::factory()->count(3)->active()->create();

@@ -12,6 +12,11 @@ class ClientSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->environment('production')) {
+            $this->command?->warn('Skipping ClientSeeder in production (demo data).');
+            return;
+        }
+
         // Create 3 test client companies (stable emails for dev/testing)
         $clients = [
             ['company_name' => 'Acme Corporation', 'contact_name' => 'Jane Smith', 'email' => 'client1@example.com', 'tier' => 'enterprise'],

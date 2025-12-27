@@ -3,9 +3,13 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Database\Seeders\RoleAndPermissionSeeder;
 use App\Models\Invoice;
 use App\Models\Contract;
 use App\Models\StorageConnection;
+use App\Models\User;
 use App\Services\AdminReports\ReportScheduleRunner;
 use App\Services\Storage\StorageSyncScheduler;
 use App\Services\AutomationEngine;
@@ -28,6 +32,71 @@ use App\Jobs\Security\PurgeOldAuditLogsJob;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
+
+/*
+|--------------------------------------------------------------------------
+| Production bootstrap utilities
+|--------------------------------------------------------------------------
+*/
+
+Artisan::command('portal:bootstrap-admin {email : Admin email address} {--name=Admin User} {--password=} {--force : Update password if user already exists}', function () {
+    $email = (string) $this->argument('email');
+    $name = (string) $this->option('name');
+    $password = (string) ($this->option('password') ?? '');
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $this->error('Invalid email address.');
+        return 1;
+    }
+
+    if ($password === '') {
+        // Generate a strong password if not provided (prints once to console).
+        $password = Str::password(24);
+        $this->warn('No password provided. Generated a password (store it securely):');
+        $this->line($password);
+    }
+
+    if (mb_strlen($password) < 16) {
+        $this->error('Password must be at least 16 characters.');
+        return 1;
+    }
+
+    // Ensure roles/permissions exist (idempotent).
+    $this->call('db:seed', [
+        '--class' => RoleAndPermissionSeeder::class,
+        '--force' => true,
+    ]);
+
+    $user = User::query()->where('email', $email)->first();
+    $force = (bool) $this->option('force');
+
+    if ($user) {
+        if (!$force) {
+            $this->error("User already exists: {$email}. Re-run with --force to update name/password.");
+            return 1;
+        }
+
+        $user->fill([
+            'name' => $name !== '' ? $name : ($user->name ?? 'Admin User'),
+            'password' => Hash::make($password),
+            'email_verified_at' => $user->email_verified_at ?? now(),
+            'is_active' => true,
+        ])->save();
+    } else {
+        $user = User::create([
+            'name' => $name !== '' ? $name : 'Admin User',
+            'email' => $email,
+            'password' => Hash::make($password),
+            'email_verified_at' => now(),
+            'is_active' => true,
+        ]);
+    }
+
+    $user->assignRole('admin');
+
+    $this->info("Admin ready: {$email}");
+    return 0;
+})->purpose('Create/repair the initial admin account (safe for production)');
 
 /*
 |--------------------------------------------------------------------------
