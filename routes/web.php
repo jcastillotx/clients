@@ -128,6 +128,7 @@ use App\Http\Livewire\Admin\BrandMonitoring\Dashboard as AdminBrandMonitoringDas
 use App\Http\Livewire\Admin\BrandMonitoring\ApiStatus as AdminBrandMonitoringApiStatus;
 use App\Http\Livewire\Admin\Social\PostCreator;
 use App\Http\Livewire\Admin\Social\PostManager;
+use App\Http\Livewire\Admin\Social\ContentCalendar;
 use App\Http\Livewire\Client\BrandMonitoring\MyMentions as ClientMyMentions;
 use App\Http\Livewire\Client\Social\PendingApprovals;
 use Dedoc\Scramble\Generator;
@@ -418,6 +419,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/posts', PostManager::class)->name('posts');
             Route::get('/posts/create', PostCreator::class)->name('posts.create');
             Route::get('/posts/{post}/edit', PostCreator::class)->name('posts.edit');
+            Route::get('/content-calendar', ContentCalendar::class)->name('content-calendar');
         });
 
         // AI analytics

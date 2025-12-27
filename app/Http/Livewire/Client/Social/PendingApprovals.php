@@ -52,7 +52,18 @@ class PendingApprovals extends Component
             'resolved_at' => now(),
         ]);
 
-        // TODO: Notify staff of approval
+        // Notify staff who created the post
+        if ($post->creator) {
+            $post->creator->notify(new \App\Notifications\SocialPostApproved($post));
+        }
+
+        // Also notify all staff with admin panel access
+        $staffUsers = \App\Models\User::permission('access admin panel')->get();
+        foreach ($staffUsers as $user) {
+            if ($user->id !== $post->creator?->id) {
+                $user->notify(new \App\Notifications\SocialPostApproved($post));
+            }
+        }
 
         session()->flash('success', 'Post approved successfully! Staff will schedule it for publishing.');
         $this->selectedPost = null;
@@ -93,7 +104,23 @@ class PendingApprovals extends Component
             $this->selectedPost->update(['meta' => $meta]);
         }
 
-        // TODO: Notify staff of requested changes
+        // Get the latest feedback (the one we just created)
+        $latestFeedback = $this->selectedPost->feedback()->latest()->first();
+
+        // Notify staff who created the post
+        if ($this->selectedPost->creator && $latestFeedback) {
+            $this->selectedPost->creator->notify(new \App\Notifications\SocialPostChangesRequested($this->selectedPost, $latestFeedback));
+        }
+
+        // Also notify all staff with admin panel access
+        if ($latestFeedback) {
+            $staffUsers = \App\Models\User::permission('access admin panel')->get();
+            foreach ($staffUsers as $user) {
+                if ($user->id !== $this->selectedPost->creator?->id) {
+                    $user->notify(new \App\Notifications\SocialPostChangesRequested($this->selectedPost, $latestFeedback));
+                }
+            }
+        }
 
         session()->flash('success', 'Changes requested. Staff will revise the post and resubmit for your approval.');
         $this->closeFeedbackModal();
