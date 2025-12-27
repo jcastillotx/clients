@@ -12,9 +12,7 @@ class ContractExpiringNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Contract $contract, public int $daysRemaining = 30)
-    {
-    }
+    public function __construct(public Contract $contract, public int $daysRemaining = 30) {}
 
     public function build(): self
     {
@@ -30,4 +28,3 @@ class ContractExpiringNotification extends Mailable implements ShouldQueue
             ]);
     }
 }
-

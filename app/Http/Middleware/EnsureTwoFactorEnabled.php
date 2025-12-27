@@ -10,12 +10,12 @@ class EnsureTwoFactorEnabled
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!config('security.enforce_admin_2fa', true)) {
+        if (! config('security.enforce_admin_2fa', true)) {
             return $next($request);
         }
 
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
@@ -24,7 +24,7 @@ class EnsureTwoFactorEnabled
             ? ($user->isAdmin() || $user->isStaff())
             : ((int) ($user->client_id ?? 0) === 0);
 
-        if (!$isPrivileged) {
+        if (! $isPrivileged) {
             return $next($request);
         }
 
@@ -33,11 +33,10 @@ class EnsureTwoFactorEnabled
             return $next($request);
         }
 
-        if (!$user->two_factor_confirmed_at && !(bool) ($user->two_factor_enabled ?? false)) {
+        if (! $user->two_factor_confirmed_at && ! (bool) ($user->two_factor_enabled ?? false)) {
             return redirect()->route('two-factor.setup');
         }
 
         return $next($request);
     }
 }
-

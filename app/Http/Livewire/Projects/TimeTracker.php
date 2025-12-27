@@ -16,12 +16,16 @@ use Livewire\Component;
 class TimeTracker extends Component
 {
     public ?int $requestId = null;
+
     public ?int $taskId = null;
+
     public string $description = '';
+
     public bool $isBillable = true;
 
     // Manual entry
     public string $manualDate = '';
+
     public int $manualMinutes = 30;
 
     public function mount(): void
@@ -73,7 +77,9 @@ class TimeTracker extends Component
             $svc->stopTimer($running);
             if ($running->request_id) {
                 $req = ServiceRequest::query()->find($running->request_id);
-                if ($req) $budgets->recalcForRequest($req);
+                if ($req) {
+                    $budgets->recalcForRequest($req);
+                }
             }
         }
 
@@ -116,7 +122,9 @@ class TimeTracker extends Component
         ]);
 
         $req = ServiceRequest::query()->find((int) $this->requestId);
-        if ($req) $budgets->recalcForRequest($req);
+        if ($req) {
+            $budgets->recalcForRequest($req);
+        }
 
         session()->flash('success', 'Manual time entry added.');
     }
@@ -143,4 +151,3 @@ class TimeTracker extends Component
         ]);
     }
 }
-

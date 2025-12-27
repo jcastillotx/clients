@@ -2,11 +2,11 @@
 
 namespace App\Http\Livewire\Admin\Requests;
 
+use App\Models\ActivityLog;
 use App\Models\Client;
 use App\Models\Request as ServiceRequest;
 use App\Models\RequestComment;
 use App\Models\User;
-use App\Models\ActivityLog;
 use App\Notifications\RequestAssignedNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Notification;
@@ -22,57 +22,108 @@ class AdminRequestManagement extends Component
     public string $viewMode = 'table'; // table|kanban
 
     public string $search = '';
+
     public ?int $clientId = null;
+
     public string $clientSearch = '';
+
     /** @var array<int, string> */
     public array $statuses = [];
+
     /** @var array<int, string> */
     public array $types = [];
+
     public string $priority = '';
+
     public ?int $assignedTo = null;
+
     public ?string $dateFrom = null;
+
     public ?string $dateTo = null;
 
     /** @var array<int, int> */
     public array $selected = [];
+
     public bool $selectPage = false;
 
     // Bulk actions
     public string $bulkStatus = '';
+
     public string $bulkPriority = '';
+
     public ?int $bulkAssignedTo = null;
 
     // Assignment modal state
     public bool $showAssign = false;
+
     public ?int $assignRequestId = null;
+
     public ?int $assignToUserId = null;
+
     public ?string $assignDueDate = null; // YYYY-MM-DD
+
     public string $assignInternalNote = '';
+
     public bool $assignNotify = true;
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingClientId(): void { $this->resetPage(); }
-    public function updatingStatuses(): void { $this->resetPage(); }
-    public function updatingTypes(): void { $this->resetPage(); }
-    public function updatingPriority(): void { $this->resetPage(); }
-    public function updatingAssignedTo(): void { $this->resetPage(); }
-    public function updatingDateFrom(): void { $this->resetPage(); }
-    public function updatingDateTo(): void { $this->resetPage(); }
-    public function updatingViewMode(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingClientId(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatuses(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTypes(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPriority(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingAssignedTo(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateFrom(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateTo(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingViewMode(): void
+    {
+        $this->resetPage();
+    }
 
     protected function baseQuery(): Builder
     {
         $user = auth()->user();
         $staffClientIds = [];
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $staffClientIds = $user->assignedClientIds();
         }
 
         return ServiceRequest::query()
             ->with(['client', 'creator', 'assignee'])
-            ->when(!empty($staffClientIds), fn ($q) => $q->whereIn('client_id', $staffClientIds))
+            ->when(! empty($staffClientIds), fn ($q) => $q->whereIn('client_id', $staffClientIds))
             ->when($this->search, function ($q) {
-                $s = '%' . $this->search . '%';
+                $s = '%'.$this->search.'%';
                 $q->where(function ($qq) use ($s) {
                     $qq->where('title', 'like', $s)
                         ->orWhere('description', 'like', $s)
@@ -80,8 +131,8 @@ class AdminRequestManagement extends Component
                 });
             })
             ->when($this->clientId, fn ($q) => $q->where('client_id', $this->clientId))
-            ->when(!empty($this->statuses), fn ($q) => $q->whereIn('status', $this->statuses))
-            ->when(!empty($this->types), fn ($q) => $q->whereIn('type', $this->types))
+            ->when(! empty($this->statuses), fn ($q) => $q->whereIn('status', $this->statuses))
+            ->when(! empty($this->types), fn ($q) => $q->whereIn('type', $this->types))
             ->when($this->priority !== '' && $this->priority !== 'all', fn ($q) => $q->where('priority', $this->priority))
             ->when($this->assignedTo, fn ($q) => $q->where('assigned_to', $this->assignedTo))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
@@ -91,8 +142,9 @@ class AdminRequestManagement extends Component
 
     public function updatedSelectPage(bool $value): void
     {
-        if (!$value) {
+        if (! $value) {
             $this->selected = [];
+
             return;
         }
 
@@ -105,7 +157,9 @@ class AdminRequestManagement extends Component
 
     public function applyBulkStatus(): void
     {
-        if (empty($this->selected) || $this->bulkStatus === '') return;
+        if (empty($this->selected) || $this->bulkStatus === '') {
+            return;
+        }
 
         ServiceRequest::query()
             ->whereIn('id', $this->selected)
@@ -119,7 +173,9 @@ class AdminRequestManagement extends Component
 
     public function applyBulkPriority(): void
     {
-        if (empty($this->selected) || $this->bulkPriority === '') return;
+        if (empty($this->selected) || $this->bulkPriority === '') {
+            return;
+        }
 
         ServiceRequest::query()
             ->whereIn('id', $this->selected)
@@ -133,7 +189,9 @@ class AdminRequestManagement extends Component
 
     public function applyBulkAssign(): void
     {
-        if (empty($this->selected) || !$this->bulkAssignedTo) return;
+        if (empty($this->selected) || ! $this->bulkAssignedTo) {
+            return;
+        }
 
         ServiceRequest::query()
             ->whereIn('id', $this->selected)
@@ -158,7 +216,9 @@ class AdminRequestManagement extends Component
 
     public function saveAssignment(): void
     {
-        if (!$this->assignRequestId) return;
+        if (! $this->assignRequestId) {
+            return;
+        }
         $req = ServiceRequest::query()->with('client')->findOrFail($this->assignRequestId);
 
         $req->update([
@@ -197,17 +257,17 @@ class AdminRequestManagement extends Component
     public function moveRequest(int $requestId, string $status): void
     {
         $allowed = array_keys(config('client-portal.request_statuses', []));
-        if (!in_array($status, $allowed, true)) {
+        if (! in_array($status, $allowed, true)) {
             return;
         }
 
         $req = ServiceRequest::query()->findOrFail($requestId);
 
         $updates = ['status' => $status];
-        if ($status === 'in_progress' && !$req->started_at) {
+        if ($status === 'in_progress' && ! $req->started_at) {
             $updates['started_at'] = now();
         }
-        if ($status === 'completed' && !$req->completed_at) {
+        if ($status === 'completed' && ! $req->completed_at) {
             $updates['completed_at'] = now();
         }
 
@@ -218,7 +278,7 @@ class AdminRequestManagement extends Component
     {
         $q = Client::query()->orderBy('company_name');
         if (trim($this->clientSearch) !== '') {
-            $s = '%' . trim($this->clientSearch) . '%';
+            $s = '%'.trim($this->clientSearch).'%';
             $q->where('company_name', 'like', $s);
         }
 
@@ -245,7 +305,7 @@ class AdminRequestManagement extends Component
         $priorities = config('client-portal.request_priorities', []);
 
         if ($this->viewMode === 'kanban') {
-            $columns = !empty($this->statuses) ? $this->statuses : array_keys($statuses);
+            $columns = ! empty($this->statuses) ? $this->statuses : array_keys($statuses);
             $boards = [];
             foreach ($columns as $status) {
                 $boards[$status] = (clone $this->baseQuery())
@@ -275,4 +335,3 @@ class AdminRequestManagement extends Component
         ])->layout('layouts.admin', ['title' => 'Requests']);
     }
 }
-

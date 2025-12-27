@@ -16,12 +16,13 @@ class SocialMediaPublishingService
     public function publishPost(ContentCalendarItem $post): bool
     {
         // Verify post is ready to publish
-        if (!$this->canPublish($post)) {
+        if (! $this->canPublish($post)) {
             Log::warning('Post cannot be published', [
                 'post_id' => $post->id,
                 'status' => $post->status,
                 'scheduled_for' => $post->scheduled_for,
             ]);
+
             return false;
         }
 
@@ -31,8 +32,9 @@ class SocialMediaPublishingService
             ->where('is_connected', true)
             ->first();
 
-        if (!$account) {
-            $post->markAsFailed('No connected account found for platform: ' . $post->platform);
+        if (! $account) {
+            $post->markAsFailed('No connected account found for platform: '.$post->platform);
+
             return false;
         }
 
@@ -45,15 +47,16 @@ class SocialMediaPublishingService
         // Verify token is still valid
         if ($account->isTokenExpired()) {
             $post->markAsFailed('Account token is expired and could not be refreshed');
+
             return false;
         }
 
         try {
             // Publish to the platform
-            $result = match($post->platform) {
+            $result = match ($post->platform) {
                 'facebook' => $this->publishToFacebook($post, $account),
                 'linkedin' => $this->publishToLinkedIn($post, $account),
-                default => throw new \Exception('Unsupported platform: ' . $post->platform),
+                default => throw new \Exception('Unsupported platform: '.$post->platform),
             };
 
             if ($result['success']) {
@@ -75,6 +78,7 @@ class SocialMediaPublishingService
                 return true;
             } else {
                 $post->markAsFailed($result['error'] ?? 'Unknown error');
+
                 return false;
             }
         } catch (\Exception $e) {
@@ -85,7 +89,8 @@ class SocialMediaPublishingService
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            $post->markAsFailed('Exception: ' . $e->getMessage());
+            $post->markAsFailed('Exception: '.$e->getMessage());
+
             return false;
         }
     }
@@ -96,12 +101,12 @@ class SocialMediaPublishingService
     protected function canPublish(ContentCalendarItem $post): bool
     {
         // Must be scheduled or approved status
-        if (!in_array($post->status, ['scheduled', 'approved'])) {
+        if (! in_array($post->status, ['scheduled', 'approved'])) {
             return false;
         }
 
         // Must have a scheduled time that has passed
-        if (!$post->scheduled_for || $post->scheduled_for->isFuture()) {
+        if (! $post->scheduled_for || $post->scheduled_for->isFuture()) {
             return false;
         }
 
@@ -119,9 +124,9 @@ class SocialMediaPublishingService
     protected function refreshAccountToken(SocialAccount $account): bool
     {
         try {
-            $service = match($account->platform) {
-                'facebook' => new FacebookOAuthService(),
-                'linkedin' => new LinkedInOAuthService(),
+            $service = match ($account->platform) {
+                'facebook' => new FacebookOAuthService,
+                'linkedin' => new LinkedInOAuthService,
                 default => null,
             };
 
@@ -130,6 +135,7 @@ class SocialMediaPublishingService
                     'account_id' => $account->id,
                     'platform' => $account->platform,
                 ]);
+
                 return true;
             }
 
@@ -139,6 +145,7 @@ class SocialMediaPublishingService
                 'account_id' => $account->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -149,14 +156,14 @@ class SocialMediaPublishingService
     protected function publishToFacebook(ContentCalendarItem $post, SocialAccount $account): array
     {
         // First, get the user's pages
-        $pagesResponse = Http::get("https://graph.facebook.com/v18.0/me/accounts", [
+        $pagesResponse = Http::get('https://graph.facebook.com/v18.0/me/accounts', [
             'access_token' => $account->access_token,
         ]);
 
         if ($pagesResponse->failed()) {
             return [
                 'success' => false,
-                'error' => 'Failed to fetch Facebook pages: ' . $pagesResponse->body(),
+                'error' => 'Failed to fetch Facebook pages: '.$pagesResponse->body(),
             ];
         }
 
@@ -177,7 +184,7 @@ class SocialMediaPublishingService
         // Prepare post content
         $content = $post->content_text;
         if ($post->hashtags) {
-            $content .= "\n\n" . $post->hashtags;
+            $content .= "\n\n".$post->hashtags;
         }
 
         // Publish the post
@@ -187,7 +194,7 @@ class SocialMediaPublishingService
         ];
 
         // Add media if present
-        if (!empty($post->media_urls) && is_array($post->media_urls)) {
+        if (! empty($post->media_urls) && is_array($post->media_urls)) {
             // For simplicity, just add the first image URL
             $firstMedia = $post->media_urls[0] ?? null;
             if ($firstMedia) {
@@ -200,7 +207,7 @@ class SocialMediaPublishingService
         if ($publishResponse->failed()) {
             return [
                 'success' => false,
-                'error' => 'Failed to publish to Facebook: ' . $publishResponse->body(),
+                'error' => 'Failed to publish to Facebook: '.$publishResponse->body(),
             ];
         }
 
@@ -225,17 +232,17 @@ class SocialMediaPublishingService
         if ($profileResponse->failed()) {
             return [
                 'success' => false,
-                'error' => 'Failed to fetch LinkedIn profile: ' . $profileResponse->body(),
+                'error' => 'Failed to fetch LinkedIn profile: '.$profileResponse->body(),
             ];
         }
 
         $profile = $profileResponse->json();
-        $authorUrn = 'urn:li:person:' . $profile['sub'];
+        $authorUrn = 'urn:li:person:'.$profile['sub'];
 
         // Prepare post content
         $content = $post->content_text;
         if ($post->hashtags) {
-            $content .= "\n\n" . $post->hashtags;
+            $content .= "\n\n".$post->hashtags;
         }
 
         // Create the post (UGC Post API)
@@ -256,7 +263,7 @@ class SocialMediaPublishingService
         ];
 
         // Add media if present
-        if (!empty($post->media_urls) && is_array($post->media_urls)) {
+        if (! empty($post->media_urls) && is_array($post->media_urls)) {
             $firstMedia = $post->media_urls[0] ?? null;
             if ($firstMedia) {
                 $postData['specificContent']['com.linkedin.ugc.ShareContent']['shareMediaCategory'] = 'ARTICLE';
@@ -279,7 +286,7 @@ class SocialMediaPublishingService
         if ($publishResponse->failed()) {
             return [
                 'success' => false,
-                'error' => 'Failed to publish to LinkedIn: ' . $publishResponse->body(),
+                'error' => 'Failed to publish to LinkedIn: '.$publishResponse->body(),
             ];
         }
 

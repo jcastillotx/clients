@@ -34,4 +34,3 @@ class BrandCompetitor extends Model
         return $this->hasMany(CompetitorMonitoring::class, 'competitor_id')->latest('id');
     }
 }
-

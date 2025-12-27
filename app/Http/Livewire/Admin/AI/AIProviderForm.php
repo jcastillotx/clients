@@ -16,17 +16,27 @@ class AIProviderForm extends Component
     public ?int $providerId = null;
 
     public string $name = 'openai';
+
     public string $api_key = '';
+
     public string $api_endpoint = '';
+
     public string $model_name = '';
+
     public string $status = 'inactive';
+
     public ?string $cost_per_1k_input_tokens = null;
+
     public ?string $cost_per_1k_output_tokens = null;
+
     public ?int $rate_limit_per_minute = null;
+
     public bool $is_default = false;
+
     public int $priority_order = 100;
 
     public bool $testOk = false;
+
     public ?string $testMessage = null;
 
     public function mount(?int $provider = null): void
@@ -72,6 +82,7 @@ class AIProviderForm extends Component
         $pricing = (array) config("ai-providers.pricing.{$this->name}", []);
         $models = array_keys($pricing);
         sort($models);
+
         return $models;
     }
 
@@ -98,7 +109,7 @@ class AIProviderForm extends Component
             $this->testMessage = $ok ? 'Connection OK.' : 'Connection failed.';
         } catch (\Throwable $e) {
             $this->testOk = false;
-            $this->testMessage = 'Connection error: ' . $e->getMessage();
+            $this->testMessage = 'Connection error: '.$e->getMessage();
         }
     }
 
@@ -122,7 +133,7 @@ class AIProviderForm extends Component
         /** @var AiProvider $row */
         $row = $this->providerId
             ? AiProvider::query()->findOrFail($this->providerId)
-            : new AiProvider();
+            : new AiProvider;
 
         // Only overwrite key if a new value is provided.
         if (trim((string) $data['api_key']) === '' && $row->exists) {
@@ -167,7 +178,7 @@ class AIProviderForm extends Component
     protected function authorizeSuperAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->hasRole('super_admin')) {
+        if (! $u || ! $u->hasRole('super_admin')) {
             abort(403, 'Only super admins can edit AI provider settings.');
         }
     }
@@ -180,4 +191,3 @@ class AIProviderForm extends Component
         ])->layout('layouts.admin', ['title' => $this->providerId ? 'Edit AI Provider' : 'Add AI Provider']);
     }
 }
-

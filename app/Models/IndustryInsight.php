@@ -19,4 +19,3 @@ class IndustryInsight extends Model
         'published_at' => 'datetime',
     ];
 }
-

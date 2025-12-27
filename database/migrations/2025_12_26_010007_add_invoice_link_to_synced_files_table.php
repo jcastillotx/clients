@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('synced_files', function (Blueprint $table) {
-            if (!Schema::hasColumn('synced_files', 'invoice_id')) {
+            if (! Schema::hasColumn('synced_files', 'invoice_id')) {
                 $table->foreignId('invoice_id')->nullable()->after('contract_id')->constrained('invoices')->nullOnDelete();
                 $table->index(['invoice_id']);
             }
@@ -25,4 +25,3 @@ return new class extends Migration
         });
     }
 };
-

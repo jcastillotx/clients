@@ -7,18 +7,15 @@ use App\Models\AiReviewQueueItem;
 use App\Models\AiTask;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
-use RuntimeException;
 
 class AISafetyService
 {
-    public function __construct(protected AIProviderManager $providers)
-    {
-    }
+    public function __construct(protected AIProviderManager $providers) {}
 
     /**
      * Scan + redact PII in messages before sending to providers.
      *
-     * @param array<int, array{role:string, content:string}> $messages
+     * @param  array<int, array{role:string, content:string}>  $messages
      * @return array{messages:array<int,array{role:string,content:string}>, pii:array<string,int>, redacted_text:string}
      */
     public function privacyCheck(array $messages, array $options = []): array
@@ -96,7 +93,7 @@ class AISafetyService
     /**
      * Fact check heuristic for research-like outputs: require sources when claims include numbers.
      *
-     * @param array<string,mixed> $structured
+     * @param  array<string,mixed>  $structured
      * @return array{passed:bool, flags:array<int,string>}
      */
     public function factCheck(array $structured): array
@@ -120,18 +117,19 @@ class AISafetyService
     /**
      * Validate JSON output has required keys; used for structured tasks.
      *
-     * @param array<string,mixed> $structured
-     * @param array<int,string> $requiredKeys
+     * @param  array<string,mixed>  $structured
+     * @param  array<int,string>  $requiredKeys
      * @return array{passed:bool, missing:array<int,string>}
      */
     public function validateStructured(array $structured, array $requiredKeys): array
     {
         $missing = [];
         foreach ($requiredKeys as $k) {
-            if (!array_key_exists($k, $structured)) {
+            if (! array_key_exists($k, $structured)) {
                 $missing[] = (string) $k;
             }
         }
+
         return ['passed' => empty($missing), 'missing' => $missing];
     }
 
@@ -170,13 +168,14 @@ class AISafetyService
         }
 
         $score = max(1, min(5, $score));
+
         return ['score' => $score, 'flags' => $flags];
     }
 
     /**
      * Safe chat wrapper: privacy redaction -> provider call -> moderation -> review queue.
      *
-     * @param array<int,array{role:string,content:string}> $messages
+     * @param  array<int,array{role:string,content:string}>  $messages
      * @return array<string,mixed>
      */
     public function safeChat(array $messages, array $options = []): array
@@ -203,7 +202,7 @@ class AISafetyService
 
         // Moderation
         $mod = $this->contentModeration($text);
-        if (!$mod['allowed']) {
+        if (! $mod['allowed']) {
             $res['blocked'] = true;
             $res['safety_flags'] = $mod['flags'];
             $text = 'AI response blocked by safety policy. A human will review this.';
@@ -256,7 +255,7 @@ class AISafetyService
         // If task has an AiTask record, persist the auto score (do not overwrite manual ratings).
         if (isset($options['task_id']) && (int) $options['task_id'] > 0) {
             $task = AiTask::query()->find((int) $options['task_id']);
-            if ($task && !$task->quality_rating) {
+            if ($task && ! $task->quality_rating) {
                 $task->update(['quality_rating' => $qs['score']]);
             }
         }
@@ -267,8 +266,8 @@ class AISafetyService
     /**
      * Provider comparison: run multiple providers and choose best by quality score.
      *
-     * @param array<int,string> $providers
-     * @param array<int,array{role:string,content:string}> $messages
+     * @param  array<int,string>  $providers
+     * @param  array<int,array{role:string,content:string}>  $messages
      * @return array{best:array<string,mixed>, all:array<int,array<string,mixed>>}
      */
     public function compareProviders(array $providers, array $messages, array $options = []): array
@@ -279,12 +278,12 @@ class AISafetyService
                 $r = $this->safeChat($messages, array_merge($options, ['provider' => $p]));
                 $all[] = $r;
             } catch (\Throwable $e) {
-                $all[] = ['provider' => $p, 'text' => 'Error: ' . $e->getMessage(), 'quality_score' => 1, 'blocked' => true];
+                $all[] = ['provider' => $p, 'text' => 'Error: '.$e->getMessage(), 'quality_score' => 1, 'blocked' => true];
             }
         }
 
         usort($all, function ($a, $b) {
-            return ((int) ($b['quality_score'] ?? 0) <=> (int) ($a['quality_score'] ?? 0));
+            return (int) ($b['quality_score'] ?? 0) <=> (int) ($a['quality_score'] ?? 0);
         });
 
         return ['best' => $all[0] ?? ['text' => 'No result'], 'all' => $all];
@@ -320,7 +319,7 @@ class AISafetyService
         }
 
         // Privacy flags or blocked content
-        if (!empty($result['blocked']) || !empty($result['safety_flags'])) {
+        if (! empty($result['blocked']) || ! empty($result['safety_flags'])) {
             return ['required' => true, 'category' => 'privacy', 'reason' => 'Safety policy flagged this output.'];
         }
 
@@ -341,18 +340,21 @@ class AISafetyService
         // Emails
         $out = preg_replace_callback('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', function ($m) use (&$counts) {
             $counts['email']++;
+
             return '[REDACTED_EMAIL]';
         }, $out) ?? $out;
 
         // Phone numbers (basic)
         $out = preg_replace_callback('/\b(\+?\d{1,2}[\s\-\.])?(\(?\d{3}\)?[\s\-\.])\d{3}[\s\-\.]\d{4}\b/', function ($m) use (&$counts) {
             $counts['phone']++;
+
             return '[REDACTED_PHONE]';
         }, $out) ?? $out;
 
         // SSN
         $out = preg_replace_callback('/\b\d{3}-\d{2}-\d{4}\b/', function ($m) use (&$counts) {
             $counts['ssn']++;
+
             return '[REDACTED_SSN]';
         }, $out) ?? $out;
 
@@ -361,8 +363,10 @@ class AISafetyService
             $digits = preg_replace('/\D+/', '', $m[0]) ?? '';
             if ($digits !== '' && $this->luhnCheck($digits)) {
                 $counts['credit_card']++;
+
                 return '[REDACTED_CARD]';
             }
+
             return $m[0];
         }, $out) ?? $out;
 
@@ -377,11 +381,14 @@ class AISafetyService
             $n = (int) $digits[$i];
             if ($alt) {
                 $n *= 2;
-                if ($n > 9) $n -= 9;
+                if ($n > 9) {
+                    $n -= 9;
+                }
             }
             $sum += $n;
-            $alt = !$alt;
+            $alt = ! $alt;
         }
+
         return $sum % 10 === 0;
     }
 
@@ -393,7 +400,7 @@ class AISafetyService
         $t = strtolower($text);
         $t = preg_replace('/[^a-z0-9\s]/', ' ', $t) ?? $t;
         $parts = array_values(array_filter(explode(' ', $t), fn ($x) => $x !== '' && strlen($x) >= 3));
+
         return array_values(array_unique(array_slice($parts, 0, 40)));
     }
 }
-

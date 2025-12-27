@@ -16,6 +16,7 @@ class UserSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command?->warn('Skipping UserSeeder in production (prevents default credentials).');
+
             return;
         }
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire\Admin\Reports;
 
-use App\Exports\ArrayExport;
 use App\Exports\MultiSheetArrayExport;
 use App\Models\Payment;
 use App\Models\ReportTemplate;
@@ -16,14 +15,18 @@ use Maatwebsite\Excel\Facades\Excel;
 class CustomReportBuilder extends Component
 {
     public string $name = '';
+
     /** @var array<int,string> */
     public array $metrics = ['revenue_by_month'];
+
     public string $previewMetric = 'revenue_by_month';
 
     public string $from = '';
+
     public string $to = '';
 
     public string $schedule = 'none'; // none|daily|weekly|monthly
+
     public string $recipients = ''; // comma-separated emails
 
     /** @var array<int,string> */
@@ -85,6 +88,7 @@ class CustomReportBuilder extends Component
                 'rows' => $rows,
             ];
         }
+
         return $out;
     }
 
@@ -194,38 +198,44 @@ class CustomReportBuilder extends Component
     public function export(string $format)
     {
         $datasets = $this->buildDatasets();
-        $baseName = Str::slug($this->name ?: ($datasets[0]['title'] ?? 'report')) . "-{$this->from}-{$this->to}";
+        $baseName = Str::slug($this->name ?: ($datasets[0]['title'] ?? 'report'))."-{$this->from}-{$this->to}";
         $format = strtolower($format);
 
         if ($format === 'csv') {
             // CSV exports the currently previewed metric only.
             [$title, $headings, $rows] = $this->buildDataset($this->previewMetric ?: ($this->metrics[0] ?? 'revenue_by_month'));
-            $filename = Str::slug($this->name ?: $title) . "-{$this->from}-{$this->to}.csv";
+            $filename = Str::slug($this->name ?: $title)."-{$this->from}-{$this->to}.csv";
+
             return response()->streamDownload(function () use ($headings, $rows) {
                 $out = fopen('php://output', 'w');
                 fputcsv($out, $headings);
-                foreach ($rows as $r) fputcsv($out, $r);
+                foreach ($rows as $r) {
+                    fputcsv($out, $r);
+                }
                 fclose($out);
             }, $filename, ['Content-Type' => 'text/csv']);
         }
 
         if ($format === 'xlsx' || $format === 'excel') {
-            $filename = $baseName . '.xlsx';
+            $filename = $baseName.'.xlsx';
+
             return Excel::download(new MultiSheetArrayExport($datasets), $filename);
         }
 
         if ($format === 'pdf') {
-            $filename = $baseName . '.pdf';
+            $filename = $baseName.'.pdf';
             $pdf = Pdf::loadView('admin.reports.export-multi-pdf', [
                 'title' => $this->name ?: 'Custom report',
                 'from' => $this->from,
                 'to' => $this->to,
                 'datasets' => $datasets,
             ]);
-            return response()->streamDownload(fn () => print($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
+
+            return response()->streamDownload(fn () => print ($pdf->output()), $filename, ['Content-Type' => 'application/pdf']);
         }
 
         session()->flash('error', 'Unsupported export format.');
+
         return null;
     }
 
@@ -234,4 +244,3 @@ class CustomReportBuilder extends Component
         return view('livewire.admin.reports.builder')->layout('layouts.admin', ['title' => 'Custom Report Builder']);
     }
 }
-

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('staff_assignments') || !Schema::hasTable('client_staff')) {
+        if (! Schema::hasTable('staff_assignments') || ! Schema::hasTable('client_staff')) {
             return;
         }
 
@@ -38,4 +38,3 @@ return new class extends Migration
         // no-op (data migration)
     }
 };
-

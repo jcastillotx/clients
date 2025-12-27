@@ -38,4 +38,3 @@ class ClientStorageSetting extends Model
         return $this->belongsTo(StorageConnection::class, 'backup_connection_id');
     }
 }
-

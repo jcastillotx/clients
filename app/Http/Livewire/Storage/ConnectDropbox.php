@@ -10,11 +10,15 @@ use Livewire\Component;
 class ConnectDropbox extends Component
 {
     public ?int $client_id = null;
+
     public string $folder_path = '';
+
     public bool $is_primary = true;
 
     public ?int $connection_id = null;
+
     public string $account_email = '';
+
     public string $status = '';
 
     public function mount(): void
@@ -47,7 +51,7 @@ class ConnectDropbox extends Component
         $this->account_email = '';
         $this->status = '';
 
-        if (!$this->client_id) {
+        if (! $this->client_id) {
             return;
         }
 
@@ -56,7 +60,7 @@ class ConnectDropbox extends Component
             ->where('provider', 'dropbox')
             ->first();
 
-        if (!$conn) {
+        if (! $conn) {
             return;
         }
 
@@ -76,8 +80,9 @@ class ConnectDropbox extends Component
             ->where('provider', 'dropbox')
             ->first();
 
-        if (!$conn) {
+        if (! $conn) {
             session()->flash('error', 'Connect Dropbox first, then configure folder/primary settings.');
+
             return;
         }
 
@@ -122,4 +127,3 @@ class ConnectDropbox extends Component
         ])->layout('layouts.admin', ['title' => 'Connect Dropbox']);
     }
 }
-

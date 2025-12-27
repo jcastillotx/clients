@@ -15,15 +15,15 @@ class GoogleDriveOAuthController extends Controller
     public function authorize(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_if(!$user, 403);
+        abort_if(! $user, 403);
 
         $clientId = (int) ($request->integer('client_id') ?: ($user->client_id ?? 0));
         abort_if($clientId <= 0, 422, 'Missing client_id.');
 
         // Staff scoping.
-        if ($user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $allowed = $user->assignedClientIds();
-            abort_if(!in_array($clientId, $allowed, true), 403, 'You do not have access to this client.');
+            abort_if(! in_array($clientId, $allowed, true), 403, 'You do not have access to this client.');
         }
 
         // Clients can only connect for their own client.
@@ -53,7 +53,7 @@ class GoogleDriveOAuthController extends Controller
     public function callback(Request $request): Response
     {
         $user = $request->user();
-        abort_if(!$user, 403);
+        abort_if(! $user, 403);
 
         $code = (string) $request->string('code', '');
         $state = (string) $request->string('state', '');
@@ -61,15 +61,15 @@ class GoogleDriveOAuthController extends Controller
         abort_if($code === '' || $state === '', 422, 'Missing OAuth code/state.');
 
         $payload = Cache::pull("gdrive_oauth_state:{$state}");
-        abort_if(!is_array($payload), 419, 'OAuth state expired. Please try again.');
+        abort_if(! is_array($payload), 419, 'OAuth state expired. Please try again.');
 
         $clientId = (int) ($payload['client_id'] ?? 0);
         abort_if($clientId <= 0, 422, 'Invalid OAuth state payload.');
 
         // Repeat scoping.
-        if ($user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $allowed = $user->assignedClientIds();
-            abort_if(!in_array($clientId, $allowed, true), 403, 'You do not have access to this client.');
+            abort_if(! in_array($clientId, $allowed, true), 403, 'You do not have access to this client.');
         }
         if ($user->isClient()) {
             abort_if((int) $user->client_id !== $clientId, 403, 'You do not have access to this client.');
@@ -93,4 +93,3 @@ class GoogleDriveOAuthController extends Controller
         ]);
     }
 }
-

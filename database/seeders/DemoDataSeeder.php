@@ -20,8 +20,8 @@ class DemoDataSeeder extends Seeder
     public function run(): void
     {
         $demoClient = Client::where('email', 'demo@example.com')->first();
-        
-        if (!$demoClient) {
+
+        if (! $demoClient) {
             return;
         }
 

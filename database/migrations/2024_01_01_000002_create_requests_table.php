@@ -27,7 +27,7 @@ return new class extends Migration
                 'in_progress',
                 'on_hold',
                 'completed',
-                'cancelled'
+                'cancelled',
             ])->default('pending');
             $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->default('medium');
             $table->date('due_date')->nullable();

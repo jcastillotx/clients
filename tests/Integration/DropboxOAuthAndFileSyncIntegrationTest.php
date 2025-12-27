@@ -13,11 +13,11 @@ class DropboxOAuthAndFileSyncIntegrationTest extends TestCase
 
     public function test_dropbox_oauth_connect_and_list_files(): void
     {
-        if (!getenv('RUN_INTEGRATION_TESTS')) {
+        if (! getenv('RUN_INTEGRATION_TESTS')) {
             $this->markTestSkipped('Set RUN_INTEGRATION_TESTS=1 to run external integration tests.');
         }
 
-        if (!getenv('DROPBOX_APP_KEY') || !getenv('DROPBOX_APP_SECRET') || !getenv('DROPBOX_REDIRECT_URI')) {
+        if (! getenv('DROPBOX_APP_KEY') || ! getenv('DROPBOX_APP_SECRET') || ! getenv('DROPBOX_REDIRECT_URI')) {
             $this->markTestSkipped('Missing DROPBOX_APP_KEY / DROPBOX_APP_SECRET / DROPBOX_REDIRECT_URI.');
         }
 
@@ -44,4 +44,3 @@ class DropboxOAuthAndFileSyncIntegrationTest extends TestCase
         $this->assertIsInt($processed);
     }
 }
-

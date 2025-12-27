@@ -37,4 +37,3 @@ return new class extends Migration
         Schema::dropIfExists('website_audit_schedules');
     }
 };
-

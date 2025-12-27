@@ -21,7 +21,7 @@ abstract class HttpJsonProviderService extends BaseAIService
     protected ?HttpClient $http = null;
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     public function configure(array $config): static
     {
@@ -41,8 +41,8 @@ abstract class HttpJsonProviderService extends BaseAIService
     abstract protected function chatEndpoint(): string;
 
     /**
-     * @param array<string, mixed> $payload
-     * @param array<string, mixed> $raw
+     * @param  array<string, mixed>  $payload
+     * @param  array<string, mixed>  $raw
      * @return array<string, mixed>
      */
     abstract protected function normalizeChatResponse(array $payload, array $raw, int $responseTimeMs): array;
@@ -53,7 +53,7 @@ abstract class HttpJsonProviderService extends BaseAIService
         if ($apiKey === '') {
             throw new RuntimeException('Provider API key is not configured.');
         }
-        if (!$this->http) {
+        if (! $this->http) {
             $this->configure($this->config);
         }
 
@@ -86,7 +86,7 @@ abstract class HttpJsonProviderService extends BaseAIService
                 $ms = (int) round((microtime(true) - $started) * 1000);
                 $rawBody = (string) $resp->getBody();
                 $raw = json_decode($rawBody, true);
-                if (!is_array($raw)) {
+                if (! is_array($raw)) {
                     throw new RuntimeException('AI provider returned non-JSON response.');
                 }
 
@@ -122,8 +122,8 @@ abstract class HttpJsonProviderService extends BaseAIService
                     ]);
                 }
 
-                if (!$shouldRetry || $i >= ($attempts - 1)) {
-                    throw new RuntimeException('AI provider request failed: ' . $e->getMessage(), (int) ($status ?? 0), $e);
+                if (! $shouldRetry || $i >= ($attempts - 1)) {
+                    throw new RuntimeException('AI provider request failed: '.$e->getMessage(), (int) ($status ?? 0), $e);
                 }
 
                 usleep($sleepMs * 1000);
@@ -131,7 +131,7 @@ abstract class HttpJsonProviderService extends BaseAIService
             } catch (GuzzleException $e) {
                 $lastError = $e;
                 if ($i >= ($attempts - 1)) {
-                    throw new RuntimeException('AI provider request failed: ' . $e->getMessage(), 0, $e);
+                    throw new RuntimeException('AI provider request failed: '.$e->getMessage(), 0, $e);
                 }
                 usleep($sleepMs * 1000);
                 $sleepMs = min(4000, $sleepMs * 2);
@@ -156,6 +156,7 @@ abstract class HttpJsonProviderService extends BaseAIService
     public function getModelList(): array
     {
         $m = (string) ($this->config['default_model'] ?? '');
+
         return $m !== '' ? [$m] : [];
     }
 
@@ -163,6 +164,7 @@ abstract class HttpJsonProviderService extends BaseAIService
     {
         try {
             $this->chat([['role' => 'user', 'content' => 'ping']], ['max_tokens' => 1]);
+
             return true;
         } catch (\Throwable) {
             return false;
@@ -170,17 +172,18 @@ abstract class HttpJsonProviderService extends BaseAIService
     }
 
     /**
-     * @param array<int, array{role:string, content:string}> $messages
+     * @param  array<int, array{role:string, content:string}>  $messages
      */
     protected function extractUserMessage(array $messages): ?string
     {
         for ($i = count($messages) - 1; $i >= 0; $i--) {
             if (($messages[$i]['role'] ?? null) === 'user') {
                 $c = $messages[$i]['content'] ?? null;
+
                 return is_string($c) ? $c : null;
             }
         }
+
         return null;
     }
 }
-

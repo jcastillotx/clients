@@ -28,4 +28,3 @@ class DocumentResource extends JsonResource
         ];
     }
 }
-

@@ -33,7 +33,7 @@ class ClientHealthMonitor extends Component
         $q = Client::query()
             ->orderBy('company_name')
             ->when(trim($this->search) !== '', function ($qq) {
-                $s = '%' . trim($this->search) . '%';
+                $s = '%'.trim($this->search).'%';
                 $qq->where('company_name', 'like', $s)->orWhere('email', 'like', $s);
             });
 
@@ -52,4 +52,3 @@ class ClientHealthMonitor extends Component
         ])->layout('layouts.admin', ['title' => 'Client Health']);
     }
 }
-

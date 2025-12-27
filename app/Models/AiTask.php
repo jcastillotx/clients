@@ -49,4 +49,3 @@ class AiTask extends Model
         return $this->belongsTo(User::class, 'executed_by');
     }
 }
-

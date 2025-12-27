@@ -32,4 +32,3 @@ class ClientLoginTest extends TestCase
         $this->get('/dashboard')->assertOk();
     }
 }
-

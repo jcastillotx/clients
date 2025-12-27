@@ -12,13 +12,19 @@ class PromptTemplateManager extends Component
     public ?int $templateId = null;
 
     public string $key = '';
+
     public string $name = '';
+
     public string $description = '';
+
     public string $status = 'active';
 
     public string $system_prompt = '';
+
     public string $variables_json = '{}';
+
     public string $notes = '';
+
     public string $version_status = 'draft';
 
     public function selectTemplate(int $id): void
@@ -55,7 +61,9 @@ class PromptTemplateManager extends Component
     public function saveTemplate(): void
     {
         $this->authorizeAdmin();
-        if (!$this->templateId) return;
+        if (! $this->templateId) {
+            return;
+        }
 
         $data = $this->validate([
             'name' => 'required|string|max:255',
@@ -70,10 +78,14 @@ class PromptTemplateManager extends Component
     public function addVersion(): void
     {
         $this->authorizeAdmin();
-        if (!$this->templateId) return;
+        if (! $this->templateId) {
+            return;
+        }
 
         $vars = json_decode($this->variables_json, true);
-        if (!is_array($vars)) $vars = [];
+        if (! is_array($vars)) {
+            $vars = [];
+        }
 
         $latest = PromptTemplateVersion::query()
             ->where('prompt_template_id', $this->templateId)
@@ -111,7 +123,9 @@ class PromptTemplateManager extends Component
     protected function authorizeAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->can('access admin panel')) abort(403);
+        if (! $u || ! $u->can('access admin panel')) {
+            abort(403);
+        }
     }
 
     public function render()
@@ -129,4 +143,3 @@ class PromptTemplateManager extends Component
         ])->layout('layouts.admin', ['title' => 'Prompt Templates']);
     }
 }
-

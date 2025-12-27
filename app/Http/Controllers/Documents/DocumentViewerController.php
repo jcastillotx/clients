@@ -13,9 +13,7 @@ use Illuminate\Support\Str;
 
 class DocumentViewerController extends Controller
 {
-    public function __construct(private readonly DocumentAccessService $access)
-    {
-    }
+    public function __construct(private readonly DocumentAccessService $access) {}
 
     public function openDocument(Document $document, string $viewer = 'office'): RedirectResponse
     {
@@ -24,6 +22,7 @@ class DocumentViewerController extends Controller
         abort_unless($this->access->canDownload($user, $document), 403);
 
         $shareUrl = $this->createShortShare(Document::class, $document->id, $user->id);
+
         return redirect()->away($this->viewerUrl($shareUrl, $viewer));
     }
 
@@ -38,6 +37,7 @@ class DocumentViewerController extends Controller
         }
 
         $shareUrl = $this->createShortShare(StorageFile::class, $storageFile->id, $user->id);
+
         return redirect()->away($this->viewerUrl($shareUrl, $viewer));
     }
 
@@ -66,4 +66,3 @@ class DocumentViewerController extends Controller
         };
     }
 }
-

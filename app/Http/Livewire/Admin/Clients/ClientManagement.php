@@ -3,11 +3,11 @@
 namespace App\Http\Livewire\Admin\Clients;
 
 use App\Models\Client;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ClientManagement extends Component
 {
@@ -16,22 +16,46 @@ class ClientManagement extends Component
     protected string $paginationTheme = 'bootstrap';
 
     public string $search = '';
+
     public string $status = 'all';
+
     public string $tier = 'all';
+
     public ?string $dateFrom = null; // YYYY-MM-DD
+
     public ?string $dateTo = null;   // YYYY-MM-DD
 
     /** @var array<int, int> */
     public array $selected = [];
+
     public bool $selectPage = false;
 
     public string $bulkAction = '';
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingStatus(): void { $this->resetPage(); }
-    public function updatingTier(): void { $this->resetPage(); }
-    public function updatingDateFrom(): void { $this->resetPage(); }
-    public function updatingDateTo(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTier(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateFrom(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateTo(): void
+    {
+        $this->resetPage();
+    }
 
     protected function baseQuery(): Builder
     {
@@ -42,7 +66,7 @@ class ClientManagement extends Component
             ->withSum(['payments as total_revenue' => fn ($q) => $q->where('status', 'succeeded')], 'amount')
             ->withMax(['activityLogs as last_activity_at' => 'created_at'])
             ->when($this->search, function ($q) {
-                $s = '%' . $this->search . '%';
+                $s = '%'.$this->search.'%';
                 $q->where(function ($qq) use ($s) {
                     $qq->where('company_name', 'like', $s)
                         ->orWhere('contact_name', 'like', $s)
@@ -60,8 +84,9 @@ class ClientManagement extends Component
 
     public function updatedSelectPage(bool $value): void
     {
-        if (!$value) {
+        if (! $value) {
             $this->selected = [];
+
             return;
         }
 
@@ -74,7 +99,9 @@ class ClientManagement extends Component
 
     public function bulkActivate(): void
     {
-        if (empty($this->selected)) return;
+        if (empty($this->selected)) {
+            return;
+        }
         Client::query()->whereIn('id', $this->selected)->update(['status' => 'active']);
         session()->flash('success', 'Selected clients activated.');
         $this->selectPage = false;
@@ -83,7 +110,9 @@ class ClientManagement extends Component
 
     public function bulkSuspend(): void
     {
-        if (empty($this->selected)) return;
+        if (empty($this->selected)) {
+            return;
+        }
         Client::query()->whereIn('id', $this->selected)->update(['status' => 'suspended']);
         session()->flash('success', 'Selected clients suspended.');
         $this->selectPage = false;
@@ -94,7 +123,7 @@ class ClientManagement extends Component
     {
         $clients = $this->baseQuery()->get();
 
-        $filename = 'clients-' . now()->format('Ymd-His') . '.csv';
+        $filename = 'clients-'.now()->format('Ymd-His').'.csv';
 
         return response()->streamDownload(function () use ($clients) {
             $out = fopen('php://output', 'w');
@@ -125,7 +154,8 @@ class ClientManagement extends Component
     {
         $clients = $this->baseQuery()->get();
         $pdf = Pdf::loadView('admin.clients.export-list-pdf', compact('clients'));
-        return response()->streamDownload(fn () => print($pdf->output()), 'clients-' . now()->format('Ymd-His') . '.pdf');
+
+        return response()->streamDownload(fn () => print ($pdf->output()), 'clients-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function render()
@@ -137,4 +167,3 @@ class ClientManagement extends Component
         ])->layout('layouts.admin', ['title' => 'Clients Management']);
     }
 }
-

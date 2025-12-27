@@ -22,4 +22,3 @@ class PredictiveCharts extends Component
         ])->layout('layouts.admin', ['title' => 'Predictive Charts']);
     }
 }
-

@@ -19,6 +19,7 @@ use Livewire\Component;
 class AIAssistantChat extends Component
 {
     public ?int $conversationId = null;
+
     public string $message = '';
 
     /** @var array<int, array<string,mixed>> */
@@ -31,7 +32,9 @@ class AIAssistantChat extends Component
 
     // Context (optional)
     public ?int $clientId = null;
+
     public ?int $requestId = null;
+
     public ?int $invoiceId = null;
 
     public function mount(?int $conversation = null): void
@@ -60,7 +63,9 @@ class AIAssistantChat extends Component
 
     public function loadConversation(): void
     {
-        if (!$this->conversationId) return;
+        if (! $this->conversationId) {
+            return;
+        }
 
         $rows = AiMessage::query()
             ->where('ai_conversation_id', $this->conversationId)
@@ -95,7 +100,9 @@ class AIAssistantChat extends Component
 
         $this->error = null;
         $text = trim($this->message);
-        if ($text === '' || !$this->conversationId) return;
+        if ($text === '' || ! $this->conversationId) {
+            return;
+        }
 
         $this->message = '';
 
@@ -129,6 +136,7 @@ class AIAssistantChat extends Component
                 'response_time_ms' => null,
             ]);
             $this->loadConversation();
+
             return;
         }
 
@@ -149,7 +157,7 @@ SYS;
         $history = $this->promptHistory(16);
 
         $messages = array_merge(
-            [['role' => 'system', 'content' => $system . "\n\nContext:\n" . $contextSummary . "\n\nKnowledge base:\n" . $kbBlock]],
+            [['role' => 'system', 'content' => $system."\n\nContext:\n".$contextSummary."\n\nKnowledge base:\n".$kbBlock]],
             $history,
             [['role' => 'user', 'content' => $text]]
         );
@@ -185,7 +193,7 @@ SYS;
             AiMessage::create([
                 'ai_conversation_id' => $this->conversationId,
                 'role' => 'assistant',
-                'content' => 'Error: ' . $e->getMessage(),
+                'content' => 'Error: '.$e->getMessage(),
                 'provider_used' => 'system',
                 'model_used' => null,
                 'tokens_used' => null,
@@ -200,7 +208,9 @@ SYS;
     public function feedback(int $messageId, string $rating): void
     {
         $this->authorizeAdmin();
-        if (!in_array($rating, ['up', 'down'], true)) return;
+        if (! in_array($rating, ['up', 'down'], true)) {
+            return;
+        }
 
         $msg = AiMessage::query()->findOrFail($messageId);
         AiMessageFeedback::create([
@@ -221,11 +231,14 @@ SYS;
         $this->authorizeAdmin();
 
         $msg = AiMessage::query()->findOrFail($messageId);
-        if ($msg->role !== 'assistant') return;
+        if ($msg->role !== 'assistant') {
+            return;
+        }
 
         $edited = trim((string) ($this->edits[$messageId] ?? ''));
         if ($edited === '' || $edited === $msg->content) {
             session()->flash('success', 'No changes to save.');
+
             return;
         }
 
@@ -245,7 +258,9 @@ SYS;
 
     protected function promptHistory(int $maxMessages): array
     {
-        if (!$this->conversationId) return [];
+        if (! $this->conversationId) {
+            return [];
+        }
         $rows = AiMessage::query()
             ->where('ai_conversation_id', $this->conversationId)
             ->whereIn('role', ['user', 'assistant'])
@@ -260,14 +275,17 @@ SYS;
 
     protected function formatKbContext(array $kb): string
     {
-        if (empty($kb)) return '(none)';
+        if (empty($kb)) {
+            return '(none)';
+        }
         $lines = [];
         foreach ($kb as $i => $row) {
             $doc = $row['document'];
             $lines[] = '---';
-            $lines[] = 'Doc #' . $doc->id . ': ' . ($doc->title ?: $doc->original_filename);
-            $lines[] = 'Snippet: ' . trim((string) $row['snippet']);
+            $lines[] = 'Doc #'.$doc->id.': '.($doc->title ?: $doc->original_filename);
+            $lines[] = 'Snippet: '.trim((string) $row['snippet']);
         }
+
         return implode("\n", $lines);
     }
 
@@ -276,23 +294,30 @@ SYS;
         $parts = [];
         if ($this->clientId) {
             $c = Client::query()->find($this->clientId);
-            if ($c) $parts[] = "Client: {$c->company_name} (#{$c->id})";
+            if ($c) {
+                $parts[] = "Client: {$c->company_name} (#{$c->id})";
+            }
         }
         if ($this->requestId) {
             $r = ServiceRequest::query()->with('client')->find($this->requestId);
-            if ($r) $parts[] = "Request: {$r->title} (#{$r->id}), status={$r->status}, client={$r->client?->company_name}";
+            if ($r) {
+                $parts[] = "Request: {$r->title} (#{$r->id}), status={$r->status}, client={$r->client?->company_name}";
+            }
         }
         if ($this->invoiceId) {
             $inv = Invoice::query()->with('client')->find($this->invoiceId);
-            if ($inv) $parts[] = "Invoice: {$inv->invoice_number} (#{$inv->id}), status={$inv->status}, amount={$inv->amount}, client={$inv->client?->company_name}";
+            if ($inv) {
+                $parts[] = "Invoice: {$inv->invoice_number} (#{$inv->id}), status={$inv->status}, amount={$inv->amount}, client={$inv->client?->company_name}";
+            }
         }
+
         return empty($parts) ? '(no specific page context)' : implode("\n", $parts);
     }
 
     protected function authorizeAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->can('access admin panel')) {
+        if (! $u || ! $u->can('access admin panel')) {
             abort(403);
         }
     }
@@ -306,4 +331,3 @@ SYS;
         ])->layout('layouts.admin', ['title' => 'AI Assistant']);
     }
 }
-

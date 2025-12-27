@@ -43,4 +43,3 @@ class CodeReviewServiceTest extends TestCase
         $this->assertNotEmpty($out['findings']);
     }
 }
-

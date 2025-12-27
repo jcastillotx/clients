@@ -74,4 +74,3 @@ class Task extends Model
         return $this->hasMany(TimeEntry::class);
     }
 }
-

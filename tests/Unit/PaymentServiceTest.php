@@ -36,4 +36,3 @@ class PaymentServiceTest extends TestCase
         $this->assertSame('paid', $invoice->status);
     }
 }
-

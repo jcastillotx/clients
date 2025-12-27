@@ -30,4 +30,3 @@ class ReportDeliveries extends Component
         ])->layout('layouts.admin', ['title' => 'Report deliveries']);
     }
 }
-

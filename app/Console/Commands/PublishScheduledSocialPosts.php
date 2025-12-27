@@ -49,13 +49,15 @@ class PublishScheduledSocialPosts extends Command
 
             if ($results['failed'] > 0) {
                 $this->error("✗ Failed to publish {$results['failed']} post(s)");
+
                 return Command::FAILURE;
             }
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Publishing failed: ' . $e->getMessage());
+            $this->error('Publishing failed: '.$e->getMessage());
             $this->error($e->getTraceAsString());
+
             return Command::FAILURE;
         }
     }

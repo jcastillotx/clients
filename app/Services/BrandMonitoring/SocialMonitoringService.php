@@ -4,9 +4,9 @@ namespace App\Services\BrandMonitoring;
 
 use App\Models\BrandMention;
 use App\Models\Client;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * Social Media Monitoring using free APIs
@@ -23,7 +23,7 @@ class SocialMonitoringService
      */
     public function searchReddit(Client $client, array $keywords = []): array
     {
-        if (!config('brand-monitoring.social.reddit.enabled')) {
+        if (! config('brand-monitoring.social.reddit.enabled')) {
             return ['skipped' => true, 'reason' => 'Reddit API disabled'];
         }
 
@@ -42,22 +42,22 @@ class SocialMonitoringService
                 'auth' => [$clientId, $clientSecret],
             ]);
 
-            if (!$tokenResponse->successful()) {
+            if (! $tokenResponse->successful()) {
                 return ['error' => 'Reddit OAuth failed'];
             }
 
             $accessToken = $tokenResponse->json()['access_token'] ?? null;
-            if (!$accessToken) {
+            if (! $accessToken) {
                 return ['error' => 'No access token received'];
             }
 
-            $keywords = !empty($keywords) ? $keywords : [$client->company_name];
+            $keywords = ! empty($keywords) ? $keywords : [$client->company_name];
             $mentions = [];
 
             foreach ($keywords as $keyword) {
                 // Search across all of Reddit
                 $searchResponse = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'Bearer '.$accessToken,
                     'User-Agent' => config('brand-monitoring.social.reddit.user_agent'),
                 ])->get('https://oauth.reddit.com/search', [
                     'q' => $keyword,
@@ -67,8 +67,9 @@ class SocialMonitoringService
                     'type' => 'link,comment',
                 ]);
 
-                if (!$searchResponse->successful()) {
+                if (! $searchResponse->successful()) {
                     Log::warning('Reddit search failed', ['keyword' => $keyword]);
+
                     continue;
                 }
 
@@ -80,9 +81,9 @@ class SocialMonitoringService
 
                     $mention = $this->storeMention($client, [
                         'platform' => 'reddit',
-                        'mention_text' => ($postData['title'] ?? '') . "\n\n" . ($postData['selftext'] ?? $postData['body'] ?? ''),
+                        'mention_text' => ($postData['title'] ?? '')."\n\n".($postData['selftext'] ?? $postData['body'] ?? ''),
                         'author' => $postData['author'] ?? 'deleted',
-                        'url' => 'https://reddit.com' . ($postData['permalink'] ?? ''),
+                        'url' => 'https://reddit.com'.($postData['permalink'] ?? ''),
                         'posted_at' => isset($postData['created_utc'])
                             ? Carbon::createFromTimestamp($postData['created_utc'])
                             : now(),
@@ -125,7 +126,7 @@ class SocialMonitoringService
      */
     public function searchYouTube(Client $client, array $keywords = []): array
     {
-        if (!config('brand-monitoring.social.youtube.enabled')) {
+        if (! config('brand-monitoring.social.youtube.enabled')) {
             return ['skipped' => true, 'reason' => 'YouTube API disabled'];
         }
 
@@ -134,7 +135,7 @@ class SocialMonitoringService
             return ['error' => 'YouTube API key not configured'];
         }
 
-        $keywords = !empty($keywords) ? $keywords : [$client->company_name];
+        $keywords = ! empty($keywords) ? $keywords : [$client->company_name];
         $mentions = [];
 
         foreach ($keywords as $keyword) {
@@ -150,8 +151,9 @@ class SocialMonitoringService
                     'key' => $apiKey,
                 ]);
 
-                if (!$searchResponse->successful()) {
+                if (! $searchResponse->successful()) {
                     Log::warning('YouTube search failed', ['keyword' => $keyword]);
+
                     continue;
                 }
 
@@ -162,11 +164,13 @@ class SocialMonitoringService
                     $snippet = $item['snippet'] ?? [];
                     $videoId = $item['id']['videoId'] ?? null;
 
-                    if (!$videoId) continue;
+                    if (! $videoId) {
+                        continue;
+                    }
 
                     $mention = $this->storeMention($client, [
                         'platform' => 'youtube',
-                        'mention_text' => ($snippet['title'] ?? '') . "\n\n" . ($snippet['description'] ?? ''),
+                        'mention_text' => ($snippet['title'] ?? '')."\n\n".($snippet['description'] ?? ''),
                         'author' => $snippet['channelTitle'] ?? 'Unknown',
                         'url' => $videoId ? "https://www.youtube.com/watch?v={$videoId}" : null,
                         'posted_at' => isset($snippet['publishedAt'])
@@ -207,22 +211,22 @@ class SocialMonitoringService
      */
     public function searchTwitterRSS(Client $client, array $keywords = []): array
     {
-        if (!config('brand-monitoring.social.twitter_rss.enabled')) {
+        if (! config('brand-monitoring.social.twitter_rss.enabled')) {
             return ['skipped' => true, 'reason' => 'Twitter RSS disabled'];
         }
 
-        $keywords = !empty($keywords) ? $keywords : [$client->company_name];
+        $keywords = ! empty($keywords) ? $keywords : [$client->company_name];
         $mentions = [];
         $nitterInstances = config('brand-monitoring.social.twitter_rss.nitter_instances', []);
 
         foreach ($keywords as $keyword) {
             foreach ($nitterInstances as $instance) {
                 try {
-                    $url = $instance . '/search/rss?f=tweets&q=' . urlencode($keyword);
+                    $url = $instance.'/search/rss?f=tweets&q='.urlencode($keyword);
 
                     $response = Http::timeout(10)->get($url);
 
-                    if (!$response->successful()) {
+                    if (! $response->successful()) {
                         continue; // Try next instance
                     }
 
@@ -247,7 +251,7 @@ class SocialMonitoringService
                         $mention = $this->storeMention($client, [
                             'platform' => 'x',
                             'mention_text' => strip_tags((string) $item->description),
-                            'author' => '@' . $author,
+                            'author' => '@'.$author,
                             'url' => str_replace($instance, 'https://twitter.com', $link),
                             'posted_at' => $pubDate,
                             'meta' => [
@@ -268,6 +272,7 @@ class SocialMonitoringService
                         'instance' => $instance,
                         'keyword' => $keyword,
                     ]);
+
                     continue; // Try next instance
                 }
             }
@@ -286,7 +291,7 @@ class SocialMonitoringService
     protected function storeMention(Client $client, array $data): ?BrandMention
     {
         // Deduplicate by URL
-        if (!empty($data['url'])) {
+        if (! empty($data['url'])) {
             $existing = BrandMention::where('client_id', $client->id)
                 ->where('url', $data['url'])
                 ->first();

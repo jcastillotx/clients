@@ -11,10 +11,15 @@ use Livewire\Component;
 class SurveyBuilder extends Component
 {
     public ?int $surveyId = null;
+
     public string $name = '';
+
     public string $description = '';
+
     public bool $isActive = true;
+
     public bool $anonymousAllowed = false;
+
     public string $type = 'satisfaction';
 
     public array $questions = []; // [{type,prompt,is_required,sort_order}]
@@ -27,7 +32,9 @@ class SurveyBuilder extends Component
 
     public function loadSurvey(): void
     {
-        if (!$this->surveyId) return;
+        if (! $this->surveyId) {
+            return;
+        }
         $s = Survey::query()->with('questions')->findOrFail($this->surveyId);
         $this->name = (string) $s->name;
         $this->description = (string) ($s->description ?? '');
@@ -67,7 +74,7 @@ class SurveyBuilder extends Component
             'questions' => ['array', 'min:1'],
         ])->validate();
 
-        $survey = $this->surveyId ? Survey::query()->findOrFail($this->surveyId) : new Survey();
+        $survey = $this->surveyId ? Survey::query()->findOrFail($this->surveyId) : new Survey;
         $survey->fill([
             'client_id' => null,
             'name' => trim($this->name),
@@ -83,7 +90,9 @@ class SurveyBuilder extends Component
         // Replace questions (MVP)
         SurveyQuestion::query()->where('survey_id', $survey->id)->delete();
         foreach ($this->questions as $q) {
-            if (!is_array($q)) continue;
+            if (! is_array($q)) {
+                continue;
+            }
             SurveyQuestion::create([
                 'survey_id' => $survey->id,
                 'type' => (string) ($q['type'] ?? 'text'),
@@ -102,9 +111,9 @@ class SurveyBuilder extends Component
         abort_unless($u && ($u->isAdmin() || $u->isStaff()), 403);
 
         $surveys = Survey::query()->orderByDesc('id')->limit(200)->get(['id', 'name', 'type', 'is_active']);
+
         return view('livewire.feedback.survey-builder', [
             'surveys' => $surveys,
         ]);
     }
 }
-

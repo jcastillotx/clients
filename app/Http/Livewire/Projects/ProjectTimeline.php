@@ -39,4 +39,3 @@ class ProjectTimeline extends Component
         ]);
     }
 }
-

@@ -27,4 +27,3 @@ class StorageTag extends Model
         return $this->belongsToMany(StorageFile::class, 'storage_file_tag', 'storage_tag_id', 'storage_file_id');
     }
 }
-

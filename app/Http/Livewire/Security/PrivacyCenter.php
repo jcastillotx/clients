@@ -64,4 +64,3 @@ class PrivacyCenter extends Component
         ]);
     }
 }
-

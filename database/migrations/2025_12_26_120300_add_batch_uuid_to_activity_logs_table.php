@@ -8,12 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('activity_logs')) {
+        if (! Schema::hasTable('activity_logs')) {
             return;
         }
 
         Schema::table('activity_logs', function (Blueprint $table) {
-            if (!Schema::hasColumn('activity_logs', 'batch_uuid')) {
+            if (! Schema::hasColumn('activity_logs', 'batch_uuid')) {
                 $table->uuid('batch_uuid')->nullable()->after('properties');
                 $table->index('batch_uuid');
             }
@@ -22,7 +22,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('activity_logs')) {
+        if (! Schema::hasTable('activity_logs')) {
             return;
         }
 
@@ -34,4 +34,3 @@ return new class extends Migration
         });
     }
 };
-

@@ -41,7 +41,7 @@ class SyncStorageProviderJob implements ShouldQueue
         ]);
 
         try {
-            if ($connection->status === 'disconnected' || !$connection->disk) {
+            if ($connection->status === 'disconnected' || ! $connection->disk) {
                 throw new \RuntimeException('Storage connection is not configured with an active filesystem disk.');
             }
 
@@ -101,7 +101,7 @@ class SyncStorageProviderJob implements ShouldQueue
                     ];
 
                     $existingFile = $existing->get($path);
-                    if (!$existingFile) {
+                    if (! $existingFile) {
                         StorageFile::create($row);
                         $added++;
                     } else {
@@ -112,7 +112,7 @@ class SyncStorageProviderJob implements ShouldQueue
                                 break;
                             }
                         }
-                        if (!$dirty && $modifiedAt && $existingFile->modified_at && $existingFile->modified_at->ne($modifiedAt)) {
+                        if (! $dirty && $modifiedAt && $existingFile->modified_at && $existingFile->modified_at->ne($modifiedAt)) {
                             $dirty = true;
                         }
                         if ($dirty) {
@@ -204,7 +204,7 @@ class SyncStorageProviderJob implements ShouldQueue
                 continue;
             }
 
-            $fingerprints = $rows->map(fn ($r) => ($r->checksum ?: 'nochk') . ':' . $r->size_bytes)->unique();
+            $fingerprints = $rows->map(fn ($r) => ($r->checksum ?: 'nochk').':'.$r->size_bytes)->unique();
             if ($fingerprints->count() <= 1) {
                 continue;
             }
@@ -223,7 +223,7 @@ class SyncStorageProviderJob implements ShouldQueue
 
             if ($rule === 'prefer_primary') {
                 $chosen = collect($candidates)->firstWhere('connection_id', $primaryId) ?? null;
-                if (!$chosen) {
+                if (! $chosen) {
                     $chosen = collect($candidates)->sortByDesc('modified_at')->first();
                     $notes = 'Primary not present for this filename; chose newest.';
                 }
@@ -266,7 +266,7 @@ class SyncStorageProviderJob implements ShouldQueue
     protected function maybeNotifyQuota(StorageConnection $connection): void
     {
         $quotaBytes = $connection->quota_bytes;
-        if (!$quotaBytes || $quotaBytes <= 0) {
+        if (! $quotaBytes || $quotaBytes <= 0) {
             return;
         }
 
@@ -306,4 +306,3 @@ class SyncStorageProviderJob implements ShouldQueue
         Notification::send($users, new StorageSyncFailed($connection, Str::limit($message, 240)));
     }
 }
-

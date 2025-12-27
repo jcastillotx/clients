@@ -37,8 +37,8 @@ class ProposalAcceptanceService
 
             $contract = Contract::create([
                 'client_id' => $proposal->client_id,
-                'title' => 'Contract — ' . ($proposal->title ?: 'Proposal'),
-                'description' => $proposal->request ? ('Linked to Request #' . $proposal->request->id) : null,
+                'title' => 'Contract — '.($proposal->title ?: 'Proposal'),
+                'description' => $proposal->request ? ('Linked to Request #'.$proposal->request->id) : null,
                 'value' => $selection?->total_amount ?? $tierAmount,
                 'status' => 'active',
                 'signed_at' => now(),
@@ -57,12 +57,12 @@ class ProposalAcceptanceService
                 'request_id' => $proposal->request_id,
                 'contract_id' => $contract->id,
                 'status' => 'draft',
-                'notes' => 'Generated from accepted proposal ' . $proposal->proposal_number,
+                'notes' => 'Generated from accepted proposal '.$proposal->proposal_number,
             ]);
 
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'description' => 'Proposal tier: ' . $tierLabel,
+                'description' => 'Proposal tier: '.$tierLabel,
                 'quantity' => 1,
                 'unit_price' => $tierAmount,
                 'total' => $tierAmount,
@@ -74,14 +74,18 @@ class ProposalAcceptanceService
             $selectedAddons = (array) ($selection?->selected_addons ?? []);
             $sort = 10;
             foreach ($addons as $a) {
-                if (!is_array($a)) continue;
+                if (! is_array($a)) {
+                    continue;
+                }
                 $k = (string) ($a['key'] ?? '');
-                if ($k === '' || !in_array($k, $selectedAddons, true)) continue;
+                if ($k === '' || ! in_array($k, $selectedAddons, true)) {
+                    continue;
+                }
                 $label = (string) (($a['label'] ?? null) ?: $k);
                 $amt = (float) (($a['amount'] ?? null) ?: 0);
                 InvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'description' => 'Add-on: ' . $label,
+                    'description' => 'Add-on: '.$label,
                     'quantity' => 1,
                     'unit_price' => $amt,
                     'total' => $amt,
@@ -106,4 +110,3 @@ class ProposalAcceptanceService
         });
     }
 }
-

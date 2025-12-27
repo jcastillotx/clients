@@ -21,7 +21,7 @@ class DeliverWebhook implements ShouldQueue
     public function handle(): void
     {
         $delivery = WebhookDelivery::query()->with('endpoint')->find($this->deliveryId);
-        if (!$delivery || !$delivery->endpoint || !$delivery->endpoint->is_active) {
+        if (! $delivery || ! $delivery->endpoint || ! $delivery->endpoint->is_active) {
             return;
         }
 
@@ -34,7 +34,7 @@ class DeliverWebhook implements ShouldQueue
         }
 
         $timestamp = now()->getTimestamp();
-        $signature = $secret !== '' ? hash_hmac('sha256', $timestamp . '.' . $json, $secret) : '';
+        $signature = $secret !== '' ? hash_hmac('sha256', $timestamp.'.'.$json, $secret) : '';
 
         $delivery->update([
             'status' => 'running',
@@ -47,12 +47,12 @@ class DeliverWebhook implements ShouldQueue
             $resp = Http::timeout(10)
                 ->acceptJson()
                 ->withHeaders(array_filter([
-                    'User-Agent' => config('app.name') . ' Webhooks',
+                    'User-Agent' => config('app.name').' Webhooks',
                     'Content-Type' => 'application/json',
                     'X-Webhook-Event' => $delivery->event_type,
                     'X-Webhook-Delivery' => $delivery->delivery_id,
                     'X-Webhook-Timestamp' => (string) $timestamp,
-                    'X-Webhook-Signature' => $signature !== '' ? ('sha256=' . $signature) : null,
+                    'X-Webhook-Signature' => $signature !== '' ? ('sha256='.$signature) : null,
                 ]))
                 ->withBody($json, 'application/json')
                 ->post($endpoint->webhook_url);
@@ -64,10 +64,10 @@ class DeliverWebhook implements ShouldQueue
                 'response_status' => $resp->status(),
                 'response_body' => mb_substr((string) $resp->body(), 0, 5000),
                 'next_attempt_at' => null,
-                'error_message' => $ok ? null : ('HTTP ' . $resp->status()),
+                'error_message' => $ok ? null : ('HTTP '.$resp->status()),
             ]);
 
-            if (!$ok) {
+            if (! $ok) {
                 if ($this->scheduleRetry($delivery)) {
                     $delivery->update(['status' => 'pending']);
                 }
@@ -92,6 +92,7 @@ class DeliverWebhook implements ShouldQueue
         $max = 5;
         if ($attempts >= $max) {
             $delivery->update(['next_attempt_at' => null]);
+
             return false;
         }
 
@@ -102,7 +103,7 @@ class DeliverWebhook implements ShouldQueue
         $delivery->update(['next_attempt_at' => $next]);
 
         $this->release($delay);
+
         return true;
     }
 }
-

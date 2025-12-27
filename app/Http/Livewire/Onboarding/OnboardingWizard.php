@@ -13,7 +13,9 @@ use Livewire\Component;
 class OnboardingWizard extends Component
 {
     public ?int $workflowId = null;
+
     public ?int $questionnaireId = null;
+
     public array $answers = [];
 
     public function mount(OnboardingService $svc): void
@@ -65,14 +67,14 @@ class OnboardingWizard extends Component
 
         // Minimal validation: required questions must be non-empty.
         $requiredKeys = collect((array) ($q->questions ?? []))
-            ->filter(fn ($row) => is_array($row) && !empty($row['required']) && !empty($row['key']))
+            ->filter(fn ($row) => is_array($row) && ! empty($row['required']) && ! empty($row['key']))
             ->map(fn ($row) => (string) $row['key'])
             ->values()
             ->all();
 
         foreach ($requiredKeys as $key) {
             $val = $this->answers[$key] ?? null;
-            $ok = is_array($val) ? !empty(array_filter($val)) : (trim((string) $val) !== '');
+            $ok = is_array($val) ? ! empty(array_filter($val)) : (trim((string) $val) !== '');
             Validator::make(['v' => $ok], ['v' => ['accepted']])->validate();
         }
 
@@ -122,4 +124,3 @@ class OnboardingWizard extends Component
         ]);
     }
 }
-

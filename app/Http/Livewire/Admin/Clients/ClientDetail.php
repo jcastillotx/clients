@@ -9,9 +9,9 @@ use App\Models\Document;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Request as ServiceRequest;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ClientDetail extends Component
 {
@@ -20,6 +20,7 @@ class ClientDetail extends Component
     protected string $paginationTheme = 'bootstrap';
 
     public Client $client;
+
     public string $tab = 'overview';
 
     public string $notes = '';
@@ -46,8 +47,9 @@ class ClientDetail extends Component
     public function updateRequestStatus(int $requestId, string $status): void
     {
         $allowed = array_keys(config('client-portal.request_statuses', []));
-        if (!in_array($status, $allowed, true)) {
+        if (! in_array($status, $allowed, true)) {
             session()->flash('error', 'Invalid status.');
+
             return;
         }
 
@@ -72,13 +74,14 @@ class ClientDetail extends Component
         ];
 
         $pdf = Pdf::loadView('admin.clients.export-detail-pdf', compact('client', 'stats'));
-        return response()->streamDownload(fn () => print($pdf->output()), 'client-' . $client->id . '-details.pdf');
+
+        return response()->streamDownload(fn () => print ($pdf->output()), 'client-'.$client->id.'-details.pdf');
     }
 
     public function exportCsv()
     {
         $client = $this->client;
-        $filename = 'client-' . $client->id . '-details.csv';
+        $filename = 'client-'.$client->id.'-details.csv';
 
         $openRequests = (int) ServiceRequest::query()
             ->where('client_id', $client->id)
@@ -166,4 +169,3 @@ class ClientDetail extends Component
             ->layout('layouts.admin', ['title' => 'Client Detail']);
     }
 }
-

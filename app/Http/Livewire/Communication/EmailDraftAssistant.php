@@ -8,18 +8,24 @@ use Livewire\Component;
 class EmailDraftAssistant extends Component
 {
     public string $purpose = 'request_update';
+
     public string $tone = 'friendly'; // formal|friendly|urgent
+
     public string $contextJson = '';
 
     public string $subject = '';
+
     public string $body = '';
+
     public array $bullets = [];
 
     public function draft(CommunicationAssistantService $svc): void
     {
         $context = [];
         $decoded = json_decode($this->contextJson, true);
-        if (is_array($decoded)) $context = $decoded;
+        if (is_array($decoded)) {
+            $context = $decoded;
+        }
 
         $res = $svc->draftEmail($context, $this->purpose, $this->tone, [
             'provider' => 'openai',
@@ -33,7 +39,9 @@ class EmailDraftAssistant extends Component
 
     public function improve(CommunicationAssistantService $svc): void
     {
-        if (trim($this->body) === '') return;
+        if (trim($this->body) === '') {
+            return;
+        }
         $res = $svc->improveWriting($this->body, [
             'provider' => 'openai',
             'tone' => $this->tone,
@@ -46,4 +54,3 @@ class EmailDraftAssistant extends Component
         return view('livewire.communication.email-assistant');
     }
 }
-

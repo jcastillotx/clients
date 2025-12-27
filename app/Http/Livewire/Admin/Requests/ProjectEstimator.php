@@ -19,12 +19,17 @@ class ProjectEstimator extends Component
 
     /** @var array<int, array<string, mixed>> */
     public array $tasks = [];
+
     public array $timeline = [];
+
     public array $risk_factors = [];
 
     public int $complexity_score = 5;
+
     public float $base_rate = 100.0;
+
     public float $markup_pct = 0.2;
+
     public float $contingency_pct = 0.1;
 
     /** SOW sections (AI drafted) */
@@ -112,7 +117,7 @@ class ProjectEstimator extends Component
             'risk_factors' => $this->risk_factors,
         ]);
 
-        if (!$this->estimate) {
+        if (! $this->estimate) {
             $this->estimate = RequestEstimate::create([
                 'request_id' => $this->request->id,
                 'client_id' => $this->request->client_id,
@@ -143,8 +148,9 @@ class ProjectEstimator extends Component
 
     public function draftSow(SowGenerationService $sow, CostCalculationService $costs): void
     {
-        if (!$this->estimate) {
+        if (! $this->estimate) {
             session()->flash('error', 'Save an estimate first.');
+
             return;
         }
 
@@ -166,8 +172,9 @@ class ProjectEstimator extends Component
 
     public function generateSowPdf(SowGenerationService $sow, CostCalculationService $costs): void
     {
-        if (!$this->estimate) {
+        if (! $this->estimate) {
             session()->flash('error', 'Save an estimate first.');
+
             return;
         }
 
@@ -180,19 +187,21 @@ class ProjectEstimator extends Component
         $contract = $sow->generateSowContract($this->request->fresh(), $this->estimate->fresh(), $estimateData, $pricingData, $sections);
 
         $this->estimate->refresh();
-        session()->flash('success', 'SOW PDF generated. Contract #' . $contract->contract_number . ' is pending signature.');
+        session()->flash('success', 'SOW PDF generated. Contract #'.$contract->contract_number.' is pending signature.');
     }
 
     public function sendToClient(): void
     {
-        if (!$this->estimate) {
+        if (! $this->estimate) {
             session()->flash('error', 'Save an estimate first.');
+
             return;
         }
 
         $client = $this->request->client;
-        if (!$client) {
+        if (! $client) {
             session()->flash('error', 'Request has no client.');
+
             return;
         }
 
@@ -210,16 +219,20 @@ class ProjectEstimator extends Component
     }
 
     /**
-     * @param array<int, array<string, mixed>> $tasks
+     * @param  array<int, array<string, mixed>>  $tasks
      * @return array<int, array<string, mixed>>
      */
     protected function normalizeTasks(array $tasks): array
     {
         $out = [];
         foreach ($tasks as $t) {
-            if (!is_array($t)) continue;
+            if (! is_array($t)) {
+                continue;
+            }
             $name = trim((string) ($t['name'] ?? ''));
-            if ($name === '') continue;
+            if ($name === '') {
+                continue;
+            }
 
             $hoursLow = (float) ($t['hours_low'] ?? 0);
             $hoursMid = (float) ($t['hours_mid'] ?? 0);
@@ -255,7 +268,7 @@ class ProjectEstimator extends Component
     }
 
     /**
-     * @param array<string,mixed> $estimateLike
+     * @param  array<string,mixed>  $estimateLike
      * @return array<string,mixed>
      */
     protected function buildPricingData(CostCalculationService $costs, array $estimateLike): array
@@ -265,7 +278,9 @@ class ProjectEstimator extends Component
 
         $sum = ['low' => 0.0, 'mid' => 0.0, 'high' => 0.0];
         foreach ($tasks as $t) {
-            if (!($t['included'] ?? true)) continue;
+            if (! ($t['included'] ?? true)) {
+                continue;
+            }
             $sum['low'] += (float) ($t['hours_low'] ?? 0);
             $sum['mid'] += (float) ($t['hours_mid'] ?? 0);
             $sum['high'] += (float) ($t['hours_high'] ?? 0);
@@ -304,15 +319,23 @@ class ProjectEstimator extends Component
 
         $avgEstimated = null;
         $avgActual = null;
-        if (!empty($similar)) {
+        if (! empty($similar)) {
             $ests = [];
             $acts = [];
             foreach ($similar as $p) {
-                if (is_array($p) && isset($p['estimated_hours']) && is_numeric($p['estimated_hours'])) $ests[] = (float) $p['estimated_hours'];
-                if (is_array($p) && isset($p['actual_hours']) && is_numeric($p['actual_hours'])) $acts[] = (float) $p['actual_hours'];
+                if (is_array($p) && isset($p['estimated_hours']) && is_numeric($p['estimated_hours'])) {
+                    $ests[] = (float) $p['estimated_hours'];
+                }
+                if (is_array($p) && isset($p['actual_hours']) && is_numeric($p['actual_hours'])) {
+                    $acts[] = (float) $p['actual_hours'];
+                }
             }
-            if (count($ests) > 0) $avgEstimated = array_sum($ests) / count($ests);
-            if (count($acts) > 0) $avgActual = array_sum($acts) / count($acts);
+            if (count($ests) > 0) {
+                $avgEstimated = array_sum($ests) / count($ests);
+            }
+            if (count($acts) > 0) {
+                $avgActual = array_sum($acts) / count($acts);
+            }
         }
 
         return view('livewire.admin.requests.project-estimator', [
@@ -324,4 +347,3 @@ class ProjectEstimator extends Component
         ]);
     }
 }
-

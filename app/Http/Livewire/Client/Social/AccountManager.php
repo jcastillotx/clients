@@ -10,6 +10,7 @@ use Livewire\Component;
 class AccountManager extends Component
 {
     public $accounts = [];
+
     public $refreshingAccountId = null;
 
     protected $listeners = ['accountConnected' => '$refresh'];
@@ -31,32 +32,33 @@ class AccountManager extends Component
     {
         $account = SocialAccount::find($accountId);
 
-        if (!$account || $account->client_id !== auth()->user()->client_id) {
+        if (! $account || $account->client_id !== auth()->user()->client_id) {
             session()->flash('error', 'Account not found.');
+
             return;
         }
 
         $this->refreshingAccountId = $accountId;
 
         try {
-            $service = match($account->platform) {
-                'facebook' => new FacebookOAuthService(),
-                'linkedin' => new LinkedInOAuthService(),
+            $service = match ($account->platform) {
+                'facebook' => new FacebookOAuthService,
+                'linkedin' => new LinkedInOAuthService,
                 default => null,
             };
 
-            if (!$service) {
+            if (! $service) {
                 throw new \Exception('OAuth service not available for this platform');
             }
 
             if ($service->refreshToken($account)) {
-                session()->flash('success', ucfirst($account->platform) . ' token refreshed successfully!');
+                session()->flash('success', ucfirst($account->platform).' token refreshed successfully!');
                 $this->loadAccounts();
             } else {
                 throw new \Exception('Token refresh failed. Please reconnect your account.');
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to refresh token: ' . $e->getMessage());
+            session()->flash('error', 'Failed to refresh token: '.$e->getMessage());
         } finally {
             $this->refreshingAccountId = null;
         }

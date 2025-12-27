@@ -8,32 +8,32 @@ use Illuminate\Support\Facades\Log;
 
 class CommunicationAssistantService
 {
-    public function __construct(protected AIProviderManager $providers)
-    {
-    }
+    public function __construct(protected AIProviderManager $providers) {}
 
     /**
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $context
      * @return array{subject:string, body:string, short_bullets:array<int,string>, _meta?:array<string,mixed>}
      */
     public function draftEmail(array $context, string $purpose, string $tone = 'friendly', array $options = []): array
     {
         $system = CommunicationPrompts::draftEmailSystem();
         $user = CommunicationPrompts::draftEmailUser($context, $purpose, $tone);
+
         return $this->chatJson('draft_email', $system, $user, $options);
     }
 
     /**
      * Suggest 3 replies for a client message.
      *
-     * @param array<string,mixed> $context
-     * @param array<int, array{role:string, content:string}> $history
+     * @param  array<string,mixed>  $context
+     * @param  array<int, array{role:string, content:string}>  $history
      * @return array{recommended_tone:string, replies:array<int,array{title:string,text:string}>, _meta?:array<string,mixed>}
      */
     public function draftResponse(string $clientMessage, array $context = [], array $history = [], array $options = []): array
     {
         $system = CommunicationPrompts::smartRepliesSystem();
         $user = CommunicationPrompts::smartRepliesUser($clientMessage, $context, $history);
+
         return $this->chatJson('smart_replies', $system, $user, $options);
     }
 
@@ -46,6 +46,7 @@ class CommunicationAssistantService
     {
         $system = CommunicationPrompts::improveWritingSystem();
         $user = CommunicationPrompts::improveWritingUser($text, $options['tone'] ?? null);
+
         return $this->chatJson('improve_writing', $system, $user, $options);
     }
 
@@ -56,6 +57,7 @@ class CommunicationAssistantService
     {
         $system = CommunicationPrompts::sentimentSystem();
         $user = $message;
+
         return $this->chatJson('analyze_sentiment', $system, $user, $options);
     }
 
@@ -66,6 +68,7 @@ class CommunicationAssistantService
     {
         $system = CommunicationPrompts::intentSystem();
         $user = $message;
+
         return $this->chatJson('detect_intent', $system, $user, $options);
     }
 
@@ -76,6 +79,7 @@ class CommunicationAssistantService
     {
         $system = CommunicationPrompts::translateSystem();
         $user = CommunicationPrompts::translateUser($text, $targetLanguage);
+
         return $this->chatJson('translate', $system, $user, $options);
     }
 
@@ -130,13 +134,15 @@ class CommunicationAssistantService
                 'tokens' => $res['tokens'] ?? null,
                 'estimated_cost' => $res['estimated_cost'] ?? null,
             ];
+
             return $data;
         } catch (\Throwable $e) {
             $msg = strtolower($e->getMessage());
             if (str_contains($msg, 'api key') || str_contains($msg, 'not configured')) {
                 return ['error' => 'AI provider not configured.'];
             }
-            Log::warning("Communication assistant failed ({$taskType}): " . $e->getMessage());
+            Log::warning("Communication assistant failed ({$taskType}): ".$e->getMessage());
+
             return ['error' => $e->getMessage()];
         }
     }
@@ -147,18 +153,24 @@ class CommunicationAssistantService
     protected function parseJsonFromText(string $text): array
     {
         $text = trim($text);
-        if ($text === '') return [];
+        if ($text === '') {
+            return [];
+        }
         $decoded = json_decode($text, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($text, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
+
         return [];
     }
 }
-

@@ -11,8 +11,11 @@ class InvoiceList extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $status = '';
+
     public string $sortField = 'created_at';
+
     public string $sortDirection = 'desc';
 
     protected $queryString = [
@@ -56,7 +59,7 @@ class InvoiceList extends Component
             })
             ->when($this->search, function ($q) {
                 $q->where(function ($query) {
-                    $query->where('invoice_number', 'like', '%' . $this->search . '%');
+                    $query->where('invoice_number', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->status, function ($q) {
@@ -66,11 +69,11 @@ class InvoiceList extends Component
 
         $totals = [
             'unpaid' => Invoice::query()
-                ->when($user->isClient(), fn($q) => $q->where('client_id', $user->client_id))
+                ->when($user->isClient(), fn ($q) => $q->where('client_id', $user->client_id))
                 ->unpaid()
                 ->sum('amount'),
             'overdue' => Invoice::query()
-                ->when($user->isClient(), fn($q) => $q->where('client_id', $user->client_id))
+                ->when($user->isClient(), fn ($q) => $q->where('client_id', $user->client_id))
                 ->overdue()
                 ->sum('amount'),
         ];

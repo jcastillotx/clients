@@ -11,6 +11,7 @@ class ContractList extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $status = '';
 
     protected $queryString = [
@@ -44,8 +45,8 @@ class ContractList extends Component
             })
             ->when($this->search, function ($q) {
                 $q->where(function ($query) {
-                    $query->where('title', 'like', '%' . $this->search . '%')
-                        ->orWhere('contract_number', 'like', '%' . $this->search . '%');
+                    $query->where('title', 'like', '%'.$this->search.'%')
+                        ->orWhere('contract_number', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->status, function ($q) {

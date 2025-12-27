@@ -11,8 +11,7 @@ class MeetingAssistantService
 {
     public function __construct(
         protected AIProviderManager $providers
-    ) {
-    }
+    ) {}
 
     /**
      * Transcribe meeting audio (OpenAI Whisper) and summarize with action items.
@@ -42,6 +41,7 @@ class MeetingAssistantService
     {
         $system = MeetingPrompts::agendaSystem();
         $user = MeetingPrompts::agendaUser($meetingPurpose, $participants);
+
         return $this->chatJson('generate_agenda', $system, $user, $options);
     }
 
@@ -59,7 +59,7 @@ class MeetingAssistantService
         $model = (string) ($options['transcription_model'] ?? 'whisper-1');
 
         $http = new HttpClient([
-            'base_uri' => rtrim($base, '/') . '/',
+            'base_uri' => rtrim($base, '/').'/',
             'timeout' => (int) ($options['timeout'] ?? 180),
         ]);
 
@@ -81,7 +81,7 @@ class MeetingAssistantService
 
         $resp = $http->post('audio/transcriptions', [
             'headers' => [
-                'Authorization' => 'Bearer ' . $apiKey,
+                'Authorization' => 'Bearer '.$apiKey,
             ],
             'multipart' => $multipart,
         ]);
@@ -124,13 +124,15 @@ class MeetingAssistantService
                 'tokens' => $res['tokens'] ?? null,
                 'estimated_cost' => $res['estimated_cost'] ?? null,
             ];
+
             return $data;
         } catch (\Throwable $e) {
             $msg = strtolower($e->getMessage());
             if (str_contains($msg, 'api key') || str_contains($msg, 'not configured')) {
                 return ['error' => 'AI provider not configured.'];
             }
-            Log::warning("Meeting assistant failed ({$taskType}): " . $e->getMessage());
+            Log::warning("Meeting assistant failed ({$taskType}): ".$e->getMessage());
+
             return ['error' => $e->getMessage()];
         }
     }
@@ -141,18 +143,24 @@ class MeetingAssistantService
     protected function parseJsonFromText(string $text): array
     {
         $text = trim($text);
-        if ($text === '') return [];
+        if ($text === '') {
+            return [];
+        }
         $decoded = json_decode($text, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($text, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
+
         return [];
     }
 }
-

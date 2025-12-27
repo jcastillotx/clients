@@ -13,6 +13,7 @@ class RequestSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command?->warn('Skipping RequestSeeder in production (demo data).');
+
             return;
         }
 
@@ -36,4 +37,3 @@ class RequestSeeder extends Seeder
             });
     }
 }
-

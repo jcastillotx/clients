@@ -29,4 +29,3 @@ class AiInsightReport extends Model
         'created_at' => 'datetime',
     ];
 }
-

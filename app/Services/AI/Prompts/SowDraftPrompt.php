@@ -28,9 +28,9 @@ SYS;
     }
 
     /**
-     * @param array<string,mixed> $request
-     * @param array<string,mixed> $estimate
-     * @param array<string,mixed> $pricing
+     * @param  array<string,mixed>  $request
+     * @param  array<string,mixed>  $estimate
+     * @param  array<string,mixed>  $pricing
      */
     public static function userPrompt(array $request, array $estimate, array $pricing): string
     {
@@ -48,4 +48,3 @@ Context JSON:
 USR;
     }
 }
-

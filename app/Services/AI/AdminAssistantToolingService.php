@@ -23,6 +23,7 @@ class AdminAssistantToolingService
         // How many active clients?
         if (str_contains($q, 'how many') && str_contains($q, 'active') && str_contains($q, 'client')) {
             $count = Client::query()->where('status', 'active')->count();
+
             return ['handled' => true, 'answer' => "There are {$count} active clients."];
         }
 
@@ -34,7 +35,8 @@ class AdminAssistantToolingService
                 ->where('status', 'succeeded')
                 ->whereBetween('processed_at', [$start, $end])
                 ->sum('amount');
-            return ['handled' => true, 'answer' => 'Revenue last month (successful payments) was $' . number_format($sum, 2) . '.'];
+
+            return ['handled' => true, 'answer' => 'Revenue last month (successful payments) was $'.number_format($sum, 2).'.'];
         }
 
         // Recommend follow-up: pick clients with highest unpaid invoices + no recent request.
@@ -49,20 +51,21 @@ class AdminAssistantToolingService
                 $lastReq = ServiceRequest::query()->where('client_id', $c->id)->max('created_at');
                 $days = $lastReq ? Carbon::parse($lastReq)->diffInDays(now()) : 365;
                 $score = ($unpaid > 0 ? min(1000, $unpaid) : 0) + ($days * 2);
-                if (!$best || $score > $best['score']) {
+                if (! $best || $score > $best['score']) {
                     $best = ['client' => $c, 'score' => $score, 'unpaid' => $unpaid, 'days' => $days];
                 }
             }
 
-            if (!$best) {
+            if (! $best) {
                 return ['handled' => true, 'answer' => 'No active clients found to recommend.'];
             }
 
             /** @var Client $c */
             $c = $best['client'];
+
             return [
                 'handled' => true,
-                'answer' => "Recommended follow-up: {$c->company_name}. Unpaid invoices: $" . number_format((float) $best['unpaid'], 2) . ". Days since last request: {$best['days']}.",
+                'answer' => "Recommended follow-up: {$c->company_name}. Unpaid invoices: $".number_format((float) $best['unpaid'], 2).". Days since last request: {$best['days']}.",
                 'meta' => ['client_id' => $c->id],
             ];
         }
@@ -75,15 +78,15 @@ class AdminAssistantToolingService
                 $clientName = trim((string) $m[1]);
             }
 
-            if (!$clientName && !empty($context['client_id'])) {
+            if (! $clientName && ! empty($context['client_id'])) {
                 $client = Client::query()->find((int) $context['client_id']);
             } else {
                 $client = $clientName
-                    ? Client::query()->where('company_name', 'like', '%' . $clientName . '%')->orderBy('company_name')->first()
+                    ? Client::query()->where('company_name', 'like', '%'.$clientName.'%')->orderBy('company_name')->first()
                     : null;
             }
 
-            if (!$client) {
+            if (! $client) {
                 return ['handled' => true, 'answer' => 'I couldn’t find that client. Try “Create invoice for <company name>”.'];
             }
 
@@ -126,4 +129,3 @@ class AdminAssistantToolingService
         return ['handled' => false, 'answer' => ''];
     }
 }
-

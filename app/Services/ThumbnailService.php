@@ -10,12 +10,12 @@ class ThumbnailService
      */
     public function makeJpegThumbnailFromFile(string $absolutePath, int $maxWidth = 640): ?string
     {
-        if (!is_file($absolutePath) || !is_readable($absolutePath)) {
+        if (! is_file($absolutePath) || ! is_readable($absolutePath)) {
             return null;
         }
 
         // Prefer GD if available (common on shared hosting). If not, skip gracefully.
-        if (!extension_loaded('gd') || !function_exists('imagecreatefromstring')) {
+        if (! extension_loaded('gd') || ! function_exists('imagecreatefromstring')) {
             return null;
         }
 
@@ -25,7 +25,7 @@ class ThumbnailService
         }
 
         $src = @imagecreatefromstring($data);
-        if (!$src) {
+        if (! $src) {
             return null;
         }
 
@@ -33,6 +33,7 @@ class ThumbnailService
         $srcH = imagesy($src);
         if ($srcW <= 0 || $srcH <= 0) {
             imagedestroy($src);
+
             return null;
         }
 
@@ -41,8 +42,9 @@ class ThumbnailService
         $dstH = max(1, $dstH);
 
         $dst = imagecreatetruecolor($dstW, $dstH);
-        if (!$dst) {
+        if (! $dst) {
             imagedestroy($src);
+
             return null;
         }
 
@@ -62,4 +64,3 @@ class ThumbnailService
         return is_string($jpeg) && $jpeg !== '' ? $jpeg : null;
     }
 }
-

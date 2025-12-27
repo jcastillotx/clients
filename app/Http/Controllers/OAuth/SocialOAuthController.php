@@ -17,12 +17,13 @@ class SocialOAuthController extends Controller
     {
         $clientId = $request->user()->client_id;
 
-        if (!$clientId) {
+        if (! $clientId) {
             return redirect()->route('dashboard')
                 ->with('error', 'Client not found.');
         }
 
-        $service = new FacebookOAuthService();
+        $service = new FacebookOAuthService;
+
         return redirect($service->getAuthorizationUrl($clientId));
     }
 
@@ -34,14 +35,14 @@ class SocialOAuthController extends Controller
         try {
             // Verify state parameter
             $state = $request->get('state');
-            if (!$state) {
+            if (! $state) {
                 throw new \Exception('Invalid state parameter');
             }
 
             $stateData = json_decode(base64_decode($state), true);
             $clientId = $stateData['client_id'] ?? null;
 
-            if (!$clientId) {
+            if (! $clientId) {
                 throw new \Exception('Invalid client ID in state');
             }
 
@@ -51,11 +52,11 @@ class SocialOAuthController extends Controller
             }
 
             $code = $request->get('code');
-            if (!$code) {
+            if (! $code) {
                 throw new \Exception('Authorization code not provided');
             }
 
-            $service = new FacebookOAuthService();
+            $service = new FacebookOAuthService;
             $account = $service->handleCallback($code, $clientId);
 
             return redirect()->route('social.accounts')
@@ -67,7 +68,7 @@ class SocialOAuthController extends Controller
             ]);
 
             return redirect()->route('social.accounts')
-                ->with('error', 'Failed to connect Facebook account: ' . $e->getMessage());
+                ->with('error', 'Failed to connect Facebook account: '.$e->getMessage());
         }
     }
 
@@ -78,12 +79,13 @@ class SocialOAuthController extends Controller
     {
         $clientId = $request->user()->client_id;
 
-        if (!$clientId) {
+        if (! $clientId) {
             return redirect()->route('dashboard')
                 ->with('error', 'Client not found.');
         }
 
-        $service = new LinkedInOAuthService();
+        $service = new LinkedInOAuthService;
+
         return redirect($service->getAuthorizationUrl($clientId));
     }
 
@@ -95,14 +97,14 @@ class SocialOAuthController extends Controller
         try {
             // Verify state parameter
             $state = $request->get('state');
-            if (!$state) {
+            if (! $state) {
                 throw new \Exception('Invalid state parameter');
             }
 
             $stateData = json_decode(base64_decode($state), true);
             $clientId = $stateData['client_id'] ?? null;
 
-            if (!$clientId) {
+            if (! $clientId) {
                 throw new \Exception('Invalid client ID in state');
             }
 
@@ -112,11 +114,11 @@ class SocialOAuthController extends Controller
             }
 
             $code = $request->get('code');
-            if (!$code) {
+            if (! $code) {
                 throw new \Exception('Authorization code not provided');
             }
 
-            $service = new LinkedInOAuthService();
+            $service = new LinkedInOAuthService;
             $account = $service->handleCallback($code, $clientId);
 
             return redirect()->route('social.accounts')
@@ -128,7 +130,7 @@ class SocialOAuthController extends Controller
             ]);
 
             return redirect()->route('social.accounts')
-                ->with('error', 'Failed to connect LinkedIn account: ' . $e->getMessage());
+                ->with('error', 'Failed to connect LinkedIn account: '.$e->getMessage());
         }
     }
 
@@ -143,15 +145,15 @@ class SocialOAuthController extends Controller
             ->where('platform', $platform)
             ->first();
 
-        if (!$account) {
+        if (! $account) {
             return redirect()->back()
                 ->with('error', 'Account not found.');
         }
 
         try {
-            $service = match($platform) {
-                'facebook' => new FacebookOAuthService(),
-                'linkedin' => new LinkedInOAuthService(),
+            $service = match ($platform) {
+                'facebook' => new FacebookOAuthService,
+                'linkedin' => new LinkedInOAuthService,
                 default => null,
             };
 
@@ -162,7 +164,7 @@ class SocialOAuthController extends Controller
             }
 
             return redirect()->back()
-                ->with('success', ucfirst($platform) . ' account disconnected successfully!');
+                ->with('success', ucfirst($platform).' account disconnected successfully!');
         } catch (\Exception $e) {
             Log::error('Social account disconnect error', [
                 'platform' => $platform,
@@ -170,7 +172,7 @@ class SocialOAuthController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'Failed to disconnect account: ' . $e->getMessage());
+                ->with('error', 'Failed to disconnect account: '.$e->getMessage());
         }
     }
 }

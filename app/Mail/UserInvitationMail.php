@@ -20,7 +20,7 @@ class UserInvitationMail extends Mailable implements ShouldQueue
 
     public function build(): self
     {
-        return $this->subject('You’ve been invited · ' . config('app.name'))
+        return $this->subject('You’ve been invited · '.config('app.name'))
             ->view('emails.user-invitation', [
                 'user' => $this->user,
                 'setPasswordUrl' => $this->setPasswordUrl,
@@ -33,4 +33,3 @@ class UserInvitationMail extends Mailable implements ShouldQueue
             ]);
     }
 }
-

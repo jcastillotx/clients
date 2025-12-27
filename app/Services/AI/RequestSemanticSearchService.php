@@ -7,13 +7,15 @@ use App\Models\RequestEmbedding;
 class RequestSemanticSearchService
 {
     /**
-     * @param array<int, float|int|string> $a
-     * @param array<int, float|int|string> $b
+     * @param  array<int, float|int|string>  $a
+     * @param  array<int, float|int|string>  $b
      */
     public function cosineSimilarity(array $a, array $b): float
     {
         $n = min(count($a), count($b));
-        if ($n === 0) return 0.0;
+        if ($n === 0) {
+            return 0.0;
+        }
 
         $dot = 0.0;
         $na = 0.0;
@@ -25,14 +27,17 @@ class RequestSemanticSearchService
             $na += $va * $va;
             $nb += $vb * $vb;
         }
-        if ($na <= 0.0 || $nb <= 0.0) return 0.0;
+        if ($na <= 0.0 || $nb <= 0.0) {
+            return 0.0;
+        }
+
         return $dot / (sqrt($na) * sqrt($nb));
     }
 
     /**
      * Rank existing request embeddings by similarity.
      *
-     * @param array<int, float|int|string> $embedding
+     * @param  array<int, float|int|string>  $embedding
      * @return array<int, array{request_id:int, score:float}>
      */
     public function findSimilarByEmbedding(array $embedding, int $limit = 5, int $candidateLimit = 500, ?int $excludeRequestId = null): array
@@ -59,7 +64,7 @@ class RequestSemanticSearchService
     }
 
     /**
-     * @param array<int, array{estimated_hours:float|null, actual_hours:float|null}> $projects
+     * @param  array<int, array{estimated_hours:float|null, actual_hours:float|null}>  $projects
      * @return array{count:int, median_ratio:float|null}
      */
     public function varianceStats(array $projects): array
@@ -68,8 +73,12 @@ class RequestSemanticSearchService
         foreach ($projects as $p) {
             $est = $p['estimated_hours'];
             $act = $p['actual_hours'];
-            if ($est === null || $act === null) continue;
-            if ($est <= 0) continue;
+            if ($est === null || $act === null) {
+                continue;
+            }
+            if ($est <= 0) {
+                continue;
+            }
             $ratios[] = $act / $est;
         }
 
@@ -88,4 +97,3 @@ class RequestSemanticSearchService
         return ['count' => $count, 'median_ratio' => (float) $median];
     }
 }
-

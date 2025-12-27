@@ -29,4 +29,3 @@ class ProposalAnalytics extends Component
         ]);
     }
 }
-

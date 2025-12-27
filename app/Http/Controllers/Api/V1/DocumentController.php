@@ -36,13 +36,13 @@ class DocumentController extends Controller
         $file = $request->file('file');
         abort_unless($file, 422);
 
-        $storedPath = $file->store('uploads/' . now()->format('Y/m'), 'documents');
+        $storedPath = $file->store('uploads/'.now()->format('Y/m'), 'documents');
         $original = $file->getClientOriginalName();
         $mime = $file->getClientMimeType();
         $size = $file->getSize();
 
         $title = $data['title'] ?? pathinfo($original, PATHINFO_FILENAME);
-        $filename = Str::slug((string) $title) . '.' . strtolower(pathinfo($original, PATHINFO_EXTENSION) ?: 'bin');
+        $filename = Str::slug((string) $title).'.'.strtolower(pathinfo($original, PATHINFO_EXTENSION) ?: 'bin');
 
         // Keep the original filename but store the "filename" field for internal use (UI)
         $doc = Document::create([
@@ -67,4 +67,3 @@ class DocumentController extends Controller
         ], 201);
     }
 }
-

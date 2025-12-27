@@ -12,8 +12,7 @@ class DocumentAnalysisService
     public function __construct(
         protected AIProviderManager $providers,
         protected DocumentTextExtractor $extractor
-    ) {
-    }
+    ) {}
 
     /**
      * Detect document type from extracted content + metadata.
@@ -100,6 +99,7 @@ class DocumentAnalysisService
         }
 
         $user = DocumentAnalysisPrompts::invoiceUser($document, $text, is_array($estimate) ? $estimate : null, $extraction);
+
         return $this->chatJson('openai', 'analyze_invoice', $system, $user, $document, $options);
     }
 
@@ -112,6 +112,7 @@ class DocumentAnalysisService
     {
         $system = DocumentAnalysisPrompts::technicalSystem();
         $user = DocumentAnalysisPrompts::technicalUser($document, $text, $extraction);
+
         return $this->chatJson('openrouter', 'analyze_technical_document', $system, $user, $document, $options);
     }
 
@@ -125,6 +126,7 @@ class DocumentAnalysisService
         $lang = (string) ($options['language'] ?? 'en');
         $system = DocumentAnalysisPrompts::summarySystem($lang);
         $user = DocumentAnalysisPrompts::summaryUser($document, $text, $extraction);
+
         return $this->chatJson('openai', 'summarize_document', $system, $user, $document, $options);
     }
 
@@ -165,7 +167,8 @@ class DocumentAnalysisService
                     '_meta' => ['provider' => $preferredProvider],
                 ];
             }
-            Log::warning('Document analysis failed: ' . $e->getMessage());
+            Log::warning('Document analysis failed: '.$e->getMessage());
+
             return [
                 'error' => $e->getMessage(),
                 '_meta' => ['provider' => $preferredProvider],
@@ -179,20 +182,25 @@ class DocumentAnalysisService
     protected function parseJsonFromText(string $text): array
     {
         $text = trim($text);
-        if ($text === '') return [];
+        if ($text === '') {
+            return [];
+        }
 
         $decoded = json_decode($text, true);
-        if (is_array($decoded)) return $decoded;
+        if (is_array($decoded)) {
+            return $decoded;
+        }
 
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         if ($start !== false && $end !== false && $end > $start) {
             $slice = substr($text, $start, $end - $start + 1);
             $decoded = json_decode($slice, true);
-            if (is_array($decoded)) return $decoded;
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
         return [];
     }
 }
-

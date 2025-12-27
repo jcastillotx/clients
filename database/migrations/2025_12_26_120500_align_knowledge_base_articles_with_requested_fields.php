@@ -8,24 +8,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('knowledge_base_articles')) {
+        if (! Schema::hasTable('knowledge_base_articles')) {
             return;
         }
 
         Schema::table('knowledge_base_articles', function (Blueprint $table) {
             // Requested schema fields (kept alongside newer KB schema for compatibility).
-            if (!Schema::hasColumn('knowledge_base_articles', 'content')) {
+            if (! Schema::hasColumn('knowledge_base_articles', 'content')) {
                 $table->longText('content')->nullable()->after('body');
             }
-            if (!Schema::hasColumn('knowledge_base_articles', 'category')) {
+            if (! Schema::hasColumn('knowledge_base_articles', 'category')) {
                 $table->string('category')->nullable()->after('content');
                 $table->index(['category']);
             }
-            if (!Schema::hasColumn('knowledge_base_articles', 'views_count')) {
+            if (! Schema::hasColumn('knowledge_base_articles', 'views_count')) {
                 $table->unsignedBigInteger('views_count')->default(0)->after('category');
                 $table->index(['views_count']);
             }
-            if (!Schema::hasColumn('knowledge_base_articles', 'created_by')) {
+            if (! Schema::hasColumn('knowledge_base_articles', 'created_by')) {
                 $table->foreignId('created_by')->nullable()->after('category_id')->constrained('users')->nullOnDelete();
                 $table->index(['created_by', 'created_at']);
             }
@@ -34,7 +34,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('knowledge_base_articles')) {
+        if (! Schema::hasTable('knowledge_base_articles')) {
             return;
         }
 
@@ -57,4 +57,3 @@ return new class extends Migration
         });
     }
 };
-

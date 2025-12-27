@@ -12,16 +12,13 @@ class InvoiceCreatedNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Invoice $invoice)
-    {
-    }
+    public function __construct(public Invoice $invoice) {}
 
     public function build(): self
     {
         return $this
-            ->subject('New invoice · ' . $this->invoice->invoice_number)
+            ->subject('New invoice · '.$this->invoice->invoice_number)
             ->view('emails.invoice-created', ['invoice' => $this->invoice])
             ->text('emails.text.invoice-created', ['invoice' => $this->invoice]);
     }
 }
-

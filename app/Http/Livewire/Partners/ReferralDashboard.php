@@ -11,7 +11,9 @@ use Livewire\Component;
 class ReferralDashboard extends Component
 {
     public ?int $partnerId = null;
+
     public string $referredName = '';
+
     public string $referredEmail = '';
 
     public function create(): void
@@ -50,4 +52,3 @@ class ReferralDashboard extends Component
         return view('livewire.partners.referral-dashboard', compact('partners', 'referrals'));
     }
 }
-

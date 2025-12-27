@@ -35,7 +35,7 @@ class DropboxWebhookController extends Controller
         $body = $request->getContent();
 
         $expected = hash_hmac('sha256', $body, $secret);
-        if (!hash_equals($expected, $signature)) {
+        if (! hash_equals($expected, $signature)) {
             return response('Invalid signature.', 403);
         }
 
@@ -60,4 +60,3 @@ class DropboxWebhookController extends Controller
         return response('OK', 200);
     }
 }
-

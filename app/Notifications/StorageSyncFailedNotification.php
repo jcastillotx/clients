@@ -31,8 +31,8 @@ class StorageSyncFailedNotification extends Notification implements ShouldQueue
             default => $this->connection->provider,
         };
 
-        return (new MailMessage())
-            ->subject('Storage sync failed · ' . config('app.name'))
+        return (new MailMessage)
+            ->subject('Storage sync failed · '.config('app.name'))
             ->greeting('We couldn’t sync your storage')
             ->line("Provider: {$provider}")
             ->line("Error: {$this->errorMessage}")
@@ -40,4 +40,3 @@ class StorageSyncFailedNotification extends Notification implements ShouldQueue
             ->action('Manage storage', route('dashboard'));
     }
 }
-

@@ -11,16 +11,16 @@ return new class extends Migration
     {
         Schema::table('automation_rules', function (Blueprint $table) {
             // Requested schema (kept alongside existing columns for backwards compatibility)
-            if (!Schema::hasColumn('automation_rules', 'trigger_type')) {
+            if (! Schema::hasColumn('automation_rules', 'trigger_type')) {
                 $table->string('trigger_type')->nullable()->after('trigger');
             }
-            if (!Schema::hasColumn('automation_rules', 'trigger_config')) {
+            if (! Schema::hasColumn('automation_rules', 'trigger_config')) {
                 $table->json('trigger_config')->nullable()->after('trigger_type');
             }
-            if (!Schema::hasColumn('automation_rules', 'condition_config')) {
+            if (! Schema::hasColumn('automation_rules', 'condition_config')) {
                 $table->json('condition_config')->nullable()->after('trigger_config');
             }
-            if (!Schema::hasColumn('automation_rules', 'action_config')) {
+            if (! Schema::hasColumn('automation_rules', 'action_config')) {
                 $table->json('action_config')->nullable()->after('condition_config');
             }
 
@@ -80,4 +80,3 @@ return new class extends Migration
         });
     }
 };
-

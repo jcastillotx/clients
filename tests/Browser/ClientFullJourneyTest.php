@@ -7,9 +7,9 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Laravel\Dusk\Concerns\ProvidesBrowser;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\DuskTestCase;
 
 class ClientFullJourneyTest extends DuskTestCase
@@ -19,7 +19,7 @@ class ClientFullJourneyTest extends DuskTestCase
 
     public function test_client_journey_smoke_login_create_request_upload_file_and_reach_payment_page(): void
     {
-        if (!env('RUN_DUSK_TESTS')) {
+        if (! env('RUN_DUSK_TESTS')) {
             $this->markTestSkipped('Set RUN_DUSK_TESTS=1 to run browser tests.');
         }
 
@@ -57,7 +57,7 @@ class ClientFullJourneyTest extends DuskTestCase
             $browser->visit('/requests/create')
                 ->type('input[type=text]', 'Need help with a new landing page')
                 ->type('textarea', 'Please build a new landing page for our campaign. Here are the details...')
-                ->attach('input[type=file]', __DIR__ . '/fixtures/sample.pdf')
+                ->attach('input[type=file]', __DIR__.'/fixtures/sample.pdf')
                 ->press('Save draft')
                 ->assertSee('Request');
 
@@ -72,4 +72,3 @@ class ClientFullJourneyTest extends DuskTestCase
         });
     }
 }
-

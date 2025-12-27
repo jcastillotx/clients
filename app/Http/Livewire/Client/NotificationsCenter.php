@@ -81,7 +81,7 @@ class NotificationsCenter extends Component
     protected function loadPrefs(): void
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
         $existing = NotificationPreference::query()
@@ -138,4 +138,3 @@ class NotificationsCenter extends Component
         ]);
     }
 }
-

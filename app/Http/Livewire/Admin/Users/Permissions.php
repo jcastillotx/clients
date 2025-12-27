@@ -66,6 +66,7 @@ class Permissions extends Component
         $name = Str::of($this->newRoleName)->trim()->lower()->replace(' ', '_')->value();
         if ($name === '') {
             session()->flash('error', 'Role name is required.');
+
             return;
         }
 
@@ -98,4 +99,3 @@ class Permissions extends Component
         ])->layout('layouts.admin', ['title' => 'Permissions']);
     }
 }
-

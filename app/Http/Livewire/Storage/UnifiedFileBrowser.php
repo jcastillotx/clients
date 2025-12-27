@@ -21,18 +21,25 @@ class UnifiedFileBrowser extends Component
     public ?int $clientId = null;
 
     public string $search = '';
+
     public string $provider = '';
+
     public string $fileType = '';
+
     public ?string $dateFrom = null;
+
     public ?string $dateTo = null;
 
     // tagging
     public string $newTagName = '';
+
     public ?int $selectedFileId = null;
 
     // linking
     public string $linkType = 'request';
+
     public ?int $linkId = null;
+
     public string $linkPurpose = 'reference';
 
     protected array $queryString = [
@@ -50,11 +57,30 @@ class UnifiedFileBrowser extends Component
         $this->clientId = $user->client_id;
     }
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingProvider(): void { $this->resetPage(); }
-    public function updatingFileType(): void { $this->resetPage(); }
-    public function updatingDateFrom(): void { $this->resetPage(); }
-    public function updatingDateTo(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingProvider(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFileType(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateFrom(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateTo(): void
+    {
+        $this->resetPage();
+    }
 
     public function selectFile(int $fileId): void
     {
@@ -122,6 +148,7 @@ class UnifiedFileBrowser extends Component
             ->findOrFail($fileId);
 
         abort_unless((int) $file->connection->client_id === (int) $this->clientId, 403);
+
         return $file;
     }
 
@@ -142,14 +169,14 @@ class UnifiedFileBrowser extends Component
             })
             ->when($this->search, function ($q) {
                 $q->where(function ($qq) {
-                    $qq->where('filename', 'like', '%' . $this->search . '%')
-                        ->orWhere('path', 'like', '%' . $this->search . '%');
+                    $qq->where('filename', 'like', '%'.$this->search.'%')
+                        ->orWhere('path', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->fileType, function ($q) {
                 $q->where(function ($qq) {
                     $qq->where('extension', $this->fileType)
-                        ->orWhere('mime_type', 'like', $this->fileType . '%');
+                        ->orWhere('mime_type', 'like', $this->fileType.'%');
                 });
             })
             ->when($this->dateFrom, fn ($q) => $q->whereDate('modified_at', '>=', $this->dateFrom))
@@ -166,4 +193,3 @@ class UnifiedFileBrowser extends Component
         ]);
     }
 }
-

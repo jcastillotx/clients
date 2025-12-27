@@ -14,6 +14,7 @@ class ClientSeeder extends Seeder
     {
         if (app()->environment('production')) {
             $this->command?->warn('Skipping ClientSeeder in production (demo data).');
+
             return;
         }
 

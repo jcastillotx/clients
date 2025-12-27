@@ -26,7 +26,7 @@ return new class extends Migration
                 'pending_signature',
                 'active',
                 'expired',
-                'terminated'
+                'terminated',
             ])->default('draft');
             $table->timestamp('signed_at')->nullable();
             $table->string('signed_by')->nullable();

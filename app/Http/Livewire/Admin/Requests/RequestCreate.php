@@ -23,16 +23,23 @@ class RequestCreate extends Component
     use WithFileUploads;
 
     public ?int $client_id = null;
+
     public string $title = '';
+
     public string $type = 'support';
+
     public string $priority = 'medium';
+
     public string $description = '';
 
     public ?int $assigned_to = null;
+
     public ?string $due_date = null; // YYYY-MM-DD
+
     public string $internal_note = '';
 
     public bool $notify_admins = true;
+
     public bool $notify_assignee = true;
 
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
@@ -95,14 +102,14 @@ class RequestCreate extends Component
         }
 
         foreach ($this->files as $file) {
-            $filename = (string) Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('requests/' . $request->id, $filename, 'attachments');
+            $filename = (string) Str::uuid().'.'.$file->getClientOriginalExtension();
+            $path = $file->storeAs('requests/'.$request->id, $filename, 'attachments');
 
             $thumbnailPath = null;
             if (str_starts_with((string) $file->getMimeType(), 'image/')) {
                 $thumb = app(ThumbnailService::class)->makeJpegThumbnailFromFile($file->getRealPath(), 640);
                 if ($thumb) {
-                    $thumbnailPath = 'requests/' . $request->id . '/thumbnails/' . (string) Str::uuid() . '.jpg';
+                    $thumbnailPath = 'requests/'.$request->id.'/thumbnails/'.(string) Str::uuid().'.jpg';
                     Storage::disk('attachments')->put($thumbnailPath, $thumb);
                 }
             }
@@ -142,6 +149,7 @@ class RequestCreate extends Component
         }
 
         session()->flash('success', 'Request created.');
+
         return redirect()->route('admin.requests.show', $request);
     }
 
@@ -158,4 +166,3 @@ class RequestCreate extends Component
         ])->layout('layouts.admin', ['title' => 'Create Request']);
     }
 }
-

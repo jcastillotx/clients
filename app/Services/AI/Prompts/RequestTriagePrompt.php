@@ -39,8 +39,8 @@ SYS;
     }
 
     /**
-     * @param array<int, array{filename:string, mime_type:?string, size_bytes:?int}> $attachments
-     * @param array<int, array{id:int, title:string, status:string, type:string, priority:string}> $similar
+     * @param  array<int, array{filename:string, mime_type:?string, size_bytes:?int}>  $attachments
+     * @param  array<int, array{id:int, title:string, status:string, type:string, priority:string}>  $similar
      */
     public static function userPrompt(ServiceRequest $request, array $attachments = [], array $similar = []): string
     {
@@ -65,4 +65,3 @@ Produce the JSON triage output now.
 USR;
     }
 }
-

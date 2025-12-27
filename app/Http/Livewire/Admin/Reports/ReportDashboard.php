@@ -13,8 +13,11 @@ use Livewire\Component;
 class ReportDashboard extends Component
 {
     public string $category = 'financial';
+
     public string $granularity = 'month';
+
     public ?string $start_date = null;
+
     public ?string $end_date = null;
 
     /** @var array{meta: array, charts: array, tables: array} */
@@ -26,13 +29,18 @@ class ReportDashboard extends Component
 
     // Custom builder
     public string $template_name = '';
+
     public string $template_description = '';
+
     public array $template_metrics = [];
 
     // Scheduling
     public ?int $schedule_template_id = null;
+
     public string $schedule_frequency = 'weekly';
+
     public string $schedule_recipients = '';
+
     public bool $schedule_is_active = true;
 
     protected array $queryString = [
@@ -176,7 +184,7 @@ class ReportDashboard extends Component
 
     protected function validateDates(): void
     {
-        if (!$this->start_date || !$this->end_date) {
+        if (! $this->start_date || ! $this->end_date) {
             return;
         }
 
@@ -252,4 +260,3 @@ class ReportDashboard extends Component
         ]);
     }
 }
-

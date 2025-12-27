@@ -13,8 +13,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class AnalyzeRequestJob implements ShouldQueue
 {
@@ -26,7 +26,7 @@ class AnalyzeRequestJob implements ShouldQueue
     public array $backoff = [60, 180, 420];
 
     /**
-     * @param array{provider?:string, model?:string} $overrides
+     * @param  array{provider?:string, model?:string}  $overrides
      */
     public function __construct(
         public int $requestId,
@@ -39,7 +39,7 @@ class AnalyzeRequestJob implements ShouldQueue
     {
         /** @var ServiceRequest|null $request */
         $request = ServiceRequest::query()->with(['client', 'creator', 'attachments'])->find($this->requestId);
-        if (!$request) {
+        if (! $request) {
             return;
         }
 
@@ -105,7 +105,7 @@ class AnalyzeRequestJob implements ShouldQueue
                 Notification::send($recipients, new RequestAiAnalysisCompletedNotification($request->fresh()));
             }
         } catch (\Throwable $e) {
-            Log::warning('AI request analysis failed: ' . $e->getMessage(), [
+            Log::warning('AI request analysis failed: '.$e->getMessage(), [
                 'request_id' => $request->id,
             ]);
 
@@ -131,4 +131,3 @@ class AnalyzeRequestJob implements ShouldQueue
         }
     }
 }
-

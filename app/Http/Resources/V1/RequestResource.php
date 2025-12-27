@@ -27,4 +27,3 @@ class RequestResource extends JsonResource
         ];
     }
 }
-

@@ -21,7 +21,7 @@ return new class extends Migration
         throw_if($teams && empty($columnNames['team_foreign_key'] ?? null), Exception::class, 'Error: team_foreign_key on config/permission.php not loaded. Run [php artisan config:clear] and try again.');
 
         // Avoid creating Spatie permission tables twice if another migration already added them.
-        if (!empty($tableNames['permissions']) && Schema::hasTable($tableNames['permissions'])) {
+        if (! empty($tableNames['permissions']) && Schema::hasTable($tableNames['permissions'])) {
             return;
         }
 

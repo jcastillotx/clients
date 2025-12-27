@@ -19,7 +19,7 @@ class SyncDropboxChanges implements ShouldQueue
     public function handle(DropboxService $service): void
     {
         $connection = StorageConnection::query()->find($this->connectionId);
-        if (!$connection || $connection->provider !== 'dropbox') {
+        if (! $connection || $connection->provider !== 'dropbox') {
             return;
         }
 
@@ -31,4 +31,3 @@ class SyncDropboxChanges implements ShouldQueue
         $service->useConnection($connection)->syncChanges((int) config('storage-providers.sync.max_files_per_run', 500));
     }
 }
-

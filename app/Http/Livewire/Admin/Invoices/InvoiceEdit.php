@@ -21,14 +21,21 @@ class InvoiceEdit extends Component
     public bool $editable = false;
 
     public bool $autoNumber = false; // locked on edit
+
     public string $invoice_number = '';
+
     public ?int $client_id = null;
+
     public ?string $issue_date = null;
+
     public ?string $due_date = null;
+
     public string $status = 'draft';
+
     public string $template = 'classic';
 
     public ?int $request_id = null;
+
     public ?int $contract_id = null;
 
     /** @var array<int, array{id?:int|null, description:string, quantity:float|string, unit_price:float|string, total:float}> */
@@ -38,16 +45,24 @@ class InvoiceEdit extends Component
     public array $removedItemIds = [];
 
     public string $tax_rate = '';
+
     public string $discount = '';
+
     public string $notes = '';
+
     public string $terms = '';
 
     // Manual payment
     public bool $showPaymentModal = false;
+
     public string $payAmount = '';
+
     public string $payMethod = 'check';
+
     public string $payTransactionId = '';
+
     public ?string $payProcessedAt = null;
+
     public bool $paySendReceipt = true;
 
     public function mount(Invoice $invoice): void
@@ -56,9 +71,9 @@ class InvoiceEdit extends Component
 
         // Staff can only access invoices for assigned clients
         $user = auth()->user();
-        if ($user && $user->hasRole('staff') && !$user->hasAnyRole(['super_admin', 'admin'])) {
+        if ($user && $user->hasRole('staff') && ! $user->hasAnyRole(['super_admin', 'admin'])) {
             $allowed = $user->assignedClientIds();
-            if (!in_array((int) $this->invoice->client_id, $allowed, true)) {
+            if (! in_array((int) $this->invoice->client_id, $allowed, true)) {
                 abort(403, 'You do not have access to this invoice.');
             }
         }
@@ -150,8 +165,9 @@ class InvoiceEdit extends Component
 
     public function save(): void
     {
-        if (!$this->editable) {
+        if (! $this->editable) {
             session()->flash('error', 'This invoice can no longer be edited.');
+
             return;
         }
 
@@ -160,13 +176,13 @@ class InvoiceEdit extends Component
         // Validate request/contract belong to client
         if ($data['request_id']) {
             $req = ServiceRequest::query()->where('client_id', $this->invoice->client_id)->find($data['request_id']);
-            if (!$req) {
+            if (! $req) {
                 throw \Illuminate\Validation\ValidationException::withMessages(['request_id' => 'Selected request does not belong to this client.']);
             }
         }
         if ($data['contract_id']) {
             $contract = Contract::query()->where('client_id', $this->invoice->client_id)->find($data['contract_id']);
-            if (!$contract) {
+            if (! $contract) {
                 throw \Illuminate\Validation\ValidationException::withMessages(['contract_id' => 'Selected contract does not belong to this client.']);
             }
         }
@@ -184,7 +200,7 @@ class InvoiceEdit extends Component
         ]);
 
         // Delete removed items
-        if (!empty($this->removedItemIds)) {
+        if (! empty($this->removedItemIds)) {
             InvoiceItem::query()->where('invoice_id', $this->invoice->id)->whereIn('id', $this->removedItemIds)->delete();
             $this->removedItemIds = [];
         }
@@ -223,8 +239,9 @@ class InvoiceEdit extends Component
 
     public function voidInvoice(): void
     {
-        if (!in_array($this->invoice->status, ['draft', 'sent', 'overdue'], true)) {
+        if (! in_array($this->invoice->status, ['draft', 'sent', 'overdue'], true)) {
             session()->flash('error', 'Only draft/sent/overdue invoices can be voided.');
+
             return;
         }
 
@@ -248,8 +265,9 @@ class InvoiceEdit extends Component
 
     public function sendOrResend(NotificationService $notifications, InvoiceGeneratorAI $invoiceAi): void
     {
-        if (!in_array($this->invoice->status, ['draft', 'sent', 'overdue'], true)) {
+        if (! in_array($this->invoice->status, ['draft', 'sent', 'overdue'], true)) {
             session()->flash('error', 'Only draft/sent/overdue invoices can be emailed.');
+
             return;
         }
 
@@ -260,13 +278,14 @@ class InvoiceEdit extends Component
             ]);
             $queued = $review['_meta']['review_queue_id'] ?? null;
             $mathOk = (bool) ($review['math_ok'] ?? true);
-            if ($queued || !$mathOk) {
+            if ($queued || ! $mathOk) {
                 session()->flash(
                     'error',
                     $queued
                         ? 'Invoice requires human review before sending (AI safety queue).'
                         : 'Invoice review detected a math/total mismatch. Please fix before sending.'
                 );
+
                 return;
             }
         } catch (\Throwable) {
@@ -339,7 +358,6 @@ class InvoiceEdit extends Component
             'templates' => config('client-portal.invoice.templates', []),
             'requests' => $requests,
             'contracts' => $contracts,
-        ])->layout('layouts.admin', ['title' => 'Edit ' . $this->invoice->invoice_number]);
+        ])->layout('layouts.admin', ['title' => 'Edit '.$this->invoice->invoice_number]);
     }
 }
-

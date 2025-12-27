@@ -12,10 +12,13 @@ use Livewire\Component;
 class KnowledgeBase extends Component
 {
     public string $search = '';
+
     public ?int $categoryId = null;
+
     public ?int $articleId = null;
 
     public ?bool $helpful = null;
+
     public string $feedbackComment = '';
 
     protected array $queryString = [
@@ -85,9 +88,9 @@ class KnowledgeBase extends Component
             ->when($this->categoryId, fn ($q) => $q->where('category_id', $this->categoryId))
             ->when($this->search, function ($q) {
                 $q->where(function ($qq) {
-                    $qq->where('title', 'like', '%' . $this->search . '%')
-                        ->orWhere('excerpt', 'like', '%' . $this->search . '%')
-                        ->orWhere('body', 'like', '%' . $this->search . '%');
+                    $qq->where('title', 'like', '%'.$this->search.'%')
+                        ->orWhere('excerpt', 'like', '%'.$this->search.'%')
+                        ->orWhere('body', 'like', '%'.$this->search.'%');
                 });
             })
             ->orderByDesc('published_at')
@@ -98,4 +101,3 @@ class KnowledgeBase extends Component
         return view('livewire.client.knowledge-base', compact('categories', 'articles', 'article'));
     }
 }
-

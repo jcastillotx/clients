@@ -59,4 +59,3 @@ class InvoicePdfGenerationTest extends TestCase
         Storage::disk('invoices')->assertExists($invoice->pdf_path);
     }
 }
-

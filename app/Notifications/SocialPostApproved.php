@@ -27,11 +27,11 @@ class SocialPostApproved extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject('Social Media Post Approved!')
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('Great news! A social media post has been approved by the client.')
-            ->line('**Client:** ' . $this->post->client->company_name)
-            ->line('**Platform:** ' . ucfirst($this->post->platform))
-            ->line('**Post Title:** ' . $this->post->title)
+            ->line('**Client:** '.$this->post->client->company_name)
+            ->line('**Platform:** '.ucfirst($this->post->platform))
+            ->line('**Post Title:** '.$this->post->title)
             ->action('Schedule Post', $url)
             ->line('The post is ready to be scheduled for publishing.')
             ->line('Thank you!');

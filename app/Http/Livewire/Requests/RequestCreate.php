@@ -19,8 +19,11 @@ class RequestCreate extends Component
     use WithFileUploads;
 
     public string $title = '';
+
     public string $type = 'support';
+
     public string $priority = 'medium';
+
     public string $description = '';
 
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
@@ -34,8 +37,8 @@ class RequestCreate extends Component
 
         return [
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'in:' . $types],
-            'priority' => ['required', 'in:' . $priorities],
+            'type' => ['required', 'in:'.$types],
+            'priority' => ['required', 'in:'.$priorities],
             'description' => ['required', 'string'],
             'files' => ['array'],
             'files.*' => ['file', "max:{$maxKb}", 'mimes:pdf,doc,docx,jpg,jpeg,png'],
@@ -52,7 +55,7 @@ class RequestCreate extends Component
         $this->validate();
 
         $user = auth()->user();
-        if (!$user?->client_id) {
+        if (! $user?->client_id) {
             abort(403);
         }
 
@@ -67,14 +70,14 @@ class RequestCreate extends Component
         ]);
 
         foreach ($this->files as $file) {
-            $filename = (string) Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('requests/' . $request->id, $filename, 'attachments');
+            $filename = (string) Str::uuid().'.'.$file->getClientOriginalExtension();
+            $path = $file->storeAs('requests/'.$request->id, $filename, 'attachments');
 
             $thumbnailPath = null;
             if (str_starts_with((string) $file->getMimeType(), 'image/')) {
                 $thumb = app(ThumbnailService::class)->makeJpegThumbnailFromFile($file->getRealPath(), 640);
                 if ($thumb) {
-                    $thumbnailPath = 'requests/' . $request->id . '/thumbnails/' . (string) Str::uuid() . '.jpg';
+                    $thumbnailPath = 'requests/'.$request->id.'/thumbnails/'.(string) Str::uuid().'.jpg';
                     Storage::disk('attachments')->put($thumbnailPath, $thumb);
                 }
             }
@@ -124,4 +127,3 @@ class RequestCreate extends Component
         ]);
     }
 }
-

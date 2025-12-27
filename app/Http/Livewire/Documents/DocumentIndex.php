@@ -13,6 +13,7 @@ class DocumentIndex extends Component
     protected string $paginationTheme = 'tailwind';
 
     public string $search = '';
+
     public string $category = 'all';
 
     public function updatingSearch(): void
@@ -32,7 +33,7 @@ class DocumentIndex extends Component
         $query = Document::query()
             ->with(['uploader'])
             ->when($user->isClient(), fn ($q) => $q->where('client_id', $user->client_id))
-            ->when($this->search, fn ($q) => $q->where('title', 'like', '%' . $this->search . '%'))
+            ->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))
             ->when($this->category !== 'all', fn ($q) => $q->where('category', $this->category))
             ->latest();
 
@@ -42,4 +43,3 @@ class DocumentIndex extends Component
         ]);
     }
 }
-

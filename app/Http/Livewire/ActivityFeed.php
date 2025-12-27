@@ -29,7 +29,7 @@ class ActivityFeed extends Component
         $user = auth()->user();
         $clientId = $user?->client_id;
 
-        if (!$clientId) {
+        if (! $clientId) {
             return view('livewire.activity-feed', [
                 'activities' => collect(),
             ]);
@@ -83,4 +83,3 @@ class ActivityFeed extends Component
         ]);
     }
 }
-

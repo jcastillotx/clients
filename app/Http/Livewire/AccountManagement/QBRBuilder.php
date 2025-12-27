@@ -10,10 +10,15 @@ use Livewire\Component;
 class QBRBuilder extends Component
 {
     public ?int $clientId = null;
+
     public ?string $scheduledDate = null;
+
     public string $presentationUrl = '';
+
     public string $notes = '';
+
     public string $actionItemsJson = '[]';
+
     public ?string $nextQbrDate = null;
 
     public function mount(): void
@@ -29,7 +34,9 @@ class QBRBuilder extends Component
         abort_unless($this->clientId, 422);
 
         $items = json_decode($this->actionItemsJson ?: '[]', true);
-        if (!is_array($items)) $items = [];
+        if (! is_array($items)) {
+            $items = [];
+        }
 
         QbrMeeting::create([
             'client_id' => $this->clientId,
@@ -58,4 +65,3 @@ class QBRBuilder extends Component
         return view('livewire.account-management.qbr-builder', compact('clients', 'qbrs'));
     }
 }
-

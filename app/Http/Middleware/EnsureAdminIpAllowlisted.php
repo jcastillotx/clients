@@ -28,7 +28,9 @@ class EnsureAdminIpAllowlisted
     private function ipMatches(string $ip, string $rule): bool
     {
         $rule = trim($rule);
-        if ($rule === '') return false;
+        if ($rule === '') {
+            return false;
+        }
 
         // exact IP match
         if (strpos($rule, '/') === false) {
@@ -46,7 +48,7 @@ class EnsureAdminIpAllowlisted
 
         $mask = -1 << (32 - $bits);
         $mask = $mask & 0xFFFFFFFF;
-        return (($ipLong & $mask) === ($subnetLong & $mask));
+
+        return ($ipLong & $mask) === ($subnetLong & $mask);
     }
 }
-

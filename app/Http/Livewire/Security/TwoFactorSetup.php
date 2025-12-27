@@ -10,8 +10,11 @@ use Livewire\Component;
 class TwoFactorSetup extends Component
 {
     public string $secret = '';
+
     public string $code = '';
+
     public array $recoveryCodes = [];
+
     public bool $confirmed = false;
 
     public function mount(TwoFactorService $svc): void
@@ -21,6 +24,7 @@ class TwoFactorSetup extends Component
 
         if ($u->two_factor_confirmed_at) {
             $this->confirmed = true;
+
             return;
         }
 
@@ -28,6 +32,7 @@ class TwoFactorSetup extends Component
         if ($u->two_factor_secret) {
             try {
                 $this->secret = Crypt::decryptString($u->two_factor_secret);
+
                 return;
             } catch (\Throwable) {
                 // fall through and regenerate
@@ -47,11 +52,12 @@ class TwoFactorSetup extends Component
     {
         $u = Auth::user();
         abort_unless($u, 403);
-        abort_unless(!$u->two_factor_confirmed_at, 422);
+        abort_unless(! $u->two_factor_confirmed_at, 422);
 
         $secret = $this->secret;
-        if (!$svc->verifyCode($secret, $this->code, 1)) {
+        if (! $svc->verifyCode($secret, $this->code, 1)) {
             $this->addError('code', 'Invalid code. Try again.');
+
             return;
         }
 
@@ -92,13 +98,15 @@ class TwoFactorSetup extends Component
         $issuer = (string) config('security.two_factor_issuer', config('app.name'));
         $label = (string) ($u->email ?: $u->name ?: 'user');
         $otpauth = $this->secret ? $svc->otpAuthUrl($issuer, $label, $this->secret) : '';
-        $qrUrl = $otpauth ? ('https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' . rawurlencode($otpauth)) : '';
+        $qrUrl = $otpauth ? ('https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl='.rawurlencode($otpauth)) : '';
 
         // If confirmed and codes not loaded, try decrypt.
         if ($u->two_factor_confirmed_at && empty($this->recoveryCodes) && $u->two_factor_recovery_codes) {
             try {
                 $codes = json_decode(Crypt::decryptString($u->two_factor_recovery_codes), true);
-                if (is_array($codes)) $this->recoveryCodes = $codes;
+                if (is_array($codes)) {
+                    $this->recoveryCodes = $codes;
+                }
             } catch (\Throwable) {
                 // ignore
             }
@@ -110,4 +118,3 @@ class TwoFactorSetup extends Component
         ]);
     }
 }
-

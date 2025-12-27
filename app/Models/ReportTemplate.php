@@ -32,4 +32,3 @@ class ReportTemplate extends Model
         return $this->hasMany(ReportSchedule::class, 'report_template_id');
     }
 }
-

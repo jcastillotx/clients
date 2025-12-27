@@ -153,4 +153,3 @@ class DocumentPermissionsTest extends TestCase
             ->assertForbidden();
     }
 }
-

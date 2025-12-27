@@ -12,9 +12,7 @@ class SurveyRequestedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public SurveyResponse $response)
-    {
-    }
+    public function __construct(public SurveyResponse $response) {}
 
     public function via($notifiable): array
     {
@@ -43,4 +41,3 @@ class SurveyRequestedNotification extends Notification implements ShouldQueue
         ];
     }
 }
-

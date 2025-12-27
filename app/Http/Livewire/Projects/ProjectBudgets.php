@@ -40,7 +40,7 @@ class ProjectBudgets extends Component
 
         $invoiceTotals = [];
         $requestIds = $budgets->pluck('request_id')->filter()->unique()->values()->all();
-        if (!empty($requestIds)) {
+        if (! empty($requestIds)) {
             $rows = Invoice::query()
                 ->whereIn('request_id', $requestIds)
                 ->selectRaw('request_id, SUM(amount) as total')
@@ -58,4 +58,3 @@ class ProjectBudgets extends Component
         ]);
     }
 }
-

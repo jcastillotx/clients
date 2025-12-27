@@ -10,8 +10,11 @@ use Livewire\Component;
 class QuestionnaireBuilder extends Component
 {
     public ?int $questionnaireId = null;
+
     public string $title = '';
+
     public string $questionnaireType = 'custom';
+
     public array $questions = [];
 
     public function mount(): void
@@ -23,7 +26,7 @@ class QuestionnaireBuilder extends Component
     public function addQuestion(): void
     {
         $this->questions[] = [
-            'key' => 'q' . (count($this->questions) + 1),
+            'key' => 'q'.(count($this->questions) + 1),
             'type' => 'text',
             'label' => 'Question',
             'required' => false,
@@ -46,7 +49,7 @@ class QuestionnaireBuilder extends Component
             'questions' => ['array', 'min:1'],
         ])->validate();
 
-        $q = $this->questionnaireId ? Questionnaire::query()->findOrFail($this->questionnaireId) : new Questionnaire();
+        $q = $this->questionnaireId ? Questionnaire::query()->findOrFail($this->questionnaireId) : new Questionnaire;
         $q->fill([
             'client_id' => $q->client_id, // set by admin later, or use as global template; keep as-is
             'questionnaire_type' => $this->questionnaireType,
@@ -75,4 +78,3 @@ class QuestionnaireBuilder extends Component
         ]);
     }
 }
-

@@ -45,7 +45,8 @@ class AISafetyDashboard extends Component
     protected function authorizeAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->can('access admin panel')) abort(403);
+        if (! $u || ! $u->can('access admin panel')) {
+            abort(403);
+        }
     }
 }
-

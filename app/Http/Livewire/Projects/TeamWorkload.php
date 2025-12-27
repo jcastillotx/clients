@@ -48,4 +48,3 @@ class TeamWorkload extends Component
         ]);
     }
 }
-

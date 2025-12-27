@@ -11,13 +11,21 @@ use Livewire\Component;
 class WhiteLabelConfigurator extends Component
 {
     public ?int $clientId = null;
+
     public string $customDomain = '';
+
     public string $logoUrl = '';
+
     public string $primaryColor = '#3c8dbc';
+
     public string $secondaryColor = '#6c757d';
+
     public string $fontFamily = 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif';
+
     public string $companyName = '';
+
     public string $footerText = '';
+
     public bool $isActive = false;
 
     public function mount(): void
@@ -31,7 +39,9 @@ class WhiteLabelConfigurator extends Component
         $user = Auth::user();
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
 
-        if (!$this->clientId) return;
+        if (! $this->clientId) {
+            return;
+        }
         $cfg = WhiteLabelConfig::query()->firstOrNew(['client_id' => $this->clientId]);
         $client = Client::query()->find($this->clientId);
 
@@ -90,9 +100,9 @@ class WhiteLabelConfigurator extends Component
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
 
         $clients = Client::query()->orderBy('company_name')->limit(250)->get(['id', 'company_name']);
+
         return view('livewire.white-label.white-label-configurator', [
             'clients' => $clients,
         ]);
     }
 }
-

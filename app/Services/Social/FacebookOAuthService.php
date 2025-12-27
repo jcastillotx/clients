@@ -2,7 +2,6 @@
 
 namespace App\Services\Social;
 
-use App\Models\Client;
 use App\Models\SocialAccount;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -11,8 +10,11 @@ use Illuminate\Support\Facades\Log;
 class FacebookOAuthService implements OAuthServiceInterface
 {
     protected string $clientId;
+
     protected string $clientSecret;
+
     protected string $redirectUri;
+
     protected string $graphApiVersion = 'v18.0';
 
     public function __construct()
@@ -62,7 +64,7 @@ class FacebookOAuthService implements OAuthServiceInterface
         ]);
 
         if ($tokenResponse->failed()) {
-            throw new \Exception('Failed to exchange code for access token: ' . $tokenResponse->body());
+            throw new \Exception('Failed to exchange code for access token: '.$tokenResponse->body());
         }
 
         $tokenData = $tokenResponse->json();
@@ -91,7 +93,7 @@ class FacebookOAuthService implements OAuthServiceInterface
         ]);
 
         if ($profileResponse->failed()) {
-            throw new \Exception('Failed to fetch user profile: ' . $profileResponse->body());
+            throw new \Exception('Failed to fetch user profile: '.$profileResponse->body());
         }
 
         $profile = $profileResponse->json();
@@ -132,7 +134,7 @@ class FacebookOAuthService implements OAuthServiceInterface
      */
     public function refreshToken(SocialAccount $account): bool
     {
-        if (!$account->access_token) {
+        if (! $account->access_token) {
             return false;
         }
 
@@ -149,6 +151,7 @@ class FacebookOAuthService implements OAuthServiceInterface
                     'account_id' => $account->id,
                     'response' => $response->body(),
                 ]);
+
                 return false;
             }
 
@@ -171,6 +174,7 @@ class FacebookOAuthService implements OAuthServiceInterface
                 'account_id' => $account->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -180,8 +184,9 @@ class FacebookOAuthService implements OAuthServiceInterface
      */
     public function disconnect(SocialAccount $account): bool
     {
-        if (!$account->access_token) {
+        if (! $account->access_token) {
             $account->disconnect();
+
             return true;
         }
 
@@ -203,6 +208,7 @@ class FacebookOAuthService implements OAuthServiceInterface
         }
 
         $account->disconnect();
+
         return true;
     }
 
@@ -217,7 +223,7 @@ class FacebookOAuthService implements OAuthServiceInterface
         ]);
 
         if ($response->failed()) {
-            throw new \Exception('Failed to fetch user profile: ' . $response->body());
+            throw new \Exception('Failed to fetch user profile: '.$response->body());
         }
 
         return $response->json();

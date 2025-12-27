@@ -2,15 +2,18 @@
 
 namespace App\Livewire\Contracts;
 
-use App\Models\Contract;
 use App\Models\ActivityLog;
+use App\Models\Contract;
 use Livewire\Component;
 
 class SignContract extends Component
 {
     public Contract $contract;
+
     public string $signature = '';
+
     public bool $agreeTerms = false;
+
     public bool $showSignaturePad = false;
 
     protected $rules = [
@@ -35,7 +38,7 @@ class SignContract extends Component
 
     public function toggleSignaturePad(): void
     {
-        $this->showSignaturePad = !$this->showSignaturePad;
+        $this->showSignaturePad = ! $this->showSignaturePad;
     }
 
     public function clearSignature(): void

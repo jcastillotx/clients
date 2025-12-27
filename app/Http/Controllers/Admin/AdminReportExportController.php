@@ -12,9 +12,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminReportExportController extends Controller
 {
-    public function __construct(private readonly ReportDataService $reportData)
-    {
-    }
+    public function __construct(private readonly ReportDataService $reportData) {}
 
     /**
      * Export admin reports as CSV, XLSX, or PDF.
@@ -51,6 +49,7 @@ class AdminReportExportController extends Controller
                 if (empty($rows)) {
                     fputcsv($out, ['(no data)']);
                     fputcsv($out, []);
+
                     continue;
                 }
 
@@ -73,7 +72,7 @@ class AdminReportExportController extends Controller
 
     protected function exportXlsx(string $category, array $payload): Response|StreamedResponse
     {
-        if (!class_exists(\Maatwebsite\Excel\Facades\Excel::class)) {
+        if (! class_exists(\Maatwebsite\Excel\Facades\Excel::class)) {
             // Graceful fallback if Excel package isn't installed in this environment.
             return $this->exportCsv($category, $payload);
         }
@@ -91,7 +90,7 @@ class AdminReportExportController extends Controller
         $filename = $this->filename($category, 'pdf');
         $view = "admin.reports.exports.{$category}";
 
-        if (!view()->exists($view)) {
+        if (! view()->exists($view)) {
             $view = 'admin.reports.exports.generic';
         }
 
@@ -108,4 +107,3 @@ class AdminReportExportController extends Controller
         return sprintf('report_%s_%s.%s', $category, now()->format('Ymd_His'), $ext);
     }
 }
-

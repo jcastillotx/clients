@@ -16,15 +16,21 @@ use Spatie\Permission\Models\Role;
 class UserCreate extends Component
 {
     public string $name = '';
+
     public string $email = '';
+
     public string $role = 'staff'; // admin|staff|client|custom
 
     public string $status = 'active'; // active|inactive|suspended
 
     public ?int $client_id = null;
+
     public bool $createNewClient = false;
+
     public string $client_company_name = '';
+
     public string $client_contact_name = '';
+
     public string $client_phone = '';
 
     /** @var array<int, string> */
@@ -32,6 +38,7 @@ class UserCreate extends Component
 
     /** @var array<int, int> */
     public array $assignedClientIds = [];
+
     public string $staffAssignmentRole = 'account_manager'; // account_manager|project_lead
 
     protected function rules(): array
@@ -128,7 +135,7 @@ class UserCreate extends Component
                 ]);
                 $clientId = $client->id;
             } else {
-                if (!$data['client_id']) {
+                if (! $data['client_id']) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'client_id' => 'Please select an existing client or create a new one.',
                     ]);
@@ -161,6 +168,7 @@ class UserCreate extends Component
         Mail::to($user->email)->queue(new UserInvitationMail($user, $setPasswordUrl, $roleLabel));
 
         session()->flash('success', 'User created and invitation email queued.');
+
         return redirect()->route('admin.users.edit', $user);
     }
 
@@ -176,4 +184,3 @@ class UserCreate extends Component
         ])->layout('layouts.admin', ['title' => 'Add User']);
     }
 }
-

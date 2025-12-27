@@ -40,7 +40,7 @@ return new class extends Migration
         });
 
         Schema::table('documents', function (Blueprint $table) {
-            if (!Schema::hasColumn('documents', 'current_version_id')) {
+            if (! Schema::hasColumn('documents', 'current_version_id')) {
                 $table->foreignId('current_version_id')->nullable()->after('id')->constrained('document_versions')->nullOnDelete();
                 $table->index(['current_version_id']);
             }
@@ -57,4 +57,3 @@ return new class extends Migration
         Schema::dropIfExists('document_versions');
     }
 };
-

@@ -2,10 +2,10 @@
 
 namespace App\Jobs\Marketing;
 
-use App\Services\Marketing\WebsiteAuditorService;
+use App\Mail\Marketing\WebsiteAuditCriticalIssuesMail;
 use App\Models\WebsiteAudit;
 use App\Models\WebsiteAuditSchedule;
-use App\Mail\Marketing\WebsiteAuditCriticalIssuesMail;
+use App\Services\Marketing\WebsiteAuditorService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -35,20 +35,18 @@ class RunWebsiteAuditJob implements ShouldQueue
         public string $url,
         public array $options = [],
         public ?int $scheduleId = null,
-    )
-    {
-    }
+    ) {}
 
     public function handle(WebsiteAuditorService $auditor): void
     {
         $report = $auditor->performFullAudit($this->url, $this->options);
 
-        if (!$this->scheduleId) {
+        if (! $this->scheduleId) {
             return;
         }
 
         $schedule = WebsiteAuditSchedule::query()->find($this->scheduleId);
-        if (!$schedule || !$schedule->is_active) {
+        if (! $schedule || ! $schedule->is_active) {
             return;
         }
 
@@ -58,7 +56,7 @@ class RunWebsiteAuditJob implements ShouldQueue
         }
 
         $audit = WebsiteAudit::query()->with('issues')->find($auditId);
-        if (!$audit || $audit->status !== 'completed') {
+        if (! $audit || $audit->status !== 'completed') {
             return;
         }
 
@@ -77,19 +75,23 @@ class RunWebsiteAuditJob implements ShouldQueue
         }
 
         $fingerprint = fn ($i) => sha1(
-            (string) $i->category . '|' . (string) $i->issue_type . '|' . (string) ($i->affected_url ?? '') . '|' . substr((string) $i->description, 0, 200)
+            (string) $i->category.'|'.(string) $i->issue_type.'|'.(string) ($i->affected_url ?? '').'|'.substr((string) $i->description, 0, 200)
         );
 
         $prevSet = [];
         if ($prev && is_array($prev->report) && isset($prev->report['issues']) && is_array($prev->report['issues'])) {
             foreach ($prev->report['issues'] as $pi) {
-                if (!is_array($pi)) continue;
-                if (($pi['severity'] ?? null) !== 'critical') continue;
-                $prevSet[sha1((string) ($pi['category'] ?? '') . '|' . (string) ($pi['issue_type'] ?? '') . '|' . (string) ($pi['affected_url'] ?? '') . '|' . substr((string) ($pi['description'] ?? ''), 0, 200))] = true;
+                if (! is_array($pi)) {
+                    continue;
+                }
+                if (($pi['severity'] ?? null) !== 'critical') {
+                    continue;
+                }
+                $prevSet[sha1((string) ($pi['category'] ?? '').'|'.(string) ($pi['issue_type'] ?? '').'|'.(string) ($pi['affected_url'] ?? '').'|'.substr((string) ($pi['description'] ?? ''), 0, 200))] = true;
             }
         }
 
-        $newCritical = $currentCritical->filter(fn ($i) => !isset($prevSet[$fingerprint($i)]))->values();
+        $newCritical = $currentCritical->filter(fn ($i) => ! isset($prevSet[$fingerprint($i)]))->values();
         if ($newCritical->isEmpty()) {
             return;
         }
@@ -115,4 +117,3 @@ class RunWebsiteAuditJob implements ShouldQueue
         }
     }
 }
-

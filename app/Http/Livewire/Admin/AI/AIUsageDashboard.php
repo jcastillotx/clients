@@ -56,7 +56,7 @@ class AIUsageDashboard extends Component
         $clients = Client::query()->whereIn('id', $byClient->pluck('client_id'))->get()->keyBy('id');
         $byClient = $byClient->map(fn ($r) => [
             'client_id' => (int) $r->client_id,
-            'client' => $clients[(int) $r->client_id]->company_name ?? ('Client #' . (int) $r->client_id),
+            'client' => $clients[(int) $r->client_id]->company_name ?? ('Client #'.(int) $r->client_id),
             'cost' => (float) $r->cost,
         ]);
 
@@ -71,7 +71,7 @@ class AIUsageDashboard extends Component
         $users = User::query()->whereIn('id', $byUser->pluck('user_id'))->get()->keyBy('id');
         $byUser = $byUser->map(fn ($r) => [
             'user_id' => (int) $r->user_id,
-            'user' => $users[(int) $r->user_id]->name ?? ('User #' . (int) $r->user_id),
+            'user' => $users[(int) $r->user_id]->name ?? ('User #'.(int) $r->user_id),
             'cost' => (float) $r->cost,
         ]);
 
@@ -82,7 +82,7 @@ class AIUsageDashboard extends Component
             ->get(['id', 'task_type', 'provider_used', 'model_used', 'cost', 'created_at', 'status']);
 
         $trend = AiUsageTracking::query()
-            ->select(DB::raw("DATE(created_at) as d"), DB::raw('SUM(cost) as cost'))
+            ->select(DB::raw('DATE(created_at) as d'), DB::raw('SUM(cost) as cost'))
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('d')
             ->orderBy('d')
@@ -111,9 +111,8 @@ class AIUsageDashboard extends Component
     protected function authorizeAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->can('access admin panel')) {
+        if (! $u || ! $u->can('access admin panel')) {
             abort(403);
         }
     }
 }
-

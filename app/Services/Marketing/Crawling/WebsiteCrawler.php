@@ -49,9 +49,9 @@ class WebsiteCrawler
         $outbound = [];
         $inbound = [];
 
-        while (!empty($queue) && count($pages) < $maxPages) {
+        while (! empty($queue) && count($pages) < $maxPages) {
             $url = array_shift($queue);
-            if (!is_string($url) || $url === '') {
+            if (! is_string($url) || $url === '') {
                 continue;
             }
 
@@ -69,6 +69,7 @@ class WebsiteCrawler
                 // Skip crawl but keep graph placeholder.
                 $outbound[$url] = $outbound[$url] ?? [];
                 $inbound[$url] = $inbound[$url] ?? [];
+
                 continue;
             }
 
@@ -102,8 +103,10 @@ class WebsiteCrawler
                 $internal = (array) ($extract['links']['internal'] ?? []);
                 foreach ($internal as $link) {
                     $link = (string) $link;
-                    if ($link === '') continue;
-                    if (!isset($visited[$link]) && count($queue) < ($maxPages * 10)) {
+                    if ($link === '') {
+                        continue;
+                    }
+                    if (! isset($visited[$link]) && count($queue) < ($maxPages * 10)) {
                         $queue[] = $link;
                     }
                 }
@@ -138,29 +141,39 @@ class WebsiteCrawler
         if ($url === '') {
             return $url;
         }
-        if (!Str::startsWith($url, ['http://', 'https://'])) {
-            $url = 'https://' . $url;
+        if (! Str::startsWith($url, ['http://', 'https://'])) {
+            $url = 'https://'.$url;
         }
+
         return $url;
     }
 
     protected function normalizeUrl(string $url): ?string
     {
         $url = trim($url);
-        if ($url === '') return null;
-        if (!Str::startsWith($url, ['http://', 'https://'])) return null;
+        if ($url === '') {
+            return null;
+        }
+        if (! Str::startsWith($url, ['http://', 'https://'])) {
+            return null;
+        }
 
         $parts = parse_url($url);
-        if (!is_array($parts)) return null;
+        if (! is_array($parts)) {
+            return null;
+        }
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
         $host = strtolower((string) ($parts['host'] ?? ''));
-        if ($scheme === '' || $host === '') return null;
+        if ($scheme === '' || $host === '') {
+            return null;
+        }
 
         $path = (string) ($parts['path'] ?? '/');
-        $query = isset($parts['query']) ? ('?' . $parts['query']) : '';
+        $query = isset($parts['query']) ? ('?'.$parts['query']) : '';
 
         // Normalize: remove fragment, keep query.
-        $normalized = "{$scheme}://{$host}" . $path . $query;
+        $normalized = "{$scheme}://{$host}".$path.$query;
+
         return rtrim($normalized, '#');
     }
 
@@ -175,7 +188,8 @@ class WebsiteCrawler
             return $url;
         }
         $isDefault = ($scheme === 'https' && (int) $port === 443) || ($scheme === 'http' && (int) $port === 80);
-        $portPart = ($port && !$isDefault) ? (':' . (int) $port) : '';
+        $portPart = ($port && ! $isDefault) ? (':'.(int) $port) : '';
+
         return "{$scheme}://{$host}{$portPart}";
     }
 
@@ -195,9 +209,11 @@ class WebsiteCrawler
                 ->get($url);
 
             $totalMs = (int) round((microtime(true) - $started) * 1000);
+
             return [$resp, ['total_ms' => $totalMs, 'ttfb_ms' => (int) round($totalMs * 0.25)]];
         } catch (\Throwable) {
             $totalMs = (int) round((microtime(true) - $started) * 1000);
+
             return [null, ['total_ms' => $totalMs, 'ttfb_ms' => null]];
         }
     }
@@ -207,12 +223,12 @@ class WebsiteCrawler
      */
     protected function fetchRobotsTxt(string $baseUrl, int $timeoutSeconds, string $ua): array
     {
-        $robotsUrl = rtrim($baseUrl, '/') . '/robots.txt';
+        $robotsUrl = rtrim($baseUrl, '/').'/robots.txt';
         try {
             $resp = Http::timeout($timeoutSeconds)
                 ->withHeaders(['User-Agent' => $ua, 'Accept' => 'text/plain,*/*'])
                 ->get($robotsUrl);
-            if (!$resp->successful()) {
+            if (! $resp->successful()) {
                 return ['fetched' => true, 'disallow' => [], 'sitemap' => []];
             }
 
@@ -223,7 +239,9 @@ class WebsiteCrawler
 
             foreach ($lines as $line) {
                 $line = trim((string) $line);
-                if ($line === '' || str_starts_with($line, '#')) continue;
+                if ($line === '' || str_starts_with($line, '#')) {
+                    continue;
+                }
                 $line = preg_replace('/\s+#.*$/', '', $line) ?? $line;
 
                 if (Str::startsWith(strtolower($line), 'user-agent:')) {
@@ -253,21 +271,32 @@ class WebsiteCrawler
     }
 
     /**
-     * @param array<int,string> $disallow
+     * @param  array<int,string>  $disallow
      */
     protected function isDisallowedByRobots(string $url, array $disallow, string $baseHost): bool
     {
-        if (empty($disallow)) return false;
+        if (empty($disallow)) {
+            return false;
+        }
         $host = (string) (parse_url($url, PHP_URL_HOST) ?? '');
-        if ($host === '' || strtolower($host) !== strtolower($baseHost)) return false;
+        if ($host === '' || strtolower($host) !== strtolower($baseHost)) {
+            return false;
+        }
 
         $path = (string) (parse_url($url, PHP_URL_PATH) ?? '/');
         foreach ($disallow as $rule) {
             $rule = trim((string) $rule);
-            if ($rule === '') continue;
-            if ($rule === '/') return true;
-            if (str_starts_with($path, $rule)) return true;
+            if ($rule === '') {
+                continue;
+            }
+            if ($rule === '/') {
+                return true;
+            }
+            if (str_starts_with($path, $rule)) {
+                return true;
+            }
         }
+
         return false;
     }
 
@@ -280,6 +309,7 @@ class WebsiteCrawler
         if (class_exists(\Symfony\Component\DomCrawler\Crawler::class)) {
             return $this->extractWithSymfonyCrawler($html, $pageUrl, $baseHost);
         }
+
         return $this->extractWithDomDocument($html, $pageUrl, $baseHost);
     }
 
@@ -344,7 +374,7 @@ class WebsiteCrawler
      */
     protected function extractWithDomDocument(string $html, string $pageUrl, string $baseHost): array
     {
-        $doc = new \DOMDocument();
+        $doc = new \DOMDocument;
         libxml_use_internal_errors(true);
         $doc->loadHTML($html);
         libxml_clear_errors();
@@ -419,7 +449,7 @@ class WebsiteCrawler
     }
 
     /**
-     * @param array<int, string> $hrefs
+     * @param  array<int, string>  $hrefs
      * @return array{all:array<int,string>, internal:array<int,string>, external:array<int,string>}
      */
     protected function resolveAndClassifyLinks(string $pageUrl, array $hrefs, string $baseHost): array
@@ -430,11 +460,17 @@ class WebsiteCrawler
 
         foreach ($hrefs as $href) {
             $href = trim((string) $href);
-            if ($href === '' || str_starts_with($href, '#')) continue;
-            if (Str::startsWith(strtolower($href), ['mailto:', 'tel:', 'javascript:'])) continue;
+            if ($href === '' || str_starts_with($href, '#')) {
+                continue;
+            }
+            if (Str::startsWith(strtolower($href), ['mailto:', 'tel:', 'javascript:'])) {
+                continue;
+            }
 
             $resolved = $this->resolveUrl($pageUrl, $href);
-            if ($resolved === null) continue;
+            if ($resolved === null) {
+                continue;
+            }
 
             $all[] = $resolved;
             $host = (string) (parse_url($resolved, PHP_URL_HOST) ?? '');
@@ -453,7 +489,7 @@ class WebsiteCrawler
     }
 
     /**
-     * @param array<int, array{src:string,alt:string}> $imgs
+     * @param  array<int, array{src:string,alt:string}>  $imgs
      * @return array<int, array{src:?string,alt:?string,src_resolved:?string,has_alt:bool}>
      */
     protected function resolveImages(string $pageUrl, array $imgs): array
@@ -470,68 +506,83 @@ class WebsiteCrawler
                 'has_alt' => trim($alt) !== '',
             ];
         }
+
         return $out;
     }
 
     protected function countWordsFromText(string $text): int
     {
         $text = trim(preg_replace('/\s+/', ' ', $text) ?? $text);
-        if ($text === '') return 0;
+        if ($text === '') {
+            return 0;
+        }
+
         return count(preg_split('/\s+/', $text) ?: []);
     }
 
     protected function resolveUrl(string $baseUrl, string $href): ?string
     {
         $href = trim($href);
-        if ($href === '') return null;
+        if ($href === '') {
+            return null;
+        }
         if (Str::startsWith($href, ['http://', 'https://'])) {
             return $this->normalizeUrl($href);
         }
 
         if (Str::startsWith($href, '//')) {
             $scheme = (string) (parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https');
-            return $this->normalizeUrl($scheme . ':' . $href);
+
+            return $this->normalizeUrl($scheme.':'.$href);
         }
 
         $baseParts = parse_url($baseUrl);
-        if (!is_array($baseParts) || empty($baseParts['scheme']) || empty($baseParts['host'])) {
+        if (! is_array($baseParts) || empty($baseParts['scheme']) || empty($baseParts['host'])) {
             return null;
         }
 
         $scheme = (string) $baseParts['scheme'];
         $host = (string) $baseParts['host'];
         $port = $baseParts['port'] ?? null;
-        $origin = $scheme . '://' . $host . (($port && (int) $port !== 80 && (int) $port !== 443) ? (':' . (int) $port) : '');
+        $origin = $scheme.'://'.$host.(($port && (int) $port !== 80 && (int) $port !== 443) ? (':'.(int) $port) : '');
 
         if (Str::startsWith($href, '/')) {
-            return $this->normalizeUrl($origin . $href);
+            return $this->normalizeUrl($origin.$href);
         }
 
         $basePath = (string) ($baseParts['path'] ?? '/');
         $dir = Str::contains($basePath, '/') ? (string) Str::beforeLast($basePath, '/') : '';
-        if ($dir === '') $dir = '/';
-        $full = rtrim($origin . $dir, '/') . '/' . $href;
+        if ($dir === '') {
+            $dir = '/';
+        }
+        $full = rtrim($origin.$dir, '/').'/'.$href;
+
         return $this->normalizeUrl($this->removeDotSegments($full));
     }
 
     protected function removeDotSegments(string $url): string
     {
         $parts = parse_url($url);
-        if (!is_array($parts)) return $url;
+        if (! is_array($parts)) {
+            return $url;
+        }
         $path = (string) ($parts['path'] ?? '/');
         $segments = explode('/', $path);
         $out = [];
         foreach ($segments as $seg) {
-            if ($seg === '' || $seg === '.') continue;
+            if ($seg === '' || $seg === '.') {
+                continue;
+            }
             if ($seg === '..') {
                 array_pop($out);
+
                 continue;
             }
             $out[] = $seg;
         }
-        $newPath = '/' . implode('/', $out);
-        $query = isset($parts['query']) ? ('?' . $parts['query']) : '';
-        return ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '') . $newPath . $query;
+        $newPath = '/'.implode('/', $out);
+        $query = isset($parts['query']) ? ('?'.$parts['query']) : '';
+
+        return ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? '').$newPath.$query;
     }
 }
-

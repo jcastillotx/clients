@@ -15,7 +15,7 @@ class EnsureUserIsAdmin
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             abort(403);
         }
 
@@ -26,11 +26,10 @@ class EnsureUserIsAdmin
                 ->with('error', 'You do not have access to the admin area.');
         }
 
-        if (!($user->isAdmin() || $user->isStaff())) {
+        if (! ($user->isAdmin() || $user->isStaff())) {
             abort(403);
         }
 
         return $next($request);
     }
 }
-

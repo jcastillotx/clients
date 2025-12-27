@@ -46,4 +46,3 @@ class CostCalculationServiceTest extends TestCase
         $this->assertEqualsWithDelta(0.20, $svc->contingencyPctForComplexity(10), 1e-9);
     }
 }
-

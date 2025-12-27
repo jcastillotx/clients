@@ -13,16 +13,22 @@ class AIRequestAnalysis extends Component
     public ServiceRequest $request;
 
     public string $provider = 'openai';
+
     public string $model = '';
 
     public ?array $analysis = null; // latest output_data
+
     public ?string $analysisStatus = null; // completed|failed|processing|null
+
     public ?float $analysisCost = null;
+
     public ?int $analysisTaskId = null;
 
     // Inline edits / overrides
     public string $suggested_type = '';
+
     public string $suggested_priority = '';
+
     public string $suggested_estimated_hours = '';
 
     public function mount(ServiceRequest $request): void
@@ -35,11 +41,12 @@ class AIRequestAnalysis extends Component
     {
         $task = $this->latestTask();
 
-        if (!$task) {
+        if (! $task) {
             $this->analysis = null;
             $this->analysisStatus = null;
             $this->analysisCost = null;
             $this->analysisTaskId = null;
+
             return;
         }
 
@@ -69,8 +76,9 @@ class AIRequestAnalysis extends Component
     public function acceptAiSuggestions(): void
     {
         $task = $this->latestTask();
-        if (!$task || !is_array($task->output_data)) {
+        if (! $task || ! is_array($task->output_data)) {
             session()->flash('error', 'No AI analysis to apply yet.');
+
             return;
         }
 
@@ -91,8 +99,12 @@ class AIRequestAnalysis extends Component
         $hours = trim($this->suggested_estimated_hours);
 
         $updates = [];
-        if ($type !== '') $updates['type'] = $type;
-        if ($priority !== '') $updates['priority'] = $priority;
+        if ($type !== '') {
+            $updates['type'] = $type;
+        }
+        if ($priority !== '') {
+            $updates['priority'] = $priority;
+        }
         $updates['estimated_hours'] = $hours !== '' ? (float) $hours : null;
 
         $this->request->update($updates);
@@ -104,12 +116,12 @@ class AIRequestAnalysis extends Component
     protected function latestTask(): ?AiTask
     {
         // Cross-DB compatible lookup: input_data JSON contains request_id.
-        $needle = '"request_id":' . (int) $this->request->id;
+        $needle = '"request_id":'.(int) $this->request->id;
 
         /** @var AiTask|null $task */
         $task = AiTask::query()
             ->whereIn('task_type', ['analyze_request', 'triage_request'])
-            ->where('input_data', 'like', '%' . $needle . '%')
+            ->where('input_data', 'like', '%'.$needle.'%')
             ->orderByDesc('id')
             ->first();
 
@@ -118,12 +130,15 @@ class AIRequestAnalysis extends Component
 
     protected function extractCostFromAnalysis(?array $analysis): ?float
     {
-        if (!$analysis) return null;
+        if (! $analysis) {
+            return null;
+        }
         $triage = (array) ($analysis['triage'] ?? $analysis);
         $meta = (array) ($triage['_meta'] ?? []);
         if (isset($meta['estimated_cost']) && is_numeric($meta['estimated_cost'])) {
             return (float) $meta['estimated_cost'];
         }
+
         return null;
     }
 
@@ -137,4 +152,3 @@ class AIRequestAnalysis extends Component
         ]);
     }
 }
-

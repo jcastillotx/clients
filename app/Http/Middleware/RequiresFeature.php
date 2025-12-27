@@ -20,12 +20,12 @@ class RequiresFeature
         $user = $request->user();
 
         // No user or no client - deny access
-        if (!$user || !$user->client) {
+        if (! $user || ! $user->client) {
             return $this->denyAccess($request, $redirect, 'No client associated with user');
         }
 
         // Check if client has the required feature
-        if (!$user->client->hasFeature($feature)) {
+        if (! $user->client->hasFeature($feature)) {
             return $this->denyAccess(
                 $request,
                 $redirect,
@@ -38,11 +38,6 @@ class RequiresFeature
 
     /**
      * Handle access denial
-     *
-     * @param  Request  $request
-     * @param  string|null  $redirect
-     * @param  string  $message
-     * @return Response
      */
     protected function denyAccess(Request $request, ?string $redirect, string $message): Response
     {

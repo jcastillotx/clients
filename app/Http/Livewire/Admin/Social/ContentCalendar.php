@@ -10,15 +10,22 @@ use Livewire\Component;
 class ContentCalendar extends Component
 {
     public $currentDate;
+
     public $viewMode = 'month'; // month or week
+
     public $selectedClient = '';
+
     public $selectedPlatform = '';
+
     public $selectedPost = null;
+
     public $showQuickScheduleModal = false;
 
     // Quick schedule fields
     public $quick_post_id;
+
     public $quick_scheduled_date;
+
     public $quick_scheduled_time;
 
     protected $queryString = [
@@ -96,7 +103,7 @@ class ContentCalendar extends Component
 
         $post = ContentCalendarItem::findOrFail($this->quick_post_id);
 
-        $scheduledDateTime = Carbon::parse($this->quick_scheduled_date . ' ' . $this->quick_scheduled_time);
+        $scheduledDateTime = Carbon::parse($this->quick_scheduled_date.' '.$this->quick_scheduled_time);
 
         $post->schedule($scheduledDateTime);
 

@@ -60,8 +60,8 @@ SYS;
             'context' => $context,
         ];
 
-        return "Generate invoice line items for this completed request.\n\nJSON context:\n" .
-            json_encode($payload, JSON_UNESCAPED_SLASHES) .
+        return "Generate invoice line items for this completed request.\n\nJSON context:\n".
+            json_encode($payload, JSON_UNESCAPED_SLASHES).
             "\n\nReturn JSON in the schema.";
     }
 
@@ -110,8 +110,8 @@ SYS;
             'estimate' => $estimateContext,
         ];
 
-        return "Review this invoice for math/missing items and compare to estimate.\n\nJSON context:\n" .
-            json_encode($payload, JSON_UNESCAPED_SLASHES) .
+        return "Review this invoice for math/missing items and compare to estimate.\n\nJSON context:\n".
+            json_encode($payload, JSON_UNESCAPED_SLASHES).
             "\n\nReturn JSON in the schema.";
     }
 
@@ -154,8 +154,8 @@ SYS;
             'market' => $market,
         ];
 
-        return "Optimize pricing for this invoice based on client tier/history and market notes.\n\nJSON context:\n" .
-            json_encode($payload, JSON_UNESCAPED_SLASHES) .
+        return "Optimize pricing for this invoice based on client tier/history and market notes.\n\nJSON context:\n".
+            json_encode($payload, JSON_UNESCAPED_SLASHES).
             "\n\nReturn JSON in the schema.";
     }
 
@@ -204,4 +204,3 @@ Schema:
 SYS;
     }
 }
-

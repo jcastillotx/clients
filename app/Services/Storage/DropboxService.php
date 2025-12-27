@@ -29,6 +29,7 @@ class DropboxService implements StorageProviderInterface
         $this->connection = $connection;
         $this->credentials = (array) ($connection->credentials ?? []);
         $this->client = $this->makeClient($connection);
+
         return $this;
     }
 
@@ -52,7 +53,7 @@ class DropboxService implements StorageProviderInterface
             'token_access_type' => 'offline',
         ]);
 
-        return 'https://www.dropbox.com/oauth2/authorize?' . $params;
+        return 'https://www.dropbox.com/oauth2/authorize?'.$params;
     }
 
     public function connect(array $credentials): bool
@@ -83,9 +84,9 @@ class DropboxService implements StorageProviderInterface
                 'redirect_uri' => $redirect,
             ]);
 
-        if (!$resp->successful()) {
+        if (! $resp->successful()) {
             $msg = (string) ($resp->json('error_description') ?? $resp->body());
-            throw new RuntimeException('Dropbox OAuth token exchange failed: ' . $msg);
+            throw new RuntimeException('Dropbox OAuth token exchange failed: '.$msg);
         }
 
         $body = (array) $resp->json();
@@ -107,7 +108,7 @@ class DropboxService implements StorageProviderInterface
         try {
             $acct = $client->getAccountInfo();
         } catch (Throwable $e) {
-            throw new RuntimeException('Dropbox connection verification failed: ' . $e->getMessage());
+            throw new RuntimeException('Dropbox connection verification failed: '.$e->getMessage());
         }
 
         $accountId = (string) Arr::get($acct, 'account_id', '');
@@ -172,6 +173,7 @@ class DropboxService implements StorageProviderInterface
         $this->credentials = [];
         $this->client = null;
         $this->connection = null;
+
         return true;
     }
 
@@ -212,7 +214,7 @@ class DropboxService implements StorageProviderInterface
     public function uploadFile(mixed $file, string $path): array
     {
         $this->ensureReady();
-        if (!$this->connection) {
+        if (! $this->connection) {
             throw new RuntimeException('Dropbox connection not loaded.');
         }
 
@@ -274,13 +276,14 @@ class DropboxService implements StorageProviderInterface
     {
         $this->ensureReady();
         $link = $this->client->getTemporaryLink($fileId);
+
         return $link;
     }
 
     public function deleteFile(string $fileId): bool
     {
         $this->ensureReady();
-        if (!$this->connection) {
+        if (! $this->connection) {
             throw new RuntimeException('Dropbox connection not loaded.');
         }
 
@@ -301,7 +304,7 @@ class DropboxService implements StorageProviderInterface
         $this->ensureReady();
         $parent = trim($parentPath, '/');
         $folderName = trim($name, '/');
-        $path = trim($parent . '/' . $folderName, '/');
+        $path = trim($parent.'/'.$folderName, '/');
 
         $meta = $this->client->createFolder($this->fullPath($path));
 
@@ -353,7 +356,7 @@ class DropboxService implements StorageProviderInterface
     public function syncChanges(int $maxEntries = 500): int
     {
         $this->ensureReady();
-        if (!$this->connection) {
+        if (! $this->connection) {
             throw new RuntimeException('Dropbox connection not loaded.');
         }
 
@@ -376,7 +379,7 @@ class DropboxService implements StorageProviderInterface
             $processed += $this->applySyncEntries($entries, $maxEntries - $processed);
 
             $hasMore = (bool) ($res['has_more'] ?? false);
-            if (!$hasMore) {
+            if (! $hasMore) {
                 break;
             }
         }
@@ -420,6 +423,7 @@ class DropboxService implements StorageProviderInterface
                         ->delete();
                 }
                 $count++;
+
                 continue;
             }
 
@@ -457,14 +461,14 @@ class DropboxService implements StorageProviderInterface
 
     protected function ensureReady(): void
     {
-        if (!$this->client) {
-            if (!$this->connection) {
+        if (! $this->client) {
+            if (! $this->connection) {
                 throw new RuntimeException('Dropbox connection not loaded.');
             }
             $this->client = $this->makeClient($this->connection);
         }
 
-        if (!$this->client->getAccessToken()) {
+        if (! $this->client->getAccessToken()) {
             throw new RuntimeException('Dropbox access token missing.');
         }
     }
@@ -476,6 +480,7 @@ class DropboxService implements StorageProviderInterface
         $redirect = (string) config('storage-providers.dropbox.redirect_uri');
 
         $provider = new DropboxConnectionTokenProvider($connection, $appKey, $appSecret, $redirect);
+
         return new DropboxClient($provider);
     }
 
@@ -488,13 +493,12 @@ class DropboxService implements StorageProviderInterface
             return '';
         }
         if ($base === '') {
-            return '/' . $rel;
+            return '/'.$rel;
         }
         if ($rel === '') {
-            return '/' . $base;
+            return '/'.$base;
         }
 
-        return '/' . $base . '/' . $rel;
+        return '/'.$base.'/'.$rel;
     }
 }
-

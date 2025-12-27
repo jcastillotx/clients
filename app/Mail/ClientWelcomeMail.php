@@ -21,9 +21,8 @@ class ClientWelcomeMail extends Mailable implements ShouldQueue
 
     public function build(): self
     {
-        return $this->subject('Welcome to ' . config('app.name'))
+        return $this->subject('Welcome to '.config('app.name'))
             ->view('emails.client-welcome')
             ->text('emails.text.client-welcome');
     }
 }
-

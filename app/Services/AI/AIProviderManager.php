@@ -6,9 +6,9 @@ use App\Contracts\AIProviderInterface;
 use App\Models\AiProvider;
 use App\Models\AiUsageTracking;
 use App\Models\Setting;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Arr;
 use RuntimeException;
 
 class AIProviderManager
@@ -59,8 +59,8 @@ class AIProviderManager
         $provider = $task['provider'];
         $model = $task['model'];
 
-        if (!$model) {
-            $map = (array) config('ai-providers.routing.complexity_models.' . $complexity, []);
+        if (! $model) {
+            $map = (array) config('ai-providers.routing.complexity_models.'.$complexity, []);
             $override = Setting::getValue('ai.routing.complexity_models', null);
             if (is_array($override) && isset($override[$complexity]) && is_array($override[$complexity])) {
                 $map = array_merge($map, $override[$complexity]);
@@ -71,11 +71,13 @@ class AIProviderManager
         // If provider is currently unhealthy, pick next healthy fallback.
         if ($this->isUnhealthy($provider)) {
             foreach ($this->fallbackOrder() as $alt) {
-                if ($alt === $provider) continue;
-                if (!$this->isUnhealthy($alt)) {
+                if ($alt === $provider) {
+                    continue;
+                }
+                if (! $this->isUnhealthy($alt)) {
                     $provider = $alt;
-                    if (!$model) {
-                        $map = (array) config('ai-providers.routing.complexity_models.' . $complexity, []);
+                    if (! $model) {
+                        $map = (array) config('ai-providers.routing.complexity_models.'.$complexity, []);
                         $model = isset($map[$provider]) && is_string($map[$provider]) ? $map[$provider] : null;
                     }
                     break;
@@ -89,15 +91,15 @@ class AIProviderManager
     /**
      * Execute a provider call with fallback + health monitoring.
      *
-     * @param callable(AIProviderInterface):array<string,mixed> $fn
+     * @param  callable(AIProviderInterface):array<string,mixed>  $fn
      * @return array<string, mixed>
      */
     public function withFallback(string $preferredProvider, callable $fn, ?string $taskType = null): array
     {
-        if (!$this->isAiGloballyEnabled()) {
+        if (! $this->isAiGloballyEnabled()) {
             throw new RuntimeException('AI features are disabled.');
         }
-        if ($taskType !== null && !$this->isTaskEnabled($taskType)) {
+        if ($taskType !== null && ! $this->isTaskEnabled($taskType)) {
             throw new RuntimeException("AI feature disabled for task: {$taskType}");
         }
         $this->enforceBudgetLimits();
@@ -113,6 +115,7 @@ class AIProviderManager
             try {
                 $res = $fn($this->provider($p));
                 $this->markHealthy($p);
+
                 return $res;
             } catch (\Throwable $e) {
                 $last = $e;
@@ -122,6 +125,7 @@ class AIProviderManager
                     'task_type' => $taskType,
                     'error' => $e->getMessage(),
                 ]);
+
                 continue;
             }
         }
@@ -146,7 +150,7 @@ class AIProviderManager
             ->orderBy('priority_order')
             ->first();
 
-        if (!$row) {
+        if (! $row) {
             return $base;
         }
 
@@ -171,12 +175,14 @@ class AIProviderManager
         if (is_array($fromSettings) && isset($fromSettings[$taskType]) && is_array($fromSettings[$taskType])) {
             $provider = (string) Arr::get($fromSettings[$taskType], 'provider', config('ai-providers.default_provider', 'openai'));
             $model = Arr::get($fromSettings[$taskType], 'model', null);
+
             return ['provider' => $provider, 'model' => is_string($model) ? $model : null];
         }
 
         $cfg = (array) config("ai-providers.task_models.{$taskType}", []);
         $provider = (string) Arr::get($cfg, 'provider', config('ai-providers.default_provider', 'openai'));
         $model = Arr::get($cfg, 'model');
+
         return ['provider' => $provider, 'model' => is_string($model) ? $model : null];
     }
 
@@ -186,9 +192,10 @@ class AIProviderManager
     protected function fallbackOrder(): array
     {
         $override = Setting::getValue('ai.fallback.order', null);
-        if (is_array($override) && !empty($override)) {
+        if (is_array($override) && ! empty($override)) {
             return array_values(array_filter(array_map('strval', $override)));
         }
+
         return (array) config('ai-providers.fallback.order', ['openai', 'openrouter', 'claude', 'perplexity', 'asksage']);
     }
 
@@ -201,6 +208,7 @@ class AIProviderManager
     {
         $state = (array) Cache::get($this->healthKey($provider), []);
         $until = (int) ($state['cooldown_until'] ?? 0);
+
         return $until > time();
     }
 
@@ -228,6 +236,7 @@ class AIProviderManager
     protected function isAiGloballyEnabled(): bool
     {
         $val = Setting::getValue('ai.features.global_enabled', true);
+
         return $val === null ? true : (bool) $val;
     }
 
@@ -237,6 +246,7 @@ class AIProviderManager
         if (is_array($features) && array_key_exists($taskType, $features)) {
             return (bool) $features[$taskType];
         }
+
         return true;
     }
 
@@ -248,7 +258,7 @@ class AIProviderManager
         }
 
         $disable = (bool) (Setting::getValue('ai.budget.disable_when_exceeded', false) ?? false);
-        if (!$disable) {
+        if (! $disable) {
             return;
         }
 
@@ -261,4 +271,3 @@ class AIProviderManager
         }
     }
 }
-

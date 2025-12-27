@@ -9,6 +9,7 @@ use Livewire\Component;
 class SummarizeDocument extends Component
 {
     public Document $document;
+
     public string $language = 'en';
 
     public ?array $summary = null;
@@ -43,4 +44,3 @@ class SummarizeDocument extends Component
         ]);
     }
 }
-

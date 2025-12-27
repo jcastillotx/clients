@@ -17,7 +17,7 @@ class InvoiceFactory extends Factory
     {
         $issue = fake()->dateTimeBetween('-90 days', '-3 days');
         $due = (clone $issue);
-        $due = (new \DateTimeImmutable($due->format('c')))->modify('+' . fake()->numberBetween(7, 30) . ' days');
+        $due = (new \DateTimeImmutable($due->format('c')))->modify('+'.fake()->numberBetween(7, 30).' days');
 
         $status = fake()->randomElement(['draft', 'sent', 'paid', 'overdue']);
 
@@ -53,4 +53,3 @@ class InvoiceFactory extends Factory
         ];
     }
 }
-

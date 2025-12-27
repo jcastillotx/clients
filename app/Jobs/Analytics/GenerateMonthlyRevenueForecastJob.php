@@ -41,4 +41,3 @@ class GenerateMonthlyRevenueForecastJob implements ShouldQueue
         ]);
     }
 }
-

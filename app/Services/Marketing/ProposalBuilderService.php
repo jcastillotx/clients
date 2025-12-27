@@ -13,13 +13,13 @@ class ProposalBuilderService
     /**
      * Generate a proposal from a request + optional template key.
      *
-     * @param array<string,mixed> $template
+     * @param  array<string,mixed>  $template
      */
     public function generateProposal(ServiceRequest $request, array $template = [], array $options = []): Proposal
     {
         $request->loadMissing(['client', 'attachments']);
         $client = $request->client;
-        if (!$client) {
+        if (! $client) {
             throw new \RuntimeException('Request has no client.');
         }
 
@@ -47,7 +47,7 @@ class ProposalBuilderService
         $content = [
             'cover' => [
                 'client_name' => $client->company_name,
-                'title' => $template['title'] ?? ('Proposal — ' . $request->title),
+                'title' => $template['title'] ?? ('Proposal — '.$request->title),
                 'prepared_for' => $client->company_name,
                 'prepared_by' => config('app.name'),
             ],
@@ -77,8 +77,8 @@ class ProposalBuilderService
     /**
      * Create tiered pricing (good/better/best) + optional add-ons from tasks.
      *
-     * @param array<int, array<string,mixed>> $services
-     * @param array<string,mixed> $estimatePricingData
+     * @param  array<int, array<string,mixed>>  $services
+     * @param  array<string,mixed>  $estimatePricingData
      * @return array<string,mixed>
      */
     public function createPricingOptions(array $services, array $estimatePricingData = []): array
@@ -98,14 +98,20 @@ class ProposalBuilderService
         // Optional tasks become add-ons (very lightweight mapping)
         $addons = [];
         foreach ($services as $idx => $t) {
-            if (!is_array($t)) continue;
-            if (empty($t['optional'])) continue;
+            if (! is_array($t)) {
+                continue;
+            }
+            if (empty($t['optional'])) {
+                continue;
+            }
             $name = trim((string) ($t['name'] ?? ''));
-            if ($name === '') continue;
+            if ($name === '') {
+                continue;
+            }
 
             $hours = (float) (($t['hours_mid'] ?? null) ?: 0);
             $addons[] = [
-                'key' => 'addon_' . $idx . '_' . Str::slug($name),
+                'key' => 'addon_'.$idx.'_'.Str::slug($name),
                 'label' => $name,
                 'description' => (string) ($t['description'] ?? ''),
                 'estimated_hours' => $hours,
@@ -128,7 +134,6 @@ class ProposalBuilderService
     private function newProposalNumber(Client $client): string
     {
         // Human-friendly number: PROP-<clientId>-<YYYYMMDD>-<rand4>
-        return 'PROP-' . $client->id . '-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
+        return 'PROP-'.$client->id.'-'.now()->format('Ymd').'-'.strtoupper(Str::random(4));
     }
 }
-

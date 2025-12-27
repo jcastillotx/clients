@@ -53,4 +53,3 @@ class RequestShow extends Component
         return view('livewire.requests.show');
     }
 }
-

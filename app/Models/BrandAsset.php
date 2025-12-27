@@ -27,4 +27,3 @@ class BrandAsset extends Model
         return $this->belongsTo(Client::class);
     }
 }
-

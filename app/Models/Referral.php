@@ -38,4 +38,3 @@ class Referral extends Model
         return $this->belongsTo(Client::class, 'converted_client_id');
     }
 }
-

@@ -18,9 +18,9 @@ class EnsureClientIsActive
         if ($user && $user->isClient()) {
             $client = $user->client;
 
-            if (!$client || !$client->isActive()) {
+            if (! $client || ! $client->isActive()) {
                 auth()->logout();
-                
+
                 return redirect()
                     ->route('login')
                     ->withErrors(['email' => 'Your account is not active. Please contact support.']);

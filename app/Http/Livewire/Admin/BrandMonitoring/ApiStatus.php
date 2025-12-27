@@ -2,10 +2,6 @@
 
 namespace App\Http\Livewire\Admin\BrandMonitoring;
 
-use App\Services\BrandMonitoring\NewsMonitoringService;
-use App\Services\BrandMonitoring\ReviewMonitoringService;
-use App\Services\BrandMonitoring\SocialMonitoringService;
-use App\Services\BrandMonitoring\WebMentionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
@@ -13,6 +9,7 @@ use Livewire\Component;
 class ApiStatus extends Component
 {
     public $testingApi = null;
+
     public $testResults = [];
 
     public function mount()
@@ -31,6 +28,7 @@ class ApiStatus extends Component
                 'message' => 'API key not configured',
             ];
             $this->testingApi = null;
+
             return;
         }
 
@@ -45,13 +43,13 @@ class ApiStatus extends Component
                 'status' => $response->successful() ? 'success' : 'error',
                 'message' => $response->successful()
                     ? 'Connected successfully'
-                    : 'Failed: HTTP ' . $response->status(),
+                    : 'Failed: HTTP '.$response->status(),
                 'limit' => '100 requests/day',
             ];
         } catch (\Throwable $e) {
             $this->testResults['newsapi'] = [
                 'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ];
         }
 
@@ -69,12 +67,13 @@ class ApiStatus extends Component
                 'message' => 'API key not configured',
             ];
             $this->testingApi = null;
+
             return;
         }
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
+                'Authorization' => 'Bearer '.$apiKey,
             ])->timeout(10)->get('https://api.yelp.com/v3/businesses/search', [
                 'term' => 'restaurant',
                 'location' => 'New York',
@@ -85,13 +84,13 @@ class ApiStatus extends Component
                 'status' => $response->successful() ? 'success' : 'error',
                 'message' => $response->successful()
                     ? 'Connected successfully'
-                    : 'Failed: HTTP ' . $response->status(),
+                    : 'Failed: HTTP '.$response->status(),
                 'limit' => '5,000 requests/day',
             ];
         } catch (\Throwable $e) {
             $this->testResults['yelp'] = [
                 'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ];
         }
 
@@ -109,6 +108,7 @@ class ApiStatus extends Component
                 'message' => 'API key not configured',
             ];
             $this->testingApi = null;
+
             return;
         }
 
@@ -124,13 +124,13 @@ class ApiStatus extends Component
                 'status' => $response->successful() ? 'success' : 'error',
                 'message' => $response->successful()
                     ? 'Connected successfully'
-                    : 'Failed: HTTP ' . $response->status(),
+                    : 'Failed: HTTP '.$response->status(),
                 'limit' => '$200 credit/month',
             ];
         } catch (\Throwable $e) {
             $this->testResults['google_places'] = [
                 'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ];
         }
 
@@ -149,6 +149,7 @@ class ApiStatus extends Component
                 'message' => 'API credentials not configured',
             ];
             $this->testingApi = null;
+
             return;
         }
 
@@ -163,13 +164,13 @@ class ApiStatus extends Component
                 'status' => $tokenResponse->successful() ? 'success' : 'error',
                 'message' => $tokenResponse->successful()
                     ? 'Connected successfully'
-                    : 'Failed: HTTP ' . $tokenResponse->status(),
+                    : 'Failed: HTTP '.$tokenResponse->status(),
                 'limit' => '60 requests/minute',
             ];
         } catch (\Throwable $e) {
             $this->testResults['reddit'] = [
                 'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ];
         }
 
@@ -187,6 +188,7 @@ class ApiStatus extends Component
                 'message' => 'API key not configured',
             ];
             $this->testingApi = null;
+
             return;
         }
 
@@ -203,13 +205,13 @@ class ApiStatus extends Component
                 'status' => $response->successful() ? 'success' : 'error',
                 'message' => $response->successful()
                     ? 'Connected successfully'
-                    : 'Failed: HTTP ' . $response->status(),
+                    : 'Failed: HTTP '.$response->status(),
                 'limit' => '10,000 units/day',
             ];
         } catch (\Throwable $e) {
             $this->testResults['youtube'] = [
                 'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ];
         }
 
@@ -228,6 +230,7 @@ class ApiStatus extends Component
                 'message' => 'API key or Search Engine ID not configured',
             ];
             $this->testingApi = null;
+
             return;
         }
 
@@ -243,13 +246,13 @@ class ApiStatus extends Component
                 'status' => $response->successful() ? 'success' : 'error',
                 'message' => $response->successful()
                     ? 'Connected successfully'
-                    : 'Failed: HTTP ' . $response->status(),
+                    : 'Failed: HTTP '.$response->status(),
                 'limit' => '100 searches/day',
             ];
         } catch (\Throwable $e) {
             $this->testResults['google_search'] = [
                 'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ];
         }
 
@@ -267,6 +270,7 @@ class ApiStatus extends Component
                 'message' => 'API key not configured',
             ];
             $this->testingApi = null;
+
             return;
         }
 
@@ -282,13 +286,13 @@ class ApiStatus extends Component
                 'status' => $response->successful() ? 'success' : 'error',
                 'message' => $response->successful()
                     ? 'Connected successfully'
-                    : 'Failed: HTTP ' . $response->status(),
+                    : 'Failed: HTTP '.$response->status(),
                 'limit' => '1,000 searches/month',
             ];
         } catch (\Throwable $e) {
             $this->testResults['bing_search'] = [
                 'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ];
         }
 
@@ -301,7 +305,7 @@ class ApiStatus extends Component
             'newsapi' => [
                 'name' => 'NewsAPI.org',
                 'enabled' => config('brand-monitoring.news.newsapi.enabled'),
-                'configured' => !empty(config('brand-monitoring.news.newsapi.api_key')),
+                'configured' => ! empty(config('brand-monitoring.news.newsapi.api_key')),
                 'limit' => '100 requests/day',
                 'category' => 'News',
             ],
@@ -315,28 +319,28 @@ class ApiStatus extends Component
             'yelp' => [
                 'name' => 'Yelp Fusion API',
                 'enabled' => config('brand-monitoring.reviews.yelp.enabled'),
-                'configured' => !empty(config('brand-monitoring.reviews.yelp.api_key')),
+                'configured' => ! empty(config('brand-monitoring.reviews.yelp.api_key')),
                 'limit' => '5,000 requests/day',
                 'category' => 'Reviews',
             ],
             'google_places' => [
                 'name' => 'Google Places API',
                 'enabled' => config('brand-monitoring.reviews.google_places.enabled'),
-                'configured' => !empty(config('brand-monitoring.reviews.google_places.api_key')),
+                'configured' => ! empty(config('brand-monitoring.reviews.google_places.api_key')),
                 'limit' => '$200 credit/month',
                 'category' => 'Reviews',
             ],
             'reddit' => [
                 'name' => 'Reddit API',
                 'enabled' => config('brand-monitoring.social.reddit.enabled'),
-                'configured' => !empty(config('brand-monitoring.social.reddit.client_id')),
+                'configured' => ! empty(config('brand-monitoring.social.reddit.client_id')),
                 'limit' => '60 requests/minute',
                 'category' => 'Social',
             ],
             'youtube' => [
                 'name' => 'YouTube Data API',
                 'enabled' => config('brand-monitoring.social.youtube.enabled'),
-                'configured' => !empty(config('brand-monitoring.social.youtube.api_key')),
+                'configured' => ! empty(config('brand-monitoring.social.youtube.api_key')),
                 'limit' => '10,000 units/day',
                 'category' => 'Social',
             ],
@@ -350,14 +354,14 @@ class ApiStatus extends Component
             'google_search' => [
                 'name' => 'Google Custom Search',
                 'enabled' => config('brand-monitoring.web_mentions.google_search.enabled'),
-                'configured' => !empty(config('brand-monitoring.web_mentions.google_search.api_key')),
+                'configured' => ! empty(config('brand-monitoring.web_mentions.google_search.api_key')),
                 'limit' => '100 searches/day',
                 'category' => 'Web',
             ],
             'bing_search' => [
                 'name' => 'Bing Search API',
                 'enabled' => config('brand-monitoring.web_mentions.bing_search.enabled'),
-                'configured' => !empty(config('brand-monitoring.web_mentions.bing_search.api_key')),
+                'configured' => ! empty(config('brand-monitoring.web_mentions.bing_search.api_key')),
                 'limit' => '1,000 searches/month',
                 'category' => 'Web',
             ],

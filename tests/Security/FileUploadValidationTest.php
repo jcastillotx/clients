@@ -45,4 +45,3 @@ class FileUploadValidationTest extends TestCase
         ])->assertStatus(422);
     }
 }
-

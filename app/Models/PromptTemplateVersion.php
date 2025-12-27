@@ -31,4 +31,3 @@ class PromptTemplateVersion extends Model
         return $this->belongsTo(PromptTemplate::class, 'prompt_template_id');
     }
 }
-

@@ -45,4 +45,3 @@ class SurveyResponse extends Model
         return $this->hasMany(SurveyAnswer::class, 'response_id');
     }
 }
-

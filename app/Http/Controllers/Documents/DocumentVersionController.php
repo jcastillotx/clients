@@ -10,9 +10,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentVersionController extends Controller
 {
-    public function __construct(private readonly DocumentAccessService $access)
-    {
-    }
+    public function __construct(private readonly DocumentAccessService $access) {}
 
     public function download(DocumentVersion $documentVersion): StreamedResponse
     {
@@ -32,4 +30,3 @@ class DocumentVersionController extends Controller
         );
     }
 }
-

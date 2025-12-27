@@ -28,4 +28,3 @@ class WhiteLabelConfig extends Model
         return $this->belongsTo(Client::class);
     }
 }
-

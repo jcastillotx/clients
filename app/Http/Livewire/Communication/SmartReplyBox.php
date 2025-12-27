@@ -8,10 +8,12 @@ use Livewire\Component;
 class SmartReplyBox extends Component
 {
     public string $clientMessage = '';
+
     public string $contextJson = ''; // optional JSON string
 
     /** @var array<int, array{title:string, text:string}> */
     public array $replies = [];
+
     public string $recommendedTone = '';
 
     public function suggest(CommunicationAssistantService $svc): void
@@ -19,12 +21,15 @@ class SmartReplyBox extends Component
         $msg = trim($this->clientMessage);
         if ($msg === '') {
             session()->flash('error', 'No message to reply to.');
+
             return;
         }
 
         $context = [];
         $decoded = json_decode($this->contextJson, true);
-        if (is_array($decoded)) $context = $decoded;
+        if (is_array($decoded)) {
+            $context = $decoded;
+        }
 
         $res = $svc->draftResponse($msg, $context, [], [
             'provider' => 'openai',
@@ -44,7 +49,9 @@ class SmartReplyBox extends Component
     public function choose(int $idx): void
     {
         $text = (string) ($this->replies[$idx]['text'] ?? '');
-        if ($text === '') return;
+        if ($text === '') {
+            return;
+        }
 
         $this->dispatch('smart-reply-selected', text: $text);
     }
@@ -54,4 +61,3 @@ class SmartReplyBox extends Component
         return view('livewire.communication.smart-reply');
     }
 }
-

@@ -27,4 +27,3 @@ class KnowledgeBaseCategory extends Model
         return $this->hasMany(KnowledgeBaseArticle::class, 'category_id');
     }
 }
-

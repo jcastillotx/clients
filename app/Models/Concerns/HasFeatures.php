@@ -9,13 +9,12 @@ trait HasFeatures
     /**
      * Check if client has access to a specific feature
      *
-     * @param string $feature Feature key (e.g., 'brand_monitoring', 'ai_insights')
-     * @return bool
+     * @param  string  $feature  Feature key (e.g., 'brand_monitoring', 'ai_insights')
      */
     public function hasFeature(string $feature): bool
     {
         // If client is inactive, no features
-        if (!$this->isActive()) {
+        if (! $this->isActive()) {
             return false;
         }
 
@@ -37,7 +36,7 @@ trait HasFeatures
             ->where('status', 'active')
             ->where(function ($q) {
                 $q->whereNull('end_date')
-                  ->orWhere('end_date', '>', now());
+                    ->orWhere('end_date', '>', now());
             })
             ->orderByDesc('created_at')
             ->first();
@@ -54,25 +53,20 @@ trait HasFeatures
 
     /**
      * Check if client has ALL specified features
-     *
-     * @param array $features
-     * @return bool
      */
     public function hasAllFeatures(array $features): bool
     {
         foreach ($features as $feature) {
-            if (!$this->hasFeature($feature)) {
+            if (! $this->hasFeature($feature)) {
                 return false;
             }
         }
+
         return true;
     }
 
     /**
      * Check if client has ANY of the specified features
-     *
-     * @param array $features
-     * @return bool
      */
     public function hasAnyFeature(array $features): bool
     {
@@ -81,13 +75,12 @@ trait HasFeatures
                 return true;
             }
         }
+
         return false;
     }
 
     /**
      * Get all features available to this client
-     *
-     * @return Collection
      */
     public function getAvailableFeatures(): Collection
     {
@@ -98,7 +91,7 @@ trait HasFeatures
             ->where('status', 'active')
             ->where(function ($q) {
                 $q->whereNull('end_date')
-                  ->orWhere('end_date', '>', now());
+                    ->orWhere('end_date', '>', now());
             })
             ->orderByDesc('created_at')
             ->first();
@@ -110,11 +103,11 @@ trait HasFeatures
         // Add explicit features
         if ($this->enabled_features) {
             foreach ($this->enabled_features as $feature) {
-                if (!str_starts_with($feature, '-')) {
+                if (! str_starts_with($feature, '-')) {
                     $features->push($feature);
                 } else {
                     // Remove denied features
-                    $features = $features->reject(fn($f) => $f === substr($feature, 1));
+                    $features = $features->reject(fn ($f) => $f === substr($feature, 1));
                 }
             }
         }
@@ -124,19 +117,16 @@ trait HasFeatures
 
     /**
      * Enable a feature for this client
-     *
-     * @param string $feature
-     * @return void
      */
     public function enableFeature(string $feature): void
     {
         $features = $this->enabled_features ?? [];
 
         // Remove deny if exists
-        $features = array_filter($features, fn($f) => $f !== "-{$feature}");
+        $features = array_filter($features, fn ($f) => $f !== "-{$feature}");
 
         // Add feature if not already present
-        if (!in_array($feature, $features)) {
+        if (! in_array($feature, $features)) {
             $features[] = $feature;
         }
 
@@ -145,19 +135,16 @@ trait HasFeatures
 
     /**
      * Disable a feature for this client
-     *
-     * @param string $feature
-     * @return void
      */
     public function disableFeature(string $feature): void
     {
         $features = $this->enabled_features ?? [];
 
         // Remove feature if present
-        $features = array_filter($features, fn($f) => $f !== $feature);
+        $features = array_filter($features, fn ($f) => $f !== $feature);
 
         // Add explicit deny
-        if (!in_array("-{$feature}", $features)) {
+        if (! in_array("-{$feature}", $features)) {
             $features[] = "-{$feature}";
         }
 
@@ -166,8 +153,6 @@ trait HasFeatures
 
     /**
      * Get features based on client tier
-     *
-     * @return array
      */
     protected function getTierFeatures(): array
     {
@@ -180,8 +165,6 @@ trait HasFeatures
 
     /**
      * Check if client has upgraded tier (premium or higher)
-     *
-     * @return bool
      */
     public function isPremiumTier(): bool
     {
@@ -191,9 +174,7 @@ trait HasFeatures
     /**
      * Get feature usage limit
      *
-     * @param string $feature
-     * @param string $limitType (e.g., 'monthly_requests', 'storage_gb')
-     * @return int|null
+     * @param  string  $limitType  (e.g., 'monthly_requests', 'storage_gb')
      */
     public function getFeatureLimit(string $feature, string $limitType): ?int
     {

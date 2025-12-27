@@ -37,7 +37,8 @@ class ClaudeService extends HttpJsonProviderService
             $role = (string) ($m['role'] ?? '');
             $content = (string) ($m['content'] ?? '');
             if ($role === 'system') {
-                $system = trim($system . "\n\n" . $content);
+                $system = trim($system."\n\n".$content);
+
                 continue;
             }
             // Anthropic expects roles: user|assistant
@@ -64,7 +65,7 @@ class ClaudeService extends HttpJsonProviderService
         if ($apiKey === '') {
             throw new RuntimeException('Claude API key is not configured.');
         }
-        if (!$this->http) {
+        if (! $this->http) {
             $this->configure($this->config);
         }
 
@@ -85,7 +86,7 @@ class ClaudeService extends HttpJsonProviderService
 
                 $ms = (int) round((microtime(true) - $started) * 1000);
                 $raw = json_decode((string) $resp->getBody(), true);
-                if (!is_array($raw)) {
+                if (! is_array($raw)) {
                     throw new RuntimeException('Claude returned non-JSON response.');
                 }
 
@@ -109,7 +110,7 @@ class ClaudeService extends HttpJsonProviderService
                 $isRate = str_contains($msg, '429') || str_contains(strtolower($msg), 'rate');
                 $is5xx = str_contains($msg, '500') || str_contains($msg, '502') || str_contains($msg, '503');
 
-                if ($i >= ($attempts - 1) || (!$isRate && !$is5xx)) {
+                if ($i >= ($attempts - 1) || (! $isRate && ! $is5xx)) {
                     throw $e;
                 }
                 usleep($sleepMs * 1000);
@@ -154,7 +155,8 @@ class ClaudeService extends HttpJsonProviderService
             $role = (string) ($m['role'] ?? '');
             $content = (string) ($m['content'] ?? '');
             if ($role === 'system') {
-                $system = trim($system . "\n\n" . $content);
+                $system = trim($system."\n\n".$content);
+
                 continue;
             }
             $anthropicMessages[] = ['role' => $role === 'assistant' ? 'assistant' : 'user', 'content' => $content];
@@ -177,7 +179,7 @@ class ClaudeService extends HttpJsonProviderService
         if ($apiKey === '') {
             throw new RuntimeException('Claude API key is not configured.');
         }
-        if (!$this->http) {
+        if (! $this->http) {
             $this->configure($this->config);
         }
 
@@ -194,7 +196,7 @@ class ClaudeService extends HttpJsonProviderService
         $body = $resp->getBody();
         $buffer = '';
 
-        while (!$body->eof()) {
+        while (! $body->eof()) {
             $buffer .= $body->read(4096);
             while (($pos = strpos($buffer, "\n\n")) !== false) {
                 $event = substr($buffer, 0, $pos);
@@ -203,11 +205,17 @@ class ClaudeService extends HttpJsonProviderService
                 // Extract "data: {json}" lines
                 foreach (explode("\n", $event) as $line) {
                     $line = trim($line);
-                    if (!str_starts_with($line, 'data:')) continue;
+                    if (! str_starts_with($line, 'data:')) {
+                        continue;
+                    }
                     $json = trim(substr($line, 5));
-                    if ($json === '' || $json === '[DONE]') continue;
+                    if ($json === '' || $json === '[DONE]') {
+                        continue;
+                    }
                     $data = json_decode($json, true);
-                    if (!is_array($data)) continue;
+                    if (! is_array($data)) {
+                        continue;
+                    }
 
                     // Anthropic stream delta type: content_block_delta with delta.text
                     if (($data['type'] ?? '') === 'content_block_delta') {
@@ -229,7 +237,7 @@ class ClaudeService extends HttpJsonProviderService
     /**
      * Cost calculation based on configured pricing table.
      *
-     * @param array{input?:int, output?:int, total?:int} $tokens
+     * @param  array{input?:int, output?:int, total?:int}  $tokens
      */
     protected function estimateCostForModel(string $model, array $tokens): float
     {
@@ -239,7 +247,7 @@ class ClaudeService extends HttpJsonProviderService
         $out = isset($row['output']) ? (float) $row['output'] : (float) ($this->config['cost_per_1k_output_tokens'] ?? 0);
 
         $t = ['input' => (int) ($tokens['input'] ?? 0), 'output' => (int) ($tokens['output'] ?? 0)];
+
         return (($t['input'] / 1000.0) * $in) + (($t['output'] / 1000.0) * $out);
     }
 }
-

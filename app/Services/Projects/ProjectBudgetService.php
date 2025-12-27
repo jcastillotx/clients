@@ -38,7 +38,7 @@ class ProjectBudgetService
         ]);
 
         $budget->save();
+
         return $budget;
     }
 }
-

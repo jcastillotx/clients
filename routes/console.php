@@ -1,27 +1,27 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schedule;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Database\Seeders\RoleAndPermissionSeeder;
-use App\Models\Invoice;
+use App\Jobs\Analytics\GenerateMonthlyRevenueForecastJob;
+use App\Jobs\Analytics\GenerateQuarterlyBusinessIntelligenceReportJob;
+use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
+use App\Jobs\Analytics\UpdateClientHealthScoresJob;
+use App\Jobs\Security\PurgeOldAuditLogsJob;
 use App\Models\Contract;
+use App\Models\Invoice;
+use App\Models\Request as ServiceRequest;
 use App\Models\StorageConnection;
 use App\Models\User;
 use App\Services\AdminReports\ReportScheduleRunner;
-use App\Services\Storage\StorageSyncScheduler;
-use App\Services\AutomationEngine;
-use App\Services\WebhookService;
 use App\Services\AI\RequestEmbeddingService;
+use App\Services\AutomationEngine;
 use App\Services\Marketing\Scheduling\WebsiteAuditScheduleRunner;
-use App\Models\Request as ServiceRequest;
-use App\Jobs\Analytics\UpdateClientHealthScoresJob;
-use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
-use App\Jobs\Analytics\GenerateMonthlyRevenueForecastJob;
-use App\Jobs\Analytics\GenerateQuarterlyBusinessIntelligenceReportJob;
-use App\Jobs\Security\PurgeOldAuditLogsJob;
+use App\Services\Storage\StorageSyncScheduler;
+use App\Services\WebhookService;
+use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,8 +44,9 @@ Artisan::command('portal:bootstrap-admin {email : Admin email address} {--name=A
     $name = (string) $this->option('name');
     $password = (string) ($this->option('password') ?? '');
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $this->error('Invalid email address.');
+
         return 1;
     }
 
@@ -58,6 +59,7 @@ Artisan::command('portal:bootstrap-admin {email : Admin email address} {--name=A
 
     if (mb_strlen($password) < 16) {
         $this->error('Password must be at least 16 characters.');
+
         return 1;
     }
 
@@ -71,8 +73,9 @@ Artisan::command('portal:bootstrap-admin {email : Admin email address} {--name=A
     $force = (bool) $this->option('force');
 
     if ($user) {
-        if (!$force) {
+        if (! $force) {
             $this->error("User already exists: {$email}. Re-run with --force to update name/password.");
+
             return 1;
         }
 
@@ -95,6 +98,7 @@ Artisan::command('portal:bootstrap-admin {email : Admin email address} {--name=A
     $user->assignRole('admin');
 
     $this->info("Admin ready: {$email}");
+
     return 0;
 })->purpose('Create/repair the initial admin account (safe for production)');
 
@@ -365,4 +369,3 @@ Schedule::call(function () {
 Schedule::command('social:publish-scheduled')
     ->everyFiveMinutes()
     ->name('social-media-publish-scheduled');
-

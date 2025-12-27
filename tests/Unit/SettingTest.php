@@ -34,4 +34,3 @@ class SettingTest extends TestCase
         $this->assertSame(['token' => 'abc'], Setting::getValue('secret'));
     }
 }
-

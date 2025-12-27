@@ -30,9 +30,13 @@ class ProjectConversionService
         $tasks = (array) ($estimate?->estimate_data['tasks'] ?? []);
         $order = 0;
         foreach ($tasks as $t) {
-            if (!is_array($t)) continue;
+            if (! is_array($t)) {
+                continue;
+            }
             $name = trim((string) ($t['name'] ?? ''));
-            if ($name === '') continue;
+            if ($name === '') {
+                continue;
+            }
 
             $task = Task::firstOrCreate(
                 ['request_id' => $request->id, 'title' => $name],
@@ -44,7 +48,9 @@ class ProjectConversionService
                     'order' => $order++,
                 ]
             );
-            if ($task->wasRecentlyCreated) $seeded++;
+            if ($task->wasRecentlyCreated) {
+                $seeded++;
+            }
         }
 
         if ($seeded === 0) {
@@ -53,7 +59,9 @@ class ProjectConversionService
                     ['request_id' => $request->id, 'title' => $title],
                     ['status' => 'todo', 'priority' => 'normal', 'order' => $order++]
                 );
-                if ($task->wasRecentlyCreated) $seeded++;
+                if ($task->wasRecentlyCreated) {
+                    $seeded++;
+                }
             }
         }
 
@@ -61,7 +69,7 @@ class ProjectConversionService
         if ($request->client_id) {
             Conversation::query()->firstOrCreate(
                 ['client_id' => $request->client_id, 'context_type' => 'request', 'context_id' => $request->id],
-                ['title' => 'Request #' . $request->id . ': ' . $request->title, 'is_closed' => false]
+                ['title' => 'Request #'.$request->id.': '.$request->title, 'is_closed' => false]
             );
         }
 
@@ -76,4 +84,3 @@ class ProjectConversionService
         return ['ok' => true, 'seeded_tasks' => $seeded];
     }
 }
-

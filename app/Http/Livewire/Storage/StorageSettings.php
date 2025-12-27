@@ -13,11 +13,17 @@ class StorageSettings extends Component
     public ?int $clientId = null;
 
     public bool $auto_sync_enabled = true;
+
     public string $auto_sync_frequency = 'daily';
+
     public string $conflict_rule = 'prefer_primary';
+
     public int $quota_alert_percent = 80;
+
     public bool $backup_enabled = false;
+
     public ?int $backup_connection_id = null;
+
     public string $folders_csv = '';
 
     public ?int $primary_connection_id = null;
@@ -109,4 +115,3 @@ class StorageSettings extends Component
         ]);
     }
 }
-

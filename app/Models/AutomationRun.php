@@ -36,4 +36,3 @@ class AutomationRun extends Model
         return $this->belongsTo(AutomationRule::class, 'automation_rule_id');
     }
 }
-

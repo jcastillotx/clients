@@ -6,8 +6,8 @@ use App\Exports\MultiSheetArrayExport;
 use App\Mail\ScheduledReportMail;
 use App\Models\Payment;
 use App\Models\ReportTemplate;
-use App\Models\StorageConnection;
 use App\Models\Request as ServiceRequest;
+use App\Models\StorageConnection;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -26,7 +26,7 @@ class SendScheduledReport implements ShouldQueue
     public function handle(): void
     {
         $tpl = ReportTemplate::query()->find($this->templateId);
-        if (!$tpl || !$tpl->is_active) {
+        if (! $tpl || ! $tpl->is_active) {
             return;
         }
 
@@ -57,7 +57,7 @@ class SendScheduledReport implements ShouldQueue
         }
 
         $title = (string) ($cfg['name'] ?? $tpl->name ?? $datasets[0]['title'] ?? 'Report');
-        $filename = Str::slug($title) . "-{$from}-{$to}.xlsx";
+        $filename = Str::slug($title)."-{$from}-{$to}.xlsx";
         $binary = Excel::raw(new MultiSheetArrayExport($datasets), \Maatwebsite\Excel\Excel::XLSX);
         foreach ($recipients as $email) {
             Mail::to($email)->queue(new ScheduledReportMail(
@@ -154,6 +154,7 @@ class SendScheduledReport implements ShouldQueue
 
         $headings = ['Status', 'Count'];
         $data = $rows->map(fn ($r) => [(string) $r->status, (int) $r->total])->all();
+
         return ['Requests by status', $headings, $data];
     }
 
@@ -168,12 +169,14 @@ class SendScheduledReport implements ShouldQueue
 
         $headings = ['Client', 'Used (bytes)', 'Known limit sum (bytes)'];
         $data = $rows->map(fn ($r) => [(string) $r->client, (int) $r->used, (int) $r->known_limit])->all();
+
         return ['Storage usage by client', $headings, $data];
     }
 
     protected function nextRunAt(string $schedule): ?\Illuminate\Support\Carbon
     {
         $schedule = $schedule ?: 'none';
+
         return match ($schedule) {
             'daily' => now()->addDay(),
             'weekly' => now()->addWeek(),
@@ -182,4 +185,3 @@ class SendScheduledReport implements ShouldQueue
         };
     }
 }
-

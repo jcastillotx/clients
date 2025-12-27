@@ -120,4 +120,3 @@ class InvoiceGeneratorAITest extends TestCase
         $this->assertContains('math_mismatch', (array) ($out['flags'] ?? []));
     }
 }
-

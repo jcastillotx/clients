@@ -55,4 +55,3 @@ class RequestEstimate extends Model
         return $this->belongsTo(AiTask::class, 'ai_task_id');
     }
 }
-

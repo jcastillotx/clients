@@ -78,4 +78,3 @@ class StorageFileDownloadTest extends TestCase
             ->assertForbidden();
     }
 }
-

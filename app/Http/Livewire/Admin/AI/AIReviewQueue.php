@@ -14,13 +14,21 @@ class AIReviewQueue extends Component
     protected string $paginationTheme = 'bootstrap';
 
     public string $status = 'pending';
+
     public string $category = '';
 
     /** @var array<int,string> */
     public array $approvedText = [];
 
-    public function updatingStatus(): void { $this->resetPage(); }
-    public function updatingCategory(): void { $this->resetPage(); }
+    public function updatingStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCategory(): void
+    {
+        $this->resetPage();
+    }
 
     public function approve(int $id): void
     {
@@ -53,7 +61,9 @@ class AIReviewQueue extends Component
     protected function authorizeAdmin(): void
     {
         $u = Auth::user();
-        if (!$u || !$u->can('access admin panel')) abort(403);
+        if (! $u || ! $u->can('access admin panel')) {
+            abort(403);
+        }
     }
 
     public function render()
@@ -61,8 +71,12 @@ class AIReviewQueue extends Component
         $this->authorizeAdmin();
 
         $q = AiReviewQueueItem::query()->orderByDesc('id');
-        if ($this->status !== '') $q->where('status', $this->status);
-        if ($this->category !== '') $q->where('category', $this->category);
+        if ($this->status !== '') {
+            $q->where('status', $this->status);
+        }
+        if ($this->category !== '') {
+            $q->where('category', $this->category);
+        }
 
         $items = $q->paginate(20);
         foreach ($items as $i) {
@@ -78,4 +92,3 @@ class AIReviewQueue extends Component
         ])->layout('layouts.admin', ['title' => 'AI Review Queue']);
     }
 }
-

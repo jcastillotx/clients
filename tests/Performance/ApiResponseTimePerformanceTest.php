@@ -12,7 +12,7 @@ class ApiResponseTimePerformanceTest extends TestCase
 
     public function test_dashboard_response_time_budget_example(): void
     {
-        if (!getenv('RUN_PERFORMANCE_TESTS')) {
+        if (! getenv('RUN_PERFORMANCE_TESTS')) {
             $this->markTestSkipped('Set RUN_PERFORMANCE_TESTS=1 to run performance tests.');
         }
 
@@ -26,4 +26,3 @@ class ApiResponseTimePerformanceTest extends TestCase
         $this->assertLessThan(2000, $elapsedMs, 'Dashboard exceeded response time budget.');
     }
 }
-

@@ -14,10 +14,15 @@ use Livewire\Component;
 class ProposalBuilder extends Component
 {
     public ?int $proposalId = null;
+
     public ?int $requestId = null;
+
     public string $title = '';
+
     public string $templateId = '';
+
     public string $contentJson = '';
+
     public string $pricingJson = '';
 
     public function mount(?Proposal $proposal = null): void
@@ -93,7 +98,7 @@ class ProposalBuilder extends Component
                 'client_id' => $req->client_id,
                 'request_id' => $req->id,
                 'title' => $this->title,
-                'proposal_number' => 'PROP-' . $req->client_id . '-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(4)),
+                'proposal_number' => 'PROP-'.$req->client_id.'-'.now()->format('Ymd').'-'.strtoupper(\Illuminate\Support\Str::random(4)),
                 'template_id' => trim($this->templateId) ?: null,
                 'content' => $content,
                 'pricing_data' => $pricing,
@@ -146,4 +151,3 @@ class ProposalBuilder extends Component
         ]);
     }
 }
-

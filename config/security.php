@@ -26,4 +26,3 @@ return [
      */
     'two_factor_issuer' => (string) env('TWO_FACTOR_ISSUER', env('APP_NAME', 'Client Portal')),
 ];
-

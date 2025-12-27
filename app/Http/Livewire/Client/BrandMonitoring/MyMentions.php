@@ -12,9 +12,13 @@ class MyMentions extends Component
     use WithPagination;
 
     public $selectedPlatform = '';
+
     public $selectedSentiment = '';
+
     public $dateFrom = '';
+
     public $dateTo = '';
+
     public $searchTerm = '';
 
     protected $queryString = [
@@ -52,13 +56,13 @@ class MyMentions extends Component
         $clientId = $user->client_id;
 
         $query = BrandMention::where('client_id', $clientId)
-            ->when($this->selectedPlatform, fn($q) => $q->where('platform', $this->selectedPlatform))
-            ->when($this->selectedSentiment, fn($q) => $q->where('sentiment', $this->selectedSentiment))
-            ->when($this->dateFrom, fn($q) => $q->whereDate('posted_at', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn($q) => $q->whereDate('posted_at', '<=', $this->dateTo))
-            ->when($this->searchTerm, fn($q) => $q->where(function($query) {
-                $query->where('mention_text', 'like', '%' . $this->searchTerm . '%')
-                      ->orWhere('author', 'like', '%' . $this->searchTerm . '%');
+            ->when($this->selectedPlatform, fn ($q) => $q->where('platform', $this->selectedPlatform))
+            ->when($this->selectedSentiment, fn ($q) => $q->where('sentiment', $this->selectedSentiment))
+            ->when($this->dateFrom, fn ($q) => $q->whereDate('posted_at', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn ($q) => $q->whereDate('posted_at', '<=', $this->dateTo))
+            ->when($this->searchTerm, fn ($q) => $q->where(function ($query) {
+                $query->where('mention_text', 'like', '%'.$this->searchTerm.'%')
+                    ->orWhere('author', 'like', '%'.$this->searchTerm.'%');
             }))
             ->orderByDesc('posted_at');
 
@@ -66,11 +70,11 @@ class MyMentions extends Component
 
         // Quick stats
         $totalMentions = BrandMention::where('client_id', $clientId)
-            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo . ' 23:59:59'])
+            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo.' 23:59:59'])
             ->count();
 
         $sentimentBreakdown = BrandMention::where('client_id', $clientId)
-            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo . ' 23:59:59'])
+            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo.' 23:59:59'])
             ->selectRaw('sentiment, COUNT(*) as count')
             ->groupBy('sentiment')
             ->pluck('count', 'sentiment')
@@ -78,12 +82,12 @@ class MyMentions extends Component
 
         $recentPositive = BrandMention::where('client_id', $clientId)
             ->where('sentiment', 'positive')
-            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo . ' 23:59:59'])
+            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo.' 23:59:59'])
             ->count();
 
         $recentNegative = BrandMention::where('client_id', $clientId)
             ->where('sentiment', 'negative')
-            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo . ' 23:59:59'])
+            ->whereBetween('posted_at', [$this->dateFrom, $this->dateTo.' 23:59:59'])
             ->count();
 
         $platforms = ['news', 'google_news', 'yelp', 'google', 'reddit', 'youtube', 'x', 'web'];

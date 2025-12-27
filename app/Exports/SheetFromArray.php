@@ -34,4 +34,3 @@ class SheetFromArray implements FromArray, WithHeadings, WithTitle
         return $this->rows;
     }
 }
-

@@ -38,7 +38,7 @@ class BrandingServiceProvider extends ServiceProvider
         $config = config('branding');
 
         // Ensure directory exists
-        if (!file_exists(dirname($cssPath))) {
+        if (! file_exists(dirname($cssPath))) {
             mkdir(dirname($cssPath), 0755, true);
         }
 

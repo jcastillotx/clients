@@ -29,13 +29,13 @@ class SocialPostChangesRequested extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject('Client Requested Changes to Social Media Post')
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('A client has requested changes to a social media post.')
-            ->line('**Client:** ' . $this->post->client->company_name)
-            ->line('**Platform:** ' . ucfirst($this->post->platform))
-            ->line('**Post Title:** ' . $this->post->title)
+            ->line('**Client:** '.$this->post->client->company_name)
+            ->line('**Platform:** '.ucfirst($this->post->platform))
+            ->line('**Post Title:** '.$this->post->title)
             ->line('**Client Feedback:**')
-            ->line('"' . $this->feedback->feedback_text . '"')
+            ->line('"'.$this->feedback->feedback_text.'"')
             ->action('Review & Edit Post', $url)
             ->line('Please make the requested changes and resubmit for approval.')
             ->line('Thank you!');

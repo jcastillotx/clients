@@ -54,7 +54,7 @@ class WebhookDeliveryTest extends TestCase
         // Verify HMAC signature
         preg_match('/t=(\d+),v1=([a-f0-9]+)/', $captured['signature'], $m);
         $this->assertSame($captured['timestamp'], $m[1] ?? null);
-        $expected = hash_hmac('sha256', $captured['timestamp'] . '.' . $captured['body'], $secret);
+        $expected = hash_hmac('sha256', $captured['timestamp'].'.'.$captured['body'], $secret);
         $this->assertSame($expected, $m[2] ?? null);
 
         $this->assertDatabaseHas('webhook_delivery_logs', [
@@ -95,4 +95,3 @@ class WebhookDeliveryTest extends TestCase
         );
     }
 }
-

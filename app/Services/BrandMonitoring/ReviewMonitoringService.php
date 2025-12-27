@@ -4,9 +4,9 @@ namespace App\Services\BrandMonitoring;
 
 use App\Models\BrandMention;
 use App\Models\Client;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * Review Monitoring using free API tiers
@@ -22,7 +22,7 @@ class ReviewMonitoringService
      */
     public function getYelpReviews(Client $client, ?string $businessId = null): array
     {
-        if (!config('brand-monitoring.reviews.yelp.enabled')) {
+        if (! config('brand-monitoring.reviews.yelp.enabled')) {
             return ['skipped' => true, 'reason' => 'Yelp API disabled'];
         }
 
@@ -33,17 +33,17 @@ class ReviewMonitoringService
 
         try {
             // Step 1: Search for business if no ID provided
-            if (!$businessId) {
+            if (! $businessId) {
                 $searchResponse = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Authorization' => 'Bearer '.$apiKey,
                 ])->get('https://api.yelp.com/v3/businesses/search', [
                     'term' => $client->company_name,
-                    'location' => $client->city . ', ' . $client->state,
+                    'location' => $client->city.', '.$client->state,
                     'limit' => 1,
                 ]);
 
-                if (!$searchResponse->successful()) {
-                    return ['error' => 'Yelp search failed: ' . $searchResponse->status()];
+                if (! $searchResponse->successful()) {
+                    return ['error' => 'Yelp search failed: '.$searchResponse->status()];
                 }
 
                 $businesses = $searchResponse->json()['businesses'] ?? [];
@@ -63,14 +63,14 @@ class ReviewMonitoringService
 
             // Step 2: Get reviews for the business
             $reviewsResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
+                'Authorization' => 'Bearer '.$apiKey,
             ])->get("https://api.yelp.com/v3/businesses/{$businessId}/reviews", [
                 'limit' => 50, // Max is 50
                 'sort_by' => 'newest',
             ]);
 
-            if (!$reviewsResponse->successful()) {
-                return ['error' => 'Yelp reviews fetch failed: ' . $reviewsResponse->status()];
+            if (! $reviewsResponse->successful()) {
+                return ['error' => 'Yelp reviews fetch failed: '.$reviewsResponse->status()];
             }
 
             $data = $reviewsResponse->json();
@@ -129,7 +129,7 @@ class ReviewMonitoringService
      */
     public function getGooglePlacesReviews(Client $client, ?string $placeId = null): array
     {
-        if (!config('brand-monitoring.reviews.google_places.enabled')) {
+        if (! config('brand-monitoring.reviews.google_places.enabled')) {
             return ['skipped' => true, 'reason' => 'Google Places disabled'];
         }
 
@@ -140,7 +140,7 @@ class ReviewMonitoringService
 
         try {
             // Step 1: Find Place if no ID provided
-            if (!$placeId) {
+            if (! $placeId) {
                 $searchResponse = Http::get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [
                     'input' => $client->company_name,
                     'inputtype' => 'textquery',
@@ -148,8 +148,8 @@ class ReviewMonitoringService
                     'key' => $apiKey,
                 ]);
 
-                if (!$searchResponse->successful()) {
-                    return ['error' => 'Google Places search failed: ' . $searchResponse->status()];
+                if (! $searchResponse->successful()) {
+                    return ['error' => 'Google Places search failed: '.$searchResponse->status()];
                 }
 
                 $candidates = $searchResponse->json()['candidates'] ?? [];
@@ -174,8 +174,8 @@ class ReviewMonitoringService
                 'key' => $apiKey,
             ]);
 
-            if (!$detailsResponse->successful()) {
-                return ['error' => 'Google Places details failed: ' . $detailsResponse->status()];
+            if (! $detailsResponse->successful()) {
+                return ['error' => 'Google Places details failed: '.$detailsResponse->status()];
             }
 
             $result = $detailsResponse->json()['result'] ?? [];
@@ -230,7 +230,7 @@ class ReviewMonitoringService
      */
     protected function ratingSentiment(int $rating): string
     {
-        return match(true) {
+        return match (true) {
             $rating >= 4 => 'positive',
             $rating == 3 => 'neutral',
             default => 'negative',
@@ -243,7 +243,7 @@ class ReviewMonitoringService
     protected function storeMention(Client $client, array $data): ?BrandMention
     {
         // Deduplicate by URL or text hash
-        if (!empty($data['url'])) {
+        if (! empty($data['url'])) {
             $existing = BrandMention::where('client_id', $client->id)
                 ->where('url', $data['url'])
                 ->first();
@@ -256,7 +256,7 @@ class ReviewMonitoringService
             $textHash = md5($data['mention_text']);
             $existing = BrandMention::where('client_id', $client->id)
                 ->where('platform', $data['platform'])
-                ->whereRaw("MD5(mention_text) = ?", [$textHash])
+                ->whereRaw('MD5(mention_text) = ?', [$textHash])
                 ->first();
 
             if ($existing) {

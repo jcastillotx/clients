@@ -10,7 +10,7 @@ return new class extends Migration
     {
         // If another automation migration already created `automation_rules`, avoid
         // creating it twice after merges. Ensure the columns this codebase expects exist.
-        if (!Schema::hasTable('automation_rules')) {
+        if (! Schema::hasTable('automation_rules')) {
             Schema::create('automation_rules', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
@@ -28,31 +28,31 @@ return new class extends Migration
             });
         } else {
             Schema::table('automation_rules', function (Blueprint $table) {
-                if (!Schema::hasColumn('automation_rules', 'description')) {
+                if (! Schema::hasColumn('automation_rules', 'description')) {
                     $table->text('description')->nullable()->after('name');
                 }
-                if (!Schema::hasColumn('automation_rules', 'conditions')) {
+                if (! Schema::hasColumn('automation_rules', 'conditions')) {
                     $table->json('conditions')->nullable()->after('trigger');
                 }
-                if (!Schema::hasColumn('automation_rules', 'actions')) {
+                if (! Schema::hasColumn('automation_rules', 'actions')) {
                     $table->json('actions')->nullable()->after('conditions');
                 }
-                if (!Schema::hasColumn('automation_rules', 'is_active')) {
+                if (! Schema::hasColumn('automation_rules', 'is_active')) {
                     $table->boolean('is_active')->default(true)->after('actions');
                 }
-                if (!Schema::hasColumn('automation_rules', 'sort_order')) {
+                if (! Schema::hasColumn('automation_rules', 'sort_order')) {
                     $table->unsignedInteger('sort_order')->default(0)->after('is_active');
                 }
-                if (!Schema::hasColumn('automation_rules', 'created_by')) {
+                if (! Schema::hasColumn('automation_rules', 'created_by')) {
                     $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
                 }
-                if (!Schema::hasColumn('automation_rules', 'updated_by')) {
+                if (! Schema::hasColumn('automation_rules', 'updated_by')) {
                     $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
                 }
             });
         }
 
-        if (!Schema::hasTable('automation_runs')) {
+        if (! Schema::hasTable('automation_runs')) {
             Schema::create('automation_runs', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('automation_rule_id')->constrained('automation_rules')->cascadeOnDelete();
@@ -80,4 +80,3 @@ return new class extends Migration
         Schema::dropIfExists('automation_rules');
     }
 };
-

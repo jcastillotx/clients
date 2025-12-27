@@ -13,7 +13,7 @@ class ResolveWhiteLabelClient
     public function handle(Request $request, Closure $next): Response
     {
         // Tests or minimal environments may not have this table migrated yet.
-        if (!Schema::hasTable('white_label_configs')) {
+        if (! Schema::hasTable('white_label_configs')) {
             return $next($request);
         }
 
@@ -34,4 +34,3 @@ class ResolveWhiteLabelClient
         return $next($request);
     }
 }
-

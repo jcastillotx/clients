@@ -14,9 +14,7 @@ use Illuminate\Support\Str;
 
 class BrandGuideBuilderService
 {
-    public function __construct(private readonly AIProviderManager $ai)
-    {
-    }
+    public function __construct(private readonly AIProviderManager $ai) {}
 
     /**
      * Generate/refresh a brand guide for a client.
@@ -27,7 +25,7 @@ class BrandGuideBuilderService
     {
         $elements = $this->extractBrandElements($client);
 
-        $slug = (string) ($options['slug'] ?? Str::slug($client->company_name ?: ('client-' . $client->id)) . '-' . Str::lower(Str::random(6)));
+        $slug = (string) ($options['slug'] ?? Str::slug($client->company_name ?: ('client-'.$client->id)).'-'.Str::lower(Str::random(6)));
 
         $guide = BrandGuide::create([
             'client_id' => $client->id,
@@ -58,7 +56,9 @@ class BrandGuideBuilderService
         }
 
         foreach ((array) ($elements['colors'] ?? []) as $c) {
-            if (!is_array($c)) continue;
+            if (! is_array($c)) {
+                continue;
+            }
             BrandColor::create([
                 'brand_guide_id' => $guide->id,
                 'color_name' => $c['name'] ?? null,
@@ -73,7 +73,9 @@ class BrandGuideBuilderService
         }
 
         foreach ((array) ($elements['fonts'] ?? []) as $f) {
-            if (!is_array($f)) continue;
+            if (! is_array($f)) {
+                continue;
+            }
             BrandFont::create([
                 'brand_guide_id' => $guide->id,
                 'font_name' => (string) ($f['name'] ?? 'Unknown font'),
@@ -86,8 +88,12 @@ class BrandGuideBuilderService
         }
 
         foreach ((array) ($elements['templates'] ?? []) as $t) {
-            if (!is_array($t)) continue;
-            if (empty($t['file_path'])) continue;
+            if (! is_array($t)) {
+                continue;
+            }
+            if (empty($t['file_path'])) {
+                continue;
+            }
             BrandTemplate::create([
                 'brand_guide_id' => $guide->id,
                 'template_name' => (string) ($t['name'] ?? 'Template'),
@@ -155,7 +161,7 @@ class BrandGuideBuilderService
     }
 
     /**
-     * @param array<string,mixed> $elements
+     * @param  array<string,mixed>  $elements
      * @return array<int,array{section_type:string,title:string,content:array<string,mixed>}>
      */
     protected function defaultSectionsFromElements(Client $client, array $elements): array
@@ -246,11 +252,13 @@ class BrandGuideBuilderService
     protected function tryParseJson(string $text): ?array
     {
         $text = trim($text);
-        if ($text === '') return null;
+        if ($text === '') {
+            return null;
+        }
         $text = preg_replace('/^```(?:json)?\s*/i', '', $text) ?? $text;
         $text = preg_replace('/\s*```$/', '', $text) ?? $text;
         $decoded = json_decode($text, true);
+
         return is_array($decoded) ? $decoded : null;
     }
 }
-

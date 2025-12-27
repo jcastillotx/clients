@@ -6,14 +6,11 @@ use App\Models\Client;
 use App\Models\OnboardingTask;
 use App\Models\OnboardingWorkflow;
 use App\Models\Questionnaire;
-use App\Services\Marketing\BrandGuideBuilderService;
 use Illuminate\Support\Arr;
 
 class OnboardingService
 {
-    public function __construct(private readonly BrandGuideBuilderService $brandGuides)
-    {
-    }
+    public function __construct(private readonly BrandGuideBuilderService $brandGuides) {}
 
     /**
      * Create a default onboarding workflow + checklist for a client.
@@ -111,7 +108,7 @@ class OnboardingService
         $questionnaire->loadMissing('client');
         $client = $questionnaire->client;
 
-        if (!$client) {
+        if (! $client) {
             return ['ok' => false, 'error' => 'Questionnaire missing client.'];
         }
 
@@ -156,4 +153,3 @@ class OnboardingService
         );
     }
 }
-

@@ -7,8 +7,8 @@ class WebsiteAuditScorer
     /**
      * Compute category + overall scores from issues and key metrics.
      *
-     * @param array<int, array{severity:string, category:string, issue_type:string, affected_url?:?string, meta?:array|null}> $issues
-     * @param array<string, mixed> $metrics
+     * @param  array<int, array{severity:string, category:string, issue_type:string, affected_url?:?string, meta?:array|null}>  $issues
+     * @param  array<string, mixed>  $metrics
      * @return array{overall:int, seo:int, performance:int, accessibility:int, security:int, mobile:int, weights:array<string,float>}
      */
     public function score(array $issues, array $metrics = []): array
@@ -44,10 +44,14 @@ class WebsiteAuditScorer
             // If issue likely impacts many pages, scale up.
             $meta = is_array($issue['meta'] ?? null) ? (array) $issue['meta'] : [];
             $scope = (string) ($meta['scope'] ?? '');
-            if ($scope === 'sitewide') $pen = (int) round($pen * 1.4);
-            if ($scope === 'many_pages') $pen = (int) round($pen * 1.2);
+            if ($scope === 'sitewide') {
+                $pen = (int) round($pen * 1.4);
+            }
+            if ($scope === 'many_pages') {
+                $pen = (int) round($pen * 1.2);
+            }
 
-            if (!isset($base[$cat])) {
+            if (! isset($base[$cat])) {
                 $cat = 'seo';
             }
             $base[$cat] -= $pen;
@@ -96,18 +100,31 @@ class WebsiteAuditScorer
 
     protected function asInt(mixed $v): ?int
     {
-        if ($v === null) return null;
-        if (is_int($v)) return $v;
-        if (is_numeric($v)) return (int) round((float) $v);
+        if ($v === null) {
+            return null;
+        }
+        if (is_int($v)) {
+            return $v;
+        }
+        if (is_numeric($v)) {
+            return (int) round((float) $v);
+        }
+
         return null;
     }
 
     protected function asFloat(mixed $v): ?float
     {
-        if ($v === null) return null;
-        if (is_float($v)) return $v;
-        if (is_numeric($v)) return (float) $v;
+        if ($v === null) {
+            return null;
+        }
+        if (is_float($v)) {
+            return $v;
+        }
+        if (is_numeric($v)) {
+            return (float) $v;
+        }
+
         return null;
     }
 }
-

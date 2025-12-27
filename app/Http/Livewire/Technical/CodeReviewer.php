@@ -8,6 +8,7 @@ use Livewire\Component;
 class CodeReviewer extends Component
 {
     public string $provider = 'claude';
+
     public string $model = '';
 
     /**
@@ -39,12 +40,13 @@ class CodeReviewer extends Component
     public function review(CodeReviewService $svc): void
     {
         $files = json_decode($this->codeFilesJson, true);
-        if (!is_array($files)) {
+        if (! is_array($files)) {
             session()->flash('error', 'Code files JSON is invalid.');
+
             return;
         }
         $ctx = json_decode($this->contextJson, true);
-        if (!is_array($ctx)) {
+        if (! is_array($ctx)) {
             $ctx = [];
         }
 
@@ -62,20 +64,23 @@ class CodeReviewer extends Component
     public function generateDocs(CodeReviewService $svc): void
     {
         $files = json_decode($this->codeFilesJson, true);
-        if (!is_array($files)) {
+        if (! is_array($files)) {
             session()->flash('error', 'Code files JSON is invalid.');
+
             return;
         }
         $ctx = json_decode($this->contextJson, true);
-        if (!is_array($ctx)) {
+        if (! is_array($ctx)) {
             $ctx = [];
         }
 
         $combined = '';
         foreach ($files as $f) {
-            if (!is_array($f)) continue;
+            if (! is_array($f)) {
+                continue;
+            }
             $path = (string) ($f['path'] ?? 'unknown');
-            $combined .= "\n\n// FILE: {$path}\n" . (string) ($f['content'] ?? '');
+            $combined .= "\n\n// FILE: {$path}\n".(string) ($f['content'] ?? '');
         }
 
         $this->docs = $svc->generateDocumentation($combined, [
@@ -94,4 +99,3 @@ class CodeReviewer extends Component
         return view('livewire.technical.code-reviewer');
     }
 }
-
