@@ -286,8 +286,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports', ClientReportDashboard::class)->name('client.reports');
     Route::get('/reports/archive', ClientReportArchive::class)->name('client.reports.archive');
 
-    // Brand monitoring
-    Route::get('/brand-monitoring/my-mentions', ClientMyMentions::class)->name('client.brand-monitoring.my-mentions');
+    // Brand monitoring (requires brand_monitoring feature)
+    Route::get('/brand-monitoring/my-mentions', ClientMyMentions::class)
+        ->name('client.brand-monitoring.my-mentions')
+        ->middleware('feature:brand_monitoring');
 
     Route::get('/privacy', PrivacyCenter::class)->name('client.privacy');
     Route::get('/privacy/requests/{privacyRequest}/download', [PrivacyExportController::class, 'download'])->name('privacy.export.download');
@@ -397,7 +399,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/website-audits/{websiteAudit}/pdf', [WebsiteAuditController::class, 'pdf'])->name('website-audits.pdf');
         });
 
-        // Brand monitoring
+        // Brand monitoring (admin views - no feature check needed, admins see all clients)
         Route::prefix('brand-monitoring')->name('brand-monitoring.')->group(function () {
             Route::get('/', AdminBrandMonitoringDashboard::class)->name('dashboard');
             Route::get('/api-status', AdminBrandMonitoringApiStatus::class)->name('api-status');

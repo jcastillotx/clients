@@ -41,6 +41,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'token.any_ability' => \App\Http\Middleware\EnsureTokenHasAnyAbility::class,
             'admin.ip_allowlist' => \App\Http\Middleware\EnsureAdminIpAllowlisted::class,
             'admin.2fa' => \App\Http\Middleware\EnsureTwoFactorEnabled::class,
+            'feature' => \App\Http\Middleware\RequiresFeature::class,
+            'feature.any' => \App\Http\Middleware\RequiresAnyFeature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

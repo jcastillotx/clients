@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Concerns\HasFeatures;
 use App\Models\Concerns\LogsActivityWithContext;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -17,6 +18,7 @@ class Client extends Model
     use HasFactory, SoftDeletes;
     use LogsActivity;
     use LogsActivityWithContext;
+    use HasFeatures;
 
     /**
      * The attributes that are mass assignable.
@@ -39,6 +41,8 @@ class Client extends Model
         'tier',
         'stripe_customer_id',
         'notes',
+        'enabled_features',
+        'meta',
     ];
 
     /**
@@ -50,6 +54,8 @@ class Client extends Model
         'status' => 'string',
         'tier' => 'string',
         'deleted_at' => 'datetime',
+        'enabled_features' => 'array',
+        'meta' => 'array',
     ];
 
     /**

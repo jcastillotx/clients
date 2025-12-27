@@ -5,22 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? config('app.name') }}</title>
+    <title>{{ $title ?? config('branding.company.name') }}</title>
 
     <link rel="manifest" href="/manifest.webmanifest">
-    <meta name="theme-color" content="#3c8dbc">
+    <meta name="theme-color" content="{{ config('branding.colors.primary') }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
-    <link rel="icon" href="/favicon.ico">
-    <link rel="apple-touch-icon" href="/favicon.ico">
+    <meta name="apple-mobile-web-app-title" content="{{ config('branding.company.name') }}">
+    <link rel="icon" href="/{{ config('branding.logo.favicon') }}">
+    <link rel="apple-touch-icon" href="/{{ config('branding.logo.icon') }}">
     <meta name="vapid-public-key" content="{{ config('pwa.vapid_public_key') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    @if(config('branding.typography.google_fonts'))
+    <link href="https://fonts.googleapis.com/css2?family={{ config('branding.typography.google_fonts') }}&display=swap" rel="stylesheet">
+    @endif
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -36,24 +38,10 @@
     <!-- Livewire Styles -->
     @livewireStyles
 
-    <style>
-        :root {
-            --primary-color: #3c8dbc;
-            --secondary-color: #6c757d;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .content-wrapper {
-            background-color: #f4f6f9;
-        }
-        .brand-link {
-            background-color: #343a40;
-        }
-        .sidebar-dark-primary {
-            background-color: #343a40;
-        }
-    </style>
+    <!-- Brand Custom CSS -->
+    @if(file_exists(public_path(config('branding.custom_css'))))
+    <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
+    @endif
 
     @stack('styles')
 </head>
