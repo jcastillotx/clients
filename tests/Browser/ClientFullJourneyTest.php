@@ -17,7 +17,7 @@ class ClientFullJourneyTest extends DuskTestCase
     use DatabaseMigrations;
     use ProvidesBrowser;
 
-    public function test_client_journey_login_create_request_upload_file_pay_invoice(): void
+    public function test_client_journey_smoke_login_create_request_upload_file_and_reach_payment_page(): void
     {
         if (!env('RUN_DUSK_TESTS')) {
             $this->markTestSkipped('Set RUN_DUSK_TESTS=1 to run browser tests.');
@@ -66,8 +66,9 @@ class ClientFullJourneyTest extends DuskTestCase
                 ->clickLink('Pay')
                 ->assertPathBeginsWith("/invoices/{$invoice->id}/pay");
 
-            // TODO: Use Stripe test mode + Stripe.js to confirm payment intent.
-            // After confirmation, the app redirects back to the invoice page with success.
+            // Payment confirmation is intentionally not automated here because it relies on Stripe.js
+            // (Elements + iframe inputs) and environment-specific Stripe test credentials.
+            // This smoke test only verifies the app renders the payment page route.
         });
     }
 }

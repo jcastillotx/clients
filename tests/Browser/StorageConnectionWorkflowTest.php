@@ -13,7 +13,7 @@ class StorageConnectionWorkflowTest extends DuskTestCase
 {
     use DatabaseMigrations;
 
-    public function test_storage_connection_workflow_example(): void
+    public function test_storage_settings_smoke_page_renders_for_client(): void
     {
         if (!env('RUN_DUSK_TESTS')) {
             $this->markTestSkipped('Set RUN_DUSK_TESTS=1 to run browser tests.');
@@ -37,8 +37,8 @@ class StorageConnectionWorkflowTest extends DuskTestCase
             $browser->visit('/storage/settings')
                 ->assertSee('Storage');
 
-            // TODO: Click "Connect Dropbox"/"Connect Google Drive"/"Connect S3" and complete OAuth / credential flow.
-            // This usually requires a real test account + env configuration.
+            // OAuth credential flows (Dropbox/Google) and S3 credential validation are environment-specific
+            // and typically require real provider accounts, so this test stays a smoke check.
         });
     }
 }

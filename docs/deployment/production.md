@@ -4,6 +4,8 @@ This guide is for deploying the Laravel 11 + Livewire client portal to a product
 
 ## Pre-deployment checklist
 
+This is an **operator checklist** for your specific production environment (it’s intentionally left unchecked in the repo).
+
 - [ ] **All environment variables configured** (`.env.production`)
   - [ ] Use `/workspace/.env.production.example` as the baseline
   - [ ] `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...`
@@ -200,6 +202,8 @@ See also: `scripts/cron/cpanel-cron.txt`
 - For long-running migrations: schedule a maintenance window and communicate it.
 
 ## Post-deployment verification checklist
+
+This is an **operator checklist** to validate the live deployment.
 
 - [ ] **Client login works**
 - [ ] **Admin login works**

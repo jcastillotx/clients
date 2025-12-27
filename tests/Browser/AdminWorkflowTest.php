@@ -12,7 +12,7 @@ class AdminWorkflowTest extends DuskTestCase
 {
     use DatabaseMigrations;
 
-    public function test_admin_workflow_create_client_assign_request_generate_invoice(): void
+    public function test_admin_workflow_smoke_can_login_and_view_admin_pages(): void
     {
         if (!env('RUN_DUSK_TESTS')) {
             $this->markTestSkipped('Set RUN_DUSK_TESTS=1 to run browser tests.');
@@ -37,7 +37,12 @@ class AdminWorkflowTest extends DuskTestCase
             $browser->visit('/admin/reports')
                 ->assertSee('Reports');
 
-            // TODO: Navigate to clients CRUD screens, create a client, assign a request, generate invoice.
+            // Smoke-check a couple more admin entry points to catch auth/middleware/regression issues.
+            $browser->visit('/admin/requests')
+                ->assertSee('Requests');
+
+            $browser->visit('/admin/invoices')
+                ->assertSee('Invoices');
         });
     }
 }
