@@ -13,6 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->prepend([
+            \App\Http\Middleware\TrustProxies::class,
+        ]);
+
+        $middleware->append([
+            \App\Http\Middleware\SecurityHeaders::class,
+        ]);
+
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\ResolveWhiteLabelClient::class,
         ]);
