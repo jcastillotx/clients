@@ -169,6 +169,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('client.privacy') }}" class="nav-link {{ request()->routeIs('client.privacy') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Privacy</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('client.analytics') }}" class="nav-link {{ request()->routeIs('client.analytics') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-chart-pie"></i>
                         <p>Analytics</p>
@@ -178,6 +184,12 @@
                     <a href="{{ route('client.reports') }}" class="nav-link {{ request()->routeIs('client.reports') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <p>Reports</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.reports.archive') }}" class="nav-link {{ request()->routeIs('client.reports.archive') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-archive"></i>
+                        <p>Report Archive</p>
                     </a>
                 </li>
                 @endif
@@ -222,9 +234,27 @@
                 @can('view reports')
                 <li class="nav-header">ADMIN</li>
                 <li class="nav-item">
+                    <a href="{{ route('admin.messages') }}" class="nav-link {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-comments"></i>
+                        <p>Messages</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('admin.reports.dashboard') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <p>Reporting</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.security.privacy-requests') }}" class="nav-link {{ request()->routeIs('admin.security.privacy-requests') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Privacy Requests</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.security.overview') }}" class="nav-link {{ request()->routeIs('admin.security.overview') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-shield-alt"></i>
+                        <p>Security Settings</p>
                     </a>
                 </li>
 
@@ -241,6 +271,18 @@
                             <a href="{{ route('admin.projects.time') }}" class="nav-link {{ request()->routeIs('admin.projects.time') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Time Tracker</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.time-approvals') }}" class="nav-link {{ request()->routeIs('admin.projects.time-approvals') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Time Approvals</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.budgets') }}" class="nav-link {{ request()->routeIs('admin.projects.budgets') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Budgets</p>
                             </a>
                         </li>
                         <li class="nav-item">

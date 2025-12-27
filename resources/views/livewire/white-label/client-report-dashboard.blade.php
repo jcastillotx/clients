@@ -23,6 +23,11 @@
                 </div>
                 <div class="text-right">
                     <span class="badge" style="background: {{ $primary }}; color: #fff;">White-labeled</span>
+                    <div class="mt-2">
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ route('client.reports.archive') }}">
+                            <i class="fas fa-archive mr-1"></i> Archive
+                        </a>
+                    </div>
                     <div class="text-muted small mt-1">Updated: {{ now()->toDateTimeString() }}</div>
                 </div>
             </div>

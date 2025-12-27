@@ -7,6 +7,8 @@ use App\Models\Task;
 use App\Models\TimeEntry;
 use App\Services\Marketing\TimeTrackingService;
 use App\Services\Projects\ProjectBudgetService;
+use App\Services\Projects\TimeEntryLockService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
@@ -29,10 +31,14 @@ class TimeTracker extends Component
         $this->manualDate = now()->toDateString();
     }
 
-    public function start(TimeTrackingService $svc): void
+    public function start(TimeTrackingService $svc, TimeEntryLockService $locks): void
     {
         $user = Auth::user();
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
+
+        if ($locks->isLocked($user, now())) {
+            abort(422, 'This timesheet week is locked.');
+        }
 
         Validator::make(['requestId' => $this->requestId], [
             'requestId' => ['required', 'integer', 'exists:requests,id'],
@@ -49,7 +55,7 @@ class TimeTracker extends Component
         session()->flash('success', 'Timer started.');
     }
 
-    public function stop(TimeTrackingService $svc, ProjectBudgetService $budgets): void
+    public function stop(TimeTrackingService $svc, ProjectBudgetService $budgets, TimeEntryLockService $locks): void
     {
         $user = Auth::user();
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
@@ -61,6 +67,9 @@ class TimeTracker extends Component
             ->first();
 
         if ($running) {
+            if ($running->started_at && $locks->isLocked($user, Carbon::parse($running->started_at))) {
+                abort(422, 'This timesheet week is locked.');
+            }
             $svc->stopTimer($running);
             if ($running->request_id) {
                 $req = ServiceRequest::query()->find($running->request_id);
@@ -71,7 +80,7 @@ class TimeTracker extends Component
         session()->flash('success', 'Timer stopped.');
     }
 
-    public function addManual(ProjectBudgetService $budgets): void
+    public function addManual(ProjectBudgetService $budgets, TimeEntryLockService $locks): void
     {
         $user = Auth::user();
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
@@ -86,7 +95,12 @@ class TimeTracker extends Component
             'manualMinutes' => ['required', 'integer', 'min:1', 'max:1440'],
         ])->validate();
 
-        $start = now()->parse($this->manualDate)->setTime(9, 0);
+        $day = Carbon::parse($this->manualDate);
+        if ($locks->isLocked($user, $day)) {
+            abort(422, 'This timesheet week is locked.');
+        }
+
+        $start = $day->copy()->setTime(9, 0);
         $end = (clone $start)->addMinutes((int) $this->manualMinutes);
 
         TimeEntry::create([

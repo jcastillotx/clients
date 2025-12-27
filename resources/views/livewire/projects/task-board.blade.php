@@ -32,10 +32,17 @@
                     <div class="card-body">
                         @foreach($board[$key] as $t)
                             <div class="border rounded p-2 mb-2">
-                                <div class="font-weight-bold">{{ $t->title }}</div>
+                                <div class="d-flex justify-content-between">
+                                    <div class="font-weight-bold">{{ $t->title }}</div>
+                                    <a class="btn btn-xs btn-outline-secondary" href="{{ route('admin.projects.tasks.show', $t) }}">Open</a>
+                                </div>
                                 @if($t->description)
                                     <div class="text-muted small">{{ $t->description }}</div>
                                 @endif
+                                <div class="text-muted small mt-1">
+                                    @if($t->start_date) Start: {{ $t->start_date->toDateString() }} · @endif
+                                    @if($t->due_date) Due: {{ $t->due_date->toDateString() }} @endif
+                                </div>
                                 <div class="mt-2 d-flex flex-wrap" style="gap: 6px;">
                                     @foreach(['todo','in_progress','blocked','done'] as $s)
                                         @if($s !== $key)

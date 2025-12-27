@@ -17,6 +17,7 @@ use App\Jobs\Analytics\UpdateClientHealthScoresJob;
 use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
 use App\Jobs\Analytics\GenerateMonthlyRevenueForecastJob;
 use App\Jobs\Analytics\GenerateQuarterlyBusinessIntelligenceReportJob;
+use App\Jobs\Security\PurgeOldAuditLogsJob;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +128,11 @@ Schedule::call(function () {
 Schedule::call(function () {
     app(ReportScheduleRunner::class)->runDueSchedules();
 })->everyFiveMinutes()->name('send-scheduled-admin-reports');
+
+// Purge old audit/activity logs
+Schedule::call(function () {
+    PurgeOldAuditLogsJob::dispatch();
+})->daily()->name('purge-old-audit-logs');
 
 // Run scheduled website audits (requires queue worker)
 Schedule::call(function () {

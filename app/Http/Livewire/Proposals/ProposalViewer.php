@@ -6,7 +6,9 @@ use App\Models\Proposal;
 use App\Models\ProposalSelection;
 use App\Models\ProposalView;
 use App\Services\Marketing\OnboardingService;
+use App\Services\Marketing\ProposalAcceptanceService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 
 class ProposalViewer extends Component
@@ -15,6 +17,11 @@ class ProposalViewer extends Component
 
     public string $selectedTier = 'better';
     public array $selectedAddons = [];
+
+    // Signature
+    public string $signerName = '';
+    public string $signatureData = '';
+    public bool $agree = false;
 
     public function mount(Proposal $proposal): void
     {
@@ -67,23 +74,34 @@ class ProposalViewer extends Component
         session()->flash('success', 'Selection saved.');
     }
 
-    public function accept(OnboardingService $onboarding): mixed
+    public function accept(OnboardingService $onboarding, ProposalAcceptanceService $acceptance): mixed
     {
         $user = Auth::user();
         abort_unless($user && $user->isClient(), 403);
         abort_unless($this->proposal->status !== 'accepted', 422);
 
+        Validator::make([
+            'signerName' => $this->signerName,
+            'signatureData' => $this->signatureData,
+            'agree' => $this->agree,
+        ], [
+            'signerName' => ['required', 'string', 'max:255'],
+            'signatureData' => ['required', 'string', 'max:200000'],
+            'agree' => ['accepted'],
+        ])->validate();
+
         $this->saveSelection();
 
-        $this->proposal->update([
-            'status' => 'accepted',
-            'accepted_at' => now(),
+        $acceptance->accept($this->proposal, [
+            'name' => $this->signerName,
+            'data' => $this->signatureData,
+            'ip' => request()->ip(),
         ]);
 
         // Kick off onboarding (idempotent)
         $onboarding->createOnboardingWorkflow($user->client);
 
-        session()->flash('success', 'Proposal accepted. Next: onboarding + contract steps.');
+        session()->flash('success', 'Proposal signed and accepted. Next: onboarding.');
         return redirect()->route('client.onboarding');
     }
 

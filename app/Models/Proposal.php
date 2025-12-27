@@ -11,6 +11,8 @@ class Proposal extends Model
     protected $fillable = [
         'client_id',
         'request_id',
+        'contract_id',
+        'invoice_id',
         'title',
         'proposal_number',
         'template_id',
@@ -20,6 +22,10 @@ class Proposal extends Model
         'valid_until',
         'sent_at',
         'accepted_at',
+        'signed_at',
+        'signed_by',
+        'signature_ip',
+        'signature_data',
         'created_by',
     ];
 
@@ -29,6 +35,7 @@ class Proposal extends Model
         'valid_until' => 'date',
         'sent_at' => 'datetime',
         'accepted_at' => 'datetime',
+        'signed_at' => 'datetime',
     ];
 
     public function client(): BelongsTo
@@ -39,6 +46,16 @@ class Proposal extends Model
     public function request(): BelongsTo
     {
         return $this->belongsTo(Request::class);
+    }
+
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     public function creator(): BelongsTo

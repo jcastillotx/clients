@@ -5,9 +5,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PrivacyExportController;
 use App\Http\Livewire\Onboarding\OnboardingWizard;
 use App\Http\Livewire\Proposals\ProposalViewer;
 use App\Http\Livewire\WhiteLabel\ClientReportDashboard;
+use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\Admin\AdminReportExportController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Documents\DocumentVersionController;
 use App\Http\Controllers\Documents\DocumentViewerController;
 use App\Http\Controllers\Marketing\WebsiteAuditController;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
+use App\Http\Livewire\Admin\Reports\ReportDeliveries as AdminReportDeliveries;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Admin\Automation\AutomationIndex;
 use App\Http\Livewire\Admin\Automation\AutomationBuilder;
@@ -50,6 +53,10 @@ use App\Http\Livewire\Client\EstimateApproval;
 use App\Http\Livewire\Communication\MeetingScheduler;
 use App\Http\Livewire\Feedback\FeedbackCollector;
 use App\Http\Livewire\Security\TwoFactorSetup;
+use App\Http\Livewire\Security\PrivacyCenter;
+use App\Http\Livewire\Admin\Security\PrivacyRequests as AdminPrivacyRequests;
+use App\Http\Livewire\Admin\Security\SecurityOverview as AdminSecurityOverview;
+use App\Http\Livewire\Communication\MessagingHub;
 use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
 use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
 use App\Http\Livewire\Communication\EmailDraftAssistant;
@@ -69,6 +76,9 @@ use App\Http\Livewire\Projects\TimeTracker as AdminTimeTracker;
 use App\Http\Livewire\Projects\TaskBoard as AdminTaskBoard;
 use App\Http\Livewire\Projects\ProjectTimeline as AdminProjectTimeline;
 use App\Http\Livewire\Projects\TeamWorkload as AdminTeamWorkload;
+use App\Http\Livewire\Projects\TaskDetail as AdminTaskDetail;
+use App\Http\Livewire\Projects\TimeApprovals as AdminTimeApprovals;
+use App\Http\Livewire\Projects\ProjectBudgets as AdminProjectBudgets;
 use App\Http\Livewire\Feedback\SurveyBuilder;
 use App\Http\Livewire\Feedback\TestimonialManager;
 use App\Http\Livewire\AccountManagement\AccountHealthDashboard;
@@ -224,6 +234,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Client AI assistant
     Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
     Route::get('/reports', ClientReportDashboard::class)->name('client.reports');
+    Route::get('/reports/archive', ClientReportArchive::class)->name('client.reports.archive');
+    Route::get('/privacy', PrivacyCenter::class)->name('client.privacy');
+    Route::get('/privacy/requests/{privacyRequest}/download', [PrivacyExportController::class, 'download'])->name('privacy.export.download');
     Route::get('/proposals/{proposal}', ProposalViewer::class)->name('client.proposals.view');
     Route::get('/surveys/respond/{token}', FeedbackCollector::class)->name('client.surveys.respond');
 
@@ -258,9 +271,13 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');
         Route::get('/meeting-notes', AdminMeetingNotes::class)->name('meeting-notes');
         Route::get('/communication/email-assistant', EmailDraftAssistant::class)->name('communication.email-assistant');
+        Route::get('/messages', MessagingHub::class)->name('messages');
+        Route::get('/security/privacy-requests', AdminPrivacyRequests::class)->name('security.privacy-requests')->middleware('permission:manage settings');
+        Route::get('/security', AdminSecurityOverview::class)->name('security.overview')->middleware('permission:manage settings');
 
         // Reports
         Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
+        Route::get('/reports/deliveries', AdminReportDeliveries::class)->name('reports.deliveries')->middleware('permission:view reports');
         Route::get('/white-label', WhiteLabelConfigurator::class)->name('white-label')->middleware('permission:manage settings');
         Route::get('/client-reports', ReportCustomizer::class)->name('client-reports')->middleware('permission:manage settings');
 
@@ -274,6 +291,9 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/projects/board', AdminTaskBoard::class)->name('projects.board');
         Route::get('/projects/timeline', AdminProjectTimeline::class)->name('projects.timeline');
         Route::get('/projects/workload', AdminTeamWorkload::class)->name('projects.workload');
+        Route::get('/projects/tasks/{task}', AdminTaskDetail::class)->name('projects.tasks.show');
+        Route::get('/projects/time-approvals', AdminTimeApprovals::class)->name('projects.time-approvals');
+        Route::get('/projects/budgets', AdminProjectBudgets::class)->name('projects.budgets');
 
         // Feedback
         Route::get('/feedback/surveys', SurveyBuilder::class)->name('feedback.surveys');

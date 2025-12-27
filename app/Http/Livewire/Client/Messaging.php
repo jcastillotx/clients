@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Events\MessageSent;
 use App\Notifications\UserMentionedInMessageNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
@@ -191,6 +192,15 @@ class Messaging extends Component
         session()->flash('success', 'Conversation created.');
     }
 
+    public function typing(): void
+    {
+        $user = Auth::user();
+        abort_unless($user && $user->isClient(), 403);
+        if (!$this->conversationId) return;
+
+        Cache::put("conv:{$this->conversationId}:typing:{$user->id}", now()->toISOString(), now()->addSeconds(10));
+    }
+
     /**
      * @return array<int,int>
      */
@@ -266,6 +276,8 @@ class Messaging extends Component
 
         $messages = collect();
         $participants = collect();
+        $pinned = collect();
+        $typingNames = [];
 
         if ($this->conversationId) {
             $conv = Conversation::query()
@@ -275,6 +287,14 @@ class Messaging extends Component
 
             if ($conv) {
                 $participants = $conv->participants;
+
+                $pinned = Message::query()
+                    ->where('conversation_id', $conv->id)
+                    ->where('is_pinned', true)
+                    ->with(['sender'])
+                    ->orderByDesc('pinned_at')
+                    ->limit(10)
+                    ->get();
 
                 $messages = Message::query()
                     ->where('conversation_id', $conv->id)
@@ -288,6 +308,14 @@ class Messaging extends Component
 
                 // auto mark read
                 $this->markVisibleAsRead();
+
+                // typing indicator
+                foreach ($participants as $p) {
+                    if ((int) $p->id === (int) $user->id) continue;
+                    if (Cache::has("conv:{$conv->id}:typing:{$p->id}")) {
+                        $typingNames[] = (string) $p->name;
+                    }
+                }
             }
         }
 
@@ -297,7 +325,7 @@ class Messaging extends Component
             ->limit(200)
             ->get(['id', 'title']);
 
-        return view('livewire.client.messaging', compact('conversations', 'messages', 'participants', 'requests'));
+        return view('livewire.client.messaging', compact('conversations', 'messages', 'participants', 'requests', 'pinned', 'typingNames'));
     }
 }
 

@@ -59,6 +59,24 @@
                         @endif
                     </div>
                 </div>
+                @if(($pinned?->count() ?? 0) > 0)
+                    <div class="card-body border-bottom" style="background:#f8f9fa;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="font-weight-bold"><i class="fas fa-thumbtack mr-1"></i> Pinned</div>
+                            <div class="text-muted small">{{ $pinned->count() }} message(s)</div>
+                        </div>
+                        <div class="mt-2">
+                            @foreach($pinned as $pm)
+                                <div class="small border rounded p-2 mb-2">
+                                    <div class="text-muted">
+                                        {{ $pm->sender?->name ?? 'System' }} · {{ $pm->created_at?->format('Y-m-d H:i') }}
+                                    </div>
+                                    <div style="white-space: pre-wrap;">{{ $pm->body ?? '—' }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
                 <div class="card-body" style="height: 420px; overflow:auto;" id="chatScroll">
                     @forelse($messages as $m)
                         @php
@@ -112,7 +130,7 @@
                         :wire:key="'smart-reply-conv-'.$conversationId"
                     />
                     <div class="input-group">
-                        <input class="form-control" placeholder="Type a message..." wire:model.defer="message" wire:keydown.enter.prevent="send">
+                        <input class="form-control" placeholder="Type a message..." wire:model.defer="message" wire:keydown="typing" wire:keydown.enter.prevent="send">
                         <div class="input-group-append">
                             <label class="btn btn-outline-secondary mb-0" title="Attach file / take photo">
                                 <i class="fas fa-camera"></i>
@@ -123,6 +141,9 @@
                             </button>
                         </div>
                     </div>
+                    @if(!empty($typingNames))
+                        <div class="text-muted small mt-2">{{ implode(', ', $typingNames) }} typing…</div>
+                    @endif
                     <small class="text-muted">Mobile: camera capture supported when available.</small>
                 </div>
             </div>
