@@ -40,6 +40,7 @@ class WebsiteAuditorService
     public function performFullAudit(string $url, array $options = []): array
     {
         $url = $this->normalizeStartUrl($url);
+        $this->guardAgainstUnsafeUrl($url);
         $clientId = $options['client_id'] ?? null;
         $auditType = (string) ($options['audit_type'] ?? 'full');
         $maxPages = max(1, (int) ($options['max_pages'] ?? 50));
@@ -378,8 +379,9 @@ class WebsiteAuditorService
         }
 
         // Caching/CDN detection (best-effort via headers on first page)
-        $cdn = $this->detectCdnFromHeaders($pages[0]['headers'] ?? []);
-        $cache = $this->cacheSignalsFromHeaders($pages[0]['headers'] ?? []);
+        $firstHeaders = !empty($pages) && is_array($pages[0]) ? (array) ($pages[0]['headers'] ?? []) : [];
+        $cdn = $this->detectCdnFromHeaders($firstHeaders);
+        $cache = $this->cacheSignalsFromHeaders($firstHeaders);
         if (($cache['has_cache_control'] ?? false) === false) {
             $issues[] = $this->issue('medium', 'performance', 'missing_cache_control', 'Cache-Control headers not detected on sample page.', $url, 'Add proper Cache-Control headers for static assets and HTML where appropriate.');
         }
@@ -408,7 +410,7 @@ class WebsiteAuditorService
     {
         $issues = [];
         $pages = (array) ($crawl['pages'] ?? []);
-        $firstHeaders = (array) ($pages[0]['headers'] ?? []);
+        $firstHeaders = !empty($pages) && is_array($pages[0]) ? (array) ($pages[0]['headers'] ?? []) : [];
 
         $ssl = $this->sslCertificateCheck($url);
         if (($ssl['ok'] ?? false) === false) {
@@ -683,6 +685,53 @@ class WebsiteAuditorService
             $url = 'https://' . $url;
         }
         return $url;
+    }
+
+    /**
+     * Best-effort SSRF/unsafe URL guard for audits.
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected function guardAgainstUnsafeUrl(string $url): void
+    {
+        $parts = parse_url($url);
+        if (!is_array($parts)) {
+            throw new \InvalidArgumentException('Invalid URL.');
+        }
+
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = (string) ($parts['host'] ?? '');
+        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
+            throw new \InvalidArgumentException('URL must be http(s) with a valid host.');
+        }
+
+        $hostLower = strtolower($host);
+        if (in_array($hostLower, ['localhost', '127.0.0.1', '::1'], true)) {
+            throw new \InvalidArgumentException('Refusing to audit local/loopback hosts.');
+        }
+
+        // If the host is an IP, block private/reserved ranges.
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            if ($this->isPrivateOrReservedIp($host)) {
+                throw new \InvalidArgumentException('Refusing to audit private/reserved IP ranges.');
+            }
+            return;
+        }
+
+        // Best-effort DNS resolve and check first A record.
+        $records = @dns_get_record($host, DNS_A);
+        if (is_array($records) && !empty($records)) {
+            $ip = (string) ($records[0]['ip'] ?? '');
+            if ($ip !== '' && $this->isPrivateOrReservedIp($ip)) {
+                throw new \InvalidArgumentException('Refusing to audit hosts resolving to private/reserved IP ranges.');
+            }
+        }
+    }
+
+    protected function isPrivateOrReservedIp(string $ip): bool
+    {
+        // FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false when IP is private/reserved.
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
     }
 
     protected function origin(string $url): string
