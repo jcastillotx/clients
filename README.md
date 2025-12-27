@@ -12,6 +12,18 @@ A self-service client management portal built with Laravel 11, Livewire 3, and A
 - **Activity Logging** - Complete audit trail for all actions
 - **Marketing Toolkit (MVP scaffolding)** - Website audits, SEO/brand/content/campaign/reputation data models + scheduled runners (feature flags via config/env)
 
+## Capabilities
+
+This portal includes a full “client portal + operations” stack. Major capabilities include:
+
+- **Client portal core**: Client/staff/admin auth, role/permission controls, service requests with attachments, contracts + signing flow, invoices + PDF generation, payments, and audit logging.
+- **Feature gating**: Fine-grained features can be enabled/disabled per client tier/contract (see `config/features.php`).
+- **AI workflows**: AI assistants, document analysis/chat, request triage, estimate drafting, contract drafting, usage/cost tracking, and safety/compliance logging.
+- **Social media management**: Social account connections (OAuth), AI-assisted post creation, content calendar, client approval workflow, scheduled publishing, and notifications.
+- **Cloud storage integrations**: Connect and sync files with **AWS S3**, **Dropbox**, and **Google Drive** (plus a unified download experience in the portal).
+- **Marketing + brand monitoring**: Website auditing scaffolding + brand mention monitoring using free/low-cost APIs (NewsAPI, Google News RSS, Yelp, Google Places, Reddit, YouTube, Google Custom Search, Bing, RSS feeds).
+- **White-label branding**: Environment-driven branding + generated CSS, branded emails, and configurable assets (see `docs/branding-setup.md`).
+
 ## Tech Stack
 
 - **Framework**: Laravel 11
@@ -121,6 +133,25 @@ php artisan test
 Notes:
 - The PHPUnit config is set up to use **SQLite in-memory** by default, so you typically don’t need to configure a database just to run tests.
 - Some tests may emit **warnings** when optional integration credentials are not present (for example, Stripe/S3/Drive/Dropbox). These are treated as warnings (not failures) so local/CI runs can still pass without external service configuration.
+
+## Configuration (Environment Variables)
+
+Most configuration is environment-driven. Start from `.env.example`, then update the sections you need.
+
+### Optional integrations / keys
+
+| Area | Variables | Notes |
+|------|-----------|-------|
+| **Payments (Stripe)** | `STRIPE_KEY`, `STRIPE_SECRET`, `STRIPE_WEBHOOK_SECRET` | Required only if you want payment processing + webhook verification. |
+| **Cloud storage (AWS S3)** | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_URL`, `AWS_ENDPOINT`, `AWS_USE_PATH_STYLE_ENDPOINT` | Used by the S3 disk (`config/filesystems.php`). |
+| **Cloud storage (Dropbox OAuth)** | `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET`, `DROPBOX_REDIRECT_URI` | Used for Dropbox connection flow (`config/storage-providers.php`). |
+| **Cloud storage (Google Drive OAuth)** | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | Used for Google Drive connection flow (`config/storage-providers.php`). |
+| **Social media OAuth** | `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | Used for social account connections (`config/services.php`). |
+| **AI providers** | `AI_DEFAULT_PROVIDER`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `PERPLEXITY_API_KEY` (plus provider/model vars) | Defaults live in `config/ai-providers.php` and can be overridden via DB at runtime. |
+| **Website auditor** | `GOOGLE_PAGESPEED_API_KEY`, `GOOGLE_SEARCH_CONSOLE_ENABLED`, `GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SEARCH_CONSOLE_PROPERTY` | See `config/website-auditor.php`. |
+| **Brand monitoring APIs** | `NEWSAPI_ENABLED`, `NEWSAPI_API_KEY`, `YELP_API_ENABLED`, `YELP_API_KEY`, `GOOGLE_PLACES_ENABLED`, `GOOGLE_PLACES_API_KEY`, `REDDIT_API_ENABLED`, `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `YOUTUBE_API_ENABLED`, `YOUTUBE_API_KEY`, `GOOGLE_SEARCH_ENABLED`, `GOOGLE_SEARCH_API_KEY`, `GOOGLE_SEARCH_ENGINE_ID`, `BING_SEARCH_ENABLED`, `BING_SEARCH_API_KEY`, `RSS_MONITORING_ENABLED` | See `config/brand-monitoring.php` and `.env.example` for defaults. |
+| **Email delivery** | `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Required if you want email notifications outside local. |
+| **White-label / branding** | `BRAND_*` | See `docs/branding-setup.md` and `config/branding.php`. |
 
 ## Default Login Credentials
 
