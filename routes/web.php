@@ -26,6 +26,15 @@ use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Admin\Automation\AutomationIndex;
 use App\Http\Livewire\Admin\Automation\AutomationBuilder;
 use App\Http\Livewire\Admin\Automation\AutomationLogs;
+use App\Http\Livewire\Admin\Clients\ClientManagement;
+use App\Http\Livewire\Admin\Clients\ClientCreate;
+use App\Http\Livewire\Admin\Clients\ClientDetail;
+use App\Http\Livewire\Admin\Clients\ClientEdit;
+use App\Http\Livewire\Admin\Users\UserManagement;
+use App\Http\Livewire\Admin\Users\UserCreate;
+use App\Http\Livewire\Admin\Users\UserEdit;
+use App\Http\Livewire\Admin\Users\Permissions as AdminUserPermissions;
+use App\Http\Livewire\Admin\ActivityLogIndex;
 use App\Http\Livewire\Admin\Requests\AdminRequestManagement;
 use App\Http\Livewire\Admin\Requests\AdminRequestDetail;
 use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
@@ -103,6 +112,12 @@ use App\Http\Livewire\AI\PromptTemplateManager as AdminPromptTemplates;
 use App\Http\Livewire\AI\KnowledgeBase as AdminKnowledgeBase;
 use App\Http\Livewire\AI\WorkflowBuilder as AdminWorkflowBuilder;
 use App\Http\Livewire\AI\ClientAssistantChat as ClientAssistantChat;
+use App\Http\Livewire\Storage\ConnectS3;
+use App\Http\Livewire\Storage\ConnectDropbox;
+use App\Http\Livewire\Storage\ConnectGoogleDrive;
+use App\Http\Livewire\Storage\S3Browser;
+use App\Http\Livewire\Storage\DropboxBrowser;
+use App\Http\Livewire\Storage\GoogleDriveBrowser;
 use App\Http\Livewire\Technical\CodeReviewer as AdminCodeReviewer;
 use App\Http\Livewire\Technical\ArchitectureAdvisor as AdminArchitectureAdvisor;
 use Dedoc\Scramble\Generator;
@@ -277,6 +292,18 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('index');
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
+        // Clients
+        Route::get('/clients', ClientManagement::class)->name('clients.index')->middleware('permission:view_any_client');
+        Route::get('/clients/create', ClientCreate::class)->name('clients.create')->middleware('permission:create_client');
+        Route::get('/clients/{client}', ClientDetail::class)->name('clients.show')->middleware('permission:view_client');
+        Route::get('/clients/{client}/edit', ClientEdit::class)->name('clients.edit')->middleware('permission:update_client');
+
+        // Users & permissions
+        Route::get('/users', UserManagement::class)->name('users.index')->middleware('permission:view_any_user');
+        Route::get('/users/create', UserCreate::class)->name('users.create')->middleware('permission:create_user');
+        Route::get('/users/{user}/edit', UserEdit::class)->name('users.edit')->middleware('permission:update_user');
+        Route::get('/users/permissions', AdminUserPermissions::class)->name('users.permissions')->middleware('permission:manage_permissions');
+
         // Requests
         Route::get('/requests', AdminRequestManagement::class)->name('requests.index');
         Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
@@ -297,7 +324,8 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/security', AdminSecurityOverview::class)->name('security.overview')->middleware('permission:manage settings');
 
         // Reports
-        Route::get('/reports', ReportDashboard::class)->name('reports.dashboard')->middleware('permission:view reports');
+        Route::get('/reports', ReportDashboard::class)->name('reports')->middleware('permission:view reports');
+        Route::get('/reports/dashboard', fn () => redirect()->route('admin.reports'))->name('reports.dashboard')->middleware('permission:view reports');
         Route::get('/reports/deliveries', AdminReportDeliveries::class)->name('reports.deliveries')->middleware('permission:view reports');
         Route::get('/white-label', WhiteLabelConfigurator::class)->name('white-label')->middleware('permission:manage settings');
         Route::get('/client-reports', ReportCustomizer::class)->name('client-reports')->middleware('permission:manage settings');
@@ -329,6 +357,16 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         // Partners & referrals
         Route::get('/partners', PartnerManager::class)->name('partners');
         Route::get('/referrals', ReferralDashboard::class)->name('referrals');
+
+        // Storage management (admin/staff)
+        Route::get('/storage', StorageOverview::class)->name('storage');
+        Route::get('/storage/overview', fn () => redirect()->route('admin.storage'))->name('storage.overview');
+        Route::get('/storage/s3/connect', ConnectS3::class)->name('storage.s3.connect');
+        Route::get('/storage/s3/browse/{connection?}', S3Browser::class)->name('storage.s3.browse');
+        Route::get('/storage/dropbox/connect', ConnectDropbox::class)->name('storage.dropbox.connect');
+        Route::get('/storage/dropbox/browse/{connection?}', DropboxBrowser::class)->name('storage.dropbox.browse');
+        Route::get('/storage/google-drive/connect', ConnectGoogleDrive::class)->name('storage.google-drive.connect');
+        Route::get('/storage/google-drive/browse/{connection?}', GoogleDriveBrowser::class)->name('storage.google-drive.browse');
 
         // Marketing: Website auditing (MVP UI)
         Route::prefix('marketing')->name('marketing.')->group(function () {
@@ -371,18 +409,27 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             ->middleware('permission:view reports');
 
         // Admin storage overview
-        Route::get('/storage/overview', StorageOverview::class)->name('storage.overview');
+        // (handled above)
 
         // System settings
-        Route::get('/settings', SystemSettings::class)->name('settings.index')->middleware('permission:manage settings');
+        Route::get('/settings', SystemSettings::class)->name('settings')->middleware('permission:manage settings');
+        Route::get('/settings/index', fn () => redirect()->route('admin.settings'))->name('settings.index')->middleware('permission:manage settings');
 
         // Webhooks
         Route::get('/webhooks', WebhookManagement::class)->name('webhooks.index')->middleware('permission:manage settings');
+        Route::get('/settings/webhooks', fn () => redirect()->route('admin.webhooks.index'))->name('settings.webhooks')->middleware('permission:manage settings');
 
         // Automation
         Route::get('/automation', AutomationIndex::class)->name('automation.index');
         Route::get('/automation/builder/{rule?}', AutomationBuilder::class)->name('automation.builder');
         Route::get('/automation/logs', AutomationLogs::class)->name('automation.logs');
+
+        // Activity log (uses the main app layout for Tailwind styles)
+        Route::get('/activity', fn () => view('admin.activity'))->name('activity')->middleware('permission:access admin panel');
+
+        // Convenience redirects for legacy links in templates
+        Route::get('/documents', fn () => redirect()->route('documents.index'))->name('documents');
+        Route::get('/contracts', fn () => redirect()->route('contracts.index'))->name('contracts');
     });
 
 /*
