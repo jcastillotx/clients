@@ -73,6 +73,7 @@ use App\Http\Livewire\Technical\ArchitectureAdvisor as AdminArchitectureAdvisor;
 use Dedoc\Scramble\Generator;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PushSubscriptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -191,6 +192,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Client AI assistant
     Route::get('/assistant', ClientAssistantChat::class)->name('client.ai.assistant');
+
+    // PWA push notification subscriptions (per-user)
+    Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
+    Route::delete('/push/unsubscribe', [PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe');
 
 });
 
