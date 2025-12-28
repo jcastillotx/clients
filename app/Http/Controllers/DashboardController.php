@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -12,7 +13,7 @@ class DashboardController extends Controller
     /**
      * Display the client dashboard.
      */
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
         $user = auth()->user();
         $client = $user->client;
