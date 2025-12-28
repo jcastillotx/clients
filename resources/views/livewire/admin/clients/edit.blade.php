@@ -196,10 +196,15 @@
                 </div>
 
                 @if($tab === 'services')
-                    <div class="mb-3">
-                        <div class="alert alert-info">
-                            <strong>Tier Features:</strong> The client's tier ({{ ucfirst($tier) }}) includes certain features by default. 
-                            Additional services checked below will be added on top of tier features.
+                    <div class="mb-4 rounded-xl bg-blue-50 border border-blue-200 p-4">
+                        <div class="flex items-start gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-blue-800">Tier Features</p>
+                                <p class="text-sm text-blue-700 mt-0.5">The client's tier (<span class="font-medium">{{ ucfirst($tier) }}</span>) includes certain features by default. Additional services checked below will be added on top of tier features.</p>
+                            </div>
                         </div>
                     </div>
 
@@ -214,45 +219,46 @@
                         ];
                     @endphp
 
-                    <div class="row g-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         @foreach($categories as $categoryKey => $categoryLabel)
                             @if(isset($servicesByCategory[$categoryKey]))
-                                <div class="col-12 col-md-6 col-lg-4">
-                                    <div class="card h-100">
-                                        <div class="card-header py-2">
-                                            <h4 class="card-title mb-0">{{ $categoryLabel }}</h4>
-                                        </div>
-                                        <div class="card-body py-2">
-                                            @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
-                                                @php
-                                                    $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
-                                                    $isSelected = in_array($serviceKey, $selectedServices);
-                                                @endphp
-                                                <label class="form-check">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                        wire:model.live="selectedServices" 
-                                                        value="{{ $serviceKey }}"
-                                                        @if($tierIncludes) checked disabled @endif>
-                                                    <span class="form-check-label">
-                                                        {{ $service['name'] }}
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+                                    <div class="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+                                        <h4 class="text-xs font-semibold text-slate-700">{{ $categoryLabel }}</h4>
+                                    </div>
+                                    <div class="p-3 space-y-2 max-h-80 overflow-y-auto">
+                                        @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
+                                            @php
+                                                $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
+                                                $isSelected = in_array($serviceKey, $selectedServices);
+                                            @endphp
+                                            <label class="flex items-start gap-2.5 cursor-pointer group">
+                                                <input type="checkbox" 
+                                                    class="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0 disabled:opacity-60"
+                                                    wire:model.live="selectedServices" 
+                                                    value="{{ $serviceKey }}"
+                                                    @if($tierIncludes) checked disabled @endif>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                                        <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900">{{ $service['name'] }}</span>
                                                         @if($tierIncludes)
-                                                            <span class="badge bg-info ms-1" title="Included in {{ ucfirst($tier) }} tier">Tier</span>
+                                                            <span class="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">Tier</span>
                                                         @elseif($isSelected)
-                                                            <span class="badge bg-success ms-1">Added</span>
+                                                            <span class="inline-flex items-center rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">Added</span>
                                                         @endif
-                                                    </span>
-                                                    <div class="text-muted small">{{ $service['description'] }}</div>
-                                                </label>
-                                            @endforeach
-                                        </div>
+                                                    </div>
+                                                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">{{ $service['description'] }}</p>
+                                                </div>
+                                            </label>
+                                        @endforeach
                                     </div>
                                 </div>
                             @endif
                         @endforeach
                     </div>
 
-                    <div class="mt-4 d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary" wire:click="saveServices" wire:loading.attr="disabled">
+                    <div class="mt-6 flex justify-end">
+                        <button type="button" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors" wire:click="saveServices" wire:loading.attr="disabled">
                             <span wire:loading.remove wire:target="saveServices">Save Services</span>
                             <span wire:loading wire:target="saveServices">Saving…</span>
                         </button>

@@ -114,58 +114,66 @@
                             </div>
                         @enderror
                     </div>
+                </div>
 
-                    <div class="col-12">
-                        <hr class="my-2">
-                        <div class="fw-semibold mb-2">Services & Features</div>
-                        <div class="form-hint mb-3">Select which services this client has access to. These are in addition to tier-based features.</div>
-                        
-                        @php
-                            $categories = [
-                                'core' => 'Core Features',
-                                'brand_monitoring' => 'Brand Monitoring',
-                                'ai' => 'AI Features',
-                                'advanced' => 'Advanced Features',
-                                'collaboration' => 'Collaboration',
-                                'research' => 'Research & Consultation',
-                            ];
-                        @endphp
+                <!-- Services & Features Section -->
+                <div class="border-t border-slate-200 pt-6 mt-6">
+                    <h3 class="text-sm font-semibold text-slate-900 mb-1">Services & Features</h3>
+                    <p class="text-xs text-slate-500 mb-4">Select which services this client has access to. These are in addition to tier-based features.</p>
+                    
+                    @php
+                        $categories = [
+                            'core' => 'Core Features',
+                            'brand_monitoring' => 'Brand Monitoring',
+                            'ai' => 'AI Features',
+                            'advanced' => 'Advanced Features',
+                            'collaboration' => 'Collaboration',
+                            'research' => 'Research & Consultation',
+                        ];
+                    @endphp
 
-                        <div class="row g-3">
-                            @foreach($categories as $categoryKey => $categoryLabel)
-                                @if(isset($servicesByCategory[$categoryKey]))
-                                    <div class="col-12 col-md-6 col-lg-4">
-                                        <div class="card">
-                                            <div class="card-header py-2">
-                                                <h4 class="card-title mb-0">{{ $categoryLabel }}</h4>
-                                            </div>
-                                            <div class="card-body py-2">
-                                                @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
-                                                    @php
-                                                        $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
-                                                    @endphp
-                                                    <label class="form-check">
-                                                        <input class="form-check-input" type="checkbox" 
-                                                            wire:model.live="selectedServices" 
-                                                            value="{{ $serviceKey }}"
-                                                            @if($tierIncludes) checked disabled title="Included in {{ ucfirst($tier) }} tier" @endif>
-                                                        <span class="form-check-label">
-                                                            {{ $service['name'] }}
-                                                            @if($tierIncludes)
-                                                                <span class="badge bg-info ms-1" title="Included in tier">Tier</span>
-                                                            @endif
-                                                        </span>
-                                                        <div class="text-muted small">{{ $service['description'] }}</div>
-                                                    </label>
-                                                @endforeach
-                                            </div>
-                                        </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        @foreach($categories as $categoryKey => $categoryLabel)
+                            @if(isset($servicesByCategory[$categoryKey]))
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+                                    <div class="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+                                        <h4 class="text-xs font-semibold text-slate-700">{{ $categoryLabel }}</h4>
                                     </div>
-                                @endif
-                            @endforeach
-                        </div>
-                        @error('selectedServices') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                                    <div class="p-3 space-y-2">
+                                        @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
+                                            @php
+                                                $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
+                                            @endphp
+                                            <label class="flex items-start gap-2.5 cursor-pointer group">
+                                                <input type="checkbox" 
+                                                    class="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0 disabled:opacity-60"
+                                                    wire:model.live="selectedServices" 
+                                                    value="{{ $serviceKey }}"
+                                                    @if($tierIncludes) checked disabled title="Included in {{ ucfirst($tier) }} tier" @endif>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                                        <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900">{{ $service['name'] }}</span>
+                                                        @if($tierIncludes)
+                                                            <span class="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">Tier</span>
+                                                        @endif
+                                                    </div>
+                                                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">{{ $service['description'] }}</p>
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
                     </div>
+                    @error('selectedServices')
+                        <div class="mt-2 flex items-start gap-1.5 text-xs font-medium text-rose-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
+                            </svg>
+                            <span>{{ $message }}</span>
+                        </div>
+                    @enderror
                 </div>
             </div>
 
