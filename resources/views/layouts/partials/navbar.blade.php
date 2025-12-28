@@ -18,11 +18,13 @@
     <ul class="navbar-nav ml-auto">
         <!-- Theme + Density -->
         <li class="nav-item d-none d-md-flex align-items-center">
-            <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="window.__toggleTheme && window.__toggleTheme()">
-                Light/Dark
+            <button type="button" class="btn-theme-toggle mr-2" onclick="window.__toggleTheme && window.__toggleTheme()" title="Toggle Light/Dark Mode">
+                <i class="fas fa-adjust"></i>
+                <span>Light/Dark</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.__cycleDensity && window.__cycleDensity()">
-                Padding
+            <button type="button" class="btn-density-toggle" onclick="window.__cycleDensity && window.__cycleDensity()" title="Cycle Padding Density">
+                <i class="fas fa-compress-arrows-alt"></i>
+                <span>Padding</span>
             </button>
         </li>
 
