@@ -79,11 +79,15 @@ class SystemSettings extends Component
         ];
 
         $e = $settings->getMany([
+            'email.provider' => 'sendmail',
             'email.smtp.host' => '',
             'email.smtp.port' => 587,
             'email.smtp.username' => '',
             'email.smtp.password' => '',
             'email.smtp.encryption' => 'tls',
+            'email.mailgun.domain' => '',
+            'email.mailgun.secret' => '',
+            'email.mailgun.endpoint' => 'api.mailgun.net',
             'email.from.address' => '',
             'email.from.name' => '',
             'email.signature' => '',
@@ -94,11 +98,15 @@ class SystemSettings extends Component
             'email.events.contract_signed' => true,
         ]);
         $this->email = [
+            'provider' => $e['email.provider'],
             'smtp_host' => $e['email.smtp.host'],
             'smtp_port' => $e['email.smtp.port'],
             'smtp_username' => $e['email.smtp.username'],
             'smtp_password' => $e['email.smtp.password'],
             'smtp_encryption' => $e['email.smtp.encryption'],
+            'mailgun_domain' => $e['email.mailgun.domain'],
+            'mailgun_secret' => $e['email.mailgun.secret'],
+            'mailgun_endpoint' => $e['email.mailgun.endpoint'],
             'from_address' => $e['email.from.address'],
             'from_name' => $e['email.from.name'],
             'signature' => $e['email.signature'],
@@ -693,15 +701,36 @@ class SystemSettings extends Component
 
     public function saveEmail(SettingsService $settings): void
     {
+        $provider = $this->email['provider'] ?? 'sendmail';
+        
+        // Auto-set SMTP host/port for known providers
+        $providerDefaults = [
+            'gmail' => ['host' => 'smtp.gmail.com', 'port' => 587, 'encryption' => 'tls'],
+            'outlook' => ['host' => 'smtp.office365.com', 'port' => 587, 'encryption' => 'tls'],
+            'brevo' => ['host' => 'smtp-relay.brevo.com', 'port' => 587, 'encryption' => 'tls'],
+        ];
+        
+        if (isset($providerDefaults[$provider])) {
+            $this->email['smtp_host'] = $providerDefaults[$provider]['host'];
+            $this->email['smtp_port'] = $providerDefaults[$provider]['port'];
+            $this->email['smtp_encryption'] = $providerDefaults[$provider]['encryption'];
+        }
+        
         $encrypted = [
             'email.smtp.password',
+            'email.mailgun.secret',
         ];
+        
         $settings->setMany([
+            'email.provider' => $provider,
             'email.smtp.host' => $this->email['smtp_host'] ?? '',
             'email.smtp.port' => (int) ($this->email['smtp_port'] ?? 587),
             'email.smtp.username' => $this->email['smtp_username'] ?? '',
             'email.smtp.password' => $this->email['smtp_password'] ?? '',
             'email.smtp.encryption' => $this->email['smtp_encryption'] ?? 'tls',
+            'email.mailgun.domain' => $this->email['mailgun_domain'] ?? '',
+            'email.mailgun.secret' => $this->email['mailgun_secret'] ?? '',
+            'email.mailgun.endpoint' => $this->email['mailgun_endpoint'] ?? 'api.mailgun.net',
             'email.from.address' => $this->email['from_address'] ?? '',
             'email.from.name' => $this->email['from_name'] ?? '',
             'email.signature' => $this->email['signature'] ?? '',
@@ -711,7 +740,8 @@ class SystemSettings extends Component
             'email.events.request_created' => (bool) ($this->email['events_request_created'] ?? true),
             'email.events.contract_signed' => (bool) ($this->email['events_contract_signed'] ?? true),
         ], 'email', $encrypted);
-        session()->flash('success', 'Email settings saved.');
+        
+        session()->flash('success', 'Email settings saved. Provider: ' . ucfirst($provider));
     }
 
     public function openEmailBuilder(): void
@@ -741,11 +771,58 @@ class SystemSettings extends Component
             'to' => ['required', 'email'],
         ])->validate();
 
-        Mail::raw('This is a test email from System Settings.', function ($m) {
-            $m->to($this->test_email_to)->subject('Test Email');
-        });
+        $provider = $this->email['provider'] ?? 'sendmail';
+        
+        try {
+            // Configure mailer dynamically based on provider settings
+            $this->configureMailer();
+            
+            Mail::raw("This is a test email from System Settings.\n\nProvider: " . ucfirst($provider) . "\nSent at: " . now()->format('Y-m-d H:i:s'), function ($m) {
+                $fromAddress = $this->email['from_address'] ?? config('mail.from.address');
+                $fromName = $this->email['from_name'] ?? config('mail.from.name');
+                
+                $m->to($this->test_email_to)
+                  ->subject('Test Email - ' . config('app.name'))
+                  ->from($fromAddress, $fromName);
+            });
 
-        session()->flash('success', 'Test email sent (check mail configuration).');
+            session()->flash('success', 'Test email sent successfully via ' . ucfirst($provider) . '!');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to send test email: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Configure the mailer at runtime based on saved settings.
+     */
+    protected function configureMailer(): void
+    {
+        $provider = $this->email['provider'] ?? 'sendmail';
+        
+        if ($provider === 'sendmail') {
+            config(['mail.default' => 'sendmail']);
+            return;
+        }
+        
+        if ($provider === 'mailgun') {
+            config([
+                'mail.default' => 'mailgun',
+                'services.mailgun.domain' => $this->email['mailgun_domain'] ?? '',
+                'services.mailgun.secret' => $this->email['mailgun_secret'] ?? '',
+                'services.mailgun.endpoint' => $this->email['mailgun_endpoint'] ?? 'api.mailgun.net',
+            ]);
+            return;
+        }
+        
+        // For SMTP-based providers (smtp, gmail, outlook, brevo)
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => $this->email['smtp_host'] ?? '',
+            'mail.mailers.smtp.port' => (int) ($this->email['smtp_port'] ?? 587),
+            'mail.mailers.smtp.username' => $this->email['smtp_username'] ?? '',
+            'mail.mailers.smtp.password' => $this->email['smtp_password'] ?? '',
+            'mail.mailers.smtp.encryption' => $this->email['smtp_encryption'] ?? 'tls',
+        ]);
     }
 
     public function savePayment(SettingsService $settings): void
