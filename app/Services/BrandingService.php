@@ -18,7 +18,7 @@ class BrandingService
     protected const CACHE_KEY = 'branding_settings';
 
     /**
-     * Default branding values.
+     * Default branding values - Professional gray/blue/white theme.
      */
     protected static array $defaults = [
         // Logos
@@ -27,49 +27,50 @@ class BrandingService
         'dashboard_logo_path' => '',
         'favicon_path' => '',
         'login_background_path' => '',
+        'document_logo_path' => '',
 
-        // Brand Colors
-        'color_primary' => '#007bff',
-        'color_primary_dark' => '#0056b3',
-        'color_primary_light' => '#66b3ff',
-        'color_secondary' => '#6c757d',
-        'color_accent' => '#28a745',
-        'color_success' => '#28a745',
-        'color_warning' => '#ffc107',
-        'color_danger' => '#dc3545',
-        'color_info' => '#17a2b8',
+        // Brand Colors - Professional Blue/Gray/White Theme
+        'color_primary' => '#3b82f6',       // Modern blue
+        'color_primary_dark' => '#1d4ed8',  // Darker blue for hover
+        'color_primary_light' => '#93c5fd', // Light blue for accents
+        'color_secondary' => '#64748b',     // Slate gray
+        'color_accent' => '#0ea5e9',        // Sky blue accent
+        'color_success' => '#22c55e',       // Green
+        'color_warning' => '#f59e0b',       // Amber
+        'color_danger' => '#ef4444',        // Red
+        'color_info' => '#06b6d4',          // Cyan
 
-        // Sidebar Colors
-        'sidebar_bg' => '#343a40',
-        'sidebar_text' => '#c2c7d0',
-        'sidebar_hover' => '#495057',
-        'sidebar_active' => '#007bff',
+        // Sidebar Colors - Dark professional look
+        'sidebar_bg' => '#1e293b',          // Slate 800
+        'sidebar_text' => '#94a3b8',        // Slate 400
+        'sidebar_hover' => '#334155',       // Slate 700
+        'sidebar_active' => '#3b82f6',      // Primary blue
 
         // Navbar Colors
-        'navbar_bg' => '#343a40',
-        'navbar_text' => '#ffffff',
-        'navbar_variant' => 'dark', // light or dark
+        'navbar_bg' => '#ffffff',           // White navbar
+        'navbar_text' => '#1e293b',         // Dark text
+        'navbar_variant' => 'light',
 
-        // Button Colors
-        'button_primary' => '',
-        'button_primary_hover' => '',
-        'button_secondary' => '',
-        'button_secondary_hover' => '',
+        // Button Colors - Will fallback to primary if empty
+        'button_primary' => '#3b82f6',
+        'button_primary_hover' => '#2563eb',
+        'button_secondary' => '#64748b',
+        'button_secondary_hover' => '#475569',
 
         // Typography
-        'font_family' => "'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        'font_size_base' => '1rem',
+        'font_family' => "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        'font_size_base' => '0.9375rem',
         'heading_font_family' => '',
 
-        // Cards & Borders
-        'card_border_radius' => '0.25rem',
-        'button_border_radius' => '0.25rem',
-        'input_border_radius' => '0.25rem',
+        // Cards & Borders - Slightly rounded for modern look
+        'card_border_radius' => '0.5rem',
+        'button_border_radius' => '0.375rem',
+        'input_border_radius' => '0.375rem',
 
         // Layout
         'sidebar_width' => '250px',
         'sidebar_collapsed_width' => '4.6rem',
-        'content_bg' => '#f4f6f9',
+        'content_bg' => '#f8fafc',          // Slate 50 - very light gray
 
         // Custom
         'custom_css' => '',
@@ -80,7 +81,6 @@ class BrandingService
 
         // Invoice/Document Templates
         'invoice_template' => 'default',
-        'document_logo_path' => '',
 
         // Custom Domain
         'custom_domain' => '',
@@ -440,68 +440,100 @@ a:hover {
     {
         return [
             'blue' => [
-                'name' => 'Ocean Blue',
-                'color_primary' => '#007bff',
-                'color_primary_dark' => '#0056b3',
-                'color_primary_light' => '#66b3ff',
-                'color_accent' => '#28a745',
-                'sidebar_bg' => '#343a40',
+                'name' => 'Professional Blue',
+                'color_primary' => '#3b82f6',
+                'color_primary_dark' => '#1d4ed8',
+                'color_primary_light' => '#93c5fd',
+                'color_secondary' => '#64748b',
+                'color_accent' => '#0ea5e9',
+                'sidebar_bg' => '#1e293b',
+                'sidebar_text' => '#94a3b8',
+                'navbar_bg' => '#ffffff',
+                'navbar_text' => '#1e293b',
             ],
             'indigo' => [
                 'name' => 'Indigo',
-                'color_primary' => '#6610f2',
-                'color_primary_dark' => '#4709ac',
-                'color_primary_light' => '#a370f7',
-                'color_accent' => '#fd7e14',
-                'sidebar_bg' => '#2c2540',
+                'color_primary' => '#6366f1',
+                'color_primary_dark' => '#4338ca',
+                'color_primary_light' => '#a5b4fc',
+                'color_secondary' => '#64748b',
+                'color_accent' => '#f59e0b',
+                'sidebar_bg' => '#1e1b4b',
+                'sidebar_text' => '#a5b4fc',
+                'navbar_bg' => '#ffffff',
+                'navbar_text' => '#1e1b4b',
             ],
             'purple' => [
-                'name' => 'Royal Purple',
-                'color_primary' => '#6f42c1',
-                'color_primary_dark' => '#4e2d89',
-                'color_primary_light' => '#a98eda',
-                'color_accent' => '#20c997',
-                'sidebar_bg' => '#3d2b5a',
+                'name' => 'Purple',
+                'color_primary' => '#8b5cf6',
+                'color_primary_dark' => '#6d28d9',
+                'color_primary_light' => '#c4b5fd',
+                'color_secondary' => '#64748b',
+                'color_accent' => '#14b8a6',
+                'sidebar_bg' => '#2e1065',
+                'sidebar_text' => '#c4b5fd',
+                'navbar_bg' => '#ffffff',
+                'navbar_text' => '#2e1065',
             ],
             'teal' => [
                 'name' => 'Teal',
-                'color_primary' => '#20c997',
-                'color_primary_dark' => '#158765',
-                'color_primary_light' => '#63e6be',
-                'color_accent' => '#fd7e14',
-                'sidebar_bg' => '#1a3a35',
+                'color_primary' => '#14b8a6',
+                'color_primary_dark' => '#0d9488',
+                'color_primary_light' => '#5eead4',
+                'color_secondary' => '#64748b',
+                'color_accent' => '#f59e0b',
+                'sidebar_bg' => '#134e4a',
+                'sidebar_text' => '#99f6e4',
+                'navbar_bg' => '#ffffff',
+                'navbar_text' => '#134e4a',
             ],
             'green' => [
-                'name' => 'Forest Green',
-                'color_primary' => '#28a745',
-                'color_primary_dark' => '#1c7430',
-                'color_primary_light' => '#71dd8a',
-                'color_accent' => '#007bff',
-                'sidebar_bg' => '#1e3a28',
+                'name' => 'Green',
+                'color_primary' => '#22c55e',
+                'color_primary_dark' => '#16a34a',
+                'color_primary_light' => '#86efac',
+                'color_secondary' => '#64748b',
+                'color_accent' => '#3b82f6',
+                'sidebar_bg' => '#14532d',
+                'sidebar_text' => '#bbf7d0',
+                'navbar_bg' => '#ffffff',
+                'navbar_text' => '#14532d',
             ],
             'orange' => [
-                'name' => 'Sunset Orange',
-                'color_primary' => '#fd7e14',
-                'color_primary_dark' => '#c35a02',
-                'color_primary_light' => '#fdb36d',
-                'color_accent' => '#007bff',
-                'sidebar_bg' => '#4a3020',
+                'name' => 'Orange',
+                'color_primary' => '#f97316',
+                'color_primary_dark' => '#ea580c',
+                'color_primary_light' => '#fdba74',
+                'color_secondary' => '#64748b',
+                'color_accent' => '#3b82f6',
+                'sidebar_bg' => '#431407',
+                'sidebar_text' => '#fed7aa',
+                'navbar_bg' => '#ffffff',
+                'navbar_text' => '#431407',
             ],
             'red' => [
-                'name' => 'Ruby Red',
-                'color_primary' => '#dc3545',
-                'color_primary_dark' => '#a71d2a',
-                'color_primary_light' => '#f1aeb5',
-                'color_accent' => '#007bff',
-                'sidebar_bg' => '#4a2025',
+                'name' => 'Red',
+                'color_primary' => '#ef4444',
+                'color_primary_dark' => '#dc2626',
+                'color_primary_light' => '#fca5a5',
+                'color_secondary' => '#64748b',
+                'color_accent' => '#3b82f6',
+                'sidebar_bg' => '#450a0a',
+                'sidebar_text' => '#fecaca',
+                'navbar_bg' => '#ffffff',
+                'navbar_text' => '#450a0a',
             ],
             'dark' => [
-                'name' => 'Dark Mode',
-                'color_primary' => '#6c757d',
-                'color_primary_dark' => '#4a5056',
-                'color_primary_light' => '#adb5bd',
-                'color_accent' => '#17a2b8',
-                'sidebar_bg' => '#1a1a2e',
+                'name' => 'Dark Slate',
+                'color_primary' => '#6366f1',
+                'color_primary_dark' => '#4f46e5',
+                'color_primary_light' => '#a5b4fc',
+                'color_secondary' => '#475569',
+                'color_accent' => '#06b6d4',
+                'sidebar_bg' => '#0f172a',
+                'sidebar_text' => '#94a3b8',
+                'navbar_bg' => '#1e293b',
+                'navbar_text' => '#f1f5f9',
             ],
         ];
     }
