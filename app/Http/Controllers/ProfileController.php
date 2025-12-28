@@ -32,6 +32,8 @@ class ProfileController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'phone' => ['nullable', 'string', 'max:20'],
+            'job_title' => ['nullable', 'string', 'max:100'],
+            'department' => ['nullable', 'string', 'max:100'],
         ]);
 
         $user->fill($validated);
@@ -43,6 +45,49 @@ class ProfileController extends Controller
         $user->save();
 
         return back()->with('success', 'Profile updated successfully.');
+    }
+
+    /**
+     * Update the user's company information.
+     */
+    public function updateCompany(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->client) {
+            return back()->with('error', 'No company associated with this account.');
+        }
+
+        $validated = $request->validate([
+            'company_name' => ['required', 'string', 'max:255'],
+            'contact_name' => ['required', 'string', 'max:255'],
+            'company_phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'zip_code' => ['nullable', 'string', 'max:20'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'website' => ['nullable', 'url', 'max:255'],
+            'industry' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        // Map the validated data to match the client model fields
+        $clientData = [
+            'company_name' => $validated['company_name'],
+            'contact_name' => $validated['contact_name'],
+            'phone' => $validated['company_phone'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'state' => $validated['state'] ?? null,
+            'zip_code' => $validated['zip_code'] ?? null,
+            'country' => $validated['country'] ?? null,
+            'website' => $validated['website'] ?? null,
+            'industry' => $validated['industry'] ?? null,
+        ];
+
+        $user->client()->update($clientData);
+
+        return back()->with('success', 'Company information updated successfully.');
     }
 
     /**
