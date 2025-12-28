@@ -6,66 +6,82 @@
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
                 <h3 class="text-base font-semibold text-slate-900">Logos & Images</h3>
             </div>
-            <div class="p-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Company Logo -->
-                    <div class="rounded-xl border border-slate-200 p-4">
-                        <h4 class="text-sm font-semibold text-slate-900 mb-3">Company Logo</h4>
-                        @if(!empty($branding['logo_path']))
-                            <div class="mb-3 p-2 bg-slate-50 rounded-lg inline-block">
-                                <img src="{{ asset('storage/' . $branding['logo_path']) }}" alt="Logo" class="max-h-14" onerror="this.style.display='none'">
-                            </div>
-                        @endif
-                        <input type="file" wire:model="logo_upload" class="block w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-800 file:cursor-pointer file:transition-colors mb-2">
-                        <p class="text-xs text-slate-500 mb-3">PNG/JPG/WEBP/SVG up to 2MB.</p>
-                        <button type="button" wire:click="uploadLogo" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
-                            Upload
-                        </button>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="font-weight-bold mb-2">Company logo</div>
+                            @if(!empty($branding['logo_path']))
+                                <div class="mb-2">
+                                    <img src="{{ asset('storage/' . $branding['logo_path']) }}" alt="Logo" style="max-height: 56px;" onerror="this.style.display='none'">
+                                </div>
+                            @endif
+                            <input type="file" class="form-control mb-2" wire:model="logo_upload">
+                            <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB.</small>
+                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLogo" wire:loading.attr="disabled" wire:target="logo_upload,uploadLogo">
+                                <span wire:loading.remove wire:target="logo_upload,uploadLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
+                                <span wire:loading wire:target="logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading…</span>
+                                <span wire:loading wire:target="uploadLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving…</span>
+                            </button>
+                            @error('logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                        </div>
                     </div>
 
-                    <!-- Login Logo -->
-                    <div class="rounded-xl border border-slate-200 p-4">
-                        <h4 class="text-sm font-semibold text-slate-900 mb-3">Login Logo</h4>
-                        @if(!empty($branding['login_logo_path']))
-                            <div class="mb-3 p-2 bg-slate-50 rounded-lg inline-block">
-                                <img src="{{ asset('storage/' . $branding['login_logo_path']) }}" alt="Login Logo" class="max-h-14" onerror="this.style.display='none'">
-                            </div>
-                        @endif
-                        <input type="file" wire:model="login_logo_upload" class="block w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-800 file:cursor-pointer file:transition-colors mb-2">
-                        <p class="text-xs text-slate-500 mb-3">PNG/JPG/WEBP/SVG up to 2MB.</p>
-                        <button type="button" wire:click="uploadLoginLogo" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
-                            Upload
-                        </button>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="font-weight-bold mb-2">Login logo</div>
+                            @if(!empty($branding['login_logo_path']))
+                                <div class="mb-2">
+                                    <img src="{{ asset('storage/' . $branding['login_logo_path']) }}" alt="Login Logo" style="max-height: 56px;" onerror="this.style.display='none'">
+                                </div>
+                            @endif
+                            <input type="file" class="form-control mb-2" wire:model="login_logo_upload">
+                            <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB.</small>
+                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLoginLogo" wire:loading.attr="disabled" wire:target="login_logo_upload,uploadLoginLogo">
+                                <span wire:loading.remove wire:target="login_logo_upload,uploadLoginLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
+                                <span wire:loading wire:target="login_logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading…</span>
+                                <span wire:loading wire:target="uploadLoginLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving…</span>
+                            </button>
+                            @error('logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                        </div>
                     </div>
 
-                    <!-- Dashboard Logo -->
-                    <div class="rounded-xl border border-slate-200 p-4">
-                        <h4 class="text-sm font-semibold text-slate-900 mb-3">Dashboard Logo</h4>
-                        @if(!empty($branding['dashboard_logo_path']))
-                            <div class="mb-3 p-2 bg-slate-50 rounded-lg inline-block">
-                                <img src="{{ asset('storage/' . $branding['dashboard_logo_path']) }}" alt="Dashboard Logo" class="max-h-8" onerror="this.style.display='none'">
-                            </div>
-                        @endif
-                        <input type="file" wire:model="dashboard_logo_upload" class="block w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-800 file:cursor-pointer file:transition-colors mb-2">
-                        <p class="text-xs text-slate-500 mb-3">PNG/JPG/WEBP/SVG up to 2MB.</p>
-                        <button type="button" wire:click="uploadDashboardLogo" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
-                            Upload
-                        </button>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="font-weight-bold mb-2">Dashboard logo (/admin)</div>
+                            @if(!empty($branding['dashboard_logo_path']))
+                                <div class="mb-2">
+                                    <img src="{{ asset('storage/' . $branding['dashboard_logo_path']) }}" alt="Dashboard Logo" style="max-height: 32px;" onerror="this.style.display='none'">
+                                </div>
+                            @endif
+                            <input type="file" class="form-control mb-2" wire:model="dashboard_logo_upload">
+                            <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB.</small>
+                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadDashboardLogo" wire:loading.attr="disabled" wire:target="dashboard_logo_upload,uploadDashboardLogo">
+                                <span wire:loading.remove wire:target="dashboard_logo_upload,uploadDashboardLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
+                                <span wire:loading wire:target="dashboard_logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading…</span>
+                                <span wire:loading wire:target="uploadDashboardLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving…</span>
+                            </button>
+                            @error('logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                        </div>
                     </div>
 
-                    <!-- Login Background -->
-                    <div class="rounded-xl border border-slate-200 p-4">
-                        <h4 class="text-sm font-semibold text-slate-900 mb-3">Login Background</h4>
-                        @if(!empty($branding['login_background_path']))
-                            <div class="mb-3 rounded-lg overflow-hidden">
-                                <img src="{{ asset('storage/' . $branding['login_background_path']) }}" alt="Login Background" class="h-14 w-full object-cover" onerror="this.style.display='none'">
-                            </div>
-                        @endif
-                        <input type="file" wire:model="login_background_upload" class="block w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-800 file:cursor-pointer file:transition-colors mb-2">
-                        <p class="text-xs text-slate-500 mb-3">PNG/JPG/WEBP up to 5MB.</p>
-                        <button type="button" wire:click="uploadLoginBackground" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
-                            Upload
-                        </button>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="font-weight-bold mb-2">Login background</div>
+                            @if(!empty($branding['login_background_path']))
+                                <div class="mb-2">
+                                    <img src="{{ asset('storage/' . $branding['login_background_path']) }}" alt="Login Background" style="height: 56px; width: 100%; object-fit: cover;" onerror="this.style.display='none'">
+                                </div>
+                            @endif
+                            <input type="file" class="form-control mb-2" wire:model="login_background_upload">
+                            <small class="text-muted d-block mb-2">PNG/JPG/WEBP up to 5MB.</small>
+                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLoginBackground" wire:loading.attr="disabled" wire:target="login_background_upload,uploadLoginBackground">
+                                <span wire:loading.remove wire:target="login_background_upload,uploadLoginBackground"><i class="fas fa-upload mr-1"></i> Upload</span>
+                                <span wire:loading wire:target="login_background_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading…</span>
+                                <span wire:loading wire:target="uploadLoginBackground"><i class="fas fa-spinner fa-spin mr-1"></i> Saving…</span>
+                            </button>
+                            @error('bg') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                        </div>
                     </div>
                 </div>
             </div>

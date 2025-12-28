@@ -1,9 +1,15 @@
-<div class="max-w-5xl mx-auto">
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-            <p class="text-sm text-slate-500">Clients</p>
-            <h1 class="text-2xl font-semibold text-slate-900">Edit Client</h1>
-            <p class="text-sm text-slate-500 mt-1">{{ $client->company_name }}</p>
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+            <div>
+                <div class="h2 mb-0">Edit Client</div>
+                <div class="text-muted">{{ $client->company_name }}</div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ route('admin.clients.show', $client) }}" class="btn btn-outline-secondary">Back</a>
+                <button type="button" class="btn btn-outline-secondary" wire:click="sendPasswordReset">Send password reset</button>
+                <button type="button" class="btn btn-outline-warning" wire:click="openPasswordModal">Set password</button>
+            </div>
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('admin.clients.show', $client) }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
@@ -15,13 +21,20 @@
         </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="border-b border-slate-200 mb-6">
-        <nav class="flex gap-6">
-            <button type="button" 
-                    wire:click="$set('tab','overview')"
-                    class="relative pb-3 text-sm font-medium transition-colors {{ $tab === 'overview' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700' }}">
-                Overview
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <button class="nav-link @if($tab==='overview') active @endif" wire:click="$set('tab','overview')" type="button">Overview</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @if($tab==='services') active @endif" wire:click="$set('tab','services')" type="button">Services</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @if($tab==='activity') active @endif" wire:click="$set('tab','activity')" type="button">Activity history</button>
+            </li>
+        </ul>
+
+        <div class="card border-top-0 rounded-top-0">
+            <div class="card-body">
                 @if($tab === 'overview')
                     <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></span>
                 @endif
@@ -182,11 +195,94 @@
                     </div>
                 </div>
 
-                <!-- Notes Section -->
-                <div class="border-t border-slate-200 pt-6">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Internal notes</label>
-                        <textarea wire:model.live.debounce.400ms="notes" rows="3" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
+                @if($tab === 'services')
+                    <div class="mb-3">
+                        <div class="alert alert-info">
+                            <strong>Tier Features:</strong> The client's tier ({{ ucfirst($tier) }}) includes certain features by default. 
+                            Additional services checked below will be added on top of tier features.
+                        </div>
+                    </div>
+
+                    @php
+                        $categories = [
+                            'core' => 'Core Features',
+                            'brand_monitoring' => 'Brand Monitoring',
+                            'ai' => 'AI Features',
+                            'advanced' => 'Advanced Features',
+                            'collaboration' => 'Collaboration',
+                            'research' => 'Research & Consultation',
+                        ];
+                    @endphp
+
+                    <div class="row g-3">
+                        @foreach($categories as $categoryKey => $categoryLabel)
+                            @if(isset($servicesByCategory[$categoryKey]))
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100">
+                                        <div class="card-header py-2">
+                                            <h4 class="card-title mb-0">{{ $categoryLabel }}</h4>
+                                        </div>
+                                        <div class="card-body py-2">
+                                            @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
+                                                @php
+                                                    $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
+                                                    $isSelected = in_array($serviceKey, $selectedServices);
+                                                @endphp
+                                                <label class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                        wire:model.live="selectedServices" 
+                                                        value="{{ $serviceKey }}"
+                                                        @if($tierIncludes) checked disabled @endif>
+                                                    <span class="form-check-label">
+                                                        {{ $service['name'] }}
+                                                        @if($tierIncludes)
+                                                            <span class="badge bg-info ms-1" title="Included in {{ ucfirst($tier) }} tier">Tier</span>
+                                                        @elseif($isSelected)
+                                                            <span class="badge bg-success ms-1">Added</span>
+                                                        @endif
+                                                    </span>
+                                                    <div class="text-muted small">{{ $service['description'] }}</div>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" wire:click="saveServices" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="saveServices">Save Services</span>
+                            <span wire:loading wire:target="saveServices">Saving…</span>
+                        </button>
+                    </div>
+                @endif
+
+                @if($tab === 'activity')
+                    <div class="table-responsive">
+                        <table class="table table-vcenter">
+                            <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>User</th>
+                                <th>Log</th>
+                                <th>Description</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @forelse($activities as $a)
+                                <tr>
+                                    <td class="text-muted">{{ $a->created_at?->diffForHumans() }}</td>
+                                    <td>{{ $a->user?->name ?? 'System' }}</td>
+                                    <td><span class="badge bg-secondary">{{ $a->log_name }}</span></td>
+                                    <td>{{ $a->description }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-muted">No activity yet.</td></tr>
+                            @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -261,6 +357,40 @@
                     {{ $activities->links() }}
                 </div>
             @endif
+        </div>
+    </div>
+
+    {{-- Set Password Modal --}}
+    @if($showPasswordModal)
+        <div class="modal modal-blur fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Set Password</h5>
+                        <button type="button" class="btn-close" wire:click="closePasswordModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control @error('newPassword') is-invalid @enderror" wire:model="newPassword" autocomplete="new-password">
+                            @error('newPassword') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control @error('newPasswordConfirmation') is-invalid @enderror" wire:model="newPasswordConfirmation" autocomplete="new-password">
+                            @error('newPasswordConfirmation') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="text-muted small">Password must be at least 8 characters.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" wire:click="closePasswordModal">Cancel</button>
+                        <button type="button" class="btn btn-warning" wire:click="setPassword" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="setPassword">Set Password</span>
+                            <span wire:loading wire:target="setPassword">Saving…</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     @endif
 </div>
