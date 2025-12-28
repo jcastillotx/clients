@@ -83,7 +83,7 @@
                         <!-- Edit Area -->
                         <div id="edit_{{ $m['id'] }}" class="hidden mt-3 rounded-xl border border-blue-200 bg-white p-4">
                             <p class="text-xs text-slate-500 mb-2">Edits are captured for prompt/training improvements.</p>
-                            <textarea rows="3" wire:model.defer="edits.{{ $m['id'] }}" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
+                            <textarea rows="3" wire:model="edits.{{ $m['id'] }}" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
                             <div class="mt-2">
                                 <button type="button" wire:click="saveEdit({{ $m['id'] }})" class="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">
                                     Save Edit
@@ -105,7 +105,7 @@
         <!-- Input Area -->
         <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
             <div class="flex gap-3">
-                <input type="text" wire:model.defer="message" wire:keydown.enter="send" placeholder="Ask about clients, revenue, follow-ups, or say 'Create invoice for ...'" class="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                <input type="text" wire:model="message" wire:keydown.enter="send" placeholder="Ask about clients, revenue, follow-ups, or say 'Create invoice for ...'" class="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                 <button type="button" wire:click="send" wire:loading.attr="disabled" class="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors flex items-center gap-2">
                     <span wire:loading.remove wire:target="send">Send</span>
                     <span wire:loading wire:target="send">Sending...</span>

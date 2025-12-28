@@ -89,7 +89,7 @@
 
                 <div class="card-footer">
                     <div class="input-group">
-                        <input class="form-control" placeholder="Type a message..." wire:model.defer="message" wire:keydown="typing" wire:keydown.enter.prevent="send">
+                        <input class="form-control" placeholder="Type a message..." wire:model="message" wire:keydown="typing" wire:keydown.enter.prevent="send">
                         <div class="input-group-append">
                             <label class="btn btn-outline-secondary mb-0" title="Attach file">
                                 <i class="fas fa-paperclip"></i>
@@ -116,7 +116,9 @@
             }
             document.addEventListener('DOMContentLoaded', scrollAdminChatToBottom);
             document.addEventListener('livewire:navigated', scrollAdminChatToBottom);
-            window.addEventListener('message-sent', scrollAdminChatToBottom);
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('message-sent', scrollAdminChatToBottom);
+            });
         </script>
     @endpush
 </div>

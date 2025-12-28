@@ -23,23 +23,23 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label class="mb-1">Scheduled date</label>
-                            <input type="date" class="form-control" wire:model.defer="scheduledDate">
+                            <input type="date" class="form-control" wire:model="scheduledDate">
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Presentation URL</label>
-                            <input class="form-control" wire:model.defer="presentationUrl" placeholder="https://...">
+                            <input class="form-control" wire:model="presentationUrl" placeholder="https://...">
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Notes</label>
-                            <textarea class="form-control" rows="4" wire:model.defer="notes"></textarea>
+                            <textarea class="form-control" rows="4" wire:model="notes"></textarea>
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Action items (JSON)</label>
-                            <textarea class="form-control" rows="4" wire:model.defer="actionItemsJson"></textarea>
+                            <textarea class="form-control" rows="4" wire:model="actionItemsJson"></textarea>
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Next QBR date</label>
-                            <input type="date" class="form-control" wire:model.defer="nextQbrDate">
+                            <input type="date" class="form-control" wire:model="nextQbrDate">
                         </div>
                         <button class="btn btn-primary" wire:click="create"><i class="fas fa-save mr-1"></i> Save</button>
                     </div>

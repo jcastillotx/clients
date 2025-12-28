@@ -77,9 +77,9 @@
                             @foreach($categories as $cat)
                                 <tr>
                                     <td class="font-weight-bold">{{ ucfirst($cat) }}</td>
-                                    <td><input type="checkbox" wire:model.defer="prefs.{{ $cat }}.in_app"></td>
-                                    <td><input type="checkbox" wire:model.defer="prefs.{{ $cat }}.email"></td>
-                                    <td><input type="checkbox" wire:model.defer="prefs.{{ $cat }}.push"></td>
+                                    <td><input type="checkbox" wire:model="prefs.{{ $cat }}.in_app"></td>
+                                    <td><input type="checkbox" wire:model="prefs.{{ $cat }}.email"></td>
+                                    <td><input type="checkbox" wire:model="prefs.{{ $cat }}.push"></td>
                                 </tr>
                             @endforeach
                         </tbody>

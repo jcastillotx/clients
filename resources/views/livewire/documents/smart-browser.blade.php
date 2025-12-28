@@ -44,12 +44,12 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text">Link</span>
                     </div>
-                    <select class="form-control" wire:model.defer="bulkLinkType">
+                    <select class="form-control" wire:model="bulkLinkType">
                         <option value="request">Request</option>
                         <option value="invoice">Invoice</option>
                         <option value="contract">Contract</option>
                     </select>
-                    <input type="number" class="form-control" wire:model.defer="bulkLinkId" placeholder="Target ID">
+                    <input type="number" class="form-control" wire:model="bulkLinkId" placeholder="Target ID">
                     <div class="input-group-append">
                         <button class="btn btn-outline-primary" wire:click="bulkLink">Apply</button>
                     </div>
@@ -59,7 +59,7 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text">Tag</span>
                     </div>
-                    <select class="form-control" wire:model.defer="bulkTagId">
+                    <select class="form-control" wire:model="bulkTagId">
                         <option value="">Select tag...</option>
                         @foreach($tags as $t)
                             <option value="{{ $t->id }}">{{ $t->name }}</option>

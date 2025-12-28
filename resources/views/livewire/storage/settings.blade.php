@@ -24,14 +24,14 @@
                     
                     <div class="pt-2">
                         <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" wire:model.defer="auto_sync_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                            <input type="checkbox" wire:model="auto_sync_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
                             <span class="text-sm text-slate-700">Auto-sync enabled</span>
                         </label>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Auto-sync Frequency</label>
-                        <select wire:model.defer="auto_sync_frequency" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <select wire:model="auto_sync_frequency" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                             <option value="hourly">Hourly</option>
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
@@ -40,7 +40,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Quota Alert Threshold (%)</label>
-                        <input type="number" wire:model.defer="quota_alert_percent" min="1" max="100" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <input type="number" wire:model="quota_alert_percent" min="1" max="100" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         <p class="mt-1.5 text-xs text-slate-500">Clients are notified when a provider reaches this threshold.</p>
                     </div>
                 </div>
@@ -56,7 +56,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Primary Storage Provider</label>
-                        <select wire:model.defer="primary_connection_id" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <select wire:model="primary_connection_id" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                             <option value="">(none)</option>
                             @foreach($connections as $c)
                                 <option value="{{ $c->id }}">{{ $c->name }} ({{ strtoupper($c->provider) }})</option>
@@ -66,7 +66,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Conflict Resolution</label>
-                        <select wire:model.defer="conflict_rule" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <select wire:model="conflict_rule" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                             <option value="prefer_primary">Prefer primary</option>
                             <option value="prefer_newest">Prefer newest</option>
                             <option value="keep_both">Keep both (log conflicts)</option>
@@ -76,7 +76,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Folders to Sync</label>
-                        <input type="text" wire:model.defer="folders_csv" placeholder="e.g. ., invoices, contracts" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <input type="text" wire:model="folders_csv" placeholder="e.g. ., invoices, contracts" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         <p class="mt-1.5 text-xs text-slate-500">Comma-separated folder paths.</p>
                     </div>
                 </div>
@@ -92,14 +92,14 @@
 
                     <div class="pt-2">
                         <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" wire:model.defer="backup_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                            <input type="checkbox" wire:model="backup_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
                             <span class="text-sm text-slate-700">Backup enabled</span>
                         </label>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Backup Destination</label>
-                        <select wire:model.defer="backup_connection_id" @disabled(!$backup_enabled) class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors disabled:bg-slate-50 disabled:text-slate-500">
+                        <select wire:model="backup_connection_id" @disabled(!$backup_enabled) class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors disabled:bg-slate-50 disabled:text-slate-500">
                             <option value="">Select provider...</option>
                             @foreach($connections as $c)
                                 <option value="{{ $c->id }}">{{ $c->name }}</option>

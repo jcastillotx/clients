@@ -15,12 +15,12 @@
 
                 <div class="col-md-2">
                     <label class="mb-1">Start date</label>
-                    <input type="date" class="form-control" wire:model.defer="start_date">
+                    <input type="date" class="form-control" wire:model="start_date">
                 </div>
 
                 <div class="col-md-2">
                     <label class="mb-1">End date</label>
-                    <input type="date" class="form-control" wire:model.defer="end_date">
+                    <input type="date" class="form-control" wire:model="end_date">
                 </div>
 
                 <div class="col-md-2">
@@ -99,11 +99,11 @@
                     <h5 class="mb-2">Save template</h5>
                     <div class="form-group">
                         <label class="mb-1">Template name</label>
-                        <input class="form-control" wire:model.defer="template_name" placeholder="e.g. Monthly Revenue + Aging">
+                        <input class="form-control" wire:model="template_name" placeholder="e.g. Monthly Revenue + Aging">
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Description (optional)</label>
-                        <textarea class="form-control" rows="2" wire:model.defer="template_description"></textarea>
+                        <textarea class="form-control" rows="2" wire:model="template_description"></textarea>
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Metrics</label>
@@ -115,7 +115,7 @@
                                                class="custom-control-input"
                                                id="metric_{{ $metricKey }}"
                                                value="{{ $metricKey }}"
-                                               wire:model.defer="template_metrics">
+                                               wire:model="template_metrics">
                                         <label class="custom-control-label" for="metric_{{ $metricKey }}">{{ $metricLabel }}</label>
                                     </div>
                                 </div>
@@ -133,7 +133,7 @@
                     <h5 class="mb-2">Schedule email delivery</h5>
                     <div class="form-group">
                         <label class="mb-1">Template</label>
-                        <select class="form-control" wire:model.defer="schedule_template_id">
+                        <select class="form-control" wire:model="schedule_template_id">
                             <option value="">Select a template...</option>
                             @foreach($this->templates as $t)
                                 <option value="{{ $t->id }}">#{{ $t->id }} — {{ $t->name }}</option>
@@ -142,7 +142,7 @@
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Frequency</label>
-                        <select class="form-control" wire:model.defer="schedule_frequency">
+                        <select class="form-control" wire:model="schedule_frequency">
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
                             <option value="monthly">Monthly</option>
@@ -150,10 +150,10 @@
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Recipients (comma separated)</label>
-                        <input class="form-control" wire:model.defer="schedule_recipients" placeholder="admin@company.com, ops@company.com">
+                        <input class="form-control" wire:model="schedule_recipients" placeholder="admin@company.com, ops@company.com">
                     </div>
                     <div class="custom-control custom-switch mb-3">
-                        <input type="checkbox" class="custom-control-input" id="sched_active" wire:model.defer="schedule_is_active">
+                        <input type="checkbox" class="custom-control-input" id="sched_active" wire:model="schedule_is_active">
                         <label class="custom-control-label" for="sched_active">Active</label>
                     </div>
                     <button class="btn btn-primary" wire:click="createSchedule">
@@ -577,8 +577,10 @@
                     if (category === 'storage') return renderStorage(payload);
                 }
 
-                window.addEventListener('reports-updated', function (e) {
-                    render(e.detail.payload);
+                document.addEventListener('livewire:init', () => {
+                    Livewire.on('reports-updated', (data) => {
+                        render(data.payload);
+                    });
                 });
 
                 // Initial render

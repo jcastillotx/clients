@@ -28,11 +28,11 @@
                     <div class="form-row">
                         <div class="col-md-8">
                             <label class="mb-1">Name</label>
-                            <input class="form-control" wire:model.defer="name">
+                            <input class="form-control" wire:model="name">
                         </div>
                         <div class="col-md-4">
                             <label class="mb-1">Type</label>
-                            <select class="form-control" wire:model.defer="type">
+                            <select class="form-control" wire:model="type">
                                 <option value="satisfaction">satisfaction</option>
                                 <option value="project_completion">project_completion</option>
                             </select>
@@ -41,17 +41,17 @@
 
                     <div class="form-group mt-2">
                         <label class="mb-1">Description</label>
-                        <textarea class="form-control" rows="2" wire:model.defer="description"></textarea>
+                        <textarea class="form-control" rows="2" wire:model="description"></textarea>
                     </div>
 
                     <div class="form-row">
                         <div class="col">
                             <label class="mb-1">Active</label>
-                            <div><input type="checkbox" wire:model.defer="isActive"></div>
+                            <div><input type="checkbox" wire:model="isActive"></div>
                         </div>
                         <div class="col">
                             <label class="mb-1">Anonymous allowed</label>
-                            <div><input type="checkbox" wire:model.defer="anonymousAllowed"></div>
+                            <div><input type="checkbox" wire:model="anonymousAllowed"></div>
                         </div>
                     </div>
 
@@ -67,7 +67,7 @@
                             <div class="form-row">
                                 <div class="col-md-3">
                                     <label class="mb-1">Type</label>
-                                    <select class="form-control" wire:model.defer="questions.{{ $i }}.type">
+                                    <select class="form-control" wire:model="questions.{{ $i }}.type">
                                         <option value="text">text</option>
                                         <option value="rating">rating</option>
                                         <option value="nps">nps</option>
@@ -75,15 +75,15 @@
                                 </div>
                                 <div class="col-md-7">
                                     <label class="mb-1">Prompt</label>
-                                    <input class="form-control" wire:model.defer="questions.{{ $i }}.prompt">
+                                    <input class="form-control" wire:model="questions.{{ $i }}.prompt">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="mb-1">Order</label>
-                                    <input type="number" class="form-control" wire:model.defer="questions.{{ $i }}.sort_order">
+                                    <input type="number" class="form-control" wire:model="questions.{{ $i }}.sort_order">
                                 </div>
                             </div>
                             <div class="form-check mt-2">
-                                <input class="form-check-input" type="checkbox" wire:model.defer="questions.{{ $i }}.is_required" id="req_{{ $i }}">
+                                <input class="form-check-input" type="checkbox" wire:model="questions.{{ $i }}.is_required" id="req_{{ $i }}">
                                 <label class="form-check-label" for="req_{{ $i }}">Required</label>
                             </div>
                         </div>

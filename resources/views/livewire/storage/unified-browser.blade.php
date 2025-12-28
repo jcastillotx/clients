@@ -105,7 +105,7 @@
                         <div class="form-group">
                             <label class="mb-1">Add tag</label>
                             <div class="input-group">
-                                <input class="form-control" wire:model.defer="newTagName" placeholder="e.g. invoice, branding">
+                                <input class="form-control" wire:model="newTagName" placeholder="e.g. invoice, branding">
                                 <div class="input-group-append">
                                     <button class="btn btn-outline-success" wire:click="addTagToSelected">Add</button>
                                 </div>
@@ -119,7 +119,7 @@
 
                         <div class="form-group">
                             <label class="mb-1">Link to</label>
-                            <select class="form-control" wire:model.defer="linkType">
+                            <select class="form-control" wire:model="linkType">
                                 <option value="request">Request</option>
                                 <option value="document">Document</option>
                                 <option value="contract">Contract</option>
@@ -127,12 +127,12 @@
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Target ID</label>
-                            <input type="number" class="form-control" wire:model.defer="linkId" placeholder="Enter ID">
+                            <input type="number" class="form-control" wire:model="linkId" placeholder="Enter ID">
                             <small class="text-muted">Use the existing ID from the app (e.g. Request #123).</small>
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Purpose</label>
-                            <input class="form-control" wire:model.defer="linkPurpose" placeholder="reference / attachment">
+                            <input class="form-control" wire:model="linkPurpose" placeholder="reference / attachment">
                         </div>
                         <button class="btn btn-primary" wire:click="linkSelected">
                             <i class="fas fa-paperclip mr-1"></i> Link File

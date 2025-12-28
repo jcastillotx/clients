@@ -207,7 +207,7 @@ class PostCreator extends Component
             $aiService = app(SocialMediaAIService::class);
             $analysis = $aiService->analyzeAndImprove($this->content_text);
 
-            $this->emit('showAnalysis', $analysis);
+            $this->dispatch('showAnalysis', analysis: $analysis);
         } catch (\Exception $e) {
             session()->flash('error', 'Analysis failed: '.$e->getMessage());
         }

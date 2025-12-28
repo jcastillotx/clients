@@ -251,7 +251,7 @@
                                 </div>
                                 <input type="text"
                                        id="blueskyHandle"
-                                       wire:model.defer="blueskyHandle"
+                                       wire:model="blueskyHandle"
                                        class="form-control @error('blueskyHandle') is-invalid @enderror"
                                        placeholder="yourhandle.bsky.social">
                             </div>
@@ -265,7 +265,7 @@
                             <label for="blueskyAppPassword">App Password</label>
                             <input type="password"
                                    id="blueskyAppPassword"
-                                   wire:model.defer="blueskyAppPassword"
+                                   wire:model="blueskyAppPassword"
                                    class="form-control @error('blueskyAppPassword') is-invalid @enderror"
                                    placeholder="xxxx-xxxx-xxxx-xxxx">
                             @error('blueskyAppPassword')

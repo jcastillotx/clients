@@ -16,11 +16,11 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Title</label>
-                    <input type="text" wire:model.defer="title" placeholder="e.g., Brand Discovery Questionnaire" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                    <input type="text" wire:model="title" placeholder="e.g., Brand Discovery Questionnaire" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Type</label>
-                    <input type="text" wire:model.defer="questionnaireType" placeholder="e.g., intake, brand_discovery, custom" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                    <input type="text" wire:model="questionnaireType" placeholder="e.g., intake, brand_discovery, custom" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                     <p class="mt-1.5 text-xs text-slate-500">Examples: intake, brand_discovery, content_brief, custom</p>
                 </div>
             </div>
@@ -43,11 +43,11 @@
                             <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
                                 <div class="sm:col-span-3">
                                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Key</label>
-                                    <input type="text" wire:model.defer="questions.{{ $idx }}.key" placeholder="field_key" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors font-mono">
+                                    <input type="text" wire:model="questions.{{ $idx }}.key" placeholder="field_key" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors font-mono">
                                 </div>
                                 <div class="sm:col-span-3">
                                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Type</label>
-                                    <select wire:model.defer="questions.{{ $idx }}.type" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                                    <select wire:model="questions.{{ $idx }}.type" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                         <option value="text">Text</option>
                                         <option value="textarea">Textarea</option>
                                         <option value="select">Select</option>
@@ -56,12 +56,12 @@
                                 </div>
                                 <div class="sm:col-span-6">
                                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Label</label>
-                                    <input type="text" wire:model.defer="questions.{{ $idx }}.label" placeholder="Question label" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                                    <input type="text" wire:model="questions.{{ $idx }}.label" placeholder="Question label" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                 </div>
                             </div>
                             <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
                                 <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" wire:model.defer="questions.{{ $idx }}.required" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                    <input type="checkbox" wire:model="questions.{{ $idx }}.required" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
                                     <span class="text-sm text-slate-700">Required</span>
                                 </label>
                                 <button type="button" wire:click="removeQuestion({{ $idx }})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Remove question">

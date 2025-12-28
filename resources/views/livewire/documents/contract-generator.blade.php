@@ -53,7 +53,7 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Contract title</label>
-                        <input class="form-control" wire:model.defer="title" placeholder="Contract — Client Name">
+                        <input class="form-control" wire:model="title" placeholder="Contract — Client Name">
                     </div>
 
                     <div class="d-flex gap-2 mt-3">
@@ -68,7 +68,7 @@
             <div class="card">
                 <div class="card-header"><div class="card-title mb-0">Draft (HTML)</div></div>
                 <div class="card-body">
-                    <textarea class="form-control" rows="18" wire:model.defer="html" placeholder="AI will generate HTML here…"></textarea>
+                    <textarea class="form-control" rows="18" wire:model="html" placeholder="AI will generate HTML here…"></textarea>
                     <div class="text-muted small mt-2">This HTML will be rendered to PDF and attached to the Contract record (pending signature).</div>
                 </div>
             </div>

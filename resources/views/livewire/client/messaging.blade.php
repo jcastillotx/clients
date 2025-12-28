@@ -16,11 +16,11 @@
                         <div class="border rounded p-2">
                             <div class="form-group mb-2">
                                 <label class="mb-1 small text-muted">Title</label>
-                                <input class="form-control form-control-sm" wire:model.defer="newConversationTitle" placeholder="e.g. Website updates">
+                                <input class="form-control form-control-sm" wire:model="newConversationTitle" placeholder="e.g. Website updates">
                             </div>
                             <div class="form-group mb-2">
                                 <label class="mb-1 small text-muted">Related request (optional)</label>
-                                <select class="form-control form-control-sm" wire:model.defer="newConversationRequestId">
+                                <select class="form-control form-control-sm" wire:model="newConversationRequestId">
                                     <option value="">None</option>
                                     @foreach($requests as $r)
                                         <option value="{{ $r->id }}">#{{ $r->id }} — {{ $r->title }}</option>
@@ -130,7 +130,7 @@
                         :wire:key="'smart-reply-conv-'.$conversationId"
                     />
                     <div class="input-group">
-                        <input class="form-control" placeholder="Type a message..." wire:model.defer="message" wire:keydown="typing" wire:keydown.enter.prevent="send">
+                        <input class="form-control" placeholder="Type a message..." wire:model="message" wire:keydown="typing" wire:keydown.enter.prevent="send">
                         <div class="input-group-append">
                             <label class="btn btn-outline-secondary mb-0" title="Attach file / take photo">
                                 <i class="fas fa-camera"></i>
@@ -158,7 +158,9 @@
             }
             document.addEventListener('DOMContentLoaded', scrollChatToBottom);
             document.addEventListener('livewire:navigated', scrollChatToBottom);
-            window.addEventListener('message-sent', scrollChatToBottom);
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('message-sent', scrollChatToBottom);
+            });
 
             // If Echo is configured, subscribe to conversation channel
             document.addEventListener('livewire:navigated', () => setupEcho());

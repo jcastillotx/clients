@@ -36,26 +36,26 @@
                                 @forelse($tasks as $i => $t)
                                     <tr>
                                         <td>
-                                            <input class="form-control form-control-sm mb-1" wire:model.defer="tasks.{{ $i }}.name" placeholder="Task name">
-                                            <textarea class="form-control form-control-sm" rows="2" wire:model.defer="tasks.{{ $i }}.description" placeholder="Description (optional)"></textarea>
+                                            <input class="form-control form-control-sm mb-1" wire:model="tasks.{{ $i }}.name" placeholder="Task name">
+                                            <textarea class="form-control form-control-sm" rows="2" wire:model="tasks.{{ $i }}.description" placeholder="Description (optional)"></textarea>
                                         </td>
                                         <td>
-                                            <input class="form-control form-control-sm" wire:model.defer="tasks.{{ $i }}.phase" placeholder="e.g. Discovery">
+                                            <input class="form-control form-control-sm" wire:model="tasks.{{ $i }}.phase" placeholder="e.g. Discovery">
                                         </td>
                                         <td class="text-center">
-                                            <input type="checkbox" class="form-check-input" wire:model.defer="tasks.{{ $i }}.optional">
+                                            <input type="checkbox" class="form-check-input" wire:model="tasks.{{ $i }}.optional">
                                         </td>
                                         <td class="text-center">
-                                            <input type="checkbox" class="form-check-input" wire:model.defer="tasks.{{ $i }}.included" @disabled(empty($t['optional']))>
+                                            <input type="checkbox" class="form-check-input" wire:model="tasks.{{ $i }}.included" @disabled(empty($t['optional']))>
                                         </td>
                                         <td class="text-end">
-                                            <input type="number" step="0.25" min="0" class="form-control form-control-sm text-end" wire:model.defer="tasks.{{ $i }}.hours_low">
+                                            <input type="number" step="0.25" min="0" class="form-control form-control-sm text-end" wire:model="tasks.{{ $i }}.hours_low">
                                         </td>
                                         <td class="text-end">
-                                            <input type="number" step="0.25" min="0" class="form-control form-control-sm text-end" wire:model.defer="tasks.{{ $i }}.hours_mid">
+                                            <input type="number" step="0.25" min="0" class="form-control form-control-sm text-end" wire:model="tasks.{{ $i }}.hours_mid">
                                         </td>
                                         <td class="text-end">
-                                            <input type="number" step="0.25" min="0" class="form-control form-control-sm text-end" wire:model.defer="tasks.{{ $i }}.hours_high">
+                                            <input type="number" step="0.25" min="0" class="form-control form-control-sm text-end" wire:model="tasks.{{ $i }}.hours_high">
                                         </td>
                                     </tr>
                                 @empty
@@ -84,23 +84,23 @@
                     <div class="row g-2">
                         <div class="col-12">
                             <div class="fw-semibold mb-1">Executive summary</div>
-                            <textarea class="form-control" rows="3" wire:model.defer="sow_sections.executive_summary" placeholder="(AI draft will populate this)"></textarea>
+                            <textarea class="form-control" rows="3" wire:model="sow_sections.executive_summary" placeholder="(AI draft will populate this)"></textarea>
                         </div>
                         <div class="col-12">
                             <div class="fw-semibold mb-1">Scope overview</div>
-                            <textarea class="form-control" rows="3" wire:model.defer="sow_sections.scope_overview"></textarea>
+                            <textarea class="form-control" rows="3" wire:model="sow_sections.scope_overview"></textarea>
                         </div>
                         <div class="col-12 col-md-6">
                             <div class="fw-semibold mb-1">Timeline overview</div>
-                            <textarea class="form-control" rows="3" wire:model.defer="sow_sections.timeline_overview"></textarea>
+                            <textarea class="form-control" rows="3" wire:model="sow_sections.timeline_overview"></textarea>
                         </div>
                         <div class="col-12 col-md-6">
                             <div class="fw-semibold mb-1">Investment overview</div>
-                            <textarea class="form-control" rows="3" wire:model.defer="sow_sections.investment_overview"></textarea>
+                            <textarea class="form-control" rows="3" wire:model="sow_sections.investment_overview"></textarea>
                         </div>
                         <div class="col-12">
                             <div class="fw-semibold mb-1">Terms overview</div>
-                            <textarea class="form-control" rows="3" wire:model.defer="sow_sections.terms_overview"></textarea>
+                            <textarea class="form-control" rows="3" wire:model="sow_sections.terms_overview"></textarea>
                         </div>
                         @if($estimateRecord?->sow_contract_id)
                             <div class="col-12">

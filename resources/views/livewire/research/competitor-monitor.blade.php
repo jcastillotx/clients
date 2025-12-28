@@ -10,11 +10,11 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="mb-1">Name</label>
-                        <input class="form-control" wire:model.defer="competitorName">
+                        <input class="form-control" wire:model="competitorName">
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Website</label>
-                        <input class="form-control" wire:model.defer="websiteUrl" placeholder="https://example.com">
+                        <input class="form-control" wire:model="websiteUrl" placeholder="https://example.com">
                     </div>
                     <button class="btn btn-primary" wire:click="addCompetitor"><i class="fas fa-save mr-1"></i> Add</button>
                 </div>

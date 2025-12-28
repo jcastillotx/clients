@@ -233,6 +233,14 @@ a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
 /* Nav Tabs */
 .nav-tabs .nav-link.active {
     border-bottom-color: var(--brand-primary) !important;
+    color: #495057 !important;
+    background-color: #fff !important;
+}
+.nav-tabs .nav-link {
+    color: #495057 !important;
+}
+.nav-tabs .nav-link:hover {
+    color: #212529 !important;
 }
 .nav-pills .nav-link.active {
     background-color: var(--brand-primary) !important;

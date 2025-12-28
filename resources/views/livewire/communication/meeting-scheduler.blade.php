@@ -11,7 +11,7 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label class="mb-1">Type</label>
-                            <select class="form-control" wire:model.defer="meetingType">
+                            <select class="form-control" wire:model="meetingType">
                                 <option value="kickoff">kickoff</option>
                                 <option value="strategy">strategy</option>
                                 <option value="review">review</option>
@@ -20,11 +20,11 @@
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Title</label>
-                            <input class="form-control" wire:model.defer="title" placeholder="Kickoff call">
+                            <input class="form-control" wire:model="title" placeholder="Kickoff call">
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Related request (optional)</label>
-                            <select class="form-control" wire:model.defer="requestId">
+                            <select class="form-control" wire:model="requestId">
                                 <option value="">None</option>
                                 @foreach($requests as $r)
                                     <option value="{{ $r->id }}">#{{ $r->id }} — {{ $r->title }}</option>
@@ -34,16 +34,16 @@
                         <div class="form-row">
                             <div class="col">
                                 <label class="mb-1">Preferred time</label>
-                                <input type="datetime-local" class="form-control" wire:model.defer="scheduledAt">
+                                <input type="datetime-local" class="form-control" wire:model="scheduledAt">
                             </div>
                             <div class="col">
                                 <label class="mb-1">Duration (min)</label>
-                                <input type="number" class="form-control" wire:model.defer="durationMinutes">
+                                <input type="number" class="form-control" wire:model="durationMinutes">
                             </div>
                         </div>
                         <div class="form-group mt-2">
                             <label class="mb-1">Agenda (optional)</label>
-                            <textarea class="form-control" rows="3" wire:model.defer="agenda"></textarea>
+                            <textarea class="form-control" rows="3" wire:model="agenda"></textarea>
                         </div>
                         <button class="btn btn-primary" wire:click="create">
                             <i class="fas fa-paper-plane mr-1"></i> Submit request
@@ -142,7 +142,7 @@
                             <div class="form-row">
                                 <div class="col-md-3">
                                     <label class="mb-1">Status</label>
-                                    <select class="form-control" wire:model.defer="status">
+                                    <select class="form-control" wire:model="status">
                                         <option value="requested">requested</option>
                                         <option value="scheduled">scheduled</option>
                                         <option value="completed">completed</option>
@@ -151,7 +151,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="mb-1">Type</label>
-                                    <select class="form-control" wire:model.defer="meetingType">
+                                    <select class="form-control" wire:model="meetingType">
                                         <option value="kickoff">kickoff</option>
                                         <option value="strategy">strategy</option>
                                         <option value="review">review</option>
@@ -160,26 +160,26 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="mb-1">Title</label>
-                                    <input class="form-control" wire:model.defer="title">
+                                    <input class="form-control" wire:model="title">
                                 </div>
                             </div>
                             <div class="form-row mt-2">
                                 <div class="col-md-4">
                                     <label class="mb-1">Scheduled at</label>
-                                    <input type="datetime-local" class="form-control" wire:model.defer="scheduledAt">
+                                    <input type="datetime-local" class="form-control" wire:model="scheduledAt">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="mb-1">Duration</label>
-                                    <input type="number" class="form-control" wire:model.defer="durationMinutes">
+                                    <input type="number" class="form-control" wire:model="durationMinutes">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="mb-1">Meeting link</label>
-                                    <input class="form-control" wire:model.defer="meetingLink" placeholder="https://zoom.us/j/...">
+                                    <input class="form-control" wire:model="meetingLink" placeholder="https://zoom.us/j/...">
                                 </div>
                             </div>
                             <div class="form-group mt-2">
                                 <label class="mb-1">Agenda</label>
-                                <textarea class="form-control" rows="3" wire:model.defer="agenda"></textarea>
+                                <textarea class="form-control" rows="3" wire:model="agenda"></textarea>
                             </div>
                             <button class="btn btn-primary" wire:click="saveAdmin"><i class="fas fa-save mr-1"></i> Save</button>
                         </div>

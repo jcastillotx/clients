@@ -42,7 +42,7 @@
         </div>
         <div class="card-footer">
             <div class="d-flex gap-2">
-                <input class="form-control" wire:model.defer="message" placeholder="Ask a question...">
+                <input class="form-control" wire:model="message" placeholder="Ask a question...">
                 <button class="btn btn-primary" wire:click="send" wire:loading.attr="disabled">Send</button>
             </div>
         </div>

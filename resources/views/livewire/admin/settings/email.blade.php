@@ -9,7 +9,7 @@
             <div class="card-body">
                 <div class="form-group">
                     <label>Select Email Provider</label>
-                    <select wire:model="email.provider" class="form-control">
+                    <select wire:model.live="email.provider" class="form-control">
                         <option value="sendmail">PHP Mail (Sendmail)</option>
                         <option value="smtp">Custom SMTP</option>
                         <option value="gmail">Gmail SMTP</option>
@@ -68,15 +68,15 @@
                             <label>SMTP Host</label>
                             @if(($email['provider'] ?? '') === 'gmail')
                                 <input type="text" class="form-control" value="smtp.gmail.com" readonly>
-                                <input type="hidden" wire:model.defer="email.smtp_host" value="smtp.gmail.com">
+                                <input type="hidden" wire:model="email.smtp_host" value="smtp.gmail.com">
                             @elseif(($email['provider'] ?? '') === 'outlook')
                                 <input type="text" class="form-control" value="smtp.office365.com" readonly>
-                                <input type="hidden" wire:model.defer="email.smtp_host" value="smtp.office365.com">
+                                <input type="hidden" wire:model="email.smtp_host" value="smtp.office365.com">
                             @elseif(($email['provider'] ?? '') === 'brevo')
                                 <input type="text" class="form-control" value="smtp-relay.brevo.com" readonly>
-                                <input type="hidden" wire:model.defer="email.smtp_host" value="smtp-relay.brevo.com">
+                                <input type="hidden" wire:model="email.smtp_host" value="smtp-relay.brevo.com">
                             @else
-                                <input type="text" wire:model.defer="email.smtp_host" class="form-control" placeholder="smtp.example.com">
+                                <input type="text" wire:model="email.smtp_host" class="form-control" placeholder="smtp.example.com">
                             @endif
                         </div>
                     </div>
@@ -85,15 +85,15 @@
                             <label>Port</label>
                             @if(($email['provider'] ?? '') === 'gmail')
                                 <input type="number" class="form-control" value="587" readonly>
-                                <input type="hidden" wire:model.defer="email.smtp_port" value="587">
+                                <input type="hidden" wire:model="email.smtp_port" value="587">
                             @elseif(($email['provider'] ?? '') === 'outlook')
                                 <input type="number" class="form-control" value="587" readonly>
-                                <input type="hidden" wire:model.defer="email.smtp_port" value="587">
+                                <input type="hidden" wire:model="email.smtp_port" value="587">
                             @elseif(($email['provider'] ?? '') === 'brevo')
                                 <input type="number" class="form-control" value="587" readonly>
-                                <input type="hidden" wire:model.defer="email.smtp_port" value="587">
+                                <input type="hidden" wire:model="email.smtp_port" value="587">
                             @else
-                                <input type="number" wire:model.defer="email.smtp_port" class="form-control" placeholder="587">
+                                <input type="number" wire:model="email.smtp_port" class="form-control" placeholder="587">
                             @endif
                         </div>
                     </div>
@@ -112,7 +112,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-user"></i></span>
                                 </div>
-                                <input type="text" wire:model.defer="email.smtp_username" class="form-control" placeholder="user@example.com">
+                                <input type="text" wire:model="email.smtp_username" class="form-control" placeholder="user@example.com">
                             </div>
                         </div>
                     </div>
@@ -131,20 +131,20 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-key"></i></span>
                                 </div>
-                                <input type="password" wire:model.defer="email.smtp_password" class="form-control" placeholder="••••••••">
+                                <input type="password" wire:model="email.smtp_password" class="form-control" placeholder="••••••••">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Encryption</label>
-                    <select wire:model.defer="email.smtp_encryption" class="form-control" @if(in_array($email['provider'] ?? '', ['gmail', 'outlook', 'brevo'])) disabled @endif>
+                    <select wire:model="email.smtp_encryption" class="form-control" @if(in_array($email['provider'] ?? '', ['gmail', 'outlook', 'brevo'])) disabled @endif>
                         <option value="tls">TLS (Recommended)</option>
                         <option value="ssl">SSL</option>
                         <option value="">None</option>
                     </select>
                     @if(in_array($email['provider'] ?? '', ['gmail', 'outlook', 'brevo']))
-                        <input type="hidden" wire:model.defer="email.smtp_encryption" value="tls">
+                        <input type="hidden" wire:model="email.smtp_encryption" value="tls">
                     @endif
                 </div>
             </div>
@@ -164,7 +164,7 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-globe"></i></span>
                         </div>
-                        <input type="text" wire:model.defer="email.mailgun_domain" class="form-control" placeholder="mg.yourdomain.com">
+                        <input type="text" wire:model="email.mailgun_domain" class="form-control" placeholder="mg.yourdomain.com">
                     </div>
                     <small class="text-muted">Your Mailgun sending domain</small>
                 </div>
@@ -174,13 +174,13 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-key"></i></span>
                         </div>
-                        <input type="password" wire:model.defer="email.mailgun_secret" class="form-control" placeholder="key-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                        <input type="password" wire:model="email.mailgun_secret" class="form-control" placeholder="key-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
                     </div>
                     <small class="text-muted">Your private API key from Mailgun</small>
                 </div>
                 <div class="form-group">
                     <label>Mailgun Region</label>
-                    <select wire:model.defer="email.mailgun_endpoint" class="form-control">
+                    <select wire:model="email.mailgun_endpoint" class="form-control">
                         <option value="api.mailgun.net">US Region (api.mailgun.net)</option>
                         <option value="api.eu.mailgun.net">EU Region (api.eu.mailgun.net)</option>
                     </select>
@@ -203,7 +203,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                                 </div>
-                                <input type="email" wire:model.defer="email.from_address" class="form-control" placeholder="hello@example.com">
+                                <input type="email" wire:model="email.from_address" class="form-control" placeholder="hello@example.com">
                             </div>
                         </div>
                     </div>
@@ -214,7 +214,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-building"></i></span>
                                 </div>
-                                <input type="text" wire:model.defer="email.from_name" class="form-control" placeholder="Your Company">
+                                <input type="text" wire:model="email.from_name" class="form-control" placeholder="Your Company">
                             </div>
                         </div>
                     </div>
@@ -233,7 +233,7 @@
             <div class="card-body">
                 <div class="form-group">
                     <label>Email Signature</label>
-                    <textarea rows="3" wire:model.defer="email.signature" class="form-control" placeholder="Best regards,&#10;Your Team"></textarea>
+                    <textarea rows="3" wire:model="email.signature" class="form-control" placeholder="Best regards,&#10;Your Team"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Email Template</label>
@@ -246,7 +246,7 @@
                         </button>
                     </div>
                     <div class="collapse" id="rawTemplateCollapse">
-                        <textarea rows="6" wire:model.defer="email.template_html" class="form-control font-monospace" placeholder="<html>...</html>"></textarea>
+                        <textarea rows="6" wire:model="email.template_html" class="form-control font-monospace" placeholder="<html>...</html>"></textarea>
                     </div>
                     <small class="text-muted">Customize your email template design</small>
                 </div>
@@ -260,15 +260,15 @@
             </div>
             <div class="card-body">
                 <div class="custom-control custom-switch mb-2">
-                    <input type="checkbox" class="custom-control-input" id="eventsInvoicePaid" wire:model.defer="email.events_invoice_paid">
+                    <input type="checkbox" class="custom-control-input" id="eventsInvoicePaid" wire:model="email.events_invoice_paid">
                     <label class="custom-control-label" for="eventsInvoicePaid">Invoice paid notifications</label>
                 </div>
                 <div class="custom-control custom-switch mb-2">
-                    <input type="checkbox" class="custom-control-input" id="eventsRequestCreated" wire:model.defer="email.events_request_created">
+                    <input type="checkbox" class="custom-control-input" id="eventsRequestCreated" wire:model="email.events_request_created">
                     <label class="custom-control-label" for="eventsRequestCreated">Request created notifications</label>
                 </div>
                 <div class="custom-control custom-switch mb-2">
-                    <input type="checkbox" class="custom-control-input" id="eventsContractSigned" wire:model.defer="email.events_contract_signed">
+                    <input type="checkbox" class="custom-control-input" id="eventsContractSigned" wire:model="email.events_contract_signed">
                     <label class="custom-control-label" for="eventsContractSigned">Contract signed notifications</label>
                 </div>
             </div>
@@ -281,7 +281,7 @@
             </div>
             <div class="card-body">
                 <div class="input-group">
-                    <input type="email" wire:model.defer="test_email_to" class="form-control" placeholder="test@example.com">
+                    <input type="email" wire:model="test_email_to" class="form-control" placeholder="test@example.com">
                     <div class="input-group-append">
                         <button type="button" wire:click="sendTestEmail" class="btn btn-info" wire:loading.attr="disabled" wire:target="sendTestEmail">
                             <span wire:loading.remove wire:target="sendTestEmail"><i class="fas fa-paper-plane mr-1"></i> Send</span>
@@ -405,10 +405,12 @@
                 }
             }
 
-            window.addEventListener('open-email-builder', function (e) {
-                const design = (e.detail && e.detail.design) ? e.detail.design : null;
-                $('#emailBuilderModal').modal('show');
-                setTimeout(function () { initEditor(design); }, 150);
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('open-email-builder', (data) => {
+                    const design = data.design || null;
+                    $('#emailBuilderModal').modal('show');
+                    setTimeout(function () { initEditor(design); }, 150);
+                });
             });
 
             document.addEventListener('click', function (evt) {

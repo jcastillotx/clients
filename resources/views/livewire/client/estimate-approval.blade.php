@@ -60,7 +60,7 @@
         <div class="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="text-sm font-semibold text-slate-900">Message (optional)</div>
             <div class="mt-1 text-xs text-slate-500">Ask for changes or clarifications.</div>
-            <textarea wire:model.defer="message" rows="4" class="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="Write a note…"></textarea>
+            <textarea wire:model="message" rows="4" class="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="Write a note…"></textarea>
             <div class="mt-3 flex flex-wrap gap-2">
                 <button wire:click="requestChanges" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
                     Request modifications

@@ -27,6 +27,22 @@
     <!-- Toast Container for Image Uploads -->
     <div id="uploadToastContainer" class="position-fixed" style="top: 20px; right: 20px; z-index: 1060;"></div>
     
+    <!-- Top Save Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0"><i class="fas fa-paint-brush mr-2 text-primary"></i>Branding Settings</h4>
+            <small class="text-muted">Customize your platform's appearance</small>
+        </div>
+        <button type="button" class="btn btn-primary btn-lg" wire:click="saveBranding" wire:loading.attr="disabled">
+            <span wire:loading.remove wire:target="saveBranding">
+                <i class="fas fa-save mr-2"></i>Save Branding Settings
+            </span>
+            <span wire:loading wire:target="saveBranding">
+                <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
+            </span>
+        </button>
+    </div>
+    
     <div class="row">
         <!-- Left Column: Logos & Colors -->
         <div class="col-lg-8">
@@ -404,24 +420,24 @@
                         <div class="col-md-4 mb-3">
                             <label class="font-weight-bold">Primary Color</label>
                             <div class="input-group">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.color_primary" style="height: 38px; padding: 2px; width: 50px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.color_primary" placeholder="#007bff">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.color_primary" style="height: 38px; padding: 2px; width: 50px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.color_primary" placeholder="#007bff">
                             </div>
                             <small class="text-muted">Main brand color for buttons, links</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="font-weight-bold">Secondary Color</label>
                             <div class="input-group">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.color_secondary" style="height: 38px; padding: 2px; width: 50px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.color_secondary" placeholder="#6c757d">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.color_secondary" style="height: 38px; padding: 2px; width: 50px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.color_secondary" placeholder="#6c757d">
                             </div>
                             <small class="text-muted">Secondary actions, muted elements</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="font-weight-bold">Accent Color</label>
                             <div class="input-group">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.color_accent" style="height: 38px; padding: 2px; width: 50px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.color_accent" placeholder="#28a745">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.color_accent" style="height: 38px; padding: 2px; width: 50px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.color_accent" placeholder="#28a745">
                             </div>
                             <small class="text-muted">Highlights, success states</small>
                         </div>
@@ -433,29 +449,29 @@
                         <div class="col-md-3 mb-3">
                             <label>Primary Button</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.button_primary" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.button_primary">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.button_primary" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.button_primary">
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label>Primary Hover</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.button_primary_hover" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.button_primary_hover">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.button_primary_hover" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.button_primary_hover">
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label>Secondary Button</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.button_secondary" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.button_secondary">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.button_secondary" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.button_secondary">
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label>Secondary Hover</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.button_secondary_hover" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.button_secondary_hover">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.button_secondary_hover" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.button_secondary_hover">
                             </div>
                         </div>
                     </div>
@@ -484,29 +500,29 @@
                         <div class="col-md-3 mb-3">
                             <label>Sidebar Background</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.sidebar_bg" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.sidebar_bg">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.sidebar_bg" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.sidebar_bg">
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label>Sidebar Text</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.sidebar_text" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.sidebar_text">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.sidebar_text" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.sidebar_text">
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label>Sidebar Hover</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.sidebar_hover" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.sidebar_hover">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.sidebar_hover" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.sidebar_hover">
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label>Sidebar Active</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.sidebar_active" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.sidebar_active">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.sidebar_active" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.sidebar_active">
                             </div>
                         </div>
                     </div>
@@ -514,22 +530,22 @@
                         <div class="col-md-4 mb-3">
                             <label>Navbar Background</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.navbar_bg" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.navbar_bg">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.navbar_bg" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.navbar_bg">
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Navbar Text</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.navbar_text" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.navbar_text">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.navbar_text" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.navbar_text">
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label>Content Background</label>
                             <div class="input-group input-group-sm">
-                                <input type="color" class="form-control form-control-color" wire:model.lazy="branding.content_bg" style="height: 31px; padding: 2px; width: 40px;">
-                                <input type="text" class="form-control" wire:model.lazy="branding.content_bg">
+                                <input type="color" class="form-control form-control-color" wire:model.blur="branding.content_bg" style="height: 31px; padding: 2px; width: 40px;">
+                                <input type="text" class="form-control" wire:model.blur="branding.content_bg">
                             </div>
                         </div>
                     </div>
@@ -624,16 +640,16 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label>Platform Name</label>
-                        <input type="text" class="form-control" wire:model.lazy="branding.platform_name" placeholder="My Agency Portal">
+                        <input type="text" class="form-control" wire:model.blur="branding.platform_name" placeholder="My Agency Portal">
                         <small class="text-muted">Displayed in browser title and header</small>
                     </div>
                     <div class="form-group">
                         <label>Company Name</label>
-                        <input type="text" class="form-control" wire:model.lazy="branding.company_name" placeholder="My Agency Inc.">
+                        <input type="text" class="form-control" wire:model.blur="branding.company_name" placeholder="My Agency Inc.">
                     </div>
                     <div class="form-group mb-0">
                         <label>Tagline</label>
-                        <input type="text" class="form-control" wire:model.lazy="branding.tagline" placeholder="Your trusted partner">
+                        <input type="text" class="form-control" wire:model.blur="branding.tagline" placeholder="Your trusted partner">
                     </div>
                 </div>
             </div>
@@ -646,7 +662,7 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label>Invoice Template</label>
-                        <select class="form-control" wire:model.lazy="branding.invoice_template">
+                        <select class="form-control" wire:model.blur="branding.invoice_template">
                             <option value="default">Default</option>
                             <option value="modern">Modern</option>
                             <option value="minimal">Minimal</option>
@@ -655,7 +671,7 @@
                     </div>
                     <div class="form-group mb-0">
                         <label>Custom Domain</label>
-                        <input type="text" class="form-control" wire:model.lazy="branding.custom_domain" placeholder="portal.yourcompany.com">
+                        <input type="text" class="form-control" wire:model.blur="branding.custom_domain" placeholder="portal.yourcompany.com">
                         <small class="text-muted">Configure DNS CNAME to point to this server</small>
                     </div>
                 </div>
@@ -669,25 +685,25 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label>Header HTML <small class="text-muted">(inside &lt;head&gt;)</small></label>
-                        <textarea class="form-control" rows="3" wire:model.lazy="branding.site_header_html" placeholder="Analytics, meta tags, verification codes..."></textarea>
+                        <textarea class="form-control" rows="3" wire:model.blur="branding.site_header_html" placeholder="Analytics, meta tags, verification codes..."></textarea>
                     </div>
                     <div class="form-group">
                         <label>Footer HTML <small class="text-muted">(before &lt;/body&gt;)</small></label>
-                        <textarea class="form-control" rows="3" wire:model.lazy="branding.site_footer_html" placeholder="Chat widgets, tracking scripts..."></textarea>
+                        <textarea class="form-control" rows="3" wire:model.blur="branding.site_footer_html" placeholder="Chat widgets, tracking scripts..."></textarea>
                     </div>
                     <div class="form-group">
                         <label>Custom CSS</label>
-                        <textarea class="form-control font-monospace" rows="4" wire:model.lazy="branding.custom_css" placeholder=".my-class { color: red; }" style="font-family: monospace; font-size: 12px;"></textarea>
+                        <textarea class="form-control font-monospace" rows="4" wire:model.blur="branding.custom_css" placeholder=".my-class { color: red; }" style="font-family: monospace; font-size: 12px;"></textarea>
                         <small class="text-muted">Advanced: Add custom CSS overrides</small>
                     </div>
                     <hr>
                     <div class="form-group">
                         <label>Email Header HTML</label>
-                        <textarea class="form-control" rows="2" wire:model.lazy="branding.email_header_html" placeholder="Custom email header..."></textarea>
+                        <textarea class="form-control" rows="2" wire:model.blur="branding.email_header_html" placeholder="Custom email header..."></textarea>
                     </div>
                     <div class="form-group mb-0">
                         <label>Email Footer HTML</label>
-                        <textarea class="form-control" rows="2" wire:model.lazy="branding.email_footer_html" placeholder="Custom email footer, legal text..."></textarea>
+                        <textarea class="form-control" rows="2" wire:model.blur="branding.email_footer_html" placeholder="Custom email footer, legal text..."></textarea>
                     </div>
                 </div>
             </div>
@@ -815,13 +831,15 @@
             }, 5000);
         }
 
-        // Listen for Livewire browser events
-        window.addEventListener('image-uploaded', function(event) {
-            showUploadToast(event.detail.type, event.detail.message, true);
-        });
+        // Listen for Livewire 3 events
+        document.addEventListener('livewire:init', function() {
+            Livewire.on('image-uploaded', function(data) {
+                showUploadToast(data.type, data.message, true);
+            });
 
-        window.addEventListener('branding-saved', function(event) {
-            showUploadToast('Branding Settings', event.detail.message, true);
+            Livewire.on('branding-saved', function(data) {
+                showUploadToast('Branding Settings', data.message, true);
+            });
         });
 
         // Auto-hide success alerts after 5 seconds

@@ -924,7 +924,7 @@ class SystemSettings extends Component
 
         app(BrandingService::class)->clearCache();
         session()->flash('success', 'Logo uploaded successfully!');
-        $this->dispatchBrowserEvent('image-uploaded', ['type' => 'Company Logo', 'message' => 'Logo uploaded successfully!']);
+        $this->dispatch('image-uploaded', type: 'Company Logo', message: 'Logo uploaded successfully!');
     }
 
     public function uploadLoginLogo(): void
@@ -947,7 +947,7 @@ class SystemSettings extends Component
 
         app(BrandingService::class)->clearCache();
         session()->flash('success', 'Login logo uploaded successfully!');
-        $this->dispatchBrowserEvent('image-uploaded', ['type' => 'Login Logo', 'message' => 'Login logo uploaded successfully!']);
+        $this->dispatch('image-uploaded', type: 'Login Logo', message: 'Login logo uploaded successfully!');
     }
 
     public function uploadDashboardLogo(): void
@@ -970,7 +970,7 @@ class SystemSettings extends Component
 
         app(BrandingService::class)->clearCache();
         session()->flash('success', 'Dashboard logo uploaded successfully!');
-        $this->dispatchBrowserEvent('image-uploaded', ['type' => 'Dashboard Logo', 'message' => 'Dashboard logo uploaded successfully!']);
+        $this->dispatch('image-uploaded', type: 'Dashboard Logo', message: 'Dashboard logo uploaded successfully!');
     }
 
     public function uploadLoginBackground(): void
@@ -993,7 +993,7 @@ class SystemSettings extends Component
 
         app(BrandingService::class)->clearCache();
         session()->flash('success', 'Login background uploaded successfully!');
-        $this->dispatchBrowserEvent('image-uploaded', ['type' => 'Login Background', 'message' => 'Login background uploaded successfully!']);
+        $this->dispatch('image-uploaded', type: 'Login Background', message: 'Login background uploaded successfully!');
     }
 
     public function uploadFavicon(): void
@@ -1016,7 +1016,7 @@ class SystemSettings extends Component
 
         app(BrandingService::class)->clearCache();
         session()->flash('success', 'Favicon uploaded successfully!');
-        $this->dispatchBrowserEvent('image-uploaded', ['type' => 'Favicon', 'message' => 'Favicon uploaded successfully!']);
+        $this->dispatch('image-uploaded', type: 'Favicon', message: 'Favicon uploaded successfully!');
     }
 
     public function uploadDocumentLogo(): void
@@ -1039,7 +1039,7 @@ class SystemSettings extends Component
 
         app(BrandingService::class)->clearCache();
         session()->flash('success', 'Document logo uploaded successfully!');
-        $this->dispatchBrowserEvent('image-uploaded', ['type' => 'Document Logo', 'message' => 'Document logo uploaded successfully!']);
+        $this->dispatch('image-uploaded', type: 'Document Logo', message: 'Document logo uploaded successfully!');
     }
 
     public function applyColorPreset(string $preset): void
@@ -1139,7 +1139,7 @@ class SystemSettings extends Component
         app(BrandingService::class)->clearCache();
 
         session()->flash('success', 'Branding settings saved successfully!');
-        $this->dispatchBrowserEvent('branding-saved', ['message' => 'Branding settings saved successfully!']);
+        $this->dispatch('branding-saved', message: 'Branding settings saved successfully!');
     }
 
     public function render()

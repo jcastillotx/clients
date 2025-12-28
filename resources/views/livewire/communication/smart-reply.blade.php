@@ -5,8 +5,8 @@
     </div>
     <div class="card-body">
         <div class="text-muted small mb-2">Paste the message you’re replying to, then click Suggest.</div>
-        <textarea class="form-control mb-2" rows="3" wire:model.defer="clientMessage" placeholder="Client message…"></textarea>
-        <textarea class="form-control mb-2" rows="2" wire:model.defer="contextJson" placeholder="Optional context JSON (request/invoice/project)"></textarea>
+        <textarea class="form-control mb-2" rows="3" wire:model="clientMessage" placeholder="Client message…"></textarea>
+        <textarea class="form-control mb-2" rows="2" wire:model="contextJson" placeholder="Optional context JSON (request/invoice/project)"></textarea>
 
         @if($recommendedTone)
             <div class="text-muted small mb-2">Recommended tone: <strong>{{ ucfirst($recommendedTone) }}</strong></div>

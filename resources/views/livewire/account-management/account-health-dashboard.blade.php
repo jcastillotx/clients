@@ -35,11 +35,11 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label class="mb-1">Milestone</label>
-                            <input class="form-control" wire:model.defer="milestoneName" placeholder="e.g. Launch new landing page">
+                            <input class="form-control" wire:model="milestoneName" placeholder="e.g. Launch new landing page">
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Target date</label>
-                            <input type="date" class="form-control" wire:model.defer="milestoneTargetDate">
+                            <input type="date" class="form-control" wire:model="milestoneTargetDate">
                         </div>
                         <button class="btn btn-outline-primary" wire:click="addMilestone"><i class="fas fa-plus mr-1"></i> Add</button>
                     </div>
@@ -54,11 +54,11 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label class="mb-1">Risk factors</label>
-                            <textarea class="form-control" rows="6" wire:model.defer="riskFactorsJson"></textarea>
+                            <textarea class="form-control" rows="6" wire:model="riskFactorsJson"></textarea>
                         </div>
                         <div class="form-group">
                             <label class="mb-1">Opportunities</label>
-                            <textarea class="form-control" rows="6" wire:model.defer="opportunitiesJson"></textarea>
+                            <textarea class="form-control" rows="6" wire:model="opportunitiesJson"></textarea>
                         </div>
                         <button class="btn btn-primary" wire:click="saveAccountHealth"><i class="fas fa-save mr-1"></i> Save</button>
                     </div>

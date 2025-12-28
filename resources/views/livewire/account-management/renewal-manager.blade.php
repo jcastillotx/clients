@@ -51,11 +51,11 @@
             <div class="card-body">
                 <div class="form-group">
                     <label class="mb-1">Stage</label>
-                    <input class="form-control" wire:model.defer="renewalStage" placeholder="e.g. outreach, negotiating, renewed">
+                    <input class="form-control" wire:model="renewalStage" placeholder="e.g. outreach, negotiating, renewed">
                 </div>
                 <div class="form-group">
                     <label class="mb-1">Notes</label>
-                    <textarea class="form-control" rows="4" wire:model.defer="renewalNotes"></textarea>
+                    <textarea class="form-control" rows="4" wire:model="renewalNotes"></textarea>
                 </div>
                 <button class="btn btn-primary" wire:click="save"><i class="fas fa-save mr-1"></i> Save</button>
             </div>

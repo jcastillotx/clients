@@ -168,13 +168,13 @@
                         <div class="form-group">
                             <label class="font-weight-bold">Edit Content (Optional):</label>
                             <p class="small text-muted">You can suggest edits to the content. Staff will review your changes.</p>
-                            <textarea wire:model.defer="editedContent" class="form-control" rows="6"></textarea>
+                            <textarea wire:model="editedContent" class="form-control" rows="6"></textarea>
                         </div>
 
                         <div class="form-group">
                             <label class="font-weight-bold">Your Feedback: <span class="text-danger">*</span></label>
                             <p class="small text-muted">Please explain what changes you'd like to see.</p>
-                            <textarea wire:model.defer="feedbackText"
+                            <textarea wire:model="feedbackText"
                                       class="form-control @error('feedbackText') is-invalid @enderror"
                                       rows="4"
                                       placeholder="E.g., Please make the tone more casual, add a call-to-action, etc."></textarea>
