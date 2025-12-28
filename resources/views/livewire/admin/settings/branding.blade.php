@@ -8,6 +8,25 @@
         <strong>Access Restricted:</strong> Only Super Admins can modify branding settings.
     </div>
 @else
+    <!-- Success/Error Notifications -->
+    @if(session()->has('success'))
+        <div class="alert alert-success alert-dismissible fade show" id="brandingSuccessAlert">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <i class="fas fa-check-circle mr-2"></i>
+            <strong>Success!</strong> {{ session('success') }}
+        </div>
+    @endif
+    @if(session()->has('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <strong>Error!</strong> {{ session('error') }}
+        </div>
+    @endif
+    
+    <!-- Toast Container for Image Uploads -->
+    <div id="uploadToastContainer" class="position-fixed" style="top: 20px; right: 20px; z-index: 1060;"></div>
+    
     <div class="row">
         <!-- Left Column: Logos & Colors -->
         <div class="col-lg-8">
@@ -20,14 +39,17 @@
                     <div class="row">
                         <!-- Company Logo -->
                         <div class="col-md-6 mb-3">
-                            <div class="card card-outline card-secondary h-100 mb-0">
-                                <div class="card-header py-2">
+                            <div class="card card-outline card-secondary h-100 mb-0" wire:loading.class="border-primary" wire:target="logo_upload,uploadLogo">
+                                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Company Logo</h5>
+                                    @if(!empty($branding['logo_path']))
+                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Uploaded</span>
+                                    @endif
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['logo_path']))
-                                        <div class="mb-2 p-2 bg-light rounded text-center">
-                                            <img src="{{ asset('storage/' . $branding['logo_path']) }}" 
+                                        <div class="mb-2 p-2 bg-light rounded text-center position-relative">
+                                            <img src="{{ asset('storage/' . $branding['logo_path']) }}?{{ time() }}" 
                                                 alt="Logo" 
                                                 class="img-thumbnail brand-preview-thumb" 
                                                 style="max-height: 60px; max-width: 100%; cursor: pointer;" 
@@ -36,6 +58,7 @@
                                                 data-image="{{ asset('storage/' . $branding['logo_path']) }}"
                                                 data-title="Company Logo"
                                                 onerror="this.style.display='none'">
+                                            <small class="d-block text-muted mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
                                         <div class="mb-2 p-3 bg-light rounded text-center text-muted">
@@ -43,33 +66,53 @@
                                             <small class="d-block mt-1">No logo uploaded</small>
                                         </div>
                                     @endif
-                                    <div class="custom-file mb-2">
-                                        <input type="file" class="custom-file-input" id="logoUpload" wire:model="logo_upload" accept="image/*">
-                                        <label class="custom-file-label" for="logoUpload">
-                                            {{ $logo_upload ? $logo_upload->getClientOriginalName() : 'Choose file...' }}
-                                        </label>
+                                    
+                                    <div class="input-group mb-2">
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="logoUpload" wire:model="logo_upload" accept="image/*">
+                                            <label class="custom-file-label" for="logoUpload">
+                                                @if($logo_upload)
+                                                    {{ $logo_upload->getClientOriginalName() }}
+                                                @else
+                                                    Choose file...
+                                                @endif
+                                            </label>
+                                        </div>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" wire:click="uploadLogo" wire:loading.attr="disabled" wire:target="logo_upload,uploadLogo" @if(!$logo_upload) disabled @endif>
+                                                <span wire:loading.remove wire:target="logo_upload,uploadLogo"><i class="fas fa-upload"></i></span>
+                                                <span wire:loading wire:target="logo_upload,uploadLogo"><i class="fas fa-spinner fa-spin"></i></span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB</small>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLogo" wire:loading.attr="disabled" wire:target="logo_upload,uploadLogo">
-                                        <span wire:loading.remove wire:target="logo_upload,uploadLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
-                                        <span wire:loading wire:target="logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading...</span>
-                                        <span wire:loading wire:target="uploadLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
-                                    </button>
-                                    @error('logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                                    <small class="text-muted">PNG/JPG/WEBP/SVG up to 2MB</small>
+                                    
+                                    <!-- Upload Progress -->
+                                    <div wire:loading wire:target="logo_upload" class="mt-2">
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
+                                        </div>
+                                        <small class="text-primary">Uploading file...</small>
+                                    </div>
+                                    
+                                    @error('logo') <div class="alert alert-danger mt-2 py-1 px-2 mb-0"><small>{{ $message }}</small></div> @enderror
                                 </div>
                             </div>
                         </div>
 
                         <!-- Login Logo -->
                         <div class="col-md-6 mb-3">
-                            <div class="card card-outline card-secondary h-100 mb-0">
-                                <div class="card-header py-2">
+                            <div class="card card-outline card-secondary h-100 mb-0" wire:loading.class="border-primary" wire:target="login_logo_upload,uploadLoginLogo">
+                                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Login Page Logo</h5>
+                                    @if(!empty($branding['login_logo_path']))
+                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Uploaded</span>
+                                    @endif
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['login_logo_path']))
                                         <div class="mb-2 p-2 bg-light rounded text-center">
-                                            <img src="{{ asset('storage/' . $branding['login_logo_path']) }}" 
+                                            <img src="{{ asset('storage/' . $branding['login_logo_path']) }}?{{ time() }}" 
                                                 alt="Login Logo" 
                                                 class="img-thumbnail brand-preview-thumb" 
                                                 style="max-height: 60px; max-width: 100%; cursor: pointer;" 
@@ -78,6 +121,7 @@
                                                 data-image="{{ asset('storage/' . $branding['login_logo_path']) }}"
                                                 data-title="Login Page Logo"
                                                 onerror="this.style.display='none'">
+                                            <small class="d-block text-muted mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
                                         <div class="mb-2 p-3 bg-light rounded text-center text-muted">
@@ -85,33 +129,48 @@
                                             <small class="d-block mt-1">Uses main logo</small>
                                         </div>
                                     @endif
-                                    <div class="custom-file mb-2">
-                                        <input type="file" class="custom-file-input" id="loginLogoUpload" wire:model="login_logo_upload" accept="image/*">
-                                        <label class="custom-file-label" for="loginLogoUpload">
-                                            {{ $login_logo_upload ? $login_logo_upload->getClientOriginalName() : 'Choose file...' }}
-                                        </label>
+                                    
+                                    <div class="input-group mb-2">
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="loginLogoUpload" wire:model="login_logo_upload" accept="image/*">
+                                            <label class="custom-file-label" for="loginLogoUpload">
+                                                {{ $login_logo_upload ? $login_logo_upload->getClientOriginalName() : 'Choose file...' }}
+                                            </label>
+                                        </div>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" wire:click="uploadLoginLogo" wire:loading.attr="disabled" wire:target="login_logo_upload,uploadLoginLogo" @if(!$login_logo_upload) disabled @endif>
+                                                <span wire:loading.remove wire:target="login_logo_upload,uploadLoginLogo"><i class="fas fa-upload"></i></span>
+                                                <span wire:loading wire:target="login_logo_upload,uploadLoginLogo"><i class="fas fa-spinner fa-spin"></i></span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB</small>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLoginLogo" wire:loading.attr="disabled" wire:target="login_logo_upload,uploadLoginLogo">
-                                        <span wire:loading.remove wire:target="login_logo_upload,uploadLoginLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
-                                        <span wire:loading wire:target="login_logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading...</span>
-                                        <span wire:loading wire:target="uploadLoginLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
-                                    </button>
-                                    @error('login_logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                                    <small class="text-muted">PNG/JPG/WEBP/SVG up to 2MB</small>
+                                    
+                                    <div wire:loading wire:target="login_logo_upload" class="mt-2">
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
+                                        </div>
+                                        <small class="text-primary">Uploading file...</small>
+                                    </div>
+                                    
+                                    @error('login_logo') <div class="alert alert-danger mt-2 py-1 px-2 mb-0"><small>{{ $message }}</small></div> @enderror
                                 </div>
                             </div>
                         </div>
 
                         <!-- Dashboard Logo -->
                         <div class="col-md-6 mb-3">
-                            <div class="card card-outline card-secondary h-100 mb-0">
-                                <div class="card-header py-2">
+                            <div class="card card-outline card-secondary h-100 mb-0" wire:loading.class="border-primary" wire:target="dashboard_logo_upload,uploadDashboardLogo">
+                                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Sidebar/Dashboard Logo</h5>
+                                    @if(!empty($branding['dashboard_logo_path']))
+                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Uploaded</span>
+                                    @endif
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['dashboard_logo_path']))
                                         <div class="mb-2 p-2 bg-dark rounded text-center">
-                                            <img src="{{ asset('storage/' . $branding['dashboard_logo_path']) }}" 
+                                            <img src="{{ asset('storage/' . $branding['dashboard_logo_path']) }}?{{ time() }}" 
                                                 alt="Dashboard Logo" 
                                                 class="img-thumbnail brand-preview-thumb" 
                                                 style="max-height: 40px; max-width: 100%; cursor: pointer; background: transparent; border: none;" 
@@ -120,6 +179,7 @@
                                                 data-image="{{ asset('storage/' . $branding['dashboard_logo_path']) }}"
                                                 data-title="Sidebar/Dashboard Logo"
                                                 onerror="this.style.display='none'">
+                                            <small class="d-block text-white-50 mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
                                         <div class="mb-2 p-3 bg-dark rounded text-center text-white-50">
@@ -127,28 +187,43 @@
                                             <small class="d-block mt-1">Uses main logo</small>
                                         </div>
                                     @endif
-                                    <div class="custom-file mb-2">
-                                        <input type="file" class="custom-file-input" id="dashboardLogoUpload" wire:model="dashboard_logo_upload" accept="image/*">
-                                        <label class="custom-file-label" for="dashboardLogoUpload">
-                                            {{ $dashboard_logo_upload ? $dashboard_logo_upload->getClientOriginalName() : 'Choose file...' }}
-                                        </label>
+                                    
+                                    <div class="input-group mb-2">
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="dashboardLogoUpload" wire:model="dashboard_logo_upload" accept="image/*">
+                                            <label class="custom-file-label" for="dashboardLogoUpload">
+                                                {{ $dashboard_logo_upload ? $dashboard_logo_upload->getClientOriginalName() : 'Choose file...' }}
+                                            </label>
+                                        </div>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" wire:click="uploadDashboardLogo" wire:loading.attr="disabled" wire:target="dashboard_logo_upload,uploadDashboardLogo" @if(!$dashboard_logo_upload) disabled @endif>
+                                                <span wire:loading.remove wire:target="dashboard_logo_upload,uploadDashboardLogo"><i class="fas fa-upload"></i></span>
+                                                <span wire:loading wire:target="dashboard_logo_upload,uploadDashboardLogo"><i class="fas fa-spinner fa-spin"></i></span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB</small>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadDashboardLogo" wire:loading.attr="disabled" wire:target="dashboard_logo_upload,uploadDashboardLogo">
-                                        <span wire:loading.remove wire:target="dashboard_logo_upload,uploadDashboardLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
-                                        <span wire:loading wire:target="dashboard_logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading...</span>
-                                        <span wire:loading wire:target="uploadDashboardLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
-                                    </button>
-                                    @error('dashboard_logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                                    <small class="text-muted">PNG/JPG/WEBP/SVG up to 2MB</small>
+                                    
+                                    <div wire:loading wire:target="dashboard_logo_upload" class="mt-2">
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
+                                        </div>
+                                        <small class="text-primary">Uploading file...</small>
+                                    </div>
+                                    
+                                    @error('dashboard_logo') <div class="alert alert-danger mt-2 py-1 px-2 mb-0"><small>{{ $message }}</small></div> @enderror
                                 </div>
                             </div>
                         </div>
 
                         <!-- Login Background -->
                         <div class="col-md-6 mb-3">
-                            <div class="card card-outline card-secondary h-100 mb-0">
-                                <div class="card-header py-2">
+                            <div class="card card-outline card-secondary h-100 mb-0" wire:loading.class="border-primary" wire:target="login_background_upload,uploadLoginBackground">
+                                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Login Background</h5>
+                                    @if(!empty($branding['login_background_path']))
+                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Uploaded</span>
+                                    @endif
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['login_background_path']))
@@ -157,7 +232,7 @@
                                             data-target="#imagePreviewModal"
                                             data-image="{{ asset('storage/' . $branding['login_background_path']) }}"
                                             data-title="Login Background">
-                                            <img src="{{ asset('storage/' . $branding['login_background_path']) }}" 
+                                            <img src="{{ asset('storage/' . $branding['login_background_path']) }}?{{ time() }}" 
                                                 alt="Login Background" 
                                                 style="width: 100%; height: 100%; object-fit: cover;" 
                                                 onerror="this.parentElement.style.display='none'">
@@ -171,33 +246,48 @@
                                             <small class="d-block mt-1">No background</small>
                                         </div>
                                     @endif
-                                    <div class="custom-file mb-2">
-                                        <input type="file" class="custom-file-input" id="loginBgUpload" wire:model="login_background_upload" accept="image/*">
-                                        <label class="custom-file-label" for="loginBgUpload">
-                                            {{ $login_background_upload ? $login_background_upload->getClientOriginalName() : 'Choose file...' }}
-                                        </label>
+                                    
+                                    <div class="input-group mb-2">
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="loginBgUpload" wire:model="login_background_upload" accept="image/*">
+                                            <label class="custom-file-label" for="loginBgUpload">
+                                                {{ $login_background_upload ? $login_background_upload->getClientOriginalName() : 'Choose file...' }}
+                                            </label>
+                                        </div>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" wire:click="uploadLoginBackground" wire:loading.attr="disabled" wire:target="login_background_upload,uploadLoginBackground" @if(!$login_background_upload) disabled @endif>
+                                                <span wire:loading.remove wire:target="login_background_upload,uploadLoginBackground"><i class="fas fa-upload"></i></span>
+                                                <span wire:loading wire:target="login_background_upload,uploadLoginBackground"><i class="fas fa-spinner fa-spin"></i></span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <small class="text-muted d-block mb-2">PNG/JPG/WEBP up to 5MB</small>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLoginBackground" wire:loading.attr="disabled" wire:target="login_background_upload,uploadLoginBackground">
-                                        <span wire:loading.remove wire:target="login_background_upload,uploadLoginBackground"><i class="fas fa-upload mr-1"></i> Upload</span>
-                                        <span wire:loading wire:target="login_background_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading...</span>
-                                        <span wire:loading wire:target="uploadLoginBackground"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
-                                    </button>
-                                    @error('bg') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                                    <small class="text-muted">PNG/JPG/WEBP up to 5MB</small>
+                                    
+                                    <div wire:loading wire:target="login_background_upload" class="mt-2">
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
+                                        </div>
+                                        <small class="text-primary">Uploading file...</small>
+                                    </div>
+                                    
+                                    @error('bg') <div class="alert alert-danger mt-2 py-1 px-2 mb-0"><small>{{ $message }}</small></div> @enderror
                                 </div>
                             </div>
                         </div>
 
                         <!-- Favicon -->
                         <div class="col-md-6 mb-3">
-                            <div class="card card-outline card-secondary h-100 mb-0">
-                                <div class="card-header py-2">
+                            <div class="card card-outline card-secondary h-100 mb-0" wire:loading.class="border-primary" wire:target="favicon_upload,uploadFavicon">
+                                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Favicon</h5>
+                                    @if(!empty($branding['favicon_path']))
+                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Uploaded</span>
+                                    @endif
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['favicon_path']))
                                         <div class="mb-2 p-2 bg-light rounded text-center">
-                                            <img src="{{ asset('storage/' . $branding['favicon_path']) }}" 
+                                            <img src="{{ asset('storage/' . $branding['favicon_path']) }}?{{ time() }}" 
                                                 alt="Favicon" 
                                                 class="img-thumbnail brand-preview-thumb" 
                                                 style="max-height: 32px; max-width: 32px; cursor: pointer;" 
@@ -206,6 +296,7 @@
                                                 data-image="{{ asset('storage/' . $branding['favicon_path']) }}"
                                                 data-title="Favicon"
                                                 onerror="this.style.display='none'">
+                                            <small class="d-block text-muted mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
                                         <div class="mb-2 p-3 bg-light rounded text-center text-muted">
@@ -213,33 +304,48 @@
                                             <small class="d-block mt-1">Default favicon</small>
                                         </div>
                                     @endif
-                                    <div class="custom-file mb-2">
-                                        <input type="file" class="custom-file-input" id="faviconUpload" wire:model="favicon_upload" accept="image/*,.ico">
-                                        <label class="custom-file-label" for="faviconUpload">
-                                            {{ $favicon_upload ? $favicon_upload->getClientOriginalName() : 'Choose file...' }}
-                                        </label>
+                                    
+                                    <div class="input-group mb-2">
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="faviconUpload" wire:model="favicon_upload" accept="image/*,.ico">
+                                            <label class="custom-file-label" for="faviconUpload">
+                                                {{ $favicon_upload ? $favicon_upload->getClientOriginalName() : 'Choose file...' }}
+                                            </label>
+                                        </div>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" wire:click="uploadFavicon" wire:loading.attr="disabled" wire:target="favicon_upload,uploadFavicon" @if(!$favicon_upload) disabled @endif>
+                                                <span wire:loading.remove wire:target="favicon_upload,uploadFavicon"><i class="fas fa-upload"></i></span>
+                                                <span wire:loading wire:target="favicon_upload,uploadFavicon"><i class="fas fa-spinner fa-spin"></i></span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <small class="text-muted d-block mb-2">ICO/PNG 32x32 or 64x64</small>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadFavicon" wire:loading.attr="disabled" wire:target="favicon_upload,uploadFavicon">
-                                        <span wire:loading.remove wire:target="favicon_upload,uploadFavicon"><i class="fas fa-upload mr-1"></i> Upload</span>
-                                        <span wire:loading wire:target="favicon_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading...</span>
-                                        <span wire:loading wire:target="uploadFavicon"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
-                                    </button>
-                                    @error('favicon') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                                    <small class="text-muted">ICO/PNG 32x32 or 64x64</small>
+                                    
+                                    <div wire:loading wire:target="favicon_upload" class="mt-2">
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
+                                        </div>
+                                        <small class="text-primary">Uploading file...</small>
+                                    </div>
+                                    
+                                    @error('favicon') <div class="alert alert-danger mt-2 py-1 px-2 mb-0"><small>{{ $message }}</small></div> @enderror
                                 </div>
                             </div>
                         </div>
 
                         <!-- Document Logo -->
                         <div class="col-md-6 mb-3">
-                            <div class="card card-outline card-secondary h-100 mb-0">
-                                <div class="card-header py-2">
+                            <div class="card card-outline card-secondary h-100 mb-0" wire:loading.class="border-primary" wire:target="document_logo_upload,uploadDocumentLogo">
+                                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">Document/Invoice Logo</h5>
+                                    @if(!empty($branding['document_logo_path']))
+                                        <span class="badge badge-success"><i class="fas fa-check mr-1"></i>Uploaded</span>
+                                    @endif
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['document_logo_path']))
                                         <div class="mb-2 p-2 bg-white border rounded text-center">
-                                            <img src="{{ asset('storage/' . $branding['document_logo_path']) }}" 
+                                            <img src="{{ asset('storage/' . $branding['document_logo_path']) }}?{{ time() }}" 
                                                 alt="Document Logo" 
                                                 class="img-thumbnail brand-preview-thumb" 
                                                 style="max-height: 50px; max-width: 100%; cursor: pointer; border: none;" 
@@ -248,6 +354,7 @@
                                                 data-image="{{ asset('storage/' . $branding['document_logo_path']) }}"
                                                 data-title="Document/Invoice Logo"
                                                 onerror="this.style.display='none'">
+                                            <small class="d-block text-muted mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
                                         <div class="mb-2 p-3 bg-light rounded text-center text-muted">
@@ -255,19 +362,31 @@
                                             <small class="d-block mt-1">Uses main logo</small>
                                         </div>
                                     @endif
-                                    <div class="custom-file mb-2">
-                                        <input type="file" class="custom-file-input" id="documentLogoUpload" wire:model="document_logo_upload" accept="image/*">
-                                        <label class="custom-file-label" for="documentLogoUpload">
-                                            {{ $document_logo_upload ? $document_logo_upload->getClientOriginalName() : 'Choose file...' }}
-                                        </label>
+                                    
+                                    <div class="input-group mb-2">
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="documentLogoUpload" wire:model="document_logo_upload" accept="image/*">
+                                            <label class="custom-file-label" for="documentLogoUpload">
+                                                {{ $document_logo_upload ? $document_logo_upload->getClientOriginalName() : 'Choose file...' }}
+                                            </label>
+                                        </div>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-primary" wire:click="uploadDocumentLogo" wire:loading.attr="disabled" wire:target="document_logo_upload,uploadDocumentLogo" @if(!$document_logo_upload) disabled @endif>
+                                                <span wire:loading.remove wire:target="document_logo_upload,uploadDocumentLogo"><i class="fas fa-upload"></i></span>
+                                                <span wire:loading wire:target="document_logo_upload,uploadDocumentLogo"><i class="fas fa-spinner fa-spin"></i></span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <small class="text-muted d-block mb-2">PNG/JPG for invoices & documents</small>
-                                    <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadDocumentLogo" wire:loading.attr="disabled" wire:target="document_logo_upload,uploadDocumentLogo">
-                                        <span wire:loading.remove wire:target="document_logo_upload,uploadDocumentLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
-                                        <span wire:loading wire:target="document_logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading...</span>
-                                        <span wire:loading wire:target="uploadDocumentLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving...</span>
-                                    </button>
-                                    @error('document_logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                                    <small class="text-muted">PNG/JPG for invoices & documents</small>
+                                    
+                                    <div wire:loading wire:target="document_logo_upload" class="mt-2">
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 100%"></div>
+                                        </div>
+                                        <small class="text-primary">Uploading file...</small>
+                                    </div>
+                                    
+                                    @error('document_logo') <div class="alert alert-danger mt-2 py-1 px-2 mb-0"><small>{{ $message }}</small></div> @enderror
                                 </div>
                             </div>
                         </div>
@@ -588,20 +707,22 @@
     <!-- Save Actions Bar -->
     <div class="row mt-4">
         <div class="col-12">
-            <div class="card card-outline card-primary">
-                <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
+            <div class="callout callout-info">
+                <div class="d-flex flex-wrap align-items-center justify-content-between">
                     <div class="mb-2 mb-md-0">
-                        <h5 class="mb-1"><i class="fas fa-save mr-2 text-primary"></i>Save Your Changes</h5>
-                        <p class="text-muted mb-0 small">Click the button to apply your branding settings across the platform.</p>
+                        <h5 class="mb-1"><i class="fas fa-save mr-2"></i>Save Your Changes</h5>
+                        <p class="text-muted mb-0">Click the button to apply your branding settings across the platform.</p>
                     </div>
-                    <button type="button" class="btn btn-primary btn-lg" wire:click="saveBranding" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="saveBranding">
-                            <i class="fas fa-save mr-2"></i>Save Branding Settings
-                        </span>
-                        <span wire:loading wire:target="saveBranding">
-                            <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
-                        </span>
-                    </button>
+                    <div>
+                        <button type="button" class="btn btn-primary btn-lg px-5" wire:click="saveBranding" wire:loading.attr="disabled" wire:loading.class="disabled">
+                            <span wire:loading.remove wire:target="saveBranding">
+                                <i class="fas fa-save mr-2"></i>Save Branding Settings
+                            </span>
+                            <span wire:loading wire:target="saveBranding">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -655,6 +776,62 @@
                     label.textContent = fileName;
                 }
             });
+        });
+
+        // Toast notification for image uploads
+        function showUploadToast(type, message, isSuccess = true) {
+            var container = document.getElementById('uploadToastContainer');
+            if (!container) return;
+            
+            var toastId = 'toast-' + Date.now();
+            var bgClass = isSuccess ? 'bg-success' : 'bg-danger';
+            var icon = isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            var toastHtml = `
+                <div id="${toastId}" class="toast show ${bgClass} text-white" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 300px;">
+                    <div class="toast-header ${bgClass} text-white">
+                        <i class="fas ${icon} mr-2"></i>
+                        <strong class="mr-auto">${type}</strong>
+                        <small class="text-white-50">just now</small>
+                        <button type="button" class="ml-2 mb-1 close text-white" data-dismiss="toast" aria-label="Close" onclick="this.closest('.toast').remove()">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="toast-body">
+                        <i class="fas fa-check mr-2"></i>${message}
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', toastHtml);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(function() {
+                var toast = document.getElementById(toastId);
+                if (toast) {
+                    toast.classList.remove('show');
+                    setTimeout(function() { toast.remove(); }, 300);
+                }
+            }, 5000);
+        }
+
+        // Listen for Livewire browser events
+        window.addEventListener('image-uploaded', function(event) {
+            showUploadToast(event.detail.type, event.detail.message, true);
+        });
+
+        window.addEventListener('branding-saved', function(event) {
+            showUploadToast('Branding Settings', event.detail.message, true);
+        });
+
+        // Auto-hide success alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            var successAlert = document.getElementById('brandingSuccessAlert');
+            if (successAlert) {
+                setTimeout(function() {
+                    $(successAlert).alert('close');
+                }, 5000);
+            }
         });
     </script>
     @endpush
