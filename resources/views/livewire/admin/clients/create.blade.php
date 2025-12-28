@@ -102,6 +102,58 @@
                         </label>
                         <div class="form-hint">If disabled, a temporary password will be emailed.</div>
                     </div>
+
+                    <div class="col-12">
+                        <hr class="my-2">
+                        <div class="fw-semibold mb-2">Services & Features</div>
+                        <div class="form-hint mb-3">Select which services this client has access to. These are in addition to tier-based features.</div>
+                        
+                        @php
+                            $categories = [
+                                'core' => 'Core Features',
+                                'brand_monitoring' => 'Brand Monitoring',
+                                'ai' => 'AI Features',
+                                'advanced' => 'Advanced Features',
+                                'collaboration' => 'Collaboration',
+                                'research' => 'Research & Consultation',
+                            ];
+                        @endphp
+
+                        <div class="row g-3">
+                            @foreach($categories as $categoryKey => $categoryLabel)
+                                @if(isset($servicesByCategory[$categoryKey]))
+                                    <div class="col-12 col-md-6 col-lg-4">
+                                        <div class="card">
+                                            <div class="card-header py-2">
+                                                <h4 class="card-title mb-0">{{ $categoryLabel }}</h4>
+                                            </div>
+                                            <div class="card-body py-2">
+                                                @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
+                                                    @php
+                                                        $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
+                                                    @endphp
+                                                    <label class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                            wire:model.live="selectedServices" 
+                                                            value="{{ $serviceKey }}"
+                                                            @if($tierIncludes) checked disabled title="Included in {{ ucfirst($tier) }} tier" @endif>
+                                                        <span class="form-check-label">
+                                                            {{ $service['name'] }}
+                                                            @if($tierIncludes)
+                                                                <span class="badge bg-info ms-1" title="Included in tier">Tier</span>
+                                                            @endif
+                                                        </span>
+                                                        <div class="text-muted small">{{ $service['description'] }}</div>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                        @error('selectedServices') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                    </div>
                 </div>
             </div>
 

@@ -41,8 +41,12 @@ class ClientCreate extends Component
 
     public bool $sendPasswordSetLink = true;
 
+    public array $selectedServices = [];
+
     protected function rules(): array
     {
+        $availableFeatures = array_keys(config('features.available', []));
+
         return [
             'company_name' => ['required', 'string', 'max:255'],
             'contact_name' => ['required', 'string', 'max:255'],
@@ -64,6 +68,8 @@ class ClientCreate extends Component
             'stripe_customer_id' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'sendPasswordSetLink' => ['boolean'],
+            'selectedServices' => ['array'],
+            'selectedServices.*' => [Rule::in($availableFeatures)],
         ];
     }
 
@@ -90,6 +96,7 @@ class ClientCreate extends Component
             'status' => $data['status'],
             'stripe_customer_id' => $data['stripe_customer_id'],
             'notes' => $data['notes'],
+            'enabled_features' => $data['selectedServices'],
         ]);
 
         // Create the primary client user
@@ -132,9 +139,15 @@ class ClientCreate extends Component
 
     public function render()
     {
+        $availableServices = config('features.available', []);
+        $servicesByCategory = collect($availableServices)->groupBy('category');
+
         return view('livewire.admin.clients.create', [
             'tiers' => ['basic' => 'Basic', 'standard' => 'Standard', 'premium' => 'Premium', 'enterprise' => 'Enterprise'],
             'statuses' => ['active' => 'Active', 'inactive' => 'Inactive', 'pending' => 'Pending', 'suspended' => 'Suspended'],
+            'availableServices' => $availableServices,
+            'servicesByCategory' => $servicesByCategory,
+            'tierFeatures' => config('features.tiers', []),
         ])->layout('layouts.admin', ['title' => 'Add Client']);
     }
 }
