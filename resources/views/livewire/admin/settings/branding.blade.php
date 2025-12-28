@@ -28,17 +28,24 @@
     <div id="uploadToastContainer" class="position-fixed" style="top: 20px; right: 20px; z-index: 1060;"></div>
     
     <!-- Top Save Bar -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h4 class="mb-0"><i class="fas fa-paint-brush mr-2 text-primary"></i>Branding Settings</h4>
+            <h4 class="mb-0"><i class="fas fa-paint-brush mr-2 text-muted"></i>Branding Settings</h4>
             <small class="text-muted">Customize your platform's appearance</small>
         </div>
-        <button type="button" class="btn btn-primary btn-lg" wire:click="saveBranding" wire:loading.attr="disabled">
+        <button type="button" wire:click="saveBranding" wire:loading.attr="disabled" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors flex items-center gap-2">
             <span wire:loading.remove wire:target="saveBranding">
-                <i class="fas fa-save mr-2"></i>Save Branding Settings
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                </svg>
+                Save Branding Settings
             </span>
             <span wire:loading wire:target="saveBranding">
-                <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
             </span>
         </button>
     </div>
@@ -720,28 +727,23 @@
         </div>
     </div>
 
-    <!-- Save Actions Bar -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="callout callout-info">
-                <div class="d-flex flex-wrap align-items-center justify-content-between">
-                    <div class="mb-2 mb-md-0">
-                        <h5 class="mb-1"><i class="fas fa-save mr-2"></i>Save Your Changes</h5>
-                        <p class="text-muted mb-0">Click the button to apply your branding settings across the platform.</p>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-primary btn-lg px-5" wire:click="saveBranding" wire:loading.attr="disabled" wire:loading.class="disabled">
-                            <span wire:loading.remove wire:target="saveBranding">
-                                <i class="fas fa-save mr-2"></i>Save Branding Settings
-                            </span>
-                            <span wire:loading wire:target="saveBranding">
-                                <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- Save Button - Matching other tabs style -->
+    <div class="mt-6">
+        <button type="button" wire:click="saveBranding" wire:loading.attr="disabled" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors flex items-center gap-2">
+            <span wire:loading.remove wire:target="saveBranding">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                </svg>
+                Save Branding Settings
+            </span>
+            <span wire:loading wire:target="saveBranding">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+            </span>
+        </button>
     </div>
 
     <!-- Image Preview Modal -->
