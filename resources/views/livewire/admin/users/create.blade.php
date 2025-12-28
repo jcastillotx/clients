@@ -16,32 +16,32 @@
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
                         <label class="form-label">Name *</label>
-                        <input type="text" class="form-control" wire:model.live.debounce.350ms="name">
-                        @error('name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        <input wire:model.live.debounce.350ms="name" type="text" class="form-control">
+                        @error('name') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-12 col-md-6">
                         <label class="form-label">Email *</label>
-                        <input type="email" class="form-control" wire:model.live.debounce.350ms="email">
-                        @error('email') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        <input wire:model.live.debounce.350ms="email" type="email" class="form-control">
+                        @error('email') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="col-12 col-md-6">
                         <label class="form-label">Role *</label>
-                        <select class="form-select" wire:model.live="role">
+                        <select wire:model.live="role" class="form-select">
                             @foreach($roles as $r)
                                 <option value="{{ $r }}">{{ str_replace('_', ' ', ucfirst($r)) }}</option>
                             @endforeach
                         </select>
-                        @error('role') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        @error('role') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-12 col-md-6">
-                        <label class="form-label">Account status</label>
-                        <select class="form-select" wire:model.live="status">
+                        <label class="form-label">Status</label>
+                        <select wire:model.live="status" class="form-select">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                             <option value="suspended">Suspended</option>
                         </select>
-                        @error('status') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        @error('status') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                     </div>
 
                     @if($role === 'client')
@@ -60,29 +60,29 @@
                         @if(!$createNewClient)
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Existing client *</label>
-                                <select class="form-select" wire:model.live="client_id">
+                                <select wire:model.live="client_id" class="form-select">
                                     <option value="">Select a client…</option>
                                     @foreach($clients as $c)
                                         <option value="{{ $c->id }}">{{ $c->company_name }}</option>
                                     @endforeach
                                 </select>
-                                @error('client_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                @error('client_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                         @else
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Company name *</label>
-                                <input type="text" class="form-control" wire:model.live.debounce.350ms="client_company_name">
-                                @error('client_company_name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <input wire:model.live.debounce.350ms="client_company_name" type="text" class="form-control">
+                                @error('client_company_name') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Contact name *</label>
-                                <input type="text" class="form-control" wire:model.live.debounce.350ms="client_contact_name">
-                                @error('client_contact_name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <input wire:model.live.debounce.350ms="client_contact_name" type="text" class="form-control">
+                                @error('client_contact_name') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Client phone</label>
-                                <input type="text" class="form-control" wire:model.live.debounce.350ms="client_phone">
-                                @error('client_phone') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <input wire:model.live.debounce.350ms="client_phone" type="text" class="form-control">
+                                @error('client_phone') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                         @endif
                     @endif
@@ -95,7 +95,7 @@
 
                         <div class="col-12 col-md-6">
                             <label class="form-label">Assignment role</label>
-                            <select class="form-select" wire:model.live="staffAssignmentRole">
+                            <select wire:model.live="staffAssignmentRole" class="form-select">
                                 <option value="account_manager">Account manager</option>
                                 <option value="project_lead">Project lead</option>
                             </select>
@@ -103,13 +103,13 @@
 
                         <div class="col-12 col-md-6">
                             <label class="form-label">Assigned clients</label>
-                            <select class="form-select" multiple size="6" wire:model.live="assignedClientIds">
+                            <select wire:model.live="assignedClientIds" class="form-select" multiple size="6">
                                 @foreach($clients as $c)
                                     <option value="{{ $c->id }}">{{ $c->company_name }}</option>
                                 @endforeach
                             </select>
                             <div class="form-hint">Staff will only see assigned clients.</div>
-                            @error('assignedClientIds.*') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            @error('assignedClientIds.*') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="col-12">
@@ -128,7 +128,7 @@
                                     </div>
                                 @endforeach
                             </div>
-                            @error('staffPermissions.*') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            @error('staffPermissions.*') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                         </div>
                     @endif
 
