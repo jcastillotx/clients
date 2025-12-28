@@ -18,4 +18,25 @@ return [
     |--------------------------------------------------------------------------
     */
     'view_path' => resource_path('views/livewire'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Layout View
+    |--------------------------------------------------------------------------
+    |
+    | This is the default layout that will be used when rendering Livewire
+    | components. You can override this per component.
+    |
+    */
+    'layout' => 'layouts.app',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lazy Loading
+    |--------------------------------------------------------------------------
+    |
+    | Enable lazy loading for Livewire components.
+    |
+    */
+    'lazy_loading' => true,
 ];
