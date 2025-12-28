@@ -134,11 +134,16 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
+        // Prevent super admins from deleting their own account
+        if ($user->hasRole('super_admin')) {
+            return back()->with('error', 'Super admin accounts cannot be deleted. Please contact another super admin to demote your account first.');
+        }
+
         $request->validate([
             'password' => ['required', 'current_password'],
         ]);
-
-        $user = $request->user();
 
         Auth::logout();
 

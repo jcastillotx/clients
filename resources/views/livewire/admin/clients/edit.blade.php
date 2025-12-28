@@ -1,398 +1,423 @@
-<div class="row justify-content-center">
-    <div class="col-12 col-xl-10">
-        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-            <div>
-                <div class="h2 mb-0">Edit Client</div>
-                <div class="text-muted">{{ $client->company_name }}</div>
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <div>
+                    <h1 class="h3 mb-0">Edit Client</h1>
+                    <p class="text-muted mb-0">{{ $client->company_name }}</p>
+                </div>
+                <div>
+                    <a href="{{ route('admin.clients.show', $client) }}" class="btn btn-outline-secondary mr-2">
+                        <i class="fas fa-arrow-left mr-1"></i> Back
+                    </a>
+                    <button type="button" class="btn btn-outline-warning" wire:click="sendPasswordReset">
+                        <i class="fas fa-key mr-1"></i> Send Password Reset
+                    </button>
+                </div>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{{ route('admin.clients.show', $client) }}" class="btn btn-outline-secondary">Back</a>
-                <button type="button" class="btn btn-outline-secondary" wire:click="sendPasswordReset">Send password reset</button>
-                <button type="button" class="btn btn-outline-warning" wire:click="openPasswordModal">Set password</button>
-            </div>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.clients.show', $client) }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
-                Back
-            </a>
-            <button type="button" wire:click="sendPasswordReset" class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100 transition-colors">
-                Send password reset
-            </button>
         </div>
     </div>
 
-        <ul class="nav nav-tabs">
-            <li class="nav-item">
-                <button class="nav-link @if($tab==='overview') active @endif" wire:click="$set('tab','overview')" type="button">Overview</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link @if($tab==='services') active @endif" wire:click="$set('tab','services')" type="button">Services</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link @if($tab==='activity') active @endif" wire:click="$set('tab','activity')" type="button">Activity history</button>
-            </li>
-        </ul>
-
-        <div class="card border-top-0 rounded-top-0">
-            <div class="card-body">
-                @if($tab === 'overview')
-                    <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></span>
-                @endif
-            </button>
-            <button type="button" 
-                    wire:click="$set('tab','activity')"
-                    class="relative pb-3 text-sm font-medium transition-colors {{ $tab === 'activity' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700' }}">
-                Activity history
-                @if($tab === 'activity')
-                    <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></span>
-                @endif
-            </button>
-        </nav>
-    </div>
-
-    @if($tab === 'overview')
-        <form wire:submit.prevent="save" class="relative rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <!-- Loading overlay -->
-            <div wire:loading.flex wire:target="save" class="absolute inset-0 z-10 items-center justify-center bg-white/70 backdrop-blur-sm">
-                <div class="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ring-black/5">
-                    <svg class="h-5 w-5 animate-spin text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                    </svg>
-                    <span class="text-sm font-semibold text-slate-700">Saving…</span>
-                </div>
-            </div>
-
-            <div class="p-6 space-y-6">
-                <!-- Basic Information -->
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Company name <span class="text-rose-500">*</span></label>
-                        <input wire:model.live.debounce.300ms="company_name" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                        @error('company_name')
-                            <div class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                                </svg>
-                                <span>{{ $message }}</span>
-                            </div>
-                        @enderror
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Contact name <span class="text-rose-500">*</span></label>
-                            <input wire:model.live.debounce.300ms="contact_name" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                            @error('contact_name')
-                                <div class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span>{{ $message }}</span>
-                                </div>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Email <span class="text-rose-500">*</span></label>
-                            <input wire:model.live.debounce.300ms="email" type="email" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                            @error('email')
-                                <div class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span>{{ $message }}</span>
-                                </div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Phone</label>
-                            <input wire:model.live.debounce.300ms="phone" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                            @error('phone')
-                                <div class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span>{{ $message }}</span>
-                                </div>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tier</label>
-                            <select wire:model.live="tier" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                                @foreach($tiers as $k => $label)
-                                    <option value="{{ $k }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('tier')
-                                <div class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span>{{ $message }}</span>
-                                </div>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Status</label>
-                            <select wire:model.live="status" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                                @foreach($statuses as $k => $label)
-                                    <option value="{{ $k }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('status')
-                                <div class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span>{{ $message }}</span>
-                                </div>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Address Section -->
-                <div class="border-t border-slate-200 pt-6">
-                    <h3 class="text-sm font-semibold text-slate-900 mb-4">Address</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Street</label>
-                            <input wire:model.live.debounce.300ms="address" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">City</label>
-                                <input wire:model.live.debounce.300ms="city" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+    <!-- Tabs -->
+    <div class="card">
+        <div class="card-header p-0">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a href="#" class="nav-link {{ $tab === 'overview' ? 'active' : '' }}" wire:click.prevent="$set('tab', 'overview')">
+                        <i class="fas fa-user mr-1"></i> Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link {{ $tab === 'profile' ? 'active' : '' }}" wire:click.prevent="$set('tab', 'profile')">
+                        <i class="fas fa-briefcase mr-1"></i> Business Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link {{ $tab === 'services' ? 'active' : '' }}" wire:click.prevent="$set('tab', 'services')">
+                        <i class="fas fa-cogs mr-1"></i> Services
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link {{ $tab === 'activity' ? 'active' : '' }}" wire:click.prevent="$set('tab', 'activity')">
+                        <i class="fas fa-history mr-1"></i> Activity
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <!-- Overview Tab -->
+            @if($tab === 'overview')
+                <form wire:submit.prevent="saveOverview">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <!-- Basic Information -->
+                            <h5 class="mb-3"><i class="fas fa-info-circle mr-2 text-muted"></i>Basic Information</h5>
+                            
+                            <div class="form-group">
+                                <label>Company Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('company_name') is-invalid @enderror" wire:model.live.debounce.300ms="company_name">
+                                @error('company_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">State</label>
-                                <input wire:model.live.debounce.300ms="state" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">ZIP</label>
-                                <input wire:model.live.debounce.300ms="zip_code" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Billing Section -->
-                <div class="border-t border-slate-200 pt-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Stripe Customer ID</label>
-                            <input wire:model.live.debounce.300ms="stripe_customer_id" type="text" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                        </div>
-                    </div>
-                </div>
-
-                @if($tab === 'services')
-                    <div class="mb-4 rounded-xl bg-blue-50 border border-blue-200 p-4">
-                        <div class="flex items-start gap-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                            </svg>
-                            <div>
-                                <p class="text-sm font-medium text-blue-800">Tier Features</p>
-                                <p class="text-sm text-blue-700 mt-0.5">The client's tier (<span class="font-medium">{{ ucfirst($tier) }}</span>) includes certain features by default. Additional services checked below will be added on top of tier features.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    @php
-                        $categories = [
-                            'core' => 'Core Features',
-                            'brand_monitoring' => 'Brand Monitoring',
-                            'ai' => 'AI Features',
-                            'advanced' => 'Advanced Features',
-                            'collaboration' => 'Collaboration',
-                            'research' => 'Research & Consultation',
-                        ];
-                    @endphp
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        @foreach($categories as $categoryKey => $categoryLabel)
-                            @if(isset($servicesByCategory[$categoryKey]))
-                                <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-                                    <div class="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
-                                        <h4 class="text-xs font-semibold text-slate-700">{{ $categoryLabel }}</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Contact Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control @error('contact_name') is-invalid @enderror" wire:model.live.debounce.300ms="contact_name">
+                                        @error('contact_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     </div>
-                                    <div class="p-3 space-y-2 max-h-80 overflow-y-auto">
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control @error('email') is-invalid @enderror" wire:model.live.debounce.300ms="email">
+                                        @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Phone</label>
+                                        <input type="text" class="form-control" wire:model.live.debounce.300ms="phone">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Tier</label>
+                                        <select class="form-control" wire:model.live="tier">
+                                            @foreach($tiers as $k => $label)
+                                                <option value="{{ $k }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Status</label>
+                                        <select class="form-control" wire:model.live="status">
+                                            @foreach($statuses as $k => $label)
+                                                <option value="{{ $k }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+                            <h5 class="mb-3"><i class="fas fa-map-marker-alt mr-2 text-muted"></i>Address</h5>
+
+                            <div class="form-group">
+                                <label>Street Address</label>
+                                <input type="text" class="form-control" wire:model.live.debounce.300ms="address">
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>City</label>
+                                        <input type="text" class="form-control" wire:model.live.debounce.300ms="city">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>State</label>
+                                        <input type="text" class="form-control" wire:model.live.debounce.300ms="state">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>ZIP Code</label>
+                                        <input type="text" class="form-control" wire:model.live.debounce.300ms="zip_code">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+                            <h5 class="mb-3"><i class="fas fa-credit-card mr-2 text-muted"></i>Billing</h5>
+
+                            <div class="form-group">
+                                <label>Stripe Customer ID</label>
+                                <input type="text" class="form-control" wire:model.live.debounce.300ms="stripe_customer_id" placeholder="cus_...">
+                            </div>
+
+                            <hr>
+                            <h5 class="mb-3"><i class="fas fa-sticky-note mr-2 text-muted"></i>Notes</h5>
+
+                            <div class="form-group">
+                                <label>Client Notes</label>
+                                <textarea class="form-control" rows="2" wire:model.live.debounce.400ms="notes"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <!-- Internal Notes -->
+                            <div class="card card-outline card-warning">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><i class="fas fa-lock mr-2"></i>Internal Notes</h5>
+                                    <span class="badge badge-warning float-right">Staff Only</span>
+                                </div>
+                                <div class="card-body">
+                                    <textarea class="form-control" rows="4" wire:model.live.debounce.400ms="internal_notes" placeholder="Private notes not visible to the client..."></textarea>
+                                    <small class="text-muted d-block mt-2">These notes are only visible to staff and admins.</small>
+                                </div>
+                            </div>
+
+                            <!-- Linked User -->
+                            <div class="card card-outline card-info">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><i class="fas fa-user-circle mr-2"></i>Linked User</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-0">
+                                        <strong>{{ $primaryUser?->name ?? 'No user linked' }}</strong><br>
+                                        <span class="text-muted">{{ $primaryUser?->email ?? '' }}</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Save Button -->
+                            <button type="submit" class="btn btn-primary btn-block" wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="saveOverview">
+                                    <i class="fas fa-save mr-1"></i> Save Changes
+                                </span>
+                                <span wire:loading wire:target="saveOverview">
+                                    <i class="fas fa-spinner fa-spin mr-1"></i> Saving...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            @endif
+
+            <!-- Business Profile Tab -->
+            @if($tab === 'profile')
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h5 class="mb-3"><i class="fas fa-briefcase mr-2 text-muted"></i>Business Profile</h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Mission Statement</label>
+                                    <textarea class="form-control" rows="4" wire:model.live.debounce.400ms="mission" placeholder="What is the company's core purpose?"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Vision Statement</label>
+                                    <textarea class="form-control" rows="4" wire:model.live.debounce.400ms="vision" placeholder="What does the company aspire to become?"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Known Competitors</label>
+                            <textarea class="form-control" rows="2" wire:model.live.debounce.400ms="competitors" placeholder="List main competitors, separated by commas"></textarea>
+                            <small class="text-muted">Used for competitive analysis and brand monitoring.</small>
+                        </div>
+
+                        <button type="button" class="btn btn-primary" wire:click="saveProfile" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="saveProfile">
+                                <i class="fas fa-save mr-1"></i> Save Profile
+                            </span>
+                            <span wire:loading wire:target="saveProfile">
+                                <i class="fas fa-spinner fa-spin mr-1"></i> Saving...
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- AI Marketing Strategy -->
+                        <div class="card card-outline card-purple">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><i class="fas fa-magic mr-2"></i>AI Marketing Strategy</h5>
+                                <span class="badge badge-purple float-right">AI Powered</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">Generate a comprehensive marketing strategy based on the client's profile.</p>
+
+                                @if($client->marketing_strategy_generated_at)
+                                    <p class="text-muted small">Last generated: {{ $client->marketing_strategy_generated_at->diffForHumans() }}</p>
+                                @endif
+
+                                <button type="button" 
+                                    class="btn btn-purple btn-block mb-3"
+                                    wire:click="generateMarketingStrategy" 
+                                    wire:loading.attr="disabled"
+                                    wire:target="generateMarketingStrategy">
+                                    <span wire:loading.remove wire:target="generateMarketingStrategy">
+                                        <i class="fas fa-bolt mr-1"></i> {{ $marketing_strategy ? 'Regenerate' : 'Generate' }} Strategy
+                                    </span>
+                                    <span wire:loading wire:target="generateMarketingStrategy">
+                                        <i class="fas fa-spinner fa-spin mr-1"></i> Generating...
+                                    </span>
+                                </button>
+
+                                @error('marketing_strategy')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
+
+                                @if($marketing_strategy)
+                                    <div class="card bg-light mb-0">
+                                        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small">Marketing Strategy</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" wire:click="$set('marketing_strategy', '')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                            {!! $marketing_strategy !!}
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="text-center py-4 bg-light rounded">
+                                        <i class="fas fa-lightbulb fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted small mb-0">Click "Generate Strategy" to create an AI-powered marketing plan</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Services Tab -->
+            @if($tab === 'services')
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Tier Features:</strong> The client's tier (<span class="font-weight-bold">{{ ucfirst($tier) }}</span>) includes certain features by default. Additional services checked below will be added on top of tier features.
+                </div>
+
+                @php
+                    $categories = [
+                        'core' => 'Core Features',
+                        'brand_monitoring' => 'Brand Monitoring',
+                        'ai' => 'AI Features',
+                        'advanced' => 'Advanced Features',
+                        'collaboration' => 'Collaboration',
+                        'research' => 'Research & Consultation',
+                    ];
+                @endphp
+
+                <div class="row">
+                    @foreach($categories as $categoryKey => $categoryLabel)
+                        @if(isset($servicesByCategory[$categoryKey]))
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card card-outline card-secondary h-100 mb-0">
+                                    <div class="card-header py-2">
+                                        <h5 class="card-title mb-0">{{ $categoryLabel }}</h5>
+                                    </div>
+                                    <div class="card-body py-2" style="max-height: 300px; overflow-y: auto;">
                                         @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
                                             @php
                                                 $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
                                                 $isSelected = in_array($serviceKey, $selectedServices);
                                             @endphp
-                                            <label class="flex items-start gap-2.5 cursor-pointer group">
-                                                <input type="checkbox" 
-                                                    class="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0 disabled:opacity-60"
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" 
                                                     wire:model.live="selectedServices" 
                                                     value="{{ $serviceKey }}"
+                                                    id="service_{{ $serviceKey }}"
                                                     @if($tierIncludes) checked disabled @endif>
-                                                <div class="min-w-0 flex-1">
-                                                    <div class="flex items-center gap-1.5 flex-wrap">
-                                                        <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900">{{ $service['name'] }}</span>
-                                                        @if($tierIncludes)
-                                                            <span class="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">Tier</span>
-                                                        @elseif($isSelected)
-                                                            <span class="inline-flex items-center rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">Added</span>
-                                                        @endif
-                                                    </div>
-                                                    <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">{{ $service['description'] }}</p>
-                                                </div>
-                                            </label>
+                                                <label class="form-check-label" for="service_{{ $serviceKey }}">
+                                                    {{ $service['name'] }}
+                                                    @if($tierIncludes)
+                                                        <span class="badge badge-info ml-1">Tier</span>
+                                                    @elseif($isSelected)
+                                                        <span class="badge badge-success ml-1">Added</span>
+                                                    @endif
+                                                </label>
+                                                <small class="d-block text-muted">{{ $service['description'] }}</small>
+                                            </div>
                                         @endforeach
                                     </div>
                                 </div>
-                            @endif
-                        @endforeach
-                    </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
 
-                    <div class="mt-6 flex justify-end">
-                        <button type="button" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors" wire:click="saveServices" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="saveServices">Save Services</span>
-                            <span wire:loading wire:target="saveServices">Saving…</span>
-                        </button>
-                    </div>
-                @endif
+                <button type="button" class="btn btn-primary mt-3" wire:click="saveServices" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="saveServices">
+                        <i class="fas fa-save mr-1"></i> Save Services
+                    </span>
+                    <span wire:loading wire:target="saveServices">
+                        <i class="fas fa-spinner fa-spin mr-1"></i> Saving...
+                    </span>
+                </button>
+            @endif
 
-                @if($tab === 'activity')
-                    <div class="table-responsive">
-                        <table class="table table-vcenter">
-                            <thead>
+            <!-- Activity Tab -->
+            @if($tab === 'activity')
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
                             <tr>
                                 <th>When</th>
                                 <th>User</th>
                                 <th>Log</th>
                                 <th>Description</th>
                             </tr>
-                            </thead>
-                            <tbody>
+                        </thead>
+                        <tbody>
                             @forelse($activities as $a)
                                 <tr>
                                     <td class="text-muted">{{ $a->created_at?->diffForHumans() }}</td>
                                     <td>{{ $a->user?->name ?? 'System' }}</td>
-                                    <td><span class="badge bg-secondary">{{ $a->log_name }}</span></td>
+                                    <td><span class="badge badge-secondary">{{ $a->log_name }}</span></td>
                                     <td>{{ $a->description }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-muted">No activity yet.</td></tr>
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted mb-0">No activity yet.</p>
+                                    </td>
+                                </tr>
                             @endforelse
-                            </tbody>
-                        </table>
+                        </tbody>
+                    </table>
+                </div>
+                
+                @if($activities->hasPages())
+                    <div class="mt-3">
+                        {{ $activities->links() }}
                     </div>
-                </div>
-
-                <!-- Linked User Info -->
-                <div class="border-t border-slate-200 pt-6">
-                    <div class="rounded-xl bg-blue-50 border border-blue-200 p-4">
-                        <div class="flex items-start gap-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                            </svg>
-                            <div>
-                                <p class="text-sm font-semibold text-blue-900">Linked user account</p>
-                                <p class="text-sm text-blue-700 mt-0.5">{{ $primaryUser?->email ?? 'No user linked yet' }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-                <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors" wire:loading.attr="disabled">
-                    <span wire:loading.remove wire:target="save">Save changes</span>
-                    <span wire:loading wire:target="save">Saving…</span>
-                </button>
-            </div>
-        </form>
-    @endif
-
-    @if($tab === 'activity')
-        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-b border-slate-200 bg-slate-50">
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">When</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">User</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Log</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Description</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200">
-                        @forelse($activities as $a)
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">{{ $a->created_at?->diffForHumans() }}</td>
-                                <td class="px-6 py-4 text-sm text-slate-900 whitespace-nowrap">{{ $a->user?->name ?? 'System' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
-                                        {{ $a->log_name }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-slate-700">{{ $a->description }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="px-6 py-12 text-center">
-                                    <div class="text-slate-400">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <p class="text-sm">No activity yet.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            
-            @if($activities->hasPages())
-                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
-                    {{ $activities->links() }}
-                </div>
+                @endif
             @endif
         </div>
     </div>
 
-    {{-- Set Password Modal --}}
-    @if($showPasswordModal)
-        <div class="modal modal-blur fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
-            <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <!-- Set Password Modal -->
+    @if($showPasswordModal ?? false)
+        <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Set Password</h5>
-                        <button type="button" class="btn-close" wire:click="closePasswordModal"></button>
+                        <button type="button" class="close" wire:click="$set('showPasswordModal', false)">
+                            <span>&times;</span>
+                        </button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">New Password</label>
+                        <div class="form-group">
+                            <label>New Password</label>
                             <input type="password" class="form-control @error('newPassword') is-invalid @enderror" wire:model="newPassword" autocomplete="new-password">
                             @error('newPassword') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control @error('newPasswordConfirmation') is-invalid @enderror" wire:model="newPasswordConfirmation" autocomplete="new-password">
-                            @error('newPasswordConfirmation') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input type="password" class="form-control" wire:model="newPasswordConfirmation" autocomplete="new-password">
                         </div>
-                        <div class="text-muted small">Password must be at least 8 characters.</div>
+                        <small class="text-muted">Password must be at least 8 characters.</small>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" wire:click="closePasswordModal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" wire:click="$set('showPasswordModal', false)">Cancel</button>
                         <button type="button" class="btn btn-warning" wire:click="setPassword" wire:loading.attr="disabled">
                             <span wire:loading.remove wire:target="setPassword">Set Password</span>
-                            <span wire:loading wire:target="setPassword">Saving…</span>
+                            <span wire:loading wire:target="setPassword">Saving...</span>
                         </button>
                     </div>
                 </div>
@@ -400,3 +425,23 @@
         </div>
     @endif
 </div>
+
+<style>
+    .btn-purple {
+        background-color: #6f42c1;
+        border-color: #6f42c1;
+        color: #fff;
+    }
+    .btn-purple:hover {
+        background-color: #5a32a3;
+        border-color: #5a32a3;
+        color: #fff;
+    }
+    .badge-purple {
+        background-color: #6f42c1;
+        color: #fff;
+    }
+    .card-outline.card-purple {
+        border-top: 3px solid #6f42c1;
+    }
+</style>

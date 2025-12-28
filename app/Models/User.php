@@ -20,6 +20,21 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     /**
+     * Boot the model.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // Prevent deletion of super admin users
+        static::deleting(function (User $user) {
+            if ($user->hasRole('super_admin')) {
+                throw new \Exception('Super admin users cannot be deleted.');
+            }
+        });
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
