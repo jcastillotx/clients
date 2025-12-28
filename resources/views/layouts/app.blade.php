@@ -43,6 +43,16 @@
     <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
     @endif
 
+    {{-- Apply theme/density before paint --}}
+    <script>
+        (function () {
+            const theme = localStorage.getItem('theme') || 'light';
+            const density = localStorage.getItem('density') || 'comfy';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.setAttribute('data-density', density);
+        })();
+    </script>
+
     @stack('styles')
 
     {{-- Site header HTML (branding setting) --}}
@@ -136,6 +146,26 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- AdminLTE App -->
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    <!-- Theme/Density toggles -->
+    <script>
+        (function () {
+            window.__toggleTheme = function () {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+            };
+            window.__cycleDensity = function () {
+                const order = ['comfy', 'compact', 'extreme'];
+                const current = document.documentElement.getAttribute('data-density') || 'comfy';
+                const idx = Math.max(0, order.indexOf(current));
+                const next = order[(idx + 1) % order.length];
+                document.documentElement.setAttribute('data-density', next);
+                localStorage.setItem('density', next);
+            };
+        })();
+    </script>
 
     <!-- Livewire Scripts -->
     @livewireScripts

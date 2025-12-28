@@ -172,7 +172,7 @@ class BrandingServiceProvider extends ServiceProvider
         $btnPrimaryHover = $buttons['primary_hover'] ?? ($colors['primary_dark'] ?? '#1e40af');
         $btnSecondary = $buttons['secondary'] ?? ($colors['secondary'] ?? '#10b981');
         $btnSecondaryHover = $buttons['secondary_hover'] ?? ($colors['secondary'] ?? '#10b981');
-        $adminPagePadding = $admin['page_padding'] ?? '1.5rem';
+        $adminPagePaddingComfy = $admin['page_padding'] ?? '1.5rem';
 
         $css = <<<CSS
 /**
@@ -223,7 +223,24 @@ class BrandingServiceProvider extends ServiceProvider
     --brand-btn-secondary-hover: {$btnSecondaryHover};
 
     /* Admin Layout */
-    --admin-page-padding: {$adminPagePadding};
+    --page-padding-comfy: {$adminPagePaddingComfy};
+    --page-padding-compact: 1rem;
+    --page-padding-extreme: 0.5rem;
+    --page-padding: var(--page-padding-comfy);
+    --admin-page-padding: var(--page-padding);
+}
+
+/* Density toggles */
+html[data-density="comfy"] { --page-padding: var(--page-padding-comfy); }
+html[data-density="compact"] { --page-padding: var(--page-padding-compact); }
+html[data-density="extreme"] { --page-padding: var(--page-padding-extreme); }
+
+/* Dark mode (base) */
+html[data-theme="dark"] {
+    --brand-bg: #0b1220;
+    --brand-bg-alt: #111827;
+    --brand-text-primary: #e5e7eb;
+    --brand-text-secondary: #9ca3af;
 }
 
 /* Global Overrides */
@@ -298,6 +315,11 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--brand-radius);
     box-shadow: var(--brand-shadow);
     border: none;
+}
+
+html[data-theme="dark"] .card {
+    background-color: var(--brand-bg-alt);
+    color: var(--brand-text-primary);
 }
 
 .card-header {
@@ -485,8 +507,27 @@ a:hover {
 
 /* Tabler Admin Panel - fixed padding */
 .page-body > .container-fluid {
-    padding-left: var(--admin-page-padding) !important;
-    padding-right: var(--admin-page-padding) !important;
+    padding-left: var(--page-padding) !important;
+    padding-right: var(--page-padding) !important;
+}
+
+/* AdminLTE layout - fixed padding */
+.content-wrapper .content > .container-fluid {
+    padding-left: var(--page-padding) !important;
+    padding-right: var(--page-padding) !important;
+}
+
+html[data-theme="dark"] .content-wrapper {
+    background-color: var(--brand-bg);
+}
+
+html[data-theme="dark"] .main-header.navbar {
+    background-color: var(--brand-bg-alt) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .main-sidebar {
+    background-color: #0f172a !important;
 }
 
 CSS;

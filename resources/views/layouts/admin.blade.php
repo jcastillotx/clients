@@ -1,214 +1,133 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ ($title ?? 'Admin') . ' · ' . config('app.name') }}</title>
+    <title>{{ ($title ?? 'Admin') . ' · ' . config('branding.company.name') }}</title>
 
-    <!-- Tabler (Bootstrap-based admin UI) -->
-    <link rel="stylesheet" href="https://unpkg.com/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
+    <meta name="theme-color" content="{{ config('branding.colors.primary') }}">
+    <link rel="icon" href="/{{ config('branding.logo.favicon') }}">
+    <link rel="apple-touch-icon" href="/{{ config('branding.logo.icon') }}">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    @if(config('branding.typography.google_fonts'))
+    <link href="https://fonts.googleapis.com/css2?family={{ config('branding.typography.google_fonts') }}&display=swap" rel="stylesheet">
+    @endif
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <!-- AdminLTE CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+
     <!-- Tailwind CSS (shared styles) -->
     @if(!app()->runningUnitTests())
-        @vite(['resources/css/app.css'])
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
+
+    <!-- Livewire Styles -->
+    @livewireStyles
 
     <!-- Brand Custom CSS -->
     @if(file_exists(public_path(config('branding.custom_css'))))
     <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
     @endif
 
+    {{-- Apply theme/density before paint --}}
+    <script>
+        (function () {
+            const theme = localStorage.getItem('theme') || 'light';
+            const density = localStorage.getItem('density') || 'comfy';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.setAttribute('data-density', density);
+        })();
+    </script>
 
-    @livewireStyles
     @stack('styles')
 
     {{-- Site header HTML (branding setting) --}}
     {!! config('branding.site.header_html') !!}
 </head>
-@php $user = auth()->user(); @endphp
-<body class="layout-fluid">
-<script>
-    // Dark mode toggle (persists in localStorage)
-    (function () {
-        const key = 'admin_theme';
-        const saved = localStorage.getItem(key);
-        if (saved === 'dark' || saved === 'light') {
-            document.documentElement.setAttribute('data-bs-theme', saved);
-        }
-        window.__toggleAdminTheme = function () {
-            const current = document.documentElement.getAttribute('data-bs-theme') || 'light';
-            const next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-bs-theme', next);
-            localStorage.setItem(key, next);
-        };
-    })();
-</script>
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+        <!-- Navbar -->
+        @include('layouts.partials.navbar')
 
-<div class="page">
-    <!-- Sidebar -->
-    <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#admin-sidebar" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <!-- Main Sidebar Container -->
+        @include('layouts.partials.sidebar')
 
-            <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
-                @php
-                    $dashboardLogo = config('branding.admin.dashboard_logo');
-                    $fallbackLogo = config('branding.logo.main');
-                @endphp
-                @if(!empty($dashboardLogo))
-                    <img src="{{ asset($dashboardLogo) }}" alt="Dashboard Logo" style="max-height: 28px; max-width: 160px;" onerror="this.style.display='none'">
-                @elseif(!empty($fallbackLogo))
-                    <img src="{{ asset($fallbackLogo) }}" alt="Logo" style="max-height: 28px; max-width: 160px;" onerror="this.style.display='none'">
-                @endif
-                <span class="fw-bold">{{ config('branding.company.name', config('app.name')) }}</span>
-                <div class="text-muted small">Admin</div>
-            </a>
-
-            <div class="collapse navbar-collapse" id="admin-sidebar">
-                <ul class="navbar-nav pt-lg-3">
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                            <span class="nav-link-title">Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.clients.*') ? 'active' : '' }}" href="{{ route('admin.clients.index') }}">
-                            <span class="nav-link-title">Clients Management</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.requests.*') ? 'active' : '' }}" href="{{ route('admin.requests.index') }}">
-                            <span class="nav-link-title">Requests Management</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}" href="{{ route('admin.invoices.index') }}">
-                            <span class="nav-link-title">Invoices &amp; Payments</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.contracts') ? 'active' : '' }}" href="{{ route('admin.contracts') }}">
-                            <span class="nav-link-title">Contracts Management</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.documents') ? 'active' : '' }}" href="{{ route('admin.documents') }}">
-                            <span class="nav-link-title">Documents</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
-                            <span class="nav-link-title">Users &amp; Permissions</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.storage') ? 'active' : '' }}" href="{{ route('admin.storage') }}">
-                            <span class="nav-link-title">Storage Settings</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}" href="{{ route('admin.reports') }}">
-                            <span class="nav-link-title">Reports &amp; Analytics</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.automation*') ? 'active' : '' }}" href="{{ route('admin.automation.index') }}">
-                            <span class="nav-link-title">Automation</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}" href="{{ route('admin.settings') }}">
-                            <span class="nav-link-title">System Settings</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.settings.webhooks') ? 'active' : '' }}" href="{{ route('admin.settings.webhooks') }}">
-                            <span class="nav-link-title">Webhooks</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('api.documentation') ? 'active' : '' }}" href="{{ route('api.documentation') }}">
-                            <span class="nav-link-title">API Documentation</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.activity') ? 'active' : '' }}" href="{{ route('admin.activity') }}">
-                            <span class="nav-link-title">Activity Log</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </aside>
-
-    <div class="page-wrapper">
-        <!-- Topbar -->
-        <header class="navbar navbar-expand-md d-print-none">
-            <div class="container-fluid">
-                <div class="navbar-nav flex-row order-md-last">
-                    <!-- Dark mode toggle -->
-                    <div class="nav-item">
-                        <button type="button" class="btn btn-ghost-secondary" onclick="window.__toggleAdminTheme()" aria-label="Toggle dark mode">
-                            Dark mode
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <section class="content pt-3">
+                <div class="container-fluid">
+                    @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        {{ session('success') }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
+                    @endif
 
-                    <!-- Notifications -->
-                    <div class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open notifications">
-                            <span class="avatar avatar-sm">{{ strtoupper(substr($user?->name ?? 'A', 0, 1)) }}</span>
-                            <div class="d-none d-xl-block ps-2">
-                                <div class="fw-semibold">{{ $user?->name }}</div>
-                                <div class="mt-1 small text-muted">{{ $user?->email }}</div>
-                            </div>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                            <a href="{{ route('profile.edit') }}" class="dropdown-item">Profile</a>
-                            <div class="dropdown-divider"></div>
-                            <form method="POST" action="{{ route('logout') }}" class="px-2">
-                                @csrf
-                                <button type="submit" class="btn btn-outline-danger w-100">Logout</button>
-                            </form>
-                        </div>
+                    @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        {{ session('error') }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
+                    @endif
+
+                    {{ $slot ?? '' }}
+                    @yield('content')
                 </div>
-
-                <!-- Quick search -->
-                <form class="d-none d-md-flex ms-2" role="search" action="{{ route('admin.reports') }}" method="GET">
-                    <input class="form-control" type="search" name="q" placeholder="Quick search…" aria-label="Quick search">
-                </form>
-            </div>
-        </header>
-
-        <div class="page-body">
-            <div class="container-fluid">
-                @if(session('success'))
-                    <div class="alert alert-success" role="status">{{ session('success') }}</div>
-                @endif
-                @if(session('error'))
-                    <div class="alert alert-danger" role="alert">{{ session('error') }}</div>
-                @endif
-
-                {{ $slot ?? '' }}
-                @yield('content')
-            </div>
+            </section>
         </div>
+
+        <!-- Footer -->
+        @include('layouts.partials.footer')
     </div>
-</div>
 
-<script src="https://unpkg.com/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-@livewireScripts
-@stack('scripts')
+    <!-- Theme/Density toggles -->
+    <script>
+        (function () {
+            window.__toggleTheme = function () {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+            };
+            window.__cycleDensity = function () {
+                const order = ['comfy', 'compact', 'extreme'];
+                const current = document.documentElement.getAttribute('data-density') || 'comfy';
+                const idx = Math.max(0, order.indexOf(current));
+                const next = order[(idx + 1) % order.length];
+                document.documentElement.setAttribute('data-density', next);
+                localStorage.setItem('density', next);
+            };
+        })();
+    </script>
 
-{{-- Site footer HTML (branding setting) --}}
-{!! config('branding.site.footer_html') !!}
+    <!-- Livewire Scripts -->
+    @livewireScripts
+
+    @stack('scripts')
+
+    {{-- Site footer HTML (branding setting) --}}
+    {!! config('branding.site.footer_html') !!}
 </body>
 </html>

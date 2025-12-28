@@ -7,12 +7,25 @@
             </a>
         </li>
         <li class="nav-item d-none d-sm-inline-block">
-            <a href="{{ route('dashboard') }}" class="nav-link">Dashboard</a>
+            @php $isAdminArea = request()->routeIs('admin.*'); @endphp
+            <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="nav-link">
+                {{ $isAdminArea ? 'Admin Dashboard' : 'Dashboard' }}
+            </a>
         </li>
     </ul>
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
+        <!-- Theme + Density -->
+        <li class="nav-item d-none d-md-flex align-items-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="window.__toggleTheme && window.__toggleTheme()">
+                Light/Dark
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.__cycleDensity && window.__cycleDensity()">
+                Padding
+            </button>
+        </li>
+
         <!-- Notifications Dropdown -->
         <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
