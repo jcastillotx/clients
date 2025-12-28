@@ -17,6 +17,12 @@
         @vite(['resources/css/app.css'])
     @endif
 
+    <!-- Brand Custom CSS -->
+    @if(file_exists(public_path(config('branding.custom_css'))))
+    <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
+    @endif
+
+
     @livewireStyles
     @stack('styles')
 </head>
