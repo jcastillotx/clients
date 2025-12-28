@@ -1,3 +1,7 @@
+@php
+    $brandingService = app(\App\Services\BrandingService::class);
+    $brand = $brandingService->all();
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -5,17 +9,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('branding.company.name') }} - Client Portal</title>
+    <title>{{ $brand['company_name'] ?? config('app.name') }} - Client Portal</title>
 
-    <link rel="icon" href="/{{ config('branding.logo.favicon') }}">
-    <link rel="apple-touch-icon" href="/{{ config('branding.logo.icon') }}">
+    @if(!empty($brand['favicon_path']))
+        <link rel="icon" href="{{ asset('storage/' . $brand['favicon_path']) }}">
+    @endif
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    @if(config('branding.typography.google_fonts'))
-    <link href="https://fonts.googleapis.com/css2?family={{ config('branding.typography.google_fonts') }}&display=swap" rel="stylesheet">
-    @endif
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -23,68 +26,119 @@
     <!-- AdminLTE CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <!-- Brand Custom CSS -->
-    @if(file_exists(public_path(config('branding.custom_css'))))
-    <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
-    @endif
-
-    {{-- Runtime brand variable overrides (settings-backed) --}}
+    <!-- Brand Styles -->
     <style>
         :root {
-            --brand-primary: {{ config('branding.colors.primary') }};
-            --brand-secondary: {{ config('branding.colors.secondary') }};
-            --brand-accent: {{ config('branding.colors.accent') }};
-            --brand-btn-primary: {{ config('branding.buttons.primary') ?: config('branding.colors.primary') }};
-            --brand-btn-primary-hover: {{ config('branding.buttons.primary_hover') ?: config('branding.colors.primary_dark') }};
-            --brand-btn-secondary: {{ config('branding.buttons.secondary') ?: config('branding.colors.secondary') }};
-            --brand-btn-secondary-hover: {{ config('branding.buttons.secondary_hover') ?: config('branding.colors.secondary') }};
+            --brand-primary: {{ $brand['color_primary'] ?? '#3b82f6' }};
+            --brand-secondary: {{ $brand['color_secondary'] ?? '#64748b' }};
+            --brand-accent: {{ $brand['color_accent'] ?? '#10b981' }};
         }
-    </style>
-
-    {{-- Apply theme/density before paint --}}
-    <script>
-        (function () {
-            const theme = localStorage.getItem('theme') || 'light';
-            const density = localStorage.getItem('density') || 'comfy';
-            document.documentElement.setAttribute('data-theme', theme);
-            document.documentElement.setAttribute('data-density', density);
-        })();
-    </script>
-
-    {{-- Site header HTML (branding setting) --}}
-    {!! config('branding.site.header_html') !!}
-
-    <style>
+        
         body {
-            font-family: {{ config('branding.typography.font_secondary') }};
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
+        
         .login-page {
-            @if(config('branding.auth.background_style') === 'gradient')
-            background: linear-gradient(135deg, {{ config('branding.colors.primary') }} 0%, {{ config('branding.colors.primary_dark') }} 100%);
-            @elseif(config('branding.auth.background_style') === 'image' && config('branding.auth.background_image'))
-            background: url('/{{ config('branding.auth.background_image') }}') no-repeat center center;
-            background-size: cover;
+            @if(!empty($brand['login_background_path']))
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(51, 65, 85, 0.9)), 
+                            url('{{ asset('storage/' . $brand['login_background_path']) }}') no-repeat center center;
+                background-size: cover;
             @else
-            background-color: {{ config('branding.auth.background_color') }};
+                background: linear-gradient(135deg, {{ $brand['color_primary'] ?? '#1e293b' }} 0%, {{ $brand['sidebar_bg'] ?? '#334155' }} 100%);
             @endif
+            min-height: 100vh;
         }
+        
         .login-box {
-            width: 400px;
+            width: 420px;
+            max-width: 95vw;
         }
-        .login-card-body {
-            border-radius: {{ config('branding.design.border_radius_lg') }};
-            box-shadow: {{ config('branding.design.shadow_lg') }};
+        
+        .login-logo {
+            margin-bottom: 1.5rem;
         }
+        
         .login-logo a {
-            color: white;
-            font-family: {{ config('branding.typography.font_primary') }};
+            color: #ffffff;
+            font-size: 1.5rem;
             font-weight: 700;
+            text-decoration: none;
         }
-        .login-logo img {
-            max-width: {{ config('branding.logo.width') }}px;
-            height: auto;
+        
+        .login-logo a:hover {
+            color: #ffffff;
+        }
+        
+        .card {
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: none;
+        }
+        
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .card-body.login-card-body {
+            padding: 1.5rem;
+        }
+        
+        .form-control {
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            padding: 0.625rem 0.875rem;
+        }
+        
+        .form-control:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .input-group-text {
+            border-radius: 0.5rem 0 0 0.5rem;
+            background: #f8fafc;
+            border: 1px solid #d1d5db;
+            border-right: none;
+        }
+        
+        .input-group .form-control {
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        
+        .btn-primary {
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary);
+            border-radius: 0.5rem;
+            font-weight: 600;
+            padding: 0.625rem 1rem;
+        }
+        
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background-color: color-mix(in srgb, var(--brand-primary) 85%, black);
+            border-color: color-mix(in srgb, var(--brand-primary) 85%, black);
+        }
+        
+        .card-outline.card-primary {
+            border-top: 3px solid var(--brand-primary);
+        }
+        
+        .icheck-primary input:checked + label::before {
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary);
+        }
+        
+        .text-white-50 {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+        
+        /* AdminLTE iCheck override */
+        .icheck-primary > input:first-child:checked + label::before,
+        .icheck-primary > input:first-child:checked + input[type="hidden"] + label::before {
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary);
         }
     </style>
 </head>
@@ -97,8 +151,5 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- AdminLTE -->
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-
-    {{-- Site footer HTML (branding setting) --}}
-    {!! config('branding.site.footer_html') !!}
 </body>
 </html>
