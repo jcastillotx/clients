@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
@@ -41,13 +42,22 @@ class ProfileController extends Controller
         $user->fill(collect($validated)->except('profile_photo')->all());
 
         if ($request->hasFile('profile_photo')) {
+            $useProfilePhotoPathColumn = Schema::hasColumn('users', 'profile_photo_path');
+
             // Delete old photo if present
-            if ($user->profile_photo_path) {
-                Storage::disk('public')->delete($user->profile_photo_path);
+            $oldPath = $useProfilePhotoPathColumn ? ($user->profile_photo_path ?? null) : ($user->avatar ?? null);
+            if ($oldPath) {
+                Storage::disk('public')->delete((string) $oldPath);
             }
 
             $path = $request->file('profile_photo')->store('profile-photos', 'public');
-            $user->profile_photo_path = $path;
+
+            // Backwards compatible: if migration isn't applied yet, store in existing `avatar` column.
+            if ($useProfilePhotoPathColumn) {
+                $user->profile_photo_path = $path;
+            } else {
+                $user->avatar = $path;
+            }
         }
 
         if ($user->isDirty('email')) {

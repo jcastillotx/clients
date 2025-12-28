@@ -287,10 +287,24 @@ class User extends Authenticatable
 
     public function profilePhotoUrl(): ?string
     {
-        if (! $this->profile_photo_path) {
+        // Prefer the newer column when present, otherwise fall back to legacy `avatar`.
+        $path = null;
+
+        try {
+            if (Schema::hasColumn('users', 'profile_photo_path')) {
+                $path = $this->profile_photo_path ?: null;
+            }
+        } catch (\Throwable $e) {
+            // Schema check can fail in some contexts; ignore and fall back.
+            $path = null;
+        }
+
+        $path = $path ?: ($this->avatar ?: null);
+
+        if (! $path) {
             return null;
         }
 
-        return asset('storage/' . ltrim((string) $this->profile_photo_path, '/'));
+        return asset('storage/' . ltrim((string) $path, '/'));
     }
 }
