@@ -30,6 +30,19 @@
     <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
     @endif
 
+    {{-- Runtime brand variable overrides (settings-backed) --}}
+    <style>
+        :root {
+            --brand-primary: {{ config('branding.colors.primary') }};
+            --brand-secondary: {{ config('branding.colors.secondary') }};
+            --brand-accent: {{ config('branding.colors.accent') }};
+            --brand-btn-primary: {{ config('branding.buttons.primary') ?: config('branding.colors.primary') }};
+            --brand-btn-primary-hover: {{ config('branding.buttons.primary_hover') ?: config('branding.colors.primary_dark') }};
+            --brand-btn-secondary: {{ config('branding.buttons.secondary') ?: config('branding.colors.secondary') }};
+            --brand-btn-secondary-hover: {{ config('branding.buttons.secondary_hover') ?: config('branding.colors.secondary') }};
+        }
+    </style>
+
     {{-- Apply theme/density before paint --}}
     <script>
         (function () {
