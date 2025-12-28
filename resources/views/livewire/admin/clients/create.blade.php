@@ -13,6 +13,9 @@
         </div>
     </div>
 
+    {{-- Flash Messages & Validation Errors --}}
+    @include('partials.flash-messages')
+
     <form wire:submit.prevent="save">
         <div class="row">
             <!-- Left Column -->
@@ -145,17 +148,28 @@
                                                 @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
                                                     @php
                                                         $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
+                                                        $isSelected = in_array($serviceKey, $selectedServices ?? []);
                                                     @endphp
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="checkbox" 
-                                                            wire:model.live="selectedServices" 
-                                                            value="{{ $serviceKey }}"
-                                                            id="service_{{ $serviceKey }}"
-                                                            @if($tierIncludes) checked disabled @endif>
-                                                        <label class="form-check-label" for="service_{{ $serviceKey }}">
+                                                    <div class="form-check mb-2" wire:key="service-{{ $categoryKey }}-{{ $serviceKey }}">
+                                                        @if($tierIncludes)
+                                                            {{-- Tier-included: show as checked & disabled without wire:model --}}
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                id="service_create_{{ $serviceKey }}"
+                                                                checked 
+                                                                disabled>
+                                                        @else
+                                                            {{-- User-selectable: use wire:model --}}
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                wire:model.live="selectedServices" 
+                                                                value="{{ $serviceKey }}"
+                                                                id="service_create_{{ $serviceKey }}">
+                                                        @endif
+                                                        <label class="form-check-label" for="service_create_{{ $serviceKey }}">
                                                             {{ $service['name'] }}
                                                             @if($tierIncludes)
                                                                 <span class="badge badge-info ml-1">Tier</span>
+                                                            @elseif($isSelected)
+                                                                <span class="badge badge-success ml-1">Added</span>
                                                             @endif
                                                         </label>
                                                         <small class="d-block text-muted">{{ $service['description'] }}</small>

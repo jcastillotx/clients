@@ -9,6 +9,9 @@
         </a>
     </div>
 
+    {{-- Flash Messages & Validation Errors --}}
+    @include('partials.flash-messages')
+
     <form wire:submit.prevent="save" class="relative rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <!-- Loading overlay -->
         <div wire:loading.flex wire:target="save" class="absolute inset-0 z-10 items-center justify-center bg-white/70 backdrop-blur-sm">

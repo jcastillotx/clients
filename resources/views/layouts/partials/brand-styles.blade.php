@@ -80,6 +80,93 @@
     --brand-font-size: {{ $brand['font_size_base'] }};
 }
 
+/* ===== Modern Button Styles (inline fallback) ===== */
+.btn-primary-modern {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    border-radius: 0.5rem !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+    border: none !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+.btn-primary-modern:hover {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+}
+.btn-primary-modern:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+.btn-secondary-modern {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    border-radius: 0.5rem !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+}
+.btn-secondary-modern:hover {
+    background-color: #f8fafc !important;
+}
+
+/* Navbar theme/density toggle buttons */
+.btn-theme-toggle,
+.btn-density-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    border-radius: 0.375rem !important;
+    border: 1px solid #e2e8f0 !important;
+    background-color: #fff !important;
+    color: #475569 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+.btn-theme-toggle:hover,
+.btn-density-toggle:hover {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+}
+
+/* Dashboard cards equal height */
+.row-cards {
+    display: flex;
+    flex-wrap: wrap;
+}
+.row-cards > [class*="col-"] {
+    display: flex;
+    flex-direction: column;
+}
+.row-cards > [class*="col-"] > .card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+.row-cards > [class*="col-"] > .card > .card-body {
+    flex: 1 1 auto;
+}
+
 /* ===== AdminLTE/Bootstrap Brand Overrides ===== */
 
 /* Primary Button */

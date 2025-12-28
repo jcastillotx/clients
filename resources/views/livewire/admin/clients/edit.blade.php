@@ -18,6 +18,9 @@
         </div>
     </div>
 
+    {{-- Flash Messages & Validation Errors --}}
+    @include('partials.flash-messages')
+
     <!-- Tabs -->
     <div class="card">
         <div class="card-header p-0">
@@ -315,12 +318,20 @@
                                                 $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
                                                 $isSelected = in_array($serviceKey, $selectedServices);
                                             @endphp
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" 
-                                                    wire:model.live="selectedServices" 
-                                                    value="{{ $serviceKey }}"
-                                                    id="service_{{ $serviceKey }}"
-                                                    @if($tierIncludes) checked disabled @endif>
+                                            <div class="form-check mb-2" wire:key="service-{{ $categoryKey }}-{{ $serviceKey }}">
+                                                @if($tierIncludes)
+                                                    {{-- Tier-included: show as checked & disabled without wire:model --}}
+                                                    <input class="form-check-input" type="checkbox" 
+                                                        id="service_{{ $serviceKey }}"
+                                                        checked 
+                                                        disabled>
+                                                @else
+                                                    {{-- User-selectable: use wire:model --}}
+                                                    <input class="form-check-input" type="checkbox" 
+                                                        wire:model.live="selectedServices" 
+                                                        value="{{ $serviceKey }}"
+                                                        id="service_{{ $serviceKey }}">
+                                                @endif
                                                 <label class="form-check-label" for="service_{{ $serviceKey }}">
                                                     {{ $service['name'] }}
                                                     @if($tierIncludes)

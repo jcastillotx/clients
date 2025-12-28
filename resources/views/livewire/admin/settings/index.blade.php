@@ -1,6 +1,9 @@
 <div>
     <h2 class="mb-3">System Settings</h2>
 
+    {{-- Flash Messages & Validation Errors --}}
+    @include('partials.flash-messages')
+
     <div class="card">
         <div class="card-header p-0">
             <ul class="nav nav-tabs" role="tablist">
