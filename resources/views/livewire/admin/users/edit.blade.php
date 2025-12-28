@@ -10,6 +10,9 @@
         </a>
     </div>
 
+    {{-- Flash Messages & Validation Errors --}}
+    @include('partials.flash-messages')
+
     <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
         <!-- Main Column -->
         <div class="xl:col-span-3 space-y-6">
@@ -177,12 +180,6 @@
                                 </div>
                                 <p class="mt-2 text-xs text-slate-500">Effective permissions = manual + entitlements.</p>
                             </div>
-                        @endif
-
-                        <div class="col-12 d-flex flex-wrap gap-2">
-                            <button type="button" class="btn btn-primary" wire:click="save" wire:loading.attr="disabled">Save</button>
-                            <button type="button" class="btn btn-outline-secondary" wire:click="sendPasswordReset" wire:loading.attr="disabled">Send password reset</button>
-                            <button type="button" class="btn btn-outline-warning" wire:click="openPasswordModal" wire:loading.attr="disabled">Set password</button>
                         </div>
                     @endif
 
