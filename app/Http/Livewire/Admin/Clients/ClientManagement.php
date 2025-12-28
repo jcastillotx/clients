@@ -64,7 +64,7 @@ class ClientManagement extends Component
                 'requests as active_requests_count' => fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled']),
             ])
             ->withSum(['payments as total_revenue' => fn ($q) => $q->where('status', 'succeeded')], 'amount')
-            ->withMax(['activityLogs as last_activity_at' => 'created_at'])
+            ->withMax('activityLogs as last_activity_at', 'created_at')
             ->when($this->search, function ($q) {
                 $s = '%'.$this->search.'%';
                 $q->where(function ($qq) use ($s) {
