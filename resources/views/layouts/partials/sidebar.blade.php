@@ -369,6 +369,36 @@
                     </ul>
                 </li>
 
+                <li class="nav-item {{ request()->routeIs('admin.contracts.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.contracts.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-file-contract"></i>
+                        <p>
+                            Contracts
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.contracts.index') }}" class="nav-link {{ request()->routeIs('admin.contracts.index') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>All Contracts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.contracts.create') }}" class="nav-link {{ request()->routeIs('admin.contracts.create') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>New Contract</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.contracts.generator') }}" class="nav-link {{ request()->routeIs('admin.contracts.generator') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>AI Generator</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
                 <li class="nav-item">
                     <a href="{{ route('admin.meetings') }}" class="nav-link {{ request()->routeIs('admin.meetings') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-calendar-alt"></i>
