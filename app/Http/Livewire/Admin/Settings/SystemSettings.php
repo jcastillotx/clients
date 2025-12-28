@@ -136,7 +136,7 @@ class SystemSettings extends Component
         ];
 
         $s = $settings->getMany([
-            'storage.default_provider' => 's3',
+            'storage.default_provider' => 'local',
             'storage.max_upload_mb' => 25,
             'storage.allowed_file_types' => 'pdf,jpg,jpeg,png,doc,docx,xls,xlsx',
             'storage.quota.basic_gb' => 5,
@@ -735,7 +735,7 @@ class SystemSettings extends Component
     public function saveStorage(SettingsService $settings): void
     {
         $settings->setMany([
-            'storage.default_provider' => $this->storage['default_provider'] ?? 's3',
+            'storage.default_provider' => $this->storage['default_provider'] ?? 'local',
             'storage.max_upload_mb' => (int) ($this->storage['max_upload_mb'] ?? 25),
             'storage.allowed_file_types' => $this->storage['allowed_file_types'] ?? '',
             'storage.quota.basic_gb' => (int) ($this->storage['quota_basic_gb'] ?? 5),
