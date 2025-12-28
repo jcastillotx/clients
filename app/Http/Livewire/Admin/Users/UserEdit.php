@@ -143,6 +143,34 @@ class UserEdit extends Component
         $data = $this->validate();
 
         $currentRole = $this->user->roles->pluck('name')->first() ?? 'staff';
+        $isSuperAdmin = $currentRole === 'super_admin';
+        $changingFromSuperAdmin = $isSuperAdmin && $data['role'] !== 'super_admin';
+
+        // Protect super admin role changes
+        if ($changingFromSuperAdmin) {
+            // Only super admins can demote other super admins
+            if (!auth()->user()->hasRole('super_admin')) {
+                session()->flash('error', 'Only super admins can demote other super admins.');
+                return;
+            }
+
+            // Prevent demoting the last super admin
+            $superAdminCount = User::query()
+                ->whereHas('roles', fn ($q) => $q->where('name', 'super_admin'))
+                ->count();
+            
+            if ($superAdminCount <= 1) {
+                session()->flash('error', 'Cannot demote the last super admin. Promote another user to super admin first.');
+                return;
+            }
+
+            // Prevent demoting yourself
+            if ($this->user->id === auth()->id()) {
+                session()->flash('error', 'You cannot demote yourself from super admin. Ask another super admin to do this.');
+                return;
+            }
+        }
+
         if ($this->isDowngrade($currentRole, $data['role']) && ! $data['confirmRoleDowngrade']) {
             session()->flash('error', 'Please confirm role downgrade before saving.');
 
