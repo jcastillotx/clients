@@ -125,12 +125,14 @@
                                 <p>My Documents</p>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="{{ route('documents.smart-browser') }}" class="nav-link {{ request()->routeIs('documents.smart-browser') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Smart Browser</p>
-                            </a>
-                        </li>
+                        @if(auth()->user()?->client_id || auth()->user()?->can('access admin panel'))
+                            <li class="nav-item">
+                                <a href="{{ route('documents.smart-browser') }}" class="nav-link {{ request()->routeIs('documents.smart-browser') ? 'active' : '' }}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Smart Browser</p>
+                                </a>
+                            </li>
+                        @endif
                         @can('access admin panel')
                         <li class="nav-item">
                             <a href="{{ route('documents.templates') }}" class="nav-link {{ request()->routeIs('documents.templates') ? 'active' : '' }}">

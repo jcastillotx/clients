@@ -50,7 +50,20 @@ class SmartDocumentBrowser extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user(), 403);
+        $user = Auth::user();
+        if (! $user) {
+            abort(403);
+        }
+
+        // Clients must have a client_id for scoping; staff/admin can browse globally.
+        if ($user->isClient() && ! $user->client_id) {
+            abort(403, 'No client associated with this account.');
+        }
+
+        // Prevent “other” authenticated users from seeing everything by default.
+        if (! $user->isClient() && ! $user->can('access admin panel')) {
+            abort(403);
+        }
     }
 
     public function toggleSelect(string $key): void
