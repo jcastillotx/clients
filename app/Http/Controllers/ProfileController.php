@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
@@ -34,9 +35,20 @@ class ProfileController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'job_title' => ['nullable', 'string', 'max:100'],
             'department' => ['nullable', 'string', 'max:100'],
+            'profile_photo' => ['nullable', 'file', 'max:4096', 'mimes:jpg,jpeg,png,webp'],
         ]);
 
-        $user->fill($validated);
+        $user->fill(collect($validated)->except('profile_photo')->all());
+
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if present
+            if ($user->profile_photo_path) {
+                Storage::disk('public')->delete($user->profile_photo_path);
+            }
+
+            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            $user->profile_photo_path = $path;
+        }
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;

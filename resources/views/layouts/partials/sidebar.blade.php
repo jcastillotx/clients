@@ -18,9 +18,14 @@
         <!-- Sidebar user panel -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
-                <div class="img-circle elevation-2 bg-info d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
-                    <span class="text-white font-weight-bold">{{ auth()->user()->initials }}</span>
-                </div>
+                @php $u = auth()->user(); $photo = $u?->profilePhotoUrl(); @endphp
+                @if($photo)
+                    <img src="{{ $photo }}" alt="Profile photo" class="img-circle elevation-2" style="width: 34px; height: 34px; object-fit: cover;">
+                @else
+                    <div class="img-circle elevation-2 bg-info d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
+                        <span class="text-white font-weight-bold">{{ $u->initials }}</span>
+                    </div>
+                @endif
             </div>
             <div class="info">
                 <a href="{{ route('profile.edit') }}" class="d-block">{{ auth()->user()->name }}</a>

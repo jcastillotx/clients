@@ -69,8 +69,13 @@
         <!-- User Dropdown -->
         <li class="nav-item dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
-                <i class="far fa-user"></i>
-                <span class="d-none d-md-inline ml-1">{{ auth()->user()->name }}</span>
+                @php $u = auth()->user(); $photo = $u?->profilePhotoUrl(); @endphp
+                @if($photo)
+                    <img src="{{ $photo }}" alt="Profile photo" class="img-circle elevation-1" style="width: 22px; height: 22px; object-fit: cover;">
+                @else
+                    <i class="far fa-user"></i>
+                @endif
+                <span class="d-none d-md-inline ml-1">{{ $u->name }}</span>
             </a>
             <div class="dropdown-menu dropdown-menu-right">
                 <a href="{{ route('profile.edit') }}" class="dropdown-item">
