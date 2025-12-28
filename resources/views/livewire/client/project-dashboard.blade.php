@@ -208,28 +208,10 @@
             function renderGantt() {
                 const el = document.getElementById('gantt');
                 if (!el) return;
-                const project = @json($project ? [
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'start' => optional($project->start_date)->toDateString(),
-                    'end' => optional($project->end_date)->toDateString(),
-                    'progress' => $project->calculated_progress_percent,
-                ] : null);
+                const project = @json($projectData);
                 if (!project) return;
-                const milestones = @json($milestones->map(fn($m) => [
-                    'id' => 'm-' . $m->id,
-                    'name' => 'Milestone: ' . $m->name,
-                    'start' => ($m->due_date?->toDateString()) ?? (optional($project->start_date)->toDateString() ?? now()->toDateString()),
-                    'end' => ($m->due_date?->toDateString()) ?? (optional($project->start_date)->toDateString() ?? now()->toDateString()),
-                    'progress' => $m->completed_at ? 100 : 0,
-                ])->values());
-                const deliverables = @json($deliverables->map(fn($d) => [
-                    'id' => 'd-' . $d->id,
-                    'name' => 'Deliverable: ' . $d->title,
-                    'start' => optional($project->start_date)->toDateString() ?? now()->toDateString(),
-                    'end' => ($d->due_date?->toDateString()) ?? (optional($project->end_date)->toDateString() ?? now()->addDays(14)->toDateString()),
-                    'progress' => $d->is_done ? 100 : 0,
-                ])->values());
+                const milestones = @json($milestoneData);
+                const deliverables = @json($deliverableData);
                 const tasks = [
                     {id: 'p-' + project.id, name: project.name, start: project.start || new Date().toISOString().slice(0,10), end: project.end || new Date().toISOString().slice(0,10), progress: project.progress},
                     ...milestones,

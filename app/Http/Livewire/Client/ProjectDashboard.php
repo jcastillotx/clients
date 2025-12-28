@@ -61,6 +61,38 @@ class ProjectDashboard extends Component
             $costEntries = $project->costEntries->take(20);
         }
 
-        return view('livewire.client.project-dashboard', compact('projects', 'project', 'milestones', 'deliverables', 'team', 'costEntries'));
+        // Prepare data for JavaScript
+        $projectData = null;
+        if ($project) {
+            $projectData = [
+                'id' => $project->id,
+                'name' => $project->name,
+                'start' => optional($project->start_date)->toDateString(),
+                'end' => optional($project->end_date)->toDateString(),
+                'progress' => $project->calculated_progress_percent,
+            ];
+        }
+
+        $milestoneData = $milestones->map(function ($m) use ($project) {
+            return [
+                'id' => 'm-' . $m->id,
+                'name' => 'Milestone: ' . $m->name,
+                'start' => ($m->due_date?->toDateString()) ?? (optional($project->start_date)->toDateString() ?? now()->toDateString()),
+                'end' => ($m->due_date?->toDateString()) ?? (optional($project->start_date)->toDateString() ?? now()->toDateString()),
+                'progress' => $m->completed_at ? 100 : 0,
+            ];
+        })->values();
+
+        $deliverableData = $deliverables->map(function ($d) use ($project) {
+            return [
+                'id' => 'd-' . $d->id,
+                'name' => $d->name,
+                'start' => optional($d->due_date)->toDateString() ?? (optional($project->start_date)->toDateString() ?? now()->toDateString()),
+                'end' => optional($d->due_date)->toDateString() ?? (optional($project->end_date)->toDateString() ?? now()->addDays(7)->toDateString()),
+                'progress' => $d->completed_at ? 100 : 0,
+            ];
+        })->values();
+
+        return view('livewire.client.project-dashboard', compact('projects', 'project', 'milestones', 'deliverables', 'team', 'costEntries', 'projectData', 'milestoneData', 'deliverableData'));
     }
 }
