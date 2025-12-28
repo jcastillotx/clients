@@ -1,73 +1,43 @@
 <?php
 
-namespace App\Providers;
+namespace App\Console\Commands;
 
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 
-class BrandingServiceProvider extends ServiceProvider
+class GenerateBrandingCSS extends Command
 {
-    /**
-     * Register services.
-     */
-    public function register(): void
-    {
-        //
-    }
+    protected $signature = 'branding:generate';
 
-    /**
-     * Bootstrap services.
-     */
-    public function boot(): void
-    {
-        // Share branding configuration with all views
-        View::composer('*', function ($view) {
-            $view->with('branding', config('branding'));
-        });
+    protected $description = 'Generate branding CSS file from configuration';
 
-        // Generate CSS custom properties from branding config
-        $this->generateBrandingCSS();
-    }
-
-    /**
-     * Generate dynamic CSS file from branding configuration
-     */
-    protected function generateBrandingCSS(): void
+    public function handle(): int
     {
         $cssPath = public_path('css/brand.css');
         $config = config('branding');
 
-        // Only generate in local/development environment
-        // In production, run: php artisan branding:generate
-        if (! app()->environment('local', 'development')) {
-            return;
+        $this->info('Generating branding CSS...');
+
+        // Ensure directory exists
+        $dir = dirname($cssPath);
+        if (! File::isDirectory($dir)) {
+            File::makeDirectory($dir, 0755, true);
+            $this->info("Created directory: {$dir}");
         }
 
-        // Skip if file exists and is recent (less than 1 hour old)
-        if (file_exists($cssPath) && (time() - filemtime($cssPath)) < 3600) {
-            return;
+        $css = $this->buildCSSContent($config);
+
+        // Write CSS file
+        if (File::put($cssPath, $css)) {
+            $this->info("✓ Branding CSS generated successfully!");
+            $this->info("  Location: {$cssPath}");
+            $this->info("  Size: " . number_format(strlen($css)) . " bytes");
+            return self::SUCCESS;
         }
 
-        try {
-            // Ensure directory exists
-            $dir = dirname($cssPath);
-            if (! file_exists($dir)) {
-                if (! @mkdir($dir, 0755, true) && ! is_dir($dir)) {
-                    \Log::warning("Cannot create directory: {$dir}");
-                    return;
-                }
-            }
-
-            $css = $this->buildCSSContent($config);
-
-            // Write CSS file
-            if (@file_put_contents($cssPath, $css) === false) {
-                \Log::warning("Cannot write branding CSS to: {$cssPath}");
-            }
-        } catch (\Throwable $e) {
-            // Log error but don't break the application
-            \Log::error('Failed to generate branding CSS: ' . $e->getMessage());
-        }
+        $this->error("Failed to write CSS file to: {$cssPath}");
+        $this->error("Please check directory permissions.");
+        return self::FAILURE;
     }
 
     /**
