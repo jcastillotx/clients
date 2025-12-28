@@ -684,8 +684,11 @@ class SystemSettings extends Component
         session()->flash('success', 'Security settings saved.');
     }
 
-    public function uploadLogo(SettingsService $settings): void
+    public function uploadLogo(): void
     {
+        /** @var SettingsService $settings */
+        $settings = app(SettingsService::class);
+
         if (! $this->logo_upload) {
             return;
         }
@@ -702,8 +705,11 @@ class SystemSettings extends Component
         session()->flash('success', 'Logo uploaded.');
     }
 
-    public function uploadLoginLogo(SettingsService $settings): void
+    public function uploadLoginLogo(): void
     {
+        /** @var SettingsService $settings */
+        $settings = app(SettingsService::class);
+
         if (! $this->login_logo_upload) {
             return;
         }
@@ -720,8 +726,11 @@ class SystemSettings extends Component
         session()->flash('success', 'Login logo uploaded.');
     }
 
-    public function uploadDashboardLogo(SettingsService $settings): void
+    public function uploadDashboardLogo(): void
     {
+        /** @var SettingsService $settings */
+        $settings = app(SettingsService::class);
+
         if (! $this->dashboard_logo_upload) {
             return;
         }
@@ -738,8 +747,11 @@ class SystemSettings extends Component
         session()->flash('success', 'Dashboard logo uploaded.');
     }
 
-    public function uploadLoginBackground(SettingsService $settings): void
+    public function uploadLoginBackground(): void
     {
+        /** @var SettingsService $settings */
+        $settings = app(SettingsService::class);
+
         if (! $this->login_background_upload) {
             return;
         }
@@ -756,8 +768,11 @@ class SystemSettings extends Component
         session()->flash('success', 'Login background uploaded.');
     }
 
-    public function saveBranding(SettingsService $settings): void
+    public function saveBranding(): void
     {
+        /** @var SettingsService $settings */
+        $settings = app(SettingsService::class);
+
         $settings->setMany([
             'branding.logo_path' => $this->branding['logo_path'] ?? '',
             'branding.login_logo_path' => $this->branding['login_logo_path'] ?? '',

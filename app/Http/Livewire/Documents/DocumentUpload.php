@@ -21,6 +21,8 @@ class DocumentUpload extends Component
 
     public string $category = 'misc';
 
+    public ?int $clientId = null;
+
     public $file;
 
     protected function rules(): array
@@ -29,6 +31,7 @@ class DocumentUpload extends Component
         $maxKb = (int) config('client-portal.max_document_upload_size', 51200);
 
         return [
+            'clientId' => ['nullable', 'integer', 'exists:clients,id'],
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:'.$categories],
             'file' => ['required', 'file', "max:{$maxKb}", 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip'],
@@ -48,7 +51,14 @@ class DocumentUpload extends Component
             abort(403);
         }
 
-        if (! $user->client_id) {
+        // Clients can only upload to their own client_id.
+        // Staff/Admin users must pick a client.
+        $targetClientId = $user->client_id ?: $this->clientId;
+        if (! $targetClientId) {
+            $this->addError('clientId', 'Please select a client for this upload.');
+            return;
+        }
+        if ($user->isClient() && (int) $targetClientId !== (int) $user->client_id) {
             abort(403);
         }
 
@@ -56,7 +66,7 @@ class DocumentUpload extends Component
 
         $filename = (string) Str::uuid().'.'.$this->file->getClientOriginalExtension();
         $path = $this->file->storeAs(
-            'clients/'.$user->client_id.'/documents',
+            'clients/'.$targetClientId.'/documents',
             $filename,
             'documents'
         );
@@ -65,13 +75,13 @@ class DocumentUpload extends Component
         if (str_starts_with((string) $this->file->getMimeType(), 'image/')) {
             $thumb = app(ThumbnailService::class)->makeJpegThumbnailFromFile($this->file->getRealPath(), 640);
             if ($thumb) {
-                $thumbnailPath = 'clients/'.$user->client_id.'/documents/thumbnails/'.(string) Str::uuid().'.jpg';
+                $thumbnailPath = 'clients/'.$targetClientId.'/documents/thumbnails/'.(string) Str::uuid().'.jpg';
                 Storage::disk('documents')->put($thumbnailPath, $thumb);
             }
         }
 
         $document = Document::create([
-            'client_id' => $user->client_id,
+            'client_id' => (int) $targetClientId,
             'uploaded_by' => $user->id,
             'title' => $this->title,
             'description' => null,
@@ -98,7 +108,7 @@ class DocumentUpload extends Component
             Notification::send($recipients, new DocumentUploadedNotification($document));
         }
 
-        $this->reset(['title', 'category', 'file']);
+        $this->reset(['title', 'category', 'file', 'clientId']);
 
         $this->dispatch('document-uploaded');
         session()->flash('success', 'Document uploaded successfully.');
