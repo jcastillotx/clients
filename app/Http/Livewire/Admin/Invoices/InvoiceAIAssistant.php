@@ -168,6 +168,6 @@ class InvoiceAIAssistant extends Component
 
     public function render()
     {
-        return view('livewire.admin.invoices.ai-assistant');
+        return view('livewire.admin.invoices.ai-assistant')->layout('layouts.admin');
     }
 }

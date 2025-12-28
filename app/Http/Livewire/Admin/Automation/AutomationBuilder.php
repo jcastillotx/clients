@@ -321,6 +321,6 @@ class AutomationBuilder extends Component
             'triggerOptions' => $this->triggerOptions,
             'actionOptions' => $this->actionOptions,
             'staffOptions' => $this->staffOptions,
-        ]);
+        ])->layout('layouts.admin');
     }
 }

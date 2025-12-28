@@ -208,6 +208,6 @@ class ContentCalendar extends Component
             'clients' => Client::active()->orderBy('company_name')->get(),
             'platforms' => ['facebook', 'instagram', 'linkedin', 'x', 'tiktok', 'pinterest'],
             'stats' => $stats,
-        ]);
+        ])->layout('layouts.admin');
     }
 }

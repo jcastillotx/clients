@@ -81,6 +81,6 @@ class PricingOptimizer extends Component
 
     public function render()
     {
-        return view('livewire.admin.invoices.pricing-optimizer');
+        return view('livewire.admin.invoices.pricing-optimizer')->layout('layouts.admin');
     }
 }

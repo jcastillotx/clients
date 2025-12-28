@@ -149,6 +149,6 @@ class Dashboard extends Component
             'clients' => $clients,
             'platforms' => $platforms,
             'needsAttentionCount' => $needsAttentionCount,
-        ]);
+        ])->layout('layouts.admin');
     }
 }

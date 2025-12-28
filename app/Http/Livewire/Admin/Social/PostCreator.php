@@ -306,6 +306,6 @@ class PostCreator extends Component
                 'educational' => 'Educational',
                 'promotional' => 'Promotional',
             ],
-        ]);
+        ])->layout('layouts.admin');
     }
 }

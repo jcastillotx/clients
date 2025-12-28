@@ -31,6 +31,6 @@ class AutomationLogs extends Component
             ->latest('id')
             ->paginate(25);
 
-        return view('livewire.admin.automation.logs', compact('runs'));
+        return view('livewire.admin.automation.logs', compact('runs'))->layout('layouts.admin');
     }
 }

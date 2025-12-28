@@ -695,6 +695,6 @@ class SystemSettings extends Component
 
     public function render()
     {
-        return view('livewire.admin.settings.index');
+        return view('livewire.admin.settings.index')->layout('layouts.admin');
     }
 }

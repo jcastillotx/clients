@@ -344,6 +344,6 @@ class ProjectEstimator extends Component
             'historicalVariance' => $hist,
             'avgEstimated' => $avgEstimated,
             'avgActual' => $avgActual,
-        ]);
+        ])->layout('layouts.admin');
     }
 }

@@ -154,6 +154,6 @@ class PostManager extends Component
                 'failed' => 'Failed',
             ],
             'stats' => $stats,
-        ]);
+        ])->layout('layouts.admin');
     }
 }
