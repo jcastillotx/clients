@@ -94,24 +94,21 @@ class CustomReportBuilder extends Component
 
     protected function revenueByMonth(): array
     {
+        $driver = DB::connection()->getDriverName();
+        $dateExpr = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', processed_at)",
+            'pgsql' => "to_char(date_trunc('month', processed_at), 'YYYY-MM')",
+            default => "DATE_FORMAT(processed_at, '%Y-%m')",
+        };
+
         $rows = Payment::query()
             ->where('status', 'succeeded')
             ->whereDate('processed_at', '>=', $this->from)
             ->whereDate('processed_at', '<=', $this->to)
-            ->selectRaw("strftime('%Y-%m', processed_at) as ym, SUM(amount) as total")
+            ->selectRaw("{$dateExpr} as ym, SUM(amount) as total")
             ->groupBy('ym')
             ->orderBy('ym')
             ->get();
-        if ($rows->isEmpty()) {
-            $rows = Payment::query()
-                ->where('status', 'succeeded')
-                ->whereDate('processed_at', '>=', $this->from)
-                ->whereDate('processed_at', '<=', $this->to)
-                ->selectRaw("DATE_FORMAT(processed_at, '%Y-%m') as ym, SUM(amount) as total")
-                ->groupBy('ym')
-                ->orderBy('ym')
-                ->get();
-        }
 
         return [
             'Revenue by month',

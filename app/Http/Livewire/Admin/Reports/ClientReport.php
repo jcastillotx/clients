@@ -148,23 +148,21 @@ class ClientReport extends Component
             'avg_ltv' => $avgLtv,
         ];
 
-        // New clients by month (sqlite/mysql fallback)
+        // New clients by month
+        $driver = DB::connection()->getDriverName();
+        $dateExpr = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', created_at)",
+            'pgsql' => "to_char(date_trunc('month', created_at), 'YYYY-MM')",
+            default => "DATE_FORMAT(created_at, '%Y-%m')",
+        };
+
         $rows = Client::query()
             ->whereDate('created_at', '>=', $this->from)
             ->whereDate('created_at', '<=', $this->to)
-            ->selectRaw("strftime('%Y-%m', created_at) as ym, COUNT(*) as total")
+            ->selectRaw("{$dateExpr} as ym, COUNT(*) as total")
             ->groupBy('ym')
             ->orderBy('ym')
             ->get();
-        if ($rows->isEmpty()) {
-            $rows = Client::query()
-                ->whereDate('created_at', '>=', $this->from)
-                ->whereDate('created_at', '<=', $this->to)
-                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as total")
-                ->groupBy('ym')
-                ->orderBy('ym')
-                ->get();
-        }
         $this->newClientsByMonth = $rows->map(fn ($r) => ['label' => (string) $r->ym, 'value' => (int) $r->total])->values()->all();
 
         $this->clientsByTier = Client::query()

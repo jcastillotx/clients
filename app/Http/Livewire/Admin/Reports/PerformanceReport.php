@@ -91,87 +91,75 @@ class PerformanceReport extends Component
         }
     }
 
+    protected function monthKeyExpr(string $column): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        return match ($driver) {
+            'sqlite' => "strftime('%Y-%m', {$column})",
+            'pgsql' => "to_char(date_trunc('month', {$column}), 'YYYY-MM')",
+            default => "DATE_FORMAT({$column}, '%Y-%m')",
+        };
+    }
+
     public function load(): void
     {
+        $driver = DB::connection()->getDriverName();
+        $monthExpr = $this->monthKeyExpr('created_at');
+
         // Response time approximation: created_at -> started_at (hours)
+        $hoursDiffExpr = match ($driver) {
+            'sqlite' => '(julianday(started_at) - julianday(created_at)) * 24.0',
+            'pgsql' => "EXTRACT(EPOCH FROM (started_at - created_at)) / 3600",
+            default => 'TIMESTAMPDIFF(HOUR, created_at, started_at)',
+        };
+
         $avgResponse = ServiceRequest::query()
             ->whereNotNull('started_at')
             ->whereDate('created_at', '>=', $this->from)
             ->whereDate('created_at', '<=', $this->to)
-            ->selectRaw("strftime('%Y-%m', created_at) as ym, AVG((julianday(started_at) - julianday(created_at)) * 24.0) as hours")
+            ->selectRaw("{$monthExpr} as ym, AVG({$hoursDiffExpr}) as hours")
             ->groupBy('ym')
             ->orderBy('ym')
             ->get();
-        if ($avgResponse->isEmpty()) {
-            $avgResponse = ServiceRequest::query()
-                ->whereNotNull('started_at')
-                ->whereDate('created_at', '>=', $this->from)
-                ->whereDate('created_at', '<=', $this->to)
-                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, AVG(TIMESTAMPDIFF(HOUR, created_at, started_at)) as hours")
-                ->groupBy('ym')
-                ->orderBy('ym')
-                ->get();
-        }
         $this->avgResponseByMonth = $avgResponse->map(fn ($r) => ['label' => (string) $r->ym, 'value' => (float) $r->hours])->values()->all();
 
         // Resolution time: created_at -> completed_at (hours)
+        $monthExprCompleted = $this->monthKeyExpr('completed_at');
+        $resolutionDiffExpr = match ($driver) {
+            'sqlite' => '(julianday(completed_at) - julianday(created_at)) * 24.0',
+            'pgsql' => "EXTRACT(EPOCH FROM (completed_at - created_at)) / 3600",
+            default => 'TIMESTAMPDIFF(HOUR, created_at, completed_at)',
+        };
+
         $avgRes = ServiceRequest::query()
             ->whereNotNull('completed_at')
             ->whereDate('completed_at', '>=', $this->from)
             ->whereDate('completed_at', '<=', $this->to)
-            ->selectRaw("strftime('%Y-%m', completed_at) as ym, AVG((julianday(completed_at) - julianday(created_at)) * 24.0) as hours")
+            ->selectRaw("{$monthExprCompleted} as ym, AVG({$resolutionDiffExpr}) as hours")
             ->groupBy('ym')
             ->orderBy('ym')
             ->get();
-        if ($avgRes->isEmpty()) {
-            $avgRes = ServiceRequest::query()
-                ->whereNotNull('completed_at')
-                ->whereDate('completed_at', '>=', $this->from)
-                ->whereDate('completed_at', '<=', $this->to)
-                ->selectRaw("DATE_FORMAT(completed_at, '%Y-%m') as ym, AVG(TIMESTAMPDIFF(HOUR, created_at, completed_at)) as hours")
-                ->groupBy('ym')
-                ->orderBy('ym')
-                ->get();
-        }
         $this->avgResolutionByMonth = $avgRes->map(fn ($r) => ['label' => (string) $r->ym, 'value' => (float) $r->hours])->values()->all();
 
         // Monthly trends: created vs completed
         $created = ServiceRequest::query()
             ->whereDate('created_at', '>=', $this->from)
             ->whereDate('created_at', '<=', $this->to)
-            ->selectRaw("strftime('%Y-%m', created_at) as ym, COUNT(*) as total")
+            ->selectRaw("{$monthExpr} as ym, COUNT(*) as total")
             ->groupBy('ym')
             ->orderBy('ym')
             ->get();
-        if ($created->isEmpty()) {
-            $created = ServiceRequest::query()
-                ->whereDate('created_at', '>=', $this->from)
-                ->whereDate('created_at', '<=', $this->to)
-                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as total")
-                ->groupBy('ym')
-                ->orderBy('ym')
-                ->get();
-        }
         $this->createdByMonth = $created->map(fn ($r) => ['label' => (string) $r->ym, 'value' => (int) $r->total])->values()->all();
 
         $completed = ServiceRequest::query()
             ->whereNotNull('completed_at')
             ->whereDate('completed_at', '>=', $this->from)
             ->whereDate('completed_at', '<=', $this->to)
-            ->selectRaw("strftime('%Y-%m', completed_at) as ym, COUNT(*) as total")
+            ->selectRaw("{$monthExprCompleted} as ym, COUNT(*) as total")
             ->groupBy('ym')
             ->orderBy('ym')
             ->get();
-        if ($completed->isEmpty()) {
-            $completed = ServiceRequest::query()
-                ->whereNotNull('completed_at')
-                ->whereDate('completed_at', '>=', $this->from)
-                ->whereDate('completed_at', '<=', $this->to)
-                ->selectRaw("DATE_FORMAT(completed_at, '%Y-%m') as ym, COUNT(*) as total")
-                ->groupBy('ym')
-                ->orderBy('ym')
-                ->get();
-        }
         $this->completedByMonth = $completed->map(fn ($r) => ['label' => (string) $r->ym, 'value' => (int) $r->total])->values()->all();
 
         $avgResponseOverall = (float) collect($this->avgResponseByMonth)->avg('value');

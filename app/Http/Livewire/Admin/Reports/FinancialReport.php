@@ -142,28 +142,39 @@ class FinancialReport extends Component
         ];
 
         // Revenue by period (month/quarter/year)
-        [$labelExprSqlite, $labelExprMysql, $alias] = match ($this->revenueGroup) {
-            'year' => ["strftime('%Y', processed_at)", "DATE_FORMAT(processed_at, '%Y')", 'period'],
-            'quarter' => [
-                "(strftime('%Y', processed_at) || '-Q' || (((CAST(strftime('%m', processed_at) AS INTEGER)-1)/3)+1))",
-                "CONCAT(YEAR(processed_at), '-Q', QUARTER(processed_at))",
-                'period',
+        $driver = DB::connection()->getDriverName();
+        [$labelExpr, $alias] = match ($this->revenueGroup) {
+            'year' => [
+                match ($driver) {
+                    'sqlite' => "strftime('%Y', processed_at)",
+                    'pgsql' => "to_char(processed_at, 'YYYY')",
+                    default => "DATE_FORMAT(processed_at, '%Y')",
+                },
+                'period'
             ],
-            default => ["strftime('%Y-%m', processed_at)", "DATE_FORMAT(processed_at, '%Y-%m')", 'period'],
+            'quarter' => [
+                match ($driver) {
+                    'sqlite' => "(strftime('%Y', processed_at) || '-Q' || (((CAST(strftime('%m', processed_at) AS INTEGER)-1)/3)+1))",
+                    'pgsql' => "to_char(processed_at, 'YYYY') || '-Q' || EXTRACT(QUARTER FROM processed_at)",
+                    default => "CONCAT(YEAR(processed_at), '-Q', QUARTER(processed_at))",
+                },
+                'period'
+            ],
+            default => [
+                match ($driver) {
+                    'sqlite' => "strftime('%Y-%m', processed_at)",
+                    'pgsql' => "to_char(date_trunc('month', processed_at), 'YYYY-MM')",
+                    default => "DATE_FORMAT(processed_at, '%Y-%m')",
+                },
+                'period'
+            ],
         };
 
         $rows = $this->paymentsQuery()
-            ->selectRaw("$labelExprSqlite as $alias, SUM(amount) as total")
+            ->selectRaw("$labelExpr as $alias, SUM(amount) as total")
             ->groupBy($alias)
             ->orderBy($alias)
             ->get();
-        if ($rows->isEmpty()) {
-            $rows = $this->paymentsQuery()
-                ->selectRaw("$labelExprMysql as $alias, SUM(amount) as total")
-                ->groupBy($alias)
-                ->orderBy($alias)
-                ->get();
-        }
 
         $this->revenueByPeriod = $rows->map(fn ($r) => [
             'label' => (string) ($r->$alias ?? ''),
