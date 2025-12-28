@@ -5,6 +5,10 @@
             <h2 class="page-title mb-0">Invoices &amp; Payments</h2>
         </div>
         <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.invoices.recurring.index') }}" class="btn btn-outline-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-repeat me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" /><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3" /></svg>
+                Recurring
+            </a>
             <a href="{{ route('admin.invoices.create') }}" class="btn btn-primary">Create Invoice</a>
             <button type="button" class="btn btn-outline-secondary" wire:click="openManualPayment()">Record Payment</button>
         </div>

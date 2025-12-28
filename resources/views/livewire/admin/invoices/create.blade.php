@@ -10,6 +10,24 @@
     <div class="row g-3">
         {{-- Main Form Column --}}
         <div class="col-12 col-xl-8">
+            {{-- Invoice Type Toggle --}}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="invoice_type" id="type_onetime" value="0" wire:model.live="is_recurring" {{ !$is_recurring ? 'checked' : '' }}>
+                        <label class="btn btn-outline-primary" for="type_onetime">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-invoice me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 7l1 0" /><path d="M9 13l6 0" /><path d="M13 17l2 0" /></svg>
+                            One-Time Invoice
+                        </label>
+                        <input type="radio" class="btn-check" name="invoice_type" id="type_recurring" value="1" wire:model.live="is_recurring" {{ $is_recurring ? 'checked' : '' }}>
+                        <label class="btn btn-outline-primary" for="type_recurring">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-repeat me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" /><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3" /></svg>
+                            Recurring Invoice
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             {{-- Client & Template Card --}}
             <div class="card mb-3">
                 <div class="card-header">
@@ -40,40 +58,136 @@
                 </div>
             </div>
 
-            {{-- Invoice Details Card --}}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h3 class="card-title mb-0">Invoice Details</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12 col-md-4">
-                            <label class="form-label">Invoice Number</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <label class="form-check m-0">
-                                        <input class="form-check-input" type="checkbox" wire:model.live="autoNumber">
-                                        <span class="form-check-label">Auto</span>
-                                    </label>
-                                </span>
-                                <input type="text" class="form-control" wire:model.live="invoice_number" placeholder="INV-YYYYMM-0001" @disabled($autoNumber)>
+            {{-- Recurring Schedule Card (only shown when recurring) --}}
+            @if($is_recurring)
+                <div class="card mb-3 border-primary">
+                    <div class="card-header bg-primary-lt">
+                        <h3 class="card-title mb-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-repeat me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12.5 21h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v3" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h12" /><path d="M20 14l2 2h-3" /><path d="M20 18l2 -2" /><path d="M19 16a3 3 0 1 0 2 5.236" /></svg>
+                            Recurring Schedule
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Schedule Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" wire:model.live="recurring_name" placeholder="e.g., Monthly Retainer - Acme Corp">
+                                @error('recurring_name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <div class="form-hint">Internal name to identify this recurring invoice schedule.</div>
                             </div>
-                            @error('invoice_number') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                            <div class="form-hint">If Auto is enabled, the number is generated on save.</div>
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <label class="form-label">Issue Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" wire:model.live="issue_date">
-                            @error('issue_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <label class="form-label">Due Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" wire:model.live="due_date">
-                            @error('due_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Frequency <span class="text-danger">*</span></label>
+                                <select class="form-select" wire:model.live="recurring_frequency">
+                                    @foreach($frequencyOptions as $key => $label)
+                                        <option value="{{ $key }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('recurring_frequency') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            </div>
+
+                            @if(in_array($recurring_frequency, ['monthly', 'quarterly', 'yearly']))
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Day of Month</label>
+                                    <select class="form-select" wire:model.live="recurring_day_of_month">
+                                        <option value="">Same as start date</option>
+                                        @for($d = 1; $d <= 28; $d++)
+                                            <option value="{{ $d }}">{{ $d }}{{ $d == 1 ? 'st' : ($d == 2 ? 'nd' : ($d == 3 ? 'rd' : 'th')) }}</option>
+                                        @endfor
+                                    </select>
+                                    @error('recurring_day_of_month') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                    <div class="form-hint">Generate invoice on this day each period (max 28 to handle all months).</div>
+                                </div>
+                            @endif
+
+                            @if(in_array($recurring_frequency, ['weekly', 'biweekly']))
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Day of Week</label>
+                                    <select class="form-select" wire:model.live="recurring_day_of_week">
+                                        <option value="">Same as start date</option>
+                                        @foreach($dayOfWeekOptions as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('recurring_day_of_week') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                </div>
+                            @endif
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" wire:model.live="recurring_start_date">
+                                @error('recurring_start_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <div class="form-hint">First invoice generated on this date.</div>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">End Date</label>
+                                <input type="date" class="form-control" wire:model.live="recurring_end_date">
+                                @error('recurring_end_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <div class="form-hint">Leave empty for indefinite.</div>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Max Occurrences</label>
+                                <input type="number" class="form-control" wire:model.live="recurring_occurrences_limit" min="1" max="999" placeholder="Unlimited">
+                                @error('recurring_occurrences_limit') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <div class="form-hint">Stop after this many invoices.</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Payment Terms (Days)</label>
+                                <input type="number" class="form-control" wire:model.live="recurring_payment_terms_days" min="0" max="365">
+                                @error('recurring_payment_terms_days') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <div class="form-hint">Due date = Issue date + this many days.</div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label d-block">&nbsp;</label>
+                                <label class="form-check">
+                                    <input class="form-check-input" type="checkbox" wire:model.live="recurring_auto_send">
+                                    <span class="form-check-label">Auto-send to client when generated</span>
+                                </label>
+                                <div class="form-hint">If unchecked, invoices are created as drafts.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            @else
+                {{-- Invoice Details Card (only for one-time) --}}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">Invoice Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Invoice Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <label class="form-check m-0">
+                                            <input class="form-check-input" type="checkbox" wire:model.live="autoNumber">
+                                            <span class="form-check-label">Auto</span>
+                                        </label>
+                                    </span>
+                                    <input type="text" class="form-control" wire:model.live="invoice_number" placeholder="INV-YYYYMM-0001" @disabled($autoNumber)>
+                                </div>
+                                @error('invoice_number') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                <div class="form-hint">If Auto is enabled, the number is generated on save.</div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Issue Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" wire:model.live="issue_date">
+                                @error('issue_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Due Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" wire:model.live="due_date">
+                                @error('due_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             {{-- Related Links Card --}}
             <div class="card mb-3">
@@ -245,22 +359,49 @@
                             </div>
                         @endif
                         <div class="d-flex justify-content-between pt-2 border-top">
-                            <span class="fw-bold">Total</span>
+                            <span class="fw-bold">{{ $is_recurring ? 'Per Invoice' : 'Total' }}</span>
                             <span class="h3 mb-0 text-primary">${{ number_format((float)$total, 2) }}</span>
                         </div>
                     </div>
+
+                    @if($is_recurring)
+                        <div class="alert alert-info mt-3 mb-0">
+                            <div class="d-flex">
+                                <div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-info-circle alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
+                                </div>
+                                <div class="ms-2">
+                                    <h4 class="alert-title mb-1">Recurring Invoice</h4>
+                                    <div class="text-muted small">
+                                        Invoices will be automatically generated {{ strtolower($frequencyOptions[$recurring_frequency] ?? $recurring_frequency) }}
+                                        @if($recurring_start_date)
+                                            starting {{ \Carbon\Carbon::parse($recurring_start_date)->format('M j, Y') }}
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
                 <div class="card-footer">
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-primary" wire:click="sendToClient" wire:loading.attr="disabled">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-send" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 14l11 -11" /><path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5" /></svg>
-                            <span wire:loading.remove wire:target="sendToClient">Send to Client</span>
-                            <span wire:loading wire:target="sendToClient">Sending…</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" wire:click="saveDraft" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="saveDraft">Save as Draft</span>
-                            <span wire:loading wire:target="saveDraft">Saving…</span>
-                        </button>
+                        @if($is_recurring)
+                            <button type="button" class="btn btn-primary" wire:click="saveRecurring" wire:loading.attr="disabled">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-plus me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12.5 21h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v5" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M16 19h6" /><path d="M19 16v6" /></svg>
+                                <span wire:loading.remove wire:target="saveRecurring">Create Recurring Schedule</span>
+                                <span wire:loading wire:target="saveRecurring">Creating…</span>
+                            </button>
+                        @else
+                            <button type="button" class="btn btn-primary" wire:click="sendToClient" wire:loading.attr="disabled">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-send me-1" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 14l11 -11" /><path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5" /></svg>
+                                <span wire:loading.remove wire:target="sendToClient">Send to Client</span>
+                                <span wire:loading wire:target="sendToClient">Sending…</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" wire:click="saveDraft" wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="saveDraft">Save as Draft</span>
+                                <span wire:loading wire:target="saveDraft">Saving…</span>
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>

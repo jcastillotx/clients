@@ -50,6 +50,7 @@ use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerato
 use App\Http\Livewire\Admin\Invoices\AdminInvoiceManagement;
 use App\Http\Livewire\Admin\Invoices\InvoiceCreate as AdminInvoiceCreate;
 use App\Http\Livewire\Admin\Invoices\InvoiceEdit as AdminInvoiceEdit;
+use App\Http\Livewire\Admin\Invoices\RecurringInvoiceIndex;
 use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use App\Http\Livewire\Admin\Reports\ReportDeliveries as AdminReportDeliveries;
@@ -374,6 +375,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         // Invoices
         Route::get('/invoices', AdminInvoiceManagement::class)->name('invoices.index')->middleware('permission:view_any_invoice');
         Route::get('/invoices/create', AdminInvoiceCreate::class)->name('invoices.create')->middleware('permission:create_invoice');
+        Route::get('/invoices/recurring', RecurringInvoiceIndex::class)->name('invoices.recurring.index')->middleware('permission:view_any_invoice');
         Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit')->middleware('permission:update_invoice');
 
         // Contracts (AI)

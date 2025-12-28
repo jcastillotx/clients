@@ -28,6 +28,7 @@ class Invoice extends Model
         'client_id',
         'request_id',
         'contract_id',
+        'recurring_invoice_id',
         'invoice_number',
         'subtotal',
         'tax_rate',
@@ -107,6 +108,14 @@ class Invoice extends Model
     public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);
+    }
+
+    /**
+     * Get the recurring invoice template this invoice was generated from.
+     */
+    public function recurringInvoice(): BelongsTo
+    {
+        return $this->belongsTo(RecurringInvoice::class);
     }
 
     /**
