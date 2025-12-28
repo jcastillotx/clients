@@ -30,6 +30,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'avatar',
+        'profile_photo_path',
         'client_id',
         'is_active',
         'status',
@@ -282,5 +283,14 @@ class User extends Authenticatable
         }
 
         return substr($initials, 0, 2);
+    }
+
+    public function profilePhotoUrl(): ?string
+    {
+        if (! $this->profile_photo_path) {
+            return null;
+        }
+
+        return asset('storage/' . ltrim((string) $this->profile_photo_path, '/'));
     }
 }

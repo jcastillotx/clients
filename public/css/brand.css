@@ -38,6 +38,25 @@
     --brand-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --brand-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     --brand-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* Density (padding) */
+    --page-padding-comfy: 1.5rem;
+    --page-padding-compact: 1rem;
+    --page-padding-extreme: 0.5rem;
+    --page-padding: var(--page-padding-comfy);
+}
+
+/* Density toggles */
+html[data-density="comfy"] { --page-padding: var(--page-padding-comfy); }
+html[data-density="compact"] { --page-padding: var(--page-padding-compact); }
+html[data-density="extreme"] { --page-padding: var(--page-padding-extreme); }
+
+/* Dark mode toggles */
+html[data-theme="dark"] {
+    --brand-bg: #0b1220;
+    --brand-bg-alt: #111827;
+    --brand-text-primary: #e5e7eb;
+    --brand-text-secondary: #9ca3af;
 }
 
 /* Global Overrides */
@@ -45,6 +64,26 @@ body {
     font-family: var(--brand-font-secondary);
     color: var(--brand-text-primary);
     background-color: var(--brand-bg);
+}
+
+/* Apply density to AdminLTE containers */
+.content-wrapper .content > .container-fluid {
+    padding-left: var(--page-padding) !important;
+    padding-right: var(--page-padding) !important;
+}
+
+html[data-theme="dark"] .content-wrapper {
+    background-color: var(--brand-bg);
+}
+
+html[data-theme="dark"] .card {
+    background-color: var(--brand-bg-alt);
+    color: var(--brand-text-primary);
+}
+
+html[data-theme="dark"] .main-header.navbar {
+    background-color: var(--brand-bg-alt) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Headings */

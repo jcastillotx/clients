@@ -8,11 +8,35 @@
                 <div class="card-header">
                     <h3 class="card-title">Profile Information</h3>
                 </div>
-                <form method="POST" action="{{ route('profile.update') }}">
+                <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
                     @csrf
                     @method('PATCH')
 
                     <div class="card-body">
+                        <div class="form-group">
+                            <label class="d-block">Profile photo</label>
+                            <div class="d-flex align-items-center" style="gap: 12px;">
+                                @php $photoUrl = $user->profilePhotoUrl(); @endphp
+                                @if($photoUrl)
+                                    <img src="{{ $photoUrl }}" alt="Profile photo" class="img-circle elevation-2" style="width: 48px; height: 48px; object-fit: cover;">
+                                @else
+                                    <div class="img-circle elevation-2 bg-info d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <span class="text-white font-weight-bold">{{ $user->initials }}</span>
+                                    </div>
+                                @endif
+                                <div class="flex-grow-1">
+                                    <input type="file"
+                                           name="profile_photo"
+                                           class="form-control @error('profile_photo') is-invalid @enderror"
+                                           accept="image/png,image/jpeg,image/webp">
+                                    <small class="text-muted">PNG/JPG/WEBP up to 4MB.</small>
+                                    @error('profile_photo')
+                                    <span class="invalid-feedback d-block">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="name">Name</label>
                             <input type="text" 
