@@ -521,6 +521,13 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
 | "public" disk and avoids path traversal.
 */
 
+Route::get('/storage', function () {
+    // `/storage/` is a directory endpoint (usually a symlink). Browsing it is not
+    // a supported UX, and many servers return 403 for directory listing. If the
+    // request reaches Laravel, return a consistent 404.
+    abort(404);
+});
+
 Route::get('/storage/{path}', function (string $path) {
     if (\Illuminate\Support\Str::contains($path, ['..', "\0"]) || str_starts_with($path, '/')) {
         abort(404);

@@ -7,6 +7,11 @@ use Tests\TestCase;
 
 class PublicStorageFallbackTest extends TestCase
 {
+    public function test_storage_directory_is_not_browseable(): void
+    {
+        $this->get('/storage')->assertNotFound();
+    }
+
     public function test_it_serves_files_from_public_disk_via_storage_prefix(): void
     {
         Storage::fake('public');
