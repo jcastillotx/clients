@@ -444,6 +444,20 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Save Button (Left Column - Mobile Friendly) -->
+            <div class="card card-primary d-lg-none">
+                <div class="card-body">
+                    <button type="button" class="btn btn-primary btn-lg btn-block" wire:click="saveBranding" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="saveBranding">
+                            <i class="fas fa-save mr-2"></i>Save Branding Settings
+                        </span>
+                        <span wire:loading wire:target="saveBranding">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
+                        </span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Right Column: Templates & Customization -->
@@ -559,7 +573,7 @@
                 </div>
             </div>
 
-            <!-- Save Button -->
+            <!-- Save Button (Right Column) -->
             <button type="button" class="btn btn-primary btn-lg btn-block" wire:click="saveBranding" wire:loading.attr="disabled">
                 <span wire:loading.remove wire:target="saveBranding">
                     <i class="fas fa-save mr-2"></i>Save Branding Settings
@@ -568,6 +582,28 @@
                     <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
                 </span>
             </button>
+        </div>
+    </div>
+
+    <!-- Save Actions Bar -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-outline card-primary">
+                <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
+                    <div class="mb-2 mb-md-0">
+                        <h5 class="mb-1"><i class="fas fa-save mr-2 text-primary"></i>Save Your Changes</h5>
+                        <p class="text-muted mb-0 small">Click the button to apply your branding settings across the platform.</p>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-lg" wire:click="saveBranding" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="saveBranding">
+                            <i class="fas fa-save mr-2"></i>Save Branding Settings
+                        </span>
+                        <span wire:loading wire:target="saveBranding">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
+                        </span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
