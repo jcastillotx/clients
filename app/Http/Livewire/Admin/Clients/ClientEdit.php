@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Admin\Clients;
 use App\Models\ActivityLog;
 use App\Models\Client;
 use App\Models\User;
+use App\Services\AI\AIProviderManager;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -46,8 +47,20 @@ class ClientEdit extends Component
 
     public ?string $notes = null;
 
-    public string $tab = 'overview';
+    // New profile fields
+    public ?string $internal_notes = null;
 
+    public ?string $mission = null;
+
+    public ?string $vision = null;
+
+    public ?string $competitors = null;
+
+    public ?string $marketing_strategy = null;
+
+    public bool $generating_strategy = false;
+
+    public string $tab = 'overview';
 
     // Password change fields
     public string $newPassword = '';
@@ -73,6 +86,11 @@ class ClientEdit extends Component
         $this->status = $client->status ?? 'active';
         $this->stripe_customer_id = $client->stripe_customer_id;
         $this->notes = $client->notes;
+        $this->internal_notes = $client->internal_notes;
+        $this->mission = $client->mission;
+        $this->vision = $client->vision;
+        $this->competitors = $client->competitors;
+        $this->marketing_strategy = $client->marketing_strategy;
         $this->selectedServices = $client->enabled_features ?? [];
     }
 
@@ -100,6 +118,11 @@ class ClientEdit extends Component
             'status' => ['required', Rule::in(['active', 'inactive', 'pending', 'suspended'])],
             'stripe_customer_id' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
+            'internal_notes' => ['nullable', 'string'],
+            'mission' => ['nullable', 'string', 'max:2000'],
+            'vision' => ['nullable', 'string', 'max:2000'],
+            'competitors' => ['nullable', 'string', 'max:2000'],
+            'marketing_strategy' => ['nullable', 'string'],
             'tab' => ['nullable', 'string'],
             'selectedServices' => ['array'],
             'selectedServices.*' => [Rule::in($availableFeatures)],
@@ -112,6 +135,89 @@ class ClientEdit extends Component
             return;
         }
         $this->validateOnly($property);
+    }
+
+    public function generateMarketingStrategy(): void
+    {
+        $this->generating_strategy = true;
+
+        try {
+            $ai = app(AIProviderManager::class);
+
+            $context = "Company: {$this->company_name}\n";
+            if ($this->mission) {
+                $context .= "Mission: {$this->mission}\n";
+            }
+            if ($this->vision) {
+                $context .= "Vision: {$this->vision}\n";
+            }
+            if ($this->competitors) {
+                $context .= "Known Competitors: {$this->competitors}\n";
+            }
+            if ($this->city || $this->state) {
+                $context .= "Location: " . implode(', ', array_filter([$this->city, $this->state])) . "\n";
+            }
+
+            $prompt = <<<PROMPT
+Based on the following client information, create a comprehensive marketing strategy:
+
+{$context}
+
+Please provide a detailed marketing strategy that includes:
+
+1. **Executive Summary** - Brief overview of the recommended approach
+2. **Target Audience** - Who should this company focus on reaching
+3. **Unique Value Proposition** - What makes this company stand out
+4. **Marketing Channels** - Recommended channels (digital, social, traditional)
+5. **Content Strategy** - Types of content to create and share
+6. **Competitive Positioning** - How to differentiate from competitors
+7. **Key Metrics & KPIs** - How to measure success
+8. **Quick Wins** - Immediate actions that can show results
+9. **Long-term Initiatives** - Strategic goals for 6-12 months
+
+Format the response in clean HTML with headers and bullet points for easy reading.
+PROMPT;
+
+            $response = $ai->chat([
+                ['role' => 'system', 'content' => 'You are an expert marketing strategist. Provide actionable, specific marketing strategies tailored to the client\'s business.'],
+                ['role' => 'user', 'content' => $prompt],
+            ], [
+                'max_tokens' => 2000,
+            ]);
+
+            $this->marketing_strategy = $response;
+            
+            // Save immediately to client
+            $this->client->update([
+                'marketing_strategy' => $response,
+                'marketing_strategy_generated_at' => now(),
+            ]);
+            
+            session()->flash('success', 'Marketing strategy generated successfully.');
+        } catch (\Exception $e) {
+            $this->addError('marketing_strategy', 'Failed to generate strategy: ' . $e->getMessage());
+        } finally {
+            $this->generating_strategy = false;
+        }
+    }
+
+    public function saveProfile(): void
+    {
+        $validated = $this->validate([
+            'mission' => ['nullable', 'string', 'max:2000'],
+            'vision' => ['nullable', 'string', 'max:2000'],
+            'competitors' => ['nullable', 'string', 'max:2000'],
+            'internal_notes' => ['nullable', 'string'],
+        ]);
+
+        $this->client->update([
+            'mission' => $validated['mission'],
+            'vision' => $validated['vision'],
+            'competitors' => $validated['competitors'],
+            'internal_notes' => $validated['internal_notes'],
+        ]);
+
+        session()->flash('success', 'Business profile updated.');
     }
 
     public function save()
@@ -132,6 +238,11 @@ class ClientEdit extends Component
             'status' => $data['status'],
             'stripe_customer_id' => $data['stripe_customer_id'],
             'notes' => $data['notes'],
+            'internal_notes' => $data['internal_notes'],
+            'mission' => $data['mission'],
+            'vision' => $data['vision'],
+            'competitors' => $data['competitors'],
+            'marketing_strategy' => $data['marketing_strategy'],
             'enabled_features' => $data['selectedServices'],
         ]);
 

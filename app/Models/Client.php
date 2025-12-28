@@ -41,6 +41,12 @@ class Client extends Model
         'tier',
         'stripe_customer_id',
         'notes',
+        'internal_notes',
+        'mission',
+        'vision',
+        'competitors',
+        'marketing_strategy',
+        'marketing_strategy_generated_at',
         'enabled_features',
         'meta',
     ];
@@ -54,6 +60,7 @@ class Client extends Model
         'status' => 'string',
         'tier' => 'string',
         'deleted_at' => 'datetime',
+        'marketing_strategy_generated_at' => 'datetime',
         'enabled_features' => 'array',
         'meta' => 'array',
     ];
