@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Settings\SettingsService;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +21,8 @@ class BrandingServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->applyBrandingOverridesFromSettings();
+
         // Share branding configuration with all views
         View::composer('*', function ($view) {
             $view->with('branding', config('branding'));
@@ -27,6 +30,82 @@ class BrandingServiceProvider extends ServiceProvider
 
         // Generate CSS custom properties from branding config
         $this->generateBrandingCSS();
+    }
+
+    /**
+     * Override config('branding') with values stored in SettingsService.
+     *
+     * This makes admin-configured branding apply immediately without requiring .env changes.
+     */
+    protected function applyBrandingOverridesFromSettings(): void
+    {
+        try {
+            /** @var SettingsService $settings */
+            $settings = app(SettingsService::class);
+
+            // Core brand colors (also used as default button colors)
+            foreach ([
+                'branding.colors.primary' => 'branding.colors.primary',
+                'branding.colors.secondary' => 'branding.colors.secondary',
+                'branding.colors.accent' => 'branding.colors.accent',
+            ] as $settingKey => $configKey) {
+                $value = (string) $settings->get($settingKey, '');
+                if ($value !== '') {
+                    config()->set($configKey, $value);
+                }
+            }
+
+            // Uploaded assets (stored on public disk, path like "branding/xyz.png")
+            $logoPath = (string) $settings->get('branding.logo_path', '');
+            if ($logoPath !== '') {
+                config()->set('branding.logo.main', 'storage/' . ltrim($logoPath, '/'));
+                // Keep email logo aligned unless specifically overridden elsewhere
+                config()->set('branding.email.logo', 'storage/' . ltrim($logoPath, '/'));
+            }
+
+            $loginLogoPath = (string) $settings->get('branding.login_logo_path', '');
+            if ($loginLogoPath !== '') {
+                config()->set('branding.auth.login_logo', 'storage/' . ltrim($loginLogoPath, '/'));
+            }
+
+            $dashboardLogoPath = (string) $settings->get('branding.dashboard_logo_path', '');
+            if ($dashboardLogoPath !== '') {
+                config()->set('branding.admin.dashboard_logo', 'storage/' . ltrim($dashboardLogoPath, '/'));
+            }
+
+            $loginBackgroundPath = (string) $settings->get('branding.login_background_path', '');
+            if ($loginBackgroundPath !== '') {
+                config()->set('branding.auth.background_style', 'image');
+                config()->set('branding.auth.background_image', 'storage/' . ltrim($loginBackgroundPath, '/'));
+            }
+
+            // Button colors (optional overrides)
+            foreach ([
+                'branding.buttons.primary' => 'branding.buttons.primary',
+                'branding.buttons.primary_hover' => 'branding.buttons.primary_hover',
+                'branding.buttons.secondary' => 'branding.buttons.secondary',
+                'branding.buttons.secondary_hover' => 'branding.buttons.secondary_hover',
+            ] as $settingKey => $configKey) {
+                $value = (string) $settings->get($settingKey, '');
+                if ($value !== '') {
+                    config()->set($configKey, $value);
+                }
+            }
+
+            // Admin header/footer HTML injection (optional)
+            $adminHeaderHtml = (string) $settings->get('branding.admin.header_html', '');
+            if ($adminHeaderHtml !== '') {
+                config()->set('branding.admin.header_html', $adminHeaderHtml);
+            }
+
+            $adminFooterHtml = (string) $settings->get('branding.admin.footer_html', '');
+            if ($adminFooterHtml !== '') {
+                config()->set('branding.admin.footer_html', $adminFooterHtml);
+            }
+        } catch (\Throwable $e) {
+            // Don't break the app if settings storage is unavailable
+            \Log::warning('Branding settings overrides not applied: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -78,6 +157,14 @@ class BrandingServiceProvider extends ServiceProvider
         $colors = $config['colors'] ?? [];
         $typography = $config['typography'] ?? [];
         $design = $config['design'] ?? [];
+        $buttons = $config['buttons'] ?? [];
+        $admin = $config['admin'] ?? [];
+
+        $btnPrimary = $buttons['primary'] ?? ($colors['primary'] ?? '#2563eb');
+        $btnPrimaryHover = $buttons['primary_hover'] ?? ($colors['primary_dark'] ?? '#1e40af');
+        $btnSecondary = $buttons['secondary'] ?? ($colors['secondary'] ?? '#10b981');
+        $btnSecondaryHover = $buttons['secondary_hover'] ?? ($colors['secondary'] ?? '#10b981');
+        $adminPagePadding = $admin['page_padding'] ?? '1.5rem';
 
         $css = <<<CSS
 /**
@@ -120,6 +207,15 @@ class BrandingServiceProvider extends ServiceProvider
     --brand-shadow-sm: {$design['shadow_sm']};
     --brand-shadow: {$design['shadow']};
     --brand-shadow-lg: {$design['shadow_lg']};
+
+    /* Button Colors (optional overrides) */
+    --brand-btn-primary: {$btnPrimary};
+    --brand-btn-primary-hover: {$btnPrimaryHover};
+    --brand-btn-secondary: {$btnSecondary};
+    --brand-btn-secondary-hover: {$btnSecondaryHover};
+
+    /* Admin Layout */
+    --admin-page-padding: {$adminPagePadding};
 }
 
 /* Global Overrides */
@@ -161,20 +257,25 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Buttons */
 .btn-primary {
-    background-color: var(--brand-primary);
-    border-color: var(--brand-primary);
+    background-color: var(--brand-btn-primary);
+    border-color: var(--brand-btn-primary);
     border-radius: var(--brand-radius);
 }
 
 .btn-primary:hover {
-    background-color: var(--brand-primary-dark);
-    border-color: var(--brand-primary-dark);
+    background-color: var(--brand-btn-primary-hover);
+    border-color: var(--brand-btn-primary-hover);
 }
 
 .btn-secondary {
-    background-color: var(--brand-secondary);
-    border-color: var(--brand-secondary);
+    background-color: var(--brand-btn-secondary);
+    border-color: var(--brand-btn-secondary);
     border-radius: var(--brand-radius);
+}
+
+.btn-secondary:hover {
+    background-color: var(--brand-btn-secondary-hover);
+    border-color: var(--brand-btn-secondary-hover);
 }
 
 .btn-accent,
@@ -372,6 +473,12 @@ a:hover {
         margin-left: 0 !important;
         padding: 0 !important;
     }
+}
+
+/* Tabler Admin Panel - fixed padding */
+.page-body > .container-fluid {
+    padding-left: var(--admin-page-padding) !important;
+    padding-right: var(--admin-page-padding) !important;
 }
 
 CSS;

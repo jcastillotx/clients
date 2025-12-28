@@ -48,6 +48,14 @@ class GenerateBrandingCSS extends Command
         $colors = $config['colors'] ?? [];
         $typography = $config['typography'] ?? [];
         $design = $config['design'] ?? [];
+        $buttons = $config['buttons'] ?? [];
+        $admin = $config['admin'] ?? [];
+
+        $btnPrimary = $buttons['primary'] ?? ($colors['primary'] ?? '#2563eb');
+        $btnPrimaryHover = $buttons['primary_hover'] ?? ($colors['primary_dark'] ?? '#1e40af');
+        $btnSecondary = $buttons['secondary'] ?? ($colors['secondary'] ?? '#10b981');
+        $btnSecondaryHover = $buttons['secondary_hover'] ?? ($colors['secondary'] ?? '#10b981');
+        $adminPagePadding = $admin['page_padding'] ?? '1.5rem';
 
         $css = <<<CSS
 /**
@@ -90,6 +98,15 @@ class GenerateBrandingCSS extends Command
     --brand-shadow-sm: {$design['shadow_sm']};
     --brand-shadow: {$design['shadow']};
     --brand-shadow-lg: {$design['shadow_lg']};
+
+    /* Button Colors (optional overrides) */
+    --brand-btn-primary: {$btnPrimary};
+    --brand-btn-primary-hover: {$btnPrimaryHover};
+    --brand-btn-secondary: {$btnSecondary};
+    --brand-btn-secondary-hover: {$btnSecondaryHover};
+
+    /* Admin Layout */
+    --admin-page-padding: {$adminPagePadding};
 }
 
 /* Global Overrides */
@@ -131,20 +148,25 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Buttons */
 .btn-primary {
-    background-color: var(--brand-primary);
-    border-color: var(--brand-primary);
+    background-color: var(--brand-btn-primary);
+    border-color: var(--brand-btn-primary);
     border-radius: var(--brand-radius);
 }
 
 .btn-primary:hover {
-    background-color: var(--brand-primary-dark);
-    border-color: var(--brand-primary-dark);
+    background-color: var(--brand-btn-primary-hover);
+    border-color: var(--brand-btn-primary-hover);
 }
 
 .btn-secondary {
-    background-color: var(--brand-secondary);
-    border-color: var(--brand-secondary);
+    background-color: var(--brand-btn-secondary);
+    border-color: var(--brand-btn-secondary);
     border-radius: var(--brand-radius);
+}
+
+.btn-secondary:hover {
+    background-color: var(--brand-btn-secondary-hover);
+    border-color: var(--brand-btn-secondary-hover);
 }
 
 .btn-accent,
@@ -342,6 +364,12 @@ a:hover {
         margin-left: 0 !important;
         padding: 0 !important;
     }
+}
+
+/* Tabler Admin Panel - fixed padding */
+.page-body > .container-fluid {
+    padding-left: var(--admin-page-padding) !important;
+    padding-right: var(--admin-page-padding) !important;
 }
 
 CSS;

@@ -25,6 +25,9 @@
 
     @livewireStyles
     @stack('styles')
+
+    {{-- Admin header HTML (branding setting) --}}
+    {!! config('branding.admin.header_html') !!}
 </head>
 @php $user = auth()->user(); @endphp
 <body class="layout-fluid">
@@ -54,7 +57,16 @@
             </button>
 
             <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
-                <span class="fw-bold">{{ config('app.name') }}</span>
+                @php
+                    $dashboardLogo = config('branding.admin.dashboard_logo');
+                    $fallbackLogo = config('branding.logo.main');
+                @endphp
+                @if(!empty($dashboardLogo))
+                    <img src="{{ asset($dashboardLogo) }}" alt="Dashboard Logo" style="max-height: 28px; max-width: 160px;" onerror="this.style.display='none'">
+                @elseif(!empty($fallbackLogo))
+                    <img src="{{ asset($fallbackLogo) }}" alt="Logo" style="max-height: 28px; max-width: 160px;" onerror="this.style.display='none'">
+                @endif
+                <span class="fw-bold">{{ config('branding.company.name', config('app.name')) }}</span>
                 <div class="text-muted small">Admin</div>
             </a>
 
@@ -195,5 +207,8 @@
 
 @livewireScripts
 @stack('scripts')
+
+{{-- Admin footer HTML (branding setting) --}}
+{!! config('branding.admin.footer_html') !!}
 </body>
 </html>

@@ -39,6 +39,9 @@ class SystemSettings extends Component
     public ?string $test_email_to = null;
 
     public $logo_upload;
+    public $login_logo_upload;
+    public $dashboard_logo_upload;
+    public $login_background_upload;
 
     public function mount(SettingsService $settings): void
     {
@@ -202,22 +205,40 @@ class SystemSettings extends Component
 
         $b = $settings->getMany([
             'branding.logo_path' => '',
+            'branding.login_logo_path' => '',
+            'branding.dashboard_logo_path' => '',
+            'branding.login_background_path' => '',
             'branding.colors.primary' => '#3c8dbc',
             'branding.colors.secondary' => '#6c757d',
             'branding.colors.accent' => '#00a65a',
+            'branding.buttons.primary' => '',
+            'branding.buttons.primary_hover' => '',
+            'branding.buttons.secondary' => '',
+            'branding.buttons.secondary_hover' => '',
             'branding.invoice_template' => 'default',
             'branding.email.header_html' => '',
             'branding.email.footer_html' => '',
+            'branding.admin.header_html' => '',
+            'branding.admin.footer_html' => '',
             'branding.custom_domain' => '',
         ]);
         $this->branding = [
             'logo_path' => $b['branding.logo_path'],
+            'login_logo_path' => $b['branding.login_logo_path'],
+            'dashboard_logo_path' => $b['branding.dashboard_logo_path'],
+            'login_background_path' => $b['branding.login_background_path'],
             'color_primary' => $b['branding.colors.primary'],
             'color_secondary' => $b['branding.colors.secondary'],
             'color_accent' => $b['branding.colors.accent'],
+            'button_primary' => $b['branding.buttons.primary'] ?: $b['branding.colors.primary'],
+            'button_primary_hover' => $b['branding.buttons.primary_hover'] ?: $b['branding.colors.primary'],
+            'button_secondary' => $b['branding.buttons.secondary'] ?: $b['branding.colors.secondary'],
+            'button_secondary_hover' => $b['branding.buttons.secondary_hover'] ?: $b['branding.colors.secondary'],
             'invoice_template' => $b['branding.invoice_template'],
             'email_header_html' => $b['branding.email.header_html'],
             'email_footer_html' => $b['branding.email.footer_html'],
+            'admin_header_html' => $b['branding.admin.header_html'],
+            'admin_footer_html' => $b['branding.admin.footer_html'],
             'custom_domain' => $b['branding.custom_domain'],
         ];
     }
@@ -678,16 +699,79 @@ class SystemSettings extends Component
         session()->flash('success', 'Logo uploaded.');
     }
 
+    public function uploadLoginLogo(SettingsService $settings): void
+    {
+        if (! $this->login_logo_upload) {
+            return;
+        }
+
+        Validator::make(['logo' => $this->login_logo_upload], [
+            'logo' => ['file', 'max:2048', 'mimes:png,jpg,jpeg,webp,svg'],
+        ])->validate();
+
+        $path = $this->login_logo_upload->store('branding', 'public');
+        $this->branding['login_logo_path'] = $path;
+        $settings->set('branding.login_logo_path', $path, 'branding');
+        $this->login_logo_upload = null;
+
+        session()->flash('success', 'Login logo uploaded.');
+    }
+
+    public function uploadDashboardLogo(SettingsService $settings): void
+    {
+        if (! $this->dashboard_logo_upload) {
+            return;
+        }
+
+        Validator::make(['logo' => $this->dashboard_logo_upload], [
+            'logo' => ['file', 'max:2048', 'mimes:png,jpg,jpeg,webp,svg'],
+        ])->validate();
+
+        $path = $this->dashboard_logo_upload->store('branding', 'public');
+        $this->branding['dashboard_logo_path'] = $path;
+        $settings->set('branding.dashboard_logo_path', $path, 'branding');
+        $this->dashboard_logo_upload = null;
+
+        session()->flash('success', 'Dashboard logo uploaded.');
+    }
+
+    public function uploadLoginBackground(SettingsService $settings): void
+    {
+        if (! $this->login_background_upload) {
+            return;
+        }
+
+        Validator::make(['bg' => $this->login_background_upload], [
+            'bg' => ['file', 'max:5120', 'mimes:png,jpg,jpeg,webp'],
+        ])->validate();
+
+        $path = $this->login_background_upload->store('branding', 'public');
+        $this->branding['login_background_path'] = $path;
+        $settings->set('branding.login_background_path', $path, 'branding');
+        $this->login_background_upload = null;
+
+        session()->flash('success', 'Login background uploaded.');
+    }
+
     public function saveBranding(SettingsService $settings): void
     {
         $settings->setMany([
             'branding.logo_path' => $this->branding['logo_path'] ?? '',
+            'branding.login_logo_path' => $this->branding['login_logo_path'] ?? '',
+            'branding.dashboard_logo_path' => $this->branding['dashboard_logo_path'] ?? '',
+            'branding.login_background_path' => $this->branding['login_background_path'] ?? '',
             'branding.colors.primary' => $this->branding['color_primary'] ?? '#3c8dbc',
             'branding.colors.secondary' => $this->branding['color_secondary'] ?? '#6c757d',
             'branding.colors.accent' => $this->branding['color_accent'] ?? '#00a65a',
+            'branding.buttons.primary' => $this->branding['button_primary'] ?? '',
+            'branding.buttons.primary_hover' => $this->branding['button_primary_hover'] ?? '',
+            'branding.buttons.secondary' => $this->branding['button_secondary'] ?? '',
+            'branding.buttons.secondary_hover' => $this->branding['button_secondary_hover'] ?? '',
             'branding.invoice_template' => $this->branding['invoice_template'] ?? 'default',
             'branding.email.header_html' => $this->branding['email_header_html'] ?? '',
             'branding.email.footer_html' => $this->branding['email_footer_html'] ?? '',
+            'branding.admin.header_html' => $this->branding['admin_header_html'] ?? '',
+            'branding.admin.footer_html' => $this->branding['admin_footer_html'] ?? '',
             'branding.custom_domain' => $this->branding['custom_domain'] ?? '',
         ], 'branding');
         session()->flash('success', 'Branding settings saved.');
