@@ -11,36 +11,39 @@
         </div>
     </div>
 
+    {{-- Flash Messages --}}
+    @include('partials.flash-messages')
+
     <div class="card">
         <div class="card-body">
-            <div class="row g-2">
-                <div class="col-12 col-md-4">
-                    <label class="form-label">Search</label>
+            <div class="row g-3">
+                <div class="col-12 col-lg-4">
+                    <label class="form-label d-block">Search</label>
                     <input wire:model.live.debounce.300ms="search" type="text" class="form-control" placeholder="Company, contact, email…">
                 </div>
-                <div class="col-6 col-md-2">
-                    <label class="form-label">Status</label>
-                    <select wire:model.live="status" class="form-select">
+                <div class="col-6 col-sm-4 col-lg-2">
+                    <label class="form-label d-block">Status</label>
+                    <select wire:model.live="status" class="form-select w-100">
                         @foreach($statuses as $k => $label)
                             <option value="{{ $k }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-6 col-md-2">
-                    <label class="form-label">Tier</label>
-                    <select wire:model.live="tier" class="form-select">
+                <div class="col-6 col-sm-4 col-lg-2">
+                    <label class="form-label d-block">Tier</label>
+                    <select wire:model.live="tier" class="form-select w-100">
                         @foreach($tiers as $k => $label)
                             <option value="{{ $k }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-6 col-md-2">
-                    <label class="form-label">From</label>
-                    <input wire:model.live="dateFrom" type="date" class="form-control">
+                <div class="col-6 col-sm-4 col-lg-2">
+                    <label class="form-label d-block">From</label>
+                    <input wire:model.live="dateFrom" type="date" class="form-control w-100">
                 </div>
-                <div class="col-6 col-md-2">
-                    <label class="form-label">To</label>
-                    <input wire:model.live="dateTo" type="date" class="form-control">
+                <div class="col-6 col-sm-4 col-lg-2">
+                    <label class="form-label d-block">To</label>
+                    <input wire:model.live="dateTo" type="date" class="form-control w-100">
                 </div>
             </div>
 
