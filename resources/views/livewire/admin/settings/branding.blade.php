@@ -27,6 +27,22 @@
     <!-- Toast Container for Image Uploads -->
     <div id="uploadToastContainer" class="position-fixed" style="top: 20px; right: 20px; z-index: 1060;"></div>
     
+    <!-- Top Save Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0"><i class="fas fa-paint-brush mr-2 text-primary"></i>Branding Settings</h4>
+            <small class="text-muted">Customize your platform's appearance</small>
+        </div>
+        <button type="button" class="btn btn-primary btn-lg" wire:click="saveBranding" wire:loading.attr="disabled">
+            <span wire:loading.remove wire:target="saveBranding">
+                <i class="fas fa-save mr-2"></i>Save Branding Settings
+            </span>
+            <span wire:loading wire:target="saveBranding">
+                <i class="fas fa-spinner fa-spin mr-2"></i>Saving...
+            </span>
+        </button>
+    </div>
+    
     <div class="row">
         <!-- Left Column: Logos & Colors -->
         <div class="col-lg-8">
@@ -815,13 +831,15 @@
             }, 5000);
         }
 
-        // Listen for Livewire browser events
-        window.addEventListener('image-uploaded', function(event) {
-            showUploadToast(event.detail.type, event.detail.message, true);
-        });
+        // Listen for Livewire 3 events
+        document.addEventListener('livewire:init', function() {
+            Livewire.on('image-uploaded', function(data) {
+                showUploadToast(data.type, data.message, true);
+            });
 
-        window.addEventListener('branding-saved', function(event) {
-            showUploadToast('Branding Settings', event.detail.message, true);
+            Livewire.on('branding-saved', function(data) {
+                showUploadToast('Branding Settings', data.message, true);
+            });
         });
 
         // Auto-hide success alerts after 5 seconds
