@@ -413,6 +413,42 @@ html[data-theme="dark"] .main-sidebar {
     background-color: #0f172a !important;
 }
 
+/* ------------------------------------------------------------------ */
+/* Compatibility utilities (Bootstrap 5 / Tabler classes used in views) */
+/* ------------------------------------------------------------------ */
+
+.text-end { text-align: right !important; }
+
+.fw-semibold { font-weight: 600 !important; }
+
+.subheader {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--brand-text-secondary);
+}
+
+.table-vcenter td,
+.table-vcenter th {
+    vertical-align: middle !important;
+}
+
+/* Minimal spacing utilities used by some admin views */
+.me-1 { margin-right: 0.25rem !important; }
+.me-2 { margin-right: 0.5rem !important; }
+.me-3 { margin-right: 1rem !important; }
+.ms-2 { margin-left: 0.5rem !important; }
+.ps-2 { padding-left: 0.5rem !important; }
+.pe-2 { padding-right: 0.5rem !important; }
+
+.gap-1 { gap: 0.25rem !important; }
+.gap-2 { gap: 0.5rem !important; }
+.gap-3 { gap: 1rem !important; }
+
+.row-cards > [class*="col-"] {
+    margin-bottom: 1rem;
+}
+
 CSS;
 
         return $css;
