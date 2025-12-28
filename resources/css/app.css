@@ -6,7 +6,7 @@
 
 /* Content area padding */
 .content-wrapper > .content {
-    padding: 1rem 1.5rem;
+    padding: 1.25rem 1.5rem;
 }
 
 @media (min-width: 768px) {
@@ -17,8 +17,14 @@
 
 @media (min-width: 1200px) {
     .content-wrapper > .content {
-        padding: 1.5rem 2.5rem;
+        padding: 2rem 2.5rem;
     }
+}
+
+/* Ensure container-fluid doesn't override padding */
+.content-wrapper .content .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
 }
 
 :root {

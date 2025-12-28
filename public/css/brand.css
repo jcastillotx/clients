@@ -270,11 +270,6 @@ html[data-theme="dark"] .main-header.navbar {
     padding: var(--page-padding);
 }
 
-.content-wrapper .content > .container-fluid {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-}
-
 html[data-theme="dark"] .content-wrapper {
     background-color: var(--brand-bg);
 }
