@@ -73,9 +73,9 @@ return new class extends Migration
             $table->text('original_url');
             $table->string('original_url_hash', 64);
             $table->text('short_url')->nullable();
-            $table->string('utm_source')->nullable();
-            $table->string('utm_medium')->nullable();
-            $table->string('utm_campaign')->nullable();
+            $table->string('utm_source', 100)->nullable();
+            $table->string('utm_medium', 50)->nullable();
+            $table->string('utm_campaign', 100)->nullable();
             $table->unsignedBigInteger('clicks')->default(0);
             $table->unsignedBigInteger('conversions')->default(0);
             $table->json('meta')->nullable();
