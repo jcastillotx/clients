@@ -9,6 +9,13 @@
 
     <!-- Tabler (Bootstrap-based admin UI) -->
     <link rel="stylesheet" href="https://unpkg.com/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Tailwind CSS (shared styles) -->
+    @if(!app()->runningUnitTests())
+        @vite(['resources/css/app.css'])
+    @endif
 
     @livewireStyles
     @stack('styles')
@@ -184,4 +191,3 @@
 @stack('scripts')
 </body>
 </html>
-
