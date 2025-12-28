@@ -86,7 +86,7 @@ return new class extends Migration
             $table->index(['utm_campaign']);
             $table->unique(['campaign_id', 'original_url_hash', 'utm_source', 'utm_medium', 'utm_campaign'], 'campaign_links_unique');
             if ($supportsFullText) {
-                $table->fullText(['original_url', 'short_url', 'utm_source', 'utm_medium', 'utm_campaign']);
+                $table->fullText(['original_url', 'short_url', 'utm_source', 'utm_medium', 'utm_campaign'], 'campaign_links_fulltext');
             }
         });
     }
