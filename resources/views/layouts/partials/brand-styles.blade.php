@@ -80,115 +80,9 @@
     --brand-font-size: {{ $brand['font_size_base'] }};
 }
 
-/* ===== Tailwind Utility Overrides - Must come first for specificity ===== */
-/* These ensure Tailwind classes work properly even in Bootstrap contexts */
+/* ===== AdminLTE/Bootstrap Brand Overrides ===== */
 
-/* Slate color buttons - primary action buttons */
-.bg-slate-900,
-button.bg-slate-900,
-[class*="bg-slate-900"] {
-    background-color: #0f172a !important;
-    border-color: transparent !important;
-}
-.bg-slate-800,
-button.bg-slate-800,
-[class*="bg-slate-800"] {
-    background-color: #1e293b !important;
-    border-color: transparent !important;
-}
-.hover\:bg-slate-800:hover {
-    background-color: #1e293b !important;
-}
-.text-white {
-    color: #fff !important;
-}
-
-/* Ensure rounded corners work */
-.rounded-lg {
-    border-radius: 0.5rem !important;
-}
-.rounded-xl {
-    border-radius: 0.75rem !important;
-}
-.rounded-2xl {
-    border-radius: 1rem !important;
-}
-
-/* Tailwind flex utilities */
-.flex { display: flex !important; }
-.items-center { align-items: center !important; }
-.gap-2 { gap: 0.5rem !important; }
-
-/* Tailwind padding utilities */
-.px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
-.py-2\.5, [class*="py-2.5"] { padding-top: 0.625rem !important; padding-bottom: 0.625rem !important; }
-
-/* Tailwind text utilities */
-.text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-.font-semibold { font-weight: 600 !important; }
-
-/* ===== Modern Button Classes (Fallback/Override) ===== */
-/* These ensure modern buttons always look correct regardless of Tailwind compilation */
-.btn-primary-modern {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 0.5rem !important;
-    border-radius: 0.5rem !important;
-    padding: 0.625rem 1rem !important;
-    font-size: 0.875rem !important;
-    font-weight: 600 !important;
-    background-color: #0f172a !important; /* slate-900 */
-    color: #ffffff !important;
-    border: none !important;
-    cursor: pointer !important;
-    transition: background-color 0.15s ease-in-out !important;
-}
-.btn-primary-modern:hover {
-    background-color: #1e293b !important; /* slate-800 */
-    color: #ffffff !important;
-}
-.btn-primary-modern:focus {
-    outline: none !important;
-    box-shadow: 0 0 0 2px #0f172a40 !important;
-}
-.btn-primary-modern:disabled {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-}
-
-.btn-secondary-modern {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 0.5rem !important;
-    border-radius: 0.5rem !important;
-    padding: 0.625rem 1rem !important;
-    font-size: 0.875rem !important;
-    font-weight: 600 !important;
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    border: 1px solid #cbd5e1 !important; /* slate-300 */
-    cursor: pointer !important;
-    transition: background-color 0.15s ease-in-out !important;
-}
-.btn-secondary-modern:hover {
-    background-color: #f8fafc !important; /* slate-50 */
-    color: #0f172a !important;
-}
-.btn-secondary-modern:focus {
-    outline: none !important;
-    box-shadow: 0 0 0 2px #64748b40 !important;
-}
-.btn-secondary-modern:disabled {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-}
-
-/* ===== AdminLTE Brand Overrides ===== */
-/* Note: These styles only apply to Bootstrap .btn classes */
-
-/* Primary Button - Bootstrap only (must have BOTH .btn AND .btn-primary) */
+/* Primary Button */
 .btn.btn-primary {
     background-color: var(--brand-primary) !important;
     border-color: var(--brand-primary) !important;
@@ -336,7 +230,7 @@ a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
     color: var(--brand-primary-dark) !important;
 }
 
-/* Nav Tabs */
+/* Nav Tabs - Use neutral colors, not brand primary for text */
 .nav-tabs .nav-link.active {
     border-bottom-color: var(--brand-primary) !important;
     color: #495057 !important;
