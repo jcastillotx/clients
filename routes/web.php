@@ -220,6 +220,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
     Route::get('/contracts/{contract}', [ContractController::class, 'show'])->name('contracts.show');
     Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
+    Route::get('/contracts/{contract}/preview', [ContractController::class, 'preview'])->name('contracts.preview');
     Route::post('/contracts/{contract}/sign', [ContractController::class, 'sign'])->name('contracts.sign');
 
     // Invoices
