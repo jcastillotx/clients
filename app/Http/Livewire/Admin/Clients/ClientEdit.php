@@ -48,12 +48,12 @@ class ClientEdit extends Component
 
     public string $tab = 'overview';
 
+
     // Password change fields
     public string $newPassword = '';
-
     public string $newPasswordConfirmation = '';
-
     public bool $showPasswordModal = false;
+    public array $selectedServices = [];
 
     public function mount(Client $client): void
     {
@@ -73,10 +73,13 @@ class ClientEdit extends Component
         $this->status = $client->status ?? 'active';
         $this->stripe_customer_id = $client->stripe_customer_id;
         $this->notes = $client->notes;
+        $this->selectedServices = $client->enabled_features ?? [];
     }
 
     protected function rules(): array
     {
+        $availableFeatures = array_keys(config('features.available', []));
+
         return [
             'company_name' => ['required', 'string', 'max:255'],
             'contact_name' => ['required', 'string', 'max:255'],
@@ -98,6 +101,8 @@ class ClientEdit extends Component
             'stripe_customer_id' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'tab' => ['nullable', 'string'],
+            'selectedServices' => ['array'],
+            'selectedServices.*' => [Rule::in($availableFeatures)],
         ];
     }
 
@@ -127,6 +132,7 @@ class ClientEdit extends Component
             'status' => $data['status'],
             'stripe_customer_id' => $data['stripe_customer_id'],
             'notes' => $data['notes'],
+            'enabled_features' => $data['selectedServices'],
         ]);
 
         // Keep primary user in sync
@@ -157,54 +163,19 @@ class ClientEdit extends Component
         session()->flash('success', 'Password reset email sent.');
     }
 
-    public function openPasswordModal(): void
+    public function saveServices(): void
     {
-        $user = $this->primaryUser ?? $this->client->users()->orderBy('id')->first();
-        if (! $user) {
-            session()->flash('error', 'No linked user found.');
-
-            return;
-        }
-
-        $this->newPassword = '';
-        $this->newPasswordConfirmation = '';
-        $this->showPasswordModal = true;
-    }
-
-    public function closePasswordModal(): void
-    {
-        $this->showPasswordModal = false;
-        $this->newPassword = '';
-        $this->newPasswordConfirmation = '';
-    }
-
-    public function setPassword(): void
-    {
-        $user = $this->primaryUser ?? $this->client->users()->orderBy('id')->first();
-        if (! $user) {
-            session()->flash('error', 'No linked user found.');
-            $this->closePasswordModal();
-
-            return;
-        }
-
-        $this->validate([
-            'newPassword' => ['required', 'string', 'min:8', 'same:newPasswordConfirmation'],
-            'newPasswordConfirmation' => ['required', 'string'],
-        ], [
-            'newPassword.required' => 'Please enter a new password.',
-            'newPassword.min' => 'Password must be at least 8 characters.',
-            'newPassword.same' => 'Passwords do not match.',
-            'newPasswordConfirmation.required' => 'Please confirm the password.',
+        $availableFeatures = array_keys(config('features.available', []));
+        $validated = $this->validate([
+            'selectedServices' => ['array'],
+            'selectedServices.*' => [Rule::in($availableFeatures)],
         ]);
 
-        $user->update([
-            'password' => $this->newPassword,
+        $this->client->update([
+            'enabled_features' => $validated['selectedServices'],
         ]);
 
-        $this->closePasswordModal();
-
-        session()->flash('success', 'Password updated successfully.');
+        session()->flash('success', 'Services updated.');
     }
 
     public function render()
@@ -215,10 +186,16 @@ class ClientEdit extends Component
             ->latest()
             ->paginate(20);
 
+        $availableServices = config('features.available', []);
+        $servicesByCategory = collect($availableServices)->groupBy('category');
+
         return view('livewire.admin.clients.edit', [
             'tiers' => ['basic' => 'Basic', 'standard' => 'Standard', 'premium' => 'Premium', 'enterprise' => 'Enterprise'],
             'statuses' => ['active' => 'Active', 'inactive' => 'Inactive', 'pending' => 'Pending', 'suspended' => 'Suspended'],
             'activities' => $activities,
+            'availableServices' => $availableServices,
+            'servicesByCategory' => $servicesByCategory,
+            'tierFeatures' => config('features.tiers', []),
         ])->layout('layouts.admin', ['title' => 'Edit Client']);
     }
 }

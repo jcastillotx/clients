@@ -32,6 +32,10 @@ class ClientManagement extends Component
 
     public string $bulkAction = '';
 
+    public bool $showArchiveConfirmModal = false;
+
+    public bool $showDeleteConfirmModal = false;
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -115,6 +119,72 @@ class ClientManagement extends Component
         }
         Client::query()->whereIn('id', $this->selected)->update(['status' => 'suspended']);
         session()->flash('success', 'Selected clients suspended.');
+        $this->selectPage = false;
+        $this->selected = [];
+    }
+
+    public function confirmBulkArchive(): void
+    {
+        if (empty($this->selected)) {
+            session()->flash('error', 'No clients selected.');
+
+            return;
+        }
+
+        $this->showArchiveConfirmModal = true;
+    }
+
+    public function cancelBulkArchive(): void
+    {
+        $this->showArchiveConfirmModal = false;
+    }
+
+    public function bulkArchive(): void
+    {
+        if (empty($this->selected)) {
+            $this->showArchiveConfirmModal = false;
+
+            return;
+        }
+
+        $count = Client::query()->whereIn('id', $this->selected)->delete();
+
+        session()->flash('success', $count.' client(s) archived.');
+
+        $this->showArchiveConfirmModal = false;
+        $this->selectPage = false;
+        $this->selected = [];
+    }
+
+    public function confirmBulkDelete(): void
+    {
+        if (empty($this->selected)) {
+            session()->flash('error', 'No clients selected.');
+
+            return;
+        }
+
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function cancelBulkDelete(): void
+    {
+        $this->showDeleteConfirmModal = false;
+    }
+
+    public function bulkDelete(): void
+    {
+        if (empty($this->selected)) {
+            $this->showDeleteConfirmModal = false;
+
+            return;
+        }
+
+        $count = Client::query()->whereIn('id', $this->selected)->forceDelete();
+
+        session()->flash('success', $count.' client(s) permanently deleted.');
+
+        $this->showDeleteConfirmModal = false;
         $this->selectPage = false;
         $this->selected = [];
     }

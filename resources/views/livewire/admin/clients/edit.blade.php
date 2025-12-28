@@ -17,6 +17,9 @@
                 <button class="nav-link @if($tab==='overview') active @endif" wire:click="$set('tab','overview')" type="button">Overview</button>
             </li>
             <li class="nav-item">
+                <button class="nav-link @if($tab==='services') active @endif" wire:click="$set('tab','services')" type="button">Services</button>
+            </li>
+            <li class="nav-item">
                 <button class="nav-link @if($tab==='activity') active @endif" wire:click="$set('tab','activity')" type="button">Activity history</button>
             </li>
         </ul>
@@ -111,6 +114,70 @@
                             </button>
                         </div>
                     </form>
+                @endif
+
+                @if($tab === 'services')
+                    <div class="mb-3">
+                        <div class="alert alert-info">
+                            <strong>Tier Features:</strong> The client's tier ({{ ucfirst($tier) }}) includes certain features by default. 
+                            Additional services checked below will be added on top of tier features.
+                        </div>
+                    </div>
+
+                    @php
+                        $categories = [
+                            'core' => 'Core Features',
+                            'brand_monitoring' => 'Brand Monitoring',
+                            'ai' => 'AI Features',
+                            'advanced' => 'Advanced Features',
+                            'collaboration' => 'Collaboration',
+                            'research' => 'Research & Consultation',
+                        ];
+                    @endphp
+
+                    <div class="row g-3">
+                        @foreach($categories as $categoryKey => $categoryLabel)
+                            @if(isset($servicesByCategory[$categoryKey]))
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="card h-100">
+                                        <div class="card-header py-2">
+                                            <h4 class="card-title mb-0">{{ $categoryLabel }}</h4>
+                                        </div>
+                                        <div class="card-body py-2">
+                                            @foreach($servicesByCategory[$categoryKey] as $serviceKey => $service)
+                                                @php
+                                                    $tierIncludes = in_array($serviceKey, $tierFeatures[$tier] ?? []);
+                                                    $isSelected = in_array($serviceKey, $selectedServices);
+                                                @endphp
+                                                <label class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                        wire:model.live="selectedServices" 
+                                                        value="{{ $serviceKey }}"
+                                                        @if($tierIncludes) checked disabled @endif>
+                                                    <span class="form-check-label">
+                                                        {{ $service['name'] }}
+                                                        @if($tierIncludes)
+                                                            <span class="badge bg-info ms-1" title="Included in {{ ucfirst($tier) }} tier">Tier</span>
+                                                        @elseif($isSelected)
+                                                            <span class="badge bg-success ms-1">Added</span>
+                                                        @endif
+                                                    </span>
+                                                    <div class="text-muted small">{{ $service['description'] }}</div>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" wire:click="saveServices" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="saveServices">Save Services</span>
+                            <span wire:loading wire:target="saveServices">Saving…</span>
+                        </button>
+                    </div>
                 @endif
 
                 @if($tab === 'activity')

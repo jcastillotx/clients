@@ -1,17 +1,18 @@
-<div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-    <div>
-        <div class="h2 mb-0">{{ $client->company_name }}</div>
-        <div class="text-muted">{{ $client->contact_name }} · {{ $client->email }}</div>
+<div>
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <div>
+            <div class="h2 mb-0">{{ $client->company_name }}</div>
+            <div class="text-muted">{{ $client->contact_name }} · {{ $client->email }}</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ route('admin.clients.edit', $client) }}" class="btn btn-outline-secondary">Edit</a>
+            <button type="button" class="btn btn-outline-secondary" wire:click="exportCsv">Export CSV</button>
+            <button type="button" class="btn btn-outline-secondary" wire:click="exportPdf">Export PDF</button>
+            <a href="{{ route('admin.clients.index') }}" class="btn btn-outline-secondary">Back</a>
+        </div>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ route('admin.clients.edit', $client) }}" class="btn btn-outline-secondary">Edit</a>
-        <button type="button" class="btn btn-outline-secondary" wire:click="exportCsv">Export CSV</button>
-        <button type="button" class="btn btn-outline-secondary" wire:click="exportPdf">Export PDF</button>
-        <a href="{{ route('admin.clients.index') }}" class="btn btn-outline-secondary">Back</a>
-    </div>
-</div>
 
-<div class="row row-cards mb-3">
+    <div class="row row-cards mb-3">
     <div class="col-6 col-lg-3">
         <div class="card card-sm">
             <div class="card-body">
@@ -304,4 +305,4 @@
         @endif
     </div>
 </div>
-
+</div>
