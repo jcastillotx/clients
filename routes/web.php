@@ -237,23 +237,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Documents
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
-    Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
-    Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
-    Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
-    Route::get('/documents/{document}/ai', DocumentAIAnalysis::class)->name('documents.ai');
-    Route::get('/documents/{document}/chat', DocumentChat::class)->name('documents.chat');
+    // Static document routes must come before the {document} wildcard
     Route::get('/documents/chat', DocumentChat::class)->name('documents.chat.all');
-    Route::get('/documents/{document}/summarize', SummarizeDocument::class)->name('documents.summarize');
-    Route::get('/documents/{document}/open/{viewer?}', [DocumentViewerController::class, 'openDocument'])
-        ->whereIn('viewer', ['office', 'google'])
-        ->name('documents.viewer.document');
-    Route::get('/documents/{document}/workflow', DocumentWorkflow::class)->name('documents.workflow');
     Route::get('/documents/smart-browser', SmartDocumentBrowser::class)->name('documents.smart-browser');
     Route::get('/documents/templates', DocumentTemplates::class)->name('documents.templates');
     Route::get('/documents/versions/{documentVersion}/download', [DocumentVersionController::class, 'download'])->name('documents.versions.download');
     Route::get('/documents/storage-files/{storageFile}/open/{viewer?}', [DocumentViewerController::class, 'openStorageFile'])
         ->whereIn('viewer', ['office', 'google'])
         ->name('documents.viewer.storage-file');
+    // Dynamic {document} routes
+    Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
+    Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
+    Route::get('/documents/{document}/ai', DocumentAIAnalysis::class)->name('documents.ai');
+    Route::get('/documents/{document}/chat', DocumentChat::class)->name('documents.chat');
+    Route::get('/documents/{document}/summarize', SummarizeDocument::class)->name('documents.summarize');
+    Route::get('/documents/{document}/open/{viewer?}', [DocumentViewerController::class, 'openDocument'])
+        ->whereIn('viewer', ['office', 'google'])
+        ->name('documents.viewer.document');
+    Route::get('/documents/{document}/workflow', DocumentWorkflow::class)->name('documents.workflow');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
