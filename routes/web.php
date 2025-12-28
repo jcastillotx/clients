@@ -371,9 +371,9 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/requests/{request}/estimator', AdminProjectEstimator::class)->name('requests.estimator');
 
         // Invoices
-        Route::get('/invoices', AdminInvoiceManagement::class)->name('invoices.index');
-        Route::get('/invoices/create', AdminInvoiceCreate::class)->name('invoices.create');
-        Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit');
+        Route::get('/invoices', AdminInvoiceManagement::class)->name('invoices.index')->middleware('permission:view_any_invoice');
+        Route::get('/invoices/create', AdminInvoiceCreate::class)->name('invoices.create')->middleware('permission:create_invoice');
+        Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit')->middleware('permission:update_invoice');
 
         // Contracts (AI)
         Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');

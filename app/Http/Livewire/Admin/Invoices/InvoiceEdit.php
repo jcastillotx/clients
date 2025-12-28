@@ -38,7 +38,7 @@ class InvoiceEdit extends Component
 
     public ?int $contract_id = null;
 
-    /** @var array<int, array{id?:int|null, description:string, quantity:float|string, unit_price:float|string, total:float}> */
+    /** @var array<int, array{id?:int|null, description:string, feature_key:string|null, quantity:float|string, unit_price:float|string, total:float}> */
     public array $items = [];
 
     /** @var array<int, int> */
@@ -97,19 +97,21 @@ class InvoiceEdit extends Component
         $this->items = $this->invoice->items->map(fn (InvoiceItem $it) => [
             'id' => $it->id,
             'description' => $it->description,
+            'feature_key' => $it->feature_key ?: null,
             'quantity' => (float) $it->quantity,
             'unit_price' => (float) $it->unit_price,
             'total' => (float) $it->total,
         ])->toArray();
 
         if (empty($this->items)) {
-            $this->items = [['description' => '', 'quantity' => 1, 'unit_price' => 0, 'total' => 0]];
+            $this->items = [['description' => '', 'feature_key' => null, 'quantity' => 1, 'unit_price' => 0, 'total' => 0]];
         }
     }
 
     protected function rules(): array
     {
         $templates = array_keys(config('client-portal.invoice.templates', ['classic' => 'Classic']));
+        $features = array_keys((array) config('features.available', []));
 
         return [
             'issue_date' => ['required', 'date'],
@@ -119,6 +121,7 @@ class InvoiceEdit extends Component
             'contract_id' => ['nullable', 'integer', Rule::exists('contracts', 'id')],
             'items' => ['required', 'array', 'min:1'],
             'items.*.description' => ['required', 'string', 'max:255'],
+            'items.*.feature_key' => ['nullable', 'string', Rule::in($features)],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -137,7 +140,7 @@ class InvoiceEdit extends Component
 
     public function addItem(): void
     {
-        $this->items[] = ['description' => '', 'quantity' => 1, 'unit_price' => 0, 'total' => 0];
+        $this->items[] = ['description' => '', 'feature_key' => null, 'quantity' => 1, 'unit_price' => 0, 'total' => 0];
     }
 
     public function removeItem(int $index): void
@@ -149,7 +152,7 @@ class InvoiceEdit extends Component
         unset($this->items[$index]);
         $this->items = array_values($this->items);
         if (empty($this->items)) {
-            $this->items = [['description' => '', 'quantity' => 1, 'unit_price' => 0, 'total' => 0]];
+            $this->items = [['description' => '', 'feature_key' => null, 'quantity' => 1, 'unit_price' => 0, 'total' => 0]];
         }
         $this->recalculate();
     }
@@ -209,6 +212,7 @@ class InvoiceEdit extends Component
         foreach (array_values($data['items']) as $idx => $row) {
             $payload = [
                 'description' => $row['description'],
+                'feature_key' => $row['feature_key'] ?: null,
                 'quantity' => (float) $row['quantity'],
                 'unit_price' => (float) $row['unit_price'],
                 'total' => (float) ((float) $row['quantity'] * (float) $row['unit_price']),
@@ -356,6 +360,10 @@ class InvoiceEdit extends Component
             'invoice' => $this->invoice->fresh(['client', 'items', 'payments']),
             'invoiceStatuses' => config('client-portal.invoice_statuses', []),
             'templates' => config('client-portal.invoice.templates', []),
+            'featureOptions' => collect((array) config('features.available', []))
+                ->map(fn ($v) => is_array($v) ? ($v['name'] ?? null) : null)
+                ->filter()
+                ->toArray(),
             'requests' => $requests,
             'contracts' => $contracts,
         ])->layout('layouts.admin', ['title' => 'Edit '.$this->invoice->invoice_number]);

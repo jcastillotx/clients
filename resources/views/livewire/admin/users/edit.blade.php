@@ -88,10 +88,13 @@
                             </div>
                         @endif
 
-                        @if($role === 'staff')
+                        @if($role === 'staff' || $role === 'client')
                             <div class="col-12">
-                                <div class="hr-text">Staff assignments</div>
+                                <div class="hr-text">{{ $role === 'staff' ? 'Staff assignments' : 'Portal permissions' }}</div>
                             </div>
+                        @endif
+
+                        @if($role === 'staff')
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Assigned clients</label>
                                 <label class="form-label">Assignment role</label>
@@ -106,7 +109,7 @@
                                 </select>
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Direct permissions</label>
+                                <label class="form-label">Manual permissions</label>
                                 <div class="border rounded p-2" style="max-height: 300px; overflow:auto;">
                                     @foreach($permissionGroups as $group => $perms)
                                         @if(empty($perms)) @continue @endif
@@ -121,6 +124,36 @@
                                         </div>
                                     @endforeach
                                 </div>
+                                <div class="text-muted small mt-2">For staff, these are direct overrides in addition to role permissions.</div>
+                            </div>
+                        @endif
+
+                        @if($role === 'client')
+                            <div class="col-12 col-md-6">
+                                <div class="alert alert-info">
+                                    <div class="fw-semibold">Automatic permissions</div>
+                                    <div class="text-muted small">
+                                        Client portal permissions are also granted automatically based on the client’s enabled features (and paid invoice items that enable features).
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Manual permissions</label>
+                                <div class="border rounded p-2" style="max-height: 300px; overflow:auto;">
+                                    @foreach($permissionGroups as $group => $perms)
+                                        @if(empty($perms)) @continue @endif
+                                        <div class="mb-2">
+                                            <div class="fw-semibold">{{ $group }}</div>
+                                            @foreach($perms as $p)
+                                                <label class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="{{ $p }}" wire:model.live="directPermissions">
+                                                    <span class="form-check-label">{{ $p }}</span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="text-muted small mt-2">Stored as manual overrides; effective permissions = manual + entitlements.</div>
                             </div>
                         @endif
 

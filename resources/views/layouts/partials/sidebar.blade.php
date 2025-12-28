@@ -89,25 +89,34 @@
                 </li>
 
                 <!-- Invoices -->
-                <li class="nav-item">
-                    <a href="{{ route('invoices.index') }}" class="nav-link {{ request()->routeIs('invoices.*') || request()->routeIs('payments.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-file-invoice-dollar"></i>
-                        <p>
-                            Invoices
-                            @php
-                                $unpaidInvoices = 0;
-                                if (auth()->user()->client) {
-                                    $unpaidInvoices = \App\Models\Invoice::where('client_id', auth()->user()->client_id)
-                                        ->unpaid()
-                                        ->count();
-                                }
-                            @endphp
-                            @if($unpaidInvoices > 0)
-                            <span class="badge badge-danger right">{{ $unpaidInvoices }}</span>
-                            @endif
-                        </p>
-                    </a>
-                </li>
+                @if(auth()->user()?->can('access admin panel'))
+                    <li class="nav-item">
+                        <a href="{{ route('admin.invoices.index') }}" class="nav-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                            <p>Invoices &amp; Payments</p>
+                        </a>
+                    </li>
+                @else
+                    <li class="nav-item">
+                        <a href="{{ route('invoices.index') }}" class="nav-link {{ request()->routeIs('invoices.*') || request()->routeIs('payments.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                            <p>
+                                Invoices
+                                @php
+                                    $unpaidInvoices = 0;
+                                    if (auth()->user()->client) {
+                                        $unpaidInvoices = \App\Models\Invoice::where('client_id', auth()->user()->client_id)
+                                            ->unpaid()
+                                            ->count();
+                                    }
+                                @endphp
+                                @if($unpaidInvoices > 0)
+                                <span class="badge badge-danger right">{{ $unpaidInvoices }}</span>
+                                @endif
+                            </p>
+                        </a>
+                    </li>
+                @endif
 
                 <!-- Documents -->
                 <li class="nav-item">
@@ -249,8 +258,26 @@
                     </li>
                 @endif
 
-                @can('view reports')
+                @can('access admin panel')
                 <li class="nav-header">ADMIN</li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.clients.index') }}" class="nav-link {{ request()->routeIs('admin.clients.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-building"></i>
+                        <p>Clients</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>Users</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.users.permissions') }}" class="nav-link {{ request()->routeIs('admin.users.permissions') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-key"></i>
+                        <p>Permissions</p>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a href="{{ route('admin.messages') }}" class="nav-link {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-comments"></i>
