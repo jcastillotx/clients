@@ -49,8 +49,9 @@
     <!-- Request List -->
     <div class="card">
         <div class="card-body p-0">
-            <table class="table table-hover">
-                <thead>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
                     <tr>
                         <th wire:click="sortBy('title')" style="cursor: pointer;">
                             Title
@@ -126,7 +127,8 @@
                     </tr>
                     @endforelse
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
         @if($requests->hasPages())
         <div class="card-footer">
