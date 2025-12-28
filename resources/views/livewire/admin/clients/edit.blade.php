@@ -7,7 +7,8 @@
             </div>
             <div class="d-flex gap-2">
                 <a href="{{ route('admin.clients.show', $client) }}" class="btn btn-outline-secondary">Back</a>
-                <button type="button" class="btn btn-outline-warning" wire:click="sendPasswordReset">Send password reset</button>
+                <button type="button" class="btn btn-outline-secondary" wire:click="sendPasswordReset">Send password reset</button>
+                <button type="button" class="btn btn-outline-warning" wire:click="openPasswordModal">Set password</button>
             </div>
         </div>
 
@@ -211,5 +212,39 @@
             </div>
         </div>
     </div>
+
+    {{-- Set Password Modal --}}
+    @if($showPasswordModal)
+        <div class="modal modal-blur fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Set Password</h5>
+                        <button type="button" class="btn-close" wire:click="closePasswordModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control @error('newPassword') is-invalid @enderror" wire:model="newPassword" autocomplete="new-password">
+                            @error('newPassword') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control @error('newPasswordConfirmation') is-invalid @enderror" wire:model="newPasswordConfirmation" autocomplete="new-password">
+                            @error('newPasswordConfirmation') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="text-muted small">Password must be at least 8 characters.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" wire:click="closePasswordModal">Cancel</button>
+                        <button type="button" class="btn btn-warning" wire:click="setPassword" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="setPassword">Set Password</span>
+                            <span wire:loading wire:target="setPassword">Saving…</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 

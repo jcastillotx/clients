@@ -48,6 +48,11 @@ class ClientEdit extends Component
 
     public string $tab = 'overview';
 
+
+    // Password change fields
+    public string $newPassword = '';
+    public string $newPasswordConfirmation = '';
+    public bool $showPasswordModal = false;
     public array $selectedServices = [];
 
     public function mount(Client $client): void
