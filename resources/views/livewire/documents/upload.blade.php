@@ -12,6 +12,26 @@
         </div>
 
         <div class="space-y-4">
+            @if($showClientSelector)
+                <div>
+                    <label class="text-xs font-semibold text-slate-600">Client <span class="text-rose-600">*</span></label>
+                    <select wire:model.live="clientId" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
+                        <option value="">Select a client…</option>
+                        @foreach($clients as $id => $name)
+                            <option value="{{ $id }}">{{ $name }}</option>
+                        @endforeach
+                    </select>
+                    @error('clientId')
+                        <div class="mt-1 flex items-start gap-2 text-xs font-medium text-rose-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
+                            </svg>
+                            <span>{{ $message }}</span>
+                        </div>
+                    @enderror
+                </div>
+            @endif
+
             <div>
                 <label class="text-xs font-semibold text-slate-600">Title <span class="text-rose-600">*</span></label>
                 <input wire:model.live.debounce.300ms="title" type="text" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="Document title" />
