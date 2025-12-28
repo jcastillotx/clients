@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone')->nullable();
             $table->string('avatar')->nullable();
-            $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
+            $table->unsignedBigInteger('client_id')->nullable()->index();
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();

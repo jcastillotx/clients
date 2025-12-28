@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('website_audit_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('website_url', 2048);
+            $table->text('website_url');
+            $table->string('website_url_hash', 64);
 
             $table->string('audit_type')->default('full'); // full, seo, performance, accessibility
             $table->string('frequency')->default('weekly'); // weekly, monthly

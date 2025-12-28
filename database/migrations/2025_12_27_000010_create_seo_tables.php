@@ -13,7 +13,8 @@ return new class extends Migration
         Schema::create('seo_keywords', function (Blueprint $table) use ($supportsFullText) {
             $table->id();
             $table->foreignId('client_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('website_url', 2048);
+            $table->text('website_url');
+            $table->string('website_url_hash', 64);
             $table->string('keyword', 255);
 
             $table->unsignedInteger('search_volume')->nullable();
@@ -28,10 +29,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['client_id', 'tracking_enabled']);
-            $table->index(['client_id', 'website_url']);
-            $table->index(['website_url']);
+            $table->index(['client_id', 'website_url_hash'], 'seo_keywords_client_url_index');
+            $table->index(['website_url_hash'], 'seo_keywords_url_index');
             $table->index(['keyword']);
-            $table->unique(['client_id', 'website_url', 'keyword']);
+            $table->unique(['client_id', 'website_url_hash', 'keyword'], 'seo_keywords_unique');
 
             if ($supportsFullText) {
                 $table->fullText(['keyword']);
@@ -43,7 +44,7 @@ return new class extends Migration
             $table->foreignId('seo_keyword_id')->constrained('seo_keywords')->cascadeOnDelete();
 
             $table->unsignedSmallInteger('position')->nullable();
-            $table->string('url_ranking', 2048)->nullable();
+            $table->text('url_ranking')->nullable();
 
             $table->string('search_engine')->default('google'); // google, bing
             $table->string('location')->nullable(); // e.g. "Austin, TX" or ISO region
@@ -54,15 +55,17 @@ return new class extends Migration
 
             $table->index(['seo_keyword_id', 'tracked_at']);
             $table->index(['search_engine', 'location', 'device']);
-            $table->unique(['seo_keyword_id', 'search_engine', 'location', 'device', 'tracked_at']);
+            $table->unique(['seo_keyword_id', 'search_engine', 'location', 'device', 'tracked_at'], 'keyword_rankings_unique');
         });
 
         Schema::create('backlinks', function (Blueprint $table) use ($supportsFullText) {
             $table->id();
             $table->foreignId('client_id')->nullable()->constrained()->nullOnDelete();
 
-            $table->string('source_url', 2048);
-            $table->string('target_url', 2048);
+            $table->text('source_url');
+            $table->string('source_url_hash', 64);
+            $table->text('target_url');
+            $table->string('target_url_hash', 64);
             $table->string('anchor_text')->nullable();
 
             $table->unsignedTinyInteger('domain_authority')->nullable(); // 0-100 (best-effort)
@@ -75,11 +78,11 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['client_id', 'status']);
-            $table->index(['client_id', 'target_url']);
-            $table->index(['target_url']);
-            $table->index(['source_url']);
+            $table->index(['client_id', 'target_url_hash'], 'backlinks_client_target_index');
+            $table->index(['target_url_hash'], 'backlinks_target_index');
+            $table->index(['source_url_hash'], 'backlinks_source_index');
             $table->index(['last_checked_at']);
-            $table->unique(['source_url', 'target_url']);
+            $table->unique(['source_url_hash', 'target_url_hash'], 'backlinks_unique');
 
             if ($supportsFullText) {
                 $table->fullText(['source_url', 'target_url', 'anchor_text']);

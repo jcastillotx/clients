@@ -10,6 +10,7 @@ class CampaignLink extends Model
     protected $fillable = [
         'campaign_id',
         'original_url',
+        'original_url_hash',
         'short_url',
         'utm_source',
         'utm_medium',
@@ -18,6 +19,13 @@ class CampaignLink extends Model
         'conversions',
         'meta',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (CampaignLink $link) {
+            $link->original_url_hash = hash('sha256', $link->original_url);
+        });
+    }
 
     protected $casts = [
         'clicks' => 'integer',

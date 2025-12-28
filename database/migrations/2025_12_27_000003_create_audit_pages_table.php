@@ -12,7 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('website_audit_id')->constrained('website_audits')->cascadeOnDelete();
 
-            $table->string('url', 2048);
+            $table->text('url');
+            $table->string('url_hash', 64); // SHA-256 hash for unique constraint
             $table->string('title')->nullable();
             $table->text('meta_description')->nullable();
 
@@ -33,7 +34,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->unique(['website_audit_id', 'url']);
+            $table->unique(['website_audit_id', 'url_hash'], 'audit_pages_audit_url_hash_unique');
             $table->index(['website_audit_id', 'status_code']);
         });
     }

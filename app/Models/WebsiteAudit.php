@@ -11,6 +11,7 @@ class WebsiteAudit extends Model
     protected $fillable = [
         'client_id',
         'website_url',
+        'website_url_hash',
         'audit_type',
         'status',
         'score',
@@ -21,6 +22,13 @@ class WebsiteAudit extends Model
         'meta',
         'failure_reason',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (WebsiteAudit $audit) {
+            $audit->website_url_hash = hash('sha256', $audit->website_url);
+        });
+    }
 
     protected $casts = [
         'score' => 'integer',

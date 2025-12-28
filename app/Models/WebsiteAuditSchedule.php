@@ -10,6 +10,7 @@ class WebsiteAuditSchedule extends Model
     protected $fillable = [
         'client_id',
         'website_url',
+        'website_url_hash',
         'audit_type',
         'frequency',
         'is_active',
@@ -20,6 +21,13 @@ class WebsiteAuditSchedule extends Model
         'next_run_at',
         'last_error',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (WebsiteAuditSchedule $schedule) {
+            $schedule->website_url_hash = hash('sha256', $schedule->website_url);
+        });
+    }
 
     protected $casts = [
         'is_active' => 'boolean',

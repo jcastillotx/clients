@@ -12,7 +12,8 @@ return new class extends Migration
         Schema::create('audit_history', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('website_url', 2048);
+            $table->text('website_url');
+            $table->string('website_url_hash', 64); // SHA-256 hash for indexing
             $table->date('audit_date');
 
             $table->unsignedTinyInteger('overall_score')->nullable();
@@ -26,8 +27,8 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index(['client_id', 'website_url']);
-            $table->index(['website_url', 'audit_date']);
+            $table->index(['client_id', 'website_url_hash'], 'audit_history_client_url_index');
+            $table->index(['website_url_hash', 'audit_date'], 'audit_history_url_date_index');
         });
     }
 

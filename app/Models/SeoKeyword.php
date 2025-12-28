@@ -11,6 +11,7 @@ class SeoKeyword extends Model
     protected $fillable = [
         'client_id',
         'website_url',
+        'website_url_hash',
         'keyword',
         'search_volume',
         'difficulty',
@@ -20,6 +21,13 @@ class SeoKeyword extends Model
         'tracking_enabled',
         'meta',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (SeoKeyword $keyword) {
+            $keyword->website_url_hash = hash('sha256', $keyword->website_url);
+        });
+    }
 
     protected $casts = [
         'search_volume' => 'integer',

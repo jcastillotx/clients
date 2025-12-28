@@ -12,6 +12,7 @@ class AuditHistory extends Model
     protected $fillable = [
         'client_id',
         'website_url',
+        'website_url_hash',
         'audit_date',
         'overall_score',
         'seo_score',
@@ -21,6 +22,13 @@ class AuditHistory extends Model
         'critical_issues',
         'pages_crawled',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (AuditHistory $history) {
+            $history->website_url_hash = hash('sha256', $history->website_url);
+        });
+    }
 
     protected $casts = [
         'audit_date' => 'date',

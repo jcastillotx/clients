@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('website_audits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('website_url', 2048);
+            $table->text('website_url');
+            $table->string('website_url_hash', 64);
             $table->string('audit_type')->default('full'); // full, seo, performance, accessibility
             $table->string('status')->default('pending'); // pending, running, completed, failed
             $table->unsignedTinyInteger('score')->nullable(); // 0-100
@@ -29,7 +30,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['client_id', 'status']);
-            $table->index(['client_id', 'website_url']);
+            $table->index(['client_id', 'website_url_hash'], 'website_audits_client_url_index');
             $table->index(['audit_type', 'status']);
         });
     }

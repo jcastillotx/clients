@@ -10,7 +10,9 @@ class Backlink extends Model
     protected $fillable = [
         'client_id',
         'source_url',
+        'source_url_hash',
         'target_url',
+        'target_url_hash',
         'anchor_text',
         'domain_authority',
         'link_type',
@@ -19,6 +21,14 @@ class Backlink extends Model
         'status',
         'meta',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Backlink $backlink) {
+            $backlink->source_url_hash = hash('sha256', $backlink->source_url);
+            $backlink->target_url_hash = hash('sha256', $backlink->target_url);
+        });
+    }
 
     protected $casts = [
         'domain_authority' => 'integer',

@@ -34,6 +34,11 @@ return new class extends Migration
             $table->index('status');
             $table->index('tier');
         });
+
+        // Add foreign key to users table now that clients exists
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('client_id')->references('id')->on('clients')->nullOnDelete();
+        });
     }
 
     /**

@@ -10,6 +10,7 @@ class AuditPage extends Model
     protected $fillable = [
         'website_audit_id',
         'url',
+        'url_hash',
         'title',
         'meta_description',
         'h1_tag',
@@ -24,6 +25,14 @@ class AuditPage extends Model
         'links',
         'images',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (AuditPage $page) {
+            // Auto-generate URL hash for unique constraint
+            $page->url_hash = hash('sha256', $page->url);
+        });
+    }
 
     protected $casts = [
         'word_count' => 'integer',

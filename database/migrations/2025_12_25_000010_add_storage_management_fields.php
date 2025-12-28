@@ -25,15 +25,15 @@ return new class extends Migration
             }
 
             if (! Schema::hasColumn('storage_connections', 'quota_warned_80_at')) {
-                $table->timestamp('quota_warned_80_at')->nullable()->after('last_synced_at');
+                $table->timestamp('quota_warned_80_at')->nullable();
             }
 
             if (! Schema::hasColumn('storage_connections', 'last_sync_failed_at')) {
-                $table->timestamp('last_sync_failed_at')->nullable()->after('quota_warned_80_at');
+                $table->timestamp('last_sync_failed_at')->nullable();
             }
 
             if (! Schema::hasColumn('storage_connections', 'sync_failed_notified_at')) {
-                $table->timestamp('sync_failed_notified_at')->nullable()->after('last_sync_failed_at');
+                $table->timestamp('sync_failed_notified_at')->nullable();
             }
         });
     }

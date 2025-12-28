@@ -70,8 +70,9 @@ return new class extends Migration
         Schema::create('campaign_links', function (Blueprint $table) use ($supportsFullText) {
             $table->id();
             $table->foreignId('campaign_id')->constrained('campaigns')->cascadeOnDelete();
-            $table->string('original_url', 2048);
-            $table->string('short_url', 2048)->nullable();
+            $table->text('original_url');
+            $table->string('original_url_hash', 64);
+            $table->text('short_url')->nullable();
             $table->string('utm_source')->nullable();
             $table->string('utm_medium')->nullable();
             $table->string('utm_campaign')->nullable();
@@ -83,7 +84,7 @@ return new class extends Migration
             $table->index(['campaign_id']);
             $table->index(['utm_source', 'utm_medium']);
             $table->index(['utm_campaign']);
-            $table->unique(['campaign_id', 'original_url', 'utm_source', 'utm_medium', 'utm_campaign']);
+            $table->unique(['campaign_id', 'original_url_hash', 'utm_source', 'utm_medium', 'utm_campaign'], 'campaign_links_unique');
             if ($supportsFullText) {
                 $table->fullText(['original_url', 'short_url', 'utm_source', 'utm_medium', 'utm_campaign']);
             }
