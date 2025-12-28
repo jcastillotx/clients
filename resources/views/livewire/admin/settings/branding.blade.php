@@ -345,11 +345,11 @@
                     <div class="mt-3 p-3 bg-light rounded">
                         <label class="font-weight-bold mb-2">Live Preview</label>
                         <div class="d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
-                            <button type="button" class="btn" style="background-color: {{ $branding['button_primary'] ?: $branding['color_primary'] }}; color: #fff;">Primary Button</button>
-                            <button type="button" class="btn" style="background-color: {{ $branding['button_secondary'] ?: $branding['color_secondary'] }}; color: #fff;">Secondary Button</button>
-                            <button type="button" class="btn" style="background-color: {{ $branding['color_accent'] }}; color: #fff;">Accent Button</button>
-                            <a href="#" onclick="return false;" style="color: {{ $branding['color_primary'] }};">Link Text</a>
-                            <span class="badge" style="background-color: {{ $branding['color_primary'] }}; color: #fff;">Badge</span>
+                            <button type="button" class="btn" style="background-color: {{ $branding['button_primary'] ?? $branding['color_primary'] ?? '#3b82f6' }}; color: #fff;">Primary Button</button>
+                            <button type="button" class="btn" style="background-color: {{ $branding['button_secondary'] ?? $branding['color_secondary'] ?? '#64748b' }}; color: #fff;">Secondary Button</button>
+                            <button type="button" class="btn" style="background-color: {{ $branding['color_accent'] ?? '#0ea5e9' }}; color: #fff;">Accent Button</button>
+                            <a href="#" onclick="return false;" style="color: {{ $branding['color_primary'] ?? '#3b82f6' }};">Link Text</a>
+                            <span class="badge" style="background-color: {{ $branding['color_primary'] ?? '#3b82f6' }}; color: #fff;">Badge</span>
                         </div>
                     </div>
                 </div>
@@ -419,23 +419,23 @@
                     <div class="mt-2">
                         <label class="font-weight-bold mb-2">Sidebar Preview</label>
                         <div class="d-flex" style="height: 120px; border-radius: 4px; overflow: hidden; border: 1px solid #ddd;">
-                            <div style="width: 200px; background-color: {{ $branding['sidebar_bg'] ?? '#343a40' }}; padding: 10px;">
-                                <div style="color: {{ $branding['sidebar_text'] ?? '#c2c7d0' }}; font-size: 12px; margin-bottom: 8px;">NAVIGATION</div>
-                                <div style="background-color: {{ $branding['sidebar_active'] ?? '#007bff' }}; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 13px; margin-bottom: 4px;">
+                            <div style="width: 200px; background-color: {{ $branding['sidebar_bg'] ?? '#1e293b' }}; padding: 10px;">
+                                <div style="color: {{ $branding['sidebar_text'] ?? '#94a3b8' }}; font-size: 12px; margin-bottom: 8px;">NAVIGATION</div>
+                                <div style="background-color: {{ $branding['sidebar_active'] ?? '#3b82f6' }}; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 13px; margin-bottom: 4px;">
                                     <i class="fas fa-home mr-2"></i> Dashboard
                                 </div>
-                                <div style="color: {{ $branding['sidebar_text'] ?? '#c2c7d0' }}; padding: 8px 12px; font-size: 13px; cursor: pointer;" 
-                                    onmouseover="this.style.backgroundColor='{{ $branding['sidebar_hover'] ?? '#495057' }}'"
+                                <div style="color: {{ $branding['sidebar_text'] ?? '#94a3b8' }}; padding: 8px 12px; font-size: 13px; cursor: pointer;" 
+                                    onmouseover="this.style.backgroundColor='{{ $branding['sidebar_hover'] ?? '#334155' }}'"
                                     onmouseout="this.style.backgroundColor='transparent'">
                                     <i class="fas fa-users mr-2"></i> Clients
                                 </div>
                             </div>
-                            <div style="flex: 1; background-color: {{ $branding['content_bg'] ?? '#f4f6f9' }};">
-                                <div style="background-color: {{ $branding['navbar_bg'] ?? '#343a40' }}; color: {{ $branding['navbar_text'] ?? '#ffffff' }}; padding: 10px 15px; font-size: 13px;">
+                            <div style="flex: 1; background-color: {{ $branding['content_bg'] ?? '#f8fafc' }};">
+                                <div style="background-color: {{ $branding['navbar_bg'] ?? '#ffffff' }}; color: {{ $branding['navbar_text'] ?? '#1e293b' }}; padding: 10px 15px; font-size: 13px; border-bottom: 1px solid #e2e8f0;">
                                     <i class="fas fa-bars mr-3"></i> Navbar
                                 </div>
                                 <div style="padding: 15px;">
-                                    <div style="background: #fff; padding: 10px; border-radius: 4px; font-size: 12px; color: #666;">
+                                    <div style="background: #fff; padding: 10px; border-radius: 4px; font-size: 12px; color: #666; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                                         Content Area
                                     </div>
                                 </div>

@@ -1,11 +1,42 @@
 {{-- 
     Dynamic Brand Styles
     This partial outputs CSS variables and overrides based on database branding settings.
+    Uses a professional gray/blue/white theme as defaults.
     Include this in your layout's <head> section.
 --}}
 @php
     $brandingService = app(\App\Services\BrandingService::class);
     $brand = $brandingService->all();
+    
+    // Ensure all required keys exist with defaults
+    $brand = array_merge([
+        'color_primary' => '#3b82f6',
+        'color_primary_dark' => '#1d4ed8',
+        'color_primary_light' => '#93c5fd',
+        'color_secondary' => '#64748b',
+        'color_accent' => '#0ea5e9',
+        'color_success' => '#22c55e',
+        'color_warning' => '#f59e0b',
+        'color_danger' => '#ef4444',
+        'color_info' => '#06b6d4',
+        'sidebar_bg' => '#1e293b',
+        'sidebar_text' => '#94a3b8',
+        'sidebar_hover' => '#334155',
+        'sidebar_active' => '#3b82f6',
+        'navbar_bg' => '#ffffff',
+        'navbar_text' => '#1e293b',
+        'button_primary' => '#3b82f6',
+        'button_primary_hover' => '#2563eb',
+        'button_secondary' => '#64748b',
+        'content_bg' => '#f8fafc',
+        'card_border_radius' => '0.5rem',
+        'button_border_radius' => '0.375rem',
+        'input_border_radius' => '0.375rem',
+        'font_family' => "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        'font_size_base' => '0.9375rem',
+        'sidebar_width' => '250px',
+        'custom_css' => '',
+    ], $brand);
 @endphp
 <style id="brand-styles">
 :root {

@@ -209,6 +209,9 @@ class SystemSettings extends Component
             'api_rate_limit_per_minute' => (int) $sec['security.api.rate_limit_per_minute'],
         ];
 
+        // Get defaults for branding
+        $brandDefaults = BrandingService::defaults();
+        
         $b = $settings->getMany([
             'branding.logo_path' => '',
             'branding.login_logo_path' => '',
@@ -216,20 +219,20 @@ class SystemSettings extends Component
             'branding.login_background_path' => '',
             'branding.favicon_path' => '',
             'branding.document_logo_path' => '',
-            'branding.colors.primary' => '#007bff',
-            'branding.colors.secondary' => '#6c757d',
-            'branding.colors.accent' => '#28a745',
-            'branding.buttons.primary' => '',
-            'branding.buttons.primary_hover' => '',
-            'branding.buttons.secondary' => '',
-            'branding.buttons.secondary_hover' => '',
-            'branding.sidebar.bg' => '#343a40',
-            'branding.sidebar.text' => '#c2c7d0',
-            'branding.sidebar.hover' => '#495057',
-            'branding.sidebar.active' => '#007bff',
-            'branding.navbar.bg' => '#343a40',
-            'branding.navbar.text' => '#ffffff',
-            'branding.content.bg' => '#f4f6f9',
+            'branding.colors.primary' => $brandDefaults['color_primary'],
+            'branding.colors.secondary' => $brandDefaults['color_secondary'],
+            'branding.colors.accent' => $brandDefaults['color_accent'],
+            'branding.buttons.primary' => $brandDefaults['button_primary'],
+            'branding.buttons.primary_hover' => $brandDefaults['button_primary_hover'],
+            'branding.buttons.secondary' => $brandDefaults['button_secondary'],
+            'branding.buttons.secondary_hover' => $brandDefaults['button_secondary_hover'],
+            'branding.sidebar.bg' => $brandDefaults['sidebar_bg'],
+            'branding.sidebar.text' => $brandDefaults['sidebar_text'],
+            'branding.sidebar.hover' => $brandDefaults['sidebar_hover'],
+            'branding.sidebar.active' => $brandDefaults['sidebar_active'],
+            'branding.navbar.bg' => $brandDefaults['navbar_bg'],
+            'branding.navbar.text' => $brandDefaults['navbar_text'],
+            'branding.content.bg' => $brandDefaults['content_bg'],
             'branding.invoice_template' => 'default',
             'branding.email.header_html' => '',
             'branding.email.footer_html' => '',
@@ -243,37 +246,40 @@ class SystemSettings extends Component
             'branding.company_name' => '',
             'branding.tagline' => '',
         ]);
+        // Get defaults from BrandingService
+        $defaults = BrandingService::defaults();
+
         $this->branding = [
-            'logo_path' => $b['branding.logo_path'],
-            'login_logo_path' => $b['branding.login_logo_path'],
-            'dashboard_logo_path' => $b['branding.dashboard_logo_path'],
-            'login_background_path' => $b['branding.login_background_path'],
-            'favicon_path' => $b['branding.favicon_path'],
-            'document_logo_path' => $b['branding.document_logo_path'],
-            'color_primary' => $b['branding.colors.primary'],
-            'color_secondary' => $b['branding.colors.secondary'],
-            'color_accent' => $b['branding.colors.accent'],
-            'button_primary' => $b['branding.buttons.primary'] ?: $b['branding.colors.primary'],
-            'button_primary_hover' => $b['branding.buttons.primary_hover'] ?: $b['branding.colors.primary'],
-            'button_secondary' => $b['branding.buttons.secondary'] ?: $b['branding.colors.secondary'],
-            'button_secondary_hover' => $b['branding.buttons.secondary_hover'] ?: $b['branding.colors.secondary'],
-            'sidebar_bg' => $b['branding.sidebar.bg'],
-            'sidebar_text' => $b['branding.sidebar.text'],
-            'sidebar_hover' => $b['branding.sidebar.hover'],
-            'sidebar_active' => $b['branding.sidebar.active'],
-            'navbar_bg' => $b['branding.navbar.bg'],
-            'navbar_text' => $b['branding.navbar.text'],
-            'content_bg' => $b['branding.content.bg'],
-            'invoice_template' => $b['branding.invoice_template'],
-            'email_header_html' => $b['branding.email.header_html'],
-            'email_footer_html' => $b['branding.email.footer_html'],
-            'site_header_html' => $b['branding.site.header_html'] ?: $b['branding.admin.header_html'],
-            'site_footer_html' => $b['branding.site.footer_html'] ?: $b['branding.admin.footer_html'],
-            'custom_domain' => $b['branding.custom_domain'],
-            'custom_css' => $b['branding.custom_css'],
-            'platform_name' => $b['branding.platform_name'],
-            'company_name' => $b['branding.company_name'],
-            'tagline' => $b['branding.tagline'],
+            'logo_path' => $b['branding.logo_path'] ?: '',
+            'login_logo_path' => $b['branding.login_logo_path'] ?: '',
+            'dashboard_logo_path' => $b['branding.dashboard_logo_path'] ?: '',
+            'login_background_path' => $b['branding.login_background_path'] ?: '',
+            'favicon_path' => $b['branding.favicon_path'] ?: '',
+            'document_logo_path' => $b['branding.document_logo_path'] ?: '',
+            'color_primary' => $b['branding.colors.primary'] ?: $defaults['color_primary'],
+            'color_secondary' => $b['branding.colors.secondary'] ?: $defaults['color_secondary'],
+            'color_accent' => $b['branding.colors.accent'] ?: $defaults['color_accent'],
+            'button_primary' => $b['branding.buttons.primary'] ?: $defaults['button_primary'],
+            'button_primary_hover' => $b['branding.buttons.primary_hover'] ?: $defaults['button_primary_hover'],
+            'button_secondary' => $b['branding.buttons.secondary'] ?: $defaults['button_secondary'],
+            'button_secondary_hover' => $b['branding.buttons.secondary_hover'] ?: $defaults['button_secondary_hover'],
+            'sidebar_bg' => $b['branding.sidebar.bg'] ?: $defaults['sidebar_bg'],
+            'sidebar_text' => $b['branding.sidebar.text'] ?: $defaults['sidebar_text'],
+            'sidebar_hover' => $b['branding.sidebar.hover'] ?: $defaults['sidebar_hover'],
+            'sidebar_active' => $b['branding.sidebar.active'] ?: $defaults['sidebar_active'],
+            'navbar_bg' => $b['branding.navbar.bg'] ?: $defaults['navbar_bg'],
+            'navbar_text' => $b['branding.navbar.text'] ?: $defaults['navbar_text'],
+            'content_bg' => $b['branding.content.bg'] ?: $defaults['content_bg'],
+            'invoice_template' => $b['branding.invoice_template'] ?: 'default',
+            'email_header_html' => $b['branding.email.header_html'] ?: '',
+            'email_footer_html' => $b['branding.email.footer_html'] ?: '',
+            'site_header_html' => $b['branding.site.header_html'] ?: $b['branding.admin.header_html'] ?: '',
+            'site_footer_html' => $b['branding.site.footer_html'] ?: $b['branding.admin.footer_html'] ?: '',
+            'custom_domain' => $b['branding.custom_domain'] ?: '',
+            'custom_css' => $b['branding.custom_css'] ?: '',
+            'platform_name' => $b['branding.platform_name'] ?: '',
+            'company_name' => $b['branding.company_name'] ?: '',
+            'tagline' => $b['branding.tagline'] ?: '',
         ];
     }
 
@@ -969,11 +975,33 @@ class SystemSettings extends Component
 
         $colors = $presets[$preset];
 
+        // Apply all colors from the preset
         $this->branding['color_primary'] = $colors['color_primary'];
         $this->branding['color_secondary'] = $colors['color_secondary'] ?? $this->branding['color_secondary'];
         $this->branding['color_accent'] = $colors['color_accent'] ?? $this->branding['color_accent'];
         $this->branding['button_primary'] = $colors['color_primary'];
         $this->branding['button_primary_hover'] = $colors['color_primary_dark'];
+        $this->branding['button_secondary'] = $colors['color_secondary'] ?? $this->branding['button_secondary'];
+        
+        // Apply sidebar colors
+        if (isset($colors['sidebar_bg'])) {
+            $this->branding['sidebar_bg'] = $colors['sidebar_bg'];
+        }
+        if (isset($colors['sidebar_text'])) {
+            $this->branding['sidebar_text'] = $colors['sidebar_text'];
+        }
+        if (isset($colors['sidebar_hover'])) {
+            $this->branding['sidebar_hover'] = $colors['sidebar_hover'];
+        }
+        $this->branding['sidebar_active'] = $colors['color_primary'];
+        
+        // Apply navbar colors
+        if (isset($colors['navbar_bg'])) {
+            $this->branding['navbar_bg'] = $colors['navbar_bg'];
+        }
+        if (isset($colors['navbar_text'])) {
+            $this->branding['navbar_text'] = $colors['navbar_text'];
+        }
 
         session()->flash('success', "Applied '{$colors['name']}' color preset. Click Save to apply changes.");
     }
