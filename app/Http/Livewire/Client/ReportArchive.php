@@ -27,6 +27,6 @@ class ReportArchive extends Component
 
         return view('livewire.client.report-archive', [
             'deliveries' => $deliveries,
-        ]);
+        ])->layout('layouts.app');
     }
 }

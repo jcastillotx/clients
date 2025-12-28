@@ -98,6 +98,6 @@ class KnowledgeBase extends Component
             ->limit(50)
             ->get();
 
-        return view('livewire.client.knowledge-base', compact('categories', 'articles', 'article'));
+        return view('livewire.client.knowledge-base', compact('categories', 'articles', 'article'))->layout('layouts.app');
     }
 }

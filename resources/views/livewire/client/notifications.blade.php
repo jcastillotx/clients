@@ -1,4 +1,4 @@
-<x-app-layout>
+
     <x-slot name="header">Notifications</x-slot>
 
     <div class="card">
@@ -92,5 +92,4 @@
             @endif
         </div>
     </div>
-</x-app-layout>
 

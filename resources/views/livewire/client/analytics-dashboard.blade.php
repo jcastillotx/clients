@@ -1,5 +1,4 @@
-<x-app-layout>
-    <x-slot name="header">Client Analytics</x-slot>
+<x-slot name="header">Client Analytics</x-slot>
 
     <div class="row">
         <div class="col-md-3">
@@ -97,5 +96,4 @@
             }
         </script>
     @endpush
-</x-app-layout>
 

@@ -93,6 +93,6 @@ class ProjectDashboard extends Component
             ];
         })->values();
 
-        return view('livewire.client.project-dashboard', compact('projects', 'project', 'milestones', 'deliverables', 'team', 'costEntries', 'projectData', 'milestoneData', 'deliverableData'));
+        return view('livewire.client.project-dashboard', compact('projects', 'project', 'milestones', 'deliverables', 'team', 'costEntries', 'projectData', 'milestoneData', 'deliverableData'))->layout('layouts.app');
     }
 }

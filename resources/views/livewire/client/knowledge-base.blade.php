@@ -1,4 +1,4 @@
-<x-app-layout>
+
     <x-slot name="header">Knowledge Base</x-slot>
 
     <div class="row">
@@ -84,5 +84,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
 

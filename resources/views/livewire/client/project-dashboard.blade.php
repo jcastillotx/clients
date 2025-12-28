@@ -1,4 +1,4 @@
-<x-app-layout>
+
     <x-slot name="header">Project Dashboard</x-slot>
 
     @push('styles')
@@ -233,5 +233,4 @@
             }
         </script>
     @endpush
-</x-app-layout>
 

@@ -1,4 +1,4 @@
-<x-app-layout>
+
     <x-slot name="header">Communication Hub</x-slot>
 
     <div class="row">
@@ -180,5 +180,4 @@
             }
         </script>
     @endpush
-</x-app-layout>
 

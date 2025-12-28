@@ -84,6 +84,6 @@ class AnalyticsDashboard extends Component
             'avgResponseHours',
             'storage',
             'unpaid'
-        ));
+        ))->layout('layouts.app');
     }
 }

@@ -1,4 +1,4 @@
-<x-app-layout>
+
     <x-slot name="header">Report archive</x-slot>
 
     <div class="card">
@@ -36,5 +36,4 @@
             </table>
         </div>
     </div>
-</x-app-layout>
 

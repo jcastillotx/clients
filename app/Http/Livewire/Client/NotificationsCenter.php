@@ -135,6 +135,6 @@ class NotificationsCenter extends Component
             'notifications' => $notifications,
             'unread' => $unread,
             'categories' => $this->defaultCategories(),
-        ]);
+        ])->layout('layouts.app');
     }
 }

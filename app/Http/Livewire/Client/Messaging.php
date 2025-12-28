@@ -344,6 +344,6 @@ class Messaging extends Component
             ->limit(200)
             ->get(['id', 'title']);
 
-        return view('livewire.client.messaging', compact('conversations', 'messages', 'participants', 'requests', 'pinned', 'typingNames'));
+        return view('livewire.client.messaging', compact('conversations', 'messages', 'participants', 'requests', 'pinned', 'typingNames'))->layout('layouts.app');
     }
 }
