@@ -33,7 +33,7 @@
             <h4 class="mb-0"><i class="fas fa-paint-brush mr-2 text-muted"></i>Branding Settings</h4>
             <small class="text-muted">Customize your platform's appearance</small>
         </div>
-        <button type="button" wire:click="saveBranding" wire:loading.attr="disabled" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors flex items-center gap-2">
+        <button type="button" wire:click="saveBranding" wire:loading.attr="disabled" class="btn-primary-modern">
             <span wire:loading.remove wire:target="saveBranding">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
@@ -707,7 +707,7 @@
 
     <!-- Save Button - Matching other tabs style -->
     <div class="mt-6">
-        <button type="button" wire:click="saveBranding" wire:loading.attr="disabled" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors flex items-center gap-2">
+        <button type="button" wire:click="saveBranding" wire:loading.attr="disabled" class="btn-primary-modern">
             <span wire:loading.remove wire:target="saveBranding">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
@@ -818,7 +818,14 @@
             });
 
             Livewire.on('branding-saved', function(data) {
-                showUploadToast('Branding Settings', data.message, true);
+                showUploadToast('Branding Settings', data.message + ' Refreshing page...', true);
+                
+                // Refresh the page after a short delay to apply branding changes
+                if (data.refresh) {
+                    setTimeout(function() {
+                        window.location.reload(true); // true = hard refresh, bypass cache
+                    }, 1500);
+                }
             });
         });
 

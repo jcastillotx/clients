@@ -80,14 +80,14 @@
     --brand-font-size: {{ $brand['font_size_base'] }};
 }
 
-/* ===== AdminLTE Brand Overrides ===== */
+/* ===== AdminLTE/Bootstrap Brand Overrides ===== */
 
 /* Primary Button */
-.btn-primary {
+.btn.btn-primary {
     background-color: var(--brand-primary) !important;
     border-color: var(--brand-primary) !important;
 }
-.btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+.btn.btn-primary:hover, .btn.btn-primary:focus, .btn.btn-primary:active {
     background-color: var(--brand-btn-primary-hover) !important;
     border-color: var(--brand-btn-primary-hover) !important;
 }
@@ -230,7 +230,7 @@ a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
     color: var(--brand-primary-dark) !important;
 }
 
-/* Nav Tabs */
+/* Nav Tabs - Use neutral colors, not brand primary for text */
 .nav-tabs .nav-link.active {
     border-bottom-color: var(--brand-primary) !important;
     color: #495057 !important;

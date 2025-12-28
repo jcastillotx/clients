@@ -1,10 +1,37 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ========================================
+   Kre8iv Client Portal - Custom Styles
+   Built on AdminLTE 3 (Bootstrap 4)
+   ======================================== */
 
-/* Custom styles for Kre8iv Client Portal */
+/* ===== CSS Variables ===== */
+:root {
+    --primary-color: #3c8dbc;
+    --primary-dark: #357ca5;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    
+    /* Slate colors for modern buttons */
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+}
 
-/* Content area padding */
+/* ===== Typography ===== */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* ===== Content Area ===== */
 .content-wrapper > .content {
     padding: 1.25rem 1.5rem;
 }
@@ -21,28 +48,12 @@
     }
 }
 
-/* Ensure container-fluid doesn't override padding */
 .content-wrapper .content .container-fluid {
     padding-left: 0;
     padding-right: 0;
 }
 
-:root {
-    --primary-color: #3c8dbc;
-    --primary-dark: #357ca5;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --warning-color: #ffc107;
-    --danger-color: #dc3545;
-    --info-color: #17a2b8;
-}
-
-/* Typography */
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-}
-
-/* Card enhancements */
+/* ===== Card Enhancements ===== */
 .card {
     border-radius: 0.5rem;
     box-shadow: none;
@@ -52,7 +63,7 @@ body {
     border-bottom: 1px solid rgba(0, 0, 0, 0.075);
 }
 
-/* Info box styles */
+/* ===== Info Box Styles ===== */
 .info-box {
     border-radius: 0.5rem;
     min-height: 90px;
@@ -62,28 +73,25 @@ body {
     border-radius: 0.5rem 0 0 0.5rem;
 }
 
-/* Button enhancements */
+/* ===== Button Enhancements ===== */
 .btn {
     border-radius: 0.375rem;
     font-weight: 500;
     transition: all 0.15s ease-in-out;
 }
 
-.btn:hover {
-    transform: none;
-}
-
+.btn:hover,
 .btn:active {
     transform: none;
 }
 
-/* Badge enhancements */
+/* ===== Badge Enhancements ===== */
 .badge {
     font-weight: 500;
     padding: 0.35em 0.65em;
 }
 
-/* Table enhancements */
+/* ===== Table Enhancements ===== */
 .table thead th {
     font-weight: 600;
     font-size: 0.875rem;
@@ -92,7 +100,7 @@ body {
     color: #6c757d;
 }
 
-/* Form control focus states */
+/* ===== Form Control Focus ===== */
 .form-control:focus {
     border-color: var(--primary-color);
     box-shadow: none;
@@ -104,260 +112,511 @@ body {
 
 /* Form container */
 .form-modern {
-    @apply space-y-5;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
 /* Form card wrapper */
 .form-card {
-    @apply relative rounded-2xl border border-slate-200 bg-white p-6;
+    position: relative;
+    border-radius: 1rem;
+    border: 1px solid var(--slate-200);
+    background-color: #fff;
+    padding: 1.5rem;
 }
 
 /* Form section divider */
 .form-section {
-    @apply border-t border-slate-200 pt-5 mt-5;
+    border-top: 1px solid var(--slate-200);
+    padding-top: 1.25rem;
+    margin-top: 1.25rem;
 }
 
 .form-section-title {
-    @apply text-sm font-semibold text-slate-900 mb-4;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--slate-900);
+    margin-bottom: 1rem;
 }
 
 /* Labels */
 .form-label-modern {
-    @apply block text-xs font-semibold text-slate-600 mb-1;
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--slate-600);
+    margin-bottom: 0.25rem;
 }
 
 .form-label-modern .required {
-    @apply text-rose-500 ml-0.5;
+    color: #e11d48;
+    margin-left: 0.125rem;
 }
 
 /* Input fields */
 .form-input {
-    @apply w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 
-           placeholder:text-slate-400
-           focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none
-           disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
-           transition-colors duration-150;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--slate-300);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--slate-900);
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.form-input.is-invalid,
-.form-input:invalid:not(:placeholder-shown) {
-    @apply border-rose-300 focus:border-rose-500 focus:ring-rose-500;
+.form-input::placeholder {
+    color: var(--slate-400);
+}
+
+.form-input:focus {
+    border-color: var(--slate-900);
+    box-shadow: 0 0 0 1px var(--slate-900);
+    outline: none;
+}
+
+.form-input:disabled {
+    background-color: var(--slate-50);
+    color: var(--slate-500);
+    cursor: not-allowed;
+}
+
+.form-input.is-invalid {
+    border-color: #fda4af;
+}
+
+.form-input.is-invalid:focus {
+    border-color: #e11d48;
+    box-shadow: 0 0 0 1px #e11d48;
 }
 
 /* Select fields */
 .form-select-modern {
-    @apply w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 
-           bg-white bg-no-repeat
-           focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none
-           disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
-           transition-colors duration-150;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--slate-300);
+    padding: 0.625rem 2.5rem 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--slate-900);
+    background-color: #fff;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
     background-position: right 0.5rem center;
     background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-select-modern:focus {
+    border-color: var(--slate-900);
+    box-shadow: 0 0 0 1px var(--slate-900);
+    outline: none;
+}
+
+.form-select-modern:disabled {
+    background-color: var(--slate-50);
+    color: var(--slate-500);
+    cursor: not-allowed;
 }
 
 /* Textarea */
 .form-textarea {
-    @apply w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 
-           placeholder:text-slate-400
-           focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none
-           disabled:bg-slate-50 disabled:text-slate-500
-           transition-colors duration-150 resize-y;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--slate-300);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--slate-900);
     min-height: 100px;
+    resize: vertical;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-textarea::placeholder {
+    color: var(--slate-400);
+}
+
+.form-textarea:focus {
+    border-color: var(--slate-900);
+    box-shadow: 0 0 0 1px var(--slate-900);
+    outline: none;
+}
+
+.form-textarea:disabled {
+    background-color: var(--slate-50);
+    color: var(--slate-500);
 }
 
 /* Checkbox and radio */
 .form-checkbox-modern {
-    @apply h-4 w-4 rounded border-slate-300 text-slate-900 
-           focus:ring-slate-900 focus:ring-offset-0
-           disabled:opacity-50;
+    height: 1rem;
+    width: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--slate-300);
 }
 
 .form-radio-modern {
-    @apply h-4 w-4 border-slate-300 text-slate-900 
-           focus:ring-slate-900 focus:ring-offset-0
-           disabled:opacity-50;
+    height: 1rem;
+    width: 1rem;
+    border: 1px solid var(--slate-300);
 }
 
 .form-check-label-modern {
-    @apply ml-2 text-sm text-slate-700;
+    margin-left: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--slate-700);
 }
 
 /* File input */
 .form-file {
-    @apply block w-full text-sm text-slate-700
-           file:mr-4 file:rounded-lg file:border-0 
-           file:bg-slate-900 file:px-4 file:py-2 
-           file:text-sm file:font-semibold file:text-white 
-           hover:file:bg-slate-800 file:cursor-pointer
-           file:transition-colors file:duration-150;
+    display: block;
+    width: 100%;
+    font-size: 0.875rem;
+    color: var(--slate-700);
 }
 
-/* Input with icon */
-.input-with-icon {
-    @apply relative;
+.form-file::file-selector-button {
+    margin-right: 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    background-color: var(--slate-900);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.15s;
 }
 
-.input-with-icon .form-input {
-    @apply pl-10;
-}
-
-.input-with-icon .input-icon {
-    @apply absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400;
-}
-
-/* Input group (input + button) */
-.input-group-modern {
-    @apply flex;
-}
-
-.input-group-modern .form-input {
-    @apply rounded-r-none;
-}
-
-.input-group-modern .btn {
-    @apply rounded-l-none;
+.form-file::file-selector-button:hover {
+    background-color: var(--slate-800);
 }
 
 /* Helper text */
 .form-hint {
-    @apply mt-1.5 text-xs text-slate-500;
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--slate-500);
 }
 
 /* Error message */
 .form-error {
-    @apply mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600;
+    margin-top: 0.375rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #e11d48;
 }
 
 .form-error-icon {
-    @apply mt-0.5 h-3.5 w-3.5 flex-shrink-0;
-}
-
-/* Validation error icons - ensure they stay small */
-.text-rose-600 > svg,
-.text-rose-500 > svg,
-[class*="text-rose"] > svg:first-child {
-    width: 0.875rem !important;
-    height: 0.875rem !important;
-    min-width: 0.875rem !important;
-    min-height: 0.875rem !important;
-    max-width: 0.875rem !important;
-    max-height: 0.875rem !important;
+    margin-top: 0.125rem;
+    height: 0.875rem;
+    width: 0.875rem;
     flex-shrink: 0;
 }
 
 /* Success message */
 .form-success {
-    @apply mt-1.5 flex items-start gap-1.5 text-xs font-medium text-emerald-600;
+    margin-top: 0.375rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #059669;
 }
 
 /* Form grid layouts */
 .form-grid {
-    @apply grid gap-4;
+    display: grid;
+    gap: 1rem;
 }
 
 .form-grid-2 {
-    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 576px) {
+    .form-grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .form-grid-3 {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
 }
 
-/* Button styles */
+@media (min-width: 576px) {
+    .form-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 992px) {
+    .form-grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ========================================
+   Modern Button Styles
+   ======================================== */
+
 .btn-modern {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 
-           text-sm font-semibold transition-all duration-150
-           focus:outline-none focus:ring-2 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    cursor: pointer;
+}
+
+.btn-modern:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn-modern:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-primary-modern {
-    @apply btn-modern bg-slate-900 text-white 
-           hover:bg-slate-800 
-           focus:ring-slate-900;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background-color: var(--slate-900);
+    color: #fff;
+    border: none;
+    transition: background-color 0.15s;
+    cursor: pointer;
+}
+
+.btn-primary-modern:hover {
+    background-color: var(--slate-800);
+    color: #fff;
+}
+
+.btn-primary-modern:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.25);
+}
+
+.btn-primary-modern:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-secondary-modern {
-    @apply btn-modern border border-slate-300 bg-white text-slate-900 
-           hover:bg-slate-50 
-           focus:ring-slate-500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background-color: #fff;
+    color: var(--slate-900);
+    border: 1px solid var(--slate-300);
+    transition: background-color 0.15s;
+    cursor: pointer;
+}
+
+.btn-secondary-modern:hover {
+    background-color: var(--slate-50);
+    color: var(--slate-900);
+}
+
+.btn-secondary-modern:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.25);
+}
+
+.btn-secondary-modern:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-danger-modern {
-    @apply btn-modern bg-rose-600 text-white 
-           hover:bg-rose-700 
-           focus:ring-rose-500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background-color: #dc2626;
+    color: #fff;
+    border: none;
+    transition: background-color 0.15s;
+    cursor: pointer;
+}
+
+.btn-danger-modern:hover {
+    background-color: #b91c1c;
+    color: #fff;
+}
+
+.btn-danger-modern:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
 }
 
 .btn-success-modern {
-    @apply btn-modern bg-emerald-600 text-white 
-           hover:bg-emerald-700 
-           focus:ring-emerald-500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background-color: #059669;
+    color: #fff;
+    border: none;
+    transition: background-color 0.15s;
+    cursor: pointer;
+}
+
+.btn-success-modern:hover {
+    background-color: #047857;
+    color: #fff;
+}
+
+.btn-success-modern:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.25);
 }
 
 /* Form actions (button row) */
 .form-actions {
-    @apply flex flex-wrap items-center gap-3 pt-4;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 1rem;
 }
 
 /* Loading overlay for forms */
 .form-loading-overlay {
-    @apply absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/70 backdrop-blur-sm;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(4px);
 }
 
 .form-loading-content {
-    @apply flex items-center gap-3 rounded-xl bg-white px-4 py-3 border border-slate-200;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.75rem;
+    background-color: #fff;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--slate-200);
 }
 
 .form-loading-spinner {
-    @apply h-5 w-5 animate-spin text-slate-900;
+    height: 1.25rem;
+    width: 1.25rem;
+    animation: spin 1s linear infinite;
+    color: var(--slate-900);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Alert boxes for forms */
 .form-alert {
-    @apply rounded-xl p-4 text-sm;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    font-size: 0.875rem;
 }
 
 .form-alert-info {
-    @apply form-alert bg-blue-50 text-blue-800 border border-blue-200;
+    background-color: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
 }
 
 .form-alert-success {
-    @apply form-alert bg-emerald-50 text-emerald-800 border border-emerald-200;
+    background-color: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
 }
 
 .form-alert-warning {
-    @apply form-alert bg-amber-50 text-amber-800 border border-amber-200;
+    background-color: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fcd34d;
 }
 
 .form-alert-danger {
-    @apply form-alert bg-rose-50 text-rose-800 border border-rose-200;
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
 }
 
 /* Card header for form sections */
 .form-card-header {
-    @apply -mx-6 -mt-6 mb-6 px-6 py-4 border-b border-slate-200 bg-slate-50 rounded-t-2xl;
+    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--slate-200);
+    background-color: var(--slate-50);
+    border-radius: 1rem 1rem 0 0;
 }
 
 .form-card-title {
-    @apply text-base font-semibold text-slate-900;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--slate-900);
+    margin: 0;
 }
 
 .form-card-subtitle {
-    @apply text-sm text-slate-500 mt-0.5;
+    font-size: 0.875rem;
+    color: var(--slate-500);
+    margin-top: 0.125rem;
 }
 
 /* Form footer */
 .form-card-footer {
-    @apply -mx-6 -mb-6 mt-6 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex justify-end gap-3;
+    margin: 1.5rem -1.5rem -1.5rem -1.5rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--slate-200);
+    background-color: var(--slate-50);
+    border-radius: 0 0 1rem 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
 }
 
-/* Custom scrollbar */
+/* ===== Custom Scrollbar ===== */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -376,7 +635,7 @@ body {
     background: #a1a1a1;
 }
 
-/* Timeline customization */
+/* ===== Timeline ===== */
 .timeline::before {
     background: #dee2e6;
 }
@@ -385,12 +644,12 @@ body {
     border-radius: 0.375rem;
 }
 
-/* Alert customization */
+/* ===== Alert ===== */
 .alert {
     border-radius: 0.5rem;
 }
 
-/* Direct chat styles for comments */
+/* ===== Direct Chat (Comments) ===== */
 .direct-chat-msg {
     margin-bottom: 1rem;
 }
@@ -406,13 +665,13 @@ body {
     border-color: #bbdefb;
 }
 
-/* Signature preview */
+/* ===== Signature Preview ===== */
 .signature-preview {
     font-family: 'Brush Script MT', cursive;
     font-size: 2rem;
 }
 
-/* Loading overlay */
+/* ===== Loading Overlay ===== */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -426,9 +685,8 @@ body {
     z-index: 9999;
 }
 
-/* Responsive adjustments */
+/* ===== Responsive Adjustments ===== */
 @media (max-width: 768px) {
-    /* Touch-friendly tap targets */
     .btn,
     .nav-link,
     .list-group-item,
@@ -438,7 +696,6 @@ body {
         align-items: center;
     }
 
-    /* Avoid hover "lift" on touch devices */
     .btn:hover {
         transform: none;
     }
@@ -457,12 +714,12 @@ body {
     }
 }
 
-/* Offline indicator should stay visible */
+/* ===== Offline Indicator ===== */
 #offline-indicator {
     border-radius: 0.75rem;
 }
 
-/* Print styles */
+/* ===== Print Styles ===== */
 @media print {
     .sidebar,
     .main-header,
@@ -477,7 +734,7 @@ body {
     }
 }
 
-/* Animation utilities */
+/* ===== Animation Utilities ===== */
 .fade-in {
     animation: fadeIn 0.3s ease-in;
 }
@@ -493,30 +750,91 @@ body {
     }
 }
 
-/* Hover effects for cards */
+/* ===== Card Hover Effects ===== */
 .card-hover:hover {
     box-shadow: none;
     transform: none;
     transition: none;
 }
 
-/* Status colors */
-.status-pending {
-    color: var(--warning-color);
+/* ===== Status Colors ===== */
+.status-pending { color: var(--warning-color); }
+.status-active { color: var(--success-color); }
+.status-completed { color: var(--success-color); }
+.status-cancelled { color: var(--danger-color); }
+.status-overdue { color: var(--danger-color); }
+
+/* ===== Utility Classes (AdminLTE-compatible) ===== */
+
+/* Spacing utilities */
+.mt-6 { margin-top: 1.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+/* Grid utilities */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+
+@media (min-width: 992px) {
+    .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-.status-active {
-    color: var(--success-color);
+/* Rounded utilities */
+.rounded-2xl { border-radius: 1rem; }
+.rounded-xl { border-radius: 0.75rem; }
+.rounded-lg { border-radius: 0.5rem; }
+
+/* Border utilities */
+.border { border: 1px solid var(--slate-200); }
+.border-slate-200 { border-color: var(--slate-200); }
+
+/* Background utilities */
+.bg-white { background-color: #fff; }
+.bg-slate-50 { background-color: var(--slate-50); }
+
+/* Shadow utilities */
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+
+/* Overflow utilities */
+.overflow-hidden { overflow: hidden; }
+
+/* Padding utilities */
+.p-6 { padding: 1.5rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+
+/* Text utilities */
+.text-base { font-size: 1rem; line-height: 1.5rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.font-semibold { font-weight: 600; }
+.text-slate-900 { color: var(--slate-900); }
+.text-slate-600 { color: var(--slate-600); }
+.text-slate-400 { color: var(--slate-400); }
+
+/* Width utilities */
+.w-full { width: 100%; }
+
+/* Space utilities */
+.space-y-4 > * + * { margin-top: 1rem; }
+
+/* Transition utilities */
+.transition-colors { transition: color 0.15s, background-color 0.15s, border-color 0.15s; }
+
+/* SVG icon sizing in buttons */
+.btn-primary-modern svg,
+.btn-secondary-modern svg,
+.btn-danger-modern svg,
+.btn-success-modern svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
 }
 
-.status-completed {
-    color: var(--success-color);
-}
-
-.status-cancelled {
-    color: var(--danger-color);
-}
-
-.status-overdue {
-    color: var(--danger-color);
+/* Animate spin for loading indicators */
+.animate-spin {
+    animation: spin 1s linear infinite;
 }
