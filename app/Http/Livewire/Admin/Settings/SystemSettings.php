@@ -1135,11 +1135,17 @@ class SystemSettings extends Component
             'branding.tagline' => $this->branding['tagline'] ?? '',
         ], 'branding');
 
-        // Clear branding cache
+        // Clear all caches to ensure branding changes take effect
         app(BrandingService::class)->clearCache();
+        app(SettingsService::class)->forgetCache();
+        
+        // Also clear any view cache if it exists
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
 
-        session()->flash('success', 'Branding settings saved successfully!');
-        $this->dispatch('branding-saved', message: 'Branding settings saved successfully!');
+        session()->flash('success', 'Branding settings saved successfully! The page will refresh to apply changes.');
+        $this->dispatch('branding-saved', message: 'Branding settings saved successfully!', refresh: true);
     }
 
     public function render()

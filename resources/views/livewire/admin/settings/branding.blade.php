@@ -818,7 +818,14 @@
             });
 
             Livewire.on('branding-saved', function(data) {
-                showUploadToast('Branding Settings', data.message, true);
+                showUploadToast('Branding Settings', data.message + ' Refreshing page...', true);
+                
+                // Refresh the page after a short delay to apply branding changes
+                if (data.refresh) {
+                    setTimeout(function() {
+                        window.location.reload(true); // true = hard refresh, bypass cache
+                    }, 1500);
+                }
             });
         });
 
