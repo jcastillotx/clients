@@ -566,6 +566,16 @@ html[data-theme="dark"] .main-sidebar {
     margin-bottom: 1rem;
 }
 
+/* Equal-height cards for horizontal rows (site-wide norm where row-cards is used) */
+.row.row-cards > [class*="col-"] {
+    display: flex;
+}
+
+.row.row-cards > [class*="col-"] > .card {
+    flex: 1 1 auto;
+    width: 100%;
+}
+
 CSS;
 
         return $css;
