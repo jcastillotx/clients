@@ -509,6 +509,40 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
 
 /*
 |--------------------------------------------------------------------------
+| Public Storage Fallback (for public disk assets)
+|--------------------------------------------------------------------------
+|
+| Branding uploads and other public assets are stored on the "public" disk and
+| referenced via "/storage/<path>". In production this is typically served via
+| the `public/storage` symlink (php artisan storage:link).
+|
+| Some environments (misconfigured deploys, locked-down hosts) may not have the
+| symlink. This route provides a safe fallback that only serves files from the
+| "public" disk and avoids path traversal.
+*/
+
+Route::get('/storage/{path}', function (string $path) {
+    if (\Illuminate\Support\Str::contains($path, ['..', "\0"]) || str_starts_with($path, '/')) {
+        abort(404);
+    }
+
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+
+    if (! $disk->exists($path)) {
+        abort(404);
+    }
+
+    $fullPath = $disk->path($path);
+    $mime = $disk->mimeType($path) ?: 'application/octet-stream';
+
+    return response()->file($fullPath, [
+        'Content-Type' => $mime,
+        'Cache-Control' => 'public, max-age=31536000',
+    ]);
+})->where('path', '.*');
+
+/*
+|--------------------------------------------------------------------------
 | Authentication Routes
 |--------------------------------------------------------------------------
 */
