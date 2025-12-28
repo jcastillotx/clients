@@ -50,12 +50,22 @@
                     <span class="form-check-label">Select first 50 results</span>
                 </label>
 
+                @if(count($selected) > 0)
+                    <span class="badge bg-primary ms-2">{{ count($selected) }} selected</span>
+                @endif
+
                 <div class="ms-auto d-flex flex-wrap gap-2">
                     <button class="btn btn-outline-success" type="button" wire:click="bulkActivate" @disabled(empty($selected))>
                         Activate
                     </button>
                     <button class="btn btn-outline-warning" type="button" wire:click="bulkSuspend" @disabled(empty($selected))>
                         Suspend
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" wire:click="confirmBulkArchive" @disabled(empty($selected))>
+                        Archive
+                    </button>
+                    <button class="btn btn-outline-danger" type="button" wire:click="confirmBulkDelete" @disabled(empty($selected))>
+                        Delete
                     </button>
                 </div>
             </div>
@@ -119,5 +129,53 @@
             {{ $clients->links() }}
         </div>
     </div>
+
+    {{-- Bulk Archive Confirmation Modal --}}
+    @if($showArchiveConfirmModal)
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-secondary text-white">
+                        <h5 class="modal-title">Confirm Archive</h5>
+                        <button type="button" class="btn-close btn-close-white" wire:click="cancelBulkArchive"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to archive <strong>{{ count($selected) }}</strong> selected client(s)?</p>
+                        <p class="text-muted mb-0">
+                            <small>Archived clients will be hidden from the list but can be restored later if needed.</small>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="cancelBulkArchive">Cancel</button>
+                        <button type="button" class="btn btn-primary" wire:click="bulkArchive">Archive Clients</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Bulk Delete Confirmation Modal --}}
+    @if($showDeleteConfirmModal)
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Confirm Permanent Delete</h5>
+                        <button type="button" class="btn-close btn-close-white" wire:click="cancelBulkDelete"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to <strong>permanently delete</strong> <strong>{{ count($selected) }}</strong> selected client(s)?</p>
+                        <p class="text-danger mb-0">
+                            <strong>Warning:</strong> This action cannot be undone. All associated data (requests, invoices, contracts, etc.) may also be affected.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="cancelBulkDelete">Cancel</button>
+                        <button type="button" class="btn btn-danger" wire:click="bulkDelete">Delete Permanently</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 
