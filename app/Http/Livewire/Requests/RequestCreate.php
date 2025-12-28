@@ -50,13 +50,47 @@ class RequestCreate extends Component
         $this->validateOnly($property);
     }
 
+    /**
+     * Save request as draft
+     */
+    public function saveDraft()
+    {
+        return $this->saveRequest('draft', false);
+    }
+
+    /**
+     * Submit request (pending status, notify admins)
+     */
+    public function submit()
+    {
+        return $this->saveRequest('pending', true);
+    }
+
+    /**
+     * Legacy save method - defaults to draft
+     */
     public function save()
+    {
+        return $this->saveDraft();
+    }
+
+    /**
+     * Core save logic
+     */
+    protected function saveRequest(string $status, bool $notifyAdmins)
     {
         $this->validate();
 
         $user = auth()->user();
-        if (! $user?->client_id) {
-            abort(403);
+        
+        if (! $user) {
+            session()->flash('error', 'You must be logged in to create a request.');
+            return;
+        }
+        
+        if (! $user->client_id) {
+            session()->flash('error', 'Your account is not associated with a client. Please contact support.');
+            return;
         }
 
         $request = ServiceRequest::create([
@@ -66,7 +100,7 @@ class RequestCreate extends Component
             'description' => $this->description,
             'type' => $this->type,
             'priority' => $this->priority,
-            'status' => 'draft',
+            'status' => $status,
         ]);
 
         foreach ($this->files as $file) {
@@ -94,21 +128,28 @@ class RequestCreate extends Component
             ]);
         }
 
+        $actionType = $status === 'draft' ? 'drafted' : 'created';
         ActivityLog::log(
-            "Created new request: {$request->title}",
+            ($status === 'draft' ? 'Saved draft request: ' : 'Submitted request: ') . $request->title,
             $request,
-            ['type' => $request->type, 'priority' => $request->priority],
-            'created',
+            ['type' => $request->type, 'priority' => $request->priority, 'status' => $status],
+            $actionType,
             'requests'
         );
 
-        // Notify admins
-        $recipients = User::query()->role(['super_admin', 'admin'])->get();
-        if ($recipients->isNotEmpty()) {
-            Notification::send($recipients, new RequestActivityNotification($request, 'created'));
+        // Notify admins only when submitting (not drafts)
+        if ($notifyAdmins) {
+            $recipients = User::query()->role(['super_admin', 'admin'])->get();
+            if ($recipients->isNotEmpty()) {
+                Notification::send($recipients, new RequestActivityNotification($request, 'created'));
+            }
         }
 
-        session()->flash('success', 'Request saved as draft.');
+        $message = $status === 'draft' 
+            ? 'Request saved as draft. You can edit and submit it later.'
+            : 'Request submitted successfully! Our team will review it shortly.';
+            
+        session()->flash('success', $message);
 
         return redirect()->route('requests.show', $request);
     }
