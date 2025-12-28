@@ -1,4 +1,3 @@
-<x-slot name="header">Client Analytics</x-slot>
 
     <div class="row">
         <div class="col-md-3">
