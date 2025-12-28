@@ -16,7 +16,7 @@ class AIProviderManager
     /**
      * Resolve a provider implementation by key.
      *
-     * @param  'openai'|'claude'|'openrouter'|'perplexity'|'asksage'  $provider
+     * @param  'openai'|'claude'|'openrouter'|'perplexity'|'asksage'|'grok'|'gemini'|'copilot'  $provider
      */
     public function provider(string $provider): AIProviderInterface
     {
@@ -26,6 +26,9 @@ class AIProviderManager
             'openrouter' => app(OpenRouterService::class)->configure($this->resolveProviderConfig($provider)),
             'perplexity' => app(PerplexityService::class)->configure($this->resolveProviderConfig($provider)),
             'asksage' => app(AskSageService::class)->configure($this->resolveProviderConfig($provider)),
+            'grok' => app(GrokService::class)->configure($this->resolveProviderConfig($provider)),
+            'gemini' => app(GeminiService::class)->configure($this->resolveProviderConfig($provider)),
+            'copilot' => app(CopilotService::class)->configure($this->resolveProviderConfig($provider)),
             default => throw new RuntimeException("Unknown AI provider: {$provider}"),
         };
     }
@@ -142,6 +145,12 @@ class AIProviderManager
     {
         $base = (array) config("ai-providers.providers.{$provider}", []);
 
+        // Check database settings for API keys (user-configurable via admin panel)
+        $dbSettings = $this->getProviderSettingsFromDb($provider);
+        if (! empty($dbSettings)) {
+            $base = array_merge($base, $dbSettings);
+        }
+
         /** @var AiProvider|null $row */
         $row = AiProvider::query()
             ->where('name', $provider)
@@ -162,6 +171,63 @@ class AIProviderManager
             'cost_per_1k_output_tokens' => $row->cost_per_1k_output_tokens,
             'rate_limit_per_minute' => $row->rate_limit_per_minute,
         ], fn ($v) => $v !== null && $v !== ''));
+    }
+
+    /**
+     * Get provider settings from database (API Settings page).
+     *
+     * @return array<string, mixed>
+     */
+    protected function getProviderSettingsFromDb(string $provider): array
+    {
+        $keyMap = [
+            'openai' => [
+                'api_key' => 'api.ai.openai.api_key',
+                'default_model' => 'api.ai.openai.default_model',
+            ],
+            'claude' => [
+                'api_key' => 'api.ai.claude.api_key',
+                'default_model' => 'api.ai.claude.default_model',
+            ],
+            'gemini' => [
+                'api_key' => 'api.ai.gemini.api_key',
+                'default_model' => 'api.ai.gemini.default_model',
+            ],
+            'grok' => [
+                'api_key' => 'api.ai.grok.api_key',
+                'default_model' => 'api.ai.grok.default_model',
+            ],
+            'perplexity' => [
+                'api_key' => 'api.ai.perplexity.api_key',
+                'default_model' => 'api.ai.perplexity.default_model',
+            ],
+            'copilot' => [
+                'api_key' => 'api.ai.copilot.api_key',
+                'api_base' => 'api.ai.copilot.endpoint',
+                'deployment_name' => 'api.ai.copilot.deployment',
+            ],
+            'openrouter' => [
+                'api_key' => 'api.ai.openrouter.api_key',
+                'default_model' => 'api.ai.openrouter.default_model',
+            ],
+            'asksage' => [
+                'api_key' => 'api.ai.asksage.api_key',
+            ],
+        ];
+
+        if (! isset($keyMap[$provider])) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($keyMap[$provider] as $configKey => $settingKey) {
+            $value = Setting::getValue($settingKey);
+            if ($value !== null && $value !== '') {
+                $result[$configKey] = $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -196,7 +262,7 @@ class AIProviderManager
             return array_values(array_filter(array_map('strval', $override)));
         }
 
-        return (array) config('ai-providers.fallback.order', ['openai', 'openrouter', 'claude', 'perplexity', 'asksage']);
+        return (array) config('ai-providers.fallback.order', ['openai', 'claude', 'gemini', 'grok', 'openrouter', 'perplexity', 'copilot', 'asksage']);
     }
 
     protected function healthKey(string $provider): string

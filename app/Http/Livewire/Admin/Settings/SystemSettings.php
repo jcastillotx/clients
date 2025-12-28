@@ -272,6 +272,16 @@ class SystemSettings extends Component
             'can_connect' => false,
         ];
 
+        // PayPal
+        $paypalClientId = $this->payment['paypal_client_id'] ?? '';
+        $paypalSecret = $this->payment['paypal_secret'] ?? '';
+        $this->integrationStatus['paypal'] = [
+            'configured' => !empty($paypalClientId) && !empty($paypalSecret),
+            'connected' => false,
+            'message' => null,
+            'can_connect' => false,
+        ];
+
         // OpenAI
         $this->integrationStatus['openai'] = [
             'configured' => !empty(config('ai-providers.providers.openai.api_key')),
@@ -387,6 +397,28 @@ class SystemSettings extends Component
                     $account = StripeAccount::retrieve();
                     $this->integrationStatus['stripe']['connected'] = true;
                     $this->integrationStatus['stripe']['message'] = 'Connected: ' . ($account->business_profile?->name ?? $account->id);
+                    break;
+
+                case 'paypal':
+                    $clientId = $this->payment['paypal_client_id'] ?? '';
+                    $secret = $this->payment['paypal_secret'] ?? '';
+                    if (empty($clientId) || empty($secret)) {
+                        $this->integrationStatus['paypal']['message'] = 'Credentials not configured';
+                        return;
+                    }
+                    // Test by getting an access token from PayPal sandbox
+                    $response = Http::asForm()
+                        ->withBasicAuth($clientId, $secret)
+                        ->timeout(10)
+                        ->post('https://api-m.sandbox.paypal.com/v1/oauth2/token', [
+                            'grant_type' => 'client_credentials',
+                        ]);
+                    if ($response->successful() && $response->json('access_token')) {
+                        $this->integrationStatus['paypal']['connected'] = true;
+                        $this->integrationStatus['paypal']['message'] = 'Connected successfully (Sandbox)';
+                    } else {
+                        $this->integrationStatus['paypal']['message'] = 'Connection failed: ' . ($response->json('error_description') ?? $response->status());
+                    }
                     break;
 
                 case 'openai':

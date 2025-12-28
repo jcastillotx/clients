@@ -52,6 +52,27 @@ return [
             'api_base' => env('ASKSAGE_API_BASE'),
             'default_model' => env('ASKSAGE_DEFAULT_MODEL'),
         ],
+
+        'grok' => [
+            'api_key' => env('GROK_API_KEY'),
+            'api_base' => env('GROK_API_BASE', 'https://api.x.ai'),
+            'default_model' => env('GROK_DEFAULT_MODEL', 'grok-2-latest'),
+        ],
+
+        'gemini' => [
+            'api_key' => env('GEMINI_API_KEY'),
+            'api_base' => env('GEMINI_API_BASE', 'https://generativelanguage.googleapis.com'),
+            'default_model' => env('GEMINI_DEFAULT_MODEL', 'gemini-1.5-flash'),
+            'embedding_model' => env('GEMINI_EMBEDDING_MODEL', 'text-embedding-004'),
+        ],
+
+        'copilot' => [
+            'api_key' => env('AZURE_OPENAI_API_KEY'),
+            'api_base' => env('AZURE_OPENAI_ENDPOINT'),
+            'deployment_name' => env('AZURE_OPENAI_DEPLOYMENT', 'gpt-4'),
+            'api_version' => env('AZURE_OPENAI_API_VERSION', '2024-02-15-preview'),
+            'default_model' => env('AZURE_OPENAI_MODEL', 'gpt-4'),
+        ],
     ],
 
     /*
@@ -88,6 +109,23 @@ return [
         ],
         'asksage' => [
             // Fill in based on your AskSage plan.
+        ],
+        'grok' => [
+            'grok-2-latest' => ['input' => 0.002, 'output' => 0.010],
+            'grok-2-1212' => ['input' => 0.002, 'output' => 0.010],
+            'grok-2-vision-1212' => ['input' => 0.002, 'output' => 0.010],
+        ],
+        'gemini' => [
+            'gemini-2.0-flash-exp' => ['input' => 0.0, 'output' => 0.0], // Free during preview
+            'gemini-1.5-pro' => ['input' => 0.00125, 'output' => 0.005],
+            'gemini-1.5-flash' => ['input' => 0.000075, 'output' => 0.0003],
+            'gemini-1.5-flash-8b' => ['input' => 0.0000375, 'output' => 0.00015],
+        ],
+        'copilot' => [
+            // Uses Azure OpenAI pricing - varies by deployment
+            'gpt-4' => ['input' => 0.030, 'output' => 0.060],
+            'gpt-4o' => ['input' => 0.005, 'output' => 0.015],
+            'gpt-4o-mini' => ['input' => 0.00015, 'output' => 0.0006],
         ],
     ],
 
@@ -128,12 +166,27 @@ return [
                 'openrouter' => 'openai/gpt-4o-mini',
                 'claude' => 'claude-3-haiku-20240307',
                 'perplexity' => 'sonar',
+                'gemini' => 'gemini-1.5-flash-8b',
+                'grok' => 'grok-2-latest',
+                'copilot' => 'gpt-4o-mini',
+            ],
+            'medium' => [
+                'openai' => 'gpt-4o',
+                'openrouter' => 'openai/gpt-4o',
+                'claude' => 'claude-3-5-sonnet-latest',
+                'perplexity' => 'sonar',
+                'gemini' => 'gemini-1.5-flash',
+                'grok' => 'grok-2-latest',
+                'copilot' => 'gpt-4o',
             ],
             'high' => [
                 'openai' => 'gpt-4-turbo',
                 'openrouter' => 'openai/gpt-4-turbo',
                 'claude' => 'claude-3-5-sonnet-latest',
                 'perplexity' => 'sonar-pro',
+                'gemini' => 'gemini-1.5-pro',
+                'grok' => 'grok-2-latest',
+                'copilot' => 'gpt-4',
             ],
         ],
     ],
@@ -145,7 +198,7 @@ return [
     */
     'fallback' => [
         // If primary fails, try in order.
-        'order' => array_values(array_filter(explode(',', env('AI_FALLBACK_ORDER', 'openai,openrouter,claude,perplexity,asksage')))),
+        'order' => array_values(array_filter(explode(',', env('AI_FALLBACK_ORDER', 'openai,claude,gemini,grok,openrouter,perplexity,copilot,asksage')))),
         // Only fallback on these exceptions/errors (implementations should throw RuntimeException/RequestException etc.)
         'enabled' => env('AI_FALLBACK_ENABLED', true),
     ],
