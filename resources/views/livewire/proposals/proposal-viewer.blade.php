@@ -115,11 +115,11 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                                         <div>
                                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Full Name</label>
-                                            <input type="text" wire:model.defer="signerName" placeholder="Your name" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                                            <input type="text" wire:model="signerName" placeholder="Your name" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                         </div>
                                         <div class="flex items-end pb-2">
                                             <label class="flex items-center gap-3 cursor-pointer">
-                                                <input type="checkbox" wire:model.defer="agree" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                                <input type="checkbox" wire:model="agree" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
                                                 <span class="text-sm text-slate-700">I agree to proceed and accept this proposal.</span>
                                             </label>
                                         </div>

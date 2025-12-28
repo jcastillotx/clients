@@ -74,7 +74,7 @@
                                 </div>
 
                                 <div class="mt-2">
-                                    <textarea class="form-control" rows="2" placeholder="Optional feedback..." wire:model.defer="feedbackComment"></textarea>
+                                    <textarea class="form-control" rows="2" placeholder="Optional feedback..." wire:model="feedbackComment"></textarea>
                                     <small class="text-muted">You can include what you were trying to do and what didn’t work.</small>
                                 </div>
                             @endif

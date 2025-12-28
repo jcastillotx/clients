@@ -37,18 +37,18 @@
                 <div class="p-6 space-y-5">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Title</label>
-                        <input type="text" wire:model.defer="title" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <input type="text" wire:model="title" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Description</label>
-                        <textarea rows="4" wire:model.defer="description" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
+                        <textarea rows="4" wire:model="description" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Status</label>
-                            <select wire:model.defer="status" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <select wire:model="status" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                 <option value="todo">To do</option>
                                 <option value="in_progress">In progress</option>
                                 <option value="blocked">Blocked</option>
@@ -57,7 +57,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Priority</label>
-                            <select wire:model.defer="priority" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <select wire:model="priority" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                 <option value="low">Low</option>
                                 <option value="normal">Normal</option>
                                 <option value="high">High</option>
@@ -66,7 +66,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assignee</label>
-                            <select wire:model.defer="assignedTo" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <select wire:model="assignedTo" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                 <option value="">Unassigned</option>
                                 @foreach($assignees as $u)
                                     <option value="{{ $u->id }}">{{ $u->name }}</option>
@@ -78,21 +78,21 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Start Date</label>
-                            <input type="date" wire:model.defer="startDate" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <input type="date" wire:model="startDate" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Due Date</label>
-                            <input type="date" wire:model.defer="dueDate" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <input type="date" wire:model="dueDate" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Estimate (hrs)</label>
-                            <input type="text" wire:model.defer="estimatedHours" placeholder="e.g. 4" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <input type="text" wire:model="estimatedHours" placeholder="e.g. 4" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Depends On</label>
-                        <select wire:model.defer="dependsOnTaskId" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <select wire:model="dependsOnTaskId" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                             <option value="">None</option>
                             @foreach($otherTasks as $ot)
                                 <option value="{{ $ot->id }}">#{{ $ot->id }} — {{ $ot->title }}</option>
@@ -123,10 +123,10 @@
                     <!-- Add Comment Form -->
                     <div class="mb-6">
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Add Comment</label>
-                        <textarea rows="3" wire:model.defer="newComment" placeholder="Write a comment..." class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
+                        <textarea rows="3" wire:model="newComment" placeholder="Write a comment..." class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
                         <div class="flex items-center justify-between mt-3">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" wire:model.defer="newCommentInternal" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                <input type="checkbox" wire:model="newCommentInternal" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
                                 <span class="text-sm text-slate-700">Internal comment</span>
                             </label>
                             <button type="button" wire:click="addComment" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors flex items-center gap-2">

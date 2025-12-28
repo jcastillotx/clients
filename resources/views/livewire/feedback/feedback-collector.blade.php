@@ -21,21 +21,21 @@
                         </label>
 
                         @if($q->type === 'nps')
-                            <select class="form-control" wire:model.defer="answers.{{ $q->id }}">
+                            <select class="form-control" wire:model="answers.{{ $q->id }}">
                                 <option value="">Select…</option>
                                 @for($i=0;$i<=10;$i++)
                                     <option value="{{ $i }}">{{ $i }}</option>
                                 @endfor
                             </select>
                         @elseif($q->type === 'rating')
-                            <select class="form-control" wire:model.defer="answers.{{ $q->id }}">
+                            <select class="form-control" wire:model="answers.{{ $q->id }}">
                                 <option value="">Select…</option>
                                 @for($i=1;$i<=5;$i++)
                                     <option value="{{ $i }}">{{ $i }}</option>
                                 @endfor
                             </select>
                         @else
-                            <textarea class="form-control" rows="3" wire:model.defer="answers.{{ $q->id }}"></textarea>
+                            <textarea class="form-control" rows="3" wire:model="answers.{{ $q->id }}"></textarea>
                         @endif
                     </div>
                 @endforeach

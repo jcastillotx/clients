@@ -19,7 +19,7 @@
             <div class="form-row">
                 <div class="col-md-4">
                     <label class="mb-1">Frequency</label>
-                    <select class="form-control" wire:model.defer="reportFrequency">
+                    <select class="form-control" wire:model="reportFrequency">
                         <option value="daily">daily</option>
                         <option value="weekly">weekly</option>
                         <option value="monthly">monthly</option>
@@ -28,7 +28,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="mb-1">Delivery</label>
-                    <select class="form-control" wire:model.defer="deliveryMethod">
+                    <select class="form-control" wire:model="deliveryMethod">
                         <option value="email">email</option>
                         <option value="portal">portal</option>
                         <option value="both">both</option>
@@ -36,7 +36,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="mb-1">Recipients (CSV)</label>
-                    <input class="form-control" wire:model.defer="recipientsCsv" placeholder="client@company.com, ...">
+                    <input class="form-control" wire:model="recipientsCsv" placeholder="client@company.com, ...">
                 </div>
             </div>
 
@@ -46,7 +46,7 @@
             <div class="d-flex flex-wrap" style="gap: 10px;">
                 @foreach($availableMetrics as $m)
                     <label class="badge badge-light p-2" style="cursor:pointer;">
-                        <input type="checkbox" wire:model.defer="visibleMetrics" value="{{ $m }}"> {{ $m }}
+                        <input type="checkbox" wire:model="visibleMetrics" value="{{ $m }}"> {{ $m }}
                     </label>
                 @endforeach
             </div>

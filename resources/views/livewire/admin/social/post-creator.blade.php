@@ -63,7 +63,7 @@
                         <!-- Title -->
                         <div class="form-group">
                             <label for="title">Post Title (Internal) <span class="text-danger">*</span></label>
-                            <input wire:model.defer="title" type="text" id="title" class="form-control @error('title') is-invalid @enderror" placeholder="Internal title for this post">
+                            <input wire:model="title" type="text" id="title" class="form-control @error('title') is-invalid @enderror" placeholder="Internal title for this post">
                             @error('title') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
 
@@ -95,20 +95,20 @@
                         <!-- Hashtags -->
                         <div class="form-group">
                             <label for="hashtags">Hashtags</label>
-                            <input wire:model.defer="hashtags" type="text" id="hashtags" class="form-control" placeholder="#marketing #socialmedia">
+                            <input wire:model="hashtags" type="text" id="hashtags" class="form-control" placeholder="#marketing #socialmedia">
                             <small class="form-text text-muted">Separate with spaces, include # symbol</small>
                         </div>
 
                         <!-- Campaign Tag -->
                         <div class="form-group">
                             <label for="campaign_tag">Campaign Tag</label>
-                            <input wire:model.defer="campaign_tag" type="text" id="campaign_tag" class="form-control" placeholder="spring-campaign-2025">
+                            <input wire:model="campaign_tag" type="text" id="campaign_tag" class="form-control" placeholder="spring-campaign-2025">
                         </div>
 
                         <!-- Scheduled Date -->
                         <div class="form-group">
                             <label for="scheduled_for">Schedule For (Optional)</label>
-                            <input wire:model.defer="scheduled_for" type="datetime-local" id="scheduled_for" class="form-control">
+                            <input wire:model="scheduled_for" type="datetime-local" id="scheduled_for" class="form-control">
                             <small class="form-text text-muted">Leave empty to save as draft</small>
                         </div>
 
@@ -160,13 +160,13 @@
                         <!-- AI Prompt -->
                         <div class="form-group">
                             <label>What do you want to post about?</label>
-                            <textarea wire:model.defer="ai_prompt" rows="4" class="form-control" placeholder="E.g., Announce our new product launch..."></textarea>
+                            <textarea wire:model="ai_prompt" rows="4" class="form-control" placeholder="E.g., Announce our new product launch..."></textarea>
                         </div>
 
                         <!-- Tone Selection -->
                         <div class="form-group">
                             <label>Tone</label>
-                            <select wire:model.defer="ai_tone" class="form-control">
+                            <select wire:model="ai_tone" class="form-control">
                                 @foreach($tones as $key => $label)
                                     <option value="{{ $key }}">{{ $label }}</option>
                                 @endforeach
@@ -176,28 +176,28 @@
                         <!-- Target Audience -->
                         <div class="form-group">
                             <label>Target Audience (Optional)</label>
-                            <input wire:model.defer="ai_target_audience" type="text" class="form-control" placeholder="Small business owners">
+                            <input wire:model="ai_target_audience" type="text" class="form-control" placeholder="Small business owners">
                         </div>
 
                         <!-- Keywords -->
                         <div class="form-group">
                             <label>Keywords (Optional)</label>
-                            <input wire:model.defer="ai_keywords" type="text" class="form-control" placeholder="innovation, growth, success">
+                            <input wire:model="ai_keywords" type="text" class="form-control" placeholder="innovation, growth, success">
                             <small class="form-text text-muted">Comma-separated</small>
                         </div>
 
                         <!-- Options -->
                         <div class="form-group">
                             <div class="custom-control custom-checkbox">
-                                <input wire:model.defer="ai_include_hashtags" type="checkbox" class="custom-control-input" id="ai_include_hashtags">
+                                <input wire:model="ai_include_hashtags" type="checkbox" class="custom-control-input" id="ai_include_hashtags">
                                 <label class="custom-control-label" for="ai_include_hashtags">Include Hashtags</label>
                             </div>
                             <div class="custom-control custom-checkbox">
-                                <input wire:model.defer="ai_include_emoji" type="checkbox" class="custom-control-input" id="ai_include_emoji">
+                                <input wire:model="ai_include_emoji" type="checkbox" class="custom-control-input" id="ai_include_emoji">
                                 <label class="custom-control-label" for="ai_include_emoji">Include Emojis</label>
                             </div>
                             <div class="custom-control custom-checkbox">
-                                <input wire:model.defer="ai_include_cta" type="checkbox" class="custom-control-input" id="ai_include_cta">
+                                <input wire:model="ai_include_cta" type="checkbox" class="custom-control-input" id="ai_include_cta">
                                 <label class="custom-control-label" for="ai_include_cta">Include Call-to-Action</label>
                             </div>
                         </div>

@@ -10,19 +10,19 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="mb-1">Name</label>
-                        <input class="form-control" wire:model.defer="name">
+                        <input class="form-control" wire:model="name">
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Category</label>
-                        <input class="form-control" wire:model.defer="category" placeholder="nda, proposal, contract...">
+                        <input class="form-control" wire:model="category" placeholder="nda, proposal, contract...">
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Variables (comma separated)</label>
-                        <input class="form-control" wire:model.defer="variables_csv" placeholder="client_name, company_name">
+                        <input class="form-control" wire:model="variables_csv" placeholder="client_name, company_name">
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Body</label>
-                        <textarea class="form-control" rows="8" wire:model.defer="body" placeholder="Hello @{{client_name}}..."></textarea>
+                        <textarea class="form-control" rows="8" wire:model="body" placeholder="Hello @{{client_name}}..."></textarea>
                         <small class="text-muted">Supports @{{variable}} replacement. (Full rich template engines can be added later.)</small>
                     </div>
                     <button class="btn btn-primary" wire:click="saveTemplate">
@@ -49,7 +49,7 @@
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Template</label>
-                        <select class="form-control" wire:model.defer="generate_template_id">
+                        <select class="form-control" wire:model="generate_template_id">
                             <option value="">Select template...</option>
                             @foreach($templates as $t)
                                 <option value="{{ $t->id }}">#{{ $t->id }} — {{ $t->name }} ({{ $t->category }})</option>
@@ -58,11 +58,11 @@
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Title</label>
-                        <input class="form-control" wire:model.defer="generate_title" placeholder="e.g. NDA - Acme Inc">
+                        <input class="form-control" wire:model="generate_title" placeholder="e.g. NDA - Acme Inc">
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Destination</label>
-                        <select class="form-control" wire:model.defer="generate_destination">
+                        <select class="form-control" wire:model="generate_destination">
                             <option value="local">Local (documents disk)</option>
                             @foreach($connections as $c)
                                 <option value="{{ $c['value'] }}">{{ $c['label'] }}</option>

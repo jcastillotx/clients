@@ -26,7 +26,7 @@
             </div>
             <div class="col-12">
                 <label class="form-label">Context JSON</label>
-                <textarea class="form-control" rows="4" wire:model.defer="contextJson" placeholder='{"client":"Acme","request":"...","invoice":"..."}'></textarea>
+                <textarea class="form-control" rows="4" wire:model="contextJson" placeholder='{"client":"Acme","request":"...","invoice":"..."}'></textarea>
             </div>
         </div>
 
@@ -34,11 +34,11 @@
 
         <div class="mb-2">
             <label class="form-label">Subject</label>
-            <input class="form-control" wire:model.defer="subject">
+            <input class="form-control" wire:model="subject">
         </div>
         <div class="mb-2">
             <label class="form-label">Body</label>
-            <textarea class="form-control" rows="8" wire:model.defer="body"></textarea>
+            <textarea class="form-control" rows="8" wire:model="body"></textarea>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-outline-secondary" wire:click="improve">Improve writing</button>

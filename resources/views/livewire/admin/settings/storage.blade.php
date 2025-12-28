@@ -42,7 +42,7 @@
         </h5>
         <div class="form-group">
             <label class="mb-1">Default storage provider</label>
-            <select class="form-control" wire:model.defer="storage.default_provider">
+            <select class="form-control" wire:model="storage.default_provider">
                 <option value="local">Local Disk</option>
                 <option value="s3">Amazon S3</option>
                 <option value="do-spaces">DigitalOcean Spaces</option>
@@ -54,17 +54,17 @@
         </div>
         <div class="form-group">
             <label class="mb-1">Maximum upload file size (MB)</label>
-            <input type="number" class="form-control" wire:model.defer="storage.max_upload_mb" min="1">
+            <input type="number" class="form-control" wire:model="storage.max_upload_mb" min="1">
             <small class="text-muted">Note: PHP's upload_max_filesize and post_max_size must also be configured on the server.</small>
         </div>
         <div class="form-group">
             <label class="mb-1">Allowed file types (comma separated)</label>
-            <input class="form-control" wire:model.defer="storage.allowed_file_types">
+            <input class="form-control" wire:model="storage.allowed_file_types">
             <small class="text-muted">e.g., pdf,jpg,jpeg,png,doc,docx,xls,xlsx</small>
         </div>
         <div class="form-group">
             <label class="mb-1">Retention policy (days)</label>
-            <input type="number" class="form-control" wire:model.defer="storage.retention_days" min="0">
+            <input type="number" class="form-control" wire:model="storage.retention_days" min="0">
             <small class="text-muted">0 = keep forever. (Enforcement can be implemented via a scheduled cleanup job.)</small>
         </div>
     </div>
@@ -75,31 +75,31 @@
         </h5>
         <div class="form-group">
             <label class="mb-1">Basic</label>
-            <input type="number" class="form-control" wire:model.defer="storage.quota_basic_gb" min="0">
+            <input type="number" class="form-control" wire:model="storage.quota_basic_gb" min="0">
         </div>
         <div class="form-group">
             <label class="mb-1">Standard</label>
-            <input type="number" class="form-control" wire:model.defer="storage.quota_standard_gb" min="0">
+            <input type="number" class="form-control" wire:model="storage.quota_standard_gb" min="0">
         </div>
         <div class="form-group">
             <label class="mb-1">Premium</label>
-            <input type="number" class="form-control" wire:model.defer="storage.quota_premium_gb" min="0">
+            <input type="number" class="form-control" wire:model="storage.quota_premium_gb" min="0">
         </div>
         <div class="form-group">
             <label class="mb-1">Enterprise</label>
-            <input type="number" class="form-control" wire:model.defer="storage.quota_enterprise_gb" min="0">
+            <input type="number" class="form-control" wire:model="storage.quota_enterprise_gb" min="0">
         </div>
 
         <h5 class="mt-4 mb-3">
             <i class="fas fa-cloud-upload-alt mr-1"></i> Backup
         </h5>
         <div class="custom-control custom-switch mb-2">
-            <input type="checkbox" class="custom-control-input" id="backup_enabled_sys" wire:model.defer="storage.backup_enabled">
+            <input type="checkbox" class="custom-control-input" id="backup_enabled_sys" wire:model="storage.backup_enabled">
             <label class="custom-control-label" for="backup_enabled_sys">Enable backup</label>
         </div>
         <div class="form-group">
             <label class="mb-1">Backup provider</label>
-            <select class="form-control" wire:model.defer="storage.backup_provider">
+            <select class="form-control" wire:model="storage.backup_provider">
                 <option value="local">Local Disk</option>
                 <option value="s3">Amazon S3</option>
                 <option value="do-spaces">DigitalOcean Spaces</option>

@@ -59,11 +59,11 @@
                 </div>
                 <div class="card-body">
                     <div class="form-group">
-                        <textarea class="form-control" rows="2" wire:model.defer="commentBody" placeholder="Add a comment..."></textarea>
+                        <textarea class="form-control" rows="2" wire:model="commentBody" placeholder="Add a comment..."></textarea>
                     </div>
                     @if(!auth()->user()->isClient())
                         <div class="custom-control custom-checkbox mb-2">
-                            <input type="checkbox" class="custom-control-input" id="internal" wire:model.defer="commentInternal">
+                            <input type="checkbox" class="custom-control-input" id="internal" wire:model="commentInternal">
                             <label class="custom-control-label" for="internal">Internal (admin only)</label>
                         </div>
                     @endif
@@ -125,7 +125,7 @@
 
                     <div class="form-group">
                         <label class="mb-1">Target type</label>
-                        <select class="form-control" wire:model.defer="linkTargetType">
+                        <select class="form-control" wire:model="linkTargetType">
                             <option value="request">Request</option>
                             <option value="invoice">Invoice</option>
                             <option value="contract">Contract</option>
@@ -133,11 +133,11 @@
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Target ID</label>
-                        <input type="number" class="form-control" wire:model.defer="linkTargetId" placeholder="e.g. 123">
+                        <input type="number" class="form-control" wire:model="linkTargetId" placeholder="e.g. 123">
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Purpose</label>
-                        <input class="form-control" wire:model.defer="linkPurpose" placeholder="supporting / amendment / addendum">
+                        <input class="form-control" wire:model="linkPurpose" placeholder="supporting / amendment / addendum">
                     </div>
 
                     @if(!auth()->user()->isClient())
@@ -150,7 +150,7 @@
 
                     <div class="form-group">
                         <label class="mb-1">Or link a cloud file</label>
-                        <select class="form-control" wire:model.defer="linkStorageFileId">
+                        <select class="form-control" wire:model="linkStorageFileId">
                             <option value="">Select file...</option>
                             @foreach($availableStorageFiles as $sf)
                                 <option value="{{ $sf->id }}">[{{ strtoupper($sf->connection->provider) }}] {{ $sf->filename }}</option>
@@ -184,7 +184,7 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="mb-1">Version A</label>
-                        <select class="form-control" wire:model.defer="compareA">
+                        <select class="form-control" wire:model="compareA">
                             <option value="">Select...</option>
                             @foreach($versions as $v)
                                 <option value="{{ $v->id }}">v{{ $v->version }} — {{ $v->original_filename }}</option>
@@ -193,7 +193,7 @@
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Version B</label>
-                        <select class="form-control" wire:model.defer="compareB">
+                        <select class="form-control" wire:model="compareB">
                             <option value="">Select...</option>
                             @foreach($versions as $v)
                                 <option value="{{ $v->id }}">v{{ $v->version }} — {{ $v->original_filename }}</option>

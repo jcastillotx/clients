@@ -113,15 +113,15 @@
                             <div class="row g-2">
                                 <div class="col-12 col-md-4">
                                     <label class="form-label">Suggested type</label>
-                                    <input type="text" class="form-control" wire:model.defer="suggested_type" placeholder="e.g. web_development">
+                                    <input type="text" class="form-control" wire:model="suggested_type" placeholder="e.g. web_development">
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label">Suggested priority</label>
-                                    <input type="text" class="form-control" wire:model.defer="suggested_priority" placeholder="low|medium|high|urgent">
+                                    <input type="text" class="form-control" wire:model="suggested_priority" placeholder="low|medium|high|urgent">
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label">Estimated hours</label>
-                                    <input type="number" step="0.25" min="0" class="form-control" wire:model.defer="suggested_estimated_hours" placeholder="e.g. 6.5">
+                                    <input type="number" step="0.25" min="0" class="form-control" wire:model="suggested_estimated_hours" placeholder="e.g. 6.5">
                                 </div>
                                 <div class="col-12 d-flex flex-wrap gap-2 mt-2">
                                     <button class="btn btn-success" wire:click="acceptAiSuggestions" wire:loading.attr="disabled">

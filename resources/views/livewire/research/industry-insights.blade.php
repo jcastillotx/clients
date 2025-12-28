@@ -10,11 +10,11 @@
                 <div class="form-row">
                     <div class="col-md-3">
                         <label class="mb-1">Industry (optional)</label>
-                        <input class="form-control" wire:model.defer="industry" placeholder="e.g. Dental, SaaS">
+                        <input class="form-control" wire:model="industry" placeholder="e.g. Dental, SaaS">
                     </div>
                     <div class="col-md-3">
                         <label class="mb-1">Type</label>
-                        <select class="form-control" wire:model.defer="insightType">
+                        <select class="form-control" wire:model="insightType">
                             <option value="news">news</option>
                             <option value="trend">trend</option>
                             <option value="report">report</option>
@@ -23,16 +23,16 @@
                     </div>
                     <div class="col-md-6">
                         <label class="mb-1">Title</label>
-                        <input class="form-control" wire:model.defer="title">
+                        <input class="form-control" wire:model="title">
                     </div>
                 </div>
                 <div class="form-group mt-2">
                     <label class="mb-1">Content</label>
-                    <textarea class="form-control" rows="3" wire:model.defer="content"></textarea>
+                    <textarea class="form-control" rows="3" wire:model="content"></textarea>
                 </div>
                 <div class="form-group">
                     <label class="mb-1">Source URL</label>
-                    <input class="form-control" wire:model.defer="sourceUrl" placeholder="https://...">
+                    <input class="form-control" wire:model="sourceUrl" placeholder="https://...">
                 </div>
                 <button class="btn btn-primary" wire:click="add"><i class="fas fa-save mr-1"></i> Add</button>
             </div>

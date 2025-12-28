@@ -10,24 +10,24 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="mb-1">Name</label>
-                        <input class="form-control" wire:model.defer="name">
+                        <input class="form-control" wire:model="name">
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Email</label>
-                        <input class="form-control" wire:model.defer="email">
+                        <input class="form-control" wire:model="email">
                     </div>
                     <div class="form-row">
                         <div class="col">
                             <label class="mb-1">Code</label>
-                            <input class="form-control" wire:model.defer="code">
+                            <input class="form-control" wire:model="code">
                         </div>
                         <div class="col">
                             <label class="mb-1">Commission %</label>
-                            <input class="form-control" wire:model.defer="commissionRate">
+                            <input class="form-control" wire:model="commissionRate">
                         </div>
                     </div>
                     <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" id="pa" wire:model.defer="isActive">
+                        <input class="form-check-input" type="checkbox" id="pa" wire:model="isActive">
                         <label class="form-check-label" for="pa">Active</label>
                     </div>
                     <button class="btn btn-primary mt-2" wire:click="create"><i class="fas fa-save mr-1"></i> Create</button>

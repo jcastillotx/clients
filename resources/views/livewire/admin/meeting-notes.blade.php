@@ -19,11 +19,11 @@
                 </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label">Purpose (optional)</label>
-                    <input class="form-control" wire:model.defer="purpose" placeholder="e.g. Weekly status update">
+                    <input class="form-control" wire:model="purpose" placeholder="e.g. Weekly status update">
                 </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label">Participants (optional)</label>
-                    <input class="form-control" wire:model.defer="participants" placeholder="Jane, John, Client Rep">
+                    <input class="form-control" wire:model="participants" placeholder="Jane, John, Client Rep">
                 </div>
                 <div class="col-12">
                     <button class="btn btn-primary" wire:click="queueTranscription" wire:loading.attr="disabled">

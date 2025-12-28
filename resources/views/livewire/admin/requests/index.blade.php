@@ -318,7 +318,7 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Internal notes</label>
-                                <textarea class="form-control" rows="3" placeholder="Visible to staff only…" wire:model.defer="assignInternalNote"></textarea>
+                                <textarea class="form-control" rows="3" placeholder="Visible to staff only…" wire:model="assignInternalNote"></textarea>
                             </div>
                             <div class="col-12">
                                 <label class="form-check">

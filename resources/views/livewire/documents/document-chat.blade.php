@@ -39,7 +39,7 @@
             <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <div class="flex-1">
                     <label class="text-xs font-semibold text-slate-600">Question</label>
-                    <textarea wire:model.defer="question" rows="2" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="Ask about clauses, dates, obligations, payment terms…"></textarea>
+                    <textarea wire:model="question" rows="2" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="Ask about clauses, dates, obligations, payment terms…"></textarea>
                 </div>
                 <button wire:click="send" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
                     Send

@@ -38,12 +38,12 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Description</label>
-                        <input type="text" wire:model.defer="description" placeholder="What are you working on?" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <input type="text" wire:model="description" placeholder="What are you working on?" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                     </div>
 
                     <div class="pt-1">
                         <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" wire:model.defer="isBillable" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                            <input type="checkbox" wire:model="isBillable" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
                             <span class="text-sm text-slate-700">Billable time</span>
                         </label>
                     </div>
@@ -91,11 +91,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Date</label>
-                            <input type="date" wire:model.defer="manualDate" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <input type="date" wire:model="manualDate" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Minutes</label>
-                            <input type="number" wire:model.defer="manualMinutes" placeholder="0" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <input type="number" wire:model="manualMinutes" placeholder="0" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         </div>
                     </div>
                     <button type="button" wire:click="addManual" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">

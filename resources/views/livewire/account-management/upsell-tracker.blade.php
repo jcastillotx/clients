@@ -20,7 +20,7 @@
             </div>
             <div class="card-body">
                 <div class="text-muted small mb-2">Track upsell/cross-sell ideas, stage, and value.</div>
-                <textarea class="form-control" rows="10" wire:model.defer="opportunitiesJson"></textarea>
+                <textarea class="form-control" rows="10" wire:model="opportunitiesJson"></textarea>
                 <button class="btn btn-primary mt-2" wire:click="save"><i class="fas fa-save mr-1"></i> Save</button>
             </div>
         </div>

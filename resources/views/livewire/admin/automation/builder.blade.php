@@ -20,13 +20,13 @@
                 <div class="col-lg-6">
                     <div class="form-group">
                         <label class="mb-1">Name</label>
-                        <input class="form-control" wire:model.defer="name" placeholder="e.g. Urgent requests notify + assign">
+                        <input class="form-control" wire:model="name" placeholder="e.g. Urgent requests notify + assign">
                     </div>
                 </div>
                 <div class="col-lg-6">
                     <div class="form-group">
                         <label class="mb-1">Trigger</label>
-                        <select class="form-control" wire:model.defer="trigger">
+                        <select class="form-control" wire:model="trigger">
                             @foreach($triggerOptions as $t)
                                 <option value="{{ $t }}">{{ $t }}</option>
                             @endforeach
@@ -38,17 +38,17 @@
 
             <div class="form-group">
                 <label class="mb-1">Description</label>
-                <textarea class="form-control" rows="2" wire:model.defer="description" placeholder="Optional"></textarea>
+                <textarea class="form-control" rows="2" wire:model="description" placeholder="Optional"></textarea>
             </div>
 
             <div class="d-flex flex-wrap" style="gap: 12px;">
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="is_active" wire:model.defer="is_active">
+                    <input type="checkbox" class="custom-control-input" id="is_active" wire:model="is_active">
                     <label class="custom-control-label" for="is_active">Enabled</label>
                 </div>
                 <div style="min-width: 220px;">
                     <label class="mb-1">Sort order</label>
-                    <input type="number" class="form-control" wire:model.defer="sort_order">
+                    <input type="number" class="form-control" wire:model="sort_order">
                 </div>
             </div>
 
@@ -58,7 +58,7 @@
                 <h5 class="mb-0">IF (Conditions)</h5>
                 <div class="d-flex align-items-center" style="gap: 8px;">
                     <span class="text-muted">Combine with</span>
-                    <select class="form-control form-control-sm" style="width: 90px;" wire:model.defer="conditions_operator">
+                    <select class="form-control form-control-sm" style="width: 90px;" wire:model="conditions_operator">
                         <option value="and">AND</option>
                         <option value="or">OR</option>
                     </select>
@@ -74,11 +74,11 @@
                         <div class="row align-items-end">
                             <div class="col-md-5">
                                 <label class="mb-1">Field (dot path)</label>
-                                <input class="form-control" wire:model.defer="conditions.{{ $i }}.field" placeholder="request.priority">
+                                <input class="form-control" wire:model="conditions.{{ $i }}.field" placeholder="request.priority">
                             </div>
                             <div class="col-md-3">
                                 <label class="mb-1">Operator</label>
-                                <select class="form-control" wire:model.defer="conditions.{{ $i }}.operator">
+                                <select class="form-control" wire:model="conditions.{{ $i }}.operator">
                                     <option value="equals">equals</option>
                                     <option value="not_equals">not_equals</option>
                                     <option value="in">in</option>
@@ -93,7 +93,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="mb-1">Value</label>
-                                <input class="form-control" wire:model.defer="conditions.{{ $i }}.value" placeholder="urgent">
+                                <input class="form-control" wire:model="conditions.{{ $i }}.value" placeholder="urgent">
                             </div>
                             <div class="col-md-1 text-right">
                                 <button class="btn btn-outline-danger btn-sm" wire:click="removeCondition({{ $i }})">
@@ -121,7 +121,7 @@
                         <div class="row align-items-end">
                             <div class="col-md-4">
                                 <label class="mb-1">Action</label>
-                                <select class="form-control" wire:model.defer="actions.{{ $i }}.type">
+                                <select class="form-control" wire:model="actions.{{ $i }}.type">
                                     @foreach($actionOptions as $k => $label)
                                         <option value="{{ $k }}">{{ $label }}</option>
                                     @endforeach
@@ -129,7 +129,7 @@
                             </div>
                             <div class="col-md-7">
                                 <label class="mb-1">Config (JSON-ish)</label>
-                                <input class="form-control" wire:model.defer="actions.{{ $i }}.config.message" placeholder="Varies by action (quick fields)">
+                                <input class="form-control" wire:model="actions.{{ $i }}.config.message" placeholder="Varies by action (quick fields)">
                                 <small class="text-muted">
                                     Use placeholders like <code>{{ '{{request.id}}' }}</code>, <code>{{ '{{client.email}}' }}</code>.
                                 </small>
@@ -145,7 +145,7 @@
                         @if(($a['type'] ?? '') === 'assign_request')
                             <div class="mt-2">
                                 <label class="mb-1">Assign to staff</label>
-                                <select class="form-control" wire:model.defer="actions.{{ $i }}.config.user_id">
+                                <select class="form-control" wire:model="actions.{{ $i }}.config.user_id">
                                     <option value="">Select...</option>
                                     @foreach($staffOptions as $u)
                                         <option value="{{ $u['id'] }}">{{ $u['name'] }}</option>
@@ -155,7 +155,7 @@
                         @elseif(($a['type'] ?? '') === 'change_request_status')
                             <div class="mt-2">
                                 <label class="mb-1">New status</label>
-                                <select class="form-control" wire:model.defer="actions.{{ $i }}.config.status">
+                                <select class="form-control" wire:model="actions.{{ $i }}.config.status">
                                     <option value="pending">pending</option>
                                     <option value="in_review">in_review</option>
                                     <option value="approved">approved</option>
@@ -169,22 +169,22 @@
                             <div class="mt-2 row">
                                 <div class="col-md-4">
                                     <label class="mb-1">To</label>
-                                    <input class="form-control" wire:model.defer="actions.{{ $i }}.config.to" placeholder="client or email@...">
+                                    <input class="form-control" wire:model="actions.{{ $i }}.config.to" placeholder="client or email@...">
                                 </div>
                                 <div class="col-md-8">
                                     <label class="mb-1">Subject</label>
-                                    <input class="form-control" wire:model.defer="actions.{{ $i }}.config.subject" placeholder="Reminder: invoice {{ '{{invoice.invoice_number}}' }}">
+                                    <input class="form-control" wire:model="actions.{{ $i }}.config.subject" placeholder="Reminder: invoice {{ '{{invoice.invoice_number}}' }}">
                                 </div>
                                 <div class="col-md-12 mt-2">
                                     <label class="mb-1">Body</label>
-                                    <textarea class="form-control" rows="2" wire:model.defer="actions.{{ $i }}.config.body"></textarea>
+                                    <textarea class="form-control" rows="2" wire:model="actions.{{ $i }}.config.body"></textarea>
                                 </div>
                             </div>
                         @elseif(($a['type'] ?? '') === 'send_notification')
                             <div class="mt-2 row">
                                 <div class="col-md-3">
                                     <label class="mb-1">Channel</label>
-                                    <select class="form-control" wire:model.defer="actions.{{ $i }}.config.channel">
+                                    <select class="form-control" wire:model="actions.{{ $i }}.config.channel">
                                         <option value="slack">slack</option>
                                         <option value="teams">teams</option>
                                         <option value="sms">sms</option>
@@ -192,22 +192,22 @@
                                 </div>
                                 <div class="col-md-9">
                                     <label class="mb-1">Webhook URL</label>
-                                    <input class="form-control" wire:model.defer="actions.{{ $i }}.config.url" placeholder="https://hooks.slack.com/...">
+                                    <input class="form-control" wire:model="actions.{{ $i }}.config.url" placeholder="https://hooks.slack.com/...">
                                 </div>
                                 <div class="col-md-12 mt-2">
                                     <label class="mb-1">Message</label>
-                                    <input class="form-control" wire:model.defer="actions.{{ $i }}.config.message" placeholder="Urgent request {{ '{{request.id}}' }} created">
+                                    <input class="form-control" wire:model="actions.{{ $i }}.config.message" placeholder="Urgent request {{ '{{request.id}}' }} created">
                                 </div>
                             </div>
                         @elseif(($a['type'] ?? '') === 'trigger_webhook')
                             <div class="mt-2">
                                 <label class="mb-1">Event name</label>
-                                <input class="form-control" wire:model.defer="actions.{{ $i }}.config.event" placeholder="custom.event">
+                                <input class="form-control" wire:model="actions.{{ $i }}.config.event" placeholder="custom.event">
                             </div>
                         @elseif(($a['type'] ?? '') === 'update_client_tier')
                             <div class="mt-2">
                                 <label class="mb-1">Tier</label>
-                                <select class="form-control" wire:model.defer="actions.{{ $i }}.config.tier">
+                                <select class="form-control" wire:model="actions.{{ $i }}.config.tier">
                                     <option value="basic">basic</option>
                                     <option value="standard">standard</option>
                                     <option value="premium">premium</option>

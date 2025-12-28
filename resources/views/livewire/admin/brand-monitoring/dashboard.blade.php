@@ -273,7 +273,7 @@
                         </div>
                         <div class="mt-4 text-left">
                             <label for="response_notes" class="block text-sm font-medium text-gray-700">Response Notes (optional)</label>
-                            <textarea wire:model.defer="responseNotes" id="response_notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="How did you respond? Any follow-up needed?"></textarea>
+                            <textarea wire:model="responseNotes" id="response_notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="How did you respond? Any follow-up needed?"></textarea>
                         </div>
                     </div>
                 </div>

@@ -68,7 +68,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Add a comment</label>
-                        <textarea class="form-control" rows="3" wire:model.defer="newComment" placeholder="Write an update…"></textarea>
+                        <textarea class="form-control" rows="3" wire:model="newComment" placeholder="Write an update…"></textarea>
                         @error('newComment') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                         <label class="form-check mt-2">
                             <input class="form-check-input" type="checkbox" wire:model.live="newCommentInternal">

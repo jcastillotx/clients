@@ -17,7 +17,7 @@
                 <div class="p-6 space-y-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Partner</label>
-                        <select wire:model.defer="partnerId" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <select wire:model="partnerId" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                             <option value="">None (direct referral)</option>
                             @foreach($partners as $p)
                                 <option value="{{ $p->id }}">{{ $p->name }}</option>
@@ -27,12 +27,12 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Referred Name <span class="text-rose-500">*</span></label>
-                        <input type="text" wire:model.defer="referredName" placeholder="John Doe" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <input type="text" wire:model="referredName" placeholder="John Doe" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1.5">Referred Email <span class="text-rose-500">*</span></label>
-                        <input type="email" wire:model.defer="referredEmail" placeholder="john@example.com" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        <input type="email" wire:model="referredEmail" placeholder="john@example.com" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                     </div>
 
                     <div class="pt-2">

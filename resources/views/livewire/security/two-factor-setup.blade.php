@@ -83,7 +83,7 @@
 
                 <div class="mb-5">
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Verification Code</label>
-                    <input type="text" wire:model.defer="code" placeholder="Enter 6-digit code" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6">
+                    <input type="text" wire:model="code" placeholder="Enter 6-digit code" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6">
                     @error('code')
                         <div class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
                             <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">

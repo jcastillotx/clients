@@ -127,7 +127,7 @@
             <div class="row">
                 <div class="col-md-3">
                     <label class="mb-1">Provider</label>
-                    <select class="form-control" wire:model.defer="new_provider">
+                    <select class="form-control" wire:model="new_provider">
                         <option value="s3">S3</option>
                         <option value="dropbox">Dropbox</option>
                         <option value="drive">Drive</option>
@@ -135,16 +135,16 @@
                 </div>
                 <div class="col-md-3">
                     <label class="mb-1">Name</label>
-                    <input class="form-control" wire:model.defer="new_name" placeholder="e.g. Primary S3 Bucket">
+                    <input class="form-control" wire:model="new_name" placeholder="e.g. Primary S3 Bucket">
                 </div>
                 <div class="col-md-3">
                     <label class="mb-1">Filesystem disk</label>
-                    <input class="form-control" wire:model.defer="new_disk" placeholder="e.g. s3, dropbox, drive">
+                    <input class="form-control" wire:model="new_disk" placeholder="e.g. s3, dropbox, drive">
                     <small class="text-muted">Must exist in `config/filesystems.php`.</small>
                 </div>
                 <div class="col-md-2">
                     <label class="mb-1">Quota (GB)</label>
-                    <input type="number" class="form-control" wire:model.defer="new_quota_gb" placeholder="Optional">
+                    <input type="number" class="form-control" wire:model="new_quota_gb" placeholder="Optional">
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
                     <button class="btn btn-primary btn-block" wire:click="connectNew">Connect</button>

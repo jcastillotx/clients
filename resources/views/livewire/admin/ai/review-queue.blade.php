@@ -64,7 +64,7 @@
                                 <td class="text-muted small" style="max-width: 220px; white-space: pre-wrap;">{{ $i->reason }}</td>
                                 <td class="text-muted small" style="max-width: 340px; white-space: pre-wrap;">{{ $i->output_preview }}</td>
                                 <td>
-                                    <textarea class="form-control form-control-sm" rows="4" wire:model.defer="approvedText.{{ $i->id }}"></textarea>
+                                    <textarea class="form-control form-control-sm" rows="4" wire:model="approvedText.{{ $i->id }}"></textarea>
                                 </td>
                                 <td class="text-end">
                                     @if($i->status === 'pending')

@@ -69,11 +69,11 @@
             <div class="form-row">
                 <div class="col-md-4">
                     <label class="mb-1">Title</label>
-                    <input class="form-control" wire:model.defer="newTitle">
+                    <input class="form-control" wire:model="newTitle">
                 </div>
                 <div class="col-md-6">
                     <label class="mb-1">Description</label>
-                    <input class="form-control" wire:model.defer="newDescription">
+                    <input class="form-control" wire:model="newDescription">
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100" wire:click="addTask" @if(!$requestId) disabled @endif>Add</button>

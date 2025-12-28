@@ -251,12 +251,12 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label>Date <span class="text-danger">*</span></label>
-                            <input wire:model.defer="quick_scheduled_date" type="date" class="form-control @error('quick_scheduled_date') is-invalid @enderror">
+                            <input wire:model="quick_scheduled_date" type="date" class="form-control @error('quick_scheduled_date') is-invalid @enderror">
                             @error('quick_scheduled_date') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
                         <div class="form-group">
                             <label>Time <span class="text-danger">*</span></label>
-                            <input wire:model.defer="quick_scheduled_time" type="time" class="form-control @error('quick_scheduled_time') is-invalid @enderror">
+                            <input wire:model="quick_scheduled_time" type="time" class="form-control @error('quick_scheduled_time') is-invalid @enderror">
                             @error('quick_scheduled_time') <span class="invalid-feedback">{{ $message }}</span> @enderror
                         </div>
                     </div>

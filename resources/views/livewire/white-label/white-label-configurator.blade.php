@@ -20,38 +20,38 @@
 
                     <div class="form-group">
                         <label class="mb-1">Custom domain</label>
-                        <input class="form-control" placeholder="reports.clientdomain.com" wire:model.defer="customDomain">
+                        <input class="form-control" placeholder="reports.clientdomain.com" wire:model="customDomain">
                         <small class="text-muted">Point DNS CNAME to your portal host, then enable Active.</small>
                     </div>
 
                     <div class="form-group">
                         <label class="mb-1">Company name</label>
-                        <input class="form-control" wire:model.defer="companyName">
+                        <input class="form-control" wire:model="companyName">
                     </div>
 
                     <div class="form-group">
                         <label class="mb-1">Logo URL</label>
-                        <input class="form-control" wire:model.defer="logoUrl">
+                        <input class="form-control" wire:model="logoUrl">
                     </div>
 
                     <div class="form-row">
                         <div class="col">
                             <label class="mb-1">Primary color</label>
-                            <input class="form-control" wire:model.defer="primaryColor">
+                            <input class="form-control" wire:model="primaryColor">
                         </div>
                         <div class="col">
                             <label class="mb-1">Secondary color</label>
-                            <input class="form-control" wire:model.defer="secondaryColor">
+                            <input class="form-control" wire:model="secondaryColor">
                         </div>
                     </div>
 
                     <div class="form-group mt-2">
                         <label class="mb-1">Footer text</label>
-                        <textarea class="form-control" rows="2" wire:model.defer="footerText"></textarea>
+                        <textarea class="form-control" rows="2" wire:model="footerText"></textarea>
                     </div>
 
                     <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" wire:model.defer="isActive" id="wlActive">
+                        <input class="form-check-input" type="checkbox" wire:model="isActive" id="wlActive">
                         <label class="form-check-label" for="wlActive">Active</label>
                     </div>
 

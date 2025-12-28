@@ -30,22 +30,22 @@
 
             <div class="form-group">
                 <label class="mb-1">Title</label>
-                <input class="form-control" wire:model.defer="title">
+                <input class="form-control" wire:model="title">
             </div>
             <div class="form-group">
                 <label class="mb-1">Template ID</label>
-                <input class="form-control" wire:model.defer="templateId" placeholder="social_media, seo, website, ...">
+                <input class="form-control" wire:model="templateId" placeholder="social_media, seo, website, ...">
             </div>
 
             <div class="form-group">
                 <label class="mb-1">Content (JSON)</label>
-                <textarea class="form-control" rows="10" wire:model.defer="contentJson"></textarea>
+                <textarea class="form-control" rows="10" wire:model="contentJson"></textarea>
                 <small class="text-muted">This is stored as JSON so templates + sections are extensible.</small>
             </div>
 
             <div class="form-group">
                 <label class="mb-1">Pricing (JSON)</label>
-                <textarea class="form-control" rows="8" wire:model.defer="pricingJson"></textarea>
+                <textarea class="form-control" rows="8" wire:model="pricingJson"></textarea>
             </div>
 
             <div class="d-flex flex-wrap" style="gap: 8px;">
