@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Meetings</x-slot>
+<div>
+    <h2 class="mb-3">Meetings</h2>
 
     @if($mode === 'client')
         <div class="row">
@@ -188,5 +188,5 @@
             </div>
         </div>
     @endif
-</x-app-layout>
+</div>
 

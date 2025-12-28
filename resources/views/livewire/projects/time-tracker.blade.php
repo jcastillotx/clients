@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Time tracking</x-slot>
+<div>
+    <h2 class="mb-3">Time tracking</h2>
 
     <div class="row">
         <div class="col-lg-5">
@@ -101,5 +101,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

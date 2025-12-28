@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Storage Conflicts</x-slot>
+<div>
+    <h2 class="mb-3">Storage Conflicts</h2>
 
     <div class="card">
         <div class="card-body">
@@ -130,5 +130,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

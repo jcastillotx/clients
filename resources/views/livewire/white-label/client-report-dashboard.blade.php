@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Reports</x-slot>
+<div>
+    <h2 class="mb-3">Reports</h2>
 
     @php
         $brandName = $whiteLabel?->company_name ?: (auth()->user()?->client?->company_name ?? config('app.name'));
@@ -39,5 +39,5 @@
     @if($footer)
         <div class="text-muted small mt-2">{{ $footer }}</div>
     @endif
-</x-app-layout>
+</div>
 

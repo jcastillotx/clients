@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Proposal builder</x-slot>
+<div>
+    <h2 class="mb-3">Proposal builder</h2>
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -64,5 +64,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

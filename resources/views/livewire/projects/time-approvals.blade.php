@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Time approvals</x-slot>
+<div>
+    <h2 class="mb-3">Time approvals</h2>
 
     <div class="card mb-3">
         <div class="card-body">
@@ -84,5 +84,5 @@
             </table>
         </div>
     </div>
-</x-app-layout>
+</div>
 

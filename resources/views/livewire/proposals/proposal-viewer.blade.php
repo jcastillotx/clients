@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Proposal</x-slot>
+<div>
+    <h2 class="mb-3">Proposal</h2>
 
     @php
         $cover = (array)($content['cover'] ?? []);
@@ -170,5 +170,5 @@
             })();
         </script>
     @endpush
-</x-app-layout>
+</div>
 

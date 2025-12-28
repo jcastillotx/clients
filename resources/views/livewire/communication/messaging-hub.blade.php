@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Messaging (Admin)</x-slot>
+<div>
+    <h2 class="mb-3">Messaging (Admin)</h2>
 
     <div class="row">
         <div class="col-lg-3">
@@ -119,5 +119,5 @@
             window.addEventListener('message-sent', scrollAdminChatToBottom);
         </script>
     @endpush
-</x-app-layout>
+</div>
 

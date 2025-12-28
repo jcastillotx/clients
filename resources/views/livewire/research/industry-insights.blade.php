@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Industry insights</x-slot>
+<div>
+    <h2 class="mb-3">Industry insights</h2>
 
     @if($canAdd)
         <div class="card mb-3">
@@ -63,5 +63,5 @@
             @endforelse
         </div>
     </div>
-</x-app-layout>
+</div>
 

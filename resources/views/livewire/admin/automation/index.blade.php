@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Automation Rules</x-slot>
+<div>
+    <h2 class="mb-3">Automation Rules</h2>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -64,5 +64,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

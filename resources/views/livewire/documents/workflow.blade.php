@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Document Workflow: {{ $document->title }}</x-slot>
+<div>
+    <h2 class="mb-3">Document Workflow: {{ $document->title }}</h2>
 
     <div class="row">
         <div class="col-lg-8">
@@ -247,5 +247,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

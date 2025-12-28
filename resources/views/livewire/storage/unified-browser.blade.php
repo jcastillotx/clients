@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Unified File Browser</x-slot>
+<div>
+    <h2 class="mb-3">Unified File Browser</h2>
 
     <div class="card">
         <div class="card-body">
@@ -142,5 +142,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

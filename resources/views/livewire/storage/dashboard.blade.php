@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Storage Dashboard</x-slot>
+<div>
+    <h2 class="mb-3">Storage Dashboard</h2>
 
     <div class="row">
         <div class="col-md-3">
@@ -237,5 +237,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

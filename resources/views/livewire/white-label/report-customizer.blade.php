@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Client report settings</x-slot>
+<div>
+    <h2 class="mb-3">Client report settings</h2>
 
     <div class="card">
         <div class="card-header">
@@ -54,5 +54,5 @@
             <button class="btn btn-primary mt-3" wire:click="save"><i class="fas fa-save mr-1"></i> Save</button>
         </div>
     </div>
-</x-app-layout>
+</div>
 

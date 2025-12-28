@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Account health</x-slot>
+<div>
+    <h2 class="mb-3">Account health</h2>
 
     <div class="card mb-3">
         <div class="card-body">
@@ -97,5 +97,5 @@
             </div>
         </div>
     @endif
-</x-app-layout>
+</div>
 

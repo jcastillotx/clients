@@ -33,24 +33,8 @@
 
                 @if($otpauth)
                     <div class="mb-3">
-                        <div id="qrcode" style="display: inline-block;"></div>
+                        <div id="qrcode-{{ $secret }}" style="display: inline-block;"></div>
                     </div>
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            var qrcodeContainer = document.getElementById("qrcode");
-                            if (qrcodeContainer && !qrcodeContainer.hasChildNodes()) {
-                                new QRCode(qrcodeContainer, {
-                                    text: "{{ $otpauth }}",
-                                    width: 200,
-                                    height: 200,
-                                    colorDark : "#000000",
-                                    colorLight : "#ffffff",
-                                    correctLevel : QRCode.CorrectLevel.H
-                                });
-                            }
-                        });
-                    </script>
                 @endif
 
                 <div class="form-group">
@@ -71,3 +55,32 @@
         </div>
     </div>
 </div>
+
+@if($otpauth && !$confirmed)
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    (function() {
+        function initQRCode() {
+            var qrcodeContainer = document.getElementById("qrcode-{{ $secret }}");
+            if (qrcodeContainer && !qrcodeContainer.hasChildNodes()) {
+                new QRCode(qrcodeContainer, {
+                    text: "{{ $otpauth }}",
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initQRCode);
+        } else {
+            initQRCode();
+        }
+    })();
+</script>
+@endpush
+@endif

@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Admin Reporting</x-slot>
+<div>
+    <h2 class="mb-3">Admin Reporting</h2>
 
     <div class="card">
         <div class="card-body">
@@ -586,5 +586,5 @@
             })();
         </script>
     @endpush
-</x-app-layout>
+</div>
 

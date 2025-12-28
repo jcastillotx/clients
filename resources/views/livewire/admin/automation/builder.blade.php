@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">{{ $ruleId ? 'Edit Automation' : 'New Automation' }}</x-slot>
+<div>
+    <h2 class="mb-3">{{ $ruleId ? 'Edit Automation' : 'New Automation' }}</h2>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -238,5 +238,5 @@
             @endif
         </div>
     </div>
-</x-app-layout>
+</div>
 

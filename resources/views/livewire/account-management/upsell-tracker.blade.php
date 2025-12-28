@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Upsell tracker</x-slot>
+<div>
+    <h2 class="mb-3">Upsell tracker</h2>
 
     <div class="card mb-3">
         <div class="card-body">
@@ -25,5 +25,5 @@
             </div>
         </div>
     @endif
-</x-app-layout>
+</div>
 

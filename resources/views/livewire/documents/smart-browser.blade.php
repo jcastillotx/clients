@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Smart Document Browser</x-slot>
+<div>
+    <h2 class="mb-3">Smart Document Browser</h2>
 
     <div class="card">
         <div class="card-body">
@@ -148,5 +148,5 @@
             </div>
         @endif
     </div>
-</x-app-layout>
+</div>
 

@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Task</x-slot>
+<div>
+    <h2 class="mb-3">Task</h2>
 
     <div class="card mb-3">
         <div class="card-body">
@@ -155,5 +155,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 
