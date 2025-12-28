@@ -46,7 +46,10 @@ use App\Http\Livewire\Admin\Clients\ClientCreate;
 use App\Http\Livewire\Admin\Clients\ClientDetail;
 use App\Http\Livewire\Admin\Clients\ClientEdit;
 use App\Http\Livewire\Admin\Clients\ClientManagement;
+use App\Http\Livewire\Admin\Contracts\ContractCreate as AdminContractCreate;
+use App\Http\Livewire\Admin\Contracts\ContractEdit as AdminContractEdit;
 use App\Http\Livewire\Admin\Contracts\ContractGenerator as AdminContractGenerator;
+use App\Http\Livewire\Admin\Contracts\ContractManagement as AdminContractManagement;
 use App\Http\Livewire\Admin\Invoices\AdminInvoiceManagement;
 use App\Http\Livewire\Admin\Invoices\InvoiceCreate as AdminInvoiceCreate;
 use App\Http\Livewire\Admin\Invoices\InvoiceEdit as AdminInvoiceEdit;
@@ -380,8 +383,11 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/invoices/recurring', RecurringInvoiceIndex::class)->name('invoices.recurring.index')->middleware('permission:view_any_invoice');
         Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit')->middleware('permission:update_invoice');
 
-        // Contracts (AI)
+        // Contracts
+        Route::get('/contracts', AdminContractManagement::class)->name('contracts.index');
+        Route::get('/contracts/create', AdminContractCreate::class)->name('contracts.create');
         Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');
+        Route::get('/contracts/{contract}/edit', AdminContractEdit::class)->name('contracts.edit');
         Route::get('/meeting-notes', AdminMeetingNotes::class)->name('meeting-notes');
         Route::get('/communication/email-assistant', EmailDraftAssistant::class)->name('communication.email-assistant');
         Route::get('/messages', MessagingHub::class)->name('messages');
