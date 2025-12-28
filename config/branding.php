@@ -199,6 +199,43 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Site-wide Header/Footer HTML
+    |--------------------------------------------------------------------------
+    |
+    | Optional raw HTML injected into every page:
+    | - header_html: inserted inside <head>
+    | - footer_html: inserted before </body>
+    |
+    */
+    'site' => [
+        'header_html' => env('BRAND_SITE_HEADER_HTML', ''),
+        'footer_html' => env('BRAND_SITE_FOOTER_HTML', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Button Colors (optional)
+    |--------------------------------------------------------------------------
+    */
+    'buttons' => [
+        'primary' => env('BRAND_BUTTON_PRIMARY', ''),
+        'primary_hover' => env('BRAND_BUTTON_PRIMARY_HOVER', ''),
+        'secondary' => env('BRAND_BUTTON_SECONDARY', ''),
+        'secondary_hover' => env('BRAND_BUTTON_SECONDARY_HOVER', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Area (optional)
+    |--------------------------------------------------------------------------
+    */
+    'admin' => [
+        'dashboard_logo' => env('BRAND_ADMIN_DASHBOARD_LOGO', null),
+        'page_padding' => env('BRAND_ADMIN_PAGE_PADDING', '1.5rem'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Custom CSS
     |--------------------------------------------------------------------------
     |
@@ -219,6 +256,9 @@ return [
         'background_style' => env('BRAND_AUTH_BG_STYLE', 'gradient'), // 'solid', 'gradient', 'image'
         'background_image' => env('BRAND_AUTH_BG_IMAGE', null),
         'background_color' => env('BRAND_AUTH_BG_COLOR', '#f3f4f6'),
+
+        // Optional explicit logo for the login page (overrides branding.logo.main)
+        'login_logo' => env('BRAND_AUTH_LOGIN_LOGO', null),
 
         // Show logo on login page?
         'show_logo' => env('BRAND_AUTH_SHOW_LOGO', true),

@@ -48,6 +48,14 @@ class GenerateBrandingCSS extends Command
         $colors = $config['colors'] ?? [];
         $typography = $config['typography'] ?? [];
         $design = $config['design'] ?? [];
+        $buttons = $config['buttons'] ?? [];
+        $admin = $config['admin'] ?? [];
+
+        $btnPrimary = $buttons['primary'] ?? ($colors['primary'] ?? '#2563eb');
+        $btnPrimaryHover = $buttons['primary_hover'] ?? ($colors['primary_dark'] ?? '#1e40af');
+        $btnSecondary = $buttons['secondary'] ?? ($colors['secondary'] ?? '#10b981');
+        $btnSecondaryHover = $buttons['secondary_hover'] ?? ($colors['secondary'] ?? '#10b981');
+        $adminPagePaddingComfy = $admin['page_padding'] ?? '1.5rem';
 
         $css = <<<CSS
 /**
@@ -90,6 +98,32 @@ class GenerateBrandingCSS extends Command
     --brand-shadow-sm: {$design['shadow_sm']};
     --brand-shadow: {$design['shadow']};
     --brand-shadow-lg: {$design['shadow_lg']};
+
+    /* Button Colors (optional overrides) */
+    --brand-btn-primary: {$btnPrimary};
+    --brand-btn-primary-hover: {$btnPrimaryHover};
+    --brand-btn-secondary: {$btnSecondary};
+    --brand-btn-secondary-hover: {$btnSecondaryHover};
+
+    /* Admin Layout */
+    --page-padding-comfy: {$adminPagePaddingComfy};
+    --page-padding-compact: 1rem;
+    --page-padding-extreme: 0.5rem;
+    --page-padding: var(--page-padding-comfy);
+    --admin-page-padding: var(--page-padding);
+}
+
+/* Density toggles */
+html[data-density="comfy"] { --page-padding: var(--page-padding-comfy); }
+html[data-density="compact"] { --page-padding: var(--page-padding-compact); }
+html[data-density="extreme"] { --page-padding: var(--page-padding-extreme); }
+
+/* Dark mode (base) */
+html[data-theme="dark"] {
+    --brand-bg: #0b1220;
+    --brand-bg-alt: #111827;
+    --brand-text-primary: #e5e7eb;
+    --brand-text-secondary: #9ca3af;
 }
 
 /* Global Overrides */
@@ -131,20 +165,25 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Buttons */
 .btn-primary {
-    background-color: var(--brand-primary);
-    border-color: var(--brand-primary);
+    background-color: var(--brand-btn-primary);
+    border-color: var(--brand-btn-primary);
     border-radius: var(--brand-radius);
 }
 
 .btn-primary:hover {
-    background-color: var(--brand-primary-dark);
-    border-color: var(--brand-primary-dark);
+    background-color: var(--brand-btn-primary-hover);
+    border-color: var(--brand-btn-primary-hover);
 }
 
 .btn-secondary {
-    background-color: var(--brand-secondary);
-    border-color: var(--brand-secondary);
+    background-color: var(--brand-btn-secondary);
+    border-color: var(--brand-btn-secondary);
     border-radius: var(--brand-radius);
+}
+
+.btn-secondary:hover {
+    background-color: var(--brand-btn-secondary-hover);
+    border-color: var(--brand-btn-secondary-hover);
 }
 
 .btn-accent,
@@ -159,6 +198,11 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--brand-radius);
     box-shadow: var(--brand-shadow);
     border: none;
+}
+
+html[data-theme="dark"] .card {
+    background-color: var(--brand-bg-alt);
+    color: var(--brand-text-primary);
 }
 
 .card-header {
@@ -342,6 +386,67 @@ a:hover {
         margin-left: 0 !important;
         padding: 0 !important;
     }
+}
+
+/* Tabler Admin Panel - fixed padding */
+.page-body > .container-fluid {
+    padding-left: var(--page-padding) !important;
+    padding-right: var(--page-padding) !important;
+}
+
+/* AdminLTE layout - fixed padding */
+.content-wrapper .content > .container-fluid {
+    padding-left: var(--page-padding) !important;
+    padding-right: var(--page-padding) !important;
+}
+
+html[data-theme="dark"] .content-wrapper {
+    background-color: var(--brand-bg);
+}
+
+html[data-theme="dark"] .main-header.navbar {
+    background-color: var(--brand-bg-alt) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .main-sidebar {
+    background-color: #0f172a !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Compatibility utilities (Bootstrap 5 / Tabler classes used in views) */
+/* ------------------------------------------------------------------ */
+
+.text-end { text-align: right !important; }
+
+.fw-semibold { font-weight: 600 !important; }
+
+.subheader {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--brand-text-secondary);
+}
+
+.table-vcenter td,
+.table-vcenter th {
+    vertical-align: middle !important;
+}
+
+/* Minimal spacing utilities used by some admin views */
+.me-1 { margin-right: 0.25rem !important; }
+.me-2 { margin-right: 0.5rem !important; }
+.me-3 { margin-right: 1rem !important; }
+.ms-2 { margin-left: 0.5rem !important; }
+.ps-2 { padding-left: 0.5rem !important; }
+.pe-2 { padding-right: 0.5rem !important; }
+
+.gap-1 { gap: 0.25rem !important; }
+.gap-2 { gap: 0.5rem !important; }
+.gap-3 { gap: 1rem !important; }
+
+.row-cards > [class*="col-"] {
+    margin-bottom: 1rem;
 }
 
 CSS;

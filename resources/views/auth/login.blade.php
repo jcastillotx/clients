@@ -2,7 +2,17 @@
     <div class="login-box">
         <div class="login-logo">
             <a href="/">
-                <b>Kre8iv</b> Client Portal
+                @php
+                    $loginLogo = config('branding.auth.login_logo');
+                    $mainLogo = config('branding.logo.main');
+                @endphp
+                @if(!empty($loginLogo))
+                    <img src="{{ asset($loginLogo) }}" alt="{{ config('branding.company.name') }} Logo" onerror="this.style.display='none'">
+                @elseif(!empty($mainLogo))
+                    <img src="{{ asset($mainLogo) }}" alt="{{ config('branding.company.name') }} Logo" onerror="this.style.display='none'">
+                @else
+                    <b>{{ config('branding.company.name', 'Client') }}</b> Portal
+                @endif
             </a>
         </div>
 

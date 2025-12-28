@@ -13,7 +13,19 @@ class InvoiceController extends Controller
 {
     protected function invoiceBranding(): array
     {
-        return (array) config('client-portal.invoice.branding', []);
+        $defaults = (array) config('client-portal.invoice.branding', []);
+
+        // Unify invoice PDF branding with the primary application branding (which can be
+        // overridden via Admin -> System Settings -> Branding).
+        $logoPath = (string) (config('branding.logo.main') ?: ($defaults['logo_path'] ?? 'images/logo.png'));
+        $primaryColor = (string) (config('branding.colors.primary') ?: ($defaults['primary_color'] ?? '#0f172a'));
+        $accentColor = (string) (config('branding.colors.accent') ?: ($defaults['accent_color'] ?? $primaryColor));
+
+        return array_merge($defaults, [
+            'primary_color' => $primaryColor,
+            'accent_color' => $accentColor,
+            'logo_path' => $logoPath, // relative to public/
+        ]);
     }
 
     /**

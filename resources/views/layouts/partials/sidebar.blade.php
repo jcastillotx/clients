@@ -1,8 +1,16 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="{{ route('dashboard') }}" class="brand-link">
-        <img src="{{ asset('images/logo.png') }}" alt="Kre8iv Designs" class="brand-image img-circle elevation-3" style="opacity: .8" onerror="this.style.display='none'">
-        <span class="brand-text font-weight-light">Client Portal</span>
+    @php
+        $isAdminArea = request()->routeIs('admin.*');
+        $logo = config('branding.admin.dashboard_logo') ?: config('branding.logo.main');
+    @endphp
+    <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="brand-link">
+        @if(!empty($logo))
+            <img src="{{ asset($logo) }}" alt="{{ config('branding.company.name') }}" class="brand-image img-circle elevation-3" style="opacity: .85" onerror="this.style.display='none'">
+        @endif
+        <span class="brand-text font-weight-light">
+            {{ $isAdminArea ? 'Admin' : 'Client Portal' }}
+        </span>
     </a>
 
     <!-- Sidebar -->

@@ -30,6 +30,19 @@
     <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
     @endif
 
+    {{-- Apply theme/density before paint --}}
+    <script>
+        (function () {
+            const theme = localStorage.getItem('theme') || 'light';
+            const density = localStorage.getItem('density') || 'comfy';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.setAttribute('data-density', density);
+        })();
+    </script>
+
+    {{-- Site header HTML (branding setting) --}}
+    {!! config('branding.site.header_html') !!}
+
     <style>
         body {
             font-family: {{ config('branding.typography.font_secondary') }};
@@ -71,5 +84,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- AdminLTE -->
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    {{-- Site footer HTML (branding setting) --}}
+    {!! config('branding.site.footer_html') !!}
 </body>
 </html>
