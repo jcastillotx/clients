@@ -48,6 +48,13 @@ class ClientEdit extends Component
 
     public string $tab = 'overview';
 
+    // Password change fields
+    public string $newPassword = '';
+
+    public string $newPasswordConfirmation = '';
+
+    public bool $showPasswordModal = false;
+
     public function mount(Client $client): void
     {
         $this->client = $client;
@@ -148,6 +155,56 @@ class ClientEdit extends Component
 
         Password::sendResetLink(['email' => $user->email]);
         session()->flash('success', 'Password reset email sent.');
+    }
+
+    public function openPasswordModal(): void
+    {
+        $user = $this->primaryUser ?? $this->client->users()->orderBy('id')->first();
+        if (! $user) {
+            session()->flash('error', 'No linked user found.');
+
+            return;
+        }
+
+        $this->newPassword = '';
+        $this->newPasswordConfirmation = '';
+        $this->showPasswordModal = true;
+    }
+
+    public function closePasswordModal(): void
+    {
+        $this->showPasswordModal = false;
+        $this->newPassword = '';
+        $this->newPasswordConfirmation = '';
+    }
+
+    public function setPassword(): void
+    {
+        $user = $this->primaryUser ?? $this->client->users()->orderBy('id')->first();
+        if (! $user) {
+            session()->flash('error', 'No linked user found.');
+            $this->closePasswordModal();
+
+            return;
+        }
+
+        $this->validate([
+            'newPassword' => ['required', 'string', 'min:8', 'same:newPasswordConfirmation'],
+            'newPasswordConfirmation' => ['required', 'string'],
+        ], [
+            'newPassword.required' => 'Please enter a new password.',
+            'newPassword.min' => 'Password must be at least 8 characters.',
+            'newPassword.same' => 'Passwords do not match.',
+            'newPasswordConfirmation.required' => 'Please confirm the password.',
+        ]);
+
+        $user->update([
+            'password' => $this->newPassword,
+        ]);
+
+        $this->closePasswordModal();
+
+        session()->flash('success', 'Password updated successfully.');
     }
 
     public function render()

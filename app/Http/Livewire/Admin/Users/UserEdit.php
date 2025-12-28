@@ -43,6 +43,13 @@ class UserEdit extends Component
 
     public string $staffAssignmentRole = 'account_manager';
 
+    // Password change fields
+    public string $newPassword = '';
+
+    public string $newPasswordConfirmation = '';
+
+    public bool $showPasswordModal = false;
+
     public function mount(User $user): void
     {
         $this->user = $user->load(['roles', 'client', 'permissions']);
@@ -191,6 +198,41 @@ class UserEdit extends Component
     {
         Password::sendResetLink(['email' => $this->user->email]);
         session()->flash('success', 'Password reset link sent.');
+    }
+
+    public function openPasswordModal(): void
+    {
+        $this->newPassword = '';
+        $this->newPasswordConfirmation = '';
+        $this->showPasswordModal = true;
+    }
+
+    public function closePasswordModal(): void
+    {
+        $this->showPasswordModal = false;
+        $this->newPassword = '';
+        $this->newPasswordConfirmation = '';
+    }
+
+    public function setPassword(): void
+    {
+        $this->validate([
+            'newPassword' => ['required', 'string', 'min:8', 'same:newPasswordConfirmation'],
+            'newPasswordConfirmation' => ['required', 'string'],
+        ], [
+            'newPassword.required' => 'Please enter a new password.',
+            'newPassword.min' => 'Password must be at least 8 characters.',
+            'newPassword.same' => 'Passwords do not match.',
+            'newPasswordConfirmation.required' => 'Please confirm the password.',
+        ]);
+
+        $this->user->update([
+            'password' => $this->newPassword,
+        ]);
+
+        $this->closePasswordModal();
+
+        session()->flash('success', 'Password updated successfully.');
     }
 
     public function render()
