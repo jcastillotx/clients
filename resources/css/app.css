@@ -4,6 +4,23 @@
 
 /* Custom styles for Kre8iv Client Portal */
 
+/* Content area padding */
+.content-wrapper > .content {
+    padding: 1rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .content-wrapper > .content {
+        padding: 1.5rem 2rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .content-wrapper > .content {
+        padding: 1.5rem 2.5rem;
+    }
+}
+
 :root {
     --primary-color: #3c8dbc;
     --primary-dark: #357ca5;
