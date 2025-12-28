@@ -46,6 +46,8 @@ class SystemSettings extends Component
     public $login_logo_upload;
     public $dashboard_logo_upload;
     public $login_background_upload;
+    public $favicon_upload;
+    public $document_logo_upload;
 
     public function mount(SettingsService $settings): void
     {
@@ -212,13 +214,22 @@ class SystemSettings extends Component
             'branding.login_logo_path' => '',
             'branding.dashboard_logo_path' => '',
             'branding.login_background_path' => '',
-            'branding.colors.primary' => '#3c8dbc',
+            'branding.favicon_path' => '',
+            'branding.document_logo_path' => '',
+            'branding.colors.primary' => '#007bff',
             'branding.colors.secondary' => '#6c757d',
-            'branding.colors.accent' => '#00a65a',
+            'branding.colors.accent' => '#28a745',
             'branding.buttons.primary' => '',
             'branding.buttons.primary_hover' => '',
             'branding.buttons.secondary' => '',
             'branding.buttons.secondary_hover' => '',
+            'branding.sidebar.bg' => '#343a40',
+            'branding.sidebar.text' => '#c2c7d0',
+            'branding.sidebar.hover' => '#495057',
+            'branding.sidebar.active' => '#007bff',
+            'branding.navbar.bg' => '#343a40',
+            'branding.navbar.text' => '#ffffff',
+            'branding.content.bg' => '#f4f6f9',
             'branding.invoice_template' => 'default',
             'branding.email.header_html' => '',
             'branding.email.footer_html' => '',
@@ -227,12 +238,18 @@ class SystemSettings extends Component
             'branding.admin.header_html' => '',
             'branding.admin.footer_html' => '',
             'branding.custom_domain' => '',
+            'branding.custom_css' => '',
+            'branding.platform_name' => '',
+            'branding.company_name' => '',
+            'branding.tagline' => '',
         ]);
         $this->branding = [
             'logo_path' => $b['branding.logo_path'],
             'login_logo_path' => $b['branding.login_logo_path'],
             'dashboard_logo_path' => $b['branding.dashboard_logo_path'],
             'login_background_path' => $b['branding.login_background_path'],
+            'favicon_path' => $b['branding.favicon_path'],
+            'document_logo_path' => $b['branding.document_logo_path'],
             'color_primary' => $b['branding.colors.primary'],
             'color_secondary' => $b['branding.colors.secondary'],
             'color_accent' => $b['branding.colors.accent'],
@@ -240,13 +257,23 @@ class SystemSettings extends Component
             'button_primary_hover' => $b['branding.buttons.primary_hover'] ?: $b['branding.colors.primary'],
             'button_secondary' => $b['branding.buttons.secondary'] ?: $b['branding.colors.secondary'],
             'button_secondary_hover' => $b['branding.buttons.secondary_hover'] ?: $b['branding.colors.secondary'],
+            'sidebar_bg' => $b['branding.sidebar.bg'],
+            'sidebar_text' => $b['branding.sidebar.text'],
+            'sidebar_hover' => $b['branding.sidebar.hover'],
+            'sidebar_active' => $b['branding.sidebar.active'],
+            'navbar_bg' => $b['branding.navbar.bg'],
+            'navbar_text' => $b['branding.navbar.text'],
+            'content_bg' => $b['branding.content.bg'],
             'invoice_template' => $b['branding.invoice_template'],
             'email_header_html' => $b['branding.email.header_html'],
             'email_footer_html' => $b['branding.email.footer_html'],
-            // Site-wide header/footer HTML (fallback to legacy admin-only settings)
             'site_header_html' => $b['branding.site.header_html'] ?: $b['branding.admin.header_html'],
             'site_footer_html' => $b['branding.site.footer_html'] ?: $b['branding.admin.footer_html'],
             'custom_domain' => $b['branding.custom_domain'],
+            'custom_css' => $b['branding.custom_css'],
+            'platform_name' => $b['branding.platform_name'],
+            'company_name' => $b['branding.company_name'],
+            'tagline' => $b['branding.tagline'],
         ];
     }
 
@@ -812,6 +839,7 @@ class SystemSettings extends Component
         $settings->set('branding.logo_path', $path, 'branding');
         $this->logo_upload = null;
 
+        app(BrandingService::class)->clearCache();
         session()->flash('success', 'Logo uploaded.');
     }
 
@@ -833,6 +861,7 @@ class SystemSettings extends Component
         $settings->set('branding.login_logo_path', $path, 'branding');
         $this->login_logo_upload = null;
 
+        app(BrandingService::class)->clearCache();
         session()->flash('success', 'Login logo uploaded.');
     }
 
@@ -854,6 +883,7 @@ class SystemSettings extends Component
         $settings->set('branding.dashboard_logo_path', $path, 'branding');
         $this->dashboard_logo_upload = null;
 
+        app(BrandingService::class)->clearCache();
         session()->flash('success', 'Dashboard logo uploaded.');
     }
 
@@ -875,7 +905,52 @@ class SystemSettings extends Component
         $settings->set('branding.login_background_path', $path, 'branding');
         $this->login_background_upload = null;
 
+        app(BrandingService::class)->clearCache();
         session()->flash('success', 'Login background uploaded.');
+    }
+
+    public function uploadFavicon(): void
+    {
+        /** @var SettingsService $settings */
+        $settings = app(SettingsService::class);
+
+        if (! $this->favicon_upload) {
+            return;
+        }
+
+        Validator::make(['favicon' => $this->favicon_upload], [
+            'favicon' => ['file', 'max:512', 'mimes:png,ico,jpg,jpeg'],
+        ])->validate();
+
+        $path = $this->favicon_upload->store('branding', 'public');
+        $this->branding['favicon_path'] = $path;
+        $settings->set('branding.favicon_path', $path, 'branding');
+        $this->favicon_upload = null;
+
+        app(BrandingService::class)->clearCache();
+        session()->flash('success', 'Favicon uploaded.');
+    }
+
+    public function uploadDocumentLogo(): void
+    {
+        /** @var SettingsService $settings */
+        $settings = app(SettingsService::class);
+
+        if (! $this->document_logo_upload) {
+            return;
+        }
+
+        Validator::make(['document_logo' => $this->document_logo_upload], [
+            'document_logo' => ['file', 'max:2048', 'mimes:png,jpg,jpeg,webp'],
+        ])->validate();
+
+        $path = $this->document_logo_upload->store('branding', 'public');
+        $this->branding['document_logo_path'] = $path;
+        $settings->set('branding.document_logo_path', $path, 'branding');
+        $this->document_logo_upload = null;
+
+        app(BrandingService::class)->clearCache();
+        session()->flash('success', 'Document logo uploaded.');
     }
 
     public function applyColorPreset(string $preset): void
@@ -919,22 +994,34 @@ class SystemSettings extends Component
             'branding.login_logo_path' => $this->branding['login_logo_path'] ?? '',
             'branding.dashboard_logo_path' => $this->branding['dashboard_logo_path'] ?? '',
             'branding.login_background_path' => $this->branding['login_background_path'] ?? '',
-            'branding.colors.primary' => $this->branding['color_primary'] ?? '#3c8dbc',
+            'branding.favicon_path' => $this->branding['favicon_path'] ?? '',
+            'branding.document_logo_path' => $this->branding['document_logo_path'] ?? '',
+            'branding.colors.primary' => $this->branding['color_primary'] ?? '#007bff',
             'branding.colors.secondary' => $this->branding['color_secondary'] ?? '#6c757d',
-            'branding.colors.accent' => $this->branding['color_accent'] ?? '#00a65a',
+            'branding.colors.accent' => $this->branding['color_accent'] ?? '#28a745',
             'branding.buttons.primary' => $this->branding['button_primary'] ?? '',
             'branding.buttons.primary_hover' => $this->branding['button_primary_hover'] ?? '',
             'branding.buttons.secondary' => $this->branding['button_secondary'] ?? '',
             'branding.buttons.secondary_hover' => $this->branding['button_secondary_hover'] ?? '',
+            'branding.sidebar.bg' => $this->branding['sidebar_bg'] ?? '#343a40',
+            'branding.sidebar.text' => $this->branding['sidebar_text'] ?? '#c2c7d0',
+            'branding.sidebar.hover' => $this->branding['sidebar_hover'] ?? '#495057',
+            'branding.sidebar.active' => $this->branding['sidebar_active'] ?? '#007bff',
+            'branding.navbar.bg' => $this->branding['navbar_bg'] ?? '#343a40',
+            'branding.navbar.text' => $this->branding['navbar_text'] ?? '#ffffff',
+            'branding.content.bg' => $this->branding['content_bg'] ?? '#f4f6f9',
             'branding.invoice_template' => $this->branding['invoice_template'] ?? 'default',
             'branding.email.header_html' => $this->branding['email_header_html'] ?? '',
             'branding.email.footer_html' => $this->branding['email_footer_html'] ?? '',
             'branding.site.header_html' => $this->branding['site_header_html'] ?? '',
             'branding.site.footer_html' => $this->branding['site_footer_html'] ?? '',
-            // Back-compat: keep writing legacy keys too (can remove later)
             'branding.admin.header_html' => $this->branding['site_header_html'] ?? '',
             'branding.admin.footer_html' => $this->branding['site_footer_html'] ?? '',
             'branding.custom_domain' => $this->branding['custom_domain'] ?? '',
+            'branding.custom_css' => $this->branding['custom_css'] ?? '',
+            'branding.platform_name' => $this->branding['platform_name'] ?? '',
+            'branding.company_name' => $this->branding['company_name'] ?? '',
+            'branding.tagline' => $this->branding['tagline'] ?? '',
         ], 'branding');
 
         // Clear branding cache

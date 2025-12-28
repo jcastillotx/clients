@@ -53,8 +53,11 @@
 
     @stack('styles')
 
-    {{-- Site header HTML (branding setting) --}}
-    {!! config('branding.site.header_html') !!}
+    {{-- Site header HTML (branding setting from database) --}}
+    @php
+        $brandingService = app(\App\Services\BrandingService::class);
+    @endphp
+    {!! $brandingService->get('site_header_html') !!}
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
@@ -170,7 +173,7 @@
 
     @stack('scripts')
 
-    {{-- Site footer HTML (branding setting) --}}
-    {!! config('branding.site.footer_html') !!}
+    {{-- Site footer HTML (branding setting from database) --}}
+    {!! app(\App\Services\BrandingService::class)->get('site_footer_html') !!}
 </body>
 </html>

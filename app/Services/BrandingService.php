@@ -101,13 +101,52 @@ class BrandingService
 
             $result = self::$defaults;
 
-            foreach ($settings as $key => $value) {
-                // Convert DB key format (branding.logo_path) to array key (logo_path)
-                $shortKey = str_replace('branding.', '', $key);
-                $shortKey = str_replace('.', '_', $shortKey);
+            // Map database keys to result keys
+            $keyMap = [
+                'branding.logo_path' => 'logo_path',
+                'branding.login_logo_path' => 'login_logo_path',
+                'branding.dashboard_logo_path' => 'dashboard_logo_path',
+                'branding.login_background_path' => 'login_background_path',
+                'branding.favicon_path' => 'favicon_path',
+                'branding.document_logo_path' => 'document_logo_path',
+                'branding.colors.primary' => 'color_primary',
+                'branding.colors.secondary' => 'color_secondary',
+                'branding.colors.accent' => 'color_accent',
+                'branding.colors.success' => 'color_success',
+                'branding.colors.warning' => 'color_warning',
+                'branding.colors.danger' => 'color_danger',
+                'branding.colors.info' => 'color_info',
+                'branding.colors.primary_dark' => 'color_primary_dark',
+                'branding.colors.primary_light' => 'color_primary_light',
+                'branding.buttons.primary' => 'button_primary',
+                'branding.buttons.primary_hover' => 'button_primary_hover',
+                'branding.buttons.secondary' => 'button_secondary',
+                'branding.buttons.secondary_hover' => 'button_secondary_hover',
+                'branding.sidebar.bg' => 'sidebar_bg',
+                'branding.sidebar.text' => 'sidebar_text',
+                'branding.sidebar.hover' => 'sidebar_hover',
+                'branding.sidebar.active' => 'sidebar_active',
+                'branding.navbar.bg' => 'navbar_bg',
+                'branding.navbar.text' => 'navbar_text',
+                'branding.navbar.variant' => 'navbar_variant',
+                'branding.content.bg' => 'content_bg',
+                'branding.invoice_template' => 'invoice_template',
+                'branding.email.header_html' => 'email_header_html',
+                'branding.email.footer_html' => 'email_footer_html',
+                'branding.site.header_html' => 'site_header_html',
+                'branding.site.footer_html' => 'site_footer_html',
+                'branding.admin.header_html' => 'site_header_html', // fallback
+                'branding.admin.footer_html' => 'site_footer_html', // fallback
+                'branding.custom_domain' => 'custom_domain',
+                'branding.custom_css' => 'custom_css',
+                'branding.platform_name' => 'platform_name',
+                'branding.company_name' => 'company_name',
+                'branding.tagline' => 'tagline',
+            ];
 
-                if (array_key_exists($shortKey, $result)) {
-                    $result[$shortKey] = $value;
+            foreach ($settings as $dbKey => $value) {
+                if (isset($keyMap[$dbKey]) && $value !== null && $value !== '') {
+                    $result[$keyMap[$dbKey]] = $value;
                 }
             }
 
@@ -120,6 +159,11 @@ class BrandingService
             }
             if (empty($result['button_secondary'])) {
                 $result['button_secondary'] = $result['color_secondary'];
+            }
+
+            // Ensure sidebar active fallback to primary
+            if (empty($result['sidebar_active']) || $result['sidebar_active'] === '#007bff') {
+                $result['sidebar_active'] = $result['color_primary'];
             }
 
             return $result;
