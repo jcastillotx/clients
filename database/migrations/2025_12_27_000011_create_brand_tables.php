@@ -64,7 +64,7 @@ return new class extends Migration
             $table->index(['brand_audit_id', 'severity']);
             $table->index(['brand_audit_id', 'status']);
             if ($supportsFullText) {
-                $table->fullText(['description', 'recommendation', 'location']);
+                $table->fullText(['description', 'recommendation', 'location'], 'brand_inconsistencies_fulltext');
             }
         });
 
@@ -84,7 +84,7 @@ return new class extends Migration
             $table->index(['client_id', 'sentiment']);
             $table->index(['posted_at']);
             if ($supportsFullText) {
-                $table->fullText(['mention_text', 'author', 'url']);
+                $table->fullText(['mention_text', 'author', 'url'], 'brand_mentions_fulltext');
             }
         });
 
@@ -103,7 +103,7 @@ return new class extends Migration
             $table->index(['client_id', 'is_active']);
             $table->index(['client_id', 'competitor_name']);
             if ($supportsFullText) {
-                $table->fullText(['competitor_name', 'website_url', 'positioning', 'target_audience']);
+                $table->fullText(['competitor_name', 'website_url', 'positioning', 'target_audience'], 'brand_competitors_fulltext');
             }
         });
     }
