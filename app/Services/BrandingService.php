@@ -97,7 +97,13 @@ class BrandingService
     public function all(): array
     {
         return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            $settings = Setting::where('group', 'branding')->pluck('value', 'key')->toArray();
+            // Get settings and decode them properly (values are JSON-encoded in the database)
+            $settings = Setting::where('group', 'branding')
+                ->get()
+                ->mapWithKeys(function (Setting $setting) {
+                    return [$setting->key => $setting->decoded()];
+                })
+                ->toArray();
 
             $result = self::$defaults;
 
