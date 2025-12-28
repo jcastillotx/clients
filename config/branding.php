@@ -33,34 +33,44 @@ return [
     */
 
     'colors' => [
-        // Primary brand color - Update with your main brand color
-        'primary' => env('BRAND_COLOR_PRIMARY', '#2563eb'),
+        // Primary brand color (Admindek cyan-blue)
+        'primary' => env('BRAND_COLOR_PRIMARY', '#04a9f5'),
 
-        // Secondary/accent color
-        'secondary' => env('BRAND_COLOR_SECONDARY', '#10b981'),
+        // Secondary/accent color (Admindek green)
+        'secondary' => env('BRAND_COLOR_SECONDARY', '#1de9b6'),
 
         // Dark variant of primary (for hover states, etc.)
-        'primary_dark' => env('BRAND_COLOR_PRIMARY_DARK', '#1e40af'),
+        'primary_dark' => env('BRAND_COLOR_PRIMARY_DARK', '#0288d1'),
 
         // Light variant of primary (for backgrounds)
-        'primary_light' => env('BRAND_COLOR_PRIMARY_LIGHT', '#dbeafe'),
+        'primary_light' => env('BRAND_COLOR_PRIMARY_LIGHT', '#e1f5fe'),
 
-        // Accent color for CTAs and highlights
-        'accent' => env('BRAND_COLOR_ACCENT', '#f59e0b'),
+        // Accent color for CTAs and highlights (Admindek purple)
+        'accent' => env('BRAND_COLOR_ACCENT', '#a389d4'),
 
         // Text colors
-        'text_primary' => env('BRAND_COLOR_TEXT_PRIMARY', '#1f2937'),
-        'text_secondary' => env('BRAND_COLOR_TEXT_SECONDARY', '#6b7280'),
+        'text_primary' => env('BRAND_COLOR_TEXT_PRIMARY', '#373a3c'),
+        'text_secondary' => env('BRAND_COLOR_TEXT_SECONDARY', '#919aa3'),
 
         // Background colors
-        'background' => env('BRAND_COLOR_BACKGROUND', '#ffffff'),
-        'background_alt' => env('BRAND_COLOR_BACKGROUND_ALT', '#f9fafb'),
+        'background' => env('BRAND_COLOR_BACKGROUND', '#f4f7fa'),
+        'background_alt' => env('BRAND_COLOR_BACKGROUND_ALT', '#ffffff'),
 
-        // Status colors (can override if needed)
-        'success' => env('BRAND_COLOR_SUCCESS', '#10b981'),
-        'warning' => env('BRAND_COLOR_WARNING', '#f59e0b'),
-        'danger' => env('BRAND_COLOR_DANGER', '#ef4444'),
-        'info' => env('BRAND_COLOR_INFO', '#3b82f6'),
+        // Sidebar colors (Admindek dark sidebar)
+        'sidebar_bg' => env('BRAND_COLOR_SIDEBAR_BG', '#3f4d67'),
+        'sidebar_text' => env('BRAND_COLOR_SIDEBAR_TEXT', '#b5bdca'),
+        'sidebar_hover' => env('BRAND_COLOR_SIDEBAR_HOVER', '#4a5a7a'),
+        'sidebar_active' => env('BRAND_COLOR_SIDEBAR_ACTIVE', '#04a9f5'),
+
+        // Header/navbar gradient colors
+        'header_start' => env('BRAND_COLOR_HEADER_START', '#04a9f5'),
+        'header_end' => env('BRAND_COLOR_HEADER_END', '#1de9b6'),
+
+        // Status colors (Admindek palette)
+        'success' => env('BRAND_COLOR_SUCCESS', '#1de9b6'),
+        'warning' => env('BRAND_COLOR_WARNING', '#f4c22b'),
+        'danger' => env('BRAND_COLOR_DANGER', '#f44236'),
+        'info' => env('BRAND_COLOR_INFO', '#04a9f5'),
     ],
 
     /*
@@ -73,17 +83,17 @@ return [
     */
 
     'typography' => [
-        // Primary font (headings, navigation)
-        'font_primary' => env('BRAND_FONT_PRIMARY', 'Inter, system-ui, -apple-system, sans-serif'),
+        // Primary font (headings, navigation) - Admindek uses Open Sans
+        'font_primary' => env('BRAND_FONT_PRIMARY', "'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"),
 
         // Secondary font (body text)
-        'font_secondary' => env('BRAND_FONT_SECONDARY', 'Inter, system-ui, -apple-system, sans-serif'),
+        'font_secondary' => env('BRAND_FONT_SECONDARY', "'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"),
 
         // Monospace font (code, numbers)
-        'font_mono' => env('BRAND_FONT_MONO', 'ui-monospace, monospace'),
+        'font_mono' => env('BRAND_FONT_MONO', "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace"),
 
         // Google Fonts to load (comma separated)
-        'google_fonts' => env('BRAND_GOOGLE_FONTS', 'Inter:300,400,500,600,700'),
+        'google_fonts' => env('BRAND_GOOGLE_FONTS', 'Open+Sans:300,400,500,600,700'),
     ],
 
     /*
@@ -123,25 +133,25 @@ return [
     */
 
     'design' => [
-        // Border radius (rounded corners)
-        'border_radius' => env('BRAND_BORDER_RADIUS', '0.5rem'), // 8px
-        'border_radius_lg' => env('BRAND_BORDER_RADIUS_LG', '1rem'), // 16px
-        'border_radius_sm' => env('BRAND_BORDER_RADIUS_SM', '0.25rem'), // 4px
+        // Border radius (Admindek uses subtle rounding)
+        'border_radius' => env('BRAND_BORDER_RADIUS', '5px'),
+        'border_radius_lg' => env('BRAND_BORDER_RADIUS_LG', '10px'),
+        'border_radius_sm' => env('BRAND_BORDER_RADIUS_SM', '3px'),
 
-        // Box shadows
-        'shadow_sm' => env('BRAND_SHADOW_SM', '0 1px 2px 0 rgb(0 0 0 / 0.05)'),
-        'shadow' => env('BRAND_SHADOW', '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)'),
-        'shadow_lg' => env('BRAND_SHADOW_LG', '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)'),
+        // Box shadows (Admindek style - subtle but visible)
+        'shadow_sm' => env('BRAND_SHADOW_SM', '0 1px 3px 0 rgba(0, 0, 0, 0.1)'),
+        'shadow' => env('BRAND_SHADOW', '0 2px 6px 0 rgba(0, 0, 0, 0.1)'),
+        'shadow_lg' => env('BRAND_SHADOW_LG', '0 5px 20px 0 rgba(0, 0, 0, 0.1)'),
 
         // Button style
         'button_style' => env('BRAND_BUTTON_STYLE', 'rounded'), // 'rounded', 'square', 'pill'
 
-        // Use gradients?
-        'use_gradients' => env('BRAND_USE_GRADIENTS', false),
+        // Use gradients? (Admindek uses gradients)
+        'use_gradients' => env('BRAND_USE_GRADIENTS', true),
 
-        // Gradient configuration (if enabled)
-        'gradient_primary' => env('BRAND_GRADIENT_PRIMARY', 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)'),
-        'gradient_accent' => env('BRAND_GRADIENT_ACCENT', 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)'),
+        // Gradient configuration (Admindek header gradient)
+        'gradient_primary' => env('BRAND_GRADIENT_PRIMARY', 'linear-gradient(to right, #04a9f5, #1de9b6)'),
+        'gradient_accent' => env('BRAND_GRADIENT_ACCENT', 'linear-gradient(to right, #a389d4, #899ed4)'),
     ],
 
     /*
