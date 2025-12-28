@@ -9,15 +9,27 @@
         </a>
     </div>
 
-    <form wire:submit.prevent="save" class="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+    <!-- Error/Success Messages -->
+    @if(session()->has('error'))
+        <div class="rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <div class="flex items-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-600 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <div class="text-sm text-rose-800">{{ session('error') }}</div>
+            </div>
+        </div>
+    @endif
+
+    <div class="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
         <!-- Submit overlay -->
-        <div wire:loading.flex wire:target="save" class="absolute inset-0 z-10 items-center justify-center rounded-2xl bg-white/70 backdrop-blur-sm">
+        <div wire:loading.flex wire:target="saveDraft,submit" class="absolute inset-0 z-10 items-center justify-center rounded-2xl bg-white/70 backdrop-blur-sm">
             <div class="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ring-black/5">
                 <svg class="h-5 w-5 animate-spin text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                 </svg>
-                <span class="text-sm font-semibold text-slate-700">Saving…</span>
+                <span class="text-sm font-semibold text-slate-700">Processing…</span>
             </div>
         </div>
 
@@ -137,15 +149,49 @@
             @endif
         </div>
 
-        <div class="pt-2 flex items-center gap-2">
-            <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" wire:loading.attr="disabled">
-                <span wire:loading.remove wire:target="save,files">Save draft</span>
-                <span wire:loading wire:target="save,files">Saving…</span>
+        <div class="pt-4 flex flex-wrap items-center gap-3 border-t border-slate-200">
+            <!-- Submit Request Button (Primary) -->
+            <button type="button" wire:click="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 flex items-center gap-2" wire:loading.attr="disabled" wire:target="saveDraft,submit,files">
+                <span wire:loading.remove wire:target="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                    Submit Request
+                </span>
+                <span wire:loading wire:target="submit">
+                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting…
+                </span>
             </button>
-            <a href="{{ route('requests.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+            
+            <!-- Save Draft Button (Secondary) -->
+            <button type="button" wire:click="saveDraft" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2" wire:loading.attr="disabled" wire:target="saveDraft,submit,files">
+                <span wire:loading.remove wire:target="saveDraft">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                    </svg>
+                    Save Draft
+                </span>
+                <span wire:loading wire:target="saveDraft">
+                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving…
+                </span>
+            </button>
+            
+            <a href="{{ route('requests.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700">
                 Cancel
             </a>
+            
+            <div class="ml-auto text-xs text-slate-500 hidden sm:block">
+                <span class="font-medium">Tip:</span> Save as draft to continue editing later
+            </div>
         </div>
-    </form>
+    </div>
 </div>
 
