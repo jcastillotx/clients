@@ -62,6 +62,6 @@ class ActivityLogIndex extends Component
             'activities' => $query->paginate(50),
             'logNames' => ActivityLog::query()->select('log_name')->distinct()->pluck('log_name')->filter()->values(),
             'events' => ActivityLog::query()->select('event')->distinct()->pluck('event')->filter()->values(),
-        ]);
+        ])->layout('layouts.admin');
     }
 }

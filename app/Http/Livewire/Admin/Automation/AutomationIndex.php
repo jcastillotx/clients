@@ -35,6 +35,6 @@ class AutomationIndex extends Component
             ->orderByDesc('id')
             ->get();
 
-        return view('livewire.admin.automation.index', compact('rules'));
+        return view('livewire.admin.automation.index', compact('rules'))->layout('layouts.admin');
     }
 }

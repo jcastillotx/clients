@@ -80,6 +80,6 @@ class StorageOverview extends Component
         $s3Bytes = (int) StorageConnection::where('provider', 's3')->sum('used_bytes');
         $stats['s3_estimated_monthly_cost'] = round(($s3Bytes / (1024 ** 3)) * $s3Rate, 2);
 
-        return view('livewire.admin.storage.overview', compact('connections', 'stats', 'lastFailures', 's3Rate'));
+        return view('livewire.admin.storage.overview', compact('connections', 'stats', 'lastFailures', 's3Rate'))->layout('layouts.admin');
     }
 }

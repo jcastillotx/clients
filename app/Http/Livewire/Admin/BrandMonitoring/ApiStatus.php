@@ -369,6 +369,6 @@ class ApiStatus extends Component
 
         return view('livewire.admin.brand-monitoring.api-status', [
             'apis' => $apis,
-        ]);
+        ])->layout('layouts.admin');
     }
 }

@@ -149,6 +149,6 @@ class AIRequestAnalysis extends Component
             'typeLabels' => config('client-portal.request_types', []),
             'priorityLabels' => config('client-portal.request_priorities', []),
             'providers' => ['openai', 'claude', 'openrouter', 'perplexity', 'asksage'],
-        ]);
+        ])->layout('layouts.admin');
     }
 }
