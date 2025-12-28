@@ -210,8 +210,8 @@
                 if (!el) return;
                 const project = @json($projectData);
                 if (!project) return;
-                const milestones = @json($milestoneData);
-                const deliverables = @json($deliverableData);
+                const milestones = @json($milestoneData ?? []);
+                const deliverables = @json($deliverableData ?? []);
                 const defaultDate = new Date().toISOString().slice(0, 10);
                 const tasks = [
                     {
@@ -221,8 +221,8 @@
                         end: project.end || defaultDate,
                         progress: project.progress
                     },
-                    ...milestones,
-                    ...deliverables,
+                    ...(milestones || []),
+                    ...(deliverables || []),
                 ];
                 el.innerHTML = '';
                 try {
