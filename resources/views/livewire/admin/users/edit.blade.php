@@ -1,159 +1,181 @@
-<div>
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-            <div class="page-pretitle">Admin</div>
-            <h2 class="page-title mb-0">Edit User</h2>
-            <div class="text-muted small">{{ $user->email }}</div>
+            <p class="text-sm text-slate-500">Admin</p>
+            <h1 class="text-2xl font-semibold text-slate-900">Edit User</h1>
+            <p class="text-sm text-slate-500 mt-1">{{ $user->email }}</p>
         </div>
-        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">Back</a>
+        <a href="{{ route('admin.users.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
+            Back
+        </a>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-xl-7">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <div class="card-title mb-0">Account</div>
+    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        <!-- Main Column -->
+        <div class="xl:col-span-3 space-y-6">
+            <!-- Account Card -->
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h2 class="text-base font-semibold text-slate-900">Account</h2>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control" wire:model.live.debounce.350ms="name">
-                            @error('name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                <div class="p-6 space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Name</label>
+                            <input type="text" wire:model.live.debounce.350ms="name" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            @error('name')
+                                <div class="mt-1.5 text-xs text-rose-600">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" wire:model.live.debounce.350ms="email">
-                            @error('email') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Email</label>
+                            <input type="email" wire:model.live.debounce.350ms="email" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            @error('email')
+                                <div class="mt-1.5 text-xs text-rose-600">{{ $message }}</div>
+                            @enderror
                         </div>
+                    </div>
 
-                        <div class="col-12 col-md-4">
-                            <label class="form-label">Status</label>
-                            <select class="form-select" wire:model.live="status">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Status</label>
+                            <select wire:model.live="status" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                                 <option value="suspended">Suspended</option>
                             </select>
-                            @error('status') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            @error('status')
+                                <div class="mt-1.5 text-xs text-rose-600">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-12 col-md-4">
-                            <label class="form-label">Role</label>
-                            <select class="form-select" wire:model.live="role">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Role</label>
+                            <select wire:model.live="role" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                 @foreach($roles as $r)
                                     <option value="{{ $r }}">{{ str_replace('_', ' ', ucfirst($r)) }}</option>
                                 @endforeach
                             </select>
-                            @error('role') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            @error('role')
+                                <div class="mt-1.5 text-xs text-rose-600">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-12 col-md-4">
-                            <label class="form-label">2FA</label>
-                            <label class="form-check mt-2">
-                                <input class="form-check-input" type="checkbox" wire:model.live="two_factor_enabled">
-                                <span class="form-check-label">Enabled</span>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">2FA</label>
+                            <div class="pt-2">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="two_factor_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                    <span class="text-sm text-slate-700">Enabled</span>
+                                </label>
+                            </div>
+                            <p class="mt-1.5 text-xs text-slate-500">Flag only (no enforcement yet).</p>
+                        </div>
+                    </div>
+
+                    @php
+                        $downgrade = false;
+                        $rank = fn ($r) => match ($r) { 'super_admin' => 4, 'admin' => 3, 'staff' => 2, 'client' => 1, default => 2 };
+                        $downgrade = $rank($role) < $rank($currentRole);
+                    @endphp
+
+                    @if($downgrade)
+                        <div class="rounded-xl bg-amber-50 border border-amber-200 p-4">
+                            <p class="text-sm text-amber-800 mb-2">
+                                You are downgrading permissions from <strong>{{ $currentRole }}</strong> to <strong>{{ $role }}</strong>.
+                            </p>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model.live="confirmRoleDowngrade" class="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 focus:ring-offset-0">
+                                <span class="text-sm text-amber-800">Confirm role downgrade</span>
                             </label>
-                            <div class="text-muted small mt-1">Flag only (no enforcement yet).</div>
                         </div>
+                    @endif
 
-                        @php
-                            $downgrade = false;
-                            $rank = fn ($r) => match ($r) { 'super_admin' => 4, 'admin' => 3, 'staff' => 2, 'client' => 1, default => 2 };
-                            $downgrade = $rank($role) < $rank($currentRole);
-                        @endphp
-
-                        @if($downgrade)
-                            <div class="col-12">
-                                <div class="alert alert-warning">
-                                    You are downgrading permissions from <strong>{{ $currentRole }}</strong> to <strong>{{ $role }}</strong>.
-                                    <label class="form-check mt-2">
-                                        <input class="form-check-input" type="checkbox" wire:model.live="confirmRoleDowngrade">
-                                        <span class="form-check-label">Confirm role downgrade</span>
-                                    </label>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if($role === 'client')
-                            <div class="col-12">
-                                <div class="hr-text">Client link</div>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">Client</label>
-                                <select class="form-select" wire:model.live="client_id">
+                    @if($role === 'client')
+                        <div class="border-t border-slate-200 pt-5">
+                            <h3 class="text-sm font-semibold text-slate-900 mb-4">Client Link</h3>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Client</label>
+                                <select wire:model.live="client_id" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                     <option value="">Select a client…</option>
                                     @foreach($clients as $c)
                                         <option value="{{ $c->id }}">{{ $c->company_name }}</option>
                                     @endforeach
                                 </select>
-                                @error('client_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                @error('client_id')
+                                    <div class="mt-1.5 text-xs text-rose-600">{{ $message }}</div>
+                                @enderror
                             </div>
-                        @endif
+                        </div>
+                    @endif
 
-                        @if($role === 'staff' || $role === 'client')
-                            <div class="col-12">
-                                <div class="hr-text">{{ $role === 'staff' ? 'Staff assignments' : 'Portal permissions' }}</div>
-                            </div>
-                        @endif
+                    @if($role === 'staff' || $role === 'client')
+                        <div class="border-t border-slate-200 pt-5">
+                            <h3 class="text-sm font-semibold text-slate-900 mb-4">{{ $role === 'staff' ? 'Staff Assignments' : 'Portal Permissions' }}</h3>
+                        </div>
+                    @endif
 
-                        @if($role === 'staff')
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">Assigned clients</label>
-                                <label class="form-label">Assignment role</label>
-                                <select class="form-select mb-2" wire:model.live="staffAssignmentRole">
+                    @if($role === 'staff')
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assignment Role</label>
+                                <select wire:model.live="staffAssignmentRole" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors mb-2">
                                     <option value="account_manager">Account manager</option>
                                     <option value="project_lead">Project lead</option>
                                 </select>
-                                <select class="form-select" multiple size="8" wire:model.live="assignedClientIds">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assigned Clients</label>
+                                <select multiple size="6" wire:model.live="assignedClientIds" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                                     @foreach($clients as $c)
                                         <option value="{{ $c->id }}">{{ $c->company_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">Manual permissions</label>
-                                <div class="border rounded p-2" style="max-height: 300px; overflow:auto;">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Manual Permissions</label>
+                                <div class="rounded-xl border border-slate-200 p-3 max-h-72 overflow-auto space-y-3">
                                     @foreach($permissionGroups as $group => $perms)
                                         @if(empty($perms)) @continue @endif
-                                        <div class="mb-2">
-                                            <div class="fw-semibold">{{ $group }}</div>
-                                            @foreach($perms as $p)
-                                                <label class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="{{ $p }}" wire:model.live="directPermissions">
-                                                    <span class="form-check-label">{{ $p }}</span>
-                                                </label>
-                                            @endforeach
+                                        <div>
+                                            <p class="text-xs font-semibold text-slate-700 mb-1">{{ $group }}</p>
+                                            <div class="space-y-1">
+                                                @foreach($perms as $p)
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="checkbox" value="{{ $p }}" wire:model.live="directPermissions" class="h-3.5 w-3.5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                                        <span class="text-xs text-slate-600">{{ $p }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
                                         </div>
                                     @endforeach
                                 </div>
-                                <div class="text-muted small mt-2">For staff, these are direct overrides in addition to role permissions.</div>
+                                <p class="mt-2 text-xs text-slate-500">Direct overrides in addition to role permissions.</p>
                             </div>
-                        @endif
+                        </div>
+                    @endif
 
-                        @if($role === 'client')
-                            <div class="col-12 col-md-6">
-                                <div class="alert alert-info">
-                                    <div class="fw-semibold">Automatic permissions</div>
-                                    <div class="text-muted small">
-                                        Client portal permissions are also granted automatically based on the client’s enabled features (and paid invoice items that enable features).
-                                    </div>
-                                </div>
+                    @if($role === 'client')
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="rounded-xl bg-blue-50 border border-blue-200 p-4">
+                                <h4 class="text-sm font-semibold text-blue-900 mb-1">Automatic Permissions</h4>
+                                <p class="text-xs text-blue-700">Client portal permissions are granted automatically based on enabled features and paid invoice items.</p>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">Manual permissions</label>
-                                <div class="border rounded p-2" style="max-height: 300px; overflow:auto;">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Manual Permissions</label>
+                                <div class="rounded-xl border border-slate-200 p-3 max-h-72 overflow-auto space-y-3">
                                     @foreach($permissionGroups as $group => $perms)
                                         @if(empty($perms)) @continue @endif
-                                        <div class="mb-2">
-                                            <div class="fw-semibold">{{ $group }}</div>
-                                            @foreach($perms as $p)
-                                                <label class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="{{ $p }}" wire:model.live="directPermissions">
-                                                    <span class="form-check-label">{{ $p }}</span>
-                                                </label>
-                                            @endforeach
+                                        <div>
+                                            <p class="text-xs font-semibold text-slate-700 mb-1">{{ $group }}</p>
+                                            <div class="space-y-1">
+                                                @foreach($perms as $p)
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="checkbox" value="{{ $p }}" wire:model.live="directPermissions" class="h-3.5 w-3.5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                                        <span class="text-xs text-slate-600">{{ $p }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
                                         </div>
                                     @endforeach
                                 </div>
-                                <div class="text-muted small mt-2">Stored as manual overrides; effective permissions = manual + entitlements.</div>
+                                <p class="mt-2 text-xs text-slate-500">Effective permissions = manual + entitlements.</p>
                             </div>
                         @endif
 
@@ -162,51 +184,73 @@
                             <button type="button" class="btn btn-outline-secondary" wire:click="sendPasswordReset" wire:loading.attr="disabled">Send password reset</button>
                             <button type="button" class="btn btn-outline-warning" wire:click="openPasswordModal" wire:loading.attr="disabled">Set password</button>
                         </div>
+                    @endif
+
+                    <div class="flex flex-wrap gap-3 pt-4">
+                        <button type="button" wire:click="save" wire:loading.attr="disabled" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">
+                            Save Changes
+                        </button>
+                        <button type="button" wire:click="sendPasswordReset" wire:loading.attr="disabled" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
+                            Send Password Reset
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title mb-0">Login history</div>
+            <!-- Login History Card -->
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h2 class="text-base font-semibold text-slate-900">Login History</h2>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-vcenter card-table">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
                         <thead>
-                        <tr>
-                            <th>When</th>
-                            <th>IP</th>
-                            <th>User agent</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($loginHistory as $h)
-                            <tr>
-                                <td class="text-muted">{{ $h->logged_in_at?->format('Y-m-d H:i') ?? $h->created_at?->format('Y-m-d H:i') }}</td>
-                                <td class="text-muted">{{ $h->ip_address ?? '—' }}</td>
-                                <td class="text-muted">{{ \Illuminate\Support\Str::limit($h->user_agent ?? '—', 80) }}</td>
+                            <tr class="border-b border-slate-200 bg-slate-50">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">When</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">IP</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">User Agent</th>
                             </tr>
-                        @empty
-                            <tr><td colspan="3" class="text-center text-muted py-4">No login history.</td></tr>
-                        @endforelse
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            @forelse($loginHistory as $h)
+                                <tr>
+                                    <td class="px-4 py-3 text-sm text-slate-500">{{ $h->logged_in_at?->format('M j, Y H:i') ?? $h->created_at?->format('M j, Y H:i') }}</td>
+                                    <td class="px-4 py-3 text-sm text-slate-500 font-mono">{{ $h->ip_address ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-sm text-slate-500 truncate max-w-xs">{{ \Illuminate\Support\Str::limit($h->user_agent ?? '—', 50) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="px-4 py-8 text-center text-sm text-slate-500">No login history.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
-                <div class="card-footer">
+                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
                     {{ $loginHistory->links() }}
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-xl-5">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title mb-0">At a glance</div>
+        <!-- Sidebar -->
+        <div class="xl:col-span-2">
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h2 class="text-base font-semibold text-slate-900">At a Glance</h2>
                 </div>
-                <div class="card-body">
-                    <div><strong>Role:</strong> {{ $currentRole }}</div>
-                    <div><strong>Client:</strong> {{ $user->client?->company_name ?? '—' }}</div>
-                    <div><strong>Last login:</strong> {{ $user->last_login_at?->format('Y-m-d H:i') ?? '—' }}</div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Role</p>
+                        <p class="text-sm font-semibold text-slate-900">{{ str_replace('_', ' ', ucfirst($currentRole)) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Client</p>
+                        <p class="text-sm font-semibold text-slate-900">{{ $user->client?->company_name ?? '—' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Last Login</p>
+                        <p class="text-sm font-semibold text-slate-900">{{ $user->last_login_at?->format('M j, Y H:i') ?? '—' }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -246,4 +290,3 @@
         </div>
     @endif
 </div>
-

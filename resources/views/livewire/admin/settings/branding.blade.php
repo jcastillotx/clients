@@ -1,8 +1,10 @@
-<div class="row">
-    <div class="col-lg-7">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Logos & Images</h3>
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <!-- Left Column: Logos & Colors -->
+    <div class="lg:col-span-3 space-y-6">
+        <!-- Logos Card -->
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <h3 class="text-base font-semibold text-slate-900">Logos & Images</h3>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -85,104 +87,113 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Colors</h3>
+        <!-- Colors Card -->
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <h3 class="text-base font-semibold text-slate-900">Colors</h3>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label class="mb-1">Primary</label>
-                        <input type="color" class="form-control form-control-color" wire:model.defer="branding.color_primary">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="mb-1">Secondary</label>
-                        <input type="color" class="form-control form-control-color" wire:model.defer="branding.color_secondary">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="mb-1">Accent</label>
-                        <input type="color" class="form-control form-control-color" wire:model.defer="branding.color_accent">
+            <div class="p-6 space-y-6">
+                <div>
+                    <h4 class="text-sm font-semibold text-slate-700 mb-3">Brand Colors</h4>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Primary</label>
+                            <input type="color" wire:model.defer="branding.color_primary" class="w-full h-10 rounded-xl border border-slate-300 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Secondary</label>
+                            <input type="color" wire:model.defer="branding.color_secondary" class="w-full h-10 rounded-xl border border-slate-300 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Accent</label>
+                            <input type="color" wire:model.defer="branding.color_accent" class="w-full h-10 rounded-xl border border-slate-300 cursor-pointer">
+                        </div>
                     </div>
                 </div>
 
-                <hr>
-
-                <div class="font-weight-bold mb-2">Buttons</div>
-                <div class="row">
-                    <div class="col-md-3">
-                        <label class="mb-1">Primary</label>
-                        <input type="color" class="form-control form-control-color" wire:model.defer="branding.button_primary">
+                <div class="border-t border-slate-200 pt-6">
+                    <h4 class="text-sm font-semibold text-slate-700 mb-3">Button Colors</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Primary</label>
+                            <input type="color" wire:model.defer="branding.button_primary" class="w-full h-10 rounded-xl border border-slate-300 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Primary Hover</label>
+                            <input type="color" wire:model.defer="branding.button_primary_hover" class="w-full h-10 rounded-xl border border-slate-300 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Secondary</label>
+                            <input type="color" wire:model.defer="branding.button_secondary" class="w-full h-10 rounded-xl border border-slate-300 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Secondary Hover</label>
+                            <input type="color" wire:model.defer="branding.button_secondary_hover" class="w-full h-10 rounded-xl border border-slate-300 cursor-pointer">
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="mb-1">Primary hover</label>
-                        <input type="color" class="form-control form-control-color" wire:model.defer="branding.button_primary_hover">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="mb-1">Secondary</label>
-                        <input type="color" class="form-control form-control-color" wire:model.defer="branding.button_secondary">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="mb-1">Secondary hover</label>
-                        <input type="color" class="form-control form-control-color" wire:model.defer="branding.button_secondary_hover">
-                    </div>
+                    <p class="mt-2 text-xs text-slate-500">These update the global button styling across the site.</p>
                 </div>
-                <small class="text-muted d-block mt-2">These update the global button styling across the site.</small>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-5">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">HTML Injection</h3>
+    <!-- Right Column: HTML Injection & Templates -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- HTML Injection Card -->
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <h3 class="text-base font-semibold text-slate-900">HTML Injection</h3>
             </div>
-            <div class="card-body">
-                <div class="form-group">
-                    <label class="mb-1">Header HTML (inside &lt;head&gt;)</label>
-                    <textarea class="form-control" rows="6" wire:model.defer="branding.site_header_html" placeholder="Analytics, meta tags, verification codes…"></textarea>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Header HTML (inside &lt;head&gt;)</label>
+                    <textarea rows="4" wire:model.defer="branding.site_header_html" placeholder="Analytics, meta tags, verification codes…" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 font-mono placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
                 </div>
-                <div class="form-group">
-                    <label class="mb-1">Footer HTML (before &lt;/body&gt;)</label>
-                    <textarea class="form-control" rows="6" wire:model.defer="branding.site_footer_html" placeholder="Chat widgets, scripts…"></textarea>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Footer HTML (before &lt;/body&gt;)</label>
+                    <textarea rows="4" wire:model.defer="branding.site_footer_html" placeholder="Chat widgets, scripts…" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 font-mono placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
                 </div>
-                <small class="text-muted">This HTML is injected on all pages (client + admin).</small>
+                <p class="text-xs text-slate-500">This HTML is injected on all pages (client + admin).</p>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Templates & Domain</h3>
+        <!-- Templates & Domain Card -->
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <h3 class="text-base font-semibold text-slate-900">Templates & Domain</h3>
             </div>
-            <div class="card-body">
-                <div class="form-group">
-                    <label class="mb-1">Invoice template</label>
-                    <select class="form-control" wire:model.defer="branding.invoice_template">
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Invoice Template</label>
+                    <select wire:model.defer="branding.invoice_template" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         <option value="default">Default</option>
                         <option value="modern">Modern</option>
                         <option value="minimal">Minimal</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label class="mb-1">Email header HTML</label>
-                    <textarea class="form-control" rows="4" wire:model.defer="branding.email_header_html"></textarea>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Email Header HTML</label>
+                    <textarea rows="3" wire:model.defer="branding.email_header_html" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 font-mono placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
                 </div>
-                <div class="form-group">
-                    <label class="mb-1">Email footer HTML</label>
-                    <textarea class="form-control" rows="4" wire:model.defer="branding.email_footer_html"></textarea>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Email Footer HTML</label>
+                    <textarea rows="3" wire:model.defer="branding.email_footer_html" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 font-mono placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"></textarea>
                 </div>
 
-                <div class="form-group mb-0">
-                    <label class="mb-1">Custom domain</label>
-                    <input class="form-control" wire:model.defer="branding.custom_domain" placeholder="portal.yourcompany.com">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Custom Domain</label>
+                    <input type="text" wire:model.defer="branding.custom_domain" placeholder="portal.yourcompany.com" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                 </div>
             </div>
         </div>
 
-        <button type="button" class="btn btn-primary btn-block" wire:click="saveBranding" wire:loading.attr="disabled">
-            <span wire:loading.remove wire:target="saveBranding"><i class="fas fa-save mr-1"></i> Save Branding</span>
+        <button type="button" wire:click="saveBranding" wire:loading.attr="disabled" class="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+            </svg>
+            <span wire:loading.remove wire:target="saveBranding">Save Branding</span>
             <span wire:loading wire:target="saveBranding">Saving…</span>
         </button>
     </div>
 </div>
-
