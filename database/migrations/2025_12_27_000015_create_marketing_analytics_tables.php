@@ -25,10 +25,10 @@ return new class extends Migration
             $table->index(['client_id', 'metric_date']);
             $table->index(['client_id', 'source']);
             $table->index(['client_id', 'metric_name']);
-            $table->unique(['client_id', 'metric_date', 'metric_type', 'source', 'metric_name']);
+            $table->unique(['client_id', 'metric_date', 'metric_type', 'source', 'metric_name'], 'marketing_metrics_unique');
 
             if ($supportsFullText) {
-                $table->fullText(['metric_name', 'metric_value_text']);
+                $table->fullText(['metric_name', 'metric_value_text'], 'marketing_metrics_fulltext');
             }
         });
 
@@ -45,7 +45,7 @@ return new class extends Migration
             $table->index(['client_id', 'is_default']);
             $table->index(['client_id', 'dashboard_name']);
             if ($supportsFullText) {
-                $table->fullText(['dashboard_name']);
+                $table->fullText(['dashboard_name'], 'custom_dashboards_fulltext');
             }
         });
 
