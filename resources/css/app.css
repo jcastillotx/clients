@@ -75,6 +75,252 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(60, 141, 188, 0.25);
 }
 
+/* ========================================
+   Modern Form Styles
+   ======================================== */
+
+/* Form container */
+.form-modern {
+    @apply space-y-5;
+}
+
+/* Form card wrapper */
+.form-card {
+    @apply relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm;
+}
+
+/* Form section divider */
+.form-section {
+    @apply border-t border-slate-200 pt-5 mt-5;
+}
+
+.form-section-title {
+    @apply text-sm font-semibold text-slate-900 mb-4;
+}
+
+/* Labels */
+.form-label-modern {
+    @apply block text-xs font-semibold text-slate-600 mb-1;
+}
+
+.form-label-modern .required {
+    @apply text-rose-500 ml-0.5;
+}
+
+/* Input fields */
+.form-input {
+    @apply w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 
+           placeholder:text-slate-400
+           focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none
+           disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
+           transition-colors duration-150;
+}
+
+.form-input.is-invalid,
+.form-input:invalid:not(:placeholder-shown) {
+    @apply border-rose-300 focus:border-rose-500 focus:ring-rose-500;
+}
+
+/* Select fields */
+.form-select-modern {
+    @apply w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 
+           bg-white bg-no-repeat
+           focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none
+           disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
+           transition-colors duration-150;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Textarea */
+.form-textarea {
+    @apply w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 
+           placeholder:text-slate-400
+           focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none
+           disabled:bg-slate-50 disabled:text-slate-500
+           transition-colors duration-150 resize-y;
+    min-height: 100px;
+}
+
+/* Checkbox and radio */
+.form-checkbox-modern {
+    @apply h-4 w-4 rounded border-slate-300 text-slate-900 
+           focus:ring-slate-900 focus:ring-offset-0
+           disabled:opacity-50;
+}
+
+.form-radio-modern {
+    @apply h-4 w-4 border-slate-300 text-slate-900 
+           focus:ring-slate-900 focus:ring-offset-0
+           disabled:opacity-50;
+}
+
+.form-check-label-modern {
+    @apply ml-2 text-sm text-slate-700;
+}
+
+/* File input */
+.form-file {
+    @apply block w-full text-sm text-slate-700
+           file:mr-4 file:rounded-lg file:border-0 
+           file:bg-slate-900 file:px-4 file:py-2 
+           file:text-sm file:font-semibold file:text-white 
+           hover:file:bg-slate-800 file:cursor-pointer
+           file:transition-colors file:duration-150;
+}
+
+/* Input with icon */
+.input-with-icon {
+    @apply relative;
+}
+
+.input-with-icon .form-input {
+    @apply pl-10;
+}
+
+.input-with-icon .input-icon {
+    @apply absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400;
+}
+
+/* Input group (input + button) */
+.input-group-modern {
+    @apply flex;
+}
+
+.input-group-modern .form-input {
+    @apply rounded-r-none;
+}
+
+.input-group-modern .btn {
+    @apply rounded-l-none;
+}
+
+/* Helper text */
+.form-hint {
+    @apply mt-1.5 text-xs text-slate-500;
+}
+
+/* Error message */
+.form-error {
+    @apply mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600;
+}
+
+.form-error-icon {
+    @apply mt-0.5 h-3.5 w-3.5 flex-shrink-0;
+}
+
+/* Success message */
+.form-success {
+    @apply mt-1.5 flex items-start gap-1.5 text-xs font-medium text-emerald-600;
+}
+
+/* Form grid layouts */
+.form-grid {
+    @apply grid gap-4;
+}
+
+.form-grid-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+}
+
+.form-grid-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+/* Button styles */
+.btn-modern {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 
+           text-sm font-semibold transition-all duration-150
+           focus:outline-none focus:ring-2 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-primary-modern {
+    @apply btn-modern bg-slate-900 text-white 
+           hover:bg-slate-800 
+           focus:ring-slate-900;
+}
+
+.btn-secondary-modern {
+    @apply btn-modern border border-slate-300 bg-white text-slate-900 
+           hover:bg-slate-50 
+           focus:ring-slate-500;
+}
+
+.btn-danger-modern {
+    @apply btn-modern bg-rose-600 text-white 
+           hover:bg-rose-700 
+           focus:ring-rose-500;
+}
+
+.btn-success-modern {
+    @apply btn-modern bg-emerald-600 text-white 
+           hover:bg-emerald-700 
+           focus:ring-emerald-500;
+}
+
+/* Form actions (button row) */
+.form-actions {
+    @apply flex flex-wrap items-center gap-3 pt-4;
+}
+
+/* Loading overlay for forms */
+.form-loading-overlay {
+    @apply absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/70 backdrop-blur-sm;
+}
+
+.form-loading-content {
+    @apply flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ring-black/5;
+}
+
+.form-loading-spinner {
+    @apply h-5 w-5 animate-spin text-slate-900;
+}
+
+/* Alert boxes for forms */
+.form-alert {
+    @apply rounded-xl p-4 text-sm;
+}
+
+.form-alert-info {
+    @apply form-alert bg-blue-50 text-blue-800 border border-blue-200;
+}
+
+.form-alert-success {
+    @apply form-alert bg-emerald-50 text-emerald-800 border border-emerald-200;
+}
+
+.form-alert-warning {
+    @apply form-alert bg-amber-50 text-amber-800 border border-amber-200;
+}
+
+.form-alert-danger {
+    @apply form-alert bg-rose-50 text-rose-800 border border-rose-200;
+}
+
+/* Card header for form sections */
+.form-card-header {
+    @apply -mx-6 -mt-6 mb-6 px-6 py-4 border-b border-slate-200 bg-slate-50 rounded-t-2xl;
+}
+
+.form-card-title {
+    @apply text-base font-semibold text-slate-900;
+}
+
+.form-card-subtitle {
+    @apply text-sm text-slate-500 mt-0.5;
+}
+
+/* Form footer */
+.form-card-footer {
+    @apply -mx-6 -mb-6 mt-6 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex justify-end gap-3;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
