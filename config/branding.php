@@ -56,6 +56,11 @@ return [
         'background' => env('BRAND_COLOR_BACKGROUND', '#ffffff'),
         'background_alt' => env('BRAND_COLOR_BACKGROUND_ALT', '#f9fafb'),
 
+        // Sidebar colors (light theme defaults - will auto-invert for dark theme)
+        'sidebar_bg' => env('BRAND_COLOR_SIDEBAR_BG', '#f8fafc'),
+        'sidebar_text' => env('BRAND_COLOR_SIDEBAR_TEXT', '#334155'),
+        'sidebar_hover' => env('BRAND_COLOR_SIDEBAR_HOVER', '#e2e8f0'),
+
         // Status colors (can override if needed)
         'success' => env('BRAND_COLOR_SUCCESS', '#10b981'),
         'warning' => env('BRAND_COLOR_WARNING', '#f59e0b'),
