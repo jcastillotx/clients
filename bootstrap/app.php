@@ -50,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.2fa' => \App\Http\Middleware\EnsureTwoFactorEnabled::class,
             'feature' => \App\Http\Middleware\RequiresFeature::class,
             'feature.any' => \App\Http\Middleware\RequiresAnyFeature::class,
+            'platform.feature' => \App\Http\Middleware\CheckPlatformFeature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

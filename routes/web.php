@@ -384,61 +384,83 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit')->middleware('permission:update_invoice');
 
         // Contracts
-        Route::get('/contracts', AdminContractManagement::class)->name('contracts.index');
-        Route::get('/contracts/create', AdminContractCreate::class)->name('contracts.create');
-        Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');
-        Route::get('/contracts/{contract}/edit', AdminContractEdit::class)->name('contracts.edit');
+        Route::middleware('platform.feature:contracts')->group(function () {
+            Route::get('/contracts', AdminContractManagement::class)->name('contracts.index');
+            Route::get('/contracts/create', AdminContractCreate::class)->name('contracts.create');
+            Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');
+            Route::get('/contracts/{contract}/edit', AdminContractEdit::class)->name('contracts.edit');
+        });
+
         Route::get('/meeting-notes', AdminMeetingNotes::class)->name('meeting-notes');
         Route::get('/communication/email-assistant', EmailDraftAssistant::class)->name('communication.email-assistant');
-        Route::get('/messages', MessagingHub::class)->name('messages');
+
+        // Messages
+        Route::get('/messages', MessagingHub::class)->name('messages')->middleware('platform.feature:messaging');
+
         Route::get('/security/privacy-requests', AdminPrivacyRequests::class)->name('security.privacy-requests')->middleware('permission:manage settings');
         Route::get('/security', AdminSecurityOverview::class)->name('security.overview')->middleware('permission:manage settings');
 
         // Reports
-        Route::get('/reports', ReportDashboard::class)->name('reports')->middleware('permission:view reports');
-        Route::get('/workload', \App\Http\Livewire\Admin\WorkloadDashboard::class)->name('workload')->middleware('permission:view reports');
-        Route::get('/reports/dashboard', fn () => redirect()->route('admin.reports'))->name('reports.dashboard')->middleware('permission:view reports');
-        Route::get('/reports/deliveries', AdminReportDeliveries::class)->name('reports.deliveries')->middleware('permission:view reports');
+        Route::middleware(['permission:view reports', 'platform.feature:reporting'])->group(function () {
+            Route::get('/reports', ReportDashboard::class)->name('reports');
+            Route::get('/workload', \App\Http\Livewire\Admin\WorkloadDashboard::class)->name('workload');
+            Route::get('/reports/dashboard', fn () => redirect()->route('admin.reports'))->name('reports.dashboard');
+            Route::get('/reports/deliveries', AdminReportDeliveries::class)->name('reports.deliveries');
+        });
         Route::get('/white-label', WhiteLabelConfigurator::class)->name('white-label')->middleware('permission:manage settings');
         Route::get('/client-reports', ReportCustomizer::class)->name('client-reports')->middleware('permission:manage settings');
 
         // Proposals
-        Route::get('/proposals/builder/{proposal?}', ProposalBuilder::class)->name('proposals.builder');
-        Route::get('/proposals/analytics/{proposal}', ProposalAnalytics::class)->name('proposals.analytics');
-        Route::get('/meetings', MeetingScheduler::class)->name('meetings');
+        Route::middleware('platform.feature:proposals')->group(function () {
+            Route::get('/proposals/builder/{proposal?}', ProposalBuilder::class)->name('proposals.builder');
+            Route::get('/proposals/analytics/{proposal}', ProposalAnalytics::class)->name('proposals.analytics');
+        });
+
+        // Meetings
+        Route::get('/meetings', MeetingScheduler::class)->name('meetings')->middleware('platform.feature:meetings');
 
         // Projects & time tracking
-        Route::get('/projects/time', AdminTimeTracker::class)->name('projects.time');
-        Route::get('/projects/board', AdminTaskBoard::class)->name('projects.board');
-        Route::get('/projects/timeline', AdminProjectTimeline::class)->name('projects.timeline');
-        Route::get('/projects/workload', AdminTeamWorkload::class)->name('projects.workload');
-        Route::get('/projects/tasks/{task}', AdminTaskDetail::class)->name('projects.tasks.show');
-        Route::get('/projects/time-approvals', AdminTimeApprovals::class)->name('projects.time-approvals');
-        Route::get('/projects/budgets', AdminProjectBudgets::class)->name('projects.budgets');
+        Route::middleware('platform.feature:projects')->group(function () {
+            Route::get('/projects/time', AdminTimeTracker::class)->name('projects.time');
+            Route::get('/projects/board', AdminTaskBoard::class)->name('projects.board');
+            Route::get('/projects/timeline', AdminProjectTimeline::class)->name('projects.timeline');
+            Route::get('/projects/workload', AdminTeamWorkload::class)->name('projects.workload');
+            Route::get('/projects/tasks/{task}', AdminTaskDetail::class)->name('projects.tasks.show');
+            Route::get('/projects/time-approvals', AdminTimeApprovals::class)->name('projects.time-approvals');
+            Route::get('/projects/budgets', AdminProjectBudgets::class)->name('projects.budgets');
+        });
 
         // Feedback
-        Route::get('/feedback/surveys', SurveyBuilder::class)->name('feedback.surveys');
-        Route::get('/feedback/testimonials', TestimonialManager::class)->name('feedback.testimonials');
+        Route::middleware('platform.feature:feedback')->group(function () {
+            Route::get('/feedback/surveys', SurveyBuilder::class)->name('feedback.surveys');
+            Route::get('/feedback/testimonials', TestimonialManager::class)->name('feedback.testimonials');
+        });
 
         // Account management
-        Route::get('/account/health', AccountHealthDashboard::class)->name('account.health');
-        Route::get('/account/qbrs', QBRBuilder::class)->name('account.qbrs');
-        Route::get('/account/renewals', RenewalManager::class)->name('account.renewals');
-        Route::get('/account/upsells', UpsellTracker::class)->name('account.upsells');
+        Route::middleware('platform.feature:account_management')->group(function () {
+            Route::get('/account/health', AccountHealthDashboard::class)->name('account.health');
+            Route::get('/account/qbrs', QBRBuilder::class)->name('account.qbrs');
+            Route::get('/account/renewals', RenewalManager::class)->name('account.renewals');
+            Route::get('/account/upsells', UpsellTracker::class)->name('account.upsells');
+        });
 
         // Partners & referrals
-        Route::get('/partners', PartnerManager::class)->name('partners');
-        Route::get('/referrals', ReferralDashboard::class)->name('referrals');
+        Route::middleware('platform.feature:partners')->group(function () {
+            Route::get('/partners', PartnerManager::class)->name('partners');
+            Route::get('/referrals', ReferralDashboard::class)->name('referrals');
+        });
 
         // Storage management (admin/staff)
-        Route::get('/storage', StorageOverview::class)->name('storage');
-        Route::get('/storage/overview', fn () => redirect()->route('admin.storage'))->name('storage.overview');
-        Route::get('/storage/s3/connect', ConnectS3::class)->name('storage.s3.connect');
-        Route::get('/storage/s3/browse/{connection?}', S3Browser::class)->name('storage.s3.browse');
-        Route::get('/storage/dropbox/connect', ConnectDropbox::class)->name('storage.dropbox.connect');
-        Route::get('/storage/dropbox/browse/{connection?}', DropboxBrowser::class)->name('storage.dropbox.browse');
-        Route::get('/storage/google-drive/connect', ConnectGoogleDrive::class)->name('storage.google-drive.connect');
-        Route::get('/storage/google-drive/browse/{connection?}', GoogleDriveBrowser::class)->name('storage.google-drive.browse');
+        Route::middleware('platform.feature:storage_integrations')->group(function () {
+            Route::get('/storage', StorageOverview::class)->name('storage');
+            Route::get('/storage/overview', fn () => redirect()->route('admin.storage'))->name('storage.overview');
+            Route::get('/storage/s3/connect', ConnectS3::class)->name('storage.s3.connect');
+            Route::get('/storage/s3/browse/{connection?}', S3Browser::class)->name('storage.s3.browse');
+            Route::get('/storage/dropbox/connect', ConnectDropbox::class)->name('storage.dropbox.connect');
+            Route::get('/storage/dropbox/browse/{connection?}', DropboxBrowser::class)->name('storage.dropbox.browse');
+            Route::get('/storage/google-drive/connect', ConnectGoogleDrive::class)->name('storage.google-drive.connect');
+            Route::get('/storage/google-drive/browse/{connection?}', GoogleDriveBrowser::class)->name('storage.google-drive.browse');
+        });
 
         // Marketing: Website auditing (MVP UI)
         Route::prefix('marketing')->name('marketing.')->group(function () {

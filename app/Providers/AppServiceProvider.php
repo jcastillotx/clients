@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\AI\AIProviderManager;
+use App\Services\PlatformFeatureService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AIProviderManager::class, fn () => new AIProviderManager);
+        $this->app->singleton(PlatformFeatureService::class, fn () => new PlatformFeatureService);
     }
 
     /**
@@ -76,6 +78,19 @@ class AppServiceProvider extends ServiceProvider
             $user = auth()->user();
 
             return $user && $user->client && $user->client->isPremiumTier();
+        });
+
+        // Platform-wide feature toggles (super admin controls)
+        Blade::if('platformFeature', function (string $module) {
+            return app(PlatformFeatureService::class)->isEnabled($module);
+        });
+
+        Blade::if('anyPlatformFeature', function (...$modules) {
+            return app(PlatformFeatureService::class)->anyEnabled($modules);
+        });
+
+        Blade::if('allPlatformFeatures', function (...$modules) {
+            return app(PlatformFeatureService::class)->allEnabled($modules);
         });
     }
 }

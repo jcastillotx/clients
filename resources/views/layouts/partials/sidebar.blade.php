@@ -47,6 +47,7 @@
                 </li>
 
                 <!-- Service Requests -->
+                @platformFeature('service_requests')
                 <li class="nav-item">
                     <a href="{{ route('requests.index') }}" class="nav-link {{ request()->routeIs('requests.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-clipboard-list"></i>
@@ -66,8 +67,10 @@
                         </p>
                     </a>
                 </li>
+                @endplatformFeature
 
                 <!-- Contracts -->
+                @platformFeature('contracts')
                 <li class="nav-item">
                     <a href="{{ route('contracts.index') }}" class="nav-link {{ request()->routeIs('contracts.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-file-contract"></i>
@@ -87,8 +90,10 @@
                         </p>
                     </a>
                 </li>
+                @endplatformFeature
 
                 <!-- Invoices -->
+                @platformFeature('invoices')
                 @if(auth()->user()?->can('access admin panel'))
                     <li class="nav-item">
                         <a href="{{ route('admin.invoices.index') }}" class="nav-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">
@@ -117,8 +122,10 @@
                         </a>
                     </li>
                 @endif
+                @endplatformFeature
 
                 <!-- Documents -->
+                @platformFeature('documents')
                 <li class="nav-item">
                     <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-folder-open"></i>
@@ -152,6 +159,7 @@
                         @endcan
                     </ul>
                 </li>
+                @endplatformFeature
 
                 @if(auth()->user()->isClient())
                 <!-- Client Extras -->
@@ -278,18 +286,22 @@
                         <p>Permissions</p>
                     </a>
                 </li>
+                @platformFeature('messaging')
                 <li class="nav-item">
                     <a href="{{ route('admin.messages') }}" class="nav-link {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-comments"></i>
                         <p>Messages</p>
                     </a>
                 </li>
+                @endplatformFeature
+                @platformFeature('reporting')
                 <li class="nav-item">
                     <a href="{{ route('admin.reports.dashboard') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <p>Reporting</p>
                     </a>
                 </li>
+                @endplatformFeature
                 <li class="nav-item">
                     <a href="{{ route('admin.security.privacy-requests') }}" class="nav-link {{ request()->routeIs('admin.security.privacy-requests') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-user-shield"></i>
@@ -303,6 +315,7 @@
                     </a>
                 </li>
 
+                @platformFeature('projects')
                 <li class="nav-item {{ request()->routeIs('admin.projects.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-stopwatch"></i>
@@ -350,7 +363,9 @@
                         </li>
                     </ul>
                 </li>
+                @endplatformFeature
 
+                @platformFeature('proposals')
                 <li class="nav-item {{ request()->routeIs('admin.proposals.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.proposals.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-file-signature"></i>
@@ -368,7 +383,10 @@
                         </li>
                     </ul>
                 </li>
+                @endplatformFeature
 
+                @platformFeature('contracts')
+                @if(Route::has('admin.contracts.index'))
                 <li class="nav-item {{ request()->routeIs('admin.contracts.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.contracts.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-file-contract"></i>
@@ -398,14 +416,19 @@
                         </li>
                     </ul>
                 </li>
+                @endif
+                @endplatformFeature
 
+                @platformFeature('meetings')
                 <li class="nav-item">
                     <a href="{{ route('admin.meetings') }}" class="nav-link {{ request()->routeIs('admin.meetings') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-calendar-alt"></i>
                         <p>Meetings</p>
                     </a>
                 </li>
+                @endplatformFeature
 
+                @platformFeature('feedback')
                 <li class="nav-item {{ request()->routeIs('admin.feedback.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.feedback.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-poll"></i>
@@ -429,7 +452,9 @@
                         </li>
                     </ul>
                 </li>
+                @endplatformFeature
 
+                @platformFeature('account_management')
                 <li class="nav-item {{ request()->routeIs('admin.account.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.account.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-handshake"></i>
@@ -465,7 +490,9 @@
                         </li>
                     </ul>
                 </li>
+                @endplatformFeature
 
+                @platformFeature('partners')
                 <li class="nav-item {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-user-friends"></i>
@@ -489,14 +516,17 @@
                         </li>
                     </ul>
                 </li>
+                @endplatformFeature
 
                 @can('access admin panel')
+                @platformFeature('storage_integrations')
                 <li class="nav-item">
                     <a href="{{ route('admin.storage.overview') }}" class="nav-link {{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-database"></i>
                         <p>Storage Overview</p>
                     </a>
                 </li>
+                @endplatformFeature
                 @can('manage settings')
                 <li class="nav-item">
                     <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
@@ -504,18 +534,22 @@
                         <p>System Settings</p>
                     </a>
                 </li>
+                @platformFeature('webhooks')
                 <li class="nav-item">
                     <a href="{{ route('admin.webhooks.index') }}" class="nav-link {{ request()->routeIs('admin.webhooks.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-plug"></i>
                         <p>Webhooks</p>
                     </a>
                 </li>
+                @endplatformFeature
+                @platformFeature('automation')
                 <li class="nav-item">
                     <a href="{{ route('admin.automation.index') }}" class="nav-link {{ request()->routeIs('admin.automation.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-robot"></i>
                         <p>Automation</p>
                     </a>
                 </li>
+                @endplatformFeature
                 @endcan
                 @endcan
                 @endcan
