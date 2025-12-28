@@ -214,6 +214,19 @@ body {
     @apply mt-0.5 h-3.5 w-3.5 flex-shrink-0;
 }
 
+/* Validation error icons - ensure they stay small */
+.text-rose-600 > svg,
+.text-rose-500 > svg,
+[class*="text-rose"] > svg:first-child {
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+    min-width: 0.875rem !important;
+    min-height: 0.875rem !important;
+    max-width: 0.875rem !important;
+    max-height: 0.875rem !important;
+    flex-shrink: 0;
+}
+
 /* Success message */
 .form-success {
     @apply mt-1.5 flex items-start gap-1.5 text-xs font-medium text-emerald-600;

@@ -57,6 +57,11 @@ class GenerateBrandingCSS extends Command
         $btnSecondaryHover = $buttons['secondary_hover'] ?? ($colors['secondary'] ?? '#10b981');
         $adminPagePaddingComfy = $admin['page_padding'] ?? '1.5rem';
 
+        // Sidebar colors (light theme defaults)
+        $sidebarBg = $colors['sidebar_bg'] ?? '#f8fafc';
+        $sidebarText = $colors['sidebar_text'] ?? '#334155';
+        $sidebarHover = $colors['sidebar_hover'] ?? '#e2e8f0';
+
         $css = <<<CSS
 /**
  * Kre8ivDesigns Marketing - Brand Styles
@@ -105,6 +110,11 @@ class GenerateBrandingCSS extends Command
     --brand-btn-secondary: {$btnSecondary};
     --brand-btn-secondary-hover: {$btnSecondaryHover};
 
+    /* Sidebar Colors (light theme) */
+    --brand-sidebar-bg: {$sidebarBg};
+    --brand-sidebar-text: {$sidebarText};
+    --brand-sidebar-hover: {$sidebarHover};
+
     /* Admin Layout */
     --page-padding-comfy: {$adminPagePaddingComfy};
     --page-padding-compact: 1rem;
@@ -118,12 +128,17 @@ html[data-density="comfy"] { --page-padding: var(--page-padding-comfy); }
 html[data-density="compact"] { --page-padding: var(--page-padding-compact); }
 html[data-density="extreme"] { --page-padding: var(--page-padding-extreme); }
 
-/* Dark mode (base) */
+/* Dark mode (base) - inverts light theme colors where appropriate */
 html[data-theme="dark"] {
     --brand-bg: #0b1220;
     --brand-bg-alt: #111827;
     --brand-text-primary: #e5e7eb;
     --brand-text-secondary: #9ca3af;
+
+    /* Sidebar (inverted for dark theme) */
+    --brand-sidebar-bg: #0f172a;
+    --brand-sidebar-text: #e2e8f0;
+    --brand-sidebar-hover: #1e293b;
 }
 
 /* Global Overrides */
@@ -145,18 +160,41 @@ h1, h2, h3, h4, h5, h6 {
     border-bottom: 3px solid var(--brand-primary-dark);
 }
 
+/* Sidebar styling - uses theme-aware variables */
 .main-sidebar {
-    background-color: var(--brand-text-primary);
+    background-color: var(--brand-sidebar-bg) !important;
 }
 
-.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active {
+.main-sidebar .sidebar {
+    background-color: var(--brand-sidebar-bg);
+}
+
+.main-sidebar .nav-link {
+    color: var(--brand-sidebar-text);
+}
+
+.main-sidebar .nav-link:hover {
+    background-color: var(--brand-sidebar-hover);
+}
+
+.main-sidebar .nav-header {
+    color: var(--brand-sidebar-text);
+    opacity: 0.7;
+}
+
+.main-sidebar .user-panel .info a {
+    color: var(--brand-sidebar-text);
+}
+
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active,
+.sidebar-light-primary .nav-sidebar > .nav-item > .nav-link.active {
     background-color: var(--brand-primary);
     color: white;
 }
 
 .brand-link {
-    background-color: var(--brand-primary-dark) !important;
-    border-bottom: 1px solid var(--brand-primary);
+    background-color: var(--brand-primary) !important;
+    border-bottom: 1px solid var(--brand-primary-dark);
 }
 
 .brand-link .brand-text {
@@ -299,10 +337,6 @@ a:hover {
     border-radius: var(--brand-radius-sm);
 }
 
-.sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
 /* Forms */
 .form-control:focus {
     border-color: var(--brand-primary);
@@ -407,10 +441,6 @@ html[data-theme="dark"] .content-wrapper {
 html[data-theme="dark"] .main-header.navbar {
     background-color: var(--brand-bg-alt) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-html[data-theme="dark"] .main-sidebar {
-    background-color: #0f172a !important;
 }
 
 /* ------------------------------------------------------------------ */

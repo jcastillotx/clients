@@ -92,6 +92,18 @@ class BrandingServiceProvider extends ServiceProvider
                 }
             }
 
+            // Sidebar colors (optional overrides)
+            foreach ([
+                'branding.colors.sidebar_bg' => 'branding.colors.sidebar_bg',
+                'branding.colors.sidebar_text' => 'branding.colors.sidebar_text',
+                'branding.colors.sidebar_hover' => 'branding.colors.sidebar_hover',
+            ] as $settingKey => $configKey) {
+                $value = (string) $settings->get($settingKey, '');
+                if ($value !== '') {
+                    config()->set($configKey, $value);
+                }
+            }
+
             // Admin header/footer HTML injection (optional)
             $siteHeaderHtml = (string) $settings->get('branding.site.header_html', '');
             $siteFooterHtml = (string) $settings->get('branding.site.footer_html', '');

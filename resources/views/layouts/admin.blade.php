@@ -47,6 +47,9 @@
             --brand-btn-primary-hover: {{ config('branding.buttons.primary_hover') ?: config('branding.colors.primary_dark') }};
             --brand-btn-secondary: {{ config('branding.buttons.secondary') ?: config('branding.colors.secondary') }};
             --brand-btn-secondary-hover: {{ config('branding.buttons.secondary_hover') ?: config('branding.colors.secondary') }};
+            --brand-sidebar-bg: {{ config('branding.colors.sidebar_bg', '#f8fafc') }};
+            --brand-sidebar-text: {{ config('branding.colors.sidebar_text', '#334155') }};
+            --brand-sidebar-hover: {{ config('branding.colors.sidebar_hover', '#e2e8f0') }};
         }
     </style>
 
