@@ -350,6 +350,259 @@ a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
     border-left-color: var(--brand-primary) !important;
 }
 
+/* ========================================
+   Dark Theme Support
+   ======================================== */
+[data-theme="dark"] body {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .content-wrapper {
+    background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .card-header {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .card-footer {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .main-header.navbar {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .main-header.navbar .nav-link {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #1e293b !important;
+    border-color: var(--brand-primary) !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .table {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .table th,
+[data-theme="dark"] .table td {
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] .nav-tabs .nav-link {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .nav-tabs .nav-link.active {
+    background-color: #1e293b !important;
+    border-color: #334155 #334155 #1e293b !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .border {
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+    color: #94a3b8 !important;
+    border-color: #475569 !important;
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover {
+    background-color: #334155 !important;
+    border-color: #64748b !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .btn-theme-toggle,
+[data-theme="dark"] .btn-density-toggle {
+    background-color: #334155 !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .btn-theme-toggle:hover,
+[data-theme="dark"] .btn-density-toggle:hover {
+    background-color: #475569 !important;
+    border-color: #64748b !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .page-link {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .page-item.active .page-link {
+    background-color: var(--brand-primary) !important;
+    border-color: var(--brand-primary) !important;
+}
+
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6,
+[data-theme="dark"] .h1, [data-theme="dark"] .h2, [data-theme="dark"] .h3,
+[data-theme="dark"] .h4, [data-theme="dark"] .h5, [data-theme="dark"] .h6 {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .form-label {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .alert {
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .alert-success {
+    background-color: rgba(34, 197, 94, 0.15) !important;
+    color: #4ade80 !important;
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .alert-warning {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+}
+
+/* ========================================
+   Density/Padding Variations
+   ======================================== */
+
+/* Compact density */
+[data-density="compact"] .content-wrapper > .content {
+    padding: 0.75rem 1rem !important;
+}
+
+[data-density="compact"] .card-body {
+    padding: 0.75rem !important;
+}
+
+[data-density="compact"] .card-header {
+    padding: 0.5rem 0.75rem !important;
+}
+
+[data-density="compact"] .form-control,
+[data-density="compact"] .form-select {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+}
+
+[data-density="compact"] .btn {
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+[data-density="compact"] .table td,
+[data-density="compact"] .table th {
+    padding: 0.375rem 0.5rem !important;
+}
+
+/* Extreme compact density */
+[data-density="extreme"] .content-wrapper > .content {
+    padding: 0.5rem 0.75rem !important;
+}
+
+[data-density="extreme"] .card-body {
+    padding: 0.5rem !important;
+}
+
+[data-density="extreme"] .card-header {
+    padding: 0.375rem 0.5rem !important;
+}
+
+[data-density="extreme"] .form-control,
+[data-density="extreme"] .form-select {
+    padding: 0.125rem 0.375rem !important;
+    font-size: 0.8125rem !important;
+}
+
+[data-density="extreme"] .btn {
+    padding: 0.125rem 0.5rem !important;
+    font-size: 0.8125rem !important;
+}
+
+[data-density="extreme"] .table td,
+[data-density="extreme"] .table th {
+    padding: 0.25rem 0.375rem !important;
+    font-size: 0.8125rem !important;
+}
+
 @if(!empty($brand['custom_css']))
 /* Custom CSS */
 {!! $brand['custom_css'] !!}
