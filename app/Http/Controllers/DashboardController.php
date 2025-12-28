@@ -17,6 +17,11 @@ class DashboardController extends Controller
         $user = auth()->user();
         $client = $user->client;
 
+        // If user doesn't have a client, redirect to admin dashboard
+        if (!$client) {
+            return redirect()->route('admin.dashboard');
+        }
+
         // Get dashboard statistics
         $stats = [
             'open_requests' => Request::where('client_id', $client->id)
