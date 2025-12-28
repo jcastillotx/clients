@@ -36,6 +36,23 @@
                     </select>
                 </div>
             </div>
+
+            <div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+                <label class="form-check">
+                    <input class="form-check-input" type="checkbox" wire:model.live="selectPage">
+                    <span class="form-check-label">Select first 50 results</span>
+                </label>
+
+                @if(count($selected) > 0)
+                    <span class="badge bg-primary ms-2">{{ count($selected) }} selected</span>
+                @endif
+
+                <div class="ms-auto">
+                    <button class="btn btn-outline-danger" type="button" wire:click="confirmBulkDelete" @disabled(empty($selected))>
+                        Delete Selected
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -44,6 +61,9 @@
             <table class="table table-vcenter table-hover card-table">
                 <thead>
                 <tr>
+                    <th style="width: 1%;">
+                        <span class="text-muted">Sel</span>
+                    </th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
@@ -65,8 +85,14 @@
                             'suspended' => 'danger',
                             default => 'secondary'
                         };
+                        $isSuperAdmin = $roleNames->contains('super_admin');
+                        $isSelf = $u->id === auth()->id();
                     @endphp
                     <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input" wire:model.live="selected" value="{{ $u->id }}"
+                                @if($isSuperAdmin || $isSelf) disabled title="{{ $isSelf ? 'Cannot select yourself' : 'Cannot select super admins' }}" @endif>
+                        </td>
                         <td class="fw-semibold">{{ $u->name }}</td>
                         <td class="text-muted">{{ $u->email }}</td>
                         <td>{{ str_replace('_', ' ', ucfirst($roleLabel)) }}</td>
@@ -81,7 +107,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">No users found.</td></tr>
                 @endforelse
                 </tbody>
             </table>
@@ -90,5 +116,29 @@
             {{ $users->links() }}
         </div>
     </div>
+
+    {{-- Bulk Delete Confirmation Modal --}}
+    @if($showDeleteConfirmModal)
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                        <button type="button" class="btn-close btn-close-white" wire:click="cancelBulkDelete"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete <strong>{{ count($selected) }}</strong> selected user(s)?</p>
+                        <p class="text-muted mb-0">
+                            <small>Super admins and your own account will be skipped. Deleted users can be restored from the database if needed.</small>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="cancelBulkDelete">Cancel</button>
+                        <button type="button" class="btn btn-danger" wire:click="bulkDelete">Delete Users</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 
