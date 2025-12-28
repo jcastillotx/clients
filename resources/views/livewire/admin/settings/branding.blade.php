@@ -16,9 +16,12 @@
                             @endif
                             <input type="file" class="form-control mb-2" wire:model="logo_upload">
                             <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB.</small>
-                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLogo">
-                                <i class="fas fa-upload mr-1"></i> Upload
+                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLogo" wire:loading.attr="disabled" wire:target="logo_upload,uploadLogo">
+                                <span wire:loading.remove wire:target="logo_upload,uploadLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
+                                <span wire:loading wire:target="logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading…</span>
+                                <span wire:loading wire:target="uploadLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving…</span>
                             </button>
+                            @error('logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
                         </div>
                     </div>
 
@@ -32,9 +35,12 @@
                             @endif
                             <input type="file" class="form-control mb-2" wire:model="login_logo_upload">
                             <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB.</small>
-                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLoginLogo">
-                                <i class="fas fa-upload mr-1"></i> Upload
+                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLoginLogo" wire:loading.attr="disabled" wire:target="login_logo_upload,uploadLoginLogo">
+                                <span wire:loading.remove wire:target="login_logo_upload,uploadLoginLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
+                                <span wire:loading wire:target="login_logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading…</span>
+                                <span wire:loading wire:target="uploadLoginLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving…</span>
                             </button>
+                            @error('logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
                         </div>
                     </div>
 
@@ -48,9 +54,12 @@
                             @endif
                             <input type="file" class="form-control mb-2" wire:model="dashboard_logo_upload">
                             <small class="text-muted d-block mb-2">PNG/JPG/WEBP/SVG up to 2MB.</small>
-                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadDashboardLogo">
-                                <i class="fas fa-upload mr-1"></i> Upload
+                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadDashboardLogo" wire:loading.attr="disabled" wire:target="dashboard_logo_upload,uploadDashboardLogo">
+                                <span wire:loading.remove wire:target="dashboard_logo_upload,uploadDashboardLogo"><i class="fas fa-upload mr-1"></i> Upload</span>
+                                <span wire:loading wire:target="dashboard_logo_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading…</span>
+                                <span wire:loading wire:target="uploadDashboardLogo"><i class="fas fa-spinner fa-spin mr-1"></i> Saving…</span>
                             </button>
+                            @error('logo') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
                         </div>
                     </div>
 
@@ -64,9 +73,12 @@
                             @endif
                             <input type="file" class="form-control mb-2" wire:model="login_background_upload">
                             <small class="text-muted d-block mb-2">PNG/JPG/WEBP up to 5MB.</small>
-                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLoginBackground">
-                                <i class="fas fa-upload mr-1"></i> Upload
+                            <button type="button" class="btn btn-outline-primary btn-sm" wire:click="uploadLoginBackground" wire:loading.attr="disabled" wire:target="login_background_upload,uploadLoginBackground">
+                                <span wire:loading.remove wire:target="login_background_upload,uploadLoginBackground"><i class="fas fa-upload mr-1"></i> Upload</span>
+                                <span wire:loading wire:target="login_background_upload"><i class="fas fa-spinner fa-spin mr-1"></i> Uploading…</span>
+                                <span wire:loading wire:target="uploadLoginBackground"><i class="fas fa-spinner fa-spin mr-1"></i> Saving…</span>
                             </button>
+                            @error('bg') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
                         </div>
                     </div>
                 </div>
