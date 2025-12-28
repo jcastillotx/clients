@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Automation Logs</x-slot>
+<div>
+    <h2 class="mb-3">Automation Logs</h2>
 
     <div class="d-flex justify-content-between mb-3">
         <div class="text-muted">Execution log for debugging + audit trail</div>
@@ -76,5 +76,5 @@
             {{ $runs->links() }}
         </div>
     </div>
-</x-app-layout>
+</div>
 

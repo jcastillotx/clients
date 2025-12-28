@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Referrals</x-slot>
+<div>
+    <h2 class="mb-3">Referrals</h2>
 
     <div class="row">
         <div class="col-lg-5">
@@ -64,5 +64,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

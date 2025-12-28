@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Onboarding</x-slot>
+<div>
+    <h2 class="mb-3">Onboarding</h2>
 
     <div class="row">
         <div class="col-lg-4">
@@ -81,5 +81,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

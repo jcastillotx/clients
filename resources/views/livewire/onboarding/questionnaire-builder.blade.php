@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Questionnaire builder</x-slot>
+<div>
+    <h2 class="mb-3">Questionnaire builder</h2>
 
     <div class="card">
         <div class="card-header">
@@ -50,5 +50,5 @@
             <button class="btn btn-primary" wire:click="save"><i class="fas fa-save mr-1"></i> Save questionnaire</button>
         </div>
     </div>
-</x-app-layout>
+</div>
 

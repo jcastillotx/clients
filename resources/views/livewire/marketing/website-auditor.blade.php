@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Website Auditor</x-slot>
+<div>
+    <h2 class="mb-3">Website Auditor</h2>
 
     <div class="card">
         <div class="card-body">
@@ -34,5 +34,5 @@
             </a>
         </div>
     </div>
-</x-app-layout>
+</div>
 

@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Proposal analytics</x-slot>
+<div>
+    <h2 class="mb-3">Proposal analytics</h2>
 
     <div class="card">
         <div class="card-header">
@@ -109,5 +109,5 @@
             @endif
         </div>
     </div>
-</x-app-layout>
+</div>
 

@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Document Templates</x-slot>
+<div>
+    <h2 class="mb-3">Document Templates</h2>
 
     <div class="row">
         <div class="col-lg-6">
@@ -107,5 +107,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
 

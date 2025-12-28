@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Website Audit Results</x-slot>
+<div>
+    <h2 class="mb-3">Website Audit Results</h2>
 
     <div class="card">
         <div class="card-body table-responsive">
@@ -46,5 +46,5 @@
             {{ $audits->links() }}
         </div>
     </div>
-</x-app-layout>
+</div>
 

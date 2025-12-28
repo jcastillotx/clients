@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">System Settings</x-slot>
+<div>
+    <h2 class="mb-3">System Settings</h2>
 
     <div class="card">
         <div class="card-header p-0">
@@ -36,5 +36,5 @@
             @endif
         </div>
     </div>
-</x-app-layout>
+</div>
 

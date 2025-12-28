@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Storage Settings</x-slot>
+<div>
+    <h2 class="mb-3">Storage Settings</h2>
 
     <div class="card">
         <div class="card-header">
@@ -80,5 +80,5 @@
             </button>
         </div>
     </div>
-</x-app-layout>
+</div>
 

@@ -1,5 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">Feedback</x-slot>
+<div>
+    <h2 class="mb-3">Feedback</h2>
 
     <div class="card">
         <div class="card-header">
@@ -46,5 +46,5 @@
             @endif
         </div>
     </div>
-</x-app-layout>
+</div>
 
