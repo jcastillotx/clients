@@ -116,25 +116,21 @@ class SendScheduledReport implements ShouldQueue
 
     protected function revenueByMonth(string $from, string $to): array
     {
+        $driver = DB::connection()->getDriverName();
+        $dateExpr = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', processed_at)",
+            'pgsql' => "to_char(date_trunc('month', processed_at), 'YYYY-MM')",
+            default => "DATE_FORMAT(processed_at, '%Y-%m')",
+        };
+
         $rows = Payment::query()
             ->where('status', 'succeeded')
             ->whereDate('processed_at', '>=', $from)
             ->whereDate('processed_at', '<=', $to)
-            ->selectRaw("strftime('%Y-%m', processed_at) as ym, SUM(amount) as total")
+            ->selectRaw("{$dateExpr} as ym, SUM(amount) as total")
             ->groupBy('ym')
             ->orderBy('ym')
             ->get();
-
-        if ($rows->isEmpty()) {
-            $rows = Payment::query()
-                ->where('status', 'succeeded')
-                ->whereDate('processed_at', '>=', $from)
-                ->whereDate('processed_at', '<=', $to)
-                ->selectRaw("DATE_FORMAT(processed_at, '%Y-%m') as ym, SUM(amount) as total")
-                ->groupBy('ym')
-                ->orderBy('ym')
-                ->get();
-        }
 
         $headings = ['Month', 'Revenue'];
         $data = $rows->map(fn ($r) => [(string) $r->ym, (float) $r->total])->all();
