@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admin\Settings;
 
+use App\Services\PlatformFeatureService;
 use App\Services\Settings\SettingsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -35,6 +36,8 @@ class SystemSettings extends Component
     public array $integrations = [];
 
     public array $integrationStatus = [];
+
+    public array $platformModules = [];
 
     public ?string $test_email_to = null;
 
@@ -248,13 +251,81 @@ class SystemSettings extends Component
 
     public function setTab(string $tab): void
     {
-        $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding', 'integrations'];
+        $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding', 'integrations', 'platform'];
         if (in_array($tab, $allowed, true)) {
             $this->tab = $tab;
             if ($tab === 'integrations') {
                 $this->loadIntegrationStatus();
             }
+            if ($tab === 'platform') {
+                $this->loadPlatformModules();
+            }
         }
+    }
+
+    public function loadPlatformModules(): void
+    {
+        /** @var PlatformFeatureService $platformService */
+        $platformService = app(PlatformFeatureService::class);
+        $this->platformModules = [];
+
+        foreach (PlatformFeatureService::$modules as $key => $module) {
+            $this->platformModules[$key] = $platformService->isEnabled($key);
+        }
+    }
+
+    public function togglePlatformModule(string $module): void
+    {
+        // Only super_admin can toggle platform features
+        if (! Auth::user()?->hasRole('super_admin')) {
+            session()->flash('error', 'Only super admins can toggle platform features.');
+            return;
+        }
+
+        /** @var PlatformFeatureService $platformService */
+        $platformService = app(PlatformFeatureService::class);
+        $newState = $platformService->toggle($module);
+        $this->platformModules[$module] = $newState;
+
+        $moduleName = PlatformFeatureService::$modules[$module]['name'] ?? $module;
+        $status = $newState ? 'enabled' : 'disabled';
+        session()->flash('success', "{$moduleName} has been {$status}.");
+    }
+
+    public function enableAllPlatformModules(): void
+    {
+        if (! Auth::user()?->hasRole('super_admin')) {
+            session()->flash('error', 'Only super admins can toggle platform features.');
+            return;
+        }
+
+        /** @var PlatformFeatureService $platformService */
+        $platformService = app(PlatformFeatureService::class);
+
+        foreach (array_keys(PlatformFeatureService::$modules) as $module) {
+            $platformService->enable($module);
+            $this->platformModules[$module] = true;
+        }
+
+        session()->flash('success', 'All platform modules have been enabled.');
+    }
+
+    public function disableAllPlatformModules(): void
+    {
+        if (! Auth::user()?->hasRole('super_admin')) {
+            session()->flash('error', 'Only super admins can toggle platform features.');
+            return;
+        }
+
+        /** @var PlatformFeatureService $platformService */
+        $platformService = app(PlatformFeatureService::class);
+
+        foreach (array_keys(PlatformFeatureService::$modules) as $module) {
+            $platformService->disable($module);
+            $this->platformModules[$module] = false;
+        }
+
+        session()->flash('success', 'All platform modules have been disabled.');
     }
 
     public function loadIntegrationStatus(): void
@@ -832,6 +903,10 @@ class SystemSettings extends Component
 
     public function render()
     {
-        return view('livewire.admin.settings.index')->layout('layouts.admin');
+        return view('livewire.admin.settings.index', [
+            'platformModuleDefinitions' => PlatformFeatureService::$modules,
+            'platformCategoryLabels' => PlatformFeatureService::categoryLabels(),
+            'isSuperAdmin' => Auth::user()?->hasRole('super_admin') ?? false,
+        ])->layout('layouts.admin');
     }
 }
