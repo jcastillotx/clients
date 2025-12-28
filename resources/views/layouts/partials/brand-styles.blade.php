@@ -149,6 +149,24 @@
     color: #1e293b !important;
 }
 
+/* Dashboard cards equal height */
+.row-cards {
+    display: flex;
+    flex-wrap: wrap;
+}
+.row-cards > [class*="col-"] {
+    display: flex;
+    flex-direction: column;
+}
+.row-cards > [class*="col-"] > .card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+.row-cards > [class*="col-"] > .card > .card-body {
+    flex: 1 1 auto;
+}
+
 /* ===== AdminLTE/Bootstrap Brand Overrides ===== */
 
 /* Primary Button */
