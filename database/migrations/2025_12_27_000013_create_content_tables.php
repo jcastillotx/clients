@@ -34,7 +34,7 @@ return new class extends Migration
             $table->index(['platform']);
             $table->index(['campaign_tag']);
             if ($supportsFullText) {
-                $table->fullText(['title', 'content_text', 'hashtags', 'campaign_tag']);
+                $table->fullText(['title', 'content_text', 'hashtags', 'campaign_tag'], 'content_calendar_fulltext');
             }
         });
 
@@ -52,7 +52,7 @@ return new class extends Migration
             $table->index(['client_id', 'template_type']);
             $table->index(['client_id', 'usage_count']);
             if ($supportsFullText) {
-                $table->fullText(['template_name', 'content']);
+                $table->fullText(['template_name', 'content'], 'content_templates_fulltext');
             }
         });
 
@@ -69,7 +69,7 @@ return new class extends Migration
 
             $table->index(['client_id', 'is_active']);
             if ($supportsFullText) {
-                $table->fullText(['theme_name', 'description']);
+                $table->fullText(['theme_name', 'description'], 'content_themes_fulltext');
             }
         });
 
