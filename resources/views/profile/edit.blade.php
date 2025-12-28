@@ -277,6 +277,7 @@
             @endif
 
             <!-- Account Info -->
+            @if($user->client)
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Company Information</h3>
