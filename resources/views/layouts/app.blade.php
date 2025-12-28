@@ -38,31 +38,8 @@
     <!-- Livewire Styles -->
     @livewireStyles
 
-    <!-- Brand Custom CSS -->
-    @if(file_exists(public_path(config('branding.custom_css'))))
-    <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
-    @endif
-
-    {{-- Runtime brand variable overrides (Admindek theme) --}}
-    <style>
-        :root {
-            --brand-primary: {{ config('branding.colors.primary') }};
-            --brand-primary-dark: {{ config('branding.colors.primary_dark') }};
-            --brand-primary-light: {{ config('branding.colors.primary_light') }};
-            --brand-secondary: {{ config('branding.colors.secondary') }};
-            --brand-accent: {{ config('branding.colors.accent') }};
-            --brand-sidebar-bg: {{ config('branding.colors.sidebar_bg', '#3f4d67') }};
-            --brand-sidebar-text: {{ config('branding.colors.sidebar_text', '#b5bdca') }};
-            --brand-sidebar-hover: {{ config('branding.colors.sidebar_hover', '#4a5a7a') }};
-            --brand-sidebar-active: {{ config('branding.colors.sidebar_active', config('branding.colors.primary')) }};
-            --brand-header-start: {{ config('branding.colors.header_start', config('branding.colors.primary')) }};
-            --brand-header-end: {{ config('branding.colors.header_end', config('branding.colors.secondary')) }};
-            --brand-success: {{ config('branding.colors.success') }};
-            --brand-warning: {{ config('branding.colors.warning') }};
-            --brand-danger: {{ config('branding.colors.danger') }};
-            --brand-info: {{ config('branding.colors.info') }};
-        }
-    </style>
+    <!-- Dynamic Brand Styles from Database -->
+    @include('layouts.partials.brand-styles')
 
     {{-- Apply theme/density before paint --}}
     <script>

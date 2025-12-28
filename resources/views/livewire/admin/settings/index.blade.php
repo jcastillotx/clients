@@ -6,17 +6,17 @@
             <ul class="nav nav-tabs" role="tablist">
                 @php
                     $tabs = [
-                        'general' => ['label' => 'General', 'icon' => null],
-                        'email' => ['label' => 'Email', 'icon' => null],
-                        'payment' => ['label' => 'Payment', 'icon' => null],
-                        'storage' => ['label' => 'Storage', 'icon' => null],
-                        'notifications' => ['label' => 'Notifications', 'icon' => null],
-                        'security' => ['label' => 'Security', 'icon' => null],
-                        'branding' => ['label' => 'Branding', 'icon' => null],
+                        'general' => ['label' => 'General', 'icon' => 'fas fa-cog'],
+                        'email' => ['label' => 'Email', 'icon' => 'fas fa-envelope'],
+                        'payment' => ['label' => 'Payment', 'icon' => 'fas fa-credit-card'],
+                        'storage' => ['label' => 'Storage', 'icon' => 'fas fa-hdd'],
+                        'notifications' => ['label' => 'Notifications', 'icon' => 'fas fa-bell'],
+                        'security' => ['label' => 'Security', 'icon' => 'fas fa-shield-alt'],
                         'integrations' => ['label' => 'Integrations', 'icon' => 'fas fa-plug'],
                     ];
-                    // Only show Platform tab to super admins
+                    // Only show Branding and Platform tabs to super admins
                     if ($isSuperAdmin ?? false) {
+                        $tabs['branding'] = ['label' => 'Branding', 'icon' => 'fas fa-paint-brush'];
                         $tabs['platform'] = ['label' => 'Platform', 'icon' => 'fas fa-toggle-on'];
                     }
                 @endphp

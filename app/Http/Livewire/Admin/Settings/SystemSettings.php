@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admin\Settings;
 
+use App\Services\BrandingService;
 use App\Services\PlatformFeatureService;
 use App\Services\Settings\SettingsService;
 use Illuminate\Support\Facades\Auth;
@@ -253,6 +254,12 @@ class SystemSettings extends Component
     {
         $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding', 'integrations', 'platform'];
         if (in_array($tab, $allowed, true)) {
+            // Restrict branding and platform tabs to super admin only
+            if (in_array($tab, ['branding', 'platform']) && !Auth::user()?->hasRole('super_admin')) {
+                session()->flash('error', 'Only super admins can access this section.');
+                return;
+            }
+            
             $this->tab = $tab;
             if ($tab === 'integrations') {
                 $this->loadIntegrationStatus();
@@ -871,8 +878,39 @@ class SystemSettings extends Component
         session()->flash('success', 'Login background uploaded.');
     }
 
+    public function applyColorPreset(string $preset): void
+    {
+        if (!Auth::user()?->hasRole('super_admin')) {
+            session()->flash('error', 'Only super admins can modify branding.');
+            return;
+        }
+
+        $presets = BrandingService::colorPresets();
+
+        if (!isset($presets[$preset])) {
+            session()->flash('error', 'Invalid color preset.');
+            return;
+        }
+
+        $colors = $presets[$preset];
+
+        $this->branding['color_primary'] = $colors['color_primary'];
+        $this->branding['color_secondary'] = $colors['color_secondary'] ?? $this->branding['color_secondary'];
+        $this->branding['color_accent'] = $colors['color_accent'] ?? $this->branding['color_accent'];
+        $this->branding['button_primary'] = $colors['color_primary'];
+        $this->branding['button_primary_hover'] = $colors['color_primary_dark'];
+
+        session()->flash('success', "Applied '{$colors['name']}' color preset. Click Save to apply changes.");
+    }
+
     public function saveBranding(): void
     {
+        // Only super admin can save branding
+        if (!Auth::user()?->hasRole('super_admin')) {
+            session()->flash('error', 'Only super admins can modify branding settings.');
+            return;
+        }
+
         /** @var SettingsService $settings */
         $settings = app(SettingsService::class);
 
@@ -898,6 +936,10 @@ class SystemSettings extends Component
             'branding.admin.footer_html' => $this->branding['site_footer_html'] ?? '',
             'branding.custom_domain' => $this->branding['custom_domain'] ?? '',
         ], 'branding');
+
+        // Clear branding cache
+        app(BrandingService::class)->clearCache();
+
         session()->flash('success', 'Branding settings saved.');
     }
 
