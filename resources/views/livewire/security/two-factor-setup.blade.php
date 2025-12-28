@@ -31,9 +31,9 @@
                     Scan the QR code with an authenticator app, then enter the 6-digit code to confirm.
                 </div>
 
-                @if($otpauth)
+                @if($qrUrl)
                     <div class="mb-3">
-                        <div id="qrcode-{{ $secret }}" style="display: inline-block;"></div>
+                        <img src="{{ $qrUrl }}" alt="2FA QR code" style="max-width: 200px; height: auto;">
                     </div>
                 @endif
 
@@ -55,32 +55,3 @@
         </div>
     </div>
 </div>
-
-@if($otpauth && !$confirmed)
-@push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script>
-    (function() {
-        function initQRCode() {
-            var qrcodeContainer = document.getElementById("qrcode-{{ $secret }}");
-            if (qrcodeContainer && !qrcodeContainer.hasChildNodes()) {
-                new QRCode(qrcodeContainer, {
-                    text: "{{ $otpauth }}",
-                    width: 200,
-                    height: 200,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.L
-                });
-            }
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initQRCode);
-        } else {
-            initQRCode();
-        }
-    })();
-</script>
-@endpush
-@endif

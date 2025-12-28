@@ -115,6 +115,6 @@ class TwoFactorSetup extends Component
         return view('livewire.security.two-factor-setup', [
             'otpauth' => $otpauth,
             'qrUrl' => $qrUrl,
-        ]);
+        ])->layout('layouts.app');
     }
 }
