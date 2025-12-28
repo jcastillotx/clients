@@ -9,7 +9,7 @@
             <div class="card-body">
                 <div class="form-group">
                     <label>Select Email Provider</label>
-                    <select wire:model="email.provider" class="form-control">
+                    <select wire:model.live="email.provider" class="form-control">
                         <option value="sendmail">PHP Mail (Sendmail)</option>
                         <option value="smtp">Custom SMTP</option>
                         <option value="gmail">Gmail SMTP</option>
