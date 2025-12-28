@@ -1,5 +1,7 @@
-<x-app-layout>
-    <x-slot name="header">Two-factor authentication</x-slot>
+<div>
+    <div class="mb-4">
+        <h2 class="text-2xl font-semibold text-slate-900">Two-factor authentication</h2>
+    </div>
 
     <div class="card">
         <div class="card-header">
@@ -68,5 +70,4 @@
             @endif
         </div>
     </div>
-</x-app-layout>
-
+</div>
