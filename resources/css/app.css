@@ -39,7 +39,7 @@ body {
 /* Card enhancements */
 .card {
     border-radius: 0.5rem;
-    box-shadow: 0 0 1px rgba(0, 0, 0, 0.125), 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: none;
 }
 
 .card-header {
@@ -64,11 +64,11 @@ body {
 }
 
 .btn:hover {
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .btn:active {
-    transform: translateY(0);
+    transform: none;
 }
 
 /* Badge enhancements */
@@ -89,7 +89,7 @@ body {
 /* Form control focus states */
 .form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(60, 141, 188, 0.25);
+    box-shadow: none;
 }
 
 /* ========================================
@@ -103,7 +103,7 @@ body {
 
 /* Form card wrapper */
 .form-card {
-    @apply relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm;
+    @apply relative rounded-2xl border border-slate-200 bg-white p-6;
 }
 
 /* Form section divider */
@@ -305,7 +305,7 @@ body {
 }
 
 .form-loading-content {
-    @apply flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ring-black/5;
+    @apply flex items-center gap-3 rounded-xl bg-white px-4 py-3 border border-slate-200;
 }
 
 .form-loading-spinner {
@@ -489,9 +489,9 @@ body {
 
 /* Hover effects for cards */
 .card-hover:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-    transition: all 0.2s ease;
+    box-shadow: none;
+    transform: none;
+    transition: none;
 }
 
 /* Status colors */
