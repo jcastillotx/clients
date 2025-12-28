@@ -1,6 +1,13 @@
 <div>
-    <h5 class="mb-4">API Integrations Status</h5>
-    <p class="text-muted mb-4">Test connections to external services and connect OAuth-based integrations.</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="mb-1">API Integrations Status</h5>
+            <p class="text-muted mb-0">Test connections to external services and connect OAuth-based integrations.</p>
+        </div>
+        <a href="{{ route('admin.settings.api') }}" class="btn btn-primary">
+            <i class="fas fa-key me-1"></i> Manage API Keys
+        </a>
+    </div>
 
     <div class="row">
         {{-- Payment Integrations --}}
@@ -39,6 +46,48 @@
                                         <span wire:loading.remove wire:target="testIntegration('stripe')">Test Connection</span>
                                         <span wire:loading wire:target="testIntegration('stripe')">Testing...</span>
                                     </button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- PayPal --}}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fab fa-paypal fa-2x text-primary me-2"></i>
+                                <div>
+                                    <h6 class="mb-0">PayPal</h6>
+                                    <small class="text-muted">Payment processing</small>
+                                </div>
+                            </div>
+                            @if(isset($integrationStatus['paypal']))
+                                <div class="mb-2">
+                                    @if($integrationStatus['paypal']['configured'])
+                                        <span class="badge bg-info">Configured</span>
+                                    @else
+                                        <span class="badge bg-secondary">Not Configured</span>
+                                    @endif
+                                    @if($integrationStatus['paypal']['connected'])
+                                        <span class="badge bg-success">Connected</span>
+                                    @endif
+                                </div>
+                                @if($integrationStatus['paypal']['message'])
+                                    <small class="{{ $integrationStatus['paypal']['connected'] ? 'text-success' : 'text-danger' }}">
+                                        {{ $integrationStatus['paypal']['message'] }}
+                                    </small>
+                                @endif
+                                <div class="mt-2">
+                                    @if($integrationStatus['paypal']['configured'])
+                                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="testIntegration('paypal')" wire:loading.attr="disabled">
+                                            <span wire:loading.remove wire:target="testIntegration('paypal')">Test Connection</span>
+                                            <span wire:loading wire:target="testIntegration('paypal')">Testing...</span>
+                                        </button>
+                                    @else
+                                        <small class="text-muted">Configure in Payment tab</small>
+                                    @endif
                                 </div>
                             @endif
                         </div>

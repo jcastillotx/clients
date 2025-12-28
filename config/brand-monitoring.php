@@ -53,6 +53,28 @@ return [
             'api_key' => env('GOOGLE_PLACES_API_KEY', ''),
             'endpoint' => 'https://maps.googleapis.com/maps/api/place',
         ],
+
+        // Trustpilot Business API
+        'trustpilot' => [
+            'enabled' => (bool) env('TRUSTPILOT_ENABLED', false),
+            'api_key' => env('TRUSTPILOT_API_KEY', ''),
+            'api_secret' => env('TRUSTPILOT_API_SECRET', ''),
+            'endpoint' => 'https://api.trustpilot.com/v1',
+        ],
+
+        // G2 Crowd API
+        'g2' => [
+            'enabled' => (bool) env('G2_ENABLED', false),
+            'api_key' => env('G2_API_KEY', ''),
+            'endpoint' => 'https://data.g2.com/api/v1',
+        ],
+
+        // Capterra / Gartner Digital Markets API
+        'capterra' => [
+            'enabled' => (bool) env('CAPTERRA_ENABLED', false),
+            'api_key' => env('CAPTERRA_API_KEY', ''),
+            'endpoint' => 'https://api.capterra.com/v1',
+        ],
     ],
 
     /*
@@ -87,6 +109,13 @@ return [
                 'https://nitter.net',
                 'https://nitter.poast.org',
             ],
+        ],
+
+        // Facebook Graph API - for page mentions monitoring
+        'facebook' => [
+            'enabled' => (bool) env('FACEBOOK_MENTIONS_ENABLED', false),
+            'access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN', ''),
+            'endpoint' => 'https://graph.facebook.com/v18.0',
         ],
     ],
 

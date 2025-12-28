@@ -59,6 +59,7 @@ use App\Http\Livewire\Admin\Requests\ProjectEstimator as AdminProjectEstimator;
 use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
 use App\Http\Livewire\Admin\Security\PrivacyRequests as AdminPrivacyRequests;
 use App\Http\Livewire\Admin\Security\SecurityOverview as AdminSecurityOverview;
+use App\Http\Livewire\Admin\Settings\ApiSettings;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Admin\Social\ContentCalendar;
 use App\Http\Livewire\Admin\Social\PostCreator;
@@ -489,6 +490,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         // System settings
         Route::get('/settings', SystemSettings::class)->name('settings')->middleware('permission:manage settings');
         Route::get('/settings/index', fn () => redirect()->route('admin.settings'))->name('settings.index')->middleware('permission:manage settings');
+        Route::get('/settings/api', ApiSettings::class)->name('settings.api')->middleware('permission:manage settings');
 
         // Webhooks
         Route::get('/webhooks', WebhookManagement::class)->name('webhooks.index')->middleware('permission:manage settings');
