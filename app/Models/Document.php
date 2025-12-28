@@ -28,6 +28,7 @@ class Document extends Model
         'filename',
         'original_filename',
         'file_path',
+        'thumbnail_path',
         'mime_type',
         'file_size',
         'category',

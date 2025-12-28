@@ -116,8 +116,21 @@ class DocumentUpload extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        $clients = [];
+
+        // Staff/admin users need a client selector
+        if (! $user->client_id) {
+            $clients = \App\Models\Client::query()
+                ->orderBy('company_name')
+                ->pluck('company_name', 'id')
+                ->toArray();
+        }
+
         return view('livewire.documents.upload', [
             'categories' => config('client-portal.document_categories', []),
+            'clients' => $clients,
+            'showClientSelector' => ! $user->client_id,
         ]);
     }
 }
