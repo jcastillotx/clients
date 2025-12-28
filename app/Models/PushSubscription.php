@@ -10,11 +10,19 @@ class PushSubscription extends Model
     protected $fillable = [
         'user_id',
         'endpoint',
+        'endpoint_hash',
         'public_key',
         'auth_token',
         'content_encoding',
         'expires_at',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (PushSubscription $subscription) {
+            $subscription->endpoint_hash = hash('sha256', $subscription->endpoint);
+        });
+    }
 
     protected $casts = [
         'expires_at' => 'datetime',
