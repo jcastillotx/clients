@@ -7,8 +7,10 @@ use App\Models\Client;
 use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\RecurringInvoice;
 use App\Models\Request as ServiceRequest;
 use App\Services\NotificationService;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -41,10 +43,32 @@ class InvoiceCreate extends Component
 
     public string $terms = '';
 
+    // Recurring invoice properties
+    public bool $is_recurring = false;
+
+    public string $recurring_name = '';
+
+    public string $recurring_frequency = 'monthly';
+
+    public ?int $recurring_day_of_month = null;
+
+    public ?int $recurring_day_of_week = null;
+
+    public ?string $recurring_start_date = null;
+
+    public ?string $recurring_end_date = null;
+
+    public ?int $recurring_occurrences_limit = null;
+
+    public int $recurring_payment_terms_days = 30;
+
+    public bool $recurring_auto_send = false;
+
     public function mount(): void
     {
         $this->issue_date = now()->toDateString();
         $this->due_date = now()->addDays(30)->toDateString();
+        $this->recurring_start_date = now()->toDateString();
         $this->tax_rate = (string) config('client-portal.invoice.tax_rate', 0);
         $this->items = [
             ['description' => '', 'feature_key' => null, 'quantity' => 1, 'unit_price' => 0, 'total' => 0],
@@ -56,12 +80,12 @@ class InvoiceCreate extends Component
         $templates = array_keys(config('client-portal.invoice.templates', ['classic' => 'Classic']));
         $features = array_keys((array) config('features.available', []));
 
-        return [
+        $rules = [
             'client_id' => ['required', 'integer', Rule::exists('clients', 'id')],
             'autoNumber' => ['boolean'],
             'invoice_number' => [$this->autoNumber ? 'nullable' : 'required', 'string', 'max:255', Rule::unique('invoices', 'invoice_number')],
-            'issue_date' => ['required', 'date'],
-            'due_date' => ['required', 'date', 'after_or_equal:issue_date'],
+            'issue_date' => ['required_without:is_recurring', 'nullable', 'date'],
+            'due_date' => ['required_without:is_recurring', 'nullable', 'date', 'after_or_equal:issue_date'],
             'request_id' => ['nullable', 'integer', Rule::exists('requests', 'id')],
             'contract_id' => ['nullable', 'integer', Rule::exists('contracts', 'id')],
             'template' => ['required', Rule::in($templates)],
@@ -74,7 +98,23 @@ class InvoiceCreate extends Component
             'discount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:10000'],
             'terms' => ['nullable', 'string', 'max:10000'],
+            'is_recurring' => ['boolean'],
         ];
+
+        // Add recurring-specific rules when recurring is enabled
+        if ($this->is_recurring) {
+            $rules['recurring_name'] = ['required', 'string', 'max:255'];
+            $rules['recurring_frequency'] = ['required', Rule::in(array_keys(RecurringInvoice::frequencyOptions()))];
+            $rules['recurring_start_date'] = ['required', 'date', 'after_or_equal:today'];
+            $rules['recurring_end_date'] = ['nullable', 'date', 'after:recurring_start_date'];
+            $rules['recurring_day_of_month'] = ['nullable', 'integer', 'min:1', 'max:28'];
+            $rules['recurring_day_of_week'] = ['nullable', 'integer', 'min:0', 'max:6'];
+            $rules['recurring_occurrences_limit'] = ['nullable', 'integer', 'min:1', 'max:999'];
+            $rules['recurring_payment_terms_days'] = ['required', 'integer', 'min:0', 'max:365'];
+            $rules['recurring_auto_send'] = ['boolean'];
+        }
+
+        return $rules;
     }
 
     public function updated(string $property): void
@@ -84,6 +124,11 @@ class InvoiceCreate extends Component
         }
         if ($property === 'autoNumber' && $this->autoNumber) {
             $this->invoice_number = '';
+        }
+        if ($property === 'recurring_frequency') {
+            // Reset day fields when frequency changes
+            $this->recurring_day_of_month = null;
+            $this->recurring_day_of_week = null;
         }
     }
 
@@ -198,8 +243,86 @@ class InvoiceCreate extends Component
         return $invoice;
     }
 
+    protected function createRecurringInvoice(): RecurringInvoice
+    {
+        $data = $this->validate();
+        $client = Client::query()->findOrFail((int) $data['client_id']);
+
+        // Constrain request/contract linkage to selected client
+        if ($data['request_id']) {
+            $req = ServiceRequest::query()->where('client_id', $client->id)->find($data['request_id']);
+            if (! $req) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['request_id' => 'Selected request does not belong to this client.']);
+            }
+        }
+        if ($data['contract_id']) {
+            $contract = Contract::query()->where('client_id', $client->id)->find($data['contract_id']);
+            if (! $contract) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['contract_id' => 'Selected contract does not belong to this client.']);
+            }
+        }
+
+        // Prepare line items for storage
+        $lineItems = array_map(function ($item) {
+            return [
+                'description' => $item['description'],
+                'feature_key' => $item['feature_key'] ?: null,
+                'quantity' => (float) $item['quantity'],
+                'unit_price' => (float) $item['unit_price'],
+            ];
+        }, array_values($data['items']));
+
+        // Calculate next generate date based on start date
+        $startDate = Carbon::parse($data['recurring_start_date']);
+
+        $recurring = RecurringInvoice::create([
+            'client_id' => $client->id,
+            'request_id' => $data['request_id'],
+            'contract_id' => $data['contract_id'],
+            'name' => $data['recurring_name'],
+            'frequency' => $data['recurring_frequency'],
+            'day_of_month' => $data['recurring_day_of_month'],
+            'day_of_week' => $data['recurring_day_of_week'],
+            'start_date' => $startDate,
+            'end_date' => $data['recurring_end_date'] ? Carbon::parse($data['recurring_end_date']) : null,
+            'next_generate_date' => $startDate,
+            'occurrences_limit' => $data['recurring_occurrences_limit'],
+            'occurrences_count' => 0,
+            'tax_rate' => (float) ($data['tax_rate'] === '' ? 0 : $data['tax_rate']),
+            'discount' => (float) ($data['discount'] === '' ? 0 : $data['discount']),
+            'notes' => $data['notes'] ?: null,
+            'terms' => $data['terms'] ?: null,
+            'template' => $data['template'],
+            'payment_terms_days' => $data['recurring_payment_terms_days'],
+            'line_items' => $lineItems,
+            'status' => 'active',
+            'auto_send' => $data['recurring_auto_send'],
+        ]);
+
+        ActivityLog::log(
+            "Admin created recurring invoice: {$recurring->name}",
+            $recurring,
+            [
+                'client_id' => $client->id,
+                'frequency' => $recurring->frequency,
+                'auto_send' => $recurring->auto_send,
+            ],
+            'created',
+            'recurring_invoices'
+        );
+
+        return $recurring;
+    }
+
     public function saveDraft(NotificationService $notifications)
     {
+        if ($this->is_recurring) {
+            $recurring = $this->createRecurringInvoice();
+            session()->flash('success', 'Recurring invoice schedule created.');
+
+            return redirect()->route('admin.invoices.recurring.index');
+        }
+
         $invoice = $this->createInvoice('draft', false, $notifications);
         session()->flash('success', 'Invoice saved as draft.');
 
@@ -208,10 +331,26 @@ class InvoiceCreate extends Component
 
     public function sendToClient(NotificationService $notifications)
     {
+        if ($this->is_recurring) {
+            $recurring = $this->createRecurringInvoice();
+            session()->flash('success', 'Recurring invoice schedule created and will auto-send when generated.');
+
+            return redirect()->route('admin.invoices.recurring.index');
+        }
+
         $invoice = $this->createInvoice('sent', true, $notifications);
         session()->flash('success', 'Invoice sent to client.');
 
         return redirect()->route('admin.invoices.edit', $invoice);
+    }
+
+    public function saveRecurring()
+    {
+        $this->is_recurring = true;
+        $recurring = $this->createRecurringInvoice();
+        session()->flash('success', 'Recurring invoice schedule created.');
+
+        return redirect()->route('admin.invoices.recurring.index');
     }
 
     public function render()
@@ -246,6 +385,16 @@ class InvoiceCreate extends Component
             'subtotal' => $this->subtotal,
             'taxAmount' => $this->taxAmount,
             'total' => $this->total,
+            'frequencyOptions' => RecurringInvoice::frequencyOptions(),
+            'dayOfWeekOptions' => [
+                0 => 'Sunday',
+                1 => 'Monday',
+                2 => 'Tuesday',
+                3 => 'Wednesday',
+                4 => 'Thursday',
+                5 => 'Friday',
+                6 => 'Saturday',
+            ],
         ])->layout('layouts.admin', ['title' => 'Create Invoice']);
     }
 }

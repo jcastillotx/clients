@@ -4,6 +4,7 @@ use App\Jobs\Analytics\GenerateMonthlyRevenueForecastJob;
 use App\Jobs\Analytics\GenerateQuarterlyBusinessIntelligenceReportJob;
 use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
 use App\Jobs\Analytics\UpdateClientHealthScoresJob;
+use App\Jobs\GenerateRecurringInvoicesJob;
 use App\Jobs\Security\PurgeOldAuditLogsJob;
 use App\Models\Contract;
 use App\Models\Invoice;
@@ -114,6 +115,11 @@ Schedule::call(function () {
         ->where('due_date', '<', now())
         ->update(['status' => 'overdue']);
 })->daily()->name('check-overdue-invoices');
+
+// Generate recurring invoices daily
+Schedule::call(function () {
+    GenerateRecurringInvoicesJob::dispatch();
+})->daily()->name('generate-recurring-invoices');
 
 // Scheduled automation triggers
 Schedule::call(function () {
