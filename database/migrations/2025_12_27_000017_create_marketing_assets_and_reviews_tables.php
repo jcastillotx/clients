@@ -32,7 +32,7 @@ return new class extends Migration
             $table->index(['client_id', 'is_latest']);
             $table->index(['expiration_date']);
             if ($supportsFullText) {
-                $table->fullText(['asset_name', 'file_path', 'mime_type', 'dimensions']);
+                $table->fullText(['asset_name', 'file_path', 'mime_type', 'dimensions'], 'marketing_assets_fulltext');
             }
         });
 
@@ -55,7 +55,7 @@ return new class extends Migration
             $table->index(['client_id', 'rating']);
             $table->index(['responded_at']);
             if ($supportsFullText) {
-                $table->fullText(['review_text', 'response_text', 'reviewer_name', 'review_url']);
+                $table->fullText(['review_text', 'response_text', 'reviewer_name', 'review_url'], 'reviews_fulltext');
             }
         });
     }
