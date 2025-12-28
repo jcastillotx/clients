@@ -13,6 +13,9 @@
         </div>
     </div>
 
+    {{-- Flash Messages & Validation Errors --}}
+    @include('partials.flash-messages')
+
     <form wire:submit.prevent="save">
         <div class="row">
             <!-- Left Column -->

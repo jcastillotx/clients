@@ -160,67 +160,81 @@ PROMPT;
 
     public function save()
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
 
-        $client = Client::create([
-            'company_name' => $data['company_name'],
-            'contact_name' => $data['contact_name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-            'address' => $data['address'],
-            'city' => $data['city'],
-            'state' => $data['state'],
-            'zip_code' => $data['zip_code'],
-            'country' => $data['country'] ?: 'US',
-            'tier' => $data['tier'],
-            'status' => $data['status'],
-            'stripe_customer_id' => $data['stripe_customer_id'],
-            'notes' => $data['notes'],
-            'internal_notes' => $data['internal_notes'],
-            'mission' => $data['mission'],
-            'vision' => $data['vision'],
-            'competitors' => $data['competitors'],
-            'marketing_strategy' => $data['marketing_strategy'],
-            'marketing_strategy_generated_at' => $data['marketing_strategy'] ? now() : null,
-            'enabled_features' => $data['selectedServices'],
-        ]);
+            $client = Client::create([
+                'company_name' => $data['company_name'],
+                'contact_name' => $data['contact_name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'],
+                'address' => $data['address'],
+                'city' => $data['city'],
+                'state' => $data['state'],
+                'zip_code' => $data['zip_code'],
+                'country' => $data['country'] ?: 'US',
+                'tier' => $data['tier'],
+                'status' => $data['status'],
+                'stripe_customer_id' => $data['stripe_customer_id'],
+                'notes' => $data['notes'],
+                'internal_notes' => $data['internal_notes'],
+                'mission' => $data['mission'],
+                'vision' => $data['vision'],
+                'competitors' => $data['competitors'],
+                'marketing_strategy' => $data['marketing_strategy'],
+                'marketing_strategy_generated_at' => $data['marketing_strategy'] ? now() : null,
+                'enabled_features' => $data['selectedServices'],
+            ]);
 
-        // Create the primary client user
-        $temporaryPassword = null;
-        $passwordSetLinkSent = (bool) $this->sendPasswordSetLink;
+            // Create the primary client user
+            $temporaryPassword = null;
+            $passwordSetLinkSent = (bool) $this->sendPasswordSetLink;
 
-        if ($passwordSetLinkSent) {
-            // Set an unknown strong password and send a reset link so the client can set their own.
-            $temporaryPassword = Str::password(32);
-        } else {
-            // Provide a temporary password in the welcome email.
-            $temporaryPassword = Str::password(16);
+            if ($passwordSetLinkSent) {
+                // Set an unknown strong password and send a reset link so the client can set their own.
+                $temporaryPassword = Str::password(32);
+            } else {
+                // Provide a temporary password in the welcome email.
+                $temporaryPassword = Str::password(16);
+            }
+
+            $user = User::create([
+                'name' => $client->contact_name,
+                'email' => $client->email,
+                'password' => $temporaryPassword, // hashed by cast
+                'client_id' => $client->id,
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]);
+            $user->assignRole('client');
+
+            if ($passwordSetLinkSent) {
+                Password::sendResetLink(['email' => $user->email]);
+            }
+
+            Mail::to($user->email)->queue(new ClientWelcomeMail(
+                user: $user,
+                portalUrl: route('login'),
+                passwordSetLinkSent: $passwordSetLinkSent,
+                temporaryPassword: $passwordSetLinkSent ? null : $temporaryPassword
+            ));
+
+            session()->flash('success', 'Client created successfully! Welcome email has been sent to ' . $client->email);
+
+            return redirect()->route('admin.clients.show', $client);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Re-throw validation exceptions so Livewire handles them
+            throw $e;
+        } catch (\Exception $e) {
+            // Log the error and show a user-friendly message
+            \Log::error('Client creation failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'company_name' => $this->company_name,
+                'email' => $this->email,
+            ]);
+            
+            session()->flash('error', 'Failed to create client: ' . $e->getMessage());
         }
-
-        $user = User::create([
-            'name' => $client->contact_name,
-            'email' => $client->email,
-            'password' => $temporaryPassword, // hashed by cast
-            'client_id' => $client->id,
-            'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
-        $user->assignRole('client');
-
-        if ($passwordSetLinkSent) {
-            Password::sendResetLink(['email' => $user->email]);
-        }
-
-        Mail::to($user->email)->queue(new ClientWelcomeMail(
-            user: $user,
-            portalUrl: route('login'),
-            passwordSetLinkSent: $passwordSetLinkSent,
-            temporaryPassword: $passwordSetLinkSent ? null : $temporaryPassword
-        ));
-
-        session()->flash('success', 'Client created. Welcome email sent.');
-
-        return redirect()->route('admin.clients.show', $client);
     }
 
     public function render()

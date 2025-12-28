@@ -18,6 +18,9 @@
         </div>
     </div>
 
+    {{-- Flash Messages & Validation Errors --}}
+    @include('partials.flash-messages')
+
     <!-- Tabs -->
     <div class="card">
         <div class="card-header p-0">

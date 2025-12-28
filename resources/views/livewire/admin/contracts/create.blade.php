@@ -9,6 +9,9 @@
         </a>
     </div>
 
+    {{-- Flash Messages & Validation Errors --}}
+    @include('partials.flash-messages')
+
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- Main Form Column -->
         <div class="xl:col-span-2 space-y-6">
