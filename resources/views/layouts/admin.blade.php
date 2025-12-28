@@ -26,8 +26,8 @@
     @livewireStyles
     @stack('styles')
 
-    {{-- Admin header HTML (branding setting) --}}
-    {!! config('branding.admin.header_html') !!}
+    {{-- Site header HTML (branding setting) --}}
+    {!! config('branding.site.header_html') !!}
 </head>
 @php $user = auth()->user(); @endphp
 <body class="layout-fluid">
@@ -208,7 +208,7 @@
 @livewireScripts
 @stack('scripts')
 
-{{-- Admin footer HTML (branding setting) --}}
-{!! config('branding.admin.footer_html') !!}
+{{-- Site footer HTML (branding setting) --}}
+{!! config('branding.site.footer_html') !!}
 </body>
 </html>

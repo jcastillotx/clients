@@ -44,6 +44,9 @@
     @endif
 
     @stack('styles')
+
+    {{-- Site header HTML (branding setting) --}}
+    {!! config('branding.site.header_html') !!}
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
@@ -138,5 +141,8 @@
     @livewireScripts
 
     @stack('scripts')
+
+    {{-- Site footer HTML (branding setting) --}}
+    {!! config('branding.site.footer_html') !!}
 </body>
 </html>

@@ -114,14 +114,14 @@
             <textarea class="form-control" rows="4" wire:model.defer="branding.email_footer_html"></textarea>
         </div>
 
-        <h5 class="mt-4 mb-3">Admin HTML (Injected on /admin)</h5>
+        <h5 class="mt-4 mb-3">Site HTML (Injected throughout the site)</h5>
         <div class="form-group">
             <label class="mb-1">Header HTML (inside &lt;head&gt;)</label>
-            <textarea class="form-control" rows="4" wire:model.defer="branding.admin_header_html" placeholder="e.g. analytics scripts, meta tags"></textarea>
+            <textarea class="form-control" rows="4" wire:model.defer="branding.site_header_html" placeholder="e.g. analytics scripts, meta tags"></textarea>
         </div>
         <div class="form-group">
             <label class="mb-1">Footer HTML (before &lt;/body&gt;)</label>
-            <textarea class="form-control" rows="4" wire:model.defer="branding.admin_footer_html" placeholder="e.g. chat widgets, scripts"></textarea>
+            <textarea class="form-control" rows="4" wire:model.defer="branding.site_footer_html" placeholder="e.g. chat widgets, scripts"></textarea>
         </div>
 
         <div class="form-group">

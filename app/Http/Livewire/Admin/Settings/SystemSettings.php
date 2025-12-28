@@ -218,6 +218,8 @@ class SystemSettings extends Component
             'branding.invoice_template' => 'default',
             'branding.email.header_html' => '',
             'branding.email.footer_html' => '',
+            'branding.site.header_html' => '',
+            'branding.site.footer_html' => '',
             'branding.admin.header_html' => '',
             'branding.admin.footer_html' => '',
             'branding.custom_domain' => '',
@@ -237,8 +239,9 @@ class SystemSettings extends Component
             'invoice_template' => $b['branding.invoice_template'],
             'email_header_html' => $b['branding.email.header_html'],
             'email_footer_html' => $b['branding.email.footer_html'],
-            'admin_header_html' => $b['branding.admin.header_html'],
-            'admin_footer_html' => $b['branding.admin.footer_html'],
+            // Site-wide header/footer HTML (fallback to legacy admin-only settings)
+            'site_header_html' => $b['branding.site.header_html'] ?: $b['branding.admin.header_html'],
+            'site_footer_html' => $b['branding.site.footer_html'] ?: $b['branding.admin.footer_html'],
             'custom_domain' => $b['branding.custom_domain'],
         ];
     }
@@ -770,8 +773,11 @@ class SystemSettings extends Component
             'branding.invoice_template' => $this->branding['invoice_template'] ?? 'default',
             'branding.email.header_html' => $this->branding['email_header_html'] ?? '',
             'branding.email.footer_html' => $this->branding['email_footer_html'] ?? '',
-            'branding.admin.header_html' => $this->branding['admin_header_html'] ?? '',
-            'branding.admin.footer_html' => $this->branding['admin_footer_html'] ?? '',
+            'branding.site.header_html' => $this->branding['site_header_html'] ?? '',
+            'branding.site.footer_html' => $this->branding['site_footer_html'] ?? '',
+            // Back-compat: keep writing legacy keys too (can remove later)
+            'branding.admin.header_html' => $this->branding['site_header_html'] ?? '',
+            'branding.admin.footer_html' => $this->branding['site_footer_html'] ?? '',
             'branding.custom_domain' => $this->branding['custom_domain'] ?? '',
         ], 'branding');
         session()->flash('success', 'Branding settings saved.');

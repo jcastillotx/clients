@@ -93,14 +93,22 @@ class BrandingServiceProvider extends ServiceProvider
             }
 
             // Admin header/footer HTML injection (optional)
-            $adminHeaderHtml = (string) $settings->get('branding.admin.header_html', '');
-            if ($adminHeaderHtml !== '') {
-                config()->set('branding.admin.header_html', $adminHeaderHtml);
+            $siteHeaderHtml = (string) $settings->get('branding.site.header_html', '');
+            $siteFooterHtml = (string) $settings->get('branding.site.footer_html', '');
+
+            // Back-compat: if site-wide is empty, fall back to legacy admin-only settings.
+            if ($siteHeaderHtml === '') {
+                $siteHeaderHtml = (string) $settings->get('branding.admin.header_html', '');
+            }
+            if ($siteFooterHtml === '') {
+                $siteFooterHtml = (string) $settings->get('branding.admin.footer_html', '');
             }
 
-            $adminFooterHtml = (string) $settings->get('branding.admin.footer_html', '');
-            if ($adminFooterHtml !== '') {
-                config()->set('branding.admin.footer_html', $adminFooterHtml);
+            if ($siteHeaderHtml !== '') {
+                config()->set('branding.site.header_html', $siteHeaderHtml);
+            }
+            if ($siteFooterHtml !== '') {
+                config()->set('branding.site.footer_html', $siteFooterHtml);
             }
         } catch (\Throwable $e) {
             // Don't break the app if settings storage is unavailable

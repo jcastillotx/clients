@@ -30,6 +30,9 @@
     <link rel="stylesheet" href="/{{ config('branding.custom_css') }}?v={{ filemtime(public_path(config('branding.custom_css'))) }}">
     @endif
 
+    {{-- Site header HTML (branding setting) --}}
+    {!! config('branding.site.header_html') !!}
+
     <style>
         body {
             font-family: {{ config('branding.typography.font_secondary') }};
@@ -71,5 +74,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- AdminLTE -->
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    {{-- Site footer HTML (branding setting) --}}
+    {!! config('branding.site.footer_html') !!}
 </body>
 </html>
