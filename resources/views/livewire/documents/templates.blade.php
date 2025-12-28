@@ -22,8 +22,8 @@
                     </div>
                     <div class="form-group">
                         <label class="mb-1">Body</label>
-                        <textarea class="form-control" rows="8" wire:model.defer="body" placeholder="Hello {{client_name}}..."></textarea>
-                        <small class="text-muted">Supports {{variable}} replacement. (Full rich template engines can be added later.)</small>
+                        <textarea class="form-control" rows="8" wire:model.defer="body" placeholder="Hello @{{client_name}}..."></textarea>
+                        <small class="text-muted">Supports @{{variable}} replacement. (Full rich template engines can be added later.)</small>
                     </div>
                     <button class="btn btn-primary" wire:click="saveTemplate">
                         <i class="fas fa-save mr-1"></i> Save Template
