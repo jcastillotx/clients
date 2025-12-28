@@ -11,6 +11,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Services\Entitlements\PortalEntitlementService;
 
 class UserEdit extends Component
 {
@@ -34,7 +35,7 @@ class UserEdit extends Component
 
     public ?int $client_id = null;
 
-    /** @var array<int, string> */
+    /** @var array<int, string> Manual overrides (stored on users.manual_permissions) */
     public array $directPermissions = [];
 
     /** @var array<int, int> */
@@ -51,7 +52,9 @@ class UserEdit extends Component
         $this->two_factor_enabled = (bool) ($this->user->two_factor_enabled ?? false);
 
         $this->role = $this->user->roles->pluck('name')->first() ?? 'staff';
-        $this->directPermissions = $this->user->permissions->pluck('name')->values()->all();
+        // Back-compat: keep using $directPermissions as the UI model, but persist it to
+        // users.manual_permissions and merge with entitlements for client users.
+        $this->directPermissions = (array) ($this->user->manual_permissions ?? []);
 
         $this->client_id = $this->user->client_id;
         $this->assignedClientIds = $this->user->assignedClients()->pluck('clients.id')->map(fn ($id) => (int) $id)->all();
@@ -83,6 +86,7 @@ class UserEdit extends Component
     protected function permissionGroups(): array
     {
         $all = Permission::query()->orderBy('name')->pluck('name')->all();
+        $clientAssignable = (array) config('entitlements.client_assignable_permissions', []);
         $groups = [
             'Clients' => [],
             'Requests' => [],
@@ -95,6 +99,9 @@ class UserEdit extends Component
         ];
 
         foreach ($all as $p) {
+            if ($this->role === 'client' && ! in_array($p, $clientAssignable, true)) {
+                continue;
+            }
             $group = match (true) {
                 str_contains($p, '_client') => 'Clients',
                 str_contains($p, '_request') => 'Requests',
@@ -153,14 +160,25 @@ class UserEdit extends Component
 
         $this->user->syncRoles([$data['role']]);
 
-        // Staff: keep direct permission selections + client assignments
+        // Persist manual permissions (used for both staff and client portal users).
+        $this->user->update([
+            'manual_permissions' => array_values(array_unique($this->directPermissions)),
+        ]);
+
+        // Staff: keep client assignments.
         if ($data['role'] === 'staff') {
-            $this->user->syncPermissions($this->directPermissions);
             $this->user->syncAssignedClients($this->assignedClientIds, $this->staffAssignmentRole);
         } else {
-            // Non-staff: clear staff-only constructs
-            $this->user->syncPermissions([]);
             $this->user->syncAssignedClients([], $this->staffAssignmentRole);
+        }
+
+        // Sync effective permissions:
+        // - client: manual + entitlements (from enabled features)
+        // - others: just manual (admins typically get permissions via roles anyway)
+        if ($data['role'] === 'client') {
+            app(PortalEntitlementService::class)->syncUser($this->user);
+        } else {
+            $this->user->syncPermissions((array) ($this->user->manual_permissions ?? []));
         }
 
         $this->confirmRoleDowngrade = false;

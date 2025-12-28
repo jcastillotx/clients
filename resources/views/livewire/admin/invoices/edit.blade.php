@@ -82,6 +82,7 @@
                                     <thead>
                                     <tr>
                                         <th>Description</th>
+                                        <th style="width:220px;">Service / Feature</th>
                                         <th style="width:120px;">Qty</th>
                                         <th style="width:160px;">Unit price</th>
                                         <th style="width:160px;" class="text-end">Total</th>
@@ -94,6 +95,15 @@
                                             <td>
                                                 <input type="text" class="form-control" wire:model.live.debounce.250ms="items.{{ $i }}.description" @disabled(!$editable)>
                                                 @error("items.$i.description") <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                            </td>
+                                            <td>
+                                                <select class="form-select" wire:model.live="items.{{ $i }}.feature_key" @disabled(!$editable)>
+                                                    <option value="">None</option>
+                                                    @foreach($featureOptions as $k => $label)
+                                                        <option value="{{ $k }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error("items.$i.feature_key") <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                             </td>
                                             <td>
                                                 <input type="number" step="0.01" min="0.01" class="form-control" wire:model.live.debounce.250ms="items.{{ $i }}.quantity" @disabled(!$editable)>

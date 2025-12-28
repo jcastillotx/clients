@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Services\Entitlements\PortalEntitlementService;
 
 class UserCreate extends Component
 {
@@ -159,6 +160,11 @@ class UserCreate extends Component
         if ($data['role'] === 'staff') {
             $user->syncPermissions($this->staffPermissions);
             $user->syncAssignedClients($this->assignedClientIds, $this->staffAssignmentRole);
+        }
+        if ($data['role'] === 'client') {
+            // Initialize manual permissions empty, then grant entitlements based on enabled features.
+            $user->update(['manual_permissions' => []]);
+            app(PortalEntitlementService::class)->syncUser($user);
         }
 
         // Create reset token + send invitation email (password setup link)

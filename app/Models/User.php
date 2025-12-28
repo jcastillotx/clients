@@ -32,6 +32,7 @@ class User extends Authenticatable
         'avatar',
         'profile_photo_path',
         'client_id',
+        'manual_permissions',
         'is_active',
         'status',
         'last_login_at',
@@ -62,6 +63,7 @@ class User extends Authenticatable
         'two_factor_enabled' => 'boolean',
         'two_factor_confirmed_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'manual_permissions' => 'array',
     ];
 
     /**

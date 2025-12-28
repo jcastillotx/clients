@@ -30,7 +30,7 @@ class InvoiceCreate extends Component
 
     public string $template = 'classic';
 
-    /** @var array<int, array{description:string, quantity:float|string, unit_price:float|string, total:float}> */
+    /** @var array<int, array{description:string, feature_key:string|null, quantity:float|string, unit_price:float|string, total:float}> */
     public array $items = [];
 
     public string $tax_rate = '';
@@ -47,13 +47,14 @@ class InvoiceCreate extends Component
         $this->due_date = now()->addDays(30)->toDateString();
         $this->tax_rate = (string) config('client-portal.invoice.tax_rate', 0);
         $this->items = [
-            ['description' => '', 'quantity' => 1, 'unit_price' => 0, 'total' => 0],
+            ['description' => '', 'feature_key' => null, 'quantity' => 1, 'unit_price' => 0, 'total' => 0],
         ];
     }
 
     protected function rules(): array
     {
         $templates = array_keys(config('client-portal.invoice.templates', ['classic' => 'Classic']));
+        $features = array_keys((array) config('features.available', []));
 
         return [
             'client_id' => ['required', 'integer', Rule::exists('clients', 'id')],
@@ -66,6 +67,7 @@ class InvoiceCreate extends Component
             'template' => ['required', Rule::in($templates)],
             'items' => ['required', 'array', 'min:1'],
             'items.*.description' => ['required', 'string', 'max:255'],
+            'items.*.feature_key' => ['nullable', 'string', Rule::in($features)],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -87,7 +89,7 @@ class InvoiceCreate extends Component
 
     public function addItem(): void
     {
-        $this->items[] = ['description' => '', 'quantity' => 1, 'unit_price' => 0, 'total' => 0];
+        $this->items[] = ['description' => '', 'feature_key' => null, 'quantity' => 1, 'unit_price' => 0, 'total' => 0];
     }
 
     public function removeItem(int $index): void
@@ -166,6 +168,7 @@ class InvoiceCreate extends Component
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'description' => $row['description'],
+                'feature_key' => $row['feature_key'] ?: null,
                 'quantity' => (float) $row['quantity'],
                 'unit_price' => (float) $row['unit_price'],
                 'total' => (float) ((float) $row['quantity'] * (float) $row['unit_price']),
@@ -236,6 +239,10 @@ class InvoiceCreate extends Component
             'requests' => $requests,
             'contracts' => $contracts,
             'templates' => config('client-portal.invoice.templates', []),
+            'featureOptions' => collect((array) config('features.available', []))
+                ->map(fn ($v) => is_array($v) ? ($v['name'] ?? null) : null)
+                ->filter()
+                ->toArray(),
             'subtotal' => $this->subtotal,
             'taxAmount' => $this->taxAmount,
             'total' => $this->total,

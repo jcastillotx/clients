@@ -96,6 +96,7 @@
                             <thead>
                             <tr>
                                 <th>Description</th>
+                                <th style="width:220px;">Service / Feature</th>
                                 <th style="width:120px;">Qty</th>
                                 <th style="width:160px;">Unit price</th>
                                 <th style="width:160px;" class="text-end">Total</th>
@@ -108,6 +109,16 @@
                                     <td>
                                         <input type="text" class="form-control" wire:model.live.debounce.250ms="items.{{ $i }}.description" placeholder="Design work, monthly retainer, …">
                                         @error("items.$i.description") <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                    </td>
+                                    <td>
+                                        <select class="form-select" wire:model.live="items.{{ $i }}.feature_key">
+                                            <option value="">None</option>
+                                            @foreach($featureOptions as $k => $label)
+                                                <option value="{{ $k }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div class="text-muted small mt-1">If set, paying this invoice will enable the feature for the client.</div>
+                                        @error("items.$i.feature_key") <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                     </td>
                                     <td>
                                         <input type="number" step="0.01" min="0.01" class="form-control" wire:model.live.debounce.250ms="items.{{ $i }}.quantity">

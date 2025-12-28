@@ -33,7 +33,19 @@ class DocumentTemplates extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user()?->can('manage documents') || Auth::user()?->can('access admin panel'), 403);
+        $user = Auth::user();
+        if (! $user) {
+            abort(403);
+        }
+
+        // This page is intentionally admin-only: it can generate documents for arbitrary clients.
+        if (! ($user->can('manage documents') || $user->can('access admin panel'))) {
+            redirect()
+                ->route('documents.index')
+                ->with('error', 'You do not have access to document templates.')
+                ->send();
+            return;
+        }
     }
 
     public function saveTemplate(): void

@@ -27,7 +27,16 @@ class StorageDashboard extends Component
     public function mount(): void
     {
         $user = Auth::user();
-        abort_unless($user?->client_id, 403);
+        if (! $user) {
+            abort(403);
+        }
+        if (! $user->client_id) {
+            if ($user->can('access admin panel')) {
+                redirect()->route('admin.storage')->send();
+                return;
+            }
+            abort(403, 'Storage is only available for client accounts.');
+        }
         $this->clientId = $user->client_id;
     }
 

@@ -371,9 +371,9 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/requests/{request}/estimator', AdminProjectEstimator::class)->name('requests.estimator');
 
         // Invoices
-        Route::get('/invoices', AdminInvoiceManagement::class)->name('invoices.index');
-        Route::get('/invoices/create', AdminInvoiceCreate::class)->name('invoices.create');
-        Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit');
+        Route::get('/invoices', AdminInvoiceManagement::class)->name('invoices.index')->middleware('permission:view_any_invoice');
+        Route::get('/invoices/create', AdminInvoiceCreate::class)->name('invoices.create')->middleware('permission:create_invoice');
+        Route::get('/invoices/{invoice}', AdminInvoiceEdit::class)->name('invoices.edit')->middleware('permission:update_invoice');
 
         // Contracts (AI)
         Route::get('/contracts/generator', AdminContractGenerator::class)->name('contracts.generator');
@@ -506,6 +506,47 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/documents', fn () => redirect()->route('documents.index'))->name('documents');
         Route::get('/contracts', fn () => redirect()->route('contracts.index'))->name('contracts');
     });
+
+/*
+|--------------------------------------------------------------------------
+| Public Storage Fallback (for public disk assets)
+|--------------------------------------------------------------------------
+|
+| Branding uploads and other public assets are stored on the "public" disk and
+| referenced via "/storage/<path>". In production this is typically served via
+| the `public/storage` symlink (php artisan storage:link).
+|
+| Some environments (misconfigured deploys, locked-down hosts) may not have the
+| symlink. This route provides a safe fallback that only serves files from the
+| "public" disk and avoids path traversal.
+*/
+
+Route::get('/storage', function () {
+    // `/storage/` is a directory endpoint (usually a symlink). Browsing it is not
+    // a supported UX, and many servers return 403 for directory listing. If the
+    // request reaches Laravel, return a consistent 404.
+    abort(404);
+});
+
+Route::get('/storage/{path}', function (string $path) {
+    if (\Illuminate\Support\Str::contains($path, ['..', "\0"]) || str_starts_with($path, '/')) {
+        abort(404);
+    }
+
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+
+    if (! $disk->exists($path)) {
+        abort(404);
+    }
+
+    $fullPath = $disk->path($path);
+    $mime = $disk->mimeType($path) ?: 'application/octet-stream';
+
+    return response()->file($fullPath, [
+        'Content-Type' => $mime,
+        'Cache-Control' => 'public, max-age=31536000',
+    ]);
+})->where('path', '.*');
 
 /*
 |--------------------------------------------------------------------------

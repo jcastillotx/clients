@@ -1,3 +1,29 @@
+@php
+    $storageLink = public_path('storage');
+    $storageTarget = storage_path('app/public');
+    $storageLinkExists = file_exists($storageLink);
+    $storageLinkOk = is_link($storageLink) && realpath($storageLink) === realpath($storageTarget);
+    $storageTargetWritable = is_dir($storageTarget) && is_writable($storageTarget);
+@endphp
+
+@if(! $storageLinkOk)
+    <div class="alert alert-warning">
+        <strong>Public storage link is missing or misconfigured.</strong>
+        <div class="mt-2">
+            Admin uploads (logos/backgrounds) are saved to <code>{{ $storageTarget }}</code> but are referenced via <code>/storage/...</code>.
+            Create the symlink on the server:
+        </div>
+        <pre class="mt-2 mb-0"><code>php artisan storage:link</code></pre>
+        <div class="mt-2 text-muted">
+            Current: <code>{{ $storageLink }}</code> {{ $storageLinkExists ? '(exists)' : '(missing)' }}.
+            Target writable: {{ $storageTargetWritable ? 'yes' : 'no' }}.
+        </div>
+        <div class="mt-2">
+            Note: this app also includes a Laravel fallback route for <code>/storage/*</code> when the symlink can’t be created.
+        </div>
+    </div>
+@endif
+
 <div class="row">
     <div class="col-md-6">
         <h5 class="mb-3">Provider Defaults</h5>

@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Invoice;
 use App\Services\AutomationEngine;
+use App\Services\Entitlements\PortalEntitlementService;
 use App\Services\WebhookService;
 
 class InvoiceObserver
@@ -45,6 +46,30 @@ class InvoiceObserver
         }
 
         if ($invoice->wasChanged('status') && $invoice->status === 'paid') {
+            // If invoice items include a sold feature/service, enable it for the client and
+            // sync portal user permissions accordingly.
+            try {
+                $client = $invoice->client;
+                if ($client) {
+                    $invoice->loadMissing('items');
+                    $features = $invoice->items
+                        ->pluck('feature_key')
+                        ->filter(fn ($k) => is_string($k) && $k !== '')
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    foreach ($features as $feature) {
+                        $client->enableFeature($feature);
+                    }
+
+                    app(PortalEntitlementService::class)->syncClientUsers($client);
+                }
+            } catch (\Throwable $e) {
+                // Never break invoice status updates because of entitlements.
+                \Log::warning('Entitlement sync failed for invoice '.$invoice->id.': '.$e->getMessage());
+            }
+
             app(AutomationEngine::class)->run('invoice.paid', [
                 'invoice' => $invoice->toArray(),
                 'client' => $invoice->client?->toArray(),
