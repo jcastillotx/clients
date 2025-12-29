@@ -78,6 +78,36 @@ class DocumentController extends Controller
     }
 
     /**
+     * Delete the document.
+     */
+    public function destroy(Document $document)
+    {
+        $this->authorizeDelete($document);
+
+        // Delete the physical file
+        if (Storage::disk('documents')->exists($document->file_path)) {
+            Storage::disk('documents')->delete($document->file_path);
+        }
+
+        // Delete thumbnail if exists
+        if ($document->thumbnail_path && Storage::disk('documents')->exists($document->thumbnail_path)) {
+            Storage::disk('documents')->delete($document->thumbnail_path);
+        }
+
+        ActivityLog::log(
+            "Deleted document: {$document->title}",
+            $document,
+            null,
+            'deleted',
+            'documents'
+        );
+
+        $document->delete();
+
+        return redirect()->route('documents.index')->with('success', 'Document deleted successfully.');
+    }
+
+    /**
      * Authorize that the current user can access this document.
      */
     protected function authorizeClientAccess(Document $document): void
@@ -98,5 +128,12 @@ class DocumentController extends Controller
         $user = auth()->user();
         abort_unless($user, 403);
         abort_unless($this->access->canDownload($user, $document), 403);
+    }
+
+    protected function authorizeDelete(Document $document): void
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+        abort_unless($this->access->canDelete($user, $document), 403);
     }
 }

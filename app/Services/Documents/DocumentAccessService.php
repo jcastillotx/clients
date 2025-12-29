@@ -59,6 +59,21 @@ class DocumentAccessService
         return $this->canDownload($user, $document);
     }
 
+    public function canDelete(User $user, Document $document): bool
+    {
+        if (! $user->isClient()) {
+            return true;
+        }
+
+        if ((int) $user->client_id !== (int) $document->client_id) {
+            return false;
+        }
+
+        $perm = $this->userPermission($user, $document);
+
+        return $perm ? (bool) $perm->can_delete : true; // default allow within client
+    }
+
     private function userPermission(User $user, Document $document): ?DocumentPermission
     {
         return DocumentPermission::query()

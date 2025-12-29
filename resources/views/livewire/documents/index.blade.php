@@ -92,6 +92,16 @@
                                     <a href="{{ route('documents.download', $document) }}" class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 sm:py-1.5 sm:text-xs">
                                         Download
                                     </a>
+                                    @if($document->userCanDelete ?? false)
+                                        <button
+                                            wire:click="deleteDocument({{ $document->id }})"
+                                            wire:confirm="Are you sure you want to delete this document? This action cannot be undone."
+                                            class="rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 sm:py-1.5 sm:text-xs"
+                                            title="Delete document"
+                                        >
+                                            Delete
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
