@@ -98,9 +98,17 @@ class RolePermissionSeeder extends Seeder
             $superAdminRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => $guard]);
             $superAdminRole->syncPermissions($allPermissions);
 
-            // admin - full access
+            // admin - delegated admin (restricted from critical system operations)
             $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => $guard]);
-            $adminRole->syncPermissions($allPermissions);
+            $adminPermissions = $allPermissions->reject(function ($permission) {
+                return in_array($permission->name, [
+                    'delete_user',        // Can manage users but not delete them
+                    'manage_permissions', // Cannot modify role permissions
+                    'view_settings',      // Cannot view system settings
+                    'update_settings',    // Cannot modify system settings
+                ]);
+            });
+            $adminRole->syncPermissions($adminPermissions);
 
             // staff - operational access
             $staffRole = Role::firstOrCreate(['name' => 'staff', 'guard_name' => $guard]);
@@ -150,16 +158,17 @@ class RolePermissionSeeder extends Seeder
                 'view reports',
             ]);
 
-            // Client role - limited access
+            // Client role - limited portal access
             $clientRole = Role::firstOrCreate(['name' => 'client', 'guard_name' => $guard]);
             $clientRole->syncPermissions([
                 'view_client',
                 'view_request',
                 'create_request',
                 'update_request',
-                'view_contract',
-                'view_invoice',
-                'process_payment',
+                'delete_request',  // Clients can delete their own requests (with reason tracking)
+                'view_contract',   // View, download, sign, and provide feedback on contracts
+                'view_invoice',    // View invoices and ask questions
+                'process_payment', // Process payments on invoices
                 'view_document',
                 'upload_document',
             ]);
