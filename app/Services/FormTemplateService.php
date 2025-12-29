@@ -26,7 +26,7 @@ class FormTemplateService
                 ['key' => 'kpis', 'type' => 'textarea', 'label' => 'What KPIs matter most? (e.g., leads, revenue, CAC, ROAS)', 'required' => true, 'options' => []],
                 ['key' => 'budget_range', 'type' => 'select', 'label' => 'Monthly marketing budget range', 'required' => false, 'options' => ['<$1k', '$1k–$3k', '$3k–$7k', '$7k–$15k', '$15k+']],
                 ['key' => 'timeline', 'type' => 'textarea', 'label' => 'Any deadlines or timeline constraints?', 'required' => false, 'options' => []],
-                ['key' => 'previous_efforts', 'type' => 'textarea', 'label' => 'What marketing have you tried before? What worked / didn't?', 'required' => false, 'options' => []],
+                ['key' => 'previous_efforts', 'type' => 'textarea', 'label' => 'What marketing have you tried before? What worked / did not work?', 'required' => false, 'options' => []],
                 ['key' => 'pain_points', 'type' => 'textarea', 'label' => 'What are your biggest pain points and challenges right now?', 'required' => true, 'options' => []],
             ],
         ],
