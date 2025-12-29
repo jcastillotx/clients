@@ -4,9 +4,14 @@
             <h5 class="mb-1">API Integrations Status</h5>
             <p class="text-muted mb-0">Test connections to external services and connect OAuth-based integrations.</p>
         </div>
-        <a href="{{ route('admin.settings.api') }}" class="btn btn-primary">
-            <i class="fas fa-key me-1"></i> Manage API Keys
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.ai.providers') }}" class="btn btn-primary">
+                <i class="fas fa-robot me-1"></i> AI Providers
+            </a>
+            <a href="{{ route('admin.settings.integrations') }}" class="btn btn-outline-primary">
+                <i class="fas fa-key me-1"></i> Integration Keys
+            </a>
+        </div>
     </div>
 
     <div class="row">
@@ -100,41 +105,23 @@
         <div class="col-12 mb-4">
             <h6 class="text-uppercase text-muted mb-3">AI Services</h6>
             <div class="row">
-                {{-- OpenAI --}}
+                {{-- AI Providers Card --}}
                 <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card h-100">
+                    <div class="card h-100 border-primary">
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-robot fa-2x text-success me-2"></i>
+                                <i class="fas fa-robot fa-2x text-primary me-2"></i>
                                 <div>
-                                    <h6 class="mb-0">OpenAI</h6>
-                                    <small class="text-muted">GPT models & embeddings</small>
+                                    <h6 class="mb-0">AI Providers</h6>
+                                    <small class="text-muted">OpenAI, Claude, Gemini, Grok & more</small>
                                 </div>
                             </div>
-                            @if(isset($integrationStatus['openai']))
-                                <div class="mb-2">
-                                    @if($integrationStatus['openai']['configured'])
-                                        <span class="badge bg-info">Configured</span>
-                                    @else
-                                        <span class="badge bg-secondary">Not Configured</span>
-                                    @endif
-                                    @if($integrationStatus['openai']['connected'])
-                                        <span class="badge bg-success">Connected</span>
-                                    @endif
-                                </div>
-                                @if($integrationStatus['openai']['message'])
-                                    <small class="{{ $integrationStatus['openai']['connected'] ? 'text-success' : 'text-danger' }}">
-                                        {{ $integrationStatus['openai']['message'] }}
-                                    </small>
-                                @endif
-                                <div class="mt-2">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" wire:click="testIntegration('openai')" wire:loading.attr="disabled">
-                                        <span wire:loading.remove wire:target="testIntegration('openai')">Test Connection</span>
-                                        <span wire:loading wire:target="testIntegration('openai')">Testing...</span>
-                                    </button>
-                                    <a href="{{ route('admin.ai.providers') }}" class="btn btn-sm btn-outline-secondary">Manage</a>
-                                </div>
-                            @endif
+                            <p class="text-muted small mb-3">
+                                Manage all AI provider configurations including API keys, model selection, cost tracking, and priority ordering.
+                            </p>
+                            <a href="{{ route('admin.ai.providers') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-cog me-1"></i> Manage AI Providers
+                            </a>
                         </div>
                     </div>
                 </div>

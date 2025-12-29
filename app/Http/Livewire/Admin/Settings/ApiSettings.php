@@ -7,12 +7,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 
+/**
+ * Integration Settings - API keys for Brand Monitoring and Social Media.
+ *
+ * Note: AI provider configuration has been moved to the dedicated AI Providers
+ * management page (Admin > AI > Providers) which provides cost tracking,
+ * priority ordering, multiple model configs, and status management.
+ */
 class ApiSettings extends Component
 {
-    public string $tab = 'ai';
-
-    // AI Provider Keys
-    public array $ai = [];
+    public string $tab = 'brand_monitoring';
 
     // Brand Monitoring API Keys
     public array $brandMonitoring = [];
@@ -29,48 +33,6 @@ class ApiSettings extends Component
     public function mount(SettingsService $settings): void
     {
         abort_unless(Auth::user()?->can('manage settings'), 403);
-
-        // Load AI provider settings
-        $aiDefaults = [
-            'api.ai.openai.api_key' => '',
-            'api.ai.openai.default_model' => 'gpt-4o-mini',
-            'api.ai.claude.api_key' => '',
-            'api.ai.claude.default_model' => 'claude-3-5-sonnet-latest',
-            'api.ai.gemini.api_key' => '',
-            'api.ai.gemini.default_model' => 'gemini-1.5-flash',
-            'api.ai.grok.api_key' => '',
-            'api.ai.grok.default_model' => 'grok-2-latest',
-            'api.ai.perplexity.api_key' => '',
-            'api.ai.perplexity.default_model' => 'sonar',
-            'api.ai.copilot.api_key' => '',
-            'api.ai.copilot.endpoint' => '',
-            'api.ai.copilot.deployment' => 'gpt-4',
-            'api.ai.openrouter.api_key' => '',
-            'api.ai.openrouter.default_model' => 'openai/gpt-4o-mini',
-            'api.ai.asksage.api_key' => '',
-            'api.ai.default_provider' => 'openai',
-        ];
-        $aiValues = $settings->getMany($aiDefaults);
-
-        $this->ai = [
-            'openai_api_key' => $aiValues['api.ai.openai.api_key'],
-            'openai_default_model' => $aiValues['api.ai.openai.default_model'],
-            'claude_api_key' => $aiValues['api.ai.claude.api_key'],
-            'claude_default_model' => $aiValues['api.ai.claude.default_model'],
-            'gemini_api_key' => $aiValues['api.ai.gemini.api_key'],
-            'gemini_default_model' => $aiValues['api.ai.gemini.default_model'],
-            'grok_api_key' => $aiValues['api.ai.grok.api_key'],
-            'grok_default_model' => $aiValues['api.ai.grok.default_model'],
-            'perplexity_api_key' => $aiValues['api.ai.perplexity.api_key'],
-            'perplexity_default_model' => $aiValues['api.ai.perplexity.default_model'],
-            'copilot_api_key' => $aiValues['api.ai.copilot.api_key'],
-            'copilot_endpoint' => $aiValues['api.ai.copilot.endpoint'],
-            'copilot_deployment' => $aiValues['api.ai.copilot.deployment'],
-            'openrouter_api_key' => $aiValues['api.ai.openrouter.api_key'],
-            'openrouter_default_model' => $aiValues['api.ai.openrouter.default_model'],
-            'asksage_api_key' => $aiValues['api.ai.asksage.api_key'],
-            'default_provider' => $aiValues['api.ai.default_provider'],
-        ];
 
         // Load Brand Monitoring settings
         $bmDefaults = [
@@ -290,42 +252,6 @@ class ApiSettings extends Component
         }
     }
 
-    public function saveAiSettings(SettingsService $settings): void
-    {
-        $encryptedKeys = [
-            'api.ai.openai.api_key',
-            'api.ai.claude.api_key',
-            'api.ai.gemini.api_key',
-            'api.ai.grok.api_key',
-            'api.ai.perplexity.api_key',
-            'api.ai.copilot.api_key',
-            'api.ai.openrouter.api_key',
-            'api.ai.asksage.api_key',
-        ];
-
-        $settings->setMany([
-            'api.ai.openai.api_key' => $this->ai['openai_api_key'] ?? '',
-            'api.ai.openai.default_model' => $this->ai['openai_default_model'] ?? 'gpt-4o-mini',
-            'api.ai.claude.api_key' => $this->ai['claude_api_key'] ?? '',
-            'api.ai.claude.default_model' => $this->ai['claude_default_model'] ?? 'claude-3-5-sonnet-latest',
-            'api.ai.gemini.api_key' => $this->ai['gemini_api_key'] ?? '',
-            'api.ai.gemini.default_model' => $this->ai['gemini_default_model'] ?? 'gemini-1.5-flash',
-            'api.ai.grok.api_key' => $this->ai['grok_api_key'] ?? '',
-            'api.ai.grok.default_model' => $this->ai['grok_default_model'] ?? 'grok-2-latest',
-            'api.ai.perplexity.api_key' => $this->ai['perplexity_api_key'] ?? '',
-            'api.ai.perplexity.default_model' => $this->ai['perplexity_default_model'] ?? 'sonar',
-            'api.ai.copilot.api_key' => $this->ai['copilot_api_key'] ?? '',
-            'api.ai.copilot.endpoint' => $this->ai['copilot_endpoint'] ?? '',
-            'api.ai.copilot.deployment' => $this->ai['copilot_deployment'] ?? 'gpt-4',
-            'api.ai.openrouter.api_key' => $this->ai['openrouter_api_key'] ?? '',
-            'api.ai.openrouter.default_model' => $this->ai['openrouter_default_model'] ?? 'openai/gpt-4o-mini',
-            'api.ai.asksage.api_key' => $this->ai['asksage_api_key'] ?? '',
-            'api.ai.default_provider' => $this->ai['default_provider'] ?? 'openai',
-        ], 'api.ai', $encryptedKeys);
-
-        session()->flash('success', 'AI settings saved successfully.');
-    }
-
     public function saveBrandMonitoringSettings(SettingsService $settings): void
     {
         $encryptedKeys = [
@@ -520,13 +446,6 @@ class ApiSettings extends Component
 
         try {
             $result = match ($provider) {
-                'openai' => $this->testOpenAI(),
-                'claude' => $this->testClaude(),
-                'gemini' => $this->testGemini(),
-                'grok' => $this->testGrok(),
-                'perplexity' => $this->testPerplexity(),
-                'copilot' => $this->testCopilot(),
-                'openrouter' => $this->testOpenRouter(),
                 'newsapi' => $this->testNewsAPI(),
                 'youtube' => $this->testYouTube(),
                 'yelp' => $this->testYelp(),
@@ -551,144 +470,6 @@ class ApiSettings extends Component
                 'message' => 'Error: ' . $e->getMessage(),
             ];
         }
-    }
-
-    protected function testOpenAI(): array
-    {
-        $apiKey = $this->ai['openai_api_key'] ?? '';
-        if (empty($apiKey)) {
-            return ['success' => false, 'message' => 'API key not configured'];
-        }
-
-        $response = Http::withToken($apiKey)
-            ->timeout(10)
-            ->get('https://api.openai.com/v1/models');
-
-        if ($response->successful()) {
-            return ['success' => true, 'message' => 'Connected successfully'];
-        }
-
-        return ['success' => false, 'message' => 'Connection failed: ' . $response->status()];
-    }
-
-    protected function testClaude(): array
-    {
-        $apiKey = $this->ai['claude_api_key'] ?? '';
-        if (empty($apiKey)) {
-            return ['success' => false, 'message' => 'API key not configured'];
-        }
-
-        $response = Http::withHeaders([
-            'x-api-key' => $apiKey,
-            'anthropic-version' => '2023-06-01',
-            'Content-Type' => 'application/json',
-        ])->timeout(15)->post('https://api.anthropic.com/v1/messages', [
-            'model' => 'claude-3-haiku-20240307',
-            'max_tokens' => 10,
-            'messages' => [['role' => 'user', 'content' => 'Hi']],
-        ]);
-
-        if ($response->successful()) {
-            return ['success' => true, 'message' => 'Connected successfully'];
-        }
-
-        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('error.message') ?? $response->status())];
-    }
-
-    protected function testGemini(): array
-    {
-        $apiKey = $this->ai['gemini_api_key'] ?? '';
-        if (empty($apiKey)) {
-            return ['success' => false, 'message' => 'API key not configured'];
-        }
-
-        $response = Http::timeout(10)
-            ->get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
-
-        if ($response->successful()) {
-            return ['success' => true, 'message' => 'Connected successfully'];
-        }
-
-        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('error.message') ?? $response->status())];
-    }
-
-    protected function testGrok(): array
-    {
-        $apiKey = $this->ai['grok_api_key'] ?? '';
-        if (empty($apiKey)) {
-            return ['success' => false, 'message' => 'API key not configured'];
-        }
-
-        $response = Http::withToken($apiKey)
-            ->timeout(10)
-            ->get('https://api.x.ai/v1/models');
-
-        if ($response->successful()) {
-            return ['success' => true, 'message' => 'Connected successfully'];
-        }
-
-        return ['success' => false, 'message' => 'Connection failed: ' . $response->status()];
-    }
-
-    protected function testPerplexity(): array
-    {
-        $apiKey = $this->ai['perplexity_api_key'] ?? '';
-        if (empty($apiKey)) {
-            return ['success' => false, 'message' => 'API key not configured'];
-        }
-
-        $response = Http::withToken($apiKey)
-            ->timeout(15)
-            ->post('https://api.perplexity.ai/chat/completions', [
-                'model' => 'sonar',
-                'messages' => [['role' => 'user', 'content' => 'Hi']],
-                'max_tokens' => 10,
-            ]);
-
-        if ($response->successful()) {
-            return ['success' => true, 'message' => 'Connected successfully'];
-        }
-
-        return ['success' => false, 'message' => 'Connection failed: ' . $response->status()];
-    }
-
-    protected function testCopilot(): array
-    {
-        $apiKey = $this->ai['copilot_api_key'] ?? '';
-        $endpoint = $this->ai['copilot_endpoint'] ?? '';
-
-        if (empty($apiKey) || empty($endpoint)) {
-            return ['success' => false, 'message' => 'API key or endpoint not configured'];
-        }
-
-        $deployment = $this->ai['copilot_deployment'] ?? 'gpt-4';
-        $response = Http::withHeaders(['api-key' => $apiKey])
-            ->timeout(10)
-            ->get("{$endpoint}/openai/deployments?api-version=2024-02-15-preview");
-
-        if ($response->successful()) {
-            return ['success' => true, 'message' => 'Connected successfully'];
-        }
-
-        return ['success' => false, 'message' => 'Connection failed: ' . $response->status()];
-    }
-
-    protected function testOpenRouter(): array
-    {
-        $apiKey = $this->ai['openrouter_api_key'] ?? '';
-        if (empty($apiKey)) {
-            return ['success' => false, 'message' => 'API key not configured'];
-        }
-
-        $response = Http::withToken($apiKey)
-            ->timeout(10)
-            ->get('https://openrouter.ai/api/v1/models');
-
-        if ($response->successful()) {
-            return ['success' => true, 'message' => 'Connected successfully'];
-        }
-
-        return ['success' => false, 'message' => 'Connection failed: ' . $response->status()];
     }
 
     protected function testNewsAPI(): array
