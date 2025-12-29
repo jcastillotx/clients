@@ -250,7 +250,28 @@ class User extends Authenticatable
      */
     public function isStaff(): bool
     {
-        $staffRoles = ['staff', 'project_manager', 'developer', 'designer', 'copywriter'];
+        $staffRoles = [
+            'staff', 'project_manager', 'developer', 'designer', 'copywriter',
+            // Strategy & Business Development
+            'marketing_director', 'account_manager', 'business_development_manager',
+            // Creative Team
+            'creative_director', 'graphic_designer', 'videographer_photographer',
+            // Digital Marketing Team
+            'digital_marketing_manager', 'seo_specialist', 'ppc_specialist',
+            'social_media_manager', 'email_marketing_specialist',
+            // Web Development & Technology
+            'crm_manager',
+            // Analytics & Insights
+            'marketing_analyst', 'data_scientist',
+            // Client Services & Support
+            'client_services_manager', 'customer_support_manager',
+            // Operations & Administration
+            'hr_manager', 'administrative_assistant',
+            // Finance & Legal
+            'bookkeeper', 'legal_advisor',
+            // Optional Roles
+            'pr_manager', 'event_planner', 'influencer_marketing_manager',
+        ];
         return $this->hasAnyRole($staffRoles) || ($this->client_id === null && ! $this->hasRole('client'));
     }
 
@@ -280,20 +301,44 @@ class User extends Authenticatable
 
     /**
      * Check if user can assign service requests.
-     * Super admins, admins, and project managers can assign.
+     * Super admins, admins, directors, and managers with assign permissions can assign.
      */
     public function canAssignRequests(): bool
     {
-        return $this->hasAnyRole(['super_admin', 'admin', 'project_manager']);
+        return $this->hasAnyRole([
+            'super_admin', 'admin', 'project_manager',
+            'marketing_director', 'creative_director', 'digital_marketing_manager',
+            'client_services_manager',
+        ]);
     }
 
     /**
      * Check if user is an assignable staff member.
-     * Staff, developers, designers, and copywriters can be assigned to requests.
+     * All staff roles can be assigned to requests.
      */
     public function isAssignableStaff(): bool
     {
-        return $this->hasAnyRole(['staff', 'developer', 'designer', 'copywriter']);
+        $assignableRoles = [
+            'staff', 'developer', 'designer', 'copywriter',
+            // Strategy & Business Development
+            'marketing_director', 'account_manager', 'business_development_manager',
+            // Creative Team
+            'creative_director', 'graphic_designer', 'videographer_photographer',
+            // Digital Marketing Team
+            'digital_marketing_manager', 'seo_specialist', 'ppc_specialist',
+            'social_media_manager', 'email_marketing_specialist',
+            // Web Development & Technology
+            'crm_manager',
+            // Analytics & Insights
+            'marketing_analyst', 'data_scientist',
+            // Client Services & Support
+            'client_services_manager', 'customer_support_manager',
+            // Operations & Administration (project_manager excluded as they assign, not get assigned)
+            'administrative_assistant',
+            // Optional Roles
+            'pr_manager', 'event_planner', 'influencer_marketing_manager',
+        ];
+        return $this->hasAnyRole($assignableRoles);
     }
 
     public function isSuspended(): bool

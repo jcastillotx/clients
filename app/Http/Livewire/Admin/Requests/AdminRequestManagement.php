@@ -308,8 +308,18 @@ class AdminRequestManagement extends Component
 
     public function getStaffOptionsProperty(): array
     {
-        // Assignable staff: staff roles that can be assigned to requests
-        $assignableRoles = ['staff', 'developer', 'designer', 'copywriter'];
+        // Assignable staff: all staff roles that can be assigned to requests
+        $assignableRoles = [
+            'staff', 'developer', 'designer', 'copywriter',
+            'marketing_director', 'account_manager', 'business_development_manager',
+            'creative_director', 'graphic_designer', 'videographer_photographer',
+            'digital_marketing_manager', 'seo_specialist', 'ppc_specialist',
+            'social_media_manager', 'email_marketing_specialist',
+            'crm_manager', 'marketing_analyst', 'data_scientist',
+            'client_services_manager', 'customer_support_manager',
+            'administrative_assistant',
+            'pr_manager', 'event_planner', 'influencer_marketing_manager',
+        ];
         return User::query()
             ->role($assignableRoles)
             ->orderBy('name')
