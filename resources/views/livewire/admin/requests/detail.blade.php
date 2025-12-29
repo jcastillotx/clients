@@ -160,22 +160,36 @@
                     <div class="card-title">Assignment</div>
                 </div>
                 <div class="card-body">
-                    <div class="mb-2">
-                        <label class="form-label">Assigned to</label>
-                        <select class="form-select" wire:model.live="assigned_to">
-                            <option value="">Unassigned</option>
-                            @foreach($staffOptions as $u)
-                                <option value="{{ $u->id }}">{{ $u->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('assigned_to') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Due date</label>
-                        <input type="date" class="form-control" wire:model.live="due_date">
-                        @error('due_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                    </div>
-                    <button class="btn btn-primary" wire:click="saveAssignment" wire:loading.attr="disabled">Save</button>
+                    @if($canAssign)
+                        <div class="mb-2">
+                            <label class="form-label">Assigned to</label>
+                            <select class="form-select" wire:model.live="assigned_to">
+                                <option value="">Unassigned</option>
+                                @foreach($staffOptions as $u)
+                                    <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('assigned_to') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Due date</label>
+                            <input type="date" class="form-control" wire:model.live="due_date">
+                            @error('due_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        </div>
+                        <button class="btn btn-primary" wire:click="saveAssignment" wire:loading.attr="disabled">Save</button>
+                    @else
+                        <div class="mb-2">
+                            <label class="form-label text-muted">Assigned to</label>
+                            <div class="text-body">{{ $request->assignee?->name ?? 'Unassigned' }}</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-muted">Due date</label>
+                            <div class="text-body">{{ $request->due_date?->format('Y-m-d') ?? '—' }}</div>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="fas fa-lock me-1"></i> Only admins and project managers can assign requests.
+                        </div>
+                    @endif
                 </div>
             </div>
 
