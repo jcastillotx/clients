@@ -82,7 +82,7 @@ class UserCreate extends Component
 
     protected function permissionGroups(): array
     {
-        $all = Permission::query()->orderBy('name')->pluck('name')->all();
+        $all = Permission::query()->where('guard_name', 'web')->orderBy('name')->pluck('name')->all();
 
         $groups = [
             'Clients' => [],
