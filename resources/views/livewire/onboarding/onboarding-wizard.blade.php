@@ -113,9 +113,10 @@
                                             </select>
                                         @elseif($type === 'multiselect')
                                             <div class="flex flex-wrap gap-2">
-                                                @foreach($opts as $o)
-                                                    <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
-                                                        <input type="checkbox" wire:model="answers.{{ $key }}" value="{{ $o }}" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                                @foreach($opts as $idx => $o)
+                                                    @php $inputId = $key . '_' . $idx; @endphp
+                                                    <label for="{{ $inputId }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors">
+                                                        <input type="checkbox" id="{{ $inputId }}" wire:model="answers.{{ $key }}" value="{{ $o }}" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
                                                         {{ $o }}
                                                     </label>
                                                 @endforeach
