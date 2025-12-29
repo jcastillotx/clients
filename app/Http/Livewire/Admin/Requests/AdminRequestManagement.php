@@ -189,6 +189,12 @@ class AdminRequestManagement extends Component
 
     public function applyBulkAssign(): void
     {
+        // Check if user has permission to assign requests
+        if (! auth()->user()->can('assign_request')) {
+            session()->flash('error', 'You do not have permission to assign requests.');
+            return;
+        }
+
         if (empty($this->selected) || ! $this->bulkAssignedTo) {
             return;
         }
@@ -205,6 +211,12 @@ class AdminRequestManagement extends Component
 
     public function openAssign(int $requestId): void
     {
+        // Check if user has permission to assign requests
+        if (! auth()->user()->can('assign_request')) {
+            session()->flash('error', 'You do not have permission to assign requests.');
+            return;
+        }
+
         $req = ServiceRequest::query()->findOrFail($requestId);
         $this->assignRequestId = $req->id;
         $this->assignToUserId = $req->assigned_to;
@@ -216,6 +228,12 @@ class AdminRequestManagement extends Component
 
     public function saveAssignment(): void
     {
+        // Check if user has permission to assign requests
+        if (! auth()->user()->can('assign_request')) {
+            session()->flash('error', 'You do not have permission to assign requests.');
+            return;
+        }
+
         if (! $this->assignRequestId) {
             return;
         }
@@ -290,8 +308,10 @@ class AdminRequestManagement extends Component
 
     public function getStaffOptionsProperty(): array
     {
+        // Assignable staff: staff roles that can be assigned to requests
+        $assignableRoles = ['staff', 'developer', 'designer', 'copywriter'];
         return User::query()
-            ->role(['super_admin', 'admin', 'staff'])
+            ->role($assignableRoles)
             ->orderBy('name')
             ->get(['id', 'name', 'email'])
             ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email])
@@ -303,6 +323,9 @@ class AdminRequestManagement extends Component
         $statuses = config('client-portal.request_statuses', []);
         $types = config('client-portal.request_types', []);
         $priorities = config('client-portal.request_priorities', []);
+
+        // Check if current user can assign requests
+        $canAssign = auth()->user()->can('assign_request');
 
         // Status summary counts for dashboard cards
         $statusCounts = ServiceRequest::query()
@@ -350,6 +373,7 @@ class AdminRequestManagement extends Component
                 'priorities' => $priorities,
                 'clientOptions' => $this->clientOptions,
                 'staffOptions' => $this->staffOptions,
+                'canAssign' => $canAssign,
             ])->layout('layouts.admin', ['title' => 'Requests']);
         }
 
@@ -364,6 +388,7 @@ class AdminRequestManagement extends Component
             'priorityCounts' => $priorityCounts,
             'overdueCount' => $overdueCount,
             'unassignedCount' => $unassignedCount,
+            'canAssign' => $canAssign,
         ])->layout('layouts.admin', ['title' => 'Requests']);
     }
 }

@@ -84,6 +84,12 @@ class AdminRequestDetail extends Component
 
     public function saveAssignment(): void
     {
+        // Check if user has permission to assign requests
+        if (! auth()->user()->can('assign_request')) {
+            session()->flash('error', 'You do not have permission to assign requests.');
+            return;
+        }
+
         $this->validateOnly('assigned_to');
         $this->validateOnly('due_date');
 
@@ -273,7 +279,16 @@ class AdminRequestDetail extends Component
             ->limit(10)
             ->get();
 
-        $staffOptions = User::query()->role(['super_admin', 'admin', 'staff'])->orderBy('name')->get(['id', 'name']);
+        // Assignable staff: staff roles that can be assigned to requests
+        // Includes general staff and specialized roles (developer, designer, copywriter)
+        $assignableRoles = ['staff', 'developer', 'designer', 'copywriter'];
+        $staffOptions = User::query()
+            ->role($assignableRoles)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Check if current user can assign requests
+        $canAssign = auth()->user()->can('assign_request');
 
         return view('livewire.admin.requests.detail', [
             'request' => $this->request->loadMissing(['client', 'creator', 'assignee', 'attachments.uploader']),
@@ -283,6 +298,7 @@ class AdminRequestDetail extends Component
             'timeEntries' => $timeEntries,
             'staffOptions' => $staffOptions,
             'relatedDocuments' => $relatedDocuments,
+            'canAssign' => $canAssign,
         ])->layout('layouts.admin', ['title' => 'Request #'.$this->request->id]);
     }
 }

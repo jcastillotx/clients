@@ -246,10 +246,12 @@ class User extends Authenticatable
 
     /**
      * Check if user is an admin/staff.
+     * Includes general staff, project managers, and specialized staff roles.
      */
     public function isStaff(): bool
     {
-        return $this->hasRole('staff') || ($this->client_id === null && ! $this->hasRole('client'));
+        $staffRoles = ['staff', 'project_manager', 'developer', 'designer', 'copywriter'];
+        return $this->hasAnyRole($staffRoles) || ($this->client_id === null && ! $this->hasRole('client'));
     }
 
     /**
@@ -266,6 +268,32 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->hasRole('super_admin');
+    }
+
+    /**
+     * Check if user is a project manager.
+     */
+    public function isProjectManager(): bool
+    {
+        return $this->hasRole('project_manager');
+    }
+
+    /**
+     * Check if user can assign service requests.
+     * Super admins, admins, and project managers can assign.
+     */
+    public function canAssignRequests(): bool
+    {
+        return $this->hasAnyRole(['super_admin', 'admin', 'project_manager']);
+    }
+
+    /**
+     * Check if user is an assignable staff member.
+     * Staff, developers, designers, and copywriters can be assigned to requests.
+     */
+    public function isAssignableStaff(): bool
+    {
+        return $this->hasAnyRole(['staff', 'developer', 'designer', 'copywriter']);
     }
 
     public function isSuspended(): bool

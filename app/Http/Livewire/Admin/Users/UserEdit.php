@@ -128,9 +128,11 @@ class UserEdit extends Component
     protected function isDowngrade(string $fromRole, string $toRole): bool
     {
         $rank = fn (string $r) => match ($r) {
-            'super_admin' => 4,
-            'admin' => 3,
-            'staff' => 2,
+            'super_admin' => 6,
+            'admin' => 5,
+            'project_manager' => 4,
+            'staff' => 3,
+            'developer', 'designer', 'copywriter' => 2, // Specialized staff roles
             'client' => 1,
             default => 2,
         };
@@ -200,8 +202,9 @@ class UserEdit extends Component
             'manual_permissions' => array_values(array_unique($this->directPermissions)),
         ]);
 
-        // Staff: keep client assignments.
-        if ($data['role'] === 'staff') {
+        // Staff and staff sub-roles: keep client assignments.
+        $staffRoles = ['staff', 'project_manager', 'developer', 'designer', 'copywriter'];
+        if (in_array($data['role'], $staffRoles, true)) {
             $this->user->syncAssignedClients($this->assignedClientIds, $this->staffAssignmentRole);
         } else {
             $this->user->syncAssignedClients([], $this->staffAssignmentRole);

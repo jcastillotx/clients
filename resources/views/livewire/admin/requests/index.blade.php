@@ -210,6 +210,7 @@
                     <button class="btn btn-outline-primary" wire:click="applyBulkStatus">Apply</button>
                 </div>
 
+                @if($canAssign)
                 <div class="input-group">
                     <span class="input-group-text">Assign</span>
                     <select class="form-select" wire:model="bulkAssignedTo">
@@ -220,6 +221,7 @@
                     </select>
                     <button class="btn btn-outline-primary" wire:click="applyBulkAssign">Apply</button>
                 </div>
+                @endif
 
                 <div class="input-group">
                     <span class="input-group-text">Priority</span>
@@ -276,7 +278,9 @@
                         </td>
                         <td class="text-end">
                             <a href="{{ route('admin.requests.show', $r) }}" class="btn btn-sm btn-outline-primary">Open</a>
+                            @if($canAssign)
                             <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="openAssign({{ $r->id }})">Assign</button>
+                            @endif
                         </td>
                     </tr>
                 @empty
