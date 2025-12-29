@@ -48,8 +48,15 @@
                     </div>
                 @elseif(($email['provider'] ?? '') === 'brevo')
                     <div class="callout callout-primary">
-                        <h5><i class="fas fa-paper-plane mr-1"></i> Brevo (Sendinblue)</h5>
-                        <p class="mb-0">Transactional email service with great deliverability. Get your SMTP credentials from your <a href="https://app.brevo.com/settings/keys/smtp" target="_blank">Brevo Dashboard</a>.</p>
+                        <h5><i class="fas fa-paper-plane mr-1"></i> Brevo (Sendinblue) SMTP Setup</h5>
+                        <p class="mb-2">Follow these steps to set up Brevo SMTP:</p>
+                        <ol class="mb-2 pl-3">
+                            <li>Go to <a href="https://app.brevo.com/settings/keys/smtp" target="_blank">Settings > SMTP & API > SMTP</a> in your Brevo dashboard</li>
+                            <li>Generate a new <strong>SMTP Key</strong> (if you don't have one)</li>
+                            <li>Use your <strong>Brevo login email</strong> as the Username below</li>
+                            <li>Use the <strong>SMTP Key</strong> (starts with <code>xkeysib-</code>) as the Password</li>
+                        </ol>
+                        <p class="mb-0 text-warning"><i class="fas fa-exclamation-triangle mr-1"></i> <strong>Important:</strong> Do NOT use your Brevo account password or REST API key. Only the SMTP Key will work.</p>
                     </div>
                 @endif
             </div>
@@ -133,6 +140,9 @@
                                 </div>
                                 <input type="password" wire:model="email.smtp_password" class="form-control" placeholder="••••••••">
                             </div>
+                            @if(($email['provider'] ?? '') === 'brevo')
+                                <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Must start with <code>xkeysib-</code></small>
+                            @endif
                         </div>
                     </div>
                 </div>
