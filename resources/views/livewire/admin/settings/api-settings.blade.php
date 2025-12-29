@@ -28,6 +28,11 @@
                         </button>
                     </li>
                     <li class="nav-item">
+                        <button type="button" class="nav-link {{ $tab === 'seo' ? 'active' : '' }}" wire:click="setTab('seo')">
+                            <i class="fas fa-search me-1"></i> SEO Integrations
+                        </button>
+                    </li>
+                    <li class="nav-item">
                         <button type="button" class="nav-link {{ $tab === 'social' ? 'active' : '' }}" wire:click="setTab('social')">
                             <i class="fas fa-share-alt me-1"></i> Social Media
                         </button>
@@ -38,6 +43,11 @@
                 {{-- Brand Monitoring Tab --}}
                 @if($tab === 'brand_monitoring')
                     @include('livewire.admin.settings.api-settings-brand')
+                @endif
+
+                {{-- SEO Integrations Tab --}}
+                @if($tab === 'seo')
+                    @include('livewire.admin.settings.api-settings-seo')
                 @endif
 
                 {{-- Social Media Tab --}}

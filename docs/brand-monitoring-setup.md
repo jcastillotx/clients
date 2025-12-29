@@ -1,6 +1,6 @@
-# Brand Monitoring Setup Guide - Free APIs
+# Brand Monitoring Setup Guide - Free & Commercial APIs
 
-This guide shows you how to set up comprehensive brand monitoring using **FREE API tiers** that rival expensive platforms like Brandwatch ($800-2000/month) or Mention ($300-600/month).
+This guide shows you how to set up comprehensive brand monitoring using a **tiered approach**: FREE API tiers first, then commercial APIs when needed. Our free tier rivals expensive platforms like Brandwatch ($800-2000/month) or Mention ($300-600/month).
 
 ## 💰 Cost Comparison
 
@@ -342,10 +342,65 @@ $sentiment->analyzePendingSentiments();
 
 ---
 
+## 🏢 Commercial API Options (When You Need More)
+
+If free APIs don't meet your needs, we support enterprise platforms:
+
+### When to Consider Commercial APIs
+
+| Scenario | Recommendation |
+|----------|----------------|
+| 1-10 clients | Stay with free APIs |
+| 10-50 clients | Consider Mention ($29-299/mo) or Brand24 ($49-399/mo) |
+| 50+ clients | Enterprise: Brandwatch, Meltwater, Talkwalker |
+| Real-time crisis monitoring | Commercial APIs recommended |
+| Influencer identification | Mention or Brand24 |
+| Image recognition | Talkwalker or Brandwatch |
+
+### Supported Commercial Platforms
+
+| Platform | Pricing | Best For |
+|----------|---------|----------|
+| **Mention** | From $29/mo | SMBs, real-time alerts |
+| **Brand24** | From $49/mo | Influence scoring, reach |
+| **Sprout Social** | From $249/mo | Social + publishing |
+| **Brandwatch** | Enterprise ($800+/mo) | Full consumer intelligence |
+| **Meltwater** | Enterprise | Media + social monitoring |
+| **Talkwalker** | Enterprise ($9,600+/yr) | Image recognition, virality |
+
+### Enabling Commercial APIs
+
+1. Navigate to **Admin → Settings → API Configuration → Brand Monitoring**
+2. Scroll to **Enterprise Brand Monitoring Platforms** section
+3. Enter your API credentials
+4. Enable the platform
+
+The system automatically integrates commercial data with your existing free API data.
+
+---
+
+## 🔍 SEO Integrations
+
+We also provide SEO tool integrations under **Admin → Settings → API Configuration → SEO Integrations**:
+
+### Free/Low-Cost SEO Tools
+- Google Search Console (free - your data)
+- Google PageSpeed Insights (free - 25k/day)
+- Bing Webmaster (free)
+- DataForSEO (from $50/mo - pay-per-use)
+- SerpApi (from $50/mo)
+
+### Commercial SEO Tools
+- Moz Pro (from $99/mo)
+- Ahrefs (from $99/mo, API from $399/mo)
+- SEMrush (from $129.95/mo)
+
+---
+
 ## 🎉 Success!
 
 You now have **enterprise-level brand monitoring** for the cost of a coffee per month!
 
 **Questions?** Check logs: `storage/logs/laravel.log`
 
-**Need help?** Review service files in `app/Services/BrandMonitoring/`
+**Need help?** Review service files in `app/Services/BrandMonitoring/` and `app/Services/SEO/`
