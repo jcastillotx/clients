@@ -41,6 +41,7 @@ class ClientDetail extends Component
     public function saveNotes(): void
     {
         $this->client->update(['notes' => $this->notes]);
+        $this->client->refresh();
         session()->flash('success', 'Notes saved.');
     }
 

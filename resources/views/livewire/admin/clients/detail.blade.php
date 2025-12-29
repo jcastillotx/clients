@@ -297,6 +297,15 @@
         @endif
 
         @if($tab === 'notes')
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    {{ session('success') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
             <div class="mb-2 text-muted">Internal notes are only visible to admins.</div>
             <textarea class="form-control" rows="6" wire:model.live.debounce.400ms="notes"></textarea>
             <div class="mt-2 d-flex justify-content-end">
