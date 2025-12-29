@@ -702,18 +702,27 @@ class SystemSettings extends Component
     public function saveEmail(SettingsService $settings): void
     {
         $provider = $this->email['provider'] ?? 'sendmail';
-        
+
         // Auto-set SMTP host/port for known providers
         $providerDefaults = [
             'gmail' => ['host' => 'smtp.gmail.com', 'port' => 587, 'encryption' => 'tls'],
             'outlook' => ['host' => 'smtp.office365.com', 'port' => 587, 'encryption' => 'tls'],
             'brevo' => ['host' => 'smtp-relay.brevo.com', 'port' => 587, 'encryption' => 'tls'],
         ];
-        
+
         if (isset($providerDefaults[$provider])) {
             $this->email['smtp_host'] = $providerDefaults[$provider]['host'];
             $this->email['smtp_port'] = $providerDefaults[$provider]['port'];
             $this->email['smtp_encryption'] = $providerDefaults[$provider]['encryption'];
+        }
+
+        // Validate Brevo credentials
+        if ($provider === 'brevo' && !empty($this->email['smtp_password'])) {
+            $password = $this->email['smtp_password'];
+            if (!str_starts_with($password, 'xkeysib-')) {
+                session()->flash('error', 'Brevo SMTP Key must start with "xkeysib-". Please use your SMTP API Key, not your account password. Generate one at: Settings > SMTP & API > SMTP in your Brevo dashboard.');
+                return;
+            }
         }
         
         $encrypted = [
@@ -816,12 +825,21 @@ class SystemSettings extends Component
             $errorMsg = $e->getMessage();
             if (str_contains($errorMsg, 'Authentication failed')) {
                 $errorMsg .= "\n\nDebug Info:\n- Host: {$host}\n- Port: {$port}\n- Username: {$username}\n- Password length: " . strlen($password) . " chars";
-                
+
                 if ($provider === 'brevo') {
-                    $errorMsg .= "\n\n💡 For Brevo: Make sure you're using the SMTP API Key (starts with 'xkeysib-'), not your account password.";
+                    $startsWithXkeysib = str_starts_with($password, 'xkeysib-');
+                    if (!$startsWithXkeysib) {
+                        $errorMsg .= "\n\n❌ Your SMTP Key doesn't start with 'xkeysib-'. You're likely using the wrong credential.";
+                    }
+                    $errorMsg .= "\n\n💡 For Brevo SMTP:\n";
+                    $errorMsg .= "1. Go to Settings > SMTP & API > SMTP in your Brevo dashboard\n";
+                    $errorMsg .= "2. Generate a new SMTP Key (if you don't have one)\n";
+                    $errorMsg .= "3. Use your Brevo login email as 'Username'\n";
+                    $errorMsg .= "4. Use the SMTP Key (starts with 'xkeysib-') as 'Password'\n";
+                    $errorMsg .= "5. Do NOT use your Brevo account password or API keys";
                 }
             }
-            
+
             session()->flash('error', 'Failed to send test email: ' . $errorMsg);
         }
     }
