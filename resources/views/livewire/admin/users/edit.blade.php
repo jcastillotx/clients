@@ -187,6 +187,9 @@
                         <button type="button" wire:click="save" wire:loading.attr="disabled" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">
                             Save Changes
                         </button>
+                        <button type="button" wire:click="openPasswordModal" class="rounded-lg border border-amber-500 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-100 transition-colors">
+                            <i class="fas fa-key mr-1"></i> Set Password
+                        </button>
                         <button type="button" wire:click="sendPasswordReset" wire:loading.attr="disabled" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors">
                             Send Password Reset
                         </button>

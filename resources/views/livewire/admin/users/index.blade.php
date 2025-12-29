@@ -67,13 +67,11 @@
                     <th style="width: 50px;" class="text-center">
                         <span class="text-muted small">SEL</span>
                     </th>
-                    <th style="width: 18%;">NAME</th>
-                    <th style="width: 22%;">EMAIL</th>
-                    <th style="width: 12%;">ROLE</th>
-                    <th style="width: 14%;">CLIENT</th>
-                    <th style="width: 8%;" class="text-center">STATUS</th>
-                    <th style="width: 14%;">LAST LOGIN</th>
-                    <th style="width: 12%;" class="text-center">ACTIONS</th>
+                    <th style="width: 30%;">NAME</th>
+                    <th style="width: 20%;">ROLE</th>
+                    <th style="width: 12%;" class="text-center">STATUS</th>
+                    <th style="width: 18%;">LAST LOGIN</th>
+                    <th style="width: 20%;" class="text-center">ACTIONS</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -89,7 +87,12 @@
                             default => 'secondary'
                         };
                         $isSuperAdmin = $roleNames->contains('super_admin');
+                        $isStaffOrAdmin = in_array($roleLabel, ['staff', 'admin', 'super_admin']);
                         $isSelf = $u->id === auth()->id();
+                        // Company tooltip: staff/admin show main company, clients show their company
+                        $companyName = $isStaffOrAdmin 
+                            ? config('app.name', 'Main Company') 
+                            : ($u->client?->company_name ?? '—');
                     @endphp
                     <tr>
                         <td class="text-center align-middle">
@@ -97,23 +100,20 @@
                                 @if($isSuperAdmin || $isSelf) disabled title="{{ $isSelf ? 'Cannot select yourself' : 'Cannot select super admins' }}" @endif>
                         </td>
                         <td class="align-middle">
-                            <span class="fw-semibold">{{ $u->name }}</span>
+                            <span class="fw-semibold" title="{{ $u->email }}" style="cursor: help; border-bottom: 1px dotted #6c757d;">
+                                {{ $u->name }}
+                            </span>
+                            <small class="d-block text-muted d-md-none">{{ $u->email }}</small>
                         </td>
-                        <td class="align-middle text-muted">
-                            <span title="{{ $u->email }}">{{ $u->email }}</span>
-                        </td>
-                        <td class="align-middle">{{ str_replace('_', ' ', ucfirst($roleLabel)) }}</td>
                         <td class="align-middle">
-                            @if($u->client)
-                                <span title="{{ $u->client->company_name }}">{{ Str::limit($u->client->company_name, 15) }}</span>
-                            @else
-                                <span class="text-muted">—</span>
-                            @endif
+                            <span title="Company: {{ $companyName }}" style="cursor: help; border-bottom: 1px dotted #6c757d;">
+                                {{ str_replace('_', ' ', ucfirst($roleLabel)) }}
+                            </span>
                         </td>
                         <td class="align-middle text-center">
                             <span class="badge bg-{{ $statusColor }}">{{ ucfirst($status) }}</span>
                         </td>
-                        <td class="align-middle text-muted small">
+                        <td class="align-middle text-muted">
                             {{ $u->last_login_at?->format('M j, Y H:i') ?? '—' }}
                         </td>
                         <td class="align-middle text-center">
@@ -127,7 +127,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
+                        <td colspan="6" class="text-center text-muted py-4">
                             <i class="fas fa-users fa-2x mb-2 d-block"></i>
                             No users found.
                         </td>
