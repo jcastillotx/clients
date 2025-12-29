@@ -56,14 +56,22 @@ class UnifiedFileBrowser extends Component
         if (! $user) {
             abort(403);
         }
-        if (! $user->client_id) {
-            // These routes are the client storage UI; admins/staff should use the admin panel.
+
+        // Admin/staff should use admin storage
+        if (! $user->isClient()) {
             if ($user->can('access admin panel')) {
                 redirect()->route('admin.storage')->send();
+
                 return;
             }
-            abort(403, 'Storage is only available for client accounts.');
+            abort(403);
         }
+
+        // Client must have a client_id associated
+        if (! $user->client_id) {
+            abort(403, 'No client associated with this account. Please contact support.');
+        }
+
         $this->clientId = $user->client_id;
     }
 
