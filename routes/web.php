@@ -10,6 +10,7 @@ use App\Http\Controllers\Documents\DocumentVersionController;
 use App\Http\Controllers\Documents\DocumentViewerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Marketing\WebsiteAuditController;
+use App\Http\Controllers\OAuth\AnalyticsOAuthController;
 use App\Http\Controllers\OAuth\SocialOAuthController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PrivacyExportController;
@@ -78,6 +79,7 @@ use App\Http\Livewire\AI\ClientAssistantChat;
 use App\Http\Livewire\AI\KnowledgeBase as AdminKnowledgeBase;
 use App\Http\Livewire\AI\PromptTemplateManager as AdminPromptTemplates;
 use App\Http\Livewire\AI\WorkflowBuilder as AdminWorkflowBuilder;
+use App\Http\Livewire\Client\AccountConnections;
 use App\Http\Livewire\Client\AnalyticsDashboard;
 use App\Http\Livewire\Client\BrandMonitoring\MyMentions as ClientMyMentions;
 use App\Http\Livewire\Client\EstimateApproval;
@@ -86,6 +88,7 @@ use App\Http\Livewire\Client\Messaging;
 use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\ProjectDashboard;
 use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
+use App\Http\Livewire\Client\Analytics\AccountManager as AnalyticsAccountManager;
 use App\Http\Livewire\Client\Social\AccountManager as SocialAccountManager;
 use App\Http\Livewire\Client\Social\PendingApprovals;
 use App\Http\Livewire\Communication\EmailDraftAssistant;
@@ -292,6 +295,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/knowledge-base', KnowledgeBase::class)->name('client.knowledge-base');
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
     Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
+    Route::get('/connections', AccountConnections::class)->name('client.connections');
     Route::get('/onboarding', OnboardingWizard::class)->name('client.onboarding');
     Route::get('/meetings', MeetingScheduler::class)->name('client.meetings');
 
@@ -318,6 +322,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/accounts', SocialAccountManager::class)->name('accounts');
     });
 
+    // Analytics Account Management
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/accounts', AnalyticsAccountManager::class)->name('accounts');
+    });
+
     // OAuth Routes (must be authenticated but not client-specific)
     Route::prefix('oauth')->name('oauth.')->group(function () {
         Route::get('/facebook', [SocialOAuthController::class, 'facebookRedirect'])->name('facebook.redirect');
@@ -332,6 +341,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tiktok/callback', [SocialOAuthController::class, 'tiktokCallback'])->name('tiktok.callback');
         Route::post('/bluesky/connect', [SocialOAuthController::class, 'blueskyConnect'])->name('bluesky.connect');
         Route::delete('/disconnect/{platform}', [SocialOAuthController::class, 'disconnect'])->name('disconnect');
+
+        // Analytics OAuth routes
+        Route::prefix('analytics')->name('analytics.')->group(function () {
+            Route::get('/google', [AnalyticsOAuthController::class, 'googleRedirect'])->name('google.redirect');
+            Route::get('/google/callback', [AnalyticsOAuthController::class, 'googleCallback'])->name('google.callback');
+            Route::delete('/disconnect/{platform}', [AnalyticsOAuthController::class, 'disconnect'])->name('disconnect');
+        });
     });
 
     Route::get('/privacy', PrivacyCenter::class)->name('client.privacy');

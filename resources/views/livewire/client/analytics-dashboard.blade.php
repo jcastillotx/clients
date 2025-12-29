@@ -27,15 +27,6 @@
                 <div class="icon"><i class="fas fa-stopwatch"></i></div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="small-box bg-warning">
-                <div class="inner">
-                    <h3>{{ $storage->count() }}</h3>
-                    <p>Storage connections</p>
-                </div>
-                <div class="icon"><i class="fas fa-cloud"></i></div>
-            </div>
-        </div>
     </div>
 
     <div class="card">
@@ -44,30 +35,6 @@
         </div>
         <div class="card-body">
             <canvas id="spendChart" height="80"></canvas>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-database mr-1"></i> Storage usage breakdown</h3>
-        </div>
-        <div class="card-body">
-            @forelse($storage as $s)
-                @php
-                    $pct = ($s['quota_bytes'] ?? 0) > 0 ? (int) floor(($s['used_bytes'] / $s['quota_bytes']) * 100) : null;
-                @endphp
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between">
-                        <div class="font-weight-bold">{{ strtoupper($s['provider']) }} — {{ $s['name'] }}</div>
-                        <div class="text-muted">{{ $pct !== null ? $pct . '%' : '—' }}</div>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ $pct ?? 0 }}%"></div>
-                    </div>
-                </div>
-            @empty
-                <div class="text-muted">No storage connections.</div>
-            @endforelse
         </div>
     </div>
 </div>
