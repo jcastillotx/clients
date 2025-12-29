@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\OnboardingTask;
 use App\Models\OnboardingWorkflow;
 use App\Models\Questionnaire;
+use App\Services\FormTemplateService;
 use Illuminate\Support\Arr;
 
 class OnboardingService
@@ -53,33 +54,14 @@ class OnboardingService
      */
     public function brandDiscoveryQuestionnaire(Client $client): Questionnaire
     {
-        $questions = [
-            // Target audience questions
-            ['key' => 'target_audience', 'type' => 'textarea', 'label' => 'Who is your target audience?', 'required' => true],
-            ['key' => 'audience_segments', 'type' => 'textarea', 'label' => 'Describe key audience segments (if multiple).', 'required' => false],
+        // Get questions from form template (admin-configurable)
+        $formTemplateService = app(FormTemplateService::class);
+        $questions = $formTemplateService->getFields('onboarding');
 
-            // Brand personality assessment
-            ['key' => 'brand_personality', 'type' => 'multiselect', 'label' => 'Brand personality (pick up to 5)', 'options' => ['Professional', 'Friendly', 'Bold', 'Playful', 'Luxury', 'Minimal', 'Innovative', 'Trustworthy', 'Community-first', 'Technical'], 'required' => true],
-            ['key' => 'brand_voice_examples', 'type' => 'textarea', 'label' => 'Share examples of brands whose voice you like (and why).', 'required' => false],
-
-            // Competitive landscape
-            ['key' => 'competitors', 'type' => 'textarea', 'label' => 'Who are your top competitors? Include websites if possible.', 'required' => true],
-            ['key' => 'differentiators', 'type' => 'textarea', 'label' => 'What differentiates you from competitors?', 'required' => true],
-
-            // Business goals and KPIs
-            ['key' => 'goals', 'type' => 'textarea', 'label' => 'What are your business goals for the next 3–6 months?', 'required' => true],
-            ['key' => 'kpis', 'type' => 'textarea', 'label' => 'What KPIs matter most? (e.g., leads, revenue, CAC, ROAS)', 'required' => true],
-
-            // Budget and timeline
-            ['key' => 'budget_range', 'type' => 'select', 'label' => 'Monthly marketing budget range', 'options' => ['<$1k', '$1k–$3k', '$3k–$7k', '$7k–$15k', '$15k+'], 'required' => false],
-            ['key' => 'timeline', 'type' => 'textarea', 'label' => 'Any deadlines or timeline constraints?', 'required' => false],
-
-            // Previous marketing efforts
-            ['key' => 'previous_efforts', 'type' => 'textarea', 'label' => 'What marketing have you tried before? What worked / didn’t?', 'required' => false],
-
-            // Pain points and challenges
-            ['key' => 'pain_points', 'type' => 'textarea', 'label' => 'What are your biggest pain points and challenges right now?', 'required' => true],
-        ];
+        // Fallback to defaults if template is empty
+        if (empty($questions)) {
+            $questions = FormTemplateService::$defaults['onboarding']['fields'] ?? [];
+        }
 
         return Questionnaire::firstOrCreate(
             [

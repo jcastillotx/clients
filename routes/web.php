@@ -65,6 +65,8 @@ use App\Http\Livewire\Admin\Requests\RequestCreate as AdminRequestCreate;
 use App\Http\Livewire\Admin\Security\PrivacyRequests as AdminPrivacyRequests;
 use App\Http\Livewire\Admin\Security\SecurityOverview as AdminSecurityOverview;
 use App\Http\Livewire\Admin\Settings\ApiSettings;
+use App\Http\Livewire\Admin\Settings\FormTemplateEditor;
+use App\Http\Livewire\Admin\Settings\FormTemplateIndex;
 use App\Http\Livewire\Admin\Settings\SystemSettings;
 use App\Http\Livewire\Admin\Social\ContentCalendar;
 use App\Http\Livewire\Admin\Social\PostCreator;
@@ -542,6 +544,10 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/settings/integrations', ApiSettings::class)->name('settings.integrations')->middleware('permission:manage settings');
         // Legacy route alias for backwards compatibility
         Route::get('/settings/api', fn () => redirect()->route('admin.settings.integrations'))->name('settings.api')->middleware('permission:manage settings');
+
+        // Form Templates
+        Route::get('/settings/forms', FormTemplateIndex::class)->name('settings.forms')->middleware('permission:manage settings');
+        Route::get('/settings/forms/{slug}', FormTemplateEditor::class)->name('settings.forms.edit')->middleware('permission:manage settings');
 
         // Webhooks
         Route::get('/webhooks', WebhookManagement::class)->name('webhooks.index')->middleware('permission:manage settings');
