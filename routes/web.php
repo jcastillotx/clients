@@ -539,7 +539,9 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         // System settings
         Route::get('/settings', SystemSettings::class)->name('settings')->middleware('permission:manage settings');
         Route::get('/settings/index', fn () => redirect()->route('admin.settings'))->name('settings.index')->middleware('permission:manage settings');
-        Route::get('/settings/api', ApiSettings::class)->name('settings.api')->middleware('permission:manage settings');
+        Route::get('/settings/integrations', ApiSettings::class)->name('settings.integrations')->middleware('permission:manage settings');
+        // Legacy route alias for backwards compatibility
+        Route::get('/settings/api', fn () => redirect()->route('admin.settings.integrations'))->name('settings.api')->middleware('permission:manage settings');
 
         // Webhooks
         Route::get('/webhooks', WebhookManagement::class)->name('webhooks.index')->middleware('permission:manage settings');
