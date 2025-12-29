@@ -8,22 +8,6 @@
         <strong>Access Restricted:</strong> Only Super Admins can modify branding settings.
     </div>
 @else
-    <!-- Success/Error Notifications -->
-    @if(session()->has('success'))
-        <div class="alert alert-success alert-dismissible fade show" id="brandingSuccessAlert">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            <i class="fas fa-check-circle mr-2"></i>
-            <strong>Success!</strong> {{ session('success') }}
-        </div>
-    @endif
-    @if(session()->has('error'))
-        <div class="alert alert-danger alert-dismissible fade show">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            <i class="fas fa-exclamation-circle mr-2"></i>
-            <strong>Error!</strong> {{ session('error') }}
-        </div>
-    @endif
-    
     <!-- Toast Container for Image Uploads -->
     <div id="uploadToastContainer" class="position-fixed" style="top: 20px; right: 20px; z-index: 1060;"></div>
     
@@ -858,15 +842,6 @@
             });
         });
 
-        // Auto-hide success alerts after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            var successAlert = document.getElementById('brandingSuccessAlert');
-            if (successAlert) {
-                setTimeout(function() {
-                    $(successAlert).alert('close');
-                }, 5000);
-            }
-        });
     </script>
     @endpush
 @endif
