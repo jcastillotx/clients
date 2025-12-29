@@ -138,9 +138,9 @@
 @push('scripts')
 <script>
     document.addEventListener('livewire:initialized', () => {
-        Livewire.on('document-uploaded', () => {
-            // Close modal (Alpine state)
-            document.querySelector('[x-data]')?.__x?.$data && (document.querySelector('[x-data]')?.__x?.$data.uploadOpen = false);
+        Livewire.on('close-upload-modal', () => {
+            // Reload page to show newly uploaded document
+            window.location.reload();
         });
     });
 </script>

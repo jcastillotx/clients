@@ -79,7 +79,7 @@ class UploadDocument extends Component
         session()->flash('success', 'Document uploaded successfully!');
 
         $this->reset(['title', 'description', 'category', 'file']);
-        $this->dispatch('document-uploaded');
+        $this->dispatch('close-upload-modal');
     }
 
     public function render()
