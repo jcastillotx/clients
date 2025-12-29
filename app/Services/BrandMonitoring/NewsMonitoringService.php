@@ -26,7 +26,7 @@ class NewsMonitoringService
             return ['skipped' => true, 'reason' => 'NewsAPI disabled'];
         }
 
-        $apiKey = config('brand-monitoring.news.newsapi.api_key');
+        $apiKey = trim(config('brand-monitoring.news.newsapi.api_key'));
         if (empty($apiKey)) {
             return ['error' => 'NewsAPI key not configured'];
         }
@@ -37,10 +37,13 @@ class NewsMonitoringService
         foreach ($keywords as $keyword) {
             try {
                 // Everything endpoint - searches title and body
+                // NewsAPI supports both query param and header authentication
                 $response = Http::timeout(15)
+                    ->withHeaders([
+                        'X-Api-Key' => $apiKey,
+                    ])
                     ->get('https://newsapi.org/v2/everything', [
                         'q' => $keyword,
-                        'apiKey' => $apiKey,
                         'language' => 'en',
                         'sortBy' => 'publishedAt',
                         'pageSize' => 20, // Max 100
@@ -48,9 +51,11 @@ class NewsMonitoringService
                     ]);
 
                 if (! $response->successful()) {
+                    $errorData = $response->json();
                     Log::warning('NewsAPI request failed', [
                         'status' => $response->status(),
                         'keyword' => $keyword,
+                        'error' => $errorData['message'] ?? 'Unknown error',
                     ]);
 
                     continue;
