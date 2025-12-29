@@ -127,7 +127,7 @@ class Dashboard extends Component
             ->pluck('count', 'platform')
             ->toArray();
 
-        $clients = Client::where('is_active', true)
+        $clients = Client::active()
             ->orderBy('company_name')
             ->get(['id', 'company_name']);
 
