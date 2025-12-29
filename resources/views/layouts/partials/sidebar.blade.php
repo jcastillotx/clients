@@ -633,9 +633,15 @@
                 @endplatformFeature
                 @can('manage settings')
                 <li class="nav-item">
-                    <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings') || request()->routeIs('admin.settings.index') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-cogs"></i>
                         <p>System Settings</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.settings.forms') }}" class="nav-link {{ request()->routeIs('admin.settings.forms*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-wpforms"></i>
+                        <p>Form Templates</p>
                     </a>
                 </li>
                 @platformFeature('webhooks')
