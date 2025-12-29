@@ -44,7 +44,7 @@ class UserCreate extends Component
 
     protected function rules(): array
     {
-        $roles = Role::query()->pluck('name')->all();
+        $roles = Role::query()->where('guard_name', 'web')->pluck('name')->all();
 
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -180,7 +180,7 @@ class UserCreate extends Component
 
     public function render()
     {
-        $roles = Role::query()->orderBy('name')->pluck('name')->all();
+        $roles = Role::query()->where('guard_name', 'web')->orderBy('name')->pluck('name')->all();
         $clients = Client::query()->orderBy('company_name')->get(['id', 'company_name']);
 
         return view('livewire.admin.users.create', [

@@ -24,7 +24,7 @@ class Permissions extends Component
 
     public function refreshMatrix(): void
     {
-        $roles = Role::query()->orderBy('name')->get();
+        $roles = Role::query()->where('guard_name', 'web')->orderBy('name')->get();
         $perms = Permission::query()->where('guard_name', 'web')->orderBy('name')->pluck('name')->all();
 
         $groups = [
@@ -70,7 +70,7 @@ class Permissions extends Component
             return;
         }
 
-        Role::firstOrCreate(['name' => $name]);
+        Role::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
         $this->newRoleName = '';
         $this->refreshMatrix();
         session()->flash('success', 'Role created.');
@@ -78,7 +78,7 @@ class Permissions extends Component
 
     public function toggle(string $roleName, string $permissionName): void
     {
-        $role = Role::query()->where('name', $roleName)->firstOrFail();
+        $role = Role::query()->where('name', $roleName)->where('guard_name', 'web')->firstOrFail();
         $perm = Permission::query()->where('name', $permissionName)->where('guard_name', 'web')->firstOrFail();
 
         if ($role->hasPermissionTo($perm)) {
@@ -92,7 +92,7 @@ class Permissions extends Component
 
     public function render()
     {
-        $roles = Role::query()->orderBy('name')->pluck('name')->all();
+        $roles = Role::query()->where('guard_name', 'web')->orderBy('name')->pluck('name')->all();
 
         return view('livewire.admin.users.permissions', [
             'roles' => $roles,
