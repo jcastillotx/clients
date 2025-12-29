@@ -224,6 +224,54 @@
                         <p>Report Archive</p>
                     </a>
                 </li>
+
+                <!-- Brand Monitoring (feature gated) -->
+                @if(auth()->user()->client && auth()->user()->client->hasFeature('brand_monitoring'))
+                <li class="nav-item">
+                    <a href="{{ route('client.brand-monitoring.my-mentions') }}" class="nav-link {{ request()->routeIs('client.brand-monitoring.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-bullhorn"></i>
+                        <p>Brand Monitor</p>
+                    </a>
+                </li>
+                @endif
+
+                <!-- Social Media Management -->
+                <li class="nav-item {{ request()->routeIs('social.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('social.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-share-alt"></i>
+                        <p>
+                            Social Media
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('social.accounts') }}" class="nav-link {{ request()->routeIs('social.accounts') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Accounts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('social.pending-approvals') }}" class="nav-link {{ request()->routeIs('social.pending-approvals') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>
+                                    Approvals
+                                    @php
+                                        $pendingPosts = 0;
+                                        if (auth()->user()->client) {
+                                            $pendingPosts = \App\Models\SocialPost::where('client_id', auth()->user()->client_id)
+                                                ->where('status', 'pending_approval')
+                                                ->count();
+                                        }
+                                    @endphp
+                                    @if($pendingPosts > 0)
+                                    <span class="badge badge-warning right">{{ $pendingPosts }}</span>
+                                    @endif
+                                </p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 @endif
 
                 @php($navUser = auth()->user())
@@ -313,6 +361,62 @@
                         <i class="nav-icon fas fa-shield-alt"></i>
                         <p>Security Settings</p>
                     </a>
+                </li>
+
+                <!-- Brand Monitoring -->
+                <li class="nav-item {{ request()->routeIs('admin.brand-monitoring.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.brand-monitoring.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-bullhorn"></i>
+                        <p>
+                            Brand Monitor
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.brand-monitoring.dashboard') }}" class="nav-link {{ request()->routeIs('admin.brand-monitoring.dashboard') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.brand-monitoring.api-status') }}" class="nav-link {{ request()->routeIs('admin.brand-monitoring.api-status') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>API Status</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Social Media -->
+                <li class="nav-item {{ request()->routeIs('admin.social.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.social.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-share-alt"></i>
+                        <p>
+                            Social Media
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.social.posts') }}" class="nav-link {{ request()->routeIs('admin.social.posts') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Posts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.social.posts.create') }}" class="nav-link {{ request()->routeIs('admin.social.posts.create') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Create Post</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.social.content-calendar') }}" class="nav-link {{ request()->routeIs('admin.social.content-calendar') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Calendar</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
                 @platformFeature('projects')
