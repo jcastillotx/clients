@@ -83,7 +83,12 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Phone</label>
-                                        <input type="text" class="form-control" wire:model.live.debounce.300ms="phone">
+                                        <input type="text" 
+                                            class="form-control phone-input" 
+                                            wire:model.live.debounce.300ms="phone"
+                                            placeholder="{{ $phoneFormat['placeholder'] ?? 'Phone number' }}"
+                                            data-country="{{ $country }}">
+                                        <small class="text-muted">Format: {{ $phoneFormat['placeholder'] ?? 'Phone number' }}</small>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -111,9 +116,24 @@
                             <hr>
                             <h5 class="mb-3"><i class="fas fa-map-marker-alt mr-2 text-muted"></i>Address</h5>
 
-                            <div class="form-group">
-                                <label>Street Address</label>
-                                <input type="text" class="form-control" wire:model.live.debounce.300ms="address">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Country</label>
+                                        <select class="form-control @error('country') is-invalid @enderror" wire:model.live="country">
+                                            @foreach($countries as $code => $name)
+                                                <option value="{{ $code }}">{{ $name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('country') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Street Address</label>
+                                        <input type="text" class="form-control" wire:model.live.debounce.300ms="address">
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row">
@@ -125,13 +145,23 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>State</label>
-                                        <input type="text" class="form-control" wire:model.live.debounce.300ms="state">
+                                        <label>State/Province</label>
+                                        @if($country === 'US')
+                                            <select class="form-control @error('state') is-invalid @enderror" wire:model.live="state">
+                                                <option value="">-- Select State --</option>
+                                                @foreach($usStates as $code => $name)
+                                                    <option value="{{ $code }}">{{ $name }}</option>
+                                                @endforeach
+                                            </select>
+                                        @else
+                                            <input type="text" class="form-control @error('state') is-invalid @enderror" wire:model.live.debounce.300ms="state" placeholder="State/Province/Region">
+                                        @endif
+                                        @error('state') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>ZIP Code</label>
+                                        <label>{{ $country === 'US' ? 'ZIP Code' : 'Postal Code' }}</label>
                                         <input type="text" class="form-control" wire:model.live.debounce.300ms="zip_code">
                                     </div>
                                 </div>
@@ -456,3 +486,72 @@
         }
     </style>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Phone mask patterns by country
+    const phoneMasks = {
+        'US': { pattern: '(###) ###-####', placeholder: '(555) 123-4567' },
+        'CA': { pattern: '(###) ###-####', placeholder: '(555) 123-4567' },
+        'GB': { pattern: '##### ######', placeholder: '07911 123456' },
+        'AU': { pattern: '#### ### ###', placeholder: '0412 345 678' },
+        'DE': { pattern: '#### ########', placeholder: '0151 12345678' },
+        'FR': { pattern: '## ## ## ## ##', placeholder: '06 12 34 56 78' },
+        'MX': { pattern: '## #### ####', placeholder: '55 1234 5678' },
+        'BR': { pattern: '(##) #####-####', placeholder: '(11) 99999-9999' },
+    };
+
+    function applyPhoneMask(input, country) {
+        const mask = phoneMasks[country];
+        if (!mask) return;
+
+        input.placeholder = mask.placeholder;
+        
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            let formattedValue = '';
+            let maskIndex = 0;
+            
+            for (let i = 0; i < value.length && maskIndex < mask.pattern.length; i++) {
+                while (maskIndex < mask.pattern.length && mask.pattern[maskIndex] !== '#') {
+                    formattedValue += mask.pattern[maskIndex];
+                    maskIndex++;
+                }
+                if (maskIndex < mask.pattern.length) {
+                    formattedValue += value[i];
+                    maskIndex++;
+                }
+            }
+            
+            e.target.value = formattedValue;
+            // Update Livewire model
+            if (typeof Livewire !== 'undefined') {
+                const component = input.closest('[wire\\:id]');
+                if (component) {
+                    Livewire.find(component.getAttribute('wire:id')).set('phone', formattedValue);
+                }
+            }
+        });
+    }
+
+    // Initialize phone mask
+    function initPhoneMask() {
+        const phoneInput = document.querySelector('.phone-input');
+        if (phoneInput) {
+            const country = phoneInput.dataset.country || 'US';
+            applyPhoneMask(phoneInput, country);
+        }
+    }
+
+    initPhoneMask();
+
+    // Re-initialize on Livewire updates
+    if (typeof Livewire !== 'undefined') {
+        Livewire.hook('morph.updated', () => {
+            initPhoneMask();
+        });
+    }
+});
+</script>
+@endpush

@@ -68,6 +68,90 @@ class ClientEdit extends Component
     public bool $showPasswordModal = false;
     public array $selectedServices = [];
 
+    // US States
+    public static array $usStates = [
+        'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas',
+        'CA' => 'California', 'CO' => 'Colorado', 'CT' => 'Connecticut', 'DE' => 'Delaware',
+        'FL' => 'Florida', 'GA' => 'Georgia', 'HI' => 'Hawaii', 'ID' => 'Idaho',
+        'IL' => 'Illinois', 'IN' => 'Indiana', 'IA' => 'Iowa', 'KS' => 'Kansas',
+        'KY' => 'Kentucky', 'LA' => 'Louisiana', 'ME' => 'Maine', 'MD' => 'Maryland',
+        'MA' => 'Massachusetts', 'MI' => 'Michigan', 'MN' => 'Minnesota', 'MS' => 'Mississippi',
+        'MO' => 'Missouri', 'MT' => 'Montana', 'NE' => 'Nebraska', 'NV' => 'Nevada',
+        'NH' => 'New Hampshire', 'NJ' => 'New Jersey', 'NM' => 'New Mexico', 'NY' => 'New York',
+        'NC' => 'North Carolina', 'ND' => 'North Dakota', 'OH' => 'Ohio', 'OK' => 'Oklahoma',
+        'OR' => 'Oregon', 'PA' => 'Pennsylvania', 'RI' => 'Rhode Island', 'SC' => 'South Carolina',
+        'SD' => 'South Dakota', 'TN' => 'Tennessee', 'TX' => 'Texas', 'UT' => 'Utah',
+        'VT' => 'Vermont', 'VA' => 'Virginia', 'WA' => 'Washington', 'WV' => 'West Virginia',
+        'WI' => 'Wisconsin', 'WY' => 'Wyoming', 'DC' => 'District of Columbia',
+    ];
+
+    // Countries
+    public static array $countries = [
+        'US' => 'United States',
+        'CA' => 'Canada',
+        'GB' => 'United Kingdom',
+        'AU' => 'Australia',
+        'DE' => 'Germany',
+        'FR' => 'France',
+        'ES' => 'Spain',
+        'IT' => 'Italy',
+        'NL' => 'Netherlands',
+        'BE' => 'Belgium',
+        'CH' => 'Switzerland',
+        'AT' => 'Austria',
+        'SE' => 'Sweden',
+        'NO' => 'Norway',
+        'DK' => 'Denmark',
+        'FI' => 'Finland',
+        'IE' => 'Ireland',
+        'NZ' => 'New Zealand',
+        'SG' => 'Singapore',
+        'HK' => 'Hong Kong',
+        'JP' => 'Japan',
+        'KR' => 'South Korea',
+        'MX' => 'Mexico',
+        'BR' => 'Brazil',
+        'AR' => 'Argentina',
+        'CL' => 'Chile',
+        'CO' => 'Colombia',
+        'IN' => 'India',
+        'PH' => 'Philippines',
+        'ZA' => 'South Africa',
+        'AE' => 'United Arab Emirates',
+        'SA' => 'Saudi Arabia',
+        'IL' => 'Israel',
+        'PL' => 'Poland',
+        'CZ' => 'Czech Republic',
+        'PT' => 'Portugal',
+        'GR' => 'Greece',
+        'RO' => 'Romania',
+        'HU' => 'Hungary',
+        'OTHER' => 'Other',
+    ];
+
+    // Phone formats by country
+    public static array $phoneFormats = [
+        'US' => ['placeholder' => '(555) 123-4567', 'pattern' => '\\(\\d{3}\\) \\d{3}-\\d{4}'],
+        'CA' => ['placeholder' => '(555) 123-4567', 'pattern' => '\\(\\d{3}\\) \\d{3}-\\d{4}'],
+        'GB' => ['placeholder' => '07911 123456', 'pattern' => '\\d{5} \\d{6}'],
+        'AU' => ['placeholder' => '0412 345 678', 'pattern' => '\\d{4} \\d{3} \\d{3}'],
+        'DE' => ['placeholder' => '0151 12345678', 'pattern' => '\\d{4} \\d{8}'],
+        'FR' => ['placeholder' => '06 12 34 56 78', 'pattern' => '\\d{2} \\d{2} \\d{2} \\d{2} \\d{2}'],
+    ];
+
+    public function updatedCountry(): void
+    {
+        // Reset state when country changes if not US
+        if ($this->country !== 'US') {
+            $this->state = null;
+        }
+    }
+
+    public function getPhoneFormatProperty(): array
+    {
+        return self::$phoneFormats[$this->country] ?? ['placeholder' => 'Phone number', 'pattern' => '.*'];
+    }
+
     public function mount(Client $client): void
     {
         $this->client = $client;
@@ -313,6 +397,9 @@ PROMPT;
             'availableServices' => $availableServices,
             'servicesByCategory' => $servicesByCategory,
             'tierFeatures' => config('features.tiers', []),
+            'usStates' => self::$usStates,
+            'countries' => self::$countries,
+            'phoneFormat' => $this->phoneFormat,
         ])->layout('layouts.admin', ['title' => 'Edit Client']);
     }
 }
