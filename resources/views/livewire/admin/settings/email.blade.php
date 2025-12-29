@@ -54,9 +54,9 @@
                             <li>Go to <a href="https://app.brevo.com/settings/keys/smtp" target="_blank">Settings > SMTP & API > SMTP</a> in your Brevo dashboard</li>
                             <li>Generate a new <strong>SMTP Key</strong> (if you don't have one)</li>
                             <li>Use your <strong>Brevo login email</strong> as the Username below</li>
-                            <li>Use the <strong>SMTP Key</strong> (starts with <code>xkeysib-</code>) as the Password</li>
+                            <li>Use the <strong>SMTP Key</strong> (starts with <code>xsmtpsib-</code>) as the Password</li>
                         </ol>
-                        <p class="mb-0 text-warning"><i class="fas fa-exclamation-triangle mr-1"></i> <strong>Important:</strong> Do NOT use your Brevo account password or REST API key. Only the SMTP Key will work.</p>
+                        <p class="mb-0 text-warning"><i class="fas fa-exclamation-triangle mr-1"></i> <strong>Important:</strong> Do NOT use your Brevo account password or REST API key (starts with <code>xkeysib-</code>). Only the SMTP Key will work.</p>
                     </div>
                 @endif
             </div>
@@ -141,7 +141,7 @@
                                 <input type="password" wire:model="email.smtp_password" class="form-control" placeholder="••••••••">
                             </div>
                             @if(($email['provider'] ?? '') === 'brevo')
-                                <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Must start with <code>xkeysib-</code></small>
+                                <small class="text-muted"><i class="fas fa-info-circle mr-1"></i>Must start with <code>xsmtpsib-</code></small>
                             @endif
                         </div>
                     </div>

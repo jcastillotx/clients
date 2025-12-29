@@ -719,8 +719,8 @@ class SystemSettings extends Component
         // Validate Brevo credentials
         if ($provider === 'brevo' && !empty($this->email['smtp_password'])) {
             $password = $this->email['smtp_password'];
-            if (!str_starts_with($password, 'xkeysib-')) {
-                session()->flash('error', 'Brevo SMTP Key must start with "xkeysib-". Please use your SMTP API Key, not your account password. Generate one at: Settings > SMTP & API > SMTP in your Brevo dashboard.');
+            if (!str_starts_with($password, 'xsmtpsib-')) {
+                session()->flash('error', 'Brevo SMTP Key must start with "xsmtpsib-". Please use your SMTP Key, not your account password or API key. Generate one at: Settings > SMTP & API > SMTP in your Brevo dashboard.');
                 return;
             }
         }
@@ -827,16 +827,16 @@ class SystemSettings extends Component
                 $errorMsg .= "\n\nDebug Info:\n- Host: {$host}\n- Port: {$port}\n- Username: {$username}\n- Password length: " . strlen($password) . " chars";
 
                 if ($provider === 'brevo') {
-                    $startsWithXkeysib = str_starts_with($password, 'xkeysib-');
-                    if (!$startsWithXkeysib) {
-                        $errorMsg .= "\n\n❌ Your SMTP Key doesn't start with 'xkeysib-'. You're likely using the wrong credential.";
+                    $startsWithXsmtpsib = str_starts_with($password, 'xsmtpsib-');
+                    if (!$startsWithXsmtpsib) {
+                        $errorMsg .= "\n\n❌ Your SMTP Key doesn't start with 'xsmtpsib-'. You're likely using the wrong credential.";
                     }
                     $errorMsg .= "\n\n💡 For Brevo SMTP:\n";
                     $errorMsg .= "1. Go to Settings > SMTP & API > SMTP in your Brevo dashboard\n";
                     $errorMsg .= "2. Generate a new SMTP Key (if you don't have one)\n";
                     $errorMsg .= "3. Use your Brevo login email as 'Username'\n";
-                    $errorMsg .= "4. Use the SMTP Key (starts with 'xkeysib-') as 'Password'\n";
-                    $errorMsg .= "5. Do NOT use your Brevo account password or API keys";
+                    $errorMsg .= "4. Use the SMTP Key (starts with 'xsmtpsib-') as 'Password'\n";
+                    $errorMsg .= "5. Do NOT use your Brevo account password or REST API keys (which start with 'xkeysib-')";
                 }
             }
 
