@@ -14,6 +14,13 @@ use Livewire\Component;
 
 class ClientCreate extends Component
 {
+    // Mode: 'new' or 'existing'
+    public string $mode = 'new';
+    
+    // For existing client selection
+    public ?int $existing_client_id = null;
+    public string $clientSearch = '';
+
     public string $company_name = '';
 
     public string $contact_name = '';
@@ -57,39 +64,184 @@ class ClientCreate extends Component
 
     public array $selectedServices = [];
 
+    // US States
+    public static array $usStates = [
+        'AL' => 'Alabama', 'AK' => 'Alaska', 'AZ' => 'Arizona', 'AR' => 'Arkansas',
+        'CA' => 'California', 'CO' => 'Colorado', 'CT' => 'Connecticut', 'DE' => 'Delaware',
+        'FL' => 'Florida', 'GA' => 'Georgia', 'HI' => 'Hawaii', 'ID' => 'Idaho',
+        'IL' => 'Illinois', 'IN' => 'Indiana', 'IA' => 'Iowa', 'KS' => 'Kansas',
+        'KY' => 'Kentucky', 'LA' => 'Louisiana', 'ME' => 'Maine', 'MD' => 'Maryland',
+        'MA' => 'Massachusetts', 'MI' => 'Michigan', 'MN' => 'Minnesota', 'MS' => 'Mississippi',
+        'MO' => 'Missouri', 'MT' => 'Montana', 'NE' => 'Nebraska', 'NV' => 'Nevada',
+        'NH' => 'New Hampshire', 'NJ' => 'New Jersey', 'NM' => 'New Mexico', 'NY' => 'New York',
+        'NC' => 'North Carolina', 'ND' => 'North Dakota', 'OH' => 'Ohio', 'OK' => 'Oklahoma',
+        'OR' => 'Oregon', 'PA' => 'Pennsylvania', 'RI' => 'Rhode Island', 'SC' => 'South Carolina',
+        'SD' => 'South Dakota', 'TN' => 'Tennessee', 'TX' => 'Texas', 'UT' => 'Utah',
+        'VT' => 'Vermont', 'VA' => 'Virginia', 'WA' => 'Washington', 'WV' => 'West Virginia',
+        'WI' => 'Wisconsin', 'WY' => 'Wyoming', 'DC' => 'District of Columbia',
+    ];
+
+    // Countries
+    public static array $countries = [
+        'US' => 'United States',
+        'CA' => 'Canada',
+        'GB' => 'United Kingdom',
+        'AU' => 'Australia',
+        'DE' => 'Germany',
+        'FR' => 'France',
+        'ES' => 'Spain',
+        'IT' => 'Italy',
+        'NL' => 'Netherlands',
+        'BE' => 'Belgium',
+        'CH' => 'Switzerland',
+        'AT' => 'Austria',
+        'SE' => 'Sweden',
+        'NO' => 'Norway',
+        'DK' => 'Denmark',
+        'FI' => 'Finland',
+        'IE' => 'Ireland',
+        'NZ' => 'New Zealand',
+        'SG' => 'Singapore',
+        'HK' => 'Hong Kong',
+        'JP' => 'Japan',
+        'KR' => 'South Korea',
+        'MX' => 'Mexico',
+        'BR' => 'Brazil',
+        'AR' => 'Argentina',
+        'CL' => 'Chile',
+        'CO' => 'Colombia',
+        'IN' => 'India',
+        'PH' => 'Philippines',
+        'ZA' => 'South Africa',
+        'AE' => 'United Arab Emirates',
+        'SA' => 'Saudi Arabia',
+        'IL' => 'Israel',
+        'PL' => 'Poland',
+        'CZ' => 'Czech Republic',
+        'PT' => 'Portugal',
+        'GR' => 'Greece',
+        'RO' => 'Romania',
+        'HU' => 'Hungary',
+        'OTHER' => 'Other',
+    ];
+
+    // Phone formats by country
+    public static array $phoneFormats = [
+        'US' => ['placeholder' => '(555) 123-4567', 'pattern' => '\\(\\d{3}\\) \\d{3}-\\d{4}'],
+        'CA' => ['placeholder' => '(555) 123-4567', 'pattern' => '\\(\\d{3}\\) \\d{3}-\\d{4}'],
+        'GB' => ['placeholder' => '07911 123456', 'pattern' => '\\d{5} \\d{6}'],
+        'AU' => ['placeholder' => '0412 345 678', 'pattern' => '\\d{4} \\d{3} \\d{3}'],
+        'DE' => ['placeholder' => '0151 12345678', 'pattern' => '\\d{4} \\d{8}'],
+        'FR' => ['placeholder' => '06 12 34 56 78', 'pattern' => '\\d{2} \\d{2} \\d{2} \\d{2} \\d{2}'],
+    ];
+
+    public function updatedCountry(): void
+    {
+        // Reset state when country changes if not US
+        if ($this->country !== 'US') {
+            $this->state = null;
+        }
+    }
+
+    public function updatedMode(): void
+    {
+        // Reset fields when switching modes
+        if ($this->mode === 'existing') {
+            $this->resetNewClientFields();
+        } else {
+            $this->existing_client_id = null;
+            $this->clientSearch = '';
+        }
+    }
+
+    public function selectExistingClient(int $clientId): void
+    {
+        $client = Client::find($clientId);
+        if ($client) {
+            $this->existing_client_id = $client->id;
+            $this->clientSearch = $client->company_name;
+            
+            // Pre-fill form with client data
+            $this->company_name = $client->company_name;
+            $this->contact_name = $client->contact_name ?? '';
+            $this->email = ''; // Email should be new for the user
+            $this->phone = $client->phone;
+            $this->address = $client->address;
+            $this->city = $client->city;
+            $this->state = $client->state;
+            $this->zip_code = $client->zip_code;
+            $this->country = $client->country ?? 'US';
+            $this->tier = $client->tier ?? 'basic';
+            $this->status = $client->status ?? 'active';
+        }
+    }
+
+    public function clearClientSelection(): void
+    {
+        $this->existing_client_id = null;
+        $this->clientSearch = '';
+    }
+
+    protected function resetNewClientFields(): void
+    {
+        $this->company_name = '';
+        $this->contact_name = '';
+        $this->email = '';
+        $this->phone = null;
+        $this->address = null;
+        $this->city = null;
+        $this->state = null;
+        $this->zip_code = null;
+        $this->country = 'US';
+        $this->tier = 'basic';
+        $this->status = 'active';
+    }
+
     protected function rules(): array
     {
         $availableFeatures = array_keys(config('features.available', []));
 
-        return [
-            'company_name' => ['required', 'string', 'max:255'],
+        // Base rules for the user (always required)
+        $rules = [
+            'mode' => ['required', Rule::in(['new', 'existing'])],
             'contact_name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('clients', 'email'),
-                Rule::unique('users', 'email'),
+                Rule::unique('users', 'email'), // User email must always be unique
             ],
             'phone' => ['nullable', 'string', 'max:50'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:100'],
-            'state' => ['nullable', 'string', 'max:100'],
-            'zip_code' => ['nullable', 'string', 'max:30'],
-            'country' => ['nullable', 'string', 'max:2'],
             'tier' => ['required', Rule::in(['basic', 'standard', 'premium', 'enterprise'])],
             'status' => ['required', Rule::in(['active', 'inactive', 'pending', 'suspended'])],
-            'stripe_customer_id' => ['nullable', 'string', 'max:255'],
-            'notes' => ['nullable', 'string'],
-            'internal_notes' => ['nullable', 'string'],
-            'mission' => ['nullable', 'string', 'max:2000'],
-            'vision' => ['nullable', 'string', 'max:2000'],
-            'competitors' => ['nullable', 'string', 'max:2000'],
-            'marketing_strategy' => ['nullable', 'string'],
             'sendPasswordSetLink' => ['boolean'],
-            'selectedServices' => ['array'],
-            'selectedServices.*' => [Rule::in($availableFeatures)],
         ];
+
+        // For existing client mode, require existing_client_id
+        if ($this->mode === 'existing') {
+            $rules['existing_client_id'] = ['required', 'exists:clients,id'];
+            $rules['company_name'] = ['nullable', 'string', 'max:255'];
+        } else {
+            // For new client mode, require all client fields
+            $rules['company_name'] = ['required', 'string', 'max:255'];
+            $rules['email'][] = Rule::unique('clients', 'email'); // Client email must be unique for new clients
+            $rules['address'] = ['nullable', 'string', 'max:255'];
+            $rules['city'] = ['nullable', 'string', 'max:100'];
+            $rules['state'] = ['nullable', 'string', 'max:100'];
+            $rules['zip_code'] = ['nullable', 'string', 'max:30'];
+            $rules['country'] = ['nullable', 'string', 'max:5'];
+            $rules['stripe_customer_id'] = ['nullable', 'string', 'max:255'];
+            $rules['notes'] = ['nullable', 'string'];
+            $rules['internal_notes'] = ['nullable', 'string'];
+            $rules['mission'] = ['nullable', 'string', 'max:2000'];
+            $rules['vision'] = ['nullable', 'string', 'max:2000'];
+            $rules['competitors'] = ['nullable', 'string', 'max:2000'];
+            $rules['marketing_strategy'] = ['nullable', 'string'];
+            $rules['selectedServices'] = ['array'];
+            $rules['selectedServices.*'] = [Rule::in($availableFeatures)];
+        }
+
+        return $rules;
     }
 
     public function updated(string $property): void
@@ -163,30 +315,44 @@ PROMPT;
         try {
             $data = $this->validate();
 
-            $client = Client::create([
-                'company_name' => $data['company_name'],
-                'contact_name' => $data['contact_name'],
-                'email' => $data['email'],
-                'phone' => $data['phone'],
-                'address' => $data['address'],
-                'city' => $data['city'],
-                'state' => $data['state'],
-                'zip_code' => $data['zip_code'],
-                'country' => $data['country'] ?: 'US',
-                'tier' => $data['tier'],
-                'status' => $data['status'],
-                'stripe_customer_id' => $data['stripe_customer_id'],
-                'notes' => $data['notes'],
-                'internal_notes' => $data['internal_notes'],
-                'mission' => $data['mission'],
-                'vision' => $data['vision'],
-                'competitors' => $data['competitors'],
-                'marketing_strategy' => $data['marketing_strategy'],
-                'marketing_strategy_generated_at' => $data['marketing_strategy'] ? now() : null,
-                'enabled_features' => $data['selectedServices'],
-            ]);
+            // Handle existing client mode
+            if ($this->mode === 'existing' && $this->existing_client_id) {
+                $client = Client::findOrFail($this->existing_client_id);
+                
+                // Update client with any additional info if needed
+                $client->update([
+                    'contact_name' => $data['contact_name'],
+                    'phone' => $data['phone'] ?? $client->phone,
+                    'tier' => $data['tier'],
+                    'status' => $data['status'],
+                ]);
+            } else {
+                // Create new client
+                $client = Client::create([
+                    'company_name' => $data['company_name'],
+                    'contact_name' => $data['contact_name'],
+                    'email' => $data['email'],
+                    'phone' => $data['phone'],
+                    'address' => $data['address'],
+                    'city' => $data['city'],
+                    'state' => $data['state'],
+                    'zip_code' => $data['zip_code'],
+                    'country' => $data['country'] ?: 'US',
+                    'tier' => $data['tier'],
+                    'status' => $data['status'],
+                    'stripe_customer_id' => $data['stripe_customer_id'],
+                    'notes' => $data['notes'],
+                    'internal_notes' => $data['internal_notes'],
+                    'mission' => $data['mission'],
+                    'vision' => $data['vision'],
+                    'competitors' => $data['competitors'],
+                    'marketing_strategy' => $data['marketing_strategy'],
+                    'marketing_strategy_generated_at' => $data['marketing_strategy'] ? now() : null,
+                    'enabled_features' => $data['selectedServices'],
+                ]);
+            }
 
-            // Create the primary client user
+            // Create the client user
             $temporaryPassword = null;
             $passwordSetLinkSent = (bool) $this->sendPasswordSetLink;
 
@@ -199,8 +365,8 @@ PROMPT;
             }
 
             $user = User::create([
-                'name' => $client->contact_name,
-                'email' => $client->email,
+                'name' => $data['contact_name'],
+                'email' => $data['email'],
                 'password' => $temporaryPassword, // hashed by cast
                 'client_id' => $client->id,
                 'is_active' => true,
@@ -219,7 +385,11 @@ PROMPT;
                 temporaryPassword: $passwordSetLinkSent ? null : $temporaryPassword
             ));
 
-            session()->flash('success', 'Client created successfully! Welcome email has been sent to ' . $client->email);
+            $message = $this->mode === 'existing' 
+                ? 'New user added to existing client. Welcome email has been sent to ' . $data['email']
+                : 'Client created successfully! Welcome email has been sent to ' . $data['email'];
+
+            session()->flash('success', $message);
 
             return redirect()->route('admin.clients.show', $client);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -235,6 +405,26 @@ PROMPT;
             
             session()->flash('error', 'Failed to create client: ' . $e->getMessage());
         }
+    }
+
+    public function getExistingClientsProperty()
+    {
+        if (empty($this->clientSearch) || strlen($this->clientSearch) < 2) {
+            return collect();
+        }
+
+        return Client::query()
+            ->where('company_name', 'like', '%' . $this->clientSearch . '%')
+            ->orWhere('contact_name', 'like', '%' . $this->clientSearch . '%')
+            ->orWhere('email', 'like', '%' . $this->clientSearch . '%')
+            ->orderBy('company_name')
+            ->limit(10)
+            ->get(['id', 'company_name', 'contact_name', 'email']);
+    }
+
+    public function getPhoneFormatProperty(): array
+    {
+        return self::$phoneFormats[$this->country] ?? ['placeholder' => 'Phone number', 'pattern' => '.*'];
     }
 
     public function render()
@@ -254,6 +444,10 @@ PROMPT;
             'availableServices' => $availableServices,
             'servicesByCategory' => $servicesByCategory,
             'tierFeatures' => config('features.tiers', []),
+            'usStates' => self::$usStates,
+            'countries' => self::$countries,
+            'existingClients' => $this->existingClients,
+            'phoneFormat' => $this->phoneFormat,
         ])->layout('layouts.admin', ['title' => 'Add Client']);
     }
 }

@@ -20,6 +20,75 @@
         <div class="row">
             <!-- Left Column -->
             <div class="col-lg-8">
+                <!-- Client Mode Selection -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-user-plus mr-2"></i>Client Type</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group btn-group-toggle w-100 mb-3" data-toggle="buttons">
+                            <label class="btn btn-outline-primary @if($mode === 'new') active @endif" style="flex: 1;">
+                                <input type="radio" wire:model.live="mode" value="new" autocomplete="off"> 
+                                <i class="fas fa-plus-circle mr-1"></i> Create New Client
+                            </label>
+                            <label class="btn btn-outline-primary @if($mode === 'existing') active @endif" style="flex: 1;">
+                                <input type="radio" wire:model.live="mode" value="existing" autocomplete="off"> 
+                                <i class="fas fa-search mr-1"></i> Link Existing Client
+                            </label>
+                        </div>
+
+                        @if($mode === 'existing')
+                            <div class="form-group position-relative">
+                                <label>Search Existing Clients</label>
+                                <div class="input-group">
+                                    <input type="text" 
+                                        class="form-control" 
+                                        wire:model.live.debounce.300ms="clientSearch" 
+                                        placeholder="Type company name, contact name, or email..."
+                                        @if($existing_client_id) readonly @endif>
+                                    @if($existing_client_id)
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-danger" wire:click="clearClientSelection">
+                                                <i class="fas fa-times"></i> Clear
+                                            </button>
+                                        </div>
+                                    @endif
+                                </div>
+                                
+                                {{-- Search Results Dropdown --}}
+                                @if(!$existing_client_id && strlen($clientSearch) >= 2)
+                                    <div class="dropdown-menu show w-100 mt-1" style="max-height: 300px; overflow-y: auto;">
+                                        @forelse($existingClients as $client)
+                                            <a href="#" class="dropdown-item" wire:click.prevent="selectExistingClient({{ $client->id }})">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>{{ $client->company_name }}</strong>
+                                                        @if($client->contact_name)
+                                                            <br><small class="text-muted">{{ $client->contact_name }}</small>
+                                                        @endif
+                                                    </div>
+                                                    <small class="text-muted">{{ $client->email }}</small>
+                                                </div>
+                                            </a>
+                                        @empty
+                                            <div class="dropdown-item text-muted">
+                                                <i class="fas fa-info-circle mr-1"></i> No clients found matching "{{ $clientSearch }}"
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                @endif
+
+                                @if($existing_client_id)
+                                    <div class="alert alert-success mt-2 mb-0">
+                                        <i class="fas fa-check-circle mr-1"></i> 
+                                        Client selected. You can now create a new user account for this client.
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Company Information -->
                 <div class="card">
                     <div class="card-header">
@@ -28,7 +97,10 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label>Company Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('company_name') is-invalid @enderror" wire:model.live.debounce.300ms="company_name">
+                            <input type="text" 
+                                class="form-control @error('company_name') is-invalid @enderror" 
+                                wire:model.live.debounce.300ms="company_name"
+                                @if($mode === 'existing' && $existing_client_id) readonly @endif>
                             @error('company_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
@@ -54,7 +126,12 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Phone</label>
-                                    <input type="text" class="form-control @error('phone') is-invalid @enderror" wire:model.live.debounce.300ms="phone">
+                                    <input type="text" 
+                                        class="form-control @error('phone') is-invalid @enderror phone-input" 
+                                        wire:model.live.debounce.300ms="phone"
+                                        placeholder="{{ $phoneFormat['placeholder'] ?? 'Phone number' }}"
+                                        data-country="{{ $country }}">
+                                    <small class="text-muted">Format: {{ $phoneFormat['placeholder'] ?? 'Phone number' }}</small>
                                     @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>
@@ -90,9 +167,24 @@
                         <h3 class="card-title"><i class="fas fa-map-marker-alt mr-2"></i>Address</h3>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
-                            <label>Street Address</label>
-                            <input type="text" class="form-control" wire:model.live.debounce.300ms="address">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Country</label>
+                                    <select class="form-control @error('country') is-invalid @enderror" wire:model.live="country">
+                                        @foreach($countries as $code => $name)
+                                            <option value="{{ $code }}">{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('country') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Street Address</label>
+                                    <input type="text" class="form-control" wire:model.live.debounce.300ms="address">
+                                </div>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-4">
@@ -103,13 +195,23 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>State</label>
-                                    <input type="text" class="form-control" wire:model.live.debounce.300ms="state">
+                                    <label>State/Province</label>
+                                    @if($country === 'US')
+                                        <select class="form-control @error('state') is-invalid @enderror" wire:model.live="state">
+                                            <option value="">-- Select State --</option>
+                                            @foreach($usStates as $code => $name)
+                                                <option value="{{ $code }}">{{ $name }}</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        <input type="text" class="form-control @error('state') is-invalid @enderror" wire:model.live.debounce.300ms="state" placeholder="State/Province/Region">
+                                    @endif
+                                    @error('state') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>ZIP Code</label>
+                                    <label>{{ $country === 'US' ? 'ZIP Code' : 'Postal Code' }}</label>
                                     <input type="text" class="form-control" wire:model.live.debounce.300ms="zip_code">
                                 </div>
                             </div>
@@ -335,3 +437,69 @@
         </div>
     </form>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Phone mask patterns by country
+    const phoneMasks = {
+        'US': { pattern: '(###) ###-####', placeholder: '(555) 123-4567' },
+        'CA': { pattern: '(###) ###-####', placeholder: '(555) 123-4567' },
+        'GB': { pattern: '##### ######', placeholder: '07911 123456' },
+        'AU': { pattern: '#### ### ###', placeholder: '0412 345 678' },
+        'DE': { pattern: '#### ########', placeholder: '0151 12345678' },
+        'FR': { pattern: '## ## ## ## ##', placeholder: '06 12 34 56 78' },
+        'MX': { pattern: '## #### ####', placeholder: '55 1234 5678' },
+        'BR': { pattern: '(##) #####-####', placeholder: '(11) 99999-9999' },
+    };
+
+    function applyPhoneMask(input, country) {
+        const mask = phoneMasks[country];
+        if (!mask) return;
+
+        input.placeholder = mask.placeholder;
+        
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            let formattedValue = '';
+            let maskIndex = 0;
+            
+            for (let i = 0; i < value.length && maskIndex < mask.pattern.length; i++) {
+                while (maskIndex < mask.pattern.length && mask.pattern[maskIndex] !== '#') {
+                    formattedValue += mask.pattern[maskIndex];
+                    maskIndex++;
+                }
+                if (maskIndex < mask.pattern.length) {
+                    formattedValue += value[i];
+                    maskIndex++;
+                }
+            }
+            
+            e.target.value = formattedValue;
+            // Update Livewire model
+            if (typeof Livewire !== 'undefined') {
+                Livewire.find(input.closest('[wire\\:id]').getAttribute('wire:id')).set('phone', formattedValue);
+            }
+        });
+    }
+
+    // Initialize phone mask
+    function initPhoneMask() {
+        const phoneInput = document.querySelector('.phone-input');
+        if (phoneInput) {
+            const country = phoneInput.dataset.country || 'US';
+            applyPhoneMask(phoneInput, country);
+        }
+    }
+
+    initPhoneMask();
+
+    // Re-initialize on Livewire updates
+    if (typeof Livewire !== 'undefined') {
+        Livewire.hook('morph.updated', () => {
+            initPhoneMask();
+        });
+    }
+});
+</script>
+@endpush
