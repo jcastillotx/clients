@@ -163,69 +163,6 @@ class RolePermissionSeeder extends Seeder
                 'view_document',
                 'upload_document',
             ]);
-
-            // Project Manager - operational access similar to staff
-            $projectManagerRole = Role::firstOrCreate(['name' => 'project_manager', 'guard_name' => $guard]);
-            $projectManagerRole->syncPermissions([
-                'access admin panel',
-
-                // Clients
-                'view_any_client',
-                'view_client',
-                'update_client',
-
-                // Requests
-                'view_any_request',
-                'view_request',
-                'create_request',
-                'update_request',
-                'delete_request',
-
-                // Invoices
-                'view_any_invoice',
-                'view_invoice',
-
-                // Contracts
-                'view_any_contract',
-                'view_contract',
-
-                // Documents
-                'view_any_document',
-                'view_document',
-                'upload_document',
-                'delete_document',
-
-                // Users (limited)
-                'view_any_user',
-                'view_user',
-
-                // Reporting
-                'view reports',
-            ]);
-
-            // Social Media Manager - focused on content and social
-            $socialMediaManagerRole = Role::firstOrCreate(['name' => 'social_media_manager', 'guard_name' => $guard]);
-            $socialMediaManagerRole->syncPermissions([
-                'access admin panel',
-
-                // Clients
-                'view_any_client',
-                'view_client',
-
-                // Requests
-                'view_any_request',
-                'view_request',
-                'create_request',
-                'update_request',
-
-                // Documents
-                'view_any_document',
-                'view_document',
-                'upload_document',
-
-                // Reporting
-                'view reports',
-            ]);
         }
     }
 }
