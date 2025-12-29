@@ -259,8 +259,8 @@
                                     @php
                                         $pendingPosts = 0;
                                         if (auth()->user()->client) {
-                                            $pendingPosts = \App\Models\SocialPost::where('client_id', auth()->user()->client_id)
-                                                ->where('status', 'pending_approval')
+                                            $pendingPosts = \App\Models\ContentCalendarItem::forClient(auth()->user()->client_id)
+                                                ->pendingApproval()
                                                 ->count();
                                         }
                                     @endphp
