@@ -240,7 +240,13 @@ PROMPT;
     public function render()
     {
         $availableServices = config('features.available', []);
-        $servicesByCategory = collect($availableServices)->groupBy('category');
+        
+        // Group by category while preserving original keys
+        $servicesByCategory = [];
+        foreach ($availableServices as $key => $service) {
+            $category = $service['category'] ?? 'other';
+            $servicesByCategory[$category][$key] = $service;
+        }
 
         return view('livewire.admin.clients.create', [
             'tiers' => ['basic' => 'Basic', 'standard' => 'Standard', 'premium' => 'Premium', 'enterprise' => 'Enterprise'],

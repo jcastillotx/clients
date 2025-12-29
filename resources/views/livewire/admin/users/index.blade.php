@@ -10,6 +10,9 @@
         </div>
     </div>
 
+    {{-- Flash Messages --}}
+    @include('partials.flash-messages')
+
     <div class="card mb-3">
         <div class="card-body">
             <div class="row g-2">
@@ -58,19 +61,19 @@
 
     <div class="card">
         <div class="table-responsive">
-            <table class="table table-vcenter table-hover card-table">
+            <table class="table table-vcenter table-hover card-table" style="min-width: 900px;">
                 <thead>
                 <tr>
-                    <th style="width: 1%;">
-                        <span class="text-muted">Sel</span>
+                    <th style="width: 40px;">
+                        <span class="text-muted small">Sel</span>
                     </th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Client</th>
-                    <th>Status</th>
-                    <th>Last login</th>
-                    <th class="text-end">Actions</th>
+                    <th style="min-width: 140px;">Name</th>
+                    <th style="min-width: 180px;">Email</th>
+                    <th style="width: 100px;">Role</th>
+                    <th style="width: 120px;">Client</th>
+                    <th style="width: 80px;">Status</th>
+                    <th style="width: 140px;" class="text-nowrap">Last Login</th>
+                    <th style="width: 160px;" class="text-end">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -93,13 +96,13 @@
                             <input type="checkbox" class="form-check-input" wire:model.live="selected" value="{{ $u->id }}"
                                 @if($isSuperAdmin || $isSelf) disabled title="{{ $isSelf ? 'Cannot select yourself' : 'Cannot select super admins' }}" @endif>
                         </td>
-                        <td class="fw-semibold">{{ $u->name }}</td>
-                        <td class="text-muted">{{ $u->email }}</td>
-                        <td>{{ str_replace('_', ' ', ucfirst($roleLabel)) }}</td>
-                        <td>{{ $u->client?->company_name ?? '—' }}</td>
+                        <td class="fw-semibold text-nowrap">{{ $u->name }}</td>
+                        <td class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="{{ $u->email }}">{{ $u->email }}</td>
+                        <td class="text-nowrap">{{ str_replace('_', ' ', ucfirst($roleLabel)) }}</td>
+                        <td class="text-nowrap" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="{{ $u->client?->company_name ?? '' }}">{{ $u->client?->company_name ?? '—' }}</td>
                         <td><span class="badge bg-{{ $statusColor }}">{{ ucfirst($status) }}</span></td>
-                        <td class="text-muted">{{ $u->last_login_at?->format('Y-m-d H:i') ?? '—' }}</td>
-                        <td class="text-end">
+                        <td class="text-muted text-nowrap small">{{ $u->last_login_at?->format('M j, Y H:i') ?? '—' }}</td>
+                        <td class="text-end text-nowrap">
                             <a href="{{ route('admin.users.edit', $u) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                             <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="toggleActive({{ $u->id }})">
                                 {{ $u->is_active ? 'Deactivate' : 'Activate' }}
