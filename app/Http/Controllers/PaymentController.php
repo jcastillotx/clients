@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\Settings\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,15 +18,25 @@ class PaymentController extends Controller
     /**
      * Create a new controller instance.
      */
-    public function __construct()
+    public function __construct(SettingsService $settings)
     {
-        Stripe::setApiKey(config('services.stripe.secret'));
+        // First try environment variable, then fall back to database settings
+        $stripeSecret = config('services.stripe.secret');
+        
+        if (empty($stripeSecret)) {
+            $mode = $settings->get('payment.stripe.mode', 'test');
+            $stripeSecret = $mode === 'live'
+                ? $settings->get('payment.stripe.live_secret')
+                : $settings->get('payment.stripe.test_secret');
+        }
+        
+        Stripe::setApiKey($stripeSecret);
     }
 
     /**
      * Show payment page for an invoice.
      */
-    public function show(Invoice $invoice): View
+    public function show(Invoice $invoice, SettingsService $settings): View
     {
         $this->authorizeClientAccess($invoice);
 
@@ -36,10 +47,19 @@ class PaymentController extends Controller
         // Create a payment intent
         $paymentIntent = $this->createPaymentIntent($invoice);
 
+        // Get the Stripe public key from env or database settings
+        $stripeKey = config('services.stripe.key');
+        if (empty($stripeKey)) {
+            $mode = $settings->get('payment.stripe.mode', 'test');
+            $stripeKey = $mode === 'live'
+                ? $settings->get('payment.stripe.live_public')
+                : $settings->get('payment.stripe.test_public');
+        }
+
         return view('payments.show', [
             'invoice' => $invoice,
             'clientSecret' => $paymentIntent->client_secret,
-            'stripeKey' => config('services.stripe.key'),
+            'stripeKey' => $stripeKey,
         ]);
     }
 
