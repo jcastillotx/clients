@@ -171,7 +171,21 @@
             @endif
 
             <!-- Staff Role Section -->
-            @if($role === 'staff')
+            @php
+                $staffTypeRoles = [
+                    'staff', 'project_manager', 'developer', 'designer', 'copywriter',
+                    'marketing_director', 'account_manager', 'business_development_manager',
+                    'creative_director', 'graphic_designer', 'videographer_photographer',
+                    'digital_marketing_manager', 'seo_specialist', 'ppc_specialist',
+                    'social_media_manager', 'email_marketing_specialist',
+                    'crm_manager', 'marketing_analyst', 'data_scientist',
+                    'client_services_manager', 'customer_support_manager',
+                    'hr_manager', 'administrative_assistant',
+                    'bookkeeper', 'legal_advisor',
+                    'pr_manager', 'event_planner', 'influencer_marketing_manager',
+                ];
+            @endphp
+            @if(in_array($role, $staffTypeRoles))
                 <div class="border-t border-slate-200 pt-6">
                     <h3 class="text-sm font-semibold text-slate-900 mb-4">Staff Access</h3>
                     
@@ -179,8 +193,9 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assignment role</label>
                             <select wire:model.live="staffAssignmentRole" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
-                                <option value="account_manager">Account manager</option>
-                                <option value="project_lead">Project lead</option>
+                                @foreach($staffAssignmentRoles as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
                             </select>
                         </div>
 

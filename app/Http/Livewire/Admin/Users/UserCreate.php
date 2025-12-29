@@ -40,11 +40,49 @@ class UserCreate extends Component
     /** @var array<int, int> */
     public array $assignedClientIds = [];
 
-    public string $staffAssignmentRole = 'account_manager'; // account_manager|project_lead
+    public string $staffAssignmentRole = 'account_manager';
+
+    /**
+     * Get all available staff assignment roles for client assignments.
+     */
+    public static function getStaffAssignmentRoles(): array
+    {
+        return [
+            'account_manager' => 'Account Manager',
+            'project_lead' => 'Project Lead',
+            'marketing_director' => 'Marketing Director/VP',
+            'business_development_manager' => 'Business Development Manager',
+            'creative_director' => 'Creative Director',
+            'graphic_designer' => 'Graphic Designer',
+            'copywriter' => 'Copywriter',
+            'videographer_photographer' => 'Videographer/Photographer',
+            'digital_marketing_manager' => 'Digital Marketing Manager',
+            'seo_specialist' => 'SEO Specialist',
+            'ppc_specialist' => 'PPC Specialist',
+            'social_media_manager' => 'Social Media Manager',
+            'email_marketing_specialist' => 'Email Marketing Specialist',
+            'web_developer' => 'Web Developer',
+            'ux_ui_designer' => 'UX/UI Designer',
+            'crm_manager' => 'CRM Manager',
+            'marketing_analyst' => 'Marketing Analyst',
+            'data_scientist' => 'Data Scientist/Analyst',
+            'client_services_manager' => 'Client Services Manager',
+            'customer_support_manager' => 'Customer Support/Community Manager',
+            'project_manager' => 'Project Manager',
+            'hr_manager' => 'HR Manager',
+            'administrative_assistant' => 'Administrative Assistant',
+            'bookkeeper' => 'Bookkeeper/Accountant',
+            'legal_advisor' => 'Legal Advisor',
+            'pr_manager' => 'PR Manager',
+            'event_planner' => 'Event Planner',
+            'influencer_marketing_manager' => 'Influencer Marketing Manager',
+        ];
+    }
 
     protected function rules(): array
     {
         $roles = Role::query()->where('guard_name', 'web')->pluck('name')->all();
+        $staffAssignmentRoles = array_keys(self::getStaffAssignmentRoles());
 
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -62,7 +100,7 @@ class UserCreate extends Component
             'staffPermissions.*' => ['string'],
             'assignedClientIds' => ['array'],
             'assignedClientIds.*' => ['integer', Rule::exists('clients', 'id')],
-            'staffAssignmentRole' => ['required', Rule::in(['account_manager', 'project_lead'])],
+            'staffAssignmentRole' => ['required', Rule::in($staffAssignmentRoles)],
         ];
     }
 
@@ -73,7 +111,20 @@ class UserCreate extends Component
                 $this->client_id = null;
                 $this->createNewClient = false;
             }
-            if ($this->role !== 'staff') {
+            // Clear staff-specific data if not a staff-type role
+            $staffTypeRoles = [
+                'staff', 'project_manager', 'developer', 'designer', 'copywriter',
+                'marketing_director', 'account_manager', 'business_development_manager',
+                'creative_director', 'graphic_designer', 'videographer_photographer',
+                'digital_marketing_manager', 'seo_specialist', 'ppc_specialist',
+                'social_media_manager', 'email_marketing_specialist',
+                'crm_manager', 'marketing_analyst', 'data_scientist',
+                'client_services_manager', 'customer_support_manager',
+                'hr_manager', 'administrative_assistant',
+                'bookkeeper', 'legal_advisor',
+                'pr_manager', 'event_planner', 'influencer_marketing_manager',
+            ];
+            if (!in_array($this->role, $staffTypeRoles, true)) {
                 $this->staffPermissions = [];
                 $this->assignedClientIds = [];
             }
@@ -157,7 +208,20 @@ class UserCreate extends Component
 
         $user->syncRoles([$data['role']]);
 
-        if ($data['role'] === 'staff') {
+        // Staff and staff sub-roles: sync permissions and client assignments
+        $staffTypeRoles = [
+            'staff', 'project_manager', 'developer', 'designer', 'copywriter',
+            'marketing_director', 'account_manager', 'business_development_manager',
+            'creative_director', 'graphic_designer', 'videographer_photographer',
+            'digital_marketing_manager', 'seo_specialist', 'ppc_specialist',
+            'social_media_manager', 'email_marketing_specialist',
+            'crm_manager', 'marketing_analyst', 'data_scientist',
+            'client_services_manager', 'customer_support_manager',
+            'hr_manager', 'administrative_assistant',
+            'bookkeeper', 'legal_advisor',
+            'pr_manager', 'event_planner', 'influencer_marketing_manager',
+        ];
+        if (in_array($data['role'], $staffTypeRoles, true)) {
             $user->syncPermissions($this->staffPermissions);
             $user->syncAssignedClients($this->assignedClientIds, $this->staffAssignmentRole);
         }
@@ -187,6 +251,7 @@ class UserCreate extends Component
             'roles' => $roles,
             'clients' => $clients,
             'permissionGroups' => $this->permissionGroups(),
+            'staffAssignmentRoles' => self::getStaffAssignmentRoles(),
         ])->layout('layouts.admin', ['title' => 'Add User']);
     }
 }

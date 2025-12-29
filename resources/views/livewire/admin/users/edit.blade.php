@@ -76,7 +76,20 @@
 
                     @php
                         $downgrade = false;
-                        $rank = fn ($r) => match ($r) { 'super_admin' => 4, 'admin' => 3, 'staff' => 2, 'client' => 1, default => 2 };
+                        $rank = fn ($r) => match ($r) {
+                            'super_admin' => 10,
+                            'admin' => 9,
+                            'marketing_director' => 8,
+                            'project_manager', 'creative_director', 'digital_marketing_manager', 'client_services_manager' => 7,
+                            'staff', 'account_manager', 'business_development_manager', 'crm_manager', 'customer_support_manager', 'hr_manager' => 6,
+                            'developer', 'designer', 'copywriter', 'graphic_designer', 'videographer_photographer',
+                            'seo_specialist', 'ppc_specialist', 'social_media_manager', 'email_marketing_specialist',
+                            'marketing_analyst', 'data_scientist', 'bookkeeper', 'legal_advisor',
+                            'pr_manager', 'event_planner', 'influencer_marketing_manager' => 5,
+                            'administrative_assistant' => 4,
+                            'client' => 1,
+                            default => 5,
+                        };
                         $downgrade = $rank($role) < $rank($currentRole);
                     @endphp
 
@@ -110,19 +123,36 @@
                         </div>
                     @endif
 
-                    @if($role === 'staff' || $role === 'client')
+                    @php
+                        $staffTypeRoles = [
+                            'staff', 'project_manager', 'developer', 'designer', 'copywriter',
+                            'marketing_director', 'account_manager', 'business_development_manager',
+                            'creative_director', 'graphic_designer', 'videographer_photographer',
+                            'digital_marketing_manager', 'seo_specialist', 'ppc_specialist',
+                            'social_media_manager', 'email_marketing_specialist',
+                            'crm_manager', 'marketing_analyst', 'data_scientist',
+                            'client_services_manager', 'customer_support_manager',
+                            'hr_manager', 'administrative_assistant',
+                            'bookkeeper', 'legal_advisor',
+                            'pr_manager', 'event_planner', 'influencer_marketing_manager',
+                        ];
+                        $isStaffRole = in_array($role, $staffTypeRoles);
+                    @endphp
+
+                    @if($isStaffRole || $role === 'client')
                         <div class="border-t border-slate-200 pt-5">
-                            <h3 class="text-sm font-semibold text-slate-900 mb-4">{{ $role === 'staff' ? 'Staff Assignments' : 'Portal Permissions' }}</h3>
+                            <h3 class="text-sm font-semibold text-slate-900 mb-4">{{ $isStaffRole ? 'Staff Assignments' : 'Portal Permissions' }}</h3>
                         </div>
                     @endif
 
-                    @if($role === 'staff')
+                    @if($isStaffRole)
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assignment Role</label>
                                 <select wire:model.live="staffAssignmentRole" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors mb-2">
-                                    <option value="account_manager">Account manager</option>
-                                    <option value="project_lead">Project lead</option>
+                                    @foreach($staffAssignmentRoles as $value => $label)
+                                        <option value="{{ $value }}">{{ $label }}</option>
+                                    @endforeach
                                 </select>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1.5">Assigned Clients</label>
                                 <select multiple size="6" wire:model.live="assignedClientIds" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">

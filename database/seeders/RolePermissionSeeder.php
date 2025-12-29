@@ -208,44 +208,370 @@ class RolePermissionSeeder extends Seeder
                 'view reports',
             ]);
 
-            // Staff sub-roles: developer, designer, copywriter (assignable staff)
-            // These have similar permissions to staff but are specialized roles
-            $staffSubRoles = ['developer', 'designer', 'copywriter'];
-            foreach ($staffSubRoles as $subRole) {
-                $role = Role::firstOrCreate(['name' => $subRole, 'guard_name' => $guard]);
-                $role->syncPermissions([
-                    'access admin panel',
+            // ============================================================
+            // Strategy & Business Development
+            // ============================================================
 
-                    // Clients (view only)
-                    'view_any_client',
-                    'view_client',
+            // Marketing Director/VP - senior leadership with broad access
+            $marketingDirectorRole = Role::firstOrCreate(['name' => 'marketing_director', 'guard_name' => $guard]);
+            $marketingDirectorRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client', 'create_client', 'update_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request', 'delete_request', 'assign_request',
+                'view_any_invoice', 'view_invoice', 'create_invoice', 'update_invoice',
+                'view_any_contract', 'view_contract', 'create_contract', 'update_contract',
+                'view_any_document', 'view_document', 'upload_document', 'delete_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
 
-                    // Requests (work on assigned requests)
-                    'view_any_request',
-                    'view_request',
-                    'update_request',
+            // Account Manager - manages client relationships
+            $accountManagerRole = Role::firstOrCreate(['name' => 'account_manager', 'guard_name' => $guard]);
+            $accountManagerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client', 'create_client', 'update_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_invoice', 'view_invoice', 'create_invoice', 'update_invoice', 'process_payment',
+                'view_any_contract', 'view_contract', 'create_contract', 'update_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
 
-                    // Invoices (view only)
-                    'view_any_invoice',
-                    'view_invoice',
+            // Business Development Manager - focuses on new business
+            $bizDevRole = Role::firstOrCreate(['name' => 'business_development_manager', 'guard_name' => $guard]);
+            $bizDevRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client', 'create_client', 'update_client',
+                'view_any_request', 'view_request', 'create_request',
+                'view_any_invoice', 'view_invoice', 'create_invoice',
+                'view_any_contract', 'view_contract', 'create_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
 
-                    // Contracts (view only)
-                    'view_any_contract',
-                    'view_contract',
+            // ============================================================
+            // Creative Team
+            // ============================================================
 
-                    // Documents
-                    'view_any_document',
-                    'view_document',
-                    'upload_document',
+            // Creative Director - leads creative team
+            $creativeDirectorRole = Role::firstOrCreate(['name' => 'creative_director', 'guard_name' => $guard]);
+            $creativeDirectorRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request', 'assign_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document', 'delete_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
 
-                    // Users (view only)
-                    'view_any_user',
-                    'view_user',
+            // Graphic Designer
+            $graphicDesignerRole = Role::firstOrCreate(['name' => 'graphic_designer', 'guard_name' => $guard]);
+            $graphicDesignerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
 
-                    // Reporting
-                    'view reports',
-                ]);
-            }
+            // Copywriter (keeping existing but renaming for consistency)
+            $copywriterRole = Role::firstOrCreate(['name' => 'copywriter', 'guard_name' => $guard]);
+            $copywriterRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // Videographer/Photographer
+            $videographerRole = Role::firstOrCreate(['name' => 'videographer_photographer', 'guard_name' => $guard]);
+            $videographerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // ============================================================
+            // Digital Marketing Team
+            // ============================================================
+
+            // Digital Marketing Manager
+            $digitalMarketingManagerRole = Role::firstOrCreate(['name' => 'digital_marketing_manager', 'guard_name' => $guard]);
+            $digitalMarketingManagerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client', 'update_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request', 'assign_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document', 'delete_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // SEO Specialist
+            $seoSpecialistRole = Role::firstOrCreate(['name' => 'seo_specialist', 'guard_name' => $guard]);
+            $seoSpecialistRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // PPC Specialist
+            $ppcSpecialistRole = Role::firstOrCreate(['name' => 'ppc_specialist', 'guard_name' => $guard]);
+            $ppcSpecialistRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // Social Media Manager
+            $socialMediaManagerRole = Role::firstOrCreate(['name' => 'social_media_manager', 'guard_name' => $guard]);
+            $socialMediaManagerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // Email Marketing Specialist
+            $emailMarketingRole = Role::firstOrCreate(['name' => 'email_marketing_specialist', 'guard_name' => $guard]);
+            $emailMarketingRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // ============================================================
+            // Web Development & Technology
+            // ============================================================
+
+            // Web Developer (keeping 'developer' for backwards compatibility)
+            $developerRole = Role::firstOrCreate(['name' => 'developer', 'guard_name' => $guard]);
+            $developerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // UX/UI Designer (keeping 'designer' for backwards compatibility)
+            $designerRole = Role::firstOrCreate(['name' => 'designer', 'guard_name' => $guard]);
+            $designerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // CRM Manager
+            $crmManagerRole = Role::firstOrCreate(['name' => 'crm_manager', 'guard_name' => $guard]);
+            $crmManagerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client', 'create_client', 'update_client',
+                'view_any_request', 'view_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // ============================================================
+            // Analytics & Insights
+            // ============================================================
+
+            // Marketing Analyst
+            $marketingAnalystRole = Role::firstOrCreate(['name' => 'marketing_analyst', 'guard_name' => $guard]);
+            $marketingAnalystRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // Data Scientist/Analyst
+            $dataScientistRole = Role::firstOrCreate(['name' => 'data_scientist', 'guard_name' => $guard]);
+            $dataScientistRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // ============================================================
+            // Client Services & Support
+            // ============================================================
+
+            // Client Services Manager
+            $clientServicesManagerRole = Role::firstOrCreate(['name' => 'client_services_manager', 'guard_name' => $guard]);
+            $clientServicesManagerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client', 'create_client', 'update_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request', 'assign_request',
+                'view_any_invoice', 'view_invoice', 'create_invoice', 'update_invoice',
+                'view_any_contract', 'view_contract', 'create_contract', 'update_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // Customer Support/Community Manager
+            $customerSupportRole = Role::firstOrCreate(['name' => 'customer_support_manager', 'guard_name' => $guard]);
+            $customerSupportRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client', 'update_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // ============================================================
+            // Operations & Administration
+            // ============================================================
+
+            // HR Manager
+            $hrManagerRole = Role::firstOrCreate(['name' => 'hr_manager', 'guard_name' => $guard]);
+            $hrManagerRole->syncPermissions([
+                'access admin panel',
+                'view_any_user', 'view_user', 'create_user', 'update_user',
+                'view_any_document', 'view_document', 'upload_document',
+                'view reports',
+            ]);
+
+            // Administrative Assistant
+            $adminAssistantRole = Role::firstOrCreate(['name' => 'administrative_assistant', 'guard_name' => $guard]);
+            $adminAssistantRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+            ]);
+
+            // ============================================================
+            // Finance & Legal
+            // ============================================================
+
+            // Bookkeeper/Accountant
+            $bookeeperRole = Role::firstOrCreate(['name' => 'bookkeeper', 'guard_name' => $guard]);
+            $bookeeperRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_invoice', 'view_invoice', 'create_invoice', 'update_invoice', 'process_payment',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view reports',
+            ]);
+
+            // Legal Advisor
+            $legalAdvisorRole = Role::firstOrCreate(['name' => 'legal_advisor', 'guard_name' => $guard]);
+            $legalAdvisorRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_contract', 'view_contract', 'create_contract', 'update_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // ============================================================
+            // Optional Roles (As the company scales)
+            // ============================================================
+
+            // Public Relations (PR) Manager
+            $prManagerRole = Role::firstOrCreate(['name' => 'pr_manager', 'guard_name' => $guard]);
+            $prManagerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_invoice', 'view_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // Event Planner
+            $eventPlannerRole = Role::firstOrCreate(['name' => 'event_planner', 'guard_name' => $guard]);
+            $eventPlannerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_invoice', 'view_invoice', 'create_invoice',
+                'view_any_contract', 'view_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
+
+            // Influencer Marketing Manager
+            $influencerManagerRole = Role::firstOrCreate(['name' => 'influencer_marketing_manager', 'guard_name' => $guard]);
+            $influencerManagerRole->syncPermissions([
+                'access admin panel',
+                'view_any_client', 'view_client',
+                'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_invoice', 'view_invoice', 'create_invoice',
+                'view_any_contract', 'view_contract', 'create_contract',
+                'view_any_document', 'view_document', 'upload_document',
+                'view_any_user', 'view_user',
+                'view reports',
+            ]);
 
             // Client role - limited portal access
             $clientRole = Role::firstOrCreate(['name' => 'client', 'guard_name' => $guard]);
