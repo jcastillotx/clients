@@ -71,16 +71,17 @@
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['logo_path']))
-                                        <div class="mb-2 p-2 bg-light rounded text-center position-relative">
+                                        <div class="mb-2 p-2 bg-light rounded text-center position-relative branding-image-container">
                                             <img src="{{ asset('storage/' . $branding['logo_path']) }}?{{ time() }}" 
                                                 alt="Logo" 
-                                                class="img-thumbnail brand-preview-thumb" 
+                                                class="img-thumbnail brand-preview-thumb branding-image-preview" 
                                                 style="max-height: 60px; max-width: 100%; cursor: pointer;" 
                                                 data-toggle="modal" 
                                                 data-target="#imagePreviewModal"
                                                 data-image="{{ asset('storage/' . $branding['logo_path']) }}"
                                                 data-title="Company Logo"
-                                                onerror="this.style.display='none'">
+                                                onload="this.parentElement.querySelector('.image-error')?.remove(); this.style.display='inline-block';"
+                                                onerror="this.style.display='none'; if(!this.parentElement.querySelector('.image-error')) { this.insertAdjacentHTML('afterend', '<div class=\'image-error text-warning\'><i class=\'fas fa-exclamation-triangle\'></i><small class=\'d-block\'>Image not found</small></div>'); }">
                                             <small class="d-block text-muted mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
@@ -134,16 +135,17 @@
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['login_logo_path']))
-                                        <div class="mb-2 p-2 bg-light rounded text-center">
+                                        <div class="mb-2 p-2 bg-light rounded text-center branding-image-container">
                                             <img src="{{ asset('storage/' . $branding['login_logo_path']) }}?{{ time() }}" 
                                                 alt="Login Logo" 
-                                                class="img-thumbnail brand-preview-thumb" 
+                                                class="img-thumbnail brand-preview-thumb branding-image-preview" 
                                                 style="max-height: 60px; max-width: 100%; cursor: pointer;" 
                                                 data-toggle="modal" 
                                                 data-target="#imagePreviewModal"
                                                 data-image="{{ asset('storage/' . $branding['login_logo_path']) }}"
                                                 data-title="Login Page Logo"
-                                                onerror="this.style.display='none'">
+                                                onload="this.parentElement.querySelector('.image-error')?.remove(); this.style.display='inline-block';"
+                                                onerror="this.style.display='none'; if(!this.parentElement.querySelector('.image-error')) { this.insertAdjacentHTML('afterend', '<div class=\'image-error text-warning\'><i class=\'fas fa-exclamation-triangle\'></i><small class=\'d-block\'>Image not found</small></div>'); }">
                                             <small class="d-block text-muted mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
@@ -192,16 +194,17 @@
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['dashboard_logo_path']))
-                                        <div class="mb-2 p-2 bg-dark rounded text-center">
+                                        <div class="mb-2 p-2 bg-dark rounded text-center branding-image-container">
                                             <img src="{{ asset('storage/' . $branding['dashboard_logo_path']) }}?{{ time() }}" 
                                                 alt="Dashboard Logo" 
-                                                class="img-thumbnail brand-preview-thumb" 
+                                                class="img-thumbnail brand-preview-thumb branding-image-preview" 
                                                 style="max-height: 40px; max-width: 100%; cursor: pointer; background: transparent; border: none;" 
                                                 data-toggle="modal" 
                                                 data-target="#imagePreviewModal"
                                                 data-image="{{ asset('storage/' . $branding['dashboard_logo_path']) }}"
                                                 data-title="Sidebar/Dashboard Logo"
-                                                onerror="this.style.display='none'">
+                                                onload="this.parentElement.querySelector('.image-error')?.remove(); this.style.display='inline-block';"
+                                                onerror="this.style.display='none'; if(!this.parentElement.querySelector('.image-error')) { this.insertAdjacentHTML('afterend', '<div class=\'image-error text-warning\'><i class=\'fas fa-exclamation-triangle\'></i><small class=\'d-block\'>Image not found</small></div>'); }">
                                             <small class="d-block text-white-50 mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
@@ -250,15 +253,17 @@
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['login_background_path']))
-                                        <div class="mb-2 rounded overflow-hidden position-relative" style="height: 60px; cursor: pointer;"
+                                        <div class="mb-2 rounded overflow-hidden position-relative branding-image-container" style="height: 60px; cursor: pointer;"
                                             data-toggle="modal" 
                                             data-target="#imagePreviewModal"
                                             data-image="{{ asset('storage/' . $branding['login_background_path']) }}"
                                             data-title="Login Background">
                                             <img src="{{ asset('storage/' . $branding['login_background_path']) }}?{{ time() }}" 
                                                 alt="Login Background" 
+                                                class="branding-image-preview"
                                                 style="width: 100%; height: 100%; object-fit: cover;" 
-                                                onerror="this.parentElement.style.display='none'">
+                                                onload="this.parentElement.querySelector('.image-error')?.remove(); this.style.display='block';"
+                                                onerror="this.style.display='none'; if(!this.parentElement.querySelector('.image-error')) { this.insertAdjacentHTML('afterend', '<div class=\'image-error text-warning p-2 text-center\' style=\'background: #f8f9fa;\'><i class=\'fas fa-exclamation-triangle\'></i><small class=\'d-block\'>Image not found</small></div>'); }">
                                             <div class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.5); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fas fa-search-plus text-white"></i>
                                             </div>
@@ -309,16 +314,17 @@
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['favicon_path']))
-                                        <div class="mb-2 p-2 bg-light rounded text-center">
+                                        <div class="mb-2 p-2 bg-light rounded text-center branding-image-container">
                                             <img src="{{ asset('storage/' . $branding['favicon_path']) }}?{{ time() }}" 
                                                 alt="Favicon" 
-                                                class="img-thumbnail brand-preview-thumb" 
+                                                class="img-thumbnail brand-preview-thumb branding-image-preview" 
                                                 style="max-height: 32px; max-width: 32px; cursor: pointer;" 
                                                 data-toggle="modal" 
                                                 data-target="#imagePreviewModal"
                                                 data-image="{{ asset('storage/' . $branding['favicon_path']) }}"
                                                 data-title="Favicon"
-                                                onerror="this.style.display='none'">
+                                                onload="this.parentElement.querySelector('.image-error')?.remove(); this.style.display='inline-block';"
+                                                onerror="this.style.display='none'; if(!this.parentElement.querySelector('.image-error')) { this.insertAdjacentHTML('afterend', '<div class=\'image-error text-warning\'><i class=\'fas fa-exclamation-triangle\'></i><small class=\'d-block\'>Image not found</small></div>'); }">
                                             <small class="d-block text-muted mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
@@ -367,16 +373,17 @@
                                 </div>
                                 <div class="card-body">
                                     @if(!empty($branding['document_logo_path']))
-                                        <div class="mb-2 p-2 bg-white border rounded text-center">
+                                        <div class="mb-2 p-2 bg-white border rounded text-center branding-image-container">
                                             <img src="{{ asset('storage/' . $branding['document_logo_path']) }}?{{ time() }}" 
                                                 alt="Document Logo" 
-                                                class="img-thumbnail brand-preview-thumb" 
+                                                class="img-thumbnail brand-preview-thumb branding-image-preview" 
                                                 style="max-height: 50px; max-width: 100%; cursor: pointer; border: none;" 
                                                 data-toggle="modal" 
                                                 data-target="#imagePreviewModal"
                                                 data-image="{{ asset('storage/' . $branding['document_logo_path']) }}"
                                                 data-title="Document/Invoice Logo"
-                                                onerror="this.style.display='none'">
+                                                onload="this.parentElement.querySelector('.image-error')?.remove(); this.style.display='inline-block';"
+                                                onerror="this.style.display='none'; if(!this.parentElement.querySelector('.image-error')) { this.insertAdjacentHTML('afterend', '<div class=\'image-error text-warning\'><i class=\'fas fa-exclamation-triangle\'></i><small class=\'d-block\'>Image not found</small></div>'); }">
                                             <small class="d-block text-muted mt-1"><i class="fas fa-search-plus mr-1"></i>Click to preview</small>
                                         </div>
                                     @else
@@ -746,6 +753,28 @@
             </div>
         </div>
     </div>
+
+    @push('styles')
+    <style>
+        /* Branding image error styling */
+        .branding-image-container .image-error {
+            padding: 8px;
+            text-align: center;
+        }
+        .branding-image-container .image-error i {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .branding-image-container .image-error small {
+            font-size: 11px;
+        }
+        /* Ensure images have proper initial state */
+        .branding-image-preview {
+            display: inline-block;
+        }
+    </style>
+    @endpush
 
     @push('scripts')
     <script>
