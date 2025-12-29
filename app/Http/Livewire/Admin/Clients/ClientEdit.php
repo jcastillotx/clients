@@ -285,6 +285,60 @@ PROMPT;
         }
     }
 
+    public function saveOverview(): void
+    {
+        $validated = $this->validate([
+            'company_name' => ['required', 'string', 'max:255'],
+            'contact_name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('clients', 'email')->ignore($this->client->id),
+                Rule::unique('users', 'email')->ignore($this->primaryUser?->id),
+            ],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'zip_code' => ['nullable', 'string', 'max:30'],
+            'country' => ['nullable', 'string', 'max:5'],
+            'tier' => ['required', Rule::in(['basic', 'standard', 'premium', 'enterprise'])],
+            'status' => ['required', Rule::in(['active', 'inactive', 'pending', 'suspended'])],
+            'stripe_customer_id' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
+            'internal_notes' => ['nullable', 'string'],
+        ]);
+
+        $this->client->update([
+            'company_name' => $validated['company_name'],
+            'contact_name' => $validated['contact_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'address' => $validated['address'],
+            'city' => $validated['city'],
+            'state' => $validated['state'],
+            'zip_code' => $validated['zip_code'],
+            'country' => $validated['country'] ?: 'US',
+            'tier' => $validated['tier'],
+            'status' => $validated['status'],
+            'stripe_customer_id' => $validated['stripe_customer_id'],
+            'notes' => $validated['notes'],
+            'internal_notes' => $validated['internal_notes'],
+        ]);
+
+        // Keep primary user in sync
+        if ($this->primaryUser) {
+            $this->primaryUser->update([
+                'name' => $validated['contact_name'],
+                'email' => $validated['email'],
+                'is_active' => $validated['status'] === 'active',
+            ]);
+        }
+
+        session()->flash('success', 'Client overview updated successfully.');
+    }
+
     public function saveProfile(): void
     {
         $validated = $this->validate([
