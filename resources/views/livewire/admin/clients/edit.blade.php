@@ -435,24 +435,24 @@
             </div>
         </div>
     @endif
-</div>
 
-<style>
-    .btn-purple {
-        background-color: #6f42c1;
-        border-color: #6f42c1;
-        color: #fff;
-    }
-    .btn-purple:hover {
-        background-color: #5a32a3;
-        border-color: #5a32a3;
-        color: #fff;
-    }
-    .badge-purple {
-        background-color: #6f42c1;
-        color: #fff;
-    }
-    .card-outline.card-purple {
-        border-top: 3px solid #6f42c1;
-    }
-</style>
+    <style>
+        .btn-purple {
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+            color: #fff;
+        }
+        .btn-purple:hover {
+            background-color: #5a32a3;
+            border-color: #5a32a3;
+            color: #fff;
+        }
+        .badge-purple {
+            background-color: #6f42c1;
+            color: #fff;
+        }
+        .card-outline.card-purple {
+            border-top: 3px solid #6f42c1;
+        }
+    </style>
+</div>
