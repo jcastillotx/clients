@@ -286,7 +286,7 @@ Artisan::command('ai:embeddings:backfill {--limit=200} {--provider=openai} {--mo
 Schedule::call(function () {
     $newsService = app(\App\Services\BrandMonitoring\NewsMonitoringService::class);
 
-    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+    foreach (\App\Models\Client::active()->cursor() as $client) {
         try {
             $keywords = $client->getBrandKeywords();
             $newsService->searchNewsAPI($client, $keywords);
@@ -304,7 +304,7 @@ Schedule::call(function () {
 Schedule::call(function () {
     $reviewService = app(\App\Services\BrandMonitoring\ReviewMonitoringService::class);
 
-    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+    foreach (\App\Models\Client::active()->cursor() as $client) {
         try {
             $reviewService->getYelpReviews($client);
             $reviewService->getGooglePlacesReviews($client);
@@ -321,7 +321,7 @@ Schedule::call(function () {
 Schedule::call(function () {
     $socialService = app(\App\Services\BrandMonitoring\SocialMonitoringService::class);
 
-    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+    foreach (\App\Models\Client::active()->cursor() as $client) {
         try {
             $keywords = $client->getBrandKeywords();
             $socialService->searchReddit($client, $keywords);
@@ -340,7 +340,7 @@ Schedule::call(function () {
 Schedule::call(function () {
     $webService = app(\App\Services\BrandMonitoring\WebMentionService::class);
 
-    foreach (\App\Models\Client::where('is_active', true)->cursor() as $client) {
+    foreach (\App\Models\Client::active()->cursor() as $client) {
         try {
             $keywords = $client->getBrandKeywords();
             $webService->searchGoogle($client, $keywords);
