@@ -21,7 +21,7 @@
                         <thead>
                             <tr>
                                 @foreach($headings as $h)
-                                    <th>{{ $h }}</th>
+                                    <th>{{ str_replace('Sla', 'SLA', \Illuminate\Support\Str::headline($h)) }}</th>
                                 @endforeach
                             </tr>
                         </thead>
