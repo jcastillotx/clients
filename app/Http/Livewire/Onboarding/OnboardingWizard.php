@@ -35,6 +35,18 @@ class OnboardingWizard extends Component
 
         $this->questionnaireId = $q?->id;
         $this->answers = (array) ($q?->answers ?? []);
+
+        // Initialize multiselect fields as empty arrays if not set
+        if ($q) {
+            foreach ((array) ($q->questions ?? []) as $question) {
+                if (isset($question['type'], $question['key']) && $question['type'] === 'multiselect') {
+                    $key = $question['key'];
+                    if (!isset($this->answers[$key]) || !is_array($this->answers[$key])) {
+                        $this->answers[$key] = [];
+                    }
+                }
+            }
+        }
     }
 
     public function saveProgress(): void
