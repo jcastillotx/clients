@@ -25,7 +25,7 @@ class Permissions extends Component
     public function refreshMatrix(): void
     {
         $roles = Role::query()->orderBy('name')->get();
-        $perms = Permission::query()->orderBy('name')->pluck('name')->all();
+        $perms = Permission::query()->where('guard_name', 'web')->orderBy('name')->pluck('name')->all();
 
         $groups = [
             'Clients' => [],
@@ -79,7 +79,7 @@ class Permissions extends Component
     public function toggle(string $roleName, string $permissionName): void
     {
         $role = Role::query()->where('name', $roleName)->firstOrFail();
-        $perm = Permission::query()->where('name', $permissionName)->firstOrFail();
+        $perm = Permission::query()->where('name', $permissionName)->where('guard_name', 'web')->firstOrFail();
 
         if ($role->hasPermissionTo($perm)) {
             $role->revokePermissionTo($perm);

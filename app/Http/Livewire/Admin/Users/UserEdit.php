@@ -92,7 +92,7 @@ class UserEdit extends Component
 
     protected function permissionGroups(): array
     {
-        $all = Permission::query()->orderBy('name')->pluck('name')->all();
+        $all = Permission::query()->where('guard_name', 'web')->orderBy('name')->pluck('name')->all();
         $clientAssignable = (array) config('entitlements.client_assignable_permissions', []);
         $groups = [
             'Clients' => [],
