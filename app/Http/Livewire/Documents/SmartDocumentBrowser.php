@@ -223,6 +223,7 @@ class SmartDocumentBrowser extends Component
         // Build a unified union query for listing (lightweight columns only)
         $docQuery = DB::table('documents')
             ->selectRaw("documents.id as id, 'document' as item_type, documents.title as title, documents.original_filename as filename, 'local' as provider, documents.mime_type as mime_type, documents.file_size as size_bytes, documents.updated_at as modified_at")
+            ->whereNull('documents.deleted_at')
             ->when($clientId, fn ($q) => $q->where('documents.client_id', $clientId));
 
         $sfQuery = DB::table('storage_files')
