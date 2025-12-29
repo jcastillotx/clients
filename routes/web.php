@@ -259,6 +259,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->whereIn('viewer', ['office', 'google'])
         ->name('documents.viewer.document');
     Route::get('/documents/{document}/workflow', DocumentWorkflow::class)->name('documents.workflow');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

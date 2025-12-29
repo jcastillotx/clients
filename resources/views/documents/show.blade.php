@@ -79,6 +79,18 @@
                     <a href="{{ route('documents.index') }}" class="btn btn-outline-secondary btn-block">
                         <i class="fas fa-arrow-left mr-1"></i> Back to Documents
                     </a>
+                    @php
+                        $canDelete = app(\App\Services\Documents\DocumentAccessService::class)->canDelete(auth()->user(), $document);
+                    @endphp
+                    @if($canDelete)
+                    <form action="{{ route('documents.destroy', $document) }}" method="POST" class="mt-2" onsubmit="return confirm('Are you sure you want to delete this document? This action cannot be undone.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-block">
+                            <i class="fas fa-trash mr-1"></i> Delete Document
+                        </button>
+                    </form>
+                    @endif
                 </div>
             </div>
 
