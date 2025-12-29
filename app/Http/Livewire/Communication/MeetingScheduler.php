@@ -124,6 +124,12 @@ class MeetingScheduler extends Component
             'meeting_link' => trim($this->meetingLink) ?: null,
         ]);
 
+        $this->reset(['editingMeetingId', 'requestId', 'meetingType', 'title', 'status', 'scheduledAt', 'durationMinutes', 'agenda', 'meetingLink']);
+        $this->meetingType = 'kickoff';
+        $this->status = 'requested';
+        $this->durationMinutes = 30;
+        $this->scheduledAt = now()->addDays(2)->format('Y-m-d\\TH:i');
+
         session()->flash('success', 'Meeting updated.');
     }
 
