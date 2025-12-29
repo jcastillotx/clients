@@ -401,14 +401,6 @@ class SystemSettings extends Component
             'can_connect' => false,
         ];
 
-        // OpenAI
-        $this->integrationStatus['openai'] = [
-            'configured' => !empty(config('ai-providers.providers.openai.api_key')),
-            'connected' => false,
-            'message' => null,
-            'can_connect' => false,
-        ];
-
         // Dropbox (OAuth)
         $dropboxConfigured = !empty(config('services.dropbox.app_key')) && !empty(config('services.dropbox.app_secret'));
         $this->integrationStatus['dropbox'] = [
@@ -537,23 +529,6 @@ class SystemSettings extends Component
                         $this->integrationStatus['paypal']['message'] = 'Connected successfully (Sandbox)';
                     } else {
                         $this->integrationStatus['paypal']['message'] = 'Connection failed: ' . ($response->json('error_description') ?? $response->status());
-                    }
-                    break;
-
-                case 'openai':
-                    $apiKey = config('ai-providers.providers.openai.api_key');
-                    if (empty($apiKey)) {
-                        $this->integrationStatus['openai']['message'] = 'API key not configured';
-                        return;
-                    }
-                    $response = Http::withToken($apiKey)
-                        ->timeout(10)
-                        ->get('https://api.openai.com/v1/models');
-                    if ($response->successful()) {
-                        $this->integrationStatus['openai']['connected'] = true;
-                        $this->integrationStatus['openai']['message'] = 'Connected successfully';
-                    } else {
-                        $this->integrationStatus['openai']['message'] = 'Connection failed: ' . $response->status();
                     }
                     break;
 

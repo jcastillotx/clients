@@ -139,17 +139,15 @@ class AIProviderManager
     /**
      * Resolve provider configuration from DB with env fallback.
      *
+     * AI provider configuration is managed exclusively via the ai_providers table
+     * (Admin > AI > Providers). This provides a single source of truth with
+     * cost tracking, priority ordering, and status management.
+     *
      * @return array<string, mixed>
      */
     public function resolveProviderConfig(string $provider): array
     {
         $base = (array) config("ai-providers.providers.{$provider}", []);
-
-        // Check database settings for API keys (user-configurable via admin panel)
-        $dbSettings = $this->getProviderSettingsFromDb($provider);
-        if (! empty($dbSettings)) {
-            $base = array_merge($base, $dbSettings);
-        }
 
         /** @var AiProvider|null $row */
         $row = AiProvider::query()
@@ -171,63 +169,6 @@ class AIProviderManager
             'cost_per_1k_output_tokens' => $row->cost_per_1k_output_tokens,
             'rate_limit_per_minute' => $row->rate_limit_per_minute,
         ], fn ($v) => $v !== null && $v !== ''));
-    }
-
-    /**
-     * Get provider settings from database (API Settings page).
-     *
-     * @return array<string, mixed>
-     */
-    protected function getProviderSettingsFromDb(string $provider): array
-    {
-        $keyMap = [
-            'openai' => [
-                'api_key' => 'api.ai.openai.api_key',
-                'default_model' => 'api.ai.openai.default_model',
-            ],
-            'claude' => [
-                'api_key' => 'api.ai.claude.api_key',
-                'default_model' => 'api.ai.claude.default_model',
-            ],
-            'gemini' => [
-                'api_key' => 'api.ai.gemini.api_key',
-                'default_model' => 'api.ai.gemini.default_model',
-            ],
-            'grok' => [
-                'api_key' => 'api.ai.grok.api_key',
-                'default_model' => 'api.ai.grok.default_model',
-            ],
-            'perplexity' => [
-                'api_key' => 'api.ai.perplexity.api_key',
-                'default_model' => 'api.ai.perplexity.default_model',
-            ],
-            'copilot' => [
-                'api_key' => 'api.ai.copilot.api_key',
-                'api_base' => 'api.ai.copilot.endpoint',
-                'deployment_name' => 'api.ai.copilot.deployment',
-            ],
-            'openrouter' => [
-                'api_key' => 'api.ai.openrouter.api_key',
-                'default_model' => 'api.ai.openrouter.default_model',
-            ],
-            'asksage' => [
-                'api_key' => 'api.ai.asksage.api_key',
-            ],
-        ];
-
-        if (! isset($keyMap[$provider])) {
-            return [];
-        }
-
-        $result = [];
-        foreach ($keyMap[$provider] as $configKey => $settingKey) {
-            $value = Setting::getValue($settingKey);
-            if ($value !== null && $value !== '') {
-                $result[$configKey] = $value;
-            }
-        }
-
-        return $result;
     }
 
     /**
