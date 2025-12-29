@@ -97,6 +97,19 @@ class PostCreator extends Component
         };
     }
 
+    public function getPlatformIcon(string $platform): string
+    {
+        return match ($platform) {
+            'facebook' => 'fab fa-facebook',
+            'instagram' => 'fab fa-instagram',
+            'linkedin' => 'fab fa-linkedin',
+            'x', 'twitter' => 'fab fa-x-twitter',
+            'tiktok' => 'fab fa-tiktok',
+            'pinterest' => 'fab fa-pinterest',
+            default => 'fas fa-share-alt',
+        };
+    }
+
     public function toggleAIPanel()
     {
         $this->show_ai_panel = ! $this->show_ai_panel;
