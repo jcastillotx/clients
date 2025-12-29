@@ -976,11 +976,14 @@ class SystemSettings extends Component
         ])->validate();
 
         $path = $this->logo_upload->store('branding', 'public');
-        $this->branding['logo_path'] = $path;
         $settings->set('branding.logo_path', $path, 'branding');
         $this->logo_upload = null;
 
+        // Force Livewire to detect the change by replacing the entire array
+        $this->branding = array_merge($this->branding, ['logo_path' => $path]);
+
         app(BrandingService::class)->clearCache();
+        $settings->forgetCache();
         session()->flash('success', 'Logo uploaded successfully!');
         $this->dispatch('image-uploaded', type: 'Company Logo', message: 'Logo uploaded successfully!');
     }
@@ -999,11 +1002,14 @@ class SystemSettings extends Component
         ])->validate();
 
         $path = $this->login_logo_upload->store('branding', 'public');
-        $this->branding['login_logo_path'] = $path;
         $settings->set('branding.login_logo_path', $path, 'branding');
         $this->login_logo_upload = null;
 
+        // Force Livewire to detect the change by replacing the entire array
+        $this->branding = array_merge($this->branding, ['login_logo_path' => $path]);
+
         app(BrandingService::class)->clearCache();
+        $settings->forgetCache();
         session()->flash('success', 'Login logo uploaded successfully!');
         $this->dispatch('image-uploaded', type: 'Login Logo', message: 'Login logo uploaded successfully!');
     }
@@ -1022,11 +1028,14 @@ class SystemSettings extends Component
         ])->validate();
 
         $path = $this->dashboard_logo_upload->store('branding', 'public');
-        $this->branding['dashboard_logo_path'] = $path;
         $settings->set('branding.dashboard_logo_path', $path, 'branding');
         $this->dashboard_logo_upload = null;
 
+        // Force Livewire to detect the change by replacing the entire array
+        $this->branding = array_merge($this->branding, ['dashboard_logo_path' => $path]);
+
         app(BrandingService::class)->clearCache();
+        $settings->forgetCache();
         session()->flash('success', 'Dashboard logo uploaded successfully!');
         $this->dispatch('image-uploaded', type: 'Dashboard Logo', message: 'Dashboard logo uploaded successfully!');
     }
@@ -1045,11 +1054,14 @@ class SystemSettings extends Component
         ])->validate();
 
         $path = $this->login_background_upload->store('branding', 'public');
-        $this->branding['login_background_path'] = $path;
         $settings->set('branding.login_background_path', $path, 'branding');
         $this->login_background_upload = null;
 
+        // Force Livewire to detect the change by replacing the entire array
+        $this->branding = array_merge($this->branding, ['login_background_path' => $path]);
+
         app(BrandingService::class)->clearCache();
+        $settings->forgetCache();
         session()->flash('success', 'Login background uploaded successfully!');
         $this->dispatch('image-uploaded', type: 'Login Background', message: 'Login background uploaded successfully!');
     }
@@ -1068,11 +1080,14 @@ class SystemSettings extends Component
         ])->validate();
 
         $path = $this->favicon_upload->store('branding', 'public');
-        $this->branding['favicon_path'] = $path;
         $settings->set('branding.favicon_path', $path, 'branding');
         $this->favicon_upload = null;
 
+        // Force Livewire to detect the change by replacing the entire array
+        $this->branding = array_merge($this->branding, ['favicon_path' => $path]);
+
         app(BrandingService::class)->clearCache();
+        $settings->forgetCache();
         session()->flash('success', 'Favicon uploaded successfully!');
         $this->dispatch('image-uploaded', type: 'Favicon', message: 'Favicon uploaded successfully!');
     }
@@ -1091,11 +1106,14 @@ class SystemSettings extends Component
         ])->validate();
 
         $path = $this->document_logo_upload->store('branding', 'public');
-        $this->branding['document_logo_path'] = $path;
         $settings->set('branding.document_logo_path', $path, 'branding');
         $this->document_logo_upload = null;
 
+        // Force Livewire to detect the change by replacing the entire array
+        $this->branding = array_merge($this->branding, ['document_logo_path' => $path]);
+
         app(BrandingService::class)->clearCache();
+        $settings->forgetCache();
         session()->flash('success', 'Document logo uploaded successfully!');
         $this->dispatch('image-uploaded', type: 'Document Logo', message: 'Document logo uploaded successfully!');
     }
