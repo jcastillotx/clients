@@ -1,7 +1,17 @@
 <div class="space-y-6">
     <div class="mb-6">
         <h2 class="text-lg font-semibold text-slate-900">Brand Monitoring API Configuration</h2>
-        <p class="text-sm text-slate-500 mt-1">Configure API keys for brand monitoring services. Most have generous free tiers.</p>
+        <p class="text-sm text-slate-500 mt-1">Configure API keys for brand monitoring services. We prioritize free/organic capabilities before commercial ones.</p>
+        <div class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <div class="text-sm text-emerald-800">
+                    <strong>Priority:</strong> Free APIs (NewsAPI, Google News RSS, Yelp, Reddit, YouTube) → Low-cost → Commercial Enterprise platforms. Free APIs save $800-2000/month vs enterprise solutions.
+                </div>
+            </div>
+        </div>
     </div>
 
     <form wire:submit.prevent="saveBrandMonitoringSettings" class="space-y-8">
@@ -330,6 +340,281 @@
                         <div class="flex items-end">
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="bing_search_enabled" wire:model="brandMonitoring.bing_search_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                <span class="text-sm text-slate-700">Enabled</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Free News APIs Section -->
+        <div>
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">FREE</span>
+                Additional News APIs
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- MediaStack -->
+                <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-violet-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd" />
+                                <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-900">MediaStack</h4>
+                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Free: 500 req/mo</span>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Key</label>
+                            <input type="password" wire:model="brandMonitoring.mediastack_api_key" placeholder="MediaStack API Key" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        </div>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" wire:model="brandMonitoring.mediastack_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                            <span class="text-sm text-slate-700">Enabled</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- GNews -->
+                <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd" />
+                                <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-900">GNews</h4>
+                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Free: 100 req/day</span>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Key</label>
+                            <input type="password" wire:model="brandMonitoring.gnews_api_key" placeholder="GNews API Key" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        </div>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" wire:model="brandMonitoring.gnews_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                            <span class="text-sm text-slate-700">Enabled</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commercial Enterprise APIs Section -->
+        <div>
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700">COMMERCIAL</span>
+                Enterprise Brand Monitoring Platforms
+            </h3>
+            <div class="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <div class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="text-sm text-purple-800">
+                        <strong>Note:</strong> These are enterprise-grade platforms. Enable only if free APIs don't meet your monitoring needs. Free APIs above are recommended first.
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <!-- Mention -->
+                <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-900">Mention</h4>
+                                <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">From $29/mo</span>
+                            </div>
+                        </div>
+                        @include('livewire.admin.settings.partials.api-test-button', ['provider' => 'mention'])
+                    </div>
+                    <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Key</label>
+                            <input type="password" wire:model="brandMonitoring.mention_api_key" placeholder="Mention API Key" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Account ID</label>
+                            <input type="text" wire:model="brandMonitoring.mention_account_id" placeholder="Mention Account ID" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        </div>
+                        <div class="flex items-end">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="brandMonitoring.mention_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                <span class="text-sm text-slate-700">Enabled</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-4">
+                        <p class="text-xs text-slate-500">Features: Real-time mentions, sentiment analysis, influencer identification, competitive analysis</p>
+                    </div>
+                </div>
+
+                <!-- Brand24 -->
+                <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                                <span class="text-xs font-bold text-orange-600">24</span>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-900">Brand24</h4>
+                                <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">From $49/mo</span>
+                            </div>
+                        </div>
+                        @include('livewire.admin.settings.partials.api-test-button', ['provider' => 'brand24'])
+                    </div>
+                    <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Key</label>
+                            <input type="password" wire:model="brandMonitoring.brand24_api_key" placeholder="Brand24 API Key" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Project ID</label>
+                            <input type="text" wire:model="brandMonitoring.brand24_project_id" placeholder="Brand24 Project ID" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        </div>
+                        <div class="flex items-end">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="brandMonitoring.brand24_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                <span class="text-sm text-slate-700">Enabled</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-4">
+                        <p class="text-xs text-slate-500">Features: Online mentions, sentiment analysis, influence score, reach metrics</p>
+                    </div>
+                </div>
+
+                <!-- Sprout Social -->
+                <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-900">Sprout Social</h4>
+                            <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">From $249/mo</span>
+                        </div>
+                    </div>
+                    <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Key</label>
+                            <input type="password" wire:model="brandMonitoring.sprout_social_api_key" placeholder="Sprout Social API Key" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Secret</label>
+                            <input type="password" wire:model="brandMonitoring.sprout_social_api_secret" placeholder="Sprout Social API Secret" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                        </div>
+                        <div class="flex items-end">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="brandMonitoring.sprout_social_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                <span class="text-sm text-slate-700">Enabled</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-4">
+                        <p class="text-xs text-slate-500">Features: Publishing, engagement, analytics, social listening</p>
+                    </div>
+                </div>
+
+                <!-- Brandwatch & Meltwater & Talkwalker in grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Brandwatch -->
+                    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                <span class="text-xs font-bold text-indigo-600">BW</span>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-900">Brandwatch</h4>
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Enterprise</span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Key</label>
+                                <input type="password" wire:model="brandMonitoring.brandwatch_api_key" placeholder="Brandwatch API Key" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Secret</label>
+                                <input type="password" wire:model="brandMonitoring.brandwatch_api_secret" placeholder="API Secret" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Project ID</label>
+                                <input type="text" wire:model="brandMonitoring.brandwatch_project_id" placeholder="Project ID" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            </div>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="brandMonitoring.brandwatch_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                <span class="text-sm text-slate-700">Enabled</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Meltwater -->
+                    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center">
+                                <span class="text-xs font-bold text-sky-600">MW</span>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-900">Meltwater</h4>
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Enterprise</span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Key</label>
+                                <input type="password" wire:model="brandMonitoring.meltwater_api_key" placeholder="Meltwater API Key" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Secret</label>
+                                <input type="password" wire:model="brandMonitoring.meltwater_api_secret" placeholder="API Secret" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            </div>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="brandMonitoring.meltwater_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
+                                <span class="text-sm text-slate-700">Enabled</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Talkwalker -->
+                    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center">
+                                <span class="text-xs font-bold text-pink-600">TW</span>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-900">Talkwalker</h4>
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Enterprise</span>
+                            </div>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">API Key</label>
+                                <input type="password" wire:model="brandMonitoring.talkwalker_api_key" placeholder="Talkwalker API Key" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Project ID</label>
+                                <input type="text" wire:model="brandMonitoring.talkwalker_project_id" placeholder="Project ID" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            </div>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="brandMonitoring.talkwalker_enabled" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0">
                                 <span class="text-sm text-slate-700">Enabled</span>
                             </label>
                         </div>

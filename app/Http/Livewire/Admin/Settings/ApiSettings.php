@@ -20,6 +20,9 @@ class ApiSettings extends Component
     // Social Media API Keys
     public array $social = [];
 
+    // SEO Integration API Keys
+    public array $seo = [];
+
     // Test results
     public array $testResults = [];
 
@@ -125,6 +128,31 @@ class ApiSettings extends Component
             'capterra_enabled' => (bool) $bmValues['api.brand.capterra.enabled'],
             'facebook_access_token' => $bmValues['api.brand.facebook.access_token'],
             'facebook_enabled' => (bool) $bmValues['api.brand.facebook.enabled'],
+            // Free news APIs
+            'mediastack_api_key' => $bmValues['api.brand.mediastack.api_key'] ?? '',
+            'mediastack_enabled' => (bool) ($bmValues['api.brand.mediastack.enabled'] ?? false),
+            'gnews_api_key' => $bmValues['api.brand.gnews.api_key'] ?? '',
+            'gnews_enabled' => (bool) ($bmValues['api.brand.gnews.enabled'] ?? false),
+            // Commercial APIs
+            'brandwatch_api_key' => $bmValues['api.brand.brandwatch.api_key'] ?? '',
+            'brandwatch_api_secret' => $bmValues['api.brand.brandwatch.api_secret'] ?? '',
+            'brandwatch_project_id' => $bmValues['api.brand.brandwatch.project_id'] ?? '',
+            'brandwatch_enabled' => (bool) ($bmValues['api.brand.brandwatch.enabled'] ?? false),
+            'mention_api_key' => $bmValues['api.brand.mention.api_key'] ?? '',
+            'mention_account_id' => $bmValues['api.brand.mention.account_id'] ?? '',
+            'mention_enabled' => (bool) ($bmValues['api.brand.mention.enabled'] ?? false),
+            'brand24_api_key' => $bmValues['api.brand.brand24.api_key'] ?? '',
+            'brand24_project_id' => $bmValues['api.brand.brand24.project_id'] ?? '',
+            'brand24_enabled' => (bool) ($bmValues['api.brand.brand24.enabled'] ?? false),
+            'sprout_social_api_key' => $bmValues['api.brand.sprout_social.api_key'] ?? '',
+            'sprout_social_api_secret' => $bmValues['api.brand.sprout_social.api_secret'] ?? '',
+            'sprout_social_enabled' => (bool) ($bmValues['api.brand.sprout_social.enabled'] ?? false),
+            'meltwater_api_key' => $bmValues['api.brand.meltwater.api_key'] ?? '',
+            'meltwater_api_secret' => $bmValues['api.brand.meltwater.api_secret'] ?? '',
+            'meltwater_enabled' => (bool) ($bmValues['api.brand.meltwater.enabled'] ?? false),
+            'talkwalker_api_key' => $bmValues['api.brand.talkwalker.api_key'] ?? '',
+            'talkwalker_project_id' => $bmValues['api.brand.talkwalker.project_id'] ?? '',
+            'talkwalker_enabled' => (bool) ($bmValues['api.brand.talkwalker.enabled'] ?? false),
         ];
 
         // Load Social Media settings
@@ -174,11 +202,89 @@ class ApiSettings extends Component
             'threads_client_id' => $socialValues['api.social.threads.client_id'],
             'threads_client_secret' => $socialValues['api.social.threads.client_secret'],
         ];
+
+        // Load SEO Integration settings
+        $seoDefaults = [
+            // Free APIs
+            'api.seo.google_search_console.enabled' => false,
+            'api.seo.google_search_console.client_id' => '',
+            'api.seo.google_search_console.client_secret' => '',
+            'api.seo.google_search_console.refresh_token' => '',
+            'api.seo.google_pagespeed.enabled' => true,
+            'api.seo.google_pagespeed.api_key' => '',
+            'api.seo.bing_webmaster.enabled' => false,
+            'api.seo.bing_webmaster.api_key' => '',
+            'api.seo.ubersuggest.enabled' => false,
+            'api.seo.ubersuggest.api_key' => '',
+            'api.seo.keywords_everywhere.enabled' => false,
+            'api.seo.keywords_everywhere.api_key' => '',
+            // Low-cost APIs
+            'api.seo.dataforseo.enabled' => false,
+            'api.seo.dataforseo.login' => '',
+            'api.seo.dataforseo.password' => '',
+            'api.seo.serpapi.enabled' => false,
+            'api.seo.serpapi.api_key' => '',
+            'api.seo.mangools.enabled' => false,
+            'api.seo.mangools.api_key' => '',
+            'api.seo.spyfu.enabled' => false,
+            'api.seo.spyfu.api_key' => '',
+            'api.seo.majestic.enabled' => false,
+            'api.seo.majestic.api_key' => '',
+            // Commercial APIs
+            'api.seo.moz.enabled' => false,
+            'api.seo.moz.access_id' => '',
+            'api.seo.moz.secret_key' => '',
+            'api.seo.ahrefs.enabled' => false,
+            'api.seo.ahrefs.api_key' => '',
+            'api.seo.semrush.enabled' => false,
+            'api.seo.semrush.api_key' => '',
+            'api.seo.screaming_frog.enabled' => false,
+            'api.seo.screaming_frog.license_key' => '',
+        ];
+        $seoValues = $settings->getMany($seoDefaults);
+
+        $this->seo = [
+            // Free APIs
+            'google_search_console_enabled' => (bool) $seoValues['api.seo.google_search_console.enabled'],
+            'google_search_console_client_id' => $seoValues['api.seo.google_search_console.client_id'],
+            'google_search_console_client_secret' => $seoValues['api.seo.google_search_console.client_secret'],
+            'google_search_console_refresh_token' => $seoValues['api.seo.google_search_console.refresh_token'],
+            'google_pagespeed_enabled' => (bool) $seoValues['api.seo.google_pagespeed.enabled'],
+            'google_pagespeed_api_key' => $seoValues['api.seo.google_pagespeed.api_key'],
+            'bing_webmaster_enabled' => (bool) $seoValues['api.seo.bing_webmaster.enabled'],
+            'bing_webmaster_api_key' => $seoValues['api.seo.bing_webmaster.api_key'],
+            'ubersuggest_enabled' => (bool) $seoValues['api.seo.ubersuggest.enabled'],
+            'ubersuggest_api_key' => $seoValues['api.seo.ubersuggest.api_key'],
+            'keywords_everywhere_enabled' => (bool) $seoValues['api.seo.keywords_everywhere.enabled'],
+            'keywords_everywhere_api_key' => $seoValues['api.seo.keywords_everywhere.api_key'],
+            // Low-cost APIs
+            'dataforseo_enabled' => (bool) $seoValues['api.seo.dataforseo.enabled'],
+            'dataforseo_login' => $seoValues['api.seo.dataforseo.login'],
+            'dataforseo_password' => $seoValues['api.seo.dataforseo.password'],
+            'serpapi_enabled' => (bool) $seoValues['api.seo.serpapi.enabled'],
+            'serpapi_api_key' => $seoValues['api.seo.serpapi.api_key'],
+            'mangools_enabled' => (bool) $seoValues['api.seo.mangools.enabled'],
+            'mangools_api_key' => $seoValues['api.seo.mangools.api_key'],
+            'spyfu_enabled' => (bool) $seoValues['api.seo.spyfu.enabled'],
+            'spyfu_api_key' => $seoValues['api.seo.spyfu.api_key'],
+            'majestic_enabled' => (bool) $seoValues['api.seo.majestic.enabled'],
+            'majestic_api_key' => $seoValues['api.seo.majestic.api_key'],
+            // Commercial APIs
+            'moz_enabled' => (bool) $seoValues['api.seo.moz.enabled'],
+            'moz_access_id' => $seoValues['api.seo.moz.access_id'],
+            'moz_secret_key' => $seoValues['api.seo.moz.secret_key'],
+            'ahrefs_enabled' => (bool) $seoValues['api.seo.ahrefs.enabled'],
+            'ahrefs_api_key' => $seoValues['api.seo.ahrefs.api_key'],
+            'semrush_enabled' => (bool) $seoValues['api.seo.semrush.enabled'],
+            'semrush_api_key' => $seoValues['api.seo.semrush.api_key'],
+            'screaming_frog_enabled' => (bool) $seoValues['api.seo.screaming_frog.enabled'],
+            'screaming_frog_license_key' => $seoValues['api.seo.screaming_frog.license_key'],
+        ];
     }
 
     public function setTab(string $tab): void
     {
-        $allowed = ['ai', 'brand_monitoring', 'social'];
+        $allowed = ['ai', 'brand_monitoring', 'social', 'seo'];
         if (in_array($tab, $allowed, true)) {
             $this->tab = $tab;
         }
@@ -235,6 +341,19 @@ class ApiSettings extends Component
             'api.brand.g2.api_key',
             'api.brand.capterra.api_key',
             'api.brand.facebook.access_token',
+            // Free news APIs
+            'api.brand.mediastack.api_key',
+            'api.brand.gnews.api_key',
+            // Commercial APIs
+            'api.brand.brandwatch.api_key',
+            'api.brand.brandwatch.api_secret',
+            'api.brand.mention.api_key',
+            'api.brand.brand24.api_key',
+            'api.brand.sprout_social.api_key',
+            'api.brand.sprout_social.api_secret',
+            'api.brand.meltwater.api_key',
+            'api.brand.meltwater.api_secret',
+            'api.brand.talkwalker.api_key',
         ];
 
         $settings->setMany([
@@ -263,9 +382,95 @@ class ApiSettings extends Component
             'api.brand.capterra.enabled' => (bool) ($this->brandMonitoring['capterra_enabled'] ?? false),
             'api.brand.facebook.access_token' => $this->brandMonitoring['facebook_access_token'] ?? '',
             'api.brand.facebook.enabled' => (bool) ($this->brandMonitoring['facebook_enabled'] ?? false),
+            // Free news APIs
+            'api.brand.mediastack.api_key' => $this->brandMonitoring['mediastack_api_key'] ?? '',
+            'api.brand.mediastack.enabled' => (bool) ($this->brandMonitoring['mediastack_enabled'] ?? false),
+            'api.brand.gnews.api_key' => $this->brandMonitoring['gnews_api_key'] ?? '',
+            'api.brand.gnews.enabled' => (bool) ($this->brandMonitoring['gnews_enabled'] ?? false),
+            // Commercial APIs
+            'api.brand.brandwatch.api_key' => $this->brandMonitoring['brandwatch_api_key'] ?? '',
+            'api.brand.brandwatch.api_secret' => $this->brandMonitoring['brandwatch_api_secret'] ?? '',
+            'api.brand.brandwatch.project_id' => $this->brandMonitoring['brandwatch_project_id'] ?? '',
+            'api.brand.brandwatch.enabled' => (bool) ($this->brandMonitoring['brandwatch_enabled'] ?? false),
+            'api.brand.mention.api_key' => $this->brandMonitoring['mention_api_key'] ?? '',
+            'api.brand.mention.account_id' => $this->brandMonitoring['mention_account_id'] ?? '',
+            'api.brand.mention.enabled' => (bool) ($this->brandMonitoring['mention_enabled'] ?? false),
+            'api.brand.brand24.api_key' => $this->brandMonitoring['brand24_api_key'] ?? '',
+            'api.brand.brand24.project_id' => $this->brandMonitoring['brand24_project_id'] ?? '',
+            'api.brand.brand24.enabled' => (bool) ($this->brandMonitoring['brand24_enabled'] ?? false),
+            'api.brand.sprout_social.api_key' => $this->brandMonitoring['sprout_social_api_key'] ?? '',
+            'api.brand.sprout_social.api_secret' => $this->brandMonitoring['sprout_social_api_secret'] ?? '',
+            'api.brand.sprout_social.enabled' => (bool) ($this->brandMonitoring['sprout_social_enabled'] ?? false),
+            'api.brand.meltwater.api_key' => $this->brandMonitoring['meltwater_api_key'] ?? '',
+            'api.brand.meltwater.api_secret' => $this->brandMonitoring['meltwater_api_secret'] ?? '',
+            'api.brand.meltwater.enabled' => (bool) ($this->brandMonitoring['meltwater_enabled'] ?? false),
+            'api.brand.talkwalker.api_key' => $this->brandMonitoring['talkwalker_api_key'] ?? '',
+            'api.brand.talkwalker.project_id' => $this->brandMonitoring['talkwalker_project_id'] ?? '',
+            'api.brand.talkwalker.enabled' => (bool) ($this->brandMonitoring['talkwalker_enabled'] ?? false),
         ], 'api.brand', $encryptedKeys);
 
         session()->flash('success', 'Brand monitoring settings saved successfully.');
+    }
+
+    public function saveSeoSettings(SettingsService $settings): void
+    {
+        $encryptedKeys = [
+            'api.seo.google_search_console.client_secret',
+            'api.seo.google_search_console.refresh_token',
+            'api.seo.google_pagespeed.api_key',
+            'api.seo.bing_webmaster.api_key',
+            'api.seo.ubersuggest.api_key',
+            'api.seo.keywords_everywhere.api_key',
+            'api.seo.dataforseo.password',
+            'api.seo.serpapi.api_key',
+            'api.seo.mangools.api_key',
+            'api.seo.spyfu.api_key',
+            'api.seo.majestic.api_key',
+            'api.seo.moz.secret_key',
+            'api.seo.ahrefs.api_key',
+            'api.seo.semrush.api_key',
+            'api.seo.screaming_frog.license_key',
+        ];
+
+        $settings->setMany([
+            // Free APIs
+            'api.seo.google_search_console.enabled' => (bool) ($this->seo['google_search_console_enabled'] ?? false),
+            'api.seo.google_search_console.client_id' => $this->seo['google_search_console_client_id'] ?? '',
+            'api.seo.google_search_console.client_secret' => $this->seo['google_search_console_client_secret'] ?? '',
+            'api.seo.google_search_console.refresh_token' => $this->seo['google_search_console_refresh_token'] ?? '',
+            'api.seo.google_pagespeed.enabled' => (bool) ($this->seo['google_pagespeed_enabled'] ?? true),
+            'api.seo.google_pagespeed.api_key' => $this->seo['google_pagespeed_api_key'] ?? '',
+            'api.seo.bing_webmaster.enabled' => (bool) ($this->seo['bing_webmaster_enabled'] ?? false),
+            'api.seo.bing_webmaster.api_key' => $this->seo['bing_webmaster_api_key'] ?? '',
+            'api.seo.ubersuggest.enabled' => (bool) ($this->seo['ubersuggest_enabled'] ?? false),
+            'api.seo.ubersuggest.api_key' => $this->seo['ubersuggest_api_key'] ?? '',
+            'api.seo.keywords_everywhere.enabled' => (bool) ($this->seo['keywords_everywhere_enabled'] ?? false),
+            'api.seo.keywords_everywhere.api_key' => $this->seo['keywords_everywhere_api_key'] ?? '',
+            // Low-cost APIs
+            'api.seo.dataforseo.enabled' => (bool) ($this->seo['dataforseo_enabled'] ?? false),
+            'api.seo.dataforseo.login' => $this->seo['dataforseo_login'] ?? '',
+            'api.seo.dataforseo.password' => $this->seo['dataforseo_password'] ?? '',
+            'api.seo.serpapi.enabled' => (bool) ($this->seo['serpapi_enabled'] ?? false),
+            'api.seo.serpapi.api_key' => $this->seo['serpapi_api_key'] ?? '',
+            'api.seo.mangools.enabled' => (bool) ($this->seo['mangools_enabled'] ?? false),
+            'api.seo.mangools.api_key' => $this->seo['mangools_api_key'] ?? '',
+            'api.seo.spyfu.enabled' => (bool) ($this->seo['spyfu_enabled'] ?? false),
+            'api.seo.spyfu.api_key' => $this->seo['spyfu_api_key'] ?? '',
+            'api.seo.majestic.enabled' => (bool) ($this->seo['majestic_enabled'] ?? false),
+            'api.seo.majestic.api_key' => $this->seo['majestic_api_key'] ?? '',
+            // Commercial APIs
+            'api.seo.moz.enabled' => (bool) ($this->seo['moz_enabled'] ?? false),
+            'api.seo.moz.access_id' => $this->seo['moz_access_id'] ?? '',
+            'api.seo.moz.secret_key' => $this->seo['moz_secret_key'] ?? '',
+            'api.seo.ahrefs.enabled' => (bool) ($this->seo['ahrefs_enabled'] ?? false),
+            'api.seo.ahrefs.api_key' => $this->seo['ahrefs_api_key'] ?? '',
+            'api.seo.semrush.enabled' => (bool) ($this->seo['semrush_enabled'] ?? false),
+            'api.seo.semrush.api_key' => $this->seo['semrush_api_key'] ?? '',
+            'api.seo.screaming_frog.enabled' => (bool) ($this->seo['screaming_frog_enabled'] ?? false),
+            'api.seo.screaming_frog.license_key' => $this->seo['screaming_frog_license_key'] ?? '',
+        ], 'api.seo', $encryptedKeys);
+
+        session()->flash('success', 'SEO integration settings saved successfully.');
     }
 
     public function saveSocialSettings(SettingsService $settings): void
@@ -326,6 +531,16 @@ class ApiSettings extends Component
                 'youtube' => $this->testYouTube(),
                 'yelp' => $this->testYelp(),
                 'google_places' => $this->testGooglePlaces(),
+                // SEO APIs
+                'google_pagespeed' => $this->testGooglePageSpeed(),
+                'dataforseo' => $this->testDataForSEO(),
+                'serpapi' => $this->testSerpApi(),
+                'moz' => $this->testMoz(),
+                'ahrefs' => $this->testAhrefs(),
+                'semrush' => $this->testSEMrush(),
+                // Commercial Brand Monitoring
+                'mention' => $this->testMention(),
+                'brand24' => $this->testBrand24(),
                 default => ['success' => false, 'message' => 'Unknown provider'],
             };
 
@@ -561,6 +776,158 @@ class ApiSettings extends Component
         }
 
         return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('error_message') ?? $response->json('status') ?? $response->status())];
+    }
+
+    protected function testGooglePageSpeed(): array
+    {
+        $apiKey = $this->seo['google_pagespeed_api_key'] ?? '';
+        // PageSpeed API works without key (with limits), but we test with key if provided
+        $params = ['url' => 'https://www.google.com', 'strategy' => 'desktop'];
+        if (!empty($apiKey)) {
+            $params['key'] = $apiKey;
+        }
+
+        $response = Http::timeout(30)
+            ->get('https://www.googleapis.com/pagespeedonline/v5/runPagespeed', $params);
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => 'Connected successfully'];
+        }
+
+        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('error.message') ?? $response->status())];
+    }
+
+    protected function testDataForSEO(): array
+    {
+        $login = $this->seo['dataforseo_login'] ?? '';
+        $password = $this->seo['dataforseo_password'] ?? '';
+        if (empty($login) || empty($password)) {
+            return ['success' => false, 'message' => 'Login or password not configured'];
+        }
+
+        $response = Http::withBasicAuth($login, $password)
+            ->timeout(10)
+            ->get('https://api.dataforseo.com/v3/serp/google/organic/locations');
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => 'Connected successfully'];
+        }
+
+        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('status_message') ?? $response->status())];
+    }
+
+    protected function testSerpApi(): array
+    {
+        $apiKey = $this->seo['serpapi_api_key'] ?? '';
+        if (empty($apiKey)) {
+            return ['success' => false, 'message' => 'API key not configured'];
+        }
+
+        $response = Http::timeout(10)
+            ->get('https://serpapi.com/account', ['api_key' => $apiKey]);
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => 'Connected successfully'];
+        }
+
+        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('error') ?? $response->status())];
+    }
+
+    protected function testMoz(): array
+    {
+        $accessId = $this->seo['moz_access_id'] ?? '';
+        $secretKey = $this->seo['moz_secret_key'] ?? '';
+        if (empty($accessId) || empty($secretKey)) {
+            return ['success' => false, 'message' => 'Access ID or Secret Key not configured'];
+        }
+
+        $response = Http::withBasicAuth($accessId, $secretKey)
+            ->timeout(15)
+            ->post('https://lsapi.seomoz.com/v2/url_metrics', [
+                'targets' => ['moz.com'],
+            ]);
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => 'Connected successfully'];
+        }
+
+        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('error_message') ?? $response->status())];
+    }
+
+    protected function testAhrefs(): array
+    {
+        $apiKey = $this->seo['ahrefs_api_key'] ?? '';
+        if (empty($apiKey)) {
+            return ['success' => false, 'message' => 'API key not configured'];
+        }
+
+        $response = Http::withToken($apiKey)
+            ->timeout(10)
+            ->get('https://api.ahrefs.com/v3/subscription-info');
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => 'Connected successfully'];
+        }
+
+        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('error') ?? $response->status())];
+    }
+
+    protected function testSEMrush(): array
+    {
+        $apiKey = $this->seo['semrush_api_key'] ?? '';
+        if (empty($apiKey)) {
+            return ['success' => false, 'message' => 'API key not configured'];
+        }
+
+        $response = Http::timeout(10)
+            ->get('https://api.semrush.com/', [
+                'type' => 'domain_ranks',
+                'key' => $apiKey,
+                'domain' => 'semrush.com',
+                'database' => 'us',
+            ]);
+
+        if ($response->successful() && !str_contains($response->body(), 'ERROR')) {
+            return ['success' => true, 'message' => 'Connected successfully'];
+        }
+
+        return ['success' => false, 'message' => 'Connection failed: ' . substr($response->body(), 0, 100)];
+    }
+
+    protected function testMention(): array
+    {
+        $apiKey = $this->brandMonitoring['mention_api_key'] ?? '';
+        if (empty($apiKey)) {
+            return ['success' => false, 'message' => 'API key not configured'];
+        }
+
+        $response = Http::withHeaders(['Authorization' => 'Bearer ' . $apiKey])
+            ->timeout(10)
+            ->get('https://api.mention.com/api/accounts/me');
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => 'Connected successfully'];
+        }
+
+        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('message') ?? $response->status())];
+    }
+
+    protected function testBrand24(): array
+    {
+        $apiKey = $this->brandMonitoring['brand24_api_key'] ?? '';
+        if (empty($apiKey)) {
+            return ['success' => false, 'message' => 'API key not configured'];
+        }
+
+        $response = Http::withHeaders(['Authorization' => 'Bearer ' . $apiKey])
+            ->timeout(10)
+            ->get('https://api.brand24.com/v3/account/projects');
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => 'Connected successfully'];
+        }
+
+        return ['success' => false, 'message' => 'Connection failed: ' . ($response->json('message') ?? $response->status())];
     }
 
     public function render()

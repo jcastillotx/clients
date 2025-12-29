@@ -3,11 +3,14 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Brand Monitoring - Free & Low-Cost API Integrations
+    | Brand Monitoring - Free & Commercial API Integrations
     |--------------------------------------------------------------------------
     |
-    | This configuration uses free API tiers to provide enterprise-level
-    | brand monitoring capabilities without expensive SaaS subscriptions.
+    | This configuration uses a tiered approach: FREE APIs first, then
+    | commercial APIs for advanced features. Free tiers provide enterprise-level
+    | brand monitoring without expensive SaaS subscriptions.
+    |
+    | Priority Order: Free/Organic → Low-Cost → Commercial Enterprise
     |
     */
 
@@ -24,12 +27,33 @@ return [
             'api_key' => env('NEWSAPI_API_KEY', ''),
             'free_tier_limit' => 100, // requests per day
             'endpoint' => 'https://newsapi.org/v2',
+            'tier' => 'free',
         ],
 
         // Google News RSS (FREE, unlimited)
         'google_news_rss' => [
             'enabled' => (bool) env('GOOGLE_NEWS_RSS_ENABLED', true),
             'base_url' => 'https://news.google.com/rss/search',
+            'tier' => 'free',
+        ],
+
+        // MediaStack - FREE: 500 requests/month
+        // Paid: From $9.99/month for more requests
+        'mediastack' => [
+            'enabled' => (bool) env('MEDIASTACK_ENABLED', false),
+            'api_key' => env('MEDIASTACK_API_KEY', ''),
+            'endpoint' => 'http://api.mediastack.com/v1',
+            'free_tier_limit' => 500, // per month
+            'tier' => 'free',
+        ],
+
+        // GNews - FREE: 100 requests/day
+        'gnews' => [
+            'enabled' => (bool) env('GNEWS_ENABLED', false),
+            'api_key' => env('GNEWS_API_KEY', ''),
+            'endpoint' => 'https://gnews.io/api/v4',
+            'free_tier_limit' => 100, // per day
+            'tier' => 'free',
         ],
     ],
 
@@ -193,5 +217,123 @@ return [
         'negative_sentiment_threshold' => -0.5, // -1 to 1 scale
         'mention_spike_threshold' => 200, // % increase
         'notify_on_critical_mentions' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Commercial Enterprise APIs (Premium Tier)
+    |--------------------------------------------------------------------------
+    |
+    | These are commercial-grade brand monitoring platforms. Use only when
+    | free tier capabilities are insufficient for your needs.
+    |
+    */
+    'commercial' => [
+        // Brandwatch - Enterprise brand intelligence platform
+        // Pricing: Custom (typically $800-2000+/month)
+        'brandwatch' => [
+            'enabled' => (bool) env('BRANDWATCH_ENABLED', false),
+            'api_key' => env('BRANDWATCH_API_KEY', ''),
+            'api_secret' => env('BRANDWATCH_API_SECRET', ''),
+            'project_id' => env('BRANDWATCH_PROJECT_ID', ''),
+            'endpoint' => 'https://api.brandwatch.com',
+            'tier' => 'enterprise',
+            'features' => ['social_listening', 'sentiment', 'influencer_tracking', 'crisis_detection'],
+        ],
+
+        // Mention - Social listening & monitoring
+        // Pricing: From $29/month (Starter) to $450+/month (Company)
+        'mention' => [
+            'enabled' => (bool) env('MENTION_ENABLED', false),
+            'api_key' => env('MENTION_API_KEY', ''),
+            'account_id' => env('MENTION_ACCOUNT_ID', ''),
+            'endpoint' => 'https://api.mention.com/api',
+            'tier' => 'commercial',
+            'features' => ['mentions', 'sentiment', 'influencers', 'competitive_analysis'],
+        ],
+
+        // Brand24 - Online reputation monitoring
+        // Pricing: From $49/month (Individual) to $399/month (Max)
+        'brand24' => [
+            'enabled' => (bool) env('BRAND24_ENABLED', false),
+            'api_key' => env('BRAND24_API_KEY', ''),
+            'project_id' => env('BRAND24_PROJECT_ID', ''),
+            'endpoint' => 'https://api.brand24.com',
+            'tier' => 'commercial',
+            'features' => ['mentions', 'sentiment', 'influence_score', 'reach'],
+        ],
+
+        // Sprout Social - Social media management & analytics
+        // Pricing: From $249/month (Standard) to $499/month (Advanced)
+        'sprout_social' => [
+            'enabled' => (bool) env('SPROUT_SOCIAL_ENABLED', false),
+            'api_key' => env('SPROUT_SOCIAL_API_KEY', ''),
+            'api_secret' => env('SPROUT_SOCIAL_API_SECRET', ''),
+            'endpoint' => 'https://api.sproutsocial.com/v1',
+            'tier' => 'commercial',
+            'features' => ['publishing', 'engagement', 'analytics', 'listening'],
+        ],
+
+        // Meltwater - Media intelligence & social analytics
+        // Pricing: Custom enterprise pricing
+        'meltwater' => [
+            'enabled' => (bool) env('MELTWATER_ENABLED', false),
+            'api_key' => env('MELTWATER_API_KEY', ''),
+            'api_secret' => env('MELTWATER_API_SECRET', ''),
+            'endpoint' => 'https://api.meltwater.com/v3',
+            'tier' => 'enterprise',
+            'features' => ['media_monitoring', 'social_listening', 'influencer_db', 'analytics'],
+        ],
+
+        // Talkwalker - Social listening & analytics
+        // Pricing: Custom (typically $9,600+/year)
+        'talkwalker' => [
+            'enabled' => (bool) env('TALKWALKER_ENABLED', false),
+            'api_key' => env('TALKWALKER_API_KEY', ''),
+            'project_id' => env('TALKWALKER_PROJECT_ID', ''),
+            'endpoint' => 'https://api.talkwalker.com/api/v1',
+            'tier' => 'enterprise',
+            'features' => ['social_listening', 'image_recognition', 'sentiment', 'virality'],
+        ],
+
+        // Hootsuite Insights - Social listening (powered by Brandwatch)
+        // Pricing: Part of Hootsuite Business/Enterprise plans
+        'hootsuite_insights' => [
+            'enabled' => (bool) env('HOOTSUITE_INSIGHTS_ENABLED', false),
+            'access_token' => env('HOOTSUITE_ACCESS_TOKEN', ''),
+            'endpoint' => 'https://platform.hootsuite.com/v1',
+            'tier' => 'commercial',
+            'features' => ['social_listening', 'sentiment', 'trends'],
+        ],
+
+        // Synthesio - AI-powered consumer intelligence
+        // Pricing: Enterprise custom
+        'synthesio' => [
+            'enabled' => (bool) env('SYNTHESIO_ENABLED', false),
+            'api_key' => env('SYNTHESIO_API_KEY', ''),
+            'endpoint' => 'https://api.synthesio.com/v2',
+            'tier' => 'enterprise',
+            'features' => ['social_listening', 'ai_insights', 'trend_detection'],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | API Priority Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Define which APIs to try first based on tier preference.
+    | The system will fallback through tiers if primary APIs fail or hit limits.
+    |
+    */
+    'priority' => [
+        // For news monitoring: try free first, then commercial
+        'news' => ['google_news_rss', 'newsapi', 'gnews', 'mediastack'],
+        // For social monitoring: try free APIs, then commercial platforms
+        'social' => ['reddit', 'youtube', 'twitter_rss', 'mention', 'brand24', 'brandwatch'],
+        // For review monitoring: free review APIs first
+        'reviews' => ['google_places', 'yelp', 'trustpilot', 'g2', 'capterra'],
+        // For comprehensive monitoring: mix of free + commercial
+        'comprehensive' => ['free_apis', 'mention', 'brand24', 'brandwatch', 'meltwater'],
     ],
 ];
