@@ -4,9 +4,9 @@
         <button class="btn btn-sm btn-outline-primary" wire:click="suggest">Suggest</button>
     </div>
     <div class="card-body">
-        <div class="text-muted small mb-2">Paste the message you’re replying to, then click Suggest.</div>
+        <div class="text-muted small mb-2">Paste the message you're replying to, then click Suggest.</div>
         <textarea class="form-control mb-2" rows="3" wire:model="clientMessage" placeholder="Client message…"></textarea>
-        <textarea class="form-control mb-2" rows="2" wire:model="contextJson" placeholder="Optional context JSON (request/invoice/project)"></textarea>
+        <input type="hidden" wire:model="contextJson">
 
         @if($recommendedTone)
             <div class="text-muted small mb-2">Recommended tone: <strong>{{ ucfirst($recommendedTone) }}</strong></div>
