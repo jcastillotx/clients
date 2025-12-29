@@ -773,6 +773,22 @@ class SystemSettings extends Component
 
         $provider = $this->email['provider'] ?? 'sendmail';
         
+        // Debug: Log what settings we're using
+        $host = $this->email['smtp_host'] ?? 'not set';
+        $port = $this->email['smtp_port'] ?? 'not set';
+        $username = $this->email['smtp_username'] ?? 'not set';
+        $password = $this->email['smtp_password'] ?? '';
+        $passwordPreview = $password ? (substr($password, 0, 8) . '...' . substr($password, -4)) : 'empty';
+        
+        \Log::info('Test email attempt', [
+            'provider' => $provider,
+            'host' => $host,
+            'port' => $port,
+            'username' => $username,
+            'password_length' => strlen($password),
+            'password_preview' => $passwordPreview,
+        ]);
+        
         try {
             // Configure mailer dynamically based on provider settings
             $this->configureMailer();
@@ -788,7 +804,25 @@ class SystemSettings extends Component
 
             session()->flash('success', 'Test email sent successfully via ' . ucfirst($provider) . '!');
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to send test email: ' . $e->getMessage());
+            \Log::error('Test email failed', [
+                'provider' => $provider,
+                'host' => $host,
+                'port' => $port,
+                'username' => $username,
+                'error' => $e->getMessage(),
+            ]);
+            
+            // Provide more helpful error message
+            $errorMsg = $e->getMessage();
+            if (str_contains($errorMsg, 'Authentication failed')) {
+                $errorMsg .= "\n\nDebug Info:\n- Host: {$host}\n- Port: {$port}\n- Username: {$username}\n- Password length: " . strlen($password) . " chars";
+                
+                if ($provider === 'brevo') {
+                    $errorMsg .= "\n\n💡 For Brevo: Make sure you're using the SMTP API Key (starts with 'xkeysib-'), not your account password.";
+                }
+            }
+            
+            session()->flash('error', 'Failed to send test email: ' . $errorMsg);
         }
     }
     
@@ -798,6 +832,9 @@ class SystemSettings extends Component
     protected function configureMailer(): void
     {
         $provider = $this->email['provider'] ?? 'sendmail';
+        
+        // Clear any cached mailer instances to ensure fresh config is used
+        Mail::purge('smtp');
         
         if ($provider === 'sendmail') {
             config(['mail.default' => 'sendmail']);
@@ -823,6 +860,9 @@ class SystemSettings extends Component
             'mail.mailers.smtp.password' => $this->email['smtp_password'] ?? '',
             'mail.mailers.smtp.encryption' => $this->email['smtp_encryption'] ?? 'tls',
         ]);
+        
+        // Purge again after config change to force new connection
+        Mail::purge('smtp');
     }
 
     public function savePayment(SettingsService $settings): void
