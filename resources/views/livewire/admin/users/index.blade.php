@@ -61,19 +61,19 @@
 
     <div class="card">
         <div class="table-responsive">
-            <table class="table table-vcenter table-hover card-table" style="min-width: 900px;">
-                <thead>
+            <table class="table table-striped table-hover mb-0" style="width: 100%;">
+                <thead class="table-light">
                 <tr>
-                    <th style="width: 40px;">
-                        <span class="text-muted small">Sel</span>
+                    <th style="width: 50px;" class="text-center">
+                        <span class="text-muted small">SEL</span>
                     </th>
-                    <th style="min-width: 140px;">Name</th>
-                    <th style="min-width: 180px;">Email</th>
-                    <th style="width: 100px;">Role</th>
-                    <th style="width: 120px;">Client</th>
-                    <th style="width: 80px;">Status</th>
-                    <th style="width: 140px;" class="text-nowrap">Last Login</th>
-                    <th style="width: 160px;" class="text-end">Actions</th>
+                    <th style="width: 18%;">NAME</th>
+                    <th style="width: 22%;">EMAIL</th>
+                    <th style="width: 12%;">ROLE</th>
+                    <th style="width: 14%;">CLIENT</th>
+                    <th style="width: 8%;" class="text-center">STATUS</th>
+                    <th style="width: 14%;">LAST LOGIN</th>
+                    <th style="width: 12%;" class="text-center">ACTIONS</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -92,32 +92,55 @@
                         $isSelf = $u->id === auth()->id();
                     @endphp
                     <tr>
-                        <td>
+                        <td class="text-center align-middle">
                             <input type="checkbox" class="form-check-input" wire:model.live="selected" value="{{ $u->id }}"
                                 @if($isSuperAdmin || $isSelf) disabled title="{{ $isSelf ? 'Cannot select yourself' : 'Cannot select super admins' }}" @endif>
                         </td>
-                        <td class="fw-semibold text-nowrap">{{ $u->name }}</td>
-                        <td class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="{{ $u->email }}">{{ $u->email }}</td>
-                        <td class="text-nowrap">{{ str_replace('_', ' ', ucfirst($roleLabel)) }}</td>
-                        <td class="text-nowrap" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;" title="{{ $u->client?->company_name ?? '' }}">{{ $u->client?->company_name ?? '—' }}</td>
-                        <td><span class="badge bg-{{ $statusColor }}">{{ ucfirst($status) }}</span></td>
-                        <td class="text-muted text-nowrap small">{{ $u->last_login_at?->format('M j, Y H:i') ?? '—' }}</td>
-                        <td class="text-end text-nowrap">
-                            <a href="{{ route('admin.users.edit', $u) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="toggleActive({{ $u->id }})">
-                                {{ $u->is_active ? 'Deactivate' : 'Activate' }}
-                            </button>
+                        <td class="align-middle">
+                            <span class="fw-semibold">{{ $u->name }}</span>
+                        </td>
+                        <td class="align-middle text-muted">
+                            <span title="{{ $u->email }}">{{ $u->email }}</span>
+                        </td>
+                        <td class="align-middle">{{ str_replace('_', ' ', ucfirst($roleLabel)) }}</td>
+                        <td class="align-middle">
+                            @if($u->client)
+                                <span title="{{ $u->client->company_name }}">{{ Str::limit($u->client->company_name, 15) }}</span>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td class="align-middle text-center">
+                            <span class="badge bg-{{ $statusColor }}">{{ ucfirst($status) }}</span>
+                        </td>
+                        <td class="align-middle text-muted small">
+                            {{ $u->last_login_at?->format('M j, Y H:i') ?? '—' }}
+                        </td>
+                        <td class="align-middle text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ route('admin.users.edit', $u) }}" class="btn btn-outline-primary btn-sm">Edit</a>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" wire:click="toggleActive({{ $u->id }})" title="{{ $u->is_active ? 'Deactivate user' : 'Activate user' }}">
+                                    {{ $u->is_active ? 'Deactivate' : 'Activate' }}
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center text-muted py-4">No users found.</td></tr>
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                            No users found.
+                        </td>
+                    </tr>
                 @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="card-footer">
-            {{ $users->links() }}
-        </div>
+        @if($users->hasPages())
+            <div class="card-footer">
+                {{ $users->links() }}
+            </div>
+        @endif
     </div>
 
     {{-- Bulk Delete Confirmation Modal --}}
