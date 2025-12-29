@@ -258,6 +258,42 @@ As you grow:
 
 ## 🚨 Troubleshooting
 
+### NewsAPI: "Your API key is invalid or incorrect"
+
+**Common Causes**:
+1. **Using Development Key**: NewsAPI free tier keys might be labeled as "developer" keys and have restrictions
+2. **Whitespace in Key**: Extra spaces when copying the key from NewsAPI website
+3. **Wrong Key Type**: Make sure you're using an API key, not OAuth credentials
+4. **Account Not Activated**: Check your email for NewsAPI account activation link
+
+**Solutions**:
+1. **Get a Fresh Key**:
+   - Visit https://newsapi.org/account
+   - Generate a new API key
+   - Copy carefully (no extra spaces)
+   - Update `.env`: `NEWSAPI_API_KEY=your_key_here`
+   - Run: `php artisan config:clear`
+
+2. **Verify Key Format**:
+   - NewsAPI keys are typically 32 characters
+   - Should look like: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
+
+3. **Test Your Key Manually**:
+   ```bash
+   # Replace YOUR_API_KEY with your actual key
+   curl "https://newsapi.org/v2/top-headlines?country=us&apiKey=YOUR_API_KEY"
+   ```
+   If this fails, the key is definitely invalid - generate a new one.
+
+4. **Check API Status**:
+   - Visit https://status.newsapi.org/
+   - Make sure NewsAPI service is operational
+
+**Note**: The free tier has limits:
+- 100 requests/day
+- 1 request per second
+- Only 1 month of historical articles
+
 ### "No mentions found"
 
 **Check**:

@@ -20,7 +20,7 @@ class ApiStatus extends Component
     public function testNewsApi()
     {
         $this->testingApi = 'newsapi';
-        $apiKey = config('brand-monitoring.news.newsapi.api_key');
+        $apiKey = trim(config('brand-monitoring.news.newsapi.api_key'));
 
         if (empty($apiKey)) {
             $this->testResults['newsapi'] = [
@@ -33,19 +33,34 @@ class ApiStatus extends Component
         }
 
         try {
-            $response = Http::timeout(10)->get('https://newsapi.org/v2/top-headlines', [
-                'apiKey' => $apiKey,
-                'country' => 'us',
-                'pageSize' => 1,
-            ]);
+            // NewsAPI supports both X-Api-Key header and apiKey query param
+            // Using header method as it's more reliable
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'X-Api-Key' => $apiKey,
+                ])
+                ->get('https://newsapi.org/v2/top-headlines', [
+                    'country' => 'us',
+                    'pageSize' => 1,
+                ]);
 
-            $this->testResults['newsapi'] = [
-                'status' => $response->successful() ? 'success' : 'error',
-                'message' => $response->successful()
-                    ? 'Connected successfully'
-                    : 'Failed: HTTP '.$response->status(),
-                'limit' => '100 requests/day',
-            ];
+            if ($response->successful()) {
+                $this->testResults['newsapi'] = [
+                    'status' => 'success',
+                    'message' => 'Connected successfully',
+                    'limit' => '100 requests/day',
+                ];
+            } else {
+                // Get detailed error from NewsAPI response
+                $data = $response->json();
+                $errorMessage = $data['message'] ?? 'Failed: HTTP '.$response->status();
+
+                $this->testResults['newsapi'] = [
+                    'status' => 'error',
+                    'message' => 'Connection failed: '.$errorMessage,
+                    'limit' => '100 requests/day',
+                ];
+            }
         } catch (\Throwable $e) {
             $this->testResults['newsapi'] = [
                 'status' => 'error',
