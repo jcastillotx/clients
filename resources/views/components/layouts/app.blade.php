@@ -30,6 +30,9 @@
     <!-- AdminLTE CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
 
+    <!-- Brand Theme CSS -->
+    <link rel="stylesheet" href="{{ asset('css/brand.css') }}">
+
     <!-- Tailwind CSS (for custom components) -->
     @if(!app()->runningUnitTests())
         @vite(['resources/css/app.css', 'resources/js/app.js'])

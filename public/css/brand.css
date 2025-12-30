@@ -150,11 +150,24 @@ html[data-theme="dark"] .main-header.navbar {
     box-shadow: none;
     width: var(--sidebar-width);
     overflow-x: hidden;
+    overflow-y: auto;
+    transition: width 0.3s ease-in-out;
 }
 
 .main-sidebar .sidebar {
     background-color: var(--brand-sidebar-bg);
     padding-top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Ensure nav-sidebar takes full width */
+.main-sidebar .nav-sidebar {
+    width: 100%;
+}
+
+.main-sidebar .nav-sidebar > .nav-item {
+    width: 100%;
 }
 
 /* Brand link at top of sidebar */
@@ -186,6 +199,9 @@ html[data-theme="dark"] .main-header.navbar {
     font-size: 14px;
     transition: all 0.2s ease;
     border-left: 3px solid transparent;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
 }
 
 .main-sidebar .nav-link:hover {
@@ -199,12 +215,30 @@ html[data-theme="dark"] .main-header.navbar {
     border-left-color: var(--brand-sidebar-active) !important;
 }
 
+/* Fix for nav-link text visibility */
+.main-sidebar .nav-link p {
+    margin: 0 !important;
+    display: inline-block !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    flex: 1 !important;
+}
+
+/* Ensure sidebar is not stuck in collapsed mode */
+.sidebar-mini:not(.sidebar-collapse) .main-sidebar .nav-link p {
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
+}
+
 .main-sidebar .nav-icon {
     color: var(--brand-sidebar-text);
     width: 24px;
+    min-width: 24px;
     font-size: 16px;
     margin-right: 10px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .main-sidebar .nav-link:hover .nav-icon,
@@ -231,6 +265,62 @@ html[data-theme="dark"] .main-header.navbar {
 .nav-treeview > .nav-item > .nav-link {
     padding-left: 45px !important;
     font-size: 13px;
+}
+
+/* Sidebar mini collapsed mode fixes */
+.sidebar-mini.sidebar-collapse .main-sidebar {
+    width: 4.6rem !important;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar:hover {
+    width: var(--sidebar-width) !important;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-link p {
+    width: 0 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar:hover .nav-link p {
+    width: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-header {
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar:hover .nav-header {
+    visibility: visible !important;
+    opacity: 0.6 !important;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar .user-panel .info {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar:hover .user-panel .info {
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
+}
+
+/* Ensure brand text hides in collapsed mode */
+.sidebar-mini.sidebar-collapse .main-sidebar .brand-text {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+}
+
+.sidebar-mini.sidebar-collapse .main-sidebar:hover .brand-text {
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
 }
 
 /* User panel in sidebar */
@@ -264,6 +354,23 @@ html[data-theme="dark"] .main-header.navbar {
 
 .content-wrapper {
     background-color: var(--brand-bg);
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Collapsed sidebar content margin */
+.sidebar-mini.sidebar-collapse .content-wrapper {
+    margin-left: 4.6rem;
+}
+
+/* Footer margin to match sidebar */
+.main-footer {
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease-in-out;
+}
+
+.sidebar-mini.sidebar-collapse .main-footer {
+    margin-left: 4.6rem;
 }
 
 .content-wrapper .content {
