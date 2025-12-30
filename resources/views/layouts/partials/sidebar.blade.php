@@ -4,9 +4,9 @@
         $isAdminArea = request()->routeIs('admin.*');
         $logo = config('branding.admin.dashboard_logo') ?: config('branding.logo.main');
     @endphp
-    <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="brand-link" style="{{ !empty($logo) ? 'justify-content: center;' : '' }}">
+    <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="brand-link {{ !empty($logo) ? 'text-center' : '' }}">
         @if(!empty($logo))
-            <img src="{{ asset($logo) }}" alt="{{ config('branding.company.name') }}" class="brand-image img-circle elevation-3" style="opacity: .85; margin-right: 0;" onerror="this.style.display='none'">
+            <img src="{{ asset($logo) }}" alt="{{ config('branding.company.name') }}" class="brand-image img-circle elevation-3 mx-auto" style="opacity: .85; margin-right: 0 !important; display: block;" onerror="this.style.display='none'">
         @else
             <span class="brand-text font-weight-light">
                 {{ $isAdminArea ? 'Admin' : 'Client Portal' }}
