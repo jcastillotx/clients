@@ -5,7 +5,7 @@
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-file-alt mr-1"></i> Create Template</h3>
+                    <h3 class="card-title"><i class="fas fa-file-alt mr-1"></i> {{ $editing_template_id ? 'Edit Template' : 'Create Template' }}</h3>
                 </div>
                 <div class="card-body">
                     <div class="form-group">
@@ -27,6 +27,27 @@
                     </div>
                     <button class="btn btn-primary" wire:click="saveTemplate">
                         <i class="fas fa-save mr-1"></i> Save Template
+                    </button>
+                    @if($editing_template_id)
+                        <button class="btn btn-outline-secondary ml-2" wire:click="cancelEdit">
+                            Cancel
+                        </button>
+                    @endif
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-robot mr-1"></i> Request Template from AI</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="mb-1">Describe the template you want</label>
+                        <textarea class="form-control" rows="4" wire:model="ai_request_prompt" placeholder="e.g. Draft a one-page DPA tailored for SaaS vendors, include data security and subprocessors."></textarea>
+                        <small class="text-muted">AI will draft a template and load it into the editor for review.</small>
+                    </div>
+                    <button class="btn btn-outline-primary" wire:click="requestTemplateFromAi" @if($ai_request_loading) disabled @endif>
+                        <i class="fas fa-magic mr-1"></i> Generate Draft
                     </button>
                 </div>
             </div>
@@ -88,6 +109,7 @@
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Category</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -96,9 +118,14 @@
                                         <td>{{ $t->id }}</td>
                                         <td>{{ $t->name }}</td>
                                         <td class="text-muted">{{ $t->category }}</td>
+                                        <td class="text-right">
+                                            <button class="btn btn-xs btn-outline-primary" wire:click="editTemplate({{ $t->id }})">
+                                                Edit
+                                            </button>
+                                        </td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="3" class="text-muted text-center py-3">No templates yet.</td></tr>
+                                    <tr><td colspan="4" class="text-muted text-center py-3">No templates yet.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -108,4 +135,3 @@
         </div>
     </div>
 </div>
-
