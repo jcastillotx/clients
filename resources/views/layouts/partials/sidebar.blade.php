@@ -7,10 +7,11 @@
     <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="brand-link">
         @if(!empty($logo))
             <img src="{{ asset($logo) }}" alt="{{ config('branding.company.name') }}" class="brand-image img-circle elevation-3" style="opacity: .85" onerror="this.style.display='none'">
+        @else
+            <span class="brand-text font-weight-light">
+                {{ $isAdminArea ? 'Admin' : 'Client Portal' }}
+            </span>
         @endif
-        <span class="brand-text font-weight-light">
-            {{ $isAdminArea ? 'Admin' : 'Client Portal' }}
-        </span>
     </a>
 
     <!-- Sidebar -->
