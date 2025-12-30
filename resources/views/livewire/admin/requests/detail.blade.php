@@ -187,7 +187,7 @@
                             <div class="text-body">{{ $request->due_date?->format('Y-m-d') ?? '—' }}</div>
                         </div>
                         <div class="text-muted small">
-                            <i class="fas fa-lock me-1"></i> Only admins and project managers can assign requests.
+                            <i class="fas fa-lock me-1"></i> Only super admins, admins, and project managers can assign requests.
                         </div>
                     @endif
                 </div>
