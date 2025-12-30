@@ -69,6 +69,7 @@
     /* Layout */
     --brand-content-bg: {{ $brand['content_bg'] }};
     --brand-sidebar-width: {{ $brand['sidebar_width'] }};
+    --sidebar-width: {{ $brand['sidebar_width'] }};
 
     /* Border Radius */
     --brand-card-radius: {{ $brand['card_border_radius'] }};
@@ -213,6 +214,7 @@ a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
 /* Sidebar */
 .main-sidebar {
     background-color: var(--brand-sidebar-bg) !important;
+    width: var(--brand-sidebar-width) !important;
 }
 .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active,
 .sidebar-light-primary .nav-sidebar > .nav-item > .nav-link.active {
@@ -222,11 +224,24 @@ a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
 .sidebar-dark-primary .nav-sidebar .nav-link,
 .sidebar-light-primary .nav-sidebar .nav-link {
     color: var(--brand-sidebar-text) !important;
+    display: flex !important;
+    align-items: center !important;
 }
 .sidebar-dark-primary .nav-sidebar .nav-link:hover,
 .sidebar-light-primary .nav-sidebar .nav-link:hover {
     background-color: var(--brand-sidebar-hover) !important;
     color: #fff !important;
+}
+/* Ensure nav-link text is visible */
+.nav-sidebar .nav-link p {
+    margin: 0 !important;
+    flex: 1 !important;
+    white-space: nowrap !important;
+}
+.sidebar-mini:not(.sidebar-collapse) .nav-sidebar .nav-link p {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-block !important;
 }
 .brand-link {
     background-color: var(--brand-sidebar-bg) !important;
