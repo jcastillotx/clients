@@ -187,8 +187,21 @@ class DocumentTemplates extends Component
 
         if (str_starts_with($this->generate_destination, 'connection:')) {
             $id = (int) str_replace('connection:', '', $this->generate_destination);
-            $conn = StorageConnection::query()->where('client_id', $client->id)->where('status', 'active')->findOrFail($id);
-            abort_unless($conn->disk, 422);
+            $conn = StorageConnection::query()
+                ->where('client_id', $client->id)
+                ->where('status', 'active')
+                ->find($id);
+
+            if (! $conn) {
+                session()->flash('error', 'Selected storage connection is not available for this client.');
+                return;
+            }
+
+            if (! $conn->disk) {
+                session()->flash('error', 'Selected storage connection is missing a configured disk.');
+                return;
+            }
+
             $providerDisk = $conn->disk;
             $providerLabel = strtoupper($conn->provider);
         }
@@ -219,6 +232,11 @@ class DocumentTemplates extends Component
 
         $savedTo = $providerDisk ? "'documents' + '{$providerDisk}'" : "'documents'";
         session()->flash('success', "Generated document #{$doc->id} and saved file to disk {$savedTo}.");
+    }
+
+    public function updatedGenerateClientId(): void
+    {
+        $this->generate_destination = 'local';
     }
 
     protected function resetTemplateForm(): void
