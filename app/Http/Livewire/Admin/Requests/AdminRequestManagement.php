@@ -310,6 +310,7 @@ class AdminRequestManagement extends Component
     {
         // Assignable staff: all staff roles that can be assigned to requests
         $assignableRoles = [
+            'super_admin', 'admin', 'project_lead', 'project_manager',
             'staff', 'developer', 'designer', 'copywriter',
             'marketing_director', 'account_manager', 'business_development_manager',
             'creative_director', 'graphic_designer', 'videographer_photographer',
