@@ -319,6 +319,7 @@ class User extends Authenticatable
     public function isAssignableStaff(): bool
     {
         $assignableRoles = [
+            'super_admin', 'admin', 'project_lead', 'project_manager',
             'staff', 'developer', 'designer', 'copywriter',
             // Strategy & Business Development
             'marketing_director', 'account_manager', 'business_development_manager',
@@ -333,7 +334,7 @@ class User extends Authenticatable
             'marketing_analyst', 'data_scientist',
             // Client Services & Support
             'client_services_manager', 'customer_support_manager',
-            // Operations & Administration (project_manager excluded as they assign, not get assigned)
+            // Operations & Administration
             'administrative_assistant',
             // Optional Roles
             'pr_manager', 'event_planner', 'influencer_marketing_manager',
