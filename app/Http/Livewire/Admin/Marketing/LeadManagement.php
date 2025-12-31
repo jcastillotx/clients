@@ -110,6 +110,6 @@ class LeadManagement extends Component
         return view('livewire.admin.marketing.lead-management', [
             'leads' => $this->baseQuery()->paginate(10),
             'assignees' => User::query()->orderBy('name')->get(),
-        ]);
+        ])->layout('layouts.admin', ['title' => 'Lead Management']);
     }
 }

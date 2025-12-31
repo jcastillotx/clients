@@ -486,7 +486,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::prefix('marketing')->name('marketing.')->group(function () {
             Route::get('/website-auditor', MarketingWebsiteAuditor::class)->name('website-auditor');
             Route::get('/audit-results', MarketingAuditResults::class)->name('audit-results');
-            Route::get('/leads', AdminLeadManagement::class)->name('leads');
+            Route::get('/leads', AdminLeadManagement::class)->name('leads')->middleware('permission:view_any_lead');
             Route::get('/website-audits/{websiteAudit}/pdf', [WebsiteAuditController::class, 'pdf'])->name('website-audits.pdf');
         });
 
