@@ -511,6 +511,12 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/manager', SocialMediaManager::class)->name('manager');
         });
 
+        // Ad Management
+        Route::prefix('ads')->name('ads.')->group(function () {
+            Route::get('/campaigns', \App\Http\Livewire\Ads\AdCampaignManager::class)->name('campaigns');
+            Route::get('/performance', \App\Http\Livewire\Ads\AdPerformanceDashboard::class)->name('performance');
+        });
+
         // AI analytics
         Route::get('/analytics/ai-insights', AdminAIInsightsDashboard::class)->name('analytics.ai-insights')->middleware('permission:view reports');
         Route::get('/analytics/predictive', AdminPredictiveCharts::class)->name('analytics.predictive')->middleware('permission:view reports');
