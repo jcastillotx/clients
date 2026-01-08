@@ -107,6 +107,10 @@ use App\Http\Livewire\Feedback\FeedbackCollector;
 use App\Http\Livewire\Feedback\SurveyBuilder;
 use App\Http\Livewire\Feedback\TestimonialManager;
 use App\Http\Livewire\Marketing\AuditResults as MarketingAuditResults;
+use App\Http\Livewire\Marketing\BrandMonitoringDashboard;
+use App\Http\Livewire\Marketing\CampaignAnalyticsDashboard;
+use App\Http\Livewire\Marketing\SeoAuditViewer;
+use App\Http\Livewire\Marketing\SocialMediaManager;
 use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
 use App\Http\Livewire\Onboarding\OnboardingWizard;
 use App\Http\Livewire\Partners\PartnerManager;
@@ -488,6 +492,8 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/audit-results', MarketingAuditResults::class)->name('audit-results');
             Route::get('/leads', AdminLeadManagement::class)->name('leads')->middleware('permission:view_any_lead');
             Route::get('/website-audits/{websiteAudit}/pdf', [WebsiteAuditController::class, 'pdf'])->name('website-audits.pdf');
+            Route::get('/campaigns', CampaignAnalyticsDashboard::class)->name('campaigns');
+            Route::get('/brand-monitoring', BrandMonitoringDashboard::class)->name('brand-monitoring');
         });
 
         // Brand monitoring (admin views - no feature check needed, admins see all clients)
@@ -502,6 +508,13 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/posts/create', PostCreator::class)->name('posts.create');
             Route::get('/posts/{post}/edit', PostCreator::class)->name('posts.edit');
             Route::get('/content-calendar', ContentCalendar::class)->name('content-calendar');
+            Route::get('/manager', SocialMediaManager::class)->name('manager');
+        });
+
+        // Ad Management
+        Route::prefix('ads')->name('ads.')->group(function () {
+            Route::get('/campaigns', \App\Http\Livewire\Ads\AdCampaignManager::class)->name('campaigns');
+            Route::get('/performance', \App\Http\Livewire\Ads\AdPerformanceDashboard::class)->name('performance');
         });
 
         // AI analytics

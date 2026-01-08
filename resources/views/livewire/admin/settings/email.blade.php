@@ -157,6 +157,16 @@
                         <input type="hidden" wire:model="email.smtp_encryption" value="tls">
                     @endif
                 </div>
+                <div class="form-group">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="smtp_verify_ssl" wire:model="email.smtp_verify_ssl" {{ ($email['smtp_verify_ssl'] ?? true) ? 'checked' : '' }}>
+                        <label class="custom-control-label" for="smtp_verify_ssl">Verify SSL Certificate</label>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt mr-1"></i>Enable SSL certificate verification for secure connections.
+                        <span class="text-warning">Disable only if your hosting provider intercepts SMTP connections with their own certificate.</span>
+                    </small>
+                </div>
             </div>
         </div>
         @endif
