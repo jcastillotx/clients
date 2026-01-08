@@ -85,6 +85,7 @@ class SystemSettings extends Component
             'email.smtp.username' => '',
             'email.smtp.password' => '',
             'email.smtp.encryption' => 'tls',
+            'email.smtp.verify_ssl' => true,
             'email.mailgun.domain' => '',
             'email.mailgun.secret' => '',
             'email.mailgun.endpoint' => 'api.mailgun.net',
@@ -104,6 +105,7 @@ class SystemSettings extends Component
             'smtp_username' => $e['email.smtp.username'],
             'smtp_password' => $e['email.smtp.password'],
             'smtp_encryption' => $e['email.smtp.encryption'],
+            'smtp_verify_ssl' => (bool) $e['email.smtp.verify_ssl'],
             'mailgun_domain' => $e['email.mailgun.domain'],
             'mailgun_secret' => $e['email.mailgun.secret'],
             'mailgun_endpoint' => $e['email.mailgun.endpoint'],
@@ -712,6 +714,7 @@ class SystemSettings extends Component
             'email.smtp.username' => $this->email['smtp_username'] ?? '',
             'email.smtp.password' => $this->email['smtp_password'] ?? '',
             'email.smtp.encryption' => $this->email['smtp_encryption'] ?? 'tls',
+            'email.smtp.verify_ssl' => (bool) ($this->email['smtp_verify_ssl'] ?? true),
             'email.mailgun.domain' => $this->email['mailgun_domain'] ?? '',
             'email.mailgun.secret' => $this->email['mailgun_secret'] ?? '',
             'email.mailgun.endpoint' => $this->email['mailgun_endpoint'] ?? 'api.mailgun.net',
@@ -763,7 +766,8 @@ class SystemSettings extends Component
         $username = $this->email['smtp_username'] ?? 'not set';
         $password = $this->email['smtp_password'] ?? '';
         $passwordPreview = $password ? (substr($password, 0, 8) . '...' . substr($password, -4)) : 'empty';
-        
+        $verifySSL = (bool) ($this->email['smtp_verify_ssl'] ?? true);
+
         \Log::info('Test email attempt', [
             'provider' => $provider,
             'host' => $host,
@@ -771,6 +775,7 @@ class SystemSettings extends Component
             'username' => $username,
             'password_length' => strlen($password),
             'password_preview' => $passwordPreview,
+            'verify_ssl' => $verifySSL,
         ]);
         
         try {
@@ -798,7 +803,13 @@ class SystemSettings extends Component
             
             // Provide more helpful error message
             $errorMsg = $e->getMessage();
-            if (str_contains($errorMsg, 'Authentication failed')) {
+
+            // Handle certificate mismatch error
+            if (str_contains($errorMsg, 'did not match expected CN') || str_contains($errorMsg, 'Peer certificate')) {
+                $errorMsg .= "\n\nThis error typically occurs when your hosting provider intercepts SMTP connections with their own certificate.";
+                $errorMsg .= "\n\nTo fix this, disable 'Verify SSL Certificate' in the SMTP settings above and try again.";
+                $errorMsg .= "\n\nNote: This is safe when using a trusted hosting provider, as the connection is still encrypted.";
+            } elseif (str_contains($errorMsg, 'Authentication failed')) {
                 $errorMsg .= "\n\nDebug Info:\n- Host: {$host}\n- Port: {$port}\n- Username: {$username}\n- Password length: " . strlen($password) . " chars";
 
                 if ($provider === 'brevo') {
@@ -845,15 +856,30 @@ class SystemSettings extends Component
         }
         
         // For SMTP-based providers (smtp, gmail, outlook, brevo)
-        config([
+        $smtpConfig = [
             'mail.default' => 'smtp',
             'mail.mailers.smtp.host' => $this->email['smtp_host'] ?? '',
             'mail.mailers.smtp.port' => (int) ($this->email['smtp_port'] ?? 587),
             'mail.mailers.smtp.username' => $this->email['smtp_username'] ?? '',
             'mail.mailers.smtp.password' => $this->email['smtp_password'] ?? '',
             'mail.mailers.smtp.encryption' => $this->email['smtp_encryption'] ?? 'tls',
-        ]);
-        
+        ];
+
+        // Add stream options for SSL verification control
+        // This helps when hosting providers intercept SMTP connections with their own certificates
+        $verifySSL = (bool) ($this->email['smtp_verify_ssl'] ?? true);
+        if (!$verifySSL) {
+            $smtpConfig['mail.mailers.smtp.stream'] = [
+                'ssl' => [
+                    'allow_self_signed' => true,
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                ],
+            ];
+        }
+
+        config($smtpConfig);
+
         // Purge again after config change to force new connection
         Mail::purge('smtp');
     }
