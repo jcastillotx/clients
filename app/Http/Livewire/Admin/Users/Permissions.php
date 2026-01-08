@@ -30,6 +30,7 @@ class Permissions extends Component
         $groups = [
             'Clients' => [],
             'Requests' => [],
+            'Leads' => [],
             'Invoices' => [],
             'Contracts' => [],
             'Documents' => [],
@@ -42,6 +43,7 @@ class Permissions extends Component
             $group = match (true) {
                 str_contains($p, '_client') => 'Clients',
                 str_contains($p, '_request') => 'Requests',
+                str_contains($p, '_lead') => 'Leads',
                 str_contains($p, '_invoice') || str_contains($p, 'process_payment') => 'Invoices',
                 str_contains($p, '_contract') => 'Contracts',
                 str_contains($p, '_document') => 'Documents',

@@ -323,6 +323,14 @@
                         <p>Clients</p>
                     </a>
                 </li>
+                @can('view_any_lead')
+                <li class="nav-item">
+                    <a href="{{ route('admin.marketing.leads') }}" class="nav-link {{ request()->routeIs('admin.marketing.leads') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-plus"></i>
+                        <p>Leads</p>
+                    </a>
+                </li>
+                @endcan
                 <li class="nav-item">
                     <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-users"></i>

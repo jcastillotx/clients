@@ -56,6 +56,7 @@ use App\Http\Livewire\Admin\Invoices\InvoiceCreate as AdminInvoiceCreate;
 use App\Http\Livewire\Admin\Invoices\InvoiceEdit as AdminInvoiceEdit;
 use App\Http\Livewire\Admin\Invoices\RecurringInvoiceIndex;
 use App\Http\Livewire\Admin\MeetingNotes as AdminMeetingNotes;
+use App\Http\Livewire\Admin\Marketing\LeadManagement as AdminLeadManagement;
 use App\Http\Livewire\Admin\Reports\ReportDashboard;
 use App\Http\Livewire\Admin\Reports\ReportDeliveries as AdminReportDeliveries;
 use App\Http\Livewire\Admin\Requests\AdminRequestDetail;
@@ -489,8 +490,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::prefix('marketing')->name('marketing.')->group(function () {
             Route::get('/website-auditor', MarketingWebsiteAuditor::class)->name('website-auditor');
             Route::get('/audit-results', MarketingAuditResults::class)->name('audit-results');
-            Route::get('/seo-audit', SeoAuditViewer::class)->name('seo-audit');
-            Route::get('/seo-audit/{auditId}', SeoAuditViewer::class)->name('seo-audit.view');
+            Route::get('/leads', AdminLeadManagement::class)->name('leads')->middleware('permission:view_any_lead');
             Route::get('/website-audits/{websiteAudit}/pdf', [WebsiteAuditController::class, 'pdf'])->name('website-audits.pdf');
             Route::get('/campaigns', CampaignAnalyticsDashboard::class)->name('campaigns');
             Route::get('/brand-monitoring', BrandMonitoringDashboard::class)->name('brand-monitoring');

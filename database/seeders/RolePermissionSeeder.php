@@ -36,6 +36,13 @@ class RolePermissionSeeder extends Seeder
             'delete_request',
             'assign_request', // Ability to assign requests to staff
 
+            // Leads
+            'view_any_lead',
+            'view_lead',
+            'create_lead',
+            'update_lead',
+            'delete_lead',
+
             // Invoices
             'view_any_invoice',
             'view_invoice',
@@ -130,6 +137,12 @@ class RolePermissionSeeder extends Seeder
                 'delete_request',
                 'assign_request',
 
+                // Leads
+                'view_any_lead',
+                'view_lead',
+                'create_lead',
+                'update_lead',
+
                 // Invoices
                 'view_any_invoice',
                 'view_invoice',
@@ -178,6 +191,12 @@ class RolePermissionSeeder extends Seeder
                 'update_request',
                 'delete_request',
 
+                // Leads
+                'view_any_lead',
+                'view_lead',
+                'create_lead',
+                'update_lead',
+
                 // Invoices
                 'view_any_invoice',
                 'view_invoice',
@@ -218,6 +237,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client', 'create_client', 'update_client',
                 'view_any_request', 'view_request', 'create_request', 'update_request', 'delete_request', 'assign_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice', 'create_invoice', 'update_invoice',
                 'view_any_contract', 'view_contract', 'create_contract', 'update_contract',
                 'view_any_document', 'view_document', 'upload_document', 'delete_document',
@@ -231,6 +251,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client', 'create_client', 'update_client',
                 'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice', 'create_invoice', 'update_invoice', 'process_payment',
                 'view_any_contract', 'view_contract', 'create_contract', 'update_contract',
                 'view_any_document', 'view_document', 'upload_document',
@@ -244,6 +265,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client', 'create_client', 'update_client',
                 'view_any_request', 'view_request', 'create_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice', 'create_invoice',
                 'view_any_contract', 'view_contract', 'create_contract',
                 'view_any_document', 'view_document', 'upload_document',
@@ -317,6 +339,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client', 'update_client',
                 'view_any_request', 'view_request', 'create_request', 'update_request', 'assign_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice',
                 'view_any_contract', 'view_contract',
                 'view_any_document', 'view_document', 'upload_document', 'delete_document',
@@ -356,6 +379,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client',
                 'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice',
                 'view_any_contract', 'view_contract',
                 'view_any_document', 'view_document', 'upload_document',
@@ -369,6 +393,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client',
                 'view_any_request', 'view_request', 'update_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice',
                 'view_any_contract', 'view_contract',
                 'view_any_document', 'view_document', 'upload_document',
@@ -412,6 +437,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client', 'create_client', 'update_client',
                 'view_any_request', 'view_request', 'update_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice',
                 'view_any_contract', 'view_contract',
                 'view_any_document', 'view_document', 'upload_document',
@@ -429,6 +455,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client',
                 'view_any_request', 'view_request',
+                'view_any_lead', 'view_lead',
                 'view_any_invoice', 'view_invoice',
                 'view_any_contract', 'view_contract',
                 'view_any_document', 'view_document',
@@ -459,6 +486,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client', 'create_client', 'update_client',
                 'view_any_request', 'view_request', 'create_request', 'update_request', 'assign_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice', 'create_invoice', 'update_invoice',
                 'view_any_contract', 'view_contract', 'create_contract', 'update_contract',
                 'view_any_document', 'view_document', 'upload_document',
@@ -472,6 +500,7 @@ class RolePermissionSeeder extends Seeder
                 'access admin panel',
                 'view_any_client', 'view_client', 'update_client',
                 'view_any_request', 'view_request', 'create_request', 'update_request',
+                'view_any_lead', 'view_lead', 'create_lead', 'update_lead',
                 'view_any_invoice', 'view_invoice',
                 'view_any_contract', 'view_contract',
                 'view_any_document', 'view_document', 'upload_document',
