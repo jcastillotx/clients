@@ -208,9 +208,17 @@
                 </li>
 
                 {{-- ============================================= --}}
-                {{-- TOOLS SECTION (Client marketing tools) --}}
+                {{-- MARKETING SECTION (Client marketing tools) --}}
                 {{-- ============================================= --}}
-                <li class="nav-header">TOOLS</li>
+                <li class="nav-header">MARKETING</li>
+
+                <!-- SEO Dashboard -->
+                <li class="nav-item">
+                    <a href="{{ route('client.seo') }}" class="nav-link {{ request()->routeIs('client.seo') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-search-dollar"></i>
+                        <p>SEO Dashboard</p>
+                    </a>
+                </li>
 
                 <!-- Brand Monitoring (feature gated) -->
                 @if(auth()->user()->client && auth()->user()->client->hasFeature('brand_monitoring'))
