@@ -11,6 +11,7 @@ use App\Http\Controllers\Documents\DocumentViewerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Marketing\WebsiteAuditController;
 use App\Http\Controllers\OAuth\AnalyticsOAuthController;
+use App\Http\Controllers\OAuth\SearchConsoleOAuthController;
 use App\Http\Controllers\OAuth\SocialOAuthController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PrivacyExportController;
@@ -91,6 +92,8 @@ use App\Http\Livewire\Client\Messaging;
 use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\ProjectDashboard;
 use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
+use App\Http\Livewire\Client\SeoDashboard;
+use App\Http\Livewire\Client\CampaignsDashboard;
 use App\Http\Livewire\Client\Analytics\AccountManager as AnalyticsAccountManager;
 use App\Http\Livewire\Client\Social\AccountManager as SocialAccountManager;
 use App\Http\Livewire\Client\Social\PendingApprovals;
@@ -303,6 +306,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/knowledge-base', KnowledgeBase::class)->name('client.knowledge-base');
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
     Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
+    Route::get('/seo', SeoDashboard::class)->name('client.seo');
+    Route::get('/campaigns', CampaignsDashboard::class)->name('client.campaigns');
     Route::get('/connections', AccountConnections::class)->name('client.connections');
     Route::get('/onboarding', OnboardingWizard::class)->name('client.onboarding');
     Route::get('/meetings', MeetingScheduler::class)->name('client.meetings');
@@ -355,6 +360,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/google', [AnalyticsOAuthController::class, 'googleRedirect'])->name('google.redirect');
             Route::get('/google/callback', [AnalyticsOAuthController::class, 'googleCallback'])->name('google.callback');
             Route::delete('/disconnect/{platform}', [AnalyticsOAuthController::class, 'disconnect'])->name('disconnect');
+        });
+
+        // Google Search Console OAuth routes
+        Route::prefix('gsc')->name('gsc.')->group(function () {
+            Route::get('/connect', [SearchConsoleOAuthController::class, 'redirect'])->name('redirect');
+            Route::get('/callback', [SearchConsoleOAuthController::class, 'callback'])->name('callback');
+            Route::post('/disconnect', [SearchConsoleOAuthController::class, 'disconnect'])->name('disconnect');
+            Route::post('/site', [SearchConsoleOAuthController::class, 'updateSite'])->name('update-site');
+            Route::post('/refresh-sites', [SearchConsoleOAuthController::class, 'refreshSites'])->name('refresh-sites');
         });
     });
 
