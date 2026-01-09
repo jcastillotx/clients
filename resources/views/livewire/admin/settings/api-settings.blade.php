@@ -37,6 +37,11 @@
                             <i class="fas fa-share-alt me-1"></i> Social Media
                         </button>
                     </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link {{ $tab === 'storage' ? 'active' : '' }}" wire:click="setTab('storage')">
+                            <i class="fas fa-cloud me-1"></i> Cloud Storage
+                        </button>
+                    </li>
                 </ul>
             </div>
             <div class="card-body">
@@ -53,6 +58,11 @@
                 {{-- Social Media Tab --}}
                 @if($tab === 'social')
                     @include('livewire.admin.settings.api-settings-social')
+                @endif
+
+                {{-- Cloud Storage Tab --}}
+                @if($tab === 'storage')
+                    @include('livewire.admin.settings.api-settings-storage')
                 @endif
             </div>
         </div>

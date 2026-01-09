@@ -3,6 +3,7 @@
 namespace App\Services\Storage;
 
 use App\Contracts\StorageProviderInterface;
+use App\Models\Setting;
 use App\Models\StorageConnection;
 use App\Models\SyncedFile;
 use Illuminate\Http\UploadedFile;
@@ -34,14 +35,50 @@ class DropboxService implements StorageProviderInterface
     }
 
     /**
+     * Get Dropbox App Key from database settings or config.
+     */
+    protected function getAppKey(): string
+    {
+        return Setting::getValue('api.storage.dropbox.app_key')
+            ?: (string) config('storage-providers.dropbox.app_key', '');
+    }
+
+    /**
+     * Get Dropbox App Secret from database settings or config.
+     */
+    protected function getAppSecret(): string
+    {
+        return Setting::getValue('api.storage.dropbox.app_secret')
+            ?: (string) config('storage-providers.dropbox.app_secret', '');
+    }
+
+    /**
+     * Get Dropbox Redirect URI from database settings or config.
+     */
+    protected function getRedirectUri(): string
+    {
+        return (string) config('storage-providers.dropbox.redirect_uri')
+            ?: url('/storage/dropbox/callback');
+    }
+
+    /**
+     * Check if Dropbox integration is enabled.
+     */
+    public function isEnabled(): bool
+    {
+        return (bool) Setting::getValue('api.storage.dropbox.enabled', false)
+            || !empty(config('storage-providers.dropbox.app_key'));
+    }
+
+    /**
      * Build Dropbox OAuth authorization URL.
      */
     public function authorizationUrl(string $state): string
     {
-        $appKey = (string) config('storage-providers.dropbox.app_key');
-        $redirect = (string) config('storage-providers.dropbox.redirect_uri');
+        $appKey = $this->getAppKey();
+        $redirect = $this->getRedirectUri();
         if ($appKey === '' || $redirect === '') {
-            throw new RuntimeException('Dropbox OAuth is not configured. Set DROPBOX_APP_KEY and DROPBOX_REDIRECT_URI.');
+            throw new RuntimeException('Dropbox OAuth is not configured. Configure it in Admin > Settings > Integrations > Cloud Storage.');
         }
 
         // token_access_type=offline requests refresh_token when app is configured for short-lived tokens.
@@ -63,11 +100,11 @@ class DropboxService implements StorageProviderInterface
             throw new RuntimeException('Missing required credential: client_id');
         }
 
-        $appKey = (string) config('storage-providers.dropbox.app_key');
-        $appSecret = (string) config('storage-providers.dropbox.app_secret');
-        $redirect = (string) config('storage-providers.dropbox.redirect_uri');
+        $appKey = $this->getAppKey();
+        $appSecret = $this->getAppSecret();
+        $redirect = $this->getRedirectUri();
         if ($appKey === '' || $appSecret === '' || $redirect === '') {
-            throw new RuntimeException('Dropbox OAuth is not configured. Set DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_REDIRECT_URI.');
+            throw new RuntimeException('Dropbox OAuth is not configured. Configure it in Admin > Settings > Integrations > Cloud Storage.');
         }
 
         $authorizationCode = (string) ($credentials['authorization_code'] ?? '');
@@ -475,9 +512,9 @@ class DropboxService implements StorageProviderInterface
 
     protected function makeClient(StorageConnection $connection): DropboxClient
     {
-        $appKey = (string) config('storage-providers.dropbox.app_key');
-        $appSecret = (string) config('storage-providers.dropbox.app_secret');
-        $redirect = (string) config('storage-providers.dropbox.redirect_uri');
+        $appKey = $this->getAppKey();
+        $appSecret = $this->getAppSecret();
+        $redirect = $this->getRedirectUri();
 
         $provider = new DropboxConnectionTokenProvider($connection, $appKey, $appSecret, $redirect);
 
