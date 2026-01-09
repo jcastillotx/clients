@@ -39,13 +39,21 @@
         <!-- Sidebar Menu -->
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                <!-- Dashboard -->
+
+                {{-- ============================================= --}}
+                {{-- DASHBOARD --}}
+                {{-- ============================================= --}}
                 <li class="nav-item">
                     <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
                         <p>Dashboard</p>
                     </a>
                 </li>
+
+                {{-- ============================================= --}}
+                {{-- SERVICES SECTION --}}
+                {{-- ============================================= --}}
+                <li class="nav-header">SERVICES</li>
 
                 <!-- Service Requests -->
                 @platformFeature('service_requests')
@@ -127,7 +135,7 @@
 
                 <!-- Documents -->
                 @platformFeature('documents')
-                <li class="nav-item">
+                <li class="nav-item {{ request()->routeIs('documents.*') ? 'menu-open' : '' }}">
                     <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-folder-open"></i>
                         <p>
@@ -162,9 +170,12 @@
                 </li>
                 @endplatformFeature
 
+                {{-- ============================================= --}}
+                {{-- CLIENT SECTION (Client users only) --}}
+                {{-- ============================================= --}}
                 @if(auth()->user()->isClient())
-                <!-- Client Extras -->
                 <li class="nav-header">CLIENT</li>
+
                 <li class="nav-item">
                     <a href="{{ route('client.projects') }}" class="nav-link {{ request()->routeIs('client.projects') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-project-diagram"></i>
@@ -195,36 +206,11 @@
                         <p>Knowledge Base</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.notifications') }}" class="nav-link {{ request()->routeIs('client.notifications') ? 'active' : '' }}">
-                        <i class="nav-icon far fa-bell"></i>
-                        <p>Notifications</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.privacy') }}" class="nav-link {{ request()->routeIs('client.privacy') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-shield"></i>
-                        <p>Privacy</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.analytics') }}" class="nav-link {{ request()->routeIs('client.analytics') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-pie"></i>
-                        <p>Analytics</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.reports') }}" class="nav-link {{ request()->routeIs('client.reports') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-line"></i>
-                        <p>Reports</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.reports.archive') }}" class="nav-link {{ request()->routeIs('client.reports.archive') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-archive"></i>
-                        <p>Report Archive</p>
-                    </a>
-                </li>
+
+                {{-- ============================================= --}}
+                {{-- TOOLS SECTION (Client marketing tools) --}}
+                {{-- ============================================= --}}
+                <li class="nav-header">TOOLS</li>
 
                 <!-- Brand Monitoring (feature gated) -->
                 @if(auth()->user()->client && auth()->user()->client->hasFeature('brand_monitoring'))
@@ -273,66 +259,90 @@
                         </li>
                     </ul>
                 </li>
-                @endif
 
+                {{-- ============================================= --}}
+                {{-- REPORTS SECTION (Client analytics) --}}
+                {{-- ============================================= --}}
+                <li class="nav-header">REPORTS</li>
+
+                <li class="nav-item">
+                    <a href="{{ route('client.analytics') }}" class="nav-link {{ request()->routeIs('client.analytics') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-pie"></i>
+                        <p>Analytics</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.reports') }}" class="nav-link {{ request()->routeIs('client.reports') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>Reports</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.reports.archive') }}" class="nav-link {{ request()->routeIs('client.reports.archive') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-archive"></i>
+                        <p>Report Archive</p>
+                    </a>
+                </li>
+
+                {{-- ============================================= --}}
+                {{-- STORAGE SECTION (Client cloud storage) --}}
+                {{-- ============================================= --}}
                 @php($navUser = auth()->user())
                 @if($navUser?->client_id)
-                    <!-- Storage (client accounts only) -->
-                    <li class="nav-item {{ request()->routeIs('storage.*') ? 'menu-open' : '' }}">
-                        <a href="#" class="nav-link {{ request()->routeIs('storage.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-cloud"></i>
-                            <p>
-                                Storage
-                                <i class="right fas fa-angle-left"></i>
-                            </p>
-                        </a>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('storage.dashboard') }}" class="nav-link {{ request()->routeIs('storage.dashboard') ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Dashboard</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('storage.browser') }}" class="nav-link {{ request()->routeIs('storage.browser') ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>File Browser</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('storage.conflicts') }}" class="nav-link {{ request()->routeIs('storage.conflicts') ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Conflicts</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('storage.settings') }}" class="nav-link {{ request()->routeIs('storage.settings') ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Settings</p>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                <li class="nav-header">STORAGE</li>
+
+                <li class="nav-item {{ request()->routeIs('storage.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('storage.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-cloud"></i>
+                        <p>
+                            Cloud Storage
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('storage.dashboard') }}" class="nav-link {{ request()->routeIs('storage.dashboard') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('storage.browser') }}" class="nav-link {{ request()->routeIs('storage.browser') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>File Browser</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('storage.conflicts') }}" class="nav-link {{ request()->routeIs('storage.conflicts') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Conflicts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('storage.settings') }}" class="nav-link {{ request()->routeIs('storage.settings') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Settings</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                @endif
                 @endif
 
+                {{-- ============================================= --}}
+                {{-- ADMIN SECTION --}}
+                {{-- ============================================= --}}
                 @can('access admin panel')
                 <li class="nav-header">ADMIN</li>
+
                 <li class="nav-item">
                     <a href="{{ route('admin.clients.index') }}" class="nav-link {{ request()->routeIs('admin.clients.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-building"></i>
                         <p>Clients</p>
                     </a>
                 </li>
-                @can('view_any_lead')
                 <li class="nav-item">
-                    <a href="{{ route('admin.marketing.leads') }}" class="nav-link {{ request()->routeIs('admin.marketing.leads') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-plus"></i>
-                        <p>Leads</p>
-                    </a>
-                </li>
-                @endcan
-                <li class="nav-item">
-                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') && !request()->routeIs('admin.users.permissions') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-users"></i>
                         <p>Users</p>
                     </a>
@@ -343,6 +353,7 @@
                         <p>Permissions</p>
                     </a>
                 </li>
+
                 @platformFeature('messaging')
                 <li class="nav-item">
                     <a href="{{ route('admin.messages') }}" class="nav-link {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
@@ -351,6 +362,16 @@
                     </a>
                 </li>
                 @endplatformFeature
+
+                @platformFeature('meetings')
+                <li class="nav-item">
+                    <a href="{{ route('admin.meetings') }}" class="nav-link {{ request()->routeIs('admin.meetings') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>Meetings</p>
+                    </a>
+                </li>
+                @endplatformFeature
+
                 @platformFeature('reporting')
                 <li class="nav-item">
                     <a href="{{ route('admin.reports.dashboard') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
@@ -359,74 +380,6 @@
                     </a>
                 </li>
                 @endplatformFeature
-                <li class="nav-item">
-                    <a href="{{ route('admin.security.privacy-requests') }}" class="nav-link {{ request()->routeIs('admin.security.privacy-requests') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-shield"></i>
-                        <p>Privacy Requests</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.security.overview') }}" class="nav-link {{ request()->routeIs('admin.security.overview') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-shield-alt"></i>
-                        <p>Security Settings</p>
-                    </a>
-                </li>
-
-                <!-- Brand Monitoring -->
-                <li class="nav-item {{ request()->routeIs('admin.brand-monitoring.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.brand-monitoring.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-bullhorn"></i>
-                        <p>
-                            Brand Monitor
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.brand-monitoring.dashboard') }}" class="nav-link {{ request()->routeIs('admin.brand-monitoring.dashboard') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Dashboard</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.brand-monitoring.api-status') }}" class="nav-link {{ request()->routeIs('admin.brand-monitoring.api-status') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>API Status</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <!-- Social Media -->
-                <li class="nav-item {{ request()->routeIs('admin.social.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.social.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-share-alt"></i>
-                        <p>
-                            Social Media
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.social.posts') }}" class="nav-link {{ request()->routeIs('admin.social.posts') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Posts</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.social.posts.create') }}" class="nav-link {{ request()->routeIs('admin.social.posts.create') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Create Post</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.social.content-calendar') }}" class="nav-link {{ request()->routeIs('admin.social.content-calendar') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Calendar</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
 
                 @platformFeature('projects')
                 <li class="nav-item {{ request()->routeIs('admin.projects.*') ? 'menu-open' : '' }}">
@@ -532,15 +485,6 @@
                 @endif
                 @endplatformFeature
 
-                @platformFeature('meetings')
-                <li class="nav-item">
-                    <a href="{{ route('admin.meetings') }}" class="nav-link {{ request()->routeIs('admin.meetings') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-calendar-alt"></i>
-                        <p>Meetings</p>
-                    </a>
-                </li>
-                @endplatformFeature
-
                 @platformFeature('feedback')
                 <li class="nav-item {{ request()->routeIs('admin.feedback.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.feedback.*') ? 'active' : '' }}">
@@ -605,6 +549,76 @@
                 </li>
                 @endplatformFeature
 
+                {{-- ============================================= --}}
+                {{-- MARKETING SECTION (Admin marketing tools) --}}
+                {{-- ============================================= --}}
+                <li class="nav-header">MARKETING</li>
+
+                @can('view_any_lead')
+                <li class="nav-item">
+                    <a href="{{ route('admin.marketing.leads') }}" class="nav-link {{ request()->routeIs('admin.marketing.leads') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-plus"></i>
+                        <p>Leads</p>
+                    </a>
+                </li>
+                @endcan
+
+                <!-- Brand Monitoring -->
+                <li class="nav-item {{ request()->routeIs('admin.brand-monitoring.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.brand-monitoring.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-bullhorn"></i>
+                        <p>
+                            Brand Monitor
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.brand-monitoring.dashboard') }}" class="nav-link {{ request()->routeIs('admin.brand-monitoring.dashboard') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.brand-monitoring.api-status') }}" class="nav-link {{ request()->routeIs('admin.brand-monitoring.api-status') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>API Status</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Social Media -->
+                <li class="nav-item {{ request()->routeIs('admin.social.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.social.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-share-alt"></i>
+                        <p>
+                            Social Media
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.social.posts') }}" class="nav-link {{ request()->routeIs('admin.social.posts') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Posts</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.social.posts.create') }}" class="nav-link {{ request()->routeIs('admin.social.posts.create') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Create Post</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.social.content-calendar') }}" class="nav-link {{ request()->routeIs('admin.social.content-calendar') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Calendar</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
                 @platformFeature('partners')
                 <li class="nav-item {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'active' : '' }}">
@@ -631,16 +645,12 @@
                 </li>
                 @endplatformFeature
 
-                @can('access admin panel')
-                @platformFeature('storage_integrations')
-                <li class="nav-item">
-                    <a href="{{ route('admin.storage.overview') }}" class="nav-link {{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-database"></i>
-                        <p>Storage Overview</p>
-                    </a>
-                </li>
-                @endplatformFeature
+                {{-- ============================================= --}}
+                {{-- SETTINGS SECTION (Admin system settings) --}}
+                {{-- ============================================= --}}
                 @can('manage settings')
+                <li class="nav-header">SETTINGS</li>
+
                 <li class="nav-item">
                     <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings') || request()->routeIs('admin.settings.index') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-cogs"></i>
@@ -653,6 +663,26 @@
                         <p>Form Templates</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.security.overview') }}" class="nav-link {{ request()->routeIs('admin.security.overview') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-shield-alt"></i>
+                        <p>Security Settings</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.security.privacy-requests') }}" class="nav-link {{ request()->routeIs('admin.security.privacy-requests') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Privacy Requests</p>
+                    </a>
+                </li>
+                @platformFeature('storage_integrations')
+                <li class="nav-item">
+                    <a href="{{ route('admin.storage.overview') }}" class="nav-link {{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-database"></i>
+                        <p>Storage Overview</p>
+                    </a>
+                </li>
+                @endplatformFeature
                 @platformFeature('webhooks')
                 <li class="nav-item">
                     <a href="{{ route('admin.webhooks.index') }}" class="nav-link {{ request()->routeIs('admin.webhooks.*') ? 'active' : '' }}">
@@ -671,8 +701,10 @@
                 @endplatformFeature
                 @endcan
                 @endcan
-                @endcan
 
+                {{-- ============================================= --}}
+                {{-- ACCOUNT SECTION (User personal settings) --}}
+                {{-- ============================================= --}}
                 <li class="nav-header">ACCOUNT</li>
 
                 <!-- Profile -->
@@ -682,6 +714,21 @@
                         <p>Profile Settings</p>
                     </a>
                 </li>
+
+                @if(auth()->user()->isClient())
+                <li class="nav-item">
+                    <a href="{{ route('client.notifications') }}" class="nav-link {{ request()->routeIs('client.notifications') ? 'active' : '' }}">
+                        <i class="nav-icon far fa-bell"></i>
+                        <p>Notifications</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('client.privacy') }}" class="nav-link {{ request()->routeIs('client.privacy') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Privacy</p>
+                    </a>
+                </li>
+                @endif
 
                 <li class="nav-item">
                     <a href="{{ route('two-factor.setup') }}" class="nav-link {{ request()->routeIs('two-factor.setup') ? 'active' : '' }}">
