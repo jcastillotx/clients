@@ -93,6 +93,7 @@ use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\ProjectDashboard;
 use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
 use App\Http\Livewire\Client\SeoDashboard;
+use App\Http\Livewire\Client\CampaignsDashboard;
 use App\Http\Livewire\Client\Analytics\AccountManager as AnalyticsAccountManager;
 use App\Http\Livewire\Client\Social\AccountManager as SocialAccountManager;
 use App\Http\Livewire\Client\Social\PendingApprovals;
@@ -306,6 +307,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
     Route::get('/analytics', AnalyticsDashboard::class)->name('client.analytics');
     Route::get('/seo', SeoDashboard::class)->name('client.seo');
+    Route::get('/campaigns', CampaignsDashboard::class)->name('client.campaigns');
     Route::get('/connections', AccountConnections::class)->name('client.connections');
     Route::get('/onboarding', OnboardingWizard::class)->name('client.onboarding');
     Route::get('/meetings', MeetingScheduler::class)->name('client.meetings');

@@ -220,6 +220,14 @@
                     </a>
                 </li>
 
+                <!-- Campaigns Dashboard -->
+                <li class="nav-item">
+                    <a href="{{ route('client.campaigns') }}" class="nav-link {{ request()->routeIs('client.campaigns*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-rocket"></i>
+                        <p>Campaigns</p>
+                    </a>
+                </li>
+
                 <!-- Brand Monitoring (feature gated) -->
                 @if(auth()->user()->client && auth()->user()->client->hasFeature('brand_monitoring'))
                 <li class="nav-item">
