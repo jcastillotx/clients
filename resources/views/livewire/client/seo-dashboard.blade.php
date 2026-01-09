@@ -84,6 +84,11 @@
                     <i class="fas fa-shield-alt mr-1"></i> Security
                 </a>
             </li>
+            <li class="nav-item">
+                <a wire:click.prevent="setTab('local')" class="nav-link {{ $activeTab === 'local' ? 'active' : '' }}" href="#">
+                    <i class="fas fa-map-marker-alt mr-1"></i> Local SEO
+                </a>
+            </li>
         </ul>
 
         {{-- ==================== OVERVIEW TAB ==================== --}}
@@ -609,6 +614,310 @@
         </div>
         @endif
         @endif
+
+        {{-- ==================== LOCAL SEO TAB ==================== --}}
+        @if($activeTab === 'local')
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Local SEO & Map Pack Tracking</strong> - Track your Google Maps/Local Pack rankings from multiple geographic points to understand your local visibility.
+                </div>
+            </div>
+        </div>
+
+        @if(!$localSeoConfigured)
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-map-marked-alt fa-4x text-muted mb-4"></i>
+                <h4>Local SEO Not Configured</h4>
+                <p class="text-muted mb-0">The Local SEO service needs to be configured by your administrator to enable Map Pack tracking.</p>
+            </div>
+        </div>
+        @else
+        {{-- Search Controls --}}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-search-location mr-2"></i>Map Pack Search</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Search Keyword</label>
+                            <input type="text" wire:model.defer="localKeyword" class="form-control" placeholder="e.g. plumber, dentist, pizza">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" wire:model.defer="localLocation" class="form-control" placeholder="City, State, Country">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Your Business Name</label>
+                            <input type="text" wire:model.defer="businessName" class="form-control" placeholder="Your business name">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button wire:click="searchMapPack" class="btn btn-primary btn-block" wire:loading.attr="disabled">
+                                <i class="fas fa-search mr-1"></i> Search Map Pack
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Grid Analysis Section --}}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-th mr-2"></i>Grid-Based Rank Tracking</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Business Coordinates</label>
+                            <div class="input-group">
+                                <input type="text" wire:model.defer="businessLat" class="form-control" placeholder="Latitude">
+                                <input type="text" wire:model.defer="businessLng" class="form-control" placeholder="Longitude">
+                            </div>
+                            <small class="text-muted">Enter your business coordinates or click on the map</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Grid Size</label>
+                            <select wire:model="gridSize" class="form-control">
+                                <option value="3">3x3 (9 points)</option>
+                                <option value="5">5x5 (25 points)</option>
+                                <option value="7">7x7 (49 points)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Radius (miles)</label>
+                            <select wire:model="gridRadius" class="form-control">
+                                <option value="3">3 miles</option>
+                                <option value="5">5 miles</option>
+                                <option value="10">10 miles</option>
+                                <option value="15">15 miles</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button wire:click="runGridAnalysis" class="btn btn-success btn-block" wire:loading.attr="disabled">
+                                <i class="fas fa-th mr-1" wire:loading.remove wire:target="runGridAnalysis"></i>
+                                <i class="fas fa-spinner fa-spin mr-1" wire:loading wire:target="runGridAnalysis"></i>
+                                Run Grid Analysis
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Grid Visualization --}}
+                @if(!empty($gridRankingData['grid_results']))
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h5 class="mb-3">
+                            <i class="fas fa-map mr-2"></i>Ranking Grid for "{{ $gridRankingData['keyword'] ?? $localKeyword }}"
+                            @if(!empty($gridRankingData['tracked_at']))
+                                <small class="text-muted ml-2">({{ $gridRankingData['tracked_at'] }})</small>
+                            @endif
+                        </h5>
+                        <div class="grid-container mb-3" style="display: inline-block;">
+                            @php
+                                $gridSize = $gridRankingData['grid_size'] ?? 5;
+                                $gridResults = collect($gridRankingData['grid_results'])->keyBy(fn($p) => $p['row'] . '-' . $p['col']);
+                            @endphp
+                            @for($row = 0; $row < $gridSize; $row++)
+                                <div class="d-flex">
+                                    @for($col = 0; $col < $gridSize; $col++)
+                                        @php
+                                            $point = $gridResults->get($row . '-' . $col);
+                                            $position = $point['business_position'] ?? null;
+                                            $color = \App\Http\Livewire\Client\SeoDashboard::getGridPositionColor($position);
+                                            $isCenter = ($row == floor($gridSize/2) && $col == floor($gridSize/2));
+                                        @endphp
+                                        <div class="grid-cell {{ $isCenter ? 'grid-center' : '' }}"
+                                             style="width: 50px; height: 50px; background-color: {{ $color }}; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-weight: bold; {{ $isCenter ? 'border: 3px solid #333;' : '' }}"
+                                             title="Row {{ $row+1 }}, Col {{ $col+1 }}">
+                                            @if($position)
+                                                <span style="color: {{ $position <= 3 ? '#fff' : '#333' }}">{{ $position }}</span>
+                                            @else
+                                                <span style="color: #999;">-</span>
+                                            @endif
+                                        </div>
+                                    @endfor
+                                </div>
+                            @endfor
+                        </div>
+                        <div class="d-flex flex-wrap mt-2">
+                            <div class="mr-3 mb-1"><span class="badge" style="background-color: #22c55e; color: #fff;">#1</span></div>
+                            <div class="mr-3 mb-1"><span class="badge" style="background-color: #4ade80; color: #fff;">#2</span></div>
+                            <div class="mr-3 mb-1"><span class="badge" style="background-color: #86efac;">#3</span></div>
+                            <div class="mr-3 mb-1"><span class="badge" style="background-color: #fde047;">4-5</span></div>
+                            <div class="mr-3 mb-1"><span class="badge" style="background-color: #fdba74;">6-10</span></div>
+                            <div class="mr-3 mb-1"><span class="badge" style="background-color: #fca5a5;">11-20</span></div>
+                            <div class="mr-3 mb-1"><span class="badge" style="background-color: #ef4444; color: #fff;">20+</span></div>
+                            <div class="mr-3 mb-1"><span class="badge" style="background-color: #e5e7eb;">Not Found</span></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <h5 class="mb-3"><i class="fas fa-chart-bar mr-2"></i>Visibility Statistics</h5>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="info-box bg-gradient-success mb-0">
+                                    <span class="info-box-icon"><i class="fas fa-eye"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Visibility Score</span>
+                                        <span class="info-box-number">{{ $gridRankingData['stats']['visibility_score'] ?? 0 }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="info-box bg-gradient-info mb-0">
+                                    <span class="info-box-icon"><i class="fas fa-sort-numeric-up"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Avg Position</span>
+                                        <span class="info-box-number">{{ $gridRankingData['stats']['average_position'] ?? 'N/A' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="info-box bg-gradient-warning mb-0">
+                                    <span class="info-box-icon"><i class="fas fa-trophy"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Top 3 Count</span>
+                                        <span class="info-box-number">{{ $gridRankingData['stats']['top_3_count'] ?? 0 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="info-box bg-gradient-secondary mb-0">
+                                    <span class="info-box-icon"><i class="fas fa-th"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Grid Points</span>
+                                        <span class="info-box-number">{{ ($gridRankingData['grid_size'] ?? 5) ** 2 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @else
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-th fa-3x mb-3 opacity-50"></i>
+                    <p>Enter your business coordinates and click "Run Grid Analysis" to check rankings from multiple locations.</p>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Map Pack Results --}}
+        @if(count($mapPackResults) > 0)
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-map-marked-alt mr-2"></i>Map Pack Results for "{{ $localKeyword }}"</h3>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th width="50">Rank</th>
+                            <th>Business Name</th>
+                            <th>Rating</th>
+                            <th>Reviews</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($mapPackResults as $result)
+                        <tr class="{{ stripos($result['title'], $businessName) !== false ? 'table-success' : '' }}">
+                            <td>
+                                <span class="badge badge-{{ $result['position'] <= 3 ? 'success' : ($result['position'] <= 7 ? 'warning' : 'secondary') }}" style="font-size: 1.1em;">
+                                    {{ $result['position'] }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong>{{ $result['title'] }}</strong>
+                                @if($result['address'])
+                                    <br><small class="text-muted">{{ $result['address'] }}</small>
+                                @endif
+                            </td>
+                            <td>
+                                @if($result['rating'])
+                                    <span class="text-warning"><i class="fas fa-star"></i></span>
+                                    {{ $result['rating'] }}
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td>{{ number_format($result['reviews_count']) }}</td>
+                            <td><span class="badge badge-light">{{ $result['category'] ?: '—' }}</span></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
+
+        {{-- Competitors --}}
+        @if(count($localCompetitors) > 0)
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-users mr-2"></i>Local Competitors</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach(array_slice($localCompetitors, 0, 6) as $competitor)
+                    <div class="col-md-4 col-sm-6 mb-3">
+                        <div class="card card-outline card-{{ $competitor['position'] <= 3 ? 'danger' : 'warning' }} mb-0">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>{{ Str::limit($competitor['name'], 25) }}</strong>
+                                        <br>
+                                        @if($competitor['rating'])
+                                            <span class="text-warning"><i class="fas fa-star"></i></span>
+                                            {{ $competitor['rating'] }}
+                                            <span class="text-muted">({{ $competitor['reviews_count'] }})</span>
+                                        @endif
+                                    </div>
+                                    <span class="badge badge-{{ $competitor['position'] <= 3 ? 'success' : 'warning' }} badge-lg">
+                                        #{{ $competitor['position'] }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Ranking History --}}
+        @if(count($localRankingHistory) > 0)
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-history mr-2"></i>Visibility History</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="localVisibilityChart" height="80"></canvas>
+            </div>
+        </div>
+        @endif
+        @endif
+        @endif
     </div>
 </div>
 
@@ -742,6 +1051,58 @@ function createScoreGauge(id, score) {
                 cutout: '70%',
                 responsive: false,
                 plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
+    }
+}
+
+// Local Visibility Chart
+const localVisChart = document.getElementById('localVisibilityChart');
+if (localVisChart && !localVisChart.chart) {
+    const localHistory = @json($localRankingHistory ?? []);
+    if (localHistory.length > 0) {
+        localVisChart.chart = new Chart(localVisChart, {
+            type: 'line',
+            data: {
+                labels: localHistory.map(d => d.date).reverse(),
+                datasets: [{
+                    label: 'Visibility Score',
+                    data: localHistory.map(d => d.visibility_score).reverse(),
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40,167,69,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Avg Position',
+                    data: localHistory.map(d => d.average_position).reverse(),
+                    borderColor: '#17a2b8',
+                    backgroundColor: 'rgba(23,162,184,0.1)',
+                    fill: false,
+                    tension: 0.3,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        title: { display: true, text: 'Visibility %' },
+                        min: 0,
+                        max: 100
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        title: { display: true, text: 'Avg Position' },
+                        reverse: true,
+                        min: 1,
+                        grid: { drawOnChartArea: false }
+                    }
+                }
             }
         });
     }
