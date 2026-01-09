@@ -220,12 +220,29 @@
                     </a>
                 </li>
 
-                <!-- Campaigns Dashboard -->
-                <li class="nav-item">
-                    <a href="{{ route('client.campaigns') }}" class="nav-link {{ request()->routeIs('client.campaigns*') ? 'active' : '' }}">
+                <!-- Campaigns -->
+                <li class="nav-item {{ request()->routeIs('client.campaigns*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('client.campaigns*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-rocket"></i>
-                        <p>Campaigns</p>
+                        <p>
+                            Campaigns
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('client.campaigns') }}" class="nav-link {{ request()->routeIs('client.campaigns') && !request()->routeIs('client.campaigns.manage') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('client.campaigns.manage') }}" class="nav-link {{ request()->routeIs('client.campaigns.manage') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Manage Campaigns</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
                 <!-- Brand Monitoring (feature gated) -->
