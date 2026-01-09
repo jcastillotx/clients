@@ -596,6 +596,31 @@
                 </li>
                 @endcan
 
+                <!-- Campaigns -->
+                <li class="nav-item {{ request()->routeIs('admin.marketing.campaigns*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.marketing.campaigns*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-rocket"></i>
+                        <p>
+                            Campaigns
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.marketing.campaigns') }}" class="nav-link {{ request()->routeIs('admin.marketing.campaigns') && !request()->routeIs('admin.marketing.campaigns.manage') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Analytics</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.marketing.campaigns.manage') }}" class="nav-link {{ request()->routeIs('admin.marketing.campaigns.manage') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Manage Campaigns</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
                 <!-- Brand Monitoring -->
                 <li class="nav-item {{ request()->routeIs('admin.brand-monitoring.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.brand-monitoring.*') ? 'active' : '' }}">

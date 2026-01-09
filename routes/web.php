@@ -113,6 +113,7 @@ use App\Http\Livewire\Feedback\TestimonialManager;
 use App\Http\Livewire\Marketing\AuditResults as MarketingAuditResults;
 use App\Http\Livewire\Marketing\BrandMonitoringDashboard;
 use App\Http\Livewire\Marketing\CampaignAnalyticsDashboard;
+use App\Http\Livewire\Admin\Marketing\CampaignManagement;
 use App\Http\Livewire\Marketing\SeoAuditViewer;
 use App\Http\Livewire\Marketing\SocialMediaManager;
 use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
@@ -509,6 +510,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/leads', AdminLeadManagement::class)->name('leads')->middleware('permission:view_any_lead');
             Route::get('/website-audits/{websiteAudit}/pdf', [WebsiteAuditController::class, 'pdf'])->name('website-audits.pdf');
             Route::get('/campaigns', CampaignAnalyticsDashboard::class)->name('campaigns');
+            Route::get('/campaigns/manage', CampaignManagement::class)->name('campaigns.manage');
             Route::get('/brand-monitoring', BrandMonitoringDashboard::class)->name('brand-monitoring');
         });
 
