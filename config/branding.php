@@ -33,44 +33,44 @@ return [
     */
 
     'colors' => [
-        // Primary brand color (Admindek cyan-blue)
-        'primary' => env('BRAND_COLOR_PRIMARY', '#04a9f5'),
+        // Primary brand color (muted purple/gray)
+        'primary' => env('BRAND_COLOR_PRIMARY', '#5F5F82'),
 
-        // Secondary/accent color (Admindek green)
-        'secondary' => env('BRAND_COLOR_SECONDARY', '#1de9b6'),
+        // Secondary color (light blue/gray)
+        'secondary' => env('BRAND_COLOR_SECONDARY', '#BFCEE0'),
 
         // Dark variant of primary (for hover states, etc.)
-        'primary_dark' => env('BRAND_COLOR_PRIMARY_DARK', '#0288d1'),
+        'primary_dark' => env('BRAND_COLOR_PRIMARY_DARK', '#4A4A66'),
 
         // Light variant of primary (for backgrounds)
-        'primary_light' => env('BRAND_COLOR_PRIMARY_LIGHT', '#e1f5fe'),
+        'primary_light' => env('BRAND_COLOR_PRIMARY_LIGHT', '#E8E8F0'),
 
-        // Accent color for CTAs and highlights (Admindek purple)
-        'accent' => env('BRAND_COLOR_ACCENT', '#a389d4'),
+        // Accent color for CTAs and highlights (black)
+        'accent' => env('BRAND_COLOR_ACCENT', '#000000'),
 
         // Text colors
-        'text_primary' => env('BRAND_COLOR_TEXT_PRIMARY', '#373a3c'),
-        'text_secondary' => env('BRAND_COLOR_TEXT_SECONDARY', '#919aa3'),
+        'text_primary' => env('BRAND_COLOR_TEXT_PRIMARY', '#000000'),
+        'text_secondary' => env('BRAND_COLOR_TEXT_SECONDARY', '#5F5F82'),
 
         // Background colors
         'background' => env('BRAND_COLOR_BACKGROUND', '#f4f7fa'),
         'background_alt' => env('BRAND_COLOR_BACKGROUND_ALT', '#ffffff'),
 
-        // Sidebar colors (Admindek dark sidebar)
-        'sidebar_bg' => env('BRAND_COLOR_SIDEBAR_BG', '#3f4d67'),
-        'sidebar_text' => env('BRAND_COLOR_SIDEBAR_TEXT', '#b5bdca'),
-        'sidebar_hover' => env('BRAND_COLOR_SIDEBAR_HOVER', '#4a5a7a'),
-        'sidebar_active' => env('BRAND_COLOR_SIDEBAR_ACTIVE', '#04a9f5'),
+        // Sidebar colors (matching new scheme)
+        'sidebar_bg' => env('BRAND_COLOR_SIDEBAR_BG', '#5F5F82'),
+        'sidebar_text' => env('BRAND_COLOR_SIDEBAR_TEXT', '#BFCEE0'),
+        'sidebar_hover' => env('BRAND_COLOR_SIDEBAR_HOVER', '#4A4A66'),
+        'sidebar_active' => env('BRAND_COLOR_SIDEBAR_ACTIVE', '#BFCEE0'),
 
         // Header/navbar gradient colors
-        'header_start' => env('BRAND_COLOR_HEADER_START', '#04a9f5'),
-        'header_end' => env('BRAND_COLOR_HEADER_END', '#1de9b6'),
+        'header_start' => env('BRAND_COLOR_HEADER_START', '#5F5F82'),
+        'header_end' => env('BRAND_COLOR_HEADER_END', '#BFCEE0'),
 
-        // Status colors (Admindek palette)
+        // Status colors
         'success' => env('BRAND_COLOR_SUCCESS', '#1de9b6'),
         'warning' => env('BRAND_COLOR_WARNING', '#f4c22b'),
         'danger' => env('BRAND_COLOR_DANGER', '#f44236'),
-        'info' => env('BRAND_COLOR_INFO', '#04a9f5'),
+        'info' => env('BRAND_COLOR_INFO', '#5F5F82'),
     ],
 
     /*
@@ -149,9 +149,9 @@ return [
         // Use gradients? (Admindek uses gradients)
         'use_gradients' => env('BRAND_USE_GRADIENTS', true),
 
-        // Gradient configuration (Admindek header gradient)
-        'gradient_primary' => env('BRAND_GRADIENT_PRIMARY', 'linear-gradient(to right, #04a9f5, #1de9b6)'),
-        'gradient_accent' => env('BRAND_GRADIENT_ACCENT', 'linear-gradient(to right, #a389d4, #899ed4)'),
+        // Gradient configuration
+        'gradient_primary' => env('BRAND_GRADIENT_PRIMARY', 'linear-gradient(to right, #5F5F82, #BFCEE0)'),
+        'gradient_accent' => env('BRAND_GRADIENT_ACCENT', 'linear-gradient(to right, #000000, #5F5F82)'),
     ],
 
     /*
@@ -201,9 +201,9 @@ return [
     */
 
     'email' => [
-        'header_color' => env('BRAND_EMAIL_HEADER_COLOR', '#2563eb'),
-        'button_color' => env('BRAND_EMAIL_BUTTON_COLOR', '#2563eb'),
-        'footer_color' => env('BRAND_EMAIL_FOOTER_COLOR', '#6b7280'),
+        'header_color' => env('BRAND_EMAIL_HEADER_COLOR', '#5F5F82'),
+        'button_color' => env('BRAND_EMAIL_BUTTON_COLOR', '#5F5F82'),
+        'footer_color' => env('BRAND_EMAIL_FOOTER_COLOR', '#5F5F82'),
         'logo' => env('BRAND_EMAIL_LOGO', 'images/logo.png'),
     ],
 

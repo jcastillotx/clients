@@ -18,7 +18,7 @@ class BrandingService
     protected const CACHE_KEY = 'branding_settings';
 
     /**
-     * Default branding values - Professional gray/blue/white theme.
+     * Default branding values - Muted purple/gray theme.
      */
     protected static array $defaults = [
         // Logos
@@ -29,33 +29,33 @@ class BrandingService
         'login_background_path' => '',
         'document_logo_path' => '',
 
-        // Brand Colors - Professional Blue/Gray/White Theme
-        'color_primary' => '#3b82f6',       // Modern blue
-        'color_primary_dark' => '#1d4ed8',  // Darker blue for hover
-        'color_primary_light' => '#93c5fd', // Light blue for accents
-        'color_secondary' => '#64748b',     // Slate gray
-        'color_accent' => '#0ea5e9',        // Sky blue accent
+        // Brand Colors - Muted Purple/Gray Theme
+        'color_primary' => '#5F5F82',       // Muted purple/gray
+        'color_primary_dark' => '#4A4A66',  // Darker variant for hover
+        'color_primary_light' => '#E8E8F0', // Light variant for backgrounds
+        'color_secondary' => '#BFCEE0',     // Light blue/gray
+        'color_accent' => '#000000',        // Black
         'color_success' => '#22c55e',       // Green
         'color_warning' => '#f59e0b',       // Amber
         'color_danger' => '#ef4444',        // Red
-        'color_info' => '#06b6d4',          // Cyan
+        'color_info' => '#5F5F82',          // Primary color
 
-        // Sidebar Colors - Dark professional look
-        'sidebar_bg' => '#1e293b',          // Slate 800
-        'sidebar_text' => '#94a3b8',        // Slate 400
-        'sidebar_hover' => '#334155',       // Slate 700
-        'sidebar_active' => '#3b82f6',      // Primary blue
+        // Sidebar Colors - Matching primary theme
+        'sidebar_bg' => '#5F5F82',          // Primary color
+        'sidebar_text' => '#BFCEE0',        // Secondary color
+        'sidebar_hover' => '#4A4A66',       // Primary dark
+        'sidebar_active' => '#BFCEE0',      // Secondary color
 
         // Navbar Colors
         'navbar_bg' => '#ffffff',           // White navbar
-        'navbar_text' => '#1e293b',         // Dark text
+        'navbar_text' => '#000000',         // Black text
         'navbar_variant' => 'light',
 
         // Button Colors - Will fallback to primary if empty
-        'button_primary' => '#3b82f6',
-        'button_primary_hover' => '#2563eb',
-        'button_secondary' => '#64748b',
-        'button_secondary_hover' => '#475569',
+        'button_primary' => '#5F5F82',
+        'button_primary_hover' => '#4A4A66',
+        'button_secondary' => '#BFCEE0',
+        'button_secondary_hover' => '#9BB0C8',
 
         // Typography
         'font_family' => "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -445,6 +445,18 @@ a:hover {
     public static function colorPresets(): array
     {
         return [
+            'default' => [
+                'name' => 'Default',
+                'color_primary' => '#5F5F82',
+                'color_primary_dark' => '#4A4A66',
+                'color_primary_light' => '#E8E8F0',
+                'color_secondary' => '#BFCEE0',
+                'color_accent' => '#000000',
+                'sidebar_bg' => '#5F5F82',
+                'sidebar_text' => '#BFCEE0',
+                'navbar_bg' => '#ffffff',
+                'navbar_text' => '#000000',
+            ],
             'blue' => [
                 'name' => 'Professional Blue',
                 'color_primary' => '#3b82f6',
