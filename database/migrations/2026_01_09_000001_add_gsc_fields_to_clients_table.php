@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('clients', function (Blueprint $table) {
-            $table->text('gsc_refresh_token')->nullable()->after('meta');
-            $table->string('gsc_site_url')->nullable()->after('gsc_refresh_token');
-            $table->timestamp('gsc_connected_at')->nullable()->after('gsc_site_url');
+            $table->text('gsc_refresh_token')->nullable();
+            $table->string('gsc_site_url')->nullable();
+            $table->timestamp('gsc_connected_at')->nullable();
         });
     }
 
