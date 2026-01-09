@@ -5,7 +5,10 @@ namespace App\Services\Social;
 use App\Models\ContentCalendarItem;
 use App\Models\SocialAccount;
 use App\Services\Social\BlueskyService;
+use App\Services\Social\InstagramOAuthService;
+use App\Services\Social\MastodonService;
 use App\Services\Social\PinterestOAuthService;
+use App\Services\Social\ThreadsOAuthService;
 use App\Services\Social\TwitterOAuthService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -58,10 +61,13 @@ class SocialMediaPublishingService
             // Publish to the platform
             $result = match ($post->platform) {
                 'facebook' => $this->publishToFacebook($post, $account),
+                'instagram' => $this->publishToInstagram($post, $account),
                 'linkedin' => $this->publishToLinkedIn($post, $account),
                 'twitter', 'x' => $this->publishToTwitter($post, $account),
                 'bluesky' => $this->publishToBluesky($post, $account),
                 'pinterest' => $this->publishToPinterest($post, $account),
+                'threads' => $this->publishToThreads($post, $account),
+                'mastodon' => $this->publishToMastodon($post, $account),
                 default => throw new \Exception('Unsupported platform: '.$post->platform),
             };
 
@@ -394,6 +400,76 @@ class SocialMediaPublishingService
             $post->content_text . ($post->hashtags ? "\n\n" . $post->hashtags : ''),
             $post->media_urls[0],
             $post->meta['link'] ?? null
+        );
+    }
+
+    /**
+     * Publish post to Instagram
+     */
+    protected function publishToInstagram(ContentCalendarItem $post, SocialAccount $account): array
+    {
+        // Instagram requires an image
+        if (empty($post->media_urls) || !is_array($post->media_urls)) {
+            return [
+                'success' => false,
+                'error' => 'Instagram requires at least one image to create a post',
+            ];
+        }
+
+        $content = $post->content_text;
+        if ($post->hashtags) {
+            $content .= "\n\n" . $post->hashtags;
+        }
+
+        $instagramService = new InstagramOAuthService();
+
+        return $instagramService->createPost(
+            $account,
+            $content,
+            $post->media_urls[0]
+        );
+    }
+
+    /**
+     * Publish post to Threads
+     */
+    protected function publishToThreads(ContentCalendarItem $post, SocialAccount $account): array
+    {
+        $content = $post->content_text;
+        if ($post->hashtags) {
+            $content .= "\n\n" . $post->hashtags;
+        }
+
+        // Threads has a 500 character limit
+        if (mb_strlen($content) > 500) {
+            $content = mb_substr($content, 0, 497) . '...';
+        }
+
+        $threadsService = new ThreadsOAuthService();
+
+        return $threadsService->createPost(
+            $account,
+            $content,
+            $post->media_urls ?? null
+        );
+    }
+
+    /**
+     * Publish post to Mastodon
+     */
+    protected function publishToMastodon(ContentCalendarItem $post, SocialAccount $account): array
+    {
+        $content = $post->content_text;
+        if ($post->hashtags) {
+            $content .= "\n\n" . $post->hashtags;
+        }
+
+        $mastodonService = new MastodonService();
+
+        return $mastodonService->createPost(
+            $account,
+            $content,
+            $post->media_urls ?? null
         );
     }
 
