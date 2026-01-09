@@ -6,14 +6,17 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "start:lite": "LITE_MODE=true node src/server.js",
+    "start:low-memory": "node --max-old-space-size=256 src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test src/**/*.test.js"
+    "test": "node --test src/**/*.test.js",
+    "install:browsers": "npx playwright install chromium",
+    "install:browsers:deps": "npx playwright install-deps chromium"
   },
   "dependencies": {
     "@crawlee/core": "^3.11.0",
     "@crawlee/cheerio": "^3.11.0",
     "@crawlee/playwright": "^3.11.0",
-    "@crawlee/puppeteer": "^3.11.0",
     "express": "^4.21.0",
     "helmet": "^7.1.0",
     "cors": "^2.8.5",
@@ -32,8 +35,7 @@
     "crawlee",
     "web-scraping",
     "crawler",
-    "playwright",
-    "puppeteer"
+    "playwright"
   ],
   "license": "MIT"
 }
