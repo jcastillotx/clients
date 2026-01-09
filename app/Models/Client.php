@@ -155,6 +155,44 @@ class Client extends Model
         return $this->hasMany(Conversation::class);
     }
 
+    /**
+     * Get maintenance plans for this client.
+     */
+    public function maintenancePlans(): HasMany
+    {
+        return $this->hasMany(MaintenancePlan::class);
+    }
+
+    /**
+     * Get the active maintenance plan for this client.
+     */
+    public function activeMaintenancePlan(): HasOne
+    {
+        return $this->hasOne(MaintenancePlan::class)
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now());
+            })
+            ->latest();
+    }
+
+    /**
+     * Get support tickets for this client.
+     */
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
+
+    /**
+     * Check if client has an active maintenance plan.
+     */
+    public function hasActiveMaintenancePlan(): bool
+    {
+        return $this->activeMaintenancePlan()->exists();
+    }
+
     public function storageConnections(): HasMany
     {
         return $this->hasMany(StorageConnection::class);
