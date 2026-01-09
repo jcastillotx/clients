@@ -49,6 +49,9 @@ class Client extends Model
         'marketing_strategy_generated_at',
         'enabled_features',
         'meta',
+        'gsc_refresh_token',
+        'gsc_site_url',
+        'gsc_connected_at',
     ];
 
     /**
@@ -63,6 +66,7 @@ class Client extends Model
         'marketing_strategy_generated_at' => 'datetime',
         'enabled_features' => 'array',
         'meta' => 'array',
+        'gsc_connected_at' => 'datetime',
     ];
 
     /**
