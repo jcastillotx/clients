@@ -565,6 +565,16 @@
                 </li>
                 @endplatformFeature
 
+                <!-- Staff How-To Guides (Admin/Staff only) -->
+                @can('access admin panel')
+                <li class="nav-item">
+                    <a href="{{ route('admin.staff-guides') }}" class="nav-link {{ request()->routeIs('admin.staff-guides*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-book-reader"></i>
+                        <p>Staff Guides</p>
+                    </a>
+                </li>
+                @endcan
+
                 {{-- ============================================= --}}
                 {{-- MARKETING SECTION (Admin marketing tools) --}}
                 {{-- ============================================= --}}

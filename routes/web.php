@@ -78,6 +78,8 @@ use App\Http\Livewire\Admin\Users\Permissions as AdminUserPermissions;
 use App\Http\Livewire\Admin\Users\UserCreate;
 use App\Http\Livewire\Admin\Users\UserEdit;
 use App\Http\Livewire\Admin\Users\UserManagement;
+use App\Http\Livewire\Admin\StaffGuides\StaffGuidesIndex;
+use App\Http\Livewire\Admin\StaffGuides\StaffGuideManager;
 use App\Http\Livewire\AI\AIAssistantChat as AdminAssistantChat;
 use App\Http\Livewire\AI\ClientAssistantChat;
 use App\Http\Livewire\AI\KnowledgeBase as AdminKnowledgeBase;
@@ -586,6 +588,10 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/automation', AutomationIndex::class)->name('automation.index');
         Route::get('/automation/builder/{rule?}', AutomationBuilder::class)->name('automation.builder');
         Route::get('/automation/logs', AutomationLogs::class)->name('automation.logs');
+
+        // Staff How-To Guides
+        Route::get('/staff-guides', StaffGuidesIndex::class)->name('staff-guides');
+        Route::get('/staff-guides/manage', StaffGuideManager::class)->name('staff-guides.manage')->middleware('permission:manage settings');
 
         // Activity log (uses the main app layout for Tailwind styles)
         Route::get('/activity', fn () => view('admin.activity'))->name('activity')->middleware('permission:access admin panel');
