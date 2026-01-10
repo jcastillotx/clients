@@ -29,6 +29,56 @@ class RequestCreate extends Component
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
     public array $files = [];
 
+    /**
+     * Get the estimated time range for the current type.
+     */
+    public function getEstimatedTimeProperty(): ?array
+    {
+        $config = config('client-portal.request_estimates.base_hours', []);
+
+        return $config[$this->type] ?? null;
+    }
+
+    /**
+     * Get the estimated cost range for the current type and priority.
+     */
+    public function getEstimatedCostProperty(): ?array
+    {
+        $estimate = $this->estimatedTime;
+        if (! $estimate) {
+            return null;
+        }
+
+        $hourlyRate = (float) config('client-portal.request_estimates.hourly_rate', 125);
+        $multipliers = config('client-portal.request_estimates.priority_multipliers', []);
+        $multiplier = (float) ($multipliers[$this->priority] ?? 1.0);
+
+        $minCost = $estimate['min'] * $hourlyRate * $multiplier;
+        $maxCost = $estimate['max'] * $hourlyRate * $multiplier;
+
+        return [
+            'min' => $minCost,
+            'max' => $maxCost,
+            'formatted' => '$' . number_format($minCost, 0) . ' - $' . number_format($maxCost, 0),
+        ];
+    }
+
+    /**
+     * Check if estimates should be shown to clients.
+     */
+    public function getShowEstimatesProperty(): bool
+    {
+        return (bool) config('client-portal.request_estimates.show_to_clients', true);
+    }
+
+    /**
+     * Get the estimate disclaimer.
+     */
+    public function getEstimateDisclaimerProperty(): string
+    {
+        return config('client-portal.request_estimates.disclaimer', '');
+    }
+
     protected function rules(): array
     {
         $types = implode(',', array_keys(config('client-portal.request_types', ['support' => 'Support'])));
