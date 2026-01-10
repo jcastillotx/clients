@@ -364,6 +364,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tiktok', [SocialOAuthController::class, 'tiktokRedirect'])->name('tiktok.redirect');
         Route::get('/tiktok/callback', [SocialOAuthController::class, 'tiktokCallback'])->name('tiktok.callback');
         Route::post('/bluesky/connect', [SocialOAuthController::class, 'blueskyConnect'])->name('bluesky.connect');
+        Route::get('/instagram', [SocialOAuthController::class, 'instagramRedirect'])->name('instagram.redirect');
+        Route::get('/instagram/callback', [SocialOAuthController::class, 'instagramCallback'])->name('instagram.callback');
+        Route::get('/threads', [SocialOAuthController::class, 'threadsRedirect'])->name('threads.redirect');
+        Route::get('/threads/callback', [SocialOAuthController::class, 'threadsCallback'])->name('threads.callback');
+        Route::post('/mastodon/connect', [SocialOAuthController::class, 'mastodonConnect'])->name('mastodon.connect');
         Route::delete('/disconnect/{platform}', [SocialOAuthController::class, 'disconnect'])->name('disconnect');
 
         // Analytics OAuth routes

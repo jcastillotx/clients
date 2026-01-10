@@ -5,8 +5,11 @@ namespace App\Http\Controllers\OAuth;
 use App\Http\Controllers\Controller;
 use App\Services\Social\BlueskyService;
 use App\Services\Social\FacebookOAuthService;
+use App\Services\Social\InstagramOAuthService;
 use App\Services\Social\LinkedInOAuthService;
+use App\Services\Social\MastodonService;
 use App\Services\Social\PinterestOAuthService;
+use App\Services\Social\ThreadsOAuthService;
 use App\Services\Social\TikTokOAuthService;
 use App\Services\Social\TwitterOAuthService;
 use Illuminate\Http\Request;
@@ -157,11 +160,14 @@ class SocialOAuthController extends Controller
         try {
             $service = match ($platform) {
                 'facebook' => new FacebookOAuthService,
+                'instagram' => new InstagramOAuthService,
                 'linkedin' => new LinkedInOAuthService,
                 'twitter' => new TwitterOAuthService,
                 'pinterest' => new PinterestOAuthService,
                 'tiktok' => new TikTokOAuthService,
                 'bluesky' => new BlueskyService,
+                'threads' => new ThreadsOAuthService,
+                'mastodon' => new MastodonService,
                 default => null,
             };
 
@@ -382,6 +388,151 @@ class SocialOAuthController extends Controller
 
             return redirect()->route('social.accounts')
                 ->with('error', 'Failed to connect Bluesky account: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Redirect to Instagram OAuth (via Facebook)
+     */
+    public function instagramRedirect(Request $request)
+    {
+        $clientId = $request->user()->client_id;
+
+        if (! $clientId) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Client not found.');
+        }
+
+        session(['oauth_client_id' => $clientId]);
+
+        $service = new InstagramOAuthService;
+        $state = base64_encode(json_encode(['client_id' => $clientId]));
+
+        return redirect($service->getAuthorizationUrl($state, $clientId));
+    }
+
+    /**
+     * Handle Instagram OAuth callback
+     */
+    public function instagramCallback(Request $request)
+    {
+        try {
+            if ($request->has('error')) {
+                throw new \Exception($request->get('error_description', 'OAuth cancelled'));
+            }
+
+            $code = $request->get('code');
+            if (! $code) {
+                throw new \Exception('Authorization code not provided');
+            }
+
+            $service = new InstagramOAuthService;
+            $account = $service->handleCallback($code);
+
+            if (! $account) {
+                throw new \Exception('Failed to connect Instagram account. Make sure you have an Instagram Business account connected to a Facebook Page.');
+            }
+
+            return redirect()->route('social.accounts')
+                ->with('success', 'Instagram account connected successfully!');
+        } catch (\Exception $e) {
+            Log::error('Instagram OAuth callback error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('social.accounts')
+                ->with('error', 'Failed to connect Instagram account: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Redirect to Threads OAuth
+     */
+    public function threadsRedirect(Request $request)
+    {
+        $clientId = $request->user()->client_id;
+
+        if (! $clientId) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Client not found.');
+        }
+
+        session(['oauth_client_id' => $clientId]);
+
+        $service = new ThreadsOAuthService;
+        $state = base64_encode(json_encode(['client_id' => $clientId]));
+
+        return redirect($service->getAuthorizationUrl($state, $clientId));
+    }
+
+    /**
+     * Handle Threads OAuth callback
+     */
+    public function threadsCallback(Request $request)
+    {
+        try {
+            if ($request->has('error')) {
+                throw new \Exception($request->get('error_description', 'OAuth cancelled'));
+            }
+
+            $code = $request->get('code');
+            if (! $code) {
+                throw new \Exception('Authorization code not provided');
+            }
+
+            $service = new ThreadsOAuthService;
+            $account = $service->handleCallback($code);
+
+            if (! $account) {
+                throw new \Exception('Failed to connect Threads account');
+            }
+
+            return redirect()->route('social.accounts')
+                ->with('success', 'Threads account connected successfully!');
+        } catch (\Exception $e) {
+            Log::error('Threads OAuth callback error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('social.accounts')
+                ->with('error', 'Failed to connect Threads account: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Connect Mastodon account (uses instance URL and access token)
+     */
+    public function mastodonConnect(Request $request)
+    {
+        $request->validate([
+            'instance' => 'required|string|url',
+            'access_token' => 'required|string',
+        ]);
+
+        $clientId = $request->user()->client_id;
+
+        if (! $clientId) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Client not found.');
+        }
+
+        try {
+            $service = new MastodonService;
+            $account = $service->connectAccount($clientId, $request->instance, $request->access_token);
+
+            if (! $account) {
+                throw new \Exception('Failed to verify Mastodon credentials. Please check your instance URL and access token.');
+            }
+
+            return redirect()->route('social.accounts')
+                ->with('success', 'Mastodon account connected successfully!');
+        } catch (\Exception $e) {
+            Log::error('Mastodon connect error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('social.accounts')
+                ->with('error', 'Failed to connect Mastodon account: '.$e->getMessage());
         }
     }
 }

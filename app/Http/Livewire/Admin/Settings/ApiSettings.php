@@ -27,6 +27,9 @@ class ApiSettings extends Component
     // SEO Integration API Keys
     public array $seo = [];
 
+    // Cloud Storage API Keys
+    public array $cloudStorage = [];
+
     // Test results
     public array $testResults = [];
 
@@ -242,11 +245,39 @@ class ApiSettings extends Component
             'screaming_frog_enabled' => (bool) $seoValues['api.seo.screaming_frog.enabled'],
             'screaming_frog_license_key' => $seoValues['api.seo.screaming_frog.license_key'],
         ];
+
+        // Load Cloud Storage settings
+        $storageDefaults = [
+            'api.storage.dropbox.app_key' => '',
+            'api.storage.dropbox.app_secret' => '',
+            'api.storage.dropbox.enabled' => false,
+            'api.storage.google_drive.client_id' => '',
+            'api.storage.google_drive.client_secret' => '',
+            'api.storage.google_drive.enabled' => false,
+            'api.storage.onedrive.client_id' => '',
+            'api.storage.onedrive.client_secret' => '',
+            'api.storage.onedrive.tenant_id' => '',
+            'api.storage.onedrive.enabled' => false,
+        ];
+        $storageValues = $settings->getMany($storageDefaults);
+
+        $this->cloudStorage = [
+            'dropbox_app_key' => $storageValues['api.storage.dropbox.app_key'],
+            'dropbox_app_secret' => $storageValues['api.storage.dropbox.app_secret'],
+            'dropbox_enabled' => (bool) $storageValues['api.storage.dropbox.enabled'],
+            'google_drive_client_id' => $storageValues['api.storage.google_drive.client_id'],
+            'google_drive_client_secret' => $storageValues['api.storage.google_drive.client_secret'],
+            'google_drive_enabled' => (bool) $storageValues['api.storage.google_drive.enabled'],
+            'onedrive_client_id' => $storageValues['api.storage.onedrive.client_id'],
+            'onedrive_client_secret' => $storageValues['api.storage.onedrive.client_secret'],
+            'onedrive_tenant_id' => $storageValues['api.storage.onedrive.tenant_id'],
+            'onedrive_enabled' => (bool) $storageValues['api.storage.onedrive.enabled'],
+        ];
     }
 
     public function setTab(string $tab): void
     {
-        $allowed = ['ai', 'brand_monitoring', 'social', 'seo'];
+        $allowed = ['ai', 'brand_monitoring', 'social', 'seo', 'storage'];
         if (in_array($tab, $allowed, true)) {
             $this->tab = $tab;
         }
@@ -438,6 +469,30 @@ class ApiSettings extends Component
         ], 'api.social', $encryptedKeys);
 
         session()->flash('success', 'Social media settings saved successfully.');
+    }
+
+    public function saveStorageSettings(SettingsService $settings): void
+    {
+        $encryptedKeys = [
+            'api.storage.dropbox.app_secret',
+            'api.storage.google_drive.client_secret',
+            'api.storage.onedrive.client_secret',
+        ];
+
+        $settings->setMany([
+            'api.storage.dropbox.app_key' => $this->cloudStorage['dropbox_app_key'] ?? '',
+            'api.storage.dropbox.app_secret' => $this->cloudStorage['dropbox_app_secret'] ?? '',
+            'api.storage.dropbox.enabled' => (bool) ($this->cloudStorage['dropbox_enabled'] ?? false),
+            'api.storage.google_drive.client_id' => $this->cloudStorage['google_drive_client_id'] ?? '',
+            'api.storage.google_drive.client_secret' => $this->cloudStorage['google_drive_client_secret'] ?? '',
+            'api.storage.google_drive.enabled' => (bool) ($this->cloudStorage['google_drive_enabled'] ?? false),
+            'api.storage.onedrive.client_id' => $this->cloudStorage['onedrive_client_id'] ?? '',
+            'api.storage.onedrive.client_secret' => $this->cloudStorage['onedrive_client_secret'] ?? '',
+            'api.storage.onedrive.tenant_id' => $this->cloudStorage['onedrive_tenant_id'] ?? '',
+            'api.storage.onedrive.enabled' => (bool) ($this->cloudStorage['onedrive_enabled'] ?? false),
+        ], 'api.storage', $encryptedKeys);
+
+        session()->flash('success', 'Cloud storage settings saved successfully.');
     }
 
     public function testConnection(string $provider): void

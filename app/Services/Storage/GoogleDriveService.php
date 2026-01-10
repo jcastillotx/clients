@@ -3,6 +3,7 @@
 namespace App\Services\Storage;
 
 use App\Contracts\StorageProviderInterface;
+use App\Models\Setting;
 use App\Models\StorageConnection;
 use App\Models\SyncedFile;
 use Google\Client as GoogleClient;
@@ -34,6 +35,42 @@ class GoogleDriveService implements StorageProviderInterface
         $this->refreshIfNeeded();
 
         return $this;
+    }
+
+    /**
+     * Get Google Drive Client ID from database settings or config.
+     */
+    protected function getClientId(): string
+    {
+        return Setting::getValue('api.storage.google_drive.client_id')
+            ?: (string) config('storage-providers.google_drive.client_id', '');
+    }
+
+    /**
+     * Get Google Drive Client Secret from database settings or config.
+     */
+    protected function getClientSecret(): string
+    {
+        return Setting::getValue('api.storage.google_drive.client_secret')
+            ?: (string) config('storage-providers.google_drive.client_secret', '');
+    }
+
+    /**
+     * Get Google Drive Redirect URI from database settings or config.
+     */
+    protected function getRedirectUri(): string
+    {
+        return (string) config('storage-providers.google_drive.redirect_uri')
+            ?: url('/storage/google/callback');
+    }
+
+    /**
+     * Check if Google Drive integration is enabled.
+     */
+    public function isEnabled(): bool
+    {
+        return (bool) Setting::getValue('api.storage.google_drive.enabled', false)
+            || !empty(config('storage-providers.google_drive.client_id'));
     }
 
     public function authorizationUrl(string $state): string
@@ -494,12 +531,12 @@ class GoogleDriveService implements StorageProviderInterface
 
     protected function makeClient(array $token): GoogleClient
     {
-        $id = (string) config('storage-providers.google_drive.client_id');
-        $secret = (string) config('storage-providers.google_drive.client_secret');
-        $redirect = (string) config('storage-providers.google_drive.redirect_uri');
+        $id = $this->getClientId();
+        $secret = $this->getClientSecret();
+        $redirect = $this->getRedirectUri();
 
         if ($id === '' || $secret === '' || $redirect === '') {
-            throw new RuntimeException('Google Drive OAuth is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI.');
+            throw new RuntimeException('Google Drive OAuth is not configured. Configure it in Admin > Settings > Integrations > Cloud Storage.');
         }
 
         $client = new GoogleClient;
