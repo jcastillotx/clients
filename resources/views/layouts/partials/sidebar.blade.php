@@ -39,10 +39,16 @@
         <!-- Sidebar Menu -->
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+<<<<<<< Updated upstream
 
                 {{-- ============================================= --}}
                 {{-- DASHBOARD --}}
                 {{-- ============================================= --}}
+=======
+                {{-- ==================== CORE SECTION ==================== --}}
+
+                <!-- Dashboard -->
+>>>>>>> Stashed changes
                 <li class="nav-item">
                     <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -50,9 +56,13 @@
                     </a>
                 </li>
 
+<<<<<<< Updated upstream
                 {{-- ============================================= --}}
                 {{-- SERVICES SECTION --}}
                 {{-- ============================================= --}}
+=======
+                {{-- ==================== SERVICES SECTION ==================== --}}
+>>>>>>> Stashed changes
                 <li class="nav-header">SERVICES</li>
 
                 <!-- Service Requests -->
@@ -123,6 +133,7 @@
                 @endplatformFeature
 
                 <!-- Invoices -->
+<<<<<<< Updated upstream
                 @platformFeature('invoices')
                 @if(auth()->user()?->can('access admin panel'))
                     <li class="nav-item">
@@ -158,6 +169,13 @@
                 @platformFeature('documents')
                 <li class="nav-item {{ request()->routeIs('documents.*') ? 'menu-open' : '' }}">
                     <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
+=======
+                <li class="nav-item">
+                    <a href="{{ route('invoices.index') }}" class="nav-link {{ request()->routeIs('invoices.*') || request()->routeIs('payments.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                        <p>
+                            Invoices & Payments
+                            @php
                                 $unpaidInvoices = 0;
                                 if (auth()->user()->client) {
                                     $unpaidInvoices = \App\Models\Invoice::where('client_id', auth()->user()->client_id)

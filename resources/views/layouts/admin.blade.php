@@ -7,9 +7,16 @@
 
     <title>{{ ($title ?? 'Admin') . ' · ' . config('branding.company.name') }}</title>
 
+<<<<<<< Updated upstream
     <meta name="theme-color" content="{{ config('branding.colors.primary') }}">
     <link rel="icon" href="/{{ config('branding.logo.favicon') }}">
     <link rel="apple-touch-icon" href="/{{ config('branding.logo.icon') }}">
+=======
+    <!-- Tabler (Bootstrap-based admin UI) -->
+    <link rel="stylesheet" href="https://unpkg.com/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+>>>>>>> Stashed changes
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
