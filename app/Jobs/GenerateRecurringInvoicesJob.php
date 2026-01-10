@@ -68,6 +68,7 @@ class GenerateRecurringInvoicesJob implements ShouldQueue
                 'due_date' => $dueDate,
                 'tax_rate' => $recurring->tax_rate,
                 'discount' => $recurring->discount,
+                'discount_type' => $recurring->discount_type ?? 'fixed',
                 'notes' => $recurring->notes,
                 'terms' => $recurring->terms,
                 'template' => $recurring->template,

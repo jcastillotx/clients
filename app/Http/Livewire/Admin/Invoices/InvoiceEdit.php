@@ -48,6 +48,8 @@ class InvoiceEdit extends Component
 
     public string $discount = '';
 
+    public string $discount_type = 'fixed';
+
     public string $notes = '';
 
     public string $terms = '';
@@ -91,6 +93,7 @@ class InvoiceEdit extends Component
 
         $this->tax_rate = (string) ($this->invoice->tax_rate ?? 0);
         $this->discount = (string) ($this->invoice->discount ?? 0);
+        $this->discount_type = $this->invoice->discount_type ?? 'fixed';
         $this->notes = (string) ($this->invoice->notes ?? '');
         $this->terms = (string) ($this->invoice->terms ?? '');
 
@@ -126,6 +129,7 @@ class InvoiceEdit extends Component
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount_type' => ['required', Rule::in(['fixed', 'percentage'])],
             'notes' => ['nullable', 'string', 'max:10000'],
             'terms' => ['nullable', 'string', 'max:10000'],
         ];
@@ -195,6 +199,7 @@ class InvoiceEdit extends Component
             'due_date' => $data['due_date'],
             'tax_rate' => (float) ($data['tax_rate'] === '' ? 0 : $data['tax_rate']),
             'discount' => (float) ($data['discount'] === '' ? 0 : $data['discount']),
+            'discount_type' => $data['discount_type'],
             'notes' => $data['notes'] ?: null,
             'terms' => $data['terms'] ?: null,
             'template' => $data['template'],

@@ -46,6 +46,7 @@ class RecurringInvoice extends Model
         'name',
         'tax_rate',
         'discount',
+        'discount_type',
         'notes',
         'terms',
         'template',
@@ -251,11 +252,23 @@ class RecurringInvoice extends Model
     }
 
     /**
+     * Calculate the actual discount amount based on discount type.
+     */
+    public function getDiscountAmountAttribute(): float
+    {
+        if ($this->discount_type === 'percentage') {
+            return round($this->subtotal * ((float) $this->discount / 100), 2);
+        }
+
+        return (float) $this->discount;
+    }
+
+    /**
      * Calculate the total.
      */
     public function getTotalAttribute(): float
     {
-        return max(0, round($this->subtotal + $this->tax_amount - (float) $this->discount, 2));
+        return max(0, round($this->subtotal + $this->tax_amount - $this->discount_amount, 2));
     }
 
     /**

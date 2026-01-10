@@ -361,14 +361,23 @@
                     <h2 class="text-base font-semibold text-slate-900">Summary</h2>
                 </div>
                 <div class="p-6 space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tax Rate (%)</label>
                             <input type="number" step="0.01" min="0" max="100" wire:model.live="tax_rate" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Discount ($)</label>
-                            <input type="number" step="0.01" min="0" wire:model.live="discount" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Discount</label>
+                            <div class="flex rounded-xl border border-slate-300 overflow-hidden focus-within:border-slate-900 focus-within:ring-1 focus-within:ring-slate-900">
+                                <input type="number" step="0.01" min="0" wire:model.live="discount" placeholder="0" class="flex-1 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none border-none">
+                                <select wire:model.live="discount_type" class="border-l border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 font-medium focus:outline-none cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <option value="fixed">$ (Fixed)</option>
+                                    <option value="percentage">% (Percent)</option>
+                                </select>
+                            </div>
+                            @if($discount_type === 'percentage' && (float)$discount > 0)
+                                <p class="mt-1.5 text-xs text-slate-500">{{ number_format((float)$discount, 2) }}% off = ${{ number_format((float)$discountAmount, 2) }}</p>
+                            @endif
                         </div>
                     </div>
 
@@ -379,8 +388,8 @@
                         </div>
                         @if((float)$discount > 0)
                             <div class="flex justify-between text-sm">
-                                <span class="text-slate-500">Discount</span>
-                                <span class="font-medium text-rose-600">-${{ number_format((float)$discount, 2) }}</span>
+                                <span class="text-slate-500">Discount{{ $discount_type === 'percentage' ? ' (' . number_format((float)$discount, 2) . '%)' : '' }}</span>
+                                <span class="font-medium text-rose-600">-${{ number_format((float)$discountAmount, 2) }}</span>
                             </div>
                         @endif
                         @if((float)$tax_rate > 0)
