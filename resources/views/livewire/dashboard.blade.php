@@ -10,104 +10,302 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
-            <span class="text-sm font-medium text-slate-700">Loading dashboard…</span>
+            <span class="text-sm font-medium text-slate-700">Loading dashboard...</span>
         </div>
     </div>
 
-    <!-- Stats -->
+    <!-- Greeting -->
+    <div class="mb-2">
+        <h1 class="text-2xl font-semibold text-slate-900">Hello, {{ auth()->user()->first_name ?? auth()->user()->name }}</h1>
+    </div>
+
+    <!-- Stats Cards -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Revenue Card -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between">
-                <div>
-                    <div class="text-sm font-medium text-slate-500">Active Requests</div>
-                    <div class="mt-2 text-3xl font-semibold text-slate-900">{{ $activeRequests }}</div>
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-slate-500">Revenue</div>
+                        <div class="flex items-center gap-2">
+                            <select class="border-0 bg-transparent p-0 text-xs text-slate-400 focus:ring-0" wire:model="selectedCurrency">
+                                <option value="USD">US Dollar...</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <div class="rounded-xl bg-slate-900/5 p-3 text-slate-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 9h6M9 13h6M5 5h.01M5 9h.01M5 13h.01M7 17h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
+                <div class="h-10 w-16">
+                    <canvas id="revenueSparkline" height="40"></canvas>
                 </div>
             </div>
-            <div class="mt-4">
-                <a href="{{ route('requests.index') }}" class="text-sm font-semibold text-slate-900 hover:underline">View requests</a>
+            <div class="mt-3">
+                <div class="text-2xl font-bold text-slate-900">@money($totalRevenue)</div>
+                <div class="mt-1 flex items-center gap-1">
+                    @if($revenueChange >= 0)
+                        <span class="inline-flex items-center text-xs font-medium text-emerald-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-0.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                            {{ $revenueChange }}%
+                        </span>
+                    @else
+                        <span class="inline-flex items-center text-xs font-medium text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-0.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                            {{ abs($revenueChange) }}%
+                        </span>
+                    @endif
+                    <span class="text-xs text-slate-400">vs last 30 days</span>
+                </div>
             </div>
         </div>
 
+        <!-- Orders Card -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between">
-                <div>
-                    <div class="text-sm font-medium text-slate-500">Pending Invoices</div>
-                    <div class="mt-2 text-3xl font-semibold text-slate-900">{{ $pendingInvoices }}</div>
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-slate-500">Active Requests</div>
+                    </div>
                 </div>
-                <div class="rounded-xl bg-slate-900/5 p-3 text-slate-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
-                    </svg>
+                <div class="h-10 w-16">
+                    <canvas id="ordersSparkline" height="40"></canvas>
                 </div>
             </div>
-            <div class="mt-4">
-                <a href="{{ route('invoices.index') }}" class="text-sm font-semibold text-slate-900 hover:underline">View invoices</a>
+            <div class="mt-3">
+                <div class="text-2xl font-bold text-slate-900">{{ $totalOrders }}</div>
+                <div class="mt-1 flex items-center gap-1">
+                    @if($ordersChange >= 0)
+                        <span class="inline-flex items-center text-xs font-medium text-emerald-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-0.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                            {{ $ordersChange }}%
+                        </span>
+                    @else
+                        <span class="inline-flex items-center text-xs font-medium text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-0.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                            {{ abs($ordersChange) }}%
+                        </span>
+                    @endif
+                    <span class="text-xs text-slate-400">vs last 30 days</span>
+                </div>
             </div>
         </div>
 
+        <!-- Open Tickets Card -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between">
-                <div>
-                    <div class="text-sm font-medium text-slate-500">Active Contracts</div>
-                    <div class="mt-2 text-3xl font-semibold text-slate-900">{{ $activeContracts }}</div>
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-slate-500">Open Tickets</div>
+                    </div>
                 </div>
-                <div class="rounded-xl bg-slate-900/5 p-3 text-slate-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3h8v4M6 7h12v14H6V7z" />
-                    </svg>
+                <div class="h-10 w-16">
+                    <canvas id="ticketsSparkline" height="40"></canvas>
                 </div>
             </div>
-            <div class="mt-4">
-                <a href="{{ route('contracts.index') }}" class="text-sm font-semibold text-slate-900 hover:underline">View contracts</a>
+            <div class="mt-3">
+                <div class="text-2xl font-bold text-slate-900">{{ $openTickets }}</div>
+                <div class="mt-1 flex items-center gap-1">
+                    @if($ticketsChange >= 0)
+                        <span class="inline-flex items-center text-xs font-medium text-emerald-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-0.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                            {{ $ticketsChange }}%
+                        </span>
+                    @else
+                        <span class="inline-flex items-center text-xs font-medium text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-0.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                            {{ abs($ticketsChange) }}%
+                        </span>
+                    @endif
+                    <span class="text-xs text-slate-400">vs last 30 days</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Charts -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Revenue Overview & Recent Tickets -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Revenue Overview -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
-                <div>
-                    <div class="text-sm font-semibold text-slate-900">Requests by status</div>
-                    <div class="mt-1 text-xs text-slate-500">Current breakdown</div>
+                <div class="flex items-center gap-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-900">Revenue Overview</div>
                 </div>
+                <select class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 focus:border-slate-300 focus:ring-0">
+                    <option>US Dollar...</option>
+                </select>
             </div>
-            <div class="mt-4">
-                <canvas id="requestStatusChart" height="180"></canvas>
+            <div class="mt-4" style="height: 200px;">
+                <canvas id="revenueOverviewChart"></canvas>
             </div>
+            @if(array_sum($invoiceTrendChart['paid'] ?? []) == 0)
+                <div class="flex flex-col items-center justify-center py-8">
+                    <div class="mb-3 text-slate-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <p class="text-sm text-slate-500">No Revenue Overview found</p>
+                </div>
+            @endif
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="text-sm font-semibold text-slate-900">Invoice trends</div>
-                    <div class="mt-1 text-xs text-slate-500">Billed vs paid (last 6 months)</div>
+        <!-- Recent Open Tickets -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-2">
+                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                    </svg>
                 </div>
+                <div class="text-sm font-semibold text-slate-900">Recent Open Tickets</div>
             </div>
-            <div class="mt-4">
-                <canvas id="invoiceTrendChart" height="180"></canvas>
+            <div class="mt-4 space-y-3">
+                @forelse($recentTickets as $ticket)
+                    <a href="{{ route('support-tickets.show', $ticket) }}" class="block rounded-xl border border-slate-100 bg-white px-3 py-3 transition hover:bg-slate-50">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                <div class="truncate text-sm font-medium text-slate-900">{{ $ticket->subject }}</div>
+                                <div class="mt-0.5 text-xs text-slate-500">{{ $ticket->ticket_number }} - {{ $ticket->created_at->diffForHumans() }}</div>
+                            </div>
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+                                @if($ticket->priority === 'urgent') bg-red-100 text-red-700
+                                @elseif($ticket->priority === 'high') bg-orange-100 text-orange-700
+                                @elseif($ticket->priority === 'medium') bg-blue-100 text-blue-700
+                                @else bg-slate-100 text-slate-700
+                                @endif">
+                                {{ ucfirst($ticket->priority) }}
+                            </span>
+                        </div>
+                    </a>
+                @empty
+                    <div class="flex flex-col items-center justify-center py-8">
+                        <div class="mb-3 text-slate-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                            </svg>
+                        </div>
+                        <p class="text-sm text-slate-500">No Recent Open Ticket found</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
 
+    <!-- Unpaid Invoices -->
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="text-sm font-semibold text-slate-900">Monthly spending</div>
-                <div class="mt-1 text-xs text-slate-500">Successful payments (last 6 months)</div>
+        <div class="flex items-center gap-2">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                </svg>
             </div>
+            <div class="text-sm font-semibold text-slate-900">Unpaid Invoices</div>
         </div>
         <div class="mt-4">
-            <canvas id="monthlySpendChart" height="120"></canvas>
+            @forelse($upcomingInvoices as $invoice)
+                <a href="{{ route('invoices.show', $invoice) }}" class="block border-b border-slate-100 py-3 last:border-0 hover:bg-slate-50">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="truncate text-sm font-semibold text-slate-900">{{ $invoice->invoice_number }}</div>
+                            <div class="text-xs text-slate-500">Due {{ $invoice->due_date?->format('M d, Y') }}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-semibold text-slate-900">@money($invoice->amount)</div>
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+                                @if($invoice->status === 'overdue') bg-red-100 text-red-700
+                                @else bg-amber-100 text-amber-700
+                                @endif">
+                                {{ ucfirst($invoice->status) }}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            @empty
+                <div class="flex flex-col items-center justify-center py-8">
+                    <div class="mb-3 text-slate-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 14l2 2 4-4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                        </svg>
+                    </div>
+                    <p class="text-sm text-slate-500">No Invoices Found</p>
+                </div>
+            @endforelse
         </div>
     </div>
 
-    <!-- Quick actions -->
+    <!-- Recent Orders -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+            </div>
+            <div class="text-sm font-semibold text-slate-900">Recent Orders</div>
+        </div>
+        <div class="mt-4">
+            @forelse($recentOrders as $order)
+                <a href="{{ route('requests.show', $order) }}" class="block border-b border-slate-100 py-3 last:border-0 hover:bg-slate-50">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="truncate text-sm font-semibold text-slate-900">{{ $order->title }}</div>
+                            <div class="text-xs text-slate-500">{{ $order->created_at->format('M d, Y') }}</div>
+                        </div>
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+                            @if($order->status === 'completed') bg-emerald-100 text-emerald-700
+                            @elseif($order->status === 'in_progress') bg-blue-100 text-blue-700
+                            @elseif($order->status === 'pending') bg-amber-100 text-amber-700
+                            @elseif($order->status === 'cancelled') bg-red-100 text-red-700
+                            @else bg-slate-100 text-slate-700
+                            @endif">
+                            {{ ucfirst(str_replace('_', ' ', $order->status)) }}
+                        </span>
+                    </div>
+                </a>
+            @empty
+                <div class="flex flex-col items-center justify-center py-8">
+                    <div class="mb-3 text-slate-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                    <p class="text-sm text-slate-500">No Recent Order found</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -128,8 +326,9 @@
         </div>
     </div>
 
+    <!-- Recent Activity & Contract Expirations -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <!-- Recent activity -->
+        <!-- Recent Activity -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <h2 class="text-base font-semibold text-slate-900">Recent activity</h2>
@@ -146,7 +345,7 @@
                             <div class="mt-0.5 text-xs text-slate-500">
                                 {{ $item->created_at?->diffForHumans() }}
                                 @if($item->user)
-                                    · {{ $item->user->name }}
+                                    - {{ $item->user->name }}
                                 @endif
                             </div>
                         </div>
@@ -159,56 +358,30 @@
             </div>
         </div>
 
-        <!-- Upcoming deadlines -->
-        <div class="space-y-6">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 class="text-base font-semibold text-slate-900">Upcoming invoice due dates</h2>
-                <div class="mt-4 space-y-3">
-                    @forelse($upcomingInvoices as $invoice)
-                        <a href="{{ route('invoices.show', $invoice) }}" class="block rounded-xl border border-slate-100 bg-white px-3 py-3 hover:bg-slate-50">
-                            <div class="flex items-center justify-between gap-3">
-                                <div class="min-w-0">
-                                    <div class="truncate text-sm font-semibold text-slate-900">{{ $invoice->invoice_number }}</div>
-                                    <div class="text-xs text-slate-500">Due {{ $invoice->due_date?->format('M d, Y') }}</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm font-semibold text-slate-900">@money($invoice->amount)</div>
-                                    <div class="text-xs text-slate-500">{{ ucfirst($invoice->status) }}</div>
-                                </div>
+        <!-- Contract Expirations -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 class="text-base font-semibold text-slate-900">Contract expirations</h2>
+            <div class="mt-4 space-y-3">
+                @forelse($upcomingContracts as $contract)
+                    <a href="{{ route('contracts.show', $contract) }}" class="block rounded-xl border border-slate-100 bg-white px-3 py-3 hover:bg-slate-50">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="truncate text-sm font-semibold text-slate-900">{{ $contract->title }}</div>
+                                <div class="text-xs text-slate-500">Ends {{ $contract->end_date?->format('M d, Y') }}</div>
                             </div>
-                        </a>
-                    @empty
-                        <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
-                            No invoices due.
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 class="text-base font-semibold text-slate-900">Contract expirations</h2>
-                <div class="mt-4 space-y-3">
-                    @forelse($upcomingContracts as $contract)
-                        <a href="{{ route('contracts.show', $contract) }}" class="block rounded-xl border border-slate-100 bg-white px-3 py-3 hover:bg-slate-50">
-                            <div class="flex items-center justify-between gap-3">
-                                <div class="min-w-0">
-                                    <div class="truncate text-sm font-semibold text-slate-900">{{ $contract->title }}</div>
-                                    <div class="text-xs text-slate-500">Ends {{ $contract->end_date?->format('M d, Y') }}</div>
+                            <div class="text-right">
+                                <div class="text-sm font-semibold text-slate-900">
+                                    {{ $contract->days_until_expiration ?? $contract->daysUntilExpiration() ?? '---' }}
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-sm font-semibold text-slate-900">
-                                        {{ $contract->days_until_expiration ?? $contract->daysUntilExpiration() ?? '—' }}
-                                    </div>
-                                    <div class="text-xs text-slate-500">days</div>
-                                </div>
+                                <div class="text-xs text-slate-500">days</div>
                             </div>
-                        </a>
-                    @empty
-                        <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
-                            No upcoming expirations.
                         </div>
-                    @endforelse
-                </div>
+                    </a>
+                @empty
+                    <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+                        No upcoming expirations.
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -219,98 +392,108 @@
 <script>
     (function () {
         const data = {
-            requestStatus: @json($requestStatusChart),
+            revenueSparkline: @json($revenueSparkline),
+            ordersSparkline: @json($ordersSparkline),
+            ticketsSparkline: @json($ticketsSparkline),
             invoiceTrend: @json($invoiceTrendChart),
-            monthlySpend: @json($monthlySpendChart),
         };
 
         function initDashboardCharts() {
             if (!window.Chart) return;
             window.__portalCharts = window.__portalCharts || {};
 
-            const rsEl = document.getElementById('requestStatusChart');
-            const itEl = document.getElementById('invoiceTrendChart');
-            const msEl = document.getElementById('monthlySpendChart');
-            if (!rsEl || !itEl || !msEl) return;
-
             // Destroy previous instances (Livewire re-renders)
-            for (const key of ['requestStatus', 'invoiceTrend', 'monthlySpend']) {
+            const chartKeys = ['revenueSparkline', 'ordersSparkline', 'ticketsSparkline', 'revenueOverview'];
+            for (const key of chartKeys) {
                 if (window.__portalCharts[key]) {
                     try { window.__portalCharts[key].destroy(); } catch (e) {}
                     window.__portalCharts[key] = null;
                 }
             }
 
-            window.__portalCharts.requestStatus = new Chart(rsEl.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: data.requestStatus.labels || [],
-                    datasets: [{
-                        data: data.requestStatus.values || [],
-                        backgroundColor: ['#0f172a', '#334155', '#64748b', '#94a3b8', '#22c55e', '#ef4444', '#f59e0b'],
-                        borderWidth: 0,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 10 } },
-                        tooltip: { enabled: true },
-                    },
-                },
-            });
-
-            window.__portalCharts.invoiceTrend = new Chart(itEl.getContext('2d'), {
+            // Sparkline chart config
+            const sparklineConfig = (data, color) => ({
                 type: 'line',
                 data: {
-                    labels: data.invoiceTrend.labels || [],
-                    datasets: [
-                        {
-                            label: 'Billed',
-                            data: data.invoiceTrend.billed || [],
-                            borderColor: '#0f172a',
-                            backgroundColor: 'rgba(15, 23, 42, 0.08)',
-                            tension: 0.35,
-                            fill: true,
-                        },
-                        {
-                            label: 'Paid',
-                            data: data.invoiceTrend.paid || [],
-                            borderColor: '#22c55e',
-                            backgroundColor: 'rgba(34, 197, 94, 0.10)',
-                            tension: 0.35,
-                            fill: true,
-                        }
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { position: 'bottom' } },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { callback: (v) => '$' + Number(v).toFixed(0) } },
-                    },
-                },
-            });
-
-            window.__portalCharts.monthlySpend = new Chart(msEl.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: data.monthlySpend.labels || [],
+                    labels: data.map((_, i) => i),
                     datasets: [{
-                        label: 'Spend',
-                        data: data.monthlySpend.values || [],
-                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                        borderRadius: 8,
+                        data: data,
+                        borderColor: color,
+                        borderWidth: 2,
+                        fill: true,
+                        backgroundColor: color + '20',
+                        tension: 0.4,
+                        pointRadius: 0,
                     }],
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { display: false } },
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
                     scales: {
-                        y: { beginAtZero: true, ticks: { callback: (v) => '$' + Number(v).toFixed(0) } },
+                        x: { display: false },
+                        y: { display: false },
                     },
                 },
             });
+
+            // Revenue sparkline
+            const revSparkEl = document.getElementById('revenueSparkline');
+            if (revSparkEl) {
+                window.__portalCharts.revenueSparkline = new Chart(revSparkEl.getContext('2d'), sparklineConfig(data.revenueSparkline || [0,0,0,0,0,0,0], '#10b981'));
+            }
+
+            // Orders sparkline
+            const ordSparkEl = document.getElementById('ordersSparkline');
+            if (ordSparkEl) {
+                window.__portalCharts.ordersSparkline = new Chart(ordSparkEl.getContext('2d'), sparklineConfig(data.ordersSparkline || [0,0,0,0,0,0,0], '#06b6d4'));
+            }
+
+            // Tickets sparkline
+            const tickSparkEl = document.getElementById('ticketsSparkline');
+            if (tickSparkEl) {
+                window.__portalCharts.ticketsSparkline = new Chart(tickSparkEl.getContext('2d'), sparklineConfig(data.ticketsSparkline || [0,0,0,0,0,0,0], '#f43f5e'));
+            }
+
+            // Revenue Overview Chart
+            const revOverviewEl = document.getElementById('revenueOverviewChart');
+            if (revOverviewEl && data.invoiceTrend && data.invoiceTrend.labels) {
+                window.__portalCharts.revenueOverview = new Chart(revOverviewEl.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.invoiceTrend.labels || [],
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.invoiceTrend.paid || [],
+                            backgroundColor: '#10b981',
+                            borderRadius: 6,
+                            barThickness: 24,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#64748b', font: { size: 11 } },
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#f1f5f9' },
+                                ticks: {
+                                    color: '#64748b',
+                                    font: { size: 11 },
+                                    callback: (v) => '$' + Number(v).toLocaleString(),
+                                },
+                            },
+                        },
+                    },
+                });
+            }
         }
 
         document.addEventListener('DOMContentLoaded', initDashboardCharts);
@@ -318,4 +501,3 @@
     })();
 </script>
 @endpush
-
