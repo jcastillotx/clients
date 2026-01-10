@@ -1,0 +1,41 @@
+{
+  "name": "crawlee-service",
+  "version": "1.0.0",
+  "description": "Crawlee-based web scraping microservice for Laravel integration",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "start:lite": "LITE_MODE=true node src/server.js",
+    "start:low-memory": "node --max-old-space-size=256 src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test src/**/*.test.js",
+    "install:browsers": "npx playwright install chromium",
+    "install:browsers:deps": "npx playwright install-deps chromium"
+  },
+  "dependencies": {
+    "@crawlee/core": "^3.11.0",
+    "@crawlee/cheerio": "^3.11.0",
+    "@crawlee/playwright": "^3.11.0",
+    "express": "^4.21.0",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "playwright": "^1.47.0",
+    "uuid": "^10.0.0",
+    "winston": "^3.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "crawlee",
+    "web-scraping",
+    "crawler",
+    "playwright"
+  ],
+  "license": "MIT"
+}
