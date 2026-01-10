@@ -158,6 +158,37 @@
                 @platformFeature('documents')
                 <li class="nav-item {{ request()->routeIs('documents.*') ? 'menu-open' : '' }}">
                     <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
+                                $unpaidInvoices = 0;
+                                if (auth()->user()->client) {
+                                    $unpaidInvoices = \App\Models\Invoice::where('client_id', auth()->user()->client_id)
+                                        ->unpaid()
+                                        ->count();
+                                }
+                            @endphp
+                            @if($unpaidInvoices > 0)
+                            <span class="badge badge-danger right">{{ $unpaidInvoices }}</span>
+                            @endif
+                        </p>
+                    </a>
+                </li>
+
+                @if(auth()->user()->isClient())
+                <!-- Projects -->
+                <li class="nav-item">
+                    <a href="{{ route('client.projects') }}" class="nav-link {{ request()->routeIs('client.projects') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-project-diagram"></i>
+                        <p>Projects</p>
+                    </a>
+                </li>
+                @endif
+
+                {{-- ==================== FILES & DOCUMENTS ==================== --}}
+                <li class="nav-header">FILES & STORAGE</li>
+
+                <!-- Documents -->
+                <li class="nav-item {{ request()->routeIs('documents.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
+>>>>>>> Stashed changes
                         <i class="nav-icon fas fa-folder-open"></i>
                         <p>
                             Documents
@@ -191,6 +222,7 @@
                 </li>
                 @endplatformFeature
 
+<<<<<<< Updated upstream
                 {{-- ============================================= --}}
                 {{-- CLIENT SECTION (Client users only) --}}
                 {{-- ============================================= --}}
@@ -345,6 +377,9 @@
                 @if($navUser?->client_id)
                 <li class="nav-header">STORAGE</li>
 
+=======
+                <!-- Storage -->
+>>>>>>> Stashed changes
                 <li class="nav-item {{ request()->routeIs('storage.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('storage.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-cloud"></i>
@@ -383,6 +418,7 @@
                 @endif
                 @endif
 
+<<<<<<< Updated upstream
                 {{-- ============================================= --}}
                 {{-- ADMIN SECTION --}}
                 {{-- ============================================= --}}
@@ -409,12 +445,19 @@
                 </li>
 
                 @platformFeature('messaging')
+=======
+                {{-- ==================== COMMUNICATION ==================== --}}
+                @if(auth()->user()->isClient())
+                <li class="nav-header">COMMUNICATION</li>
+
+>>>>>>> Stashed changes
                 <li class="nav-item">
-                    <a href="{{ route('admin.messages') }}" class="nav-link {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
+                    <a href="{{ route('client.messaging') }}" class="nav-link {{ request()->routeIs('client.messaging') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-comments"></i>
                         <p>Messages</p>
                     </a>
                 </li>
+<<<<<<< Updated upstream
                 @endplatformFeature
 
                 @platformFeature('meetings')
@@ -439,30 +482,103 @@
                 <li class="nav-item {{ request()->routeIs('admin.projects.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-stopwatch"></i>
+=======
+
+                <li class="nav-item">
+                    <a href="{{ route('client.meetings') }}" class="nav-link {{ request()->routeIs('client.meetings') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-calendar"></i>
+                        <p>Meetings</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('client.notifications') }}" class="nav-link {{ request()->routeIs('client.notifications') ? 'active' : '' }}">
+                        <i class="nav-icon far fa-bell"></i>
+>>>>>>> Stashed changes
                         <p>
-                            Projects
+                            Notifications
+                            @php
+                                $unreadNotifications = auth()->user()->unreadNotifications->count();
+                            @endphp
+                            @if($unreadNotifications > 0)
+                            <span class="badge badge-warning right">{{ $unreadNotifications }}</span>
+                            @endif
+                        </p>
+                    </a>
+                </li>
+
+                {{-- ==================== INSIGHTS & REPORTS ==================== --}}
+                <li class="nav-header">INSIGHTS</li>
+
+                <li class="nav-item">
+                    <a href="{{ route('client.analytics') }}" class="nav-link {{ request()->routeIs('client.analytics') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-pie"></i>
+                        <p>Analytics</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('client.reports*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('client.reports*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>
+                            Reports
                             <i class="right fas fa-angle-left"></i>
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="{{ route('admin.projects.time') }}" class="nav-link {{ request()->routeIs('admin.projects.time') ? 'active' : '' }}">
+                            <a href="{{ route('client.reports') }}" class="nav-link {{ request()->routeIs('client.reports') && !request()->routeIs('client.reports.archive') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
-                                <p>Time Tracker</p>
+                                <p>Dashboard</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.projects.time-approvals') }}" class="nav-link {{ request()->routeIs('admin.projects.time-approvals') ? 'active' : '' }}">
+                            <a href="{{ route('client.reports.archive') }}" class="nav-link {{ request()->routeIs('client.reports.archive') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
-                                <p>Time Approvals</p>
+                                <p>Archive</p>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.projects.budgets') }}" class="nav-link {{ request()->routeIs('admin.projects.budgets') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Budgets</p>
-                            </a>
-                        </li>
+                    </ul>
+                </li>
+
+                {{-- ==================== RESOURCES ==================== --}}
+                <li class="nav-header">RESOURCES</li>
+
+                <li class="nav-item">
+                    <a href="{{ route('client.knowledge-base') }}" class="nav-link {{ request()->routeIs('client.knowledge-base') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-book"></i>
+                        <p>Knowledge Base</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('client.onboarding') }}" class="nav-link {{ request()->routeIs('client.onboarding') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-list-check"></i>
+                        <p>Onboarding</p>
+                    </a>
+                </li>
+                @endif
+
+                {{-- ==================== ADMIN SECTION (if user has access) ==================== --}}
+                @can('view reports')
+                <li class="nav-header">ADMIN</li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.messages') }}" class="nav-link {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-envelope"></i>
+                        <p>All Messages</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('admin.projects.*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-tasks"></i>
+                        <p>
+                            Project Management
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="{{ route('admin.projects.board') }}" class="nav-link {{ request()->routeIs('admin.projects.board') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
@@ -473,6 +589,18 @@
                             <a href="{{ route('admin.projects.timeline') }}" class="nav-link {{ request()->routeIs('admin.projects.timeline') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Timeline</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.time') }}" class="nav-link {{ request()->routeIs('admin.projects.time') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Time Tracker</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.projects.budgets') }}" class="nav-link {{ request()->routeIs('admin.projects.budgets') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Budgets</p>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -776,6 +904,7 @@
                 </li>
                 @endplatformFeature
 
+<<<<<<< Updated upstream
                 {{-- ============================================= --}}
                 {{-- AI SECTION (Admin AI tools) --}}
                 {{-- ============================================= --}}
@@ -881,6 +1010,23 @@
                     </a>
                 </li>
                 @platformFeature('storage_integrations')
+=======
+                <li class="nav-item">
+                    <a href="{{ route('admin.reports.dashboard') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-bar"></i>
+                        <p>Reporting</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.security.overview') }}" class="nav-link {{ request()->routeIs('admin.security.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-shield-alt"></i>
+                        <p>Security</p>
+                    </a>
+                </li>
+
+                @can('access admin panel')
+>>>>>>> Stashed changes
                 <li class="nav-item">
                     <a href="{{ route('admin.storage.overview') }}" class="nav-link {{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-database"></i>
@@ -907,9 +1053,13 @@
                 @endcan
                 @endcan
 
+<<<<<<< Updated upstream
                 {{-- ============================================= --}}
                 {{-- ACCOUNT SECTION (User personal settings) --}}
                 {{-- ============================================= --}}
+=======
+                {{-- ==================== ACCOUNT SECTION ==================== --}}
+>>>>>>> Stashed changes
                 <li class="nav-header">ACCOUNT</li>
 
                 <!-- Profile -->
@@ -938,7 +1088,14 @@
                 <li class="nav-item">
                     <a href="{{ route('two-factor.setup') }}" class="nav-link {{ request()->routeIs('two-factor.setup') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-shield-alt"></i>
-                        <p>Two-factor (2FA)</p>
+                        <p>Two-Factor (2FA)</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('client.privacy') }}" class="nav-link {{ request()->routeIs('client.privacy') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Privacy</p>
                     </a>
                 </li>
 
@@ -948,7 +1105,7 @@
                         @csrf
                     </form>
                     <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                        <i class="nav-icon fas fa-sign-out-alt"></i>
+                        <i class="nav-icon fas fa-sign-out-alt text-danger"></i>
                         <p>Sign Out</p>
                     </a>
                 </li>
