@@ -141,6 +141,50 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Support Ticket Categories
+    |--------------------------------------------------------------------------
+    */
+
+    'support_ticket_categories' => [
+        'technical_issue' => 'Technical Issue',
+        'bug_report' => 'Bug Report',
+        'general_question' => 'General Question',
+        'account_issue' => 'Account Issue',
+        'billing_question' => 'Billing Question',
+        'feature_request' => 'Feature Request',
+        'other' => 'Other',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Support Ticket Statuses
+    |--------------------------------------------------------------------------
+    */
+
+    'support_ticket_statuses' => [
+        'open' => 'Open',
+        'in_progress' => 'In Progress',
+        'waiting_on_client' => 'Waiting on Client',
+        'waiting_on_vendor' => 'Waiting on Vendor',
+        'resolved' => 'Resolved',
+        'closed' => 'Closed',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maintenance Plan Statuses
+    |--------------------------------------------------------------------------
+    */
+
+    'maintenance_plan_statuses' => [
+        'active' => 'Active',
+        'paused' => 'Paused',
+        'expired' => 'Expired',
+        'cancelled' => 'Cancelled',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Document Categories
     |--------------------------------------------------------------------------
     */

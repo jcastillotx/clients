@@ -236,6 +236,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Project Estimate Request (AI-powered)
     Route::get('/estimate', \App\Http\Livewire\Client\EstimateRequest::class)->name('client.estimate');
 
+    // Support Tickets
+    Route::get('/support-tickets', \App\Http\Livewire\SupportTickets\SupportTicketIndex::class)->name('support-tickets.index');
+    Route::get('/support-tickets/create', \App\Http\Livewire\SupportTickets\SupportTicketCreate::class)->name('support-tickets.create');
+    Route::get('/support-tickets/{ticket}', \App\Http\Livewire\SupportTickets\SupportTicketShow::class)->name('support-tickets.show');
+
     // Contracts
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
     Route::get('/contracts/{contract}', [ContractController::class, 'show'])->name('contracts.show');
@@ -411,11 +416,20 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
         Route::get('/users/{user}/edit', UserEdit::class)->name('users.edit')->middleware('permission:update_user');
         Route::get('/users/permissions', AdminUserPermissions::class)->name('users.permissions')->middleware('permission:manage_permissions');
 
-        // Requests
+        // Requests (Service Requests)
         Route::get('/requests', AdminRequestManagement::class)->name('requests.index');
         Route::get('/requests/create', AdminRequestCreate::class)->name('requests.create');
         Route::get('/requests/{request}', AdminRequestDetail::class)->name('requests.show');
         Route::get('/requests/{request}/estimator', AdminProjectEstimator::class)->name('requests.estimator');
+
+        // Support Tickets
+        Route::get('/support-tickets', \App\Http\Livewire\Admin\SupportTickets\SupportTicketManagement::class)->name('support-tickets.index');
+        Route::get('/support-tickets/{ticket}', \App\Http\Livewire\Admin\SupportTickets\SupportTicketDetail::class)->name('support-tickets.show');
+
+        // Maintenance Plans
+        Route::get('/maintenance-plans', \App\Http\Livewire\Admin\MaintenancePlans\MaintenancePlanIndex::class)->name('maintenance-plans.index');
+        Route::get('/maintenance-plans/create', \App\Http\Livewire\Admin\MaintenancePlans\MaintenancePlanCreate::class)->name('maintenance-plans.create');
+        Route::get('/maintenance-plans/{plan}', \App\Http\Livewire\Admin\MaintenancePlans\MaintenancePlanEdit::class)->name('maintenance-plans.edit');
 
         // Invoices
         Route::get('/invoices', AdminInvoiceManagement::class)->name('invoices.index')->middleware('permission:view_any_invoice');
