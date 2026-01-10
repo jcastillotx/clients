@@ -125,6 +125,7 @@ use App\Http\Livewire\Partners\ReferralDashboard;
 use App\Http\Livewire\Projects\ProjectBudgets as AdminProjectBudgets;
 use App\Http\Livewire\Projects\ProjectTimeline as AdminProjectTimeline;
 use App\Http\Livewire\Projects\TaskBoard as AdminTaskBoard;
+use App\Http\Livewire\Admin\Tasks\TaskManagement as AdminTaskManagement;
 use App\Http\Livewire\Projects\TaskDetail as AdminTaskDetail;
 use App\Http\Livewire\Projects\TeamWorkload as AdminTeamWorkload;
 use App\Http\Livewire\Projects\TimeApprovals as AdminTimeApprovals;
@@ -486,6 +487,9 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/projects/time-approvals', AdminTimeApprovals::class)->name('projects.time-approvals');
             Route::get('/projects/budgets', AdminProjectBudgets::class)->name('projects.budgets');
         });
+
+        // Staff Task Management (Kanban, Gantt, List, Calendar views)
+        Route::get('/tasks', AdminTaskManagement::class)->name('tasks.index');
 
         // Feedback
         Route::middleware('platform.feature:feedback')->group(function () {
