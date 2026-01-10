@@ -41,6 +41,17 @@ class SupportTicket extends Model
         'first_response_at',
         'resolved_at',
         'closed_at',
+        // SLA fields
+        'sla_response_due_at',
+        'sla_resolution_due_at',
+        'sla_response_breached',
+        'sla_resolution_breached',
+        'sla_response_breached_at',
+        'sla_resolution_breached_at',
+        'escalation_level',
+        'last_escalated_at',
+        'sla_paused',
+        'sla_paused_duration_minutes',
     ];
 
     /**
@@ -57,6 +68,17 @@ class SupportTicket extends Model
         'resolved_at' => 'datetime',
         'closed_at' => 'datetime',
         'deleted_at' => 'datetime',
+        // SLA casts
+        'sla_response_due_at' => 'datetime',
+        'sla_resolution_due_at' => 'datetime',
+        'sla_response_breached' => 'boolean',
+        'sla_resolution_breached' => 'boolean',
+        'sla_response_breached_at' => 'datetime',
+        'sla_resolution_breached_at' => 'datetime',
+        'escalation_level' => 'integer',
+        'last_escalated_at' => 'datetime',
+        'sla_paused' => 'boolean',
+        'sla_paused_duration_minutes' => 'integer',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -93,7 +115,255 @@ class SupportTicket extends Model
             } elseif ($ticket->maintenance_plan_id) {
                 $ticket->is_billable = false;
             }
+
+            // Set SLA due dates based on priority
+            $ticket->calculateSlaDueDates();
         });
+
+        static::updating(function (SupportTicket $ticket) {
+            // Handle SLA pausing when status changes to waiting_on_client
+            $pauseStatuses = config('client-portal.support_ticket_sla.pause_on_statuses', ['waiting_on_client']);
+
+            if ($ticket->isDirty('status')) {
+                $oldStatus = $ticket->getOriginal('status');
+                $newStatus = $ticket->status;
+
+                // Entering a pause status
+                if (in_array($newStatus, $pauseStatuses) && ! in_array($oldStatus, $pauseStatuses)) {
+                    $ticket->sla_paused = true;
+                }
+
+                // Leaving a pause status
+                if (in_array($oldStatus, $pauseStatuses) && ! in_array($newStatus, $pauseStatuses) && $ticket->sla_paused) {
+                    $ticket->sla_paused = false;
+                    // Recalculate SLA due dates accounting for paused time
+                    $ticket->extendSlaDueDates();
+                }
+            }
+
+            // Recalculate SLA if priority changes
+            if ($ticket->isDirty('priority') && ! $ticket->sla_response_breached && ! $ticket->sla_resolution_breached) {
+                $ticket->calculateSlaDueDates();
+            }
+        });
+    }
+
+    /**
+     * Calculate and set SLA due dates based on priority.
+     */
+    public function calculateSlaDueDates(): void
+    {
+        $slaTargets = config('client-portal.support_ticket_sla.targets', []);
+        $priorityTargets = $slaTargets[$this->priority] ?? $slaTargets['medium'] ?? null;
+
+        if (! $priorityTargets) {
+            return;
+        }
+
+        $baseTime = $this->created_at ?? now();
+
+        $this->sla_response_due_at = $baseTime->copy()->addHours($priorityTargets['response_hours']);
+        $this->sla_resolution_due_at = $baseTime->copy()->addHours($priorityTargets['resolution_hours']);
+    }
+
+    /**
+     * Extend SLA due dates when ticket is unpaused.
+     */
+    public function extendSlaDueDates(): void
+    {
+        $pausedMinutes = $this->sla_paused_duration_minutes;
+
+        if ($pausedMinutes > 0) {
+            if ($this->sla_response_due_at && ! $this->sla_response_breached) {
+                $this->sla_response_due_at = $this->sla_response_due_at->addMinutes($pausedMinutes);
+            }
+            if ($this->sla_resolution_due_at && ! $this->sla_resolution_breached) {
+                $this->sla_resolution_due_at = $this->sla_resolution_due_at->addMinutes($pausedMinutes);
+            }
+            $this->sla_paused_duration_minutes = 0;
+        }
+    }
+
+    /**
+     * Mark the response SLA as breached.
+     */
+    public function markResponseBreached(): void
+    {
+        if (! $this->sla_response_breached) {
+            $this->update([
+                'sla_response_breached' => true,
+                'sla_response_breached_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Mark the resolution SLA as breached.
+     */
+    public function markResolutionBreached(): void
+    {
+        if (! $this->sla_resolution_breached) {
+            $this->update([
+                'sla_resolution_breached' => true,
+                'sla_resolution_breached_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Escalate the ticket to the next level.
+     */
+    public function escalate(): void
+    {
+        $escalationConfig = config('client-portal.support_ticket_sla.escalation', []);
+        $maxLevel = count($escalationConfig['levels'] ?? []);
+
+        if ($this->escalation_level < $maxLevel) {
+            $this->update([
+                'escalation_level' => $this->escalation_level + 1,
+                'last_escalated_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Get the SLA status for display.
+     */
+    public function getSlaStatusAttribute(): string
+    {
+        if ($this->sla_resolution_breached) {
+            return 'breached';
+        }
+
+        if ($this->sla_response_breached && ! $this->first_response_at) {
+            return 'response_breached';
+        }
+
+        if ($this->sla_paused) {
+            return 'paused';
+        }
+
+        // Check if approaching breach (within warning threshold)
+        $warningThreshold = config('client-portal.support_ticket_sla.escalation.warning_threshold', 75);
+
+        if (! $this->first_response_at && $this->sla_response_due_at) {
+            $percentUsed = $this->getResponseSlaPercentUsed();
+            if ($percentUsed >= $warningThreshold) {
+                return 'warning';
+            }
+        }
+
+        if ($this->sla_resolution_due_at && $this->isOpen()) {
+            $percentUsed = $this->getResolutionSlaPercentUsed();
+            if ($percentUsed >= $warningThreshold) {
+                return 'warning';
+            }
+        }
+
+        return 'on_track';
+    }
+
+    /**
+     * Get the percentage of response SLA time used.
+     */
+    public function getResponseSlaPercentUsed(): float
+    {
+        if (! $this->sla_response_due_at || ! $this->created_at) {
+            return 0;
+        }
+
+        $totalMinutes = $this->created_at->diffInMinutes($this->sla_response_due_at);
+        if ($totalMinutes <= 0) {
+            return 100;
+        }
+
+        $elapsedMinutes = $this->created_at->diffInMinutes(now()) - $this->sla_paused_duration_minutes;
+
+        return min(100, ($elapsedMinutes / $totalMinutes) * 100);
+    }
+
+    /**
+     * Get the percentage of resolution SLA time used.
+     */
+    public function getResolutionSlaPercentUsed(): float
+    {
+        if (! $this->sla_resolution_due_at || ! $this->created_at) {
+            return 0;
+        }
+
+        $totalMinutes = $this->created_at->diffInMinutes($this->sla_resolution_due_at);
+        if ($totalMinutes <= 0) {
+            return 100;
+        }
+
+        $elapsedMinutes = $this->created_at->diffInMinutes(now()) - $this->sla_paused_duration_minutes;
+
+        return min(100, ($elapsedMinutes / $totalMinutes) * 100);
+    }
+
+    /**
+     * Get the SLA status color for UI.
+     */
+    public function getSlaStatusColorAttribute(): string
+    {
+        return match ($this->sla_status) {
+            'breached', 'response_breached' => 'danger',
+            'warning' => 'warning',
+            'paused' => 'secondary',
+            'on_track' => 'success',
+            default => 'secondary',
+        };
+    }
+
+    /**
+     * Get time remaining until response SLA breach.
+     */
+    public function getResponseTimeRemainingAttribute(): ?string
+    {
+        if (! $this->sla_response_due_at || $this->first_response_at || $this->sla_response_breached) {
+            return null;
+        }
+
+        $remaining = now()->diff($this->sla_response_due_at);
+
+        if ($remaining->invert) {
+            return 'Breached';
+        }
+
+        return $this->formatTimeDiff($remaining);
+    }
+
+    /**
+     * Get time remaining until resolution SLA breach.
+     */
+    public function getResolutionTimeRemainingAttribute(): ?string
+    {
+        if (! $this->sla_resolution_due_at || ! $this->isOpen() || $this->sla_resolution_breached) {
+            return null;
+        }
+
+        $remaining = now()->diff($this->sla_resolution_due_at);
+
+        if ($remaining->invert) {
+            return 'Breached';
+        }
+
+        return $this->formatTimeDiff($remaining);
+    }
+
+    /**
+     * Format a DateInterval for display.
+     */
+    protected function formatTimeDiff(\DateInterval $diff): string
+    {
+        if ($diff->d > 0) {
+            return $diff->d . 'd ' . $diff->h . 'h';
+        }
+        if ($diff->h > 0) {
+            return $diff->h . 'h ' . $diff->i . 'm';
+        }
+
+        return $diff->i . 'm';
     }
 
     /**
@@ -296,5 +566,54 @@ class SupportTicket extends Model
     public function scopeCovered($query)
     {
         return $query->where('is_billable', false);
+    }
+
+    /**
+     * Scope for tickets with response SLA approaching breach.
+     */
+    public function scopeResponseSlaDue($query)
+    {
+        return $query->open()
+            ->whereNull('first_response_at')
+            ->where('sla_response_breached', false)
+            ->where('sla_paused', false)
+            ->whereNotNull('sla_response_due_at')
+            ->where('sla_response_due_at', '<=', now());
+    }
+
+    /**
+     * Scope for tickets with resolution SLA approaching breach.
+     */
+    public function scopeResolutionSlaDue($query)
+    {
+        return $query->open()
+            ->where('sla_resolution_breached', false)
+            ->where('sla_paused', false)
+            ->whereNotNull('sla_resolution_due_at')
+            ->where('sla_resolution_due_at', '<=', now());
+    }
+
+    /**
+     * Scope for tickets with any SLA breached.
+     */
+    public function scopeSlaBreached($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('sla_response_breached', true)
+                ->orWhere('sla_resolution_breached', true);
+        });
+    }
+
+    /**
+     * Scope for tickets needing escalation.
+     */
+    public function scopeNeedsEscalation($query)
+    {
+        $escalationConfig = config('client-portal.support_ticket_sla.escalation', []);
+        $maxLevel = count($escalationConfig['levels'] ?? []);
+
+        return $query->open()
+            ->slaBreached()
+            ->where('escalation_level', '<', $maxLevel);
     }
 }

@@ -99,6 +99,47 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Request Estimates
+    |--------------------------------------------------------------------------
+    | Base hour estimates and hourly rates by request type.
+    | These provide clients with estimated time and cost when submitting requests.
+    | Admins can adjust estimates on individual requests.
+    */
+
+    'request_estimates' => [
+        'hourly_rate' => env('REQUEST_HOURLY_RATE', 125.00), // Default hourly rate
+
+        // Base hour estimates by type (minimum hours typically needed)
+        'base_hours' => [
+            'web_development' => ['min' => 8, 'max' => 40, 'label' => '1-5 days'],
+            'graphic_design' => ['min' => 2, 'max' => 16, 'label' => '2-16 hours'],
+            'marketing' => ['min' => 4, 'max' => 20, 'label' => '4-20 hours'],
+            'seo' => ['min' => 4, 'max' => 16, 'label' => '4-16 hours'],
+            'social_media' => ['min' => 2, 'max' => 8, 'label' => '2-8 hours'],
+            'branding' => ['min' => 8, 'max' => 40, 'label' => '1-5 days'],
+            'consulting' => ['min' => 1, 'max' => 4, 'label' => '1-4 hours'],
+            'maintenance' => ['min' => 1, 'max' => 4, 'label' => '1-4 hours'],
+            'support' => ['min' => 0.5, 'max' => 2, 'label' => '30 min - 2 hours'],
+            'other' => ['min' => 1, 'max' => 8, 'label' => '1-8 hours'],
+        ],
+
+        // Priority multipliers (urgent costs more)
+        'priority_multipliers' => [
+            'low' => 1.0,
+            'medium' => 1.0,
+            'high' => 1.25,
+            'urgent' => 1.5,
+        ],
+
+        // Whether to show estimates to clients on request creation
+        'show_to_clients' => true,
+
+        // Disclaimer shown with estimates
+        'disclaimer' => 'Estimates are based on typical project scope. Actual time and cost may vary based on specific requirements. A detailed quote will be provided after review.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Client Tiers
     |--------------------------------------------------------------------------
     */
@@ -168,6 +209,61 @@ return [
         'waiting_on_vendor' => 'Waiting on Vendor',
         'resolved' => 'Resolved',
         'closed' => 'Closed',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Support Ticket SLA Configuration
+    |--------------------------------------------------------------------------
+    | Define response and resolution time targets (in hours) by priority.
+    | Response time: Time to first reply from staff.
+    | Resolution time: Time to resolve/close the ticket.
+    */
+
+    'support_ticket_sla' => [
+        // SLA targets in hours by priority
+        'targets' => [
+            'urgent' => [
+                'response_hours' => 1,      // 1 hour response time
+                'resolution_hours' => 4,    // 4 hours resolution time
+            ],
+            'high' => [
+                'response_hours' => 4,      // 4 hours response time
+                'resolution_hours' => 24,   // 24 hours resolution time
+            ],
+            'medium' => [
+                'response_hours' => 8,      // 8 hours response time (1 business day)
+                'resolution_hours' => 72,   // 72 hours resolution time (3 business days)
+            ],
+            'low' => [
+                'response_hours' => 24,     // 24 hours response time
+                'resolution_hours' => 168,  // 168 hours resolution time (7 days)
+            ],
+        ],
+
+        // Business hours configuration (for future enhancement)
+        'business_hours' => [
+            'enabled' => false, // When true, SLA only counts during business hours
+            'start' => '09:00',
+            'end' => '17:00',
+            'timezone' => 'America/New_York',
+            'working_days' => [1, 2, 3, 4, 5], // Monday to Friday
+        ],
+
+        // Escalation configuration
+        'escalation' => [
+            'enabled' => true,
+            // Escalate after this percentage of SLA time has passed
+            'warning_threshold' => 75,  // Send warning at 75% of SLA time
+            'levels' => [
+                1 => ['after_breach_minutes' => 0, 'notify' => ['assigned_staff', 'ticket_creator']],
+                2 => ['after_breach_minutes' => 60, 'notify' => ['team_lead']],
+                3 => ['after_breach_minutes' => 240, 'notify' => ['manager']],
+            ],
+        ],
+
+        // Statuses that pause SLA timer
+        'pause_on_statuses' => ['waiting_on_client'],
     ],
 
     /*

@@ -4,7 +4,9 @@ use App\Jobs\Analytics\GenerateMonthlyRevenueForecastJob;
 use App\Jobs\Analytics\GenerateQuarterlyBusinessIntelligenceReportJob;
 use App\Jobs\Analytics\GenerateWeeklyTrendReportJob;
 use App\Jobs\Analytics\UpdateClientHealthScoresJob;
+use App\Jobs\CheckSupportTicketSlaJob;
 use App\Jobs\GenerateRecurringInvoicesJob;
+use App\Jobs\SendInvoiceRemindersJob;
 use App\Jobs\Security\PurgeOldAuditLogsJob;
 use App\Models\Contract;
 use App\Models\Invoice;
@@ -120,6 +122,16 @@ Schedule::call(function () {
 Schedule::call(function () {
     GenerateRecurringInvoicesJob::dispatch();
 })->daily()->name('generate-recurring-invoices');
+
+// Check support ticket SLAs every 5 minutes
+Schedule::call(function () {
+    CheckSupportTicketSlaJob::dispatch();
+})->everyFiveMinutes()->name('check-support-ticket-sla');
+
+// Send invoice reminders daily (due soon + overdue)
+Schedule::call(function () {
+    SendInvoiceRemindersJob::dispatch();
+})->dailyAt('09:00')->name('send-invoice-reminders');
 
 // Scheduled automation triggers
 Schedule::call(function () {

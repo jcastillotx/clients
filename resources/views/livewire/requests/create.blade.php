@@ -111,6 +111,40 @@
             @enderror
         </div>
 
+        <!-- Estimate Display -->
+        @if($this->showEstimates && $this->estimatedTime)
+            <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <div class="flex items-start gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                    </svg>
+                    <div class="flex-1">
+                        <div class="text-sm font-semibold text-blue-900">Estimated Time & Cost</div>
+                        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-xs font-medium text-blue-700 uppercase tracking-wider">Time Estimate</div>
+                                <div class="mt-1 text-lg font-semibold text-blue-900">{{ $this->estimatedTime['label'] }}</div>
+                            </div>
+                            @if($this->estimatedCost)
+                                <div>
+                                    <div class="text-xs font-medium text-blue-700 uppercase tracking-wider">Cost Estimate</div>
+                                    <div class="mt-1 text-lg font-semibold text-blue-900">{{ $this->estimatedCost['formatted'] }}</div>
+                                    @if($priority === 'high' || $priority === 'urgent')
+                                        <div class="text-xs text-blue-600 mt-0.5">Includes {{ $priority === 'urgent' ? '50%' : '25%' }} priority surcharge</div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                        @if($this->estimateDisclaimer)
+                            <div class="mt-3 text-xs text-blue-700 border-t border-blue-200 pt-2">
+                                {{ $this->estimateDisclaimer }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div
             x-data="{ isUploading: false, progress: 0 }"
             x-on:livewire-upload-start="isUploading = true"

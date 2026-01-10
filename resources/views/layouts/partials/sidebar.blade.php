@@ -78,6 +78,27 @@
                 </li>
                 @endplatformFeature
 
+                <!-- Support Tickets -->
+                <li class="nav-item">
+                    <a href="{{ route('support-tickets.index') }}" class="nav-link {{ request()->routeIs('support-tickets.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-life-ring"></i>
+                        <p>
+                            Support Tickets
+                            @php
+                                $openTickets = 0;
+                                if (auth()->user()->client) {
+                                    $openTickets = \App\Models\SupportTicket::where('client_id', auth()->user()->client_id)
+                                        ->open()
+                                        ->count();
+                                }
+                            @endphp
+                            @if($openTickets > 0)
+                            <span class="badge badge-warning right">{{ $openTickets }}</span>
+                            @endif
+                        </p>
+                    </a>
+                </li>
+
                 <!-- Contracts -->
                 @platformFeature('contracts')
                 <li class="nav-item">
@@ -472,6 +493,40 @@
                     </a>
                 </li>
 
+                {{-- ============================================= --}}
+                {{-- SUPPORT SECTION (Admin) --}}
+                {{-- ============================================= --}}
+                <li class="nav-header">SUPPORT</li>
+
+                <!-- Support Tickets (Admin) -->
+                <li class="nav-item">
+                    <a href="{{ route('admin.support-tickets.index') }}" class="nav-link {{ request()->routeIs('admin.support-tickets.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-headset"></i>
+                        <p>
+                            Support Tickets
+                            @php
+                                $openAdminTickets = \App\Models\SupportTicket::open()->count();
+                            @endphp
+                            @if($openAdminTickets > 0)
+                            <span class="badge badge-warning right">{{ $openAdminTickets }}</span>
+                            @endif
+                        </p>
+                    </a>
+                </li>
+
+                <!-- Maintenance Plans -->
+                <li class="nav-item">
+                    <a href="{{ route('admin.maintenance-plans.index') }}" class="nav-link {{ request()->routeIs('admin.maintenance-plans.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-tools"></i>
+                        <p>Maintenance Plans</p>
+                    </a>
+                </li>
+
+                {{-- ============================================= --}}
+                {{-- SALES SECTION (Admin) --}}
+                {{-- ============================================= --}}
+                <li class="nav-header">SALES</li>
+
                 @platformFeature('proposals')
                 <li class="nav-item {{ request()->routeIs('admin.proposals.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.proposals.*') ? 'active' : '' }}">
@@ -715,6 +770,80 @@
                             <a href="{{ route('admin.referrals') }}" class="nav-link {{ request()->routeIs('admin.referrals') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Referrals</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                @endplatformFeature
+
+                {{-- ============================================= --}}
+                {{-- AI SECTION (Admin AI tools) --}}
+                {{-- ============================================= --}}
+                @platformFeature('ai')
+                <li class="nav-header">AI TOOLS</li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.ai.assistant') }}" class="nav-link {{ request()->routeIs('admin.ai.assistant') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-robot"></i>
+                        <p>AI Assistant</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('admin.ai.*') && !request()->routeIs('admin.ai.assistant') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->routeIs('admin.ai.*') && !request()->routeIs('admin.ai.assistant') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-brain"></i>
+                        <p>
+                            AI Management
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.ai.providers') }}" class="nav-link {{ request()->routeIs('admin.ai.providers*') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Providers</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.ai.tasks') }}" class="nav-link {{ request()->routeIs('admin.ai.tasks') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Task Config</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.ai.usage') }}" class="nav-link {{ request()->routeIs('admin.ai.usage') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Usage & Costs</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.ai.quality') }}" class="nav-link {{ request()->routeIs('admin.ai.quality') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Quality Metrics</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.ai.safety') }}" class="nav-link {{ request()->routeIs('admin.ai.safety') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Safety Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.ai.review-queue') }}" class="nav-link {{ request()->routeIs('admin.ai.review-queue') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Review Queue</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.ai.knowledge-base') }}" class="nav-link {{ request()->routeIs('admin.ai.knowledge-base') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Knowledge Base</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.ai.prompt-templates') }}" class="nav-link {{ request()->routeIs('admin.ai.prompt-templates') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Prompt Templates</p>
                             </a>
                         </li>
                     </ul>
