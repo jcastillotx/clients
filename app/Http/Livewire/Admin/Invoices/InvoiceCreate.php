@@ -39,6 +39,8 @@ class InvoiceCreate extends Component
 
     public string $discount = '';
 
+    public string $discount_type = 'fixed'; // 'fixed' or 'percentage'
+
     public string $notes = '';
 
     public string $terms = '';
@@ -96,6 +98,7 @@ class InvoiceCreate extends Component
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount_type' => ['required', Rule::in(['fixed', 'percentage'])],
             'notes' => ['nullable', 'string', 'max:10000'],
             'terms' => ['nullable', 'string', 'max:10000'],
             'is_recurring' => ['boolean'],
@@ -168,11 +171,20 @@ class InvoiceCreate extends Component
         return round($this->subtotal * ($rate / 100), 2);
     }
 
-    public function getTotalProperty(): float
+    public function getDiscountAmountProperty(): float
     {
         $discount = (float) ($this->discount === '' ? 0 : $this->discount);
 
-        return max(0, round($this->subtotal + $this->taxAmount - $discount, 2));
+        if ($this->discount_type === 'percentage') {
+            return round($this->subtotal * ($discount / 100), 2);
+        }
+
+        return $discount;
+    }
+
+    public function getTotalProperty(): float
+    {
+        return max(0, round($this->subtotal + $this->taxAmount - $this->discountAmount, 2));
     }
 
     protected function createInvoice(string $status, bool $sendEmail, NotificationService $notifications): Invoice
@@ -203,6 +215,7 @@ class InvoiceCreate extends Component
             'due_date' => $data['due_date'],
             'tax_rate' => (float) ($data['tax_rate'] === '' ? 0 : $data['tax_rate']),
             'discount' => (float) ($data['discount'] === '' ? 0 : $data['discount']),
+            'discount_type' => $data['discount_type'],
             'notes' => $data['notes'] ?: null,
             'terms' => $data['terms'] ?: null,
             'status' => $status,
@@ -290,6 +303,7 @@ class InvoiceCreate extends Component
             'occurrences_count' => 0,
             'tax_rate' => (float) ($data['tax_rate'] === '' ? 0 : $data['tax_rate']),
             'discount' => (float) ($data['discount'] === '' ? 0 : $data['discount']),
+            'discount_type' => $data['discount_type'],
             'notes' => $data['notes'] ?: null,
             'terms' => $data['terms'] ?: null,
             'template' => $data['template'],
@@ -384,6 +398,7 @@ class InvoiceCreate extends Component
                 ->toArray(),
             'subtotal' => $this->subtotal,
             'taxAmount' => $this->taxAmount,
+            'discountAmount' => $this->discountAmount,
             'total' => $this->total,
             'frequencyOptions' => RecurringInvoice::frequencyOptions(),
             'dayOfWeekOptions' => [

@@ -107,8 +107,8 @@
         @endif
         @if($invoice->discount > 0)
             <tr>
-                <td class="muted">Discount</td>
-                <td class="right">-${{ number_format($invoice->discount, 2) }}</td>
+                <td class="muted">Discount{{ $invoice->discount_type === 'percentage' ? ' (' . number_format($invoice->discount, 2) . '%)' : '' }}</td>
+                <td class="right">-${{ number_format($invoice->discount_amount, 2) }}</td>
             </tr>
         @endif
         <tr class="grand">

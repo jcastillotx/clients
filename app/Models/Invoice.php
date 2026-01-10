@@ -34,6 +34,7 @@ class Invoice extends Model
         'tax_rate',
         'tax_amount',
         'discount',
+        'discount_type',
         'amount',
         'issue_date',
         'due_date',
@@ -246,13 +247,33 @@ class Invoice extends Model
     }
 
     /**
+     * Calculate the actual discount amount based on discount type.
+     */
+    public function getDiscountAmountAttribute(): float
+    {
+        $subtotal = (float) $this->subtotal;
+
+        if ($this->discount_type === 'percentage') {
+            return round($subtotal * ((float) $this->discount / 100), 2);
+        }
+
+        return (float) $this->discount;
+    }
+
+    /**
      * Calculate totals from items.
      */
     public function calculateTotal(): float
     {
         $subtotal = $this->items()->sum('total');
         $taxAmount = $subtotal * ($this->tax_rate / 100);
-        $amount = $subtotal + $taxAmount - $this->discount;
+
+        // Calculate discount based on type
+        $discountAmount = $this->discount_type === 'percentage'
+            ? $subtotal * ((float) $this->discount / 100)
+            : (float) $this->discount;
+
+        $amount = $subtotal + $taxAmount - $discountAmount;
 
         $this->update([
             'subtotal' => $subtotal,
