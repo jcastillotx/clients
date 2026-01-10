@@ -464,6 +464,14 @@
                 </li>
                 @endplatformFeature
 
+                <!-- Staff Task Management -->
+                <li class="nav-item">
+                    <a href="{{ route('admin.tasks.index') }}" class="nav-link {{ request()->routeIs('admin.tasks.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-tasks"></i>
+                        <p>Task Management</p>
+                    </a>
+                </li>
+
                 @platformFeature('proposals')
                 <li class="nav-item {{ request()->routeIs('admin.proposals.*') ? 'menu-open' : '' }}">
                     <a href="#" class="nav-link {{ request()->routeIs('admin.proposals.*') ? 'active' : '' }}">
