@@ -148,7 +148,7 @@ class AIRequestAnalysis extends Component
             'statusLabels' => config('client-portal.request_statuses', []),
             'typeLabels' => config('client-portal.request_types', []),
             'priorityLabels' => config('client-portal.request_priorities', []),
-            'providers' => ['openai', 'claude', 'openrouter', 'perplexity', 'asksage'],
+            'providers' => ['openai', 'claude', 'gemini', 'grok', 'copilot', 'openrouter', 'perplexity', 'asksage'],
         ])->layout('layouts.admin');
     }
 }

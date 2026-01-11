@@ -9,8 +9,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // First, alter the enum to include 'gemini'
-        DB::statement("ALTER TABLE ai_providers MODIFY COLUMN name ENUM('openai', 'claude', 'openrouter', 'perplexity', 'asksage', 'gemini')");
+        // First, alter the enum to include all new providers (gemini, grok, copilot)
+        DB::statement("ALTER TABLE ai_providers MODIFY COLUMN name ENUM('openai', 'claude', 'openrouter', 'perplexity', 'asksage', 'gemini', 'grok', 'copilot')");
 
         // Insert Gemini as an available AI provider
         DB::table('ai_providers')->insert([
