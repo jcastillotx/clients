@@ -5,6 +5,9 @@ namespace App\Http\Livewire\Admin\AI;
 use App\Models\AiProvider;
 use App\Services\AI\AskSageService;
 use App\Services\AI\ClaudeService;
+use App\Services\AI\CopilotService;
+use App\Services\AI\GeminiService;
+use App\Services\AI\GrokService;
 use App\Services\AI\OpenAIService;
 use App\Services\AI\OpenRouterService;
 use App\Services\AI\PerplexityService;
@@ -71,6 +74,9 @@ class AIProviderForm extends Component
         return [
             'openai' => 'OpenAI',
             'claude' => 'Claude (Anthropic)',
+            'gemini' => 'Gemini (Google)',
+            'grok' => 'Grok (xAI)',
+            'copilot' => 'Copilot (Microsoft)',
             'openrouter' => 'OpenRouter',
             'perplexity' => 'Perplexity',
             'asksage' => 'AskSage',
@@ -118,7 +124,7 @@ class AIProviderForm extends Component
         $this->authorizeSuperAdmin();
 
         $data = $this->validate([
-            'name' => 'required|in:openai,claude,openrouter,perplexity,asksage',
+            'name' => 'required|in:openai,claude,gemini,grok,copilot,openrouter,perplexity,asksage',
             'api_key' => 'nullable|string',
             'api_endpoint' => 'nullable|string',
             'model_name' => 'nullable|string',
@@ -168,6 +174,9 @@ class AIProviderForm extends Component
         return match ($name) {
             'openai' => app(OpenAIService::class),
             'claude' => app(ClaudeService::class),
+            'gemini' => app(GeminiService::class),
+            'grok' => app(GrokService::class),
+            'copilot' => app(CopilotService::class),
             'openrouter' => app(OpenRouterService::class),
             'perplexity' => app(PerplexityService::class),
             'asksage' => app(AskSageService::class),
