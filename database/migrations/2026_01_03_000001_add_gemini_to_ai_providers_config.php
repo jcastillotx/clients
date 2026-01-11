@@ -1,12 +1,17 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        // First, alter the enum to include 'gemini'
+        DB::statement("ALTER TABLE ai_providers MODIFY COLUMN name ENUM('openai', 'claude', 'openrouter', 'perplexity', 'asksage', 'gemini')");
+
         // Insert Gemini as an available AI provider
         DB::table('ai_providers')->insert([
             'name' => 'gemini',
@@ -19,21 +24,15 @@ return new class extends Migration
             'cost_per_1k_input_tokens' => 0.000075, // $0.075 per 1M tokens
             'cost_per_1k_output_tokens' => 0.0003,   // $0.30 per 1M tokens
             'rate_limit_per_minute' => 1000,
-            'supported_features' => json_encode([
-                'chat',
-                'vision',
-                'embeddings',
-                'document_analysis',
-                'image_analysis',
-                'multimodal',
-            ]),
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
     }
 
     public function down(): void
     {
         DB::table('ai_providers')->where('name', 'gemini')->delete();
+
+        // Revert the enum back to original values
+        DB::statement("ALTER TABLE ai_providers MODIFY COLUMN name ENUM('openai', 'claude', 'openrouter', 'perplexity', 'asksage')");
     }
 };
