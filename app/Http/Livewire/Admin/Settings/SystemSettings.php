@@ -513,9 +513,16 @@ class SystemSettings extends Component
             ];
 
             if ($newState === 'completed') {
+                // Best-effort UI update: reflect the latest SHA as the "current" one.
+                if (! empty($this->updateStatus['latest_sha'])) {
+                    $this->updateStatus['current_sha'] = (string) $this->updateStatus['latest_sha'];
+                }
+
+                session()->flash('success', 'Update installed successfully. Refreshing site…');
                 $this->dispatch('github-deploy-complete');
             } elseif ($newState === 'failed') {
-                session()->flash('error', 'Deploy failed. Check GitHub Actions for logs.');
+                $suffix = $conclusion ? " ({$conclusion})" : '';
+                session()->flash('error', 'Update failed'.$suffix.'. Check GitHub Actions for logs.');
             }
         } catch (\Throwable $e) {
             // Don't spam the UI with transient GitHub errors; keep state as-is.

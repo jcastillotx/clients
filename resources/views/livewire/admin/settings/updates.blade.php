@@ -98,8 +98,8 @@
                         <span class="badge badge-primary">In progress</span>
                         <span class="ms-2 text-muted">Deploying…</span>
                     @elseif($deployState === 'completed')
-                        <span class="badge badge-success">Completed</span>
-                        <span class="ms-2 text-muted">Refreshing this page…</span>
+                        <span class="badge badge-success">Updated successfully</span>
+                        <span class="ms-2 text-muted">Refreshing site…</span>
                     @elseif($deployState === 'failed')
                         <span class="badge badge-danger">Failed</span>
                         @if($deployConclusion)
