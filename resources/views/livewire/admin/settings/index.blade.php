@@ -21,6 +21,7 @@
                     if ($isSuperAdmin ?? false) {
                         $tabs['branding'] = ['label' => 'Branding', 'icon' => 'fas fa-paint-brush'];
                         $tabs['platform'] = ['label' => 'Platform', 'icon' => 'fas fa-toggle-on'];
+                        $tabs['updates'] = ['label' => 'Updates', 'icon' => 'fas fa-code-branch'];
                     }
                 @endphp
                 @foreach($tabs as $k => $config)
@@ -54,6 +55,8 @@
                 @include('livewire.admin.settings.integrations')
             @elseif($tab === 'platform')
                 @include('livewire.admin.settings.platform')
+            @elseif($tab === 'updates')
+                @include('livewire.admin.settings.updates')
             @endif
         </div>
     </div>
