@@ -43,32 +43,97 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # NOTE:
-      # This repo contains server-side deploy helpers under scripts/deploy/cpanel/.
-      # Real production deploys typically run on your server (SSH) and/or your hosting provider.
-      #
-      # Recommended approach:
-      # - Configure repository secrets for SSH (host/user/key) or hosting API credentials
-      # - SSH into your server and run your deploy script there
-      #
-      # Example (requires secrets): appleboy/ssh-action@v1.0.3
-      #
-      # - name: Deploy via SSH (example)
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.DEPLOY_HOST }}
-      #     username: ${{ secrets.DEPLOY_USER }}
-      #     key: ${{ secrets.DEPLOY_SSH_KEY }}
-      #     script: |
-      #       export APP_ROOT="${{ secrets.APP_ROOT }}"
-      #       export REPO_URL="${{ secrets.REPO_URL }}"
-      #       export BRANCH="main"
-      #       bash scripts/deploy/cpanel/preflight.sh
-      #       bash scripts/deploy/cpanel/deploy_release.sh
-      #       bash scripts/deploy/cpanel/post_deploy_verify.sh
-
-      - name: No-op (configure real deploy steps)
+      - name: Validate deploy secrets exist
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_APP_ROOT: ${{ secrets.DEPLOY_APP_ROOT }}
+          DEPLOY_REPO_URL: ${{ secrets.DEPLOY_REPO_URL }}
         run: |
-          echo "Workflow dispatched successfully."
-          echo "Configure real deploy steps in .github/workflows/deploy.yml (SSH/hosting provider)."
+          set -euo pipefail
+          missing=0
+          for k in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_APP_ROOT DEPLOY_REPO_URL; do
+            if [ -z "${!k:-}" ]; then
+              echo "Missing required secret: $k" >&2
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "" >&2
+            echo "Set these GitHub repository secrets to enable deploy-from-admin:" >&2
+            echo "- DEPLOY_HOST (server hostname)" >&2
+            echo "- DEPLOY_USER (ssh username)" >&2
+            echo "- DEPLOY_SSH_KEY (private key)" >&2
+            echo "- DEPLOY_APP_ROOT (e.g. /home/user/apps/client-portal)" >&2
+            echo "- DEPLOY_REPO_URL (git@github.com:owner/repo.git)" >&2
+            echo "Optional: DEPLOY_BRANCH (default: main)" >&2
+            exit 1
+          fi
+
+      - name: Deploy via SSH (release-style)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export APP_ROOT="${{ secrets.DEPLOY_APP_ROOT }}"
+            export REPO_URL="${{ secrets.DEPLOY_REPO_URL }}"
+            export BRANCH="${{ secrets.DEPLOY_BRANCH || 'main' }}"
+
+            RELEASES_DIR="$APP_ROOT/releases"
+            SHARED_DIR="$APP_ROOT/shared"
+            TS="$(date +%F_%H%M%S)"
+            NEW_RELEASE="$RELEASES_DIR/$TS"
+
+            mkdir -p "$RELEASES_DIR" "$SHARED_DIR/storage"
+
+            echo "==> Creating release: $NEW_RELEASE"
+            mkdir -p "$NEW_RELEASE"
+            git clone --branch "$BRANCH" --depth 1 "$REPO_URL" "$NEW_RELEASE"
+
+            echo "==> Linking shared .env and storage"
+            if [[ ! -f "$SHARED_DIR/.env" ]]; then
+              echo "Missing $SHARED_DIR/.env. Copy your production env there first." >&2
+              exit 1
+            fi
+            ln -sfn "$SHARED_DIR/.env" "$NEW_RELEASE/.env"
+            rm -rf "$NEW_RELEASE/storage"
+            ln -sfn "$SHARED_DIR/storage" "$NEW_RELEASE/storage"
+
+            echo "==> Injecting APP_BUILD_SHA"
+            cd "$NEW_RELEASE"
+            SHA="$(git rev-parse HEAD || true)"
+            if [[ -n "$SHA" ]]; then
+              if grep -q '^APP_BUILD_SHA=' "$SHARED_DIR/.env"; then
+                sed -i "s/^APP_BUILD_SHA=.*/APP_BUILD_SHA=$SHA/" "$SHARED_DIR/.env"
+              else
+                echo "" >> "$SHARED_DIR/.env"
+                echo "APP_BUILD_SHA=$SHA" >> "$SHARED_DIR/.env"
+              fi
+            fi
+
+            echo "==> Installing dependencies"
+            composer install --no-dev --prefer-dist --optimize-autoloader
+
+            echo "==> Permissions"
+            chmod -R 775 "$NEW_RELEASE/storage" "$NEW_RELEASE/bootstrap/cache" || true
+
+            echo "==> Running migrations"
+            php artisan migrate --force
+
+            echo "==> Caching"
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            echo "==> Switching current symlink"
+            ln -sfn "$NEW_RELEASE" "$APP_ROOT/current"
+
+            echo "==> Signaling workers"
+            php artisan queue:restart || true
+
+            echo "==> Done. Current release is now: $TS"
 
