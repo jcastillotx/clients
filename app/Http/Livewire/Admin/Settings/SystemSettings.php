@@ -43,6 +43,8 @@ class SystemSettings extends Component
 
     public array $updateStatus = [];
 
+    public array $deployStatus = [];
+
     public ?string $test_email_to = null;
 
     public $logo_upload;
@@ -324,6 +326,16 @@ class SystemSettings extends Component
             'compare_url' => null,
             'actions_url' => $this->githubActionsWorkflowUrl(),
         ];
+
+        $this->deployStatus = [
+            'state' => 'idle', // idle|dispatched|in_progress|completed|failed
+            'dispatched_at' => null,
+            'run_id' => null,
+            'run_url' => null,
+            'status' => null,
+            'conclusion' => null,
+            'updated_at' => null,
+        ];
     }
 
     public function setTab(string $tab): void
@@ -441,9 +453,95 @@ class SystemSettings extends Component
             $svc->dispatchWorkflow($owner, $repo, $workflow, $branch, $inputs, $token);
 
             $this->updateStatus['actions_url'] = $this->githubActionsWorkflowUrl();
-            session()->flash('success', 'Deploy workflow dispatched. Check GitHub Actions for progress.');
+            $this->deployStatus = [
+                'state' => 'dispatched',
+                'dispatched_at' => now()->toDateTimeString(),
+                'run_id' => null,
+                'run_url' => $this->githubActionsWorkflowUrl(),
+                'status' => null,
+                'conclusion' => null,
+                'updated_at' => now()->toDateTimeString(),
+            ];
+
+            session()->flash('success', 'Deploy started. This page will refresh automatically when it completes.');
         } catch (\Throwable $e) {
             session()->flash('error', 'Failed to dispatch deploy workflow: '.$e->getMessage());
+        }
+    }
+
+    public function pollGithubDeployStatus(): void
+    {
+        if (! Auth::user()?->hasRole('super_admin')) {
+            return;
+        }
+
+        if (! $this->githubUpdatesConfigured()) {
+            return;
+        }
+
+        $state = (string) ($this->deployStatus['state'] ?? 'idle');
+        if (! in_array($state, ['dispatched', 'in_progress'], true)) {
+            return;
+        }
+
+        $owner = (string) config('github-updates.owner');
+        $repo = (string) config('github-updates.repo');
+        $branch = (string) config('github-updates.branch', 'main');
+        $workflow = (string) config('github-updates.workflow', 'deploy.yml');
+        $token = (string) config('github-updates.token');
+        $dispatchedAt = (string) ($this->deployStatus['dispatched_at'] ?? '');
+
+        try {
+            /** @var GitHubRepoUpdateService $svc */
+            $svc = app(GitHubRepoUpdateService::class);
+            $run = $svc->latestWorkflowRun($owner, $repo, $workflow, $branch, $token);
+
+            if (! $run) {
+                return;
+            }
+
+            // Best-effort: ensure we don't accidentally show an old run if the UI polls later.
+            if ($dispatchedAt !== '' && ! empty($run['created_at'])) {
+                $runCreated = strtotime((string) $run['created_at']) ?: 0;
+                $dispatchTs = strtotime($dispatchedAt) ?: 0;
+                if ($dispatchTs > 0 && $runCreated > 0 && $runCreated < ($dispatchTs - 30)) {
+                    return;
+                }
+            }
+
+            $status = (string) ($run['status'] ?? '');
+            $conclusion = $run['conclusion'] ?? null;
+            $runUrl = $run['html_url'] ?? $this->githubActionsWorkflowUrl();
+
+            $newState = 'in_progress';
+            if ($status === 'completed') {
+                $newState = ($conclusion === 'success') ? 'completed' : 'failed';
+            }
+
+            $this->deployStatus = [
+                'state' => $newState,
+                'dispatched_at' => $dispatchedAt ?: now()->toDateTimeString(),
+                'run_id' => $run['id'] ?? null,
+                'run_url' => $runUrl,
+                'status' => $status ?: null,
+                'conclusion' => $conclusion,
+                'updated_at' => now()->toDateTimeString(),
+            ];
+
+            if ($newState === 'completed') {
+                // Best-effort UI update: reflect the latest SHA as the "current" one.
+                if (! empty($this->updateStatus['latest_sha'])) {
+                    $this->updateStatus['current_sha'] = (string) $this->updateStatus['latest_sha'];
+                }
+
+                session()->flash('success', 'Update installed successfully. Refreshing site…');
+                $this->dispatch('github-deploy-complete');
+            } elseif ($newState === 'failed') {
+                $suffix = $conclusion ? " ({$conclusion})" : '';
+                session()->flash('error', 'Update failed'.$suffix.'. Check GitHub Actions for logs.');
+            }
+        } catch (\Throwable $e) {
+            // Don't spam the UI with transient GitHub errors; keep state as-is.
         }
     }
 

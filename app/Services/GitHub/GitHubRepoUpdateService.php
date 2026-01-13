@@ -88,5 +88,50 @@ class GitHubRepoUpdateService
             throw new \RuntimeException('GitHub workflow dispatch failed (HTTP '.$res->status().').');
         }
     }
+
+    /**
+     * Returns the most recent workflow run for the given workflow file.
+     *
+     * @return array{
+     *   id:int,
+     *   status:string|null,
+     *   conclusion:string|null,
+     *   html_url:string|null,
+     *   created_at:string|null,
+     *   updated_at:string|null
+     * }|null
+     */
+    public function latestWorkflowRun(string $owner, string $repo, string $workflowFile, ?string $branch, string $token): ?array
+    {
+        $query = [
+            'per_page' => 1,
+        ];
+        if (! empty($branch)) {
+            $query['branch'] = $branch;
+        }
+
+        // We only care about runs triggered via the admin "Update now" button.
+        $query['event'] = 'workflow_dispatch';
+
+        $res = $this->client($token)->get("/repos/{$owner}/{$repo}/actions/workflows/{$workflowFile}/runs", $query);
+
+        if (! $res->successful()) {
+            throw new \RuntimeException('GitHub workflow runs lookup failed (HTTP '.$res->status().').');
+        }
+
+        $run = $res->json('workflow_runs.0');
+        if (! is_array($run)) {
+            return null;
+        }
+
+        return [
+            'id' => (int) ($run['id'] ?? 0),
+            'status' => $run['status'] ?? null,
+            'conclusion' => $run['conclusion'] ?? null,
+            'html_url' => $run['html_url'] ?? null,
+            'created_at' => $run['created_at'] ?? null,
+            'updated_at' => $run['updated_at'] ?? null,
+        ];
+    }
 }
 

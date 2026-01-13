@@ -16,7 +16,16 @@
         $compareUrl = $updateStatus['compare_url'] ?? null;
         $actionsUrl = $updateStatus['actions_url'] ?? null;
         $checkedAt = $updateStatus['checked_at'] ?? null;
+
+        $deployState = $deployStatus['state'] ?? 'idle';
+        $deployRunUrl = $deployStatus['run_url'] ?? null;
+        $deployConclusion = $deployStatus['conclusion'] ?? null;
+        $deployUpdatedAt = $deployStatus['updated_at'] ?? null;
     @endphp
+
+    @if(in_array($deployState, ['dispatched', 'in_progress'], true))
+        <div wire:poll.10s="pollGithubDeployStatus"></div>
+    @endif
 
     <div class="card">
         <div class="card-header">
@@ -78,6 +87,35 @@
                     @endif
                 </dd>
 
+                <dt class="col-sm-3">Deploy</dt>
+                <dd class="col-sm-9">
+                    @if($deployState === 'idle')
+                        <span class="text-muted">—</span>
+                    @elseif($deployState === 'dispatched')
+                        <span class="badge badge-info">Dispatched</span>
+                        <span class="ms-2 text-muted">Waiting for Actions run…</span>
+                    @elseif($deployState === 'in_progress')
+                        <span class="badge badge-primary">In progress</span>
+                        <span class="ms-2 text-muted">Deploying…</span>
+                    @elseif($deployState === 'completed')
+                        <span class="badge badge-success">Updated successfully</span>
+                        <span class="ms-2 text-muted">Refreshing site…</span>
+                    @elseif($deployState === 'failed')
+                        <span class="badge badge-danger">Failed</span>
+                        @if($deployConclusion)
+                            <span class="ms-2 text-muted">({{ $deployConclusion }})</span>
+                        @endif
+                    @endif
+
+                    @if($deployRunUrl)
+                        <a href="{{ $deployRunUrl }}" target="_blank" rel="noopener" class="ms-2">View run</a>
+                    @endif
+
+                    @if($deployUpdatedAt)
+                        <span class="ms-2 text-muted">Updated: {{ $deployUpdatedAt }}</span>
+                    @endif
+                </dd>
+
                 <dt class="col-sm-3">Last checked</dt>
                 <dd class="col-sm-9">
                     <span class="text-muted">{{ $checkedAt ?: '—' }}</span>
@@ -111,5 +149,14 @@
             </div>
         </div>
     </div>
+
+    <script>
+      document.addEventListener('livewire:init', () => {
+        Livewire.on('github-deploy-complete', () => {
+          // Give the deploy a moment to switch the live symlink/restart services.
+          setTimeout(() => window.location.reload(), 5000);
+        });
+      });
+    </script>
 </div>
 
