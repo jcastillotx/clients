@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admin\Settings;
 
 use App\Services\BrandingService;
+use App\Services\GitHub\GitHubRepoUpdateService;
 use App\Services\PlatformFeatureService;
 use App\Services\Settings\SettingsService;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,8 @@ class SystemSettings extends Component
     public array $integrationStatus = [];
 
     public array $platformModules = [];
+
+    public array $updateStatus = [];
 
     public ?string $test_email_to = null;
 
@@ -291,14 +294,28 @@ class SystemSettings extends Component
             'company_name' => $b['branding.company_name'] ?: '',
             'tagline' => $b['branding.tagline'] ?: '',
         ];
+
+        $this->updateStatus = [
+            'configured' => $this->githubUpdatesConfigured(),
+            'owner' => (string) config('github-updates.owner'),
+            'repo' => (string) config('github-updates.repo'),
+            'branch' => (string) config('github-updates.branch', 'main'),
+            'workflow' => (string) config('github-updates.workflow', 'deploy.yml'),
+            'current_sha' => (string) config('github-updates.current_sha', ''),
+            'checked_at' => null,
+            'latest_sha' => null,
+            'behind_by' => null,
+            'compare_url' => null,
+            'actions_url' => $this->githubActionsWorkflowUrl(),
+        ];
     }
 
     public function setTab(string $tab): void
     {
-        $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding', 'integrations', 'platform'];
+        $allowed = ['general', 'email', 'payment', 'storage', 'notifications', 'security', 'branding', 'integrations', 'platform', 'updates'];
         if (in_array($tab, $allowed, true)) {
             // Restrict branding and platform tabs to super admin only
-            if (in_array($tab, ['branding', 'platform']) && !Auth::user()?->hasRole('super_admin')) {
+            if (in_array($tab, ['branding', 'platform', 'updates'], true) && !Auth::user()?->hasRole('super_admin')) {
                 session()->flash('error', 'Only super admins can access this section.');
                 return;
             }
@@ -311,6 +328,128 @@ class SystemSettings extends Component
                 $this->loadPlatformModules();
             }
         }
+    }
+
+    public function checkForGithubUpdates(): void
+    {
+        if (! Auth::user()?->hasRole('super_admin')) {
+            session()->flash('error', 'Only super admins can check for updates.');
+            return;
+        }
+
+        if (! $this->githubUpdatesConfigured()) {
+            session()->flash('error', 'GitHub update checking is not configured. Set GITHUB_UPDATES_* env vars.');
+            $this->updateStatus['configured'] = false;
+            $this->updateStatus['actions_url'] = $this->githubActionsWorkflowUrl();
+            return;
+        }
+
+        $owner = (string) config('github-updates.owner');
+        $repo = (string) config('github-updates.repo');
+        $branch = (string) config('github-updates.branch', 'main');
+        $token = (string) config('github-updates.token');
+        $currentSha = (string) config('github-updates.current_sha', '');
+
+        try {
+            /** @var GitHubRepoUpdateService $svc */
+            $svc = app(GitHubRepoUpdateService::class);
+
+            $latest = $svc->latestCommit($owner, $repo, $branch, $token);
+
+            $status = [
+                'configured' => true,
+                'owner' => $owner,
+                'repo' => $repo,
+                'branch' => $branch,
+                'workflow' => (string) config('github-updates.workflow', 'deploy.yml'),
+                'current_sha' => $currentSha,
+                'checked_at' => now()->toDateTimeString(),
+                'latest_sha' => $latest['sha'],
+                'latest_url' => $latest['html_url'],
+                'behind_by' => null,
+                'compare_url' => null,
+                'actions_url' => $this->githubActionsWorkflowUrl(),
+            ];
+
+            if ($currentSha !== '') {
+                $cmp = $svc->compare($owner, $repo, $currentSha, $branch, $token);
+                $status['behind_by'] = $cmp['behind_by'];
+                $status['compare_url'] = $cmp['html_url'];
+            }
+
+            $this->updateStatus = $status;
+
+            if ($currentSha === '') {
+                session()->flash('success', 'Checked GitHub. Latest version fetched (current build SHA not configured).');
+            } elseif (($status['behind_by'] ?? 0) > 0) {
+                session()->flash('success', 'Update available: this site is behind by '.(int) $status['behind_by'].' commit(s).');
+            } else {
+                session()->flash('success', 'Up to date: no commits behind '.$branch.'.');
+            }
+        } catch (\Throwable $e) {
+            $this->updateStatus['checked_at'] = now()->toDateTimeString();
+            $this->updateStatus['actions_url'] = $this->githubActionsWorkflowUrl();
+            session()->flash('error', 'Update check failed: '.$e->getMessage());
+        }
+    }
+
+    public function triggerGithubUpdate(): void
+    {
+        if (! Auth::user()?->hasRole('super_admin')) {
+            session()->flash('error', 'Only super admins can trigger an update.');
+            return;
+        }
+
+        if (! $this->githubUpdatesConfigured()) {
+            session()->flash('error', 'GitHub workflow dispatch is not configured. Set GITHUB_UPDATES_* env vars.');
+            return;
+        }
+
+        $owner = (string) config('github-updates.owner');
+        $repo = (string) config('github-updates.repo');
+        $branch = (string) config('github-updates.branch', 'main');
+        $workflow = (string) config('github-updates.workflow', 'deploy.yml');
+        $token = (string) config('github-updates.token');
+
+        $inputs = [
+            'environment' => app()->environment('production') ? 'production' : (string) app()->environment(),
+            'initiated_by' => (string) (Auth::user()?->email ?? Auth::user()?->name ?? 'admin'),
+            'requested_from' => (string) config('app.url'),
+            'current_sha' => (string) config('github-updates.current_sha', ''),
+            'latest_sha' => (string) ($this->updateStatus['latest_sha'] ?? ''),
+        ];
+
+        try {
+            /** @var GitHubRepoUpdateService $svc */
+            $svc = app(GitHubRepoUpdateService::class);
+            $svc->dispatchWorkflow($owner, $repo, $workflow, $branch, $inputs, $token);
+
+            $this->updateStatus['actions_url'] = $this->githubActionsWorkflowUrl();
+            session()->flash('success', 'Deploy workflow dispatched. Check GitHub Actions for progress.');
+        } catch (\Throwable $e) {
+            session()->flash('error', 'Failed to dispatch deploy workflow: '.$e->getMessage());
+        }
+    }
+
+    protected function githubUpdatesConfigured(): bool
+    {
+        return (string) config('github-updates.owner') !== ''
+            && (string) config('github-updates.repo') !== ''
+            && (string) config('github-updates.workflow') !== ''
+            && (string) config('github-updates.token') !== '';
+    }
+
+    protected function githubActionsWorkflowUrl(): ?string
+    {
+        $owner = (string) config('github-updates.owner');
+        $repo = (string) config('github-updates.repo');
+        $workflow = (string) config('github-updates.workflow');
+
+        if ($owner === '' || $repo === '' || $workflow === '') {
+            return null;
+        }
+
+        return "https://github.com/{$owner}/{$repo}/actions/workflows/{$workflow}";
     }
 
     public function loadPlatformModules(): void

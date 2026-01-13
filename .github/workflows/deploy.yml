@@ -1,0 +1,74 @@
+name: Deploy (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
+      initiated_by:
+        description: "Who clicked update in the admin UI"
+        required: false
+        default: ""
+      requested_from:
+        description: "App URL that dispatched this workflow"
+        required: false
+        default: ""
+      current_sha:
+        description: "Currently deployed SHA (if provided)"
+        required: false
+        default: ""
+      latest_sha:
+        description: "Latest SHA at time of dispatch (if known)"
+        required: false
+        default: ""
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Initiated by: ${{ inputs.initiated_by }}"
+          echo "Requested from: ${{ inputs.requested_from }}"
+          echo "Current SHA: ${{ inputs.current_sha }}"
+          echo "Latest SHA: ${{ inputs.latest_sha }}"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # NOTE:
+      # This repo contains server-side deploy helpers under scripts/deploy/cpanel/.
+      # Real production deploys typically run on your server (SSH) and/or your hosting provider.
+      #
+      # Recommended approach:
+      # - Configure repository secrets for SSH (host/user/key) or hosting API credentials
+      # - SSH into your server and run your deploy script there
+      #
+      # Example (requires secrets): appleboy/ssh-action@v1.0.3
+      #
+      # - name: Deploy via SSH (example)
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   with:
+      #     host: ${{ secrets.DEPLOY_HOST }}
+      #     username: ${{ secrets.DEPLOY_USER }}
+      #     key: ${{ secrets.DEPLOY_SSH_KEY }}
+      #     script: |
+      #       export APP_ROOT="${{ secrets.APP_ROOT }}"
+      #       export REPO_URL="${{ secrets.REPO_URL }}"
+      #       export BRANCH="main"
+      #       bash scripts/deploy/cpanel/preflight.sh
+      #       bash scripts/deploy/cpanel/deploy_release.sh
+      #       bash scripts/deploy/cpanel/post_deploy_verify.sh
+
+      - name: No-op (configure real deploy steps)
+        run: |
+          echo "Workflow dispatched successfully."
+          echo "Configure real deploy steps in .github/workflows/deploy.yml (SSH/hosting provider)."
+
