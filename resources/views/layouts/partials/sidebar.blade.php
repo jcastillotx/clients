@@ -341,7 +341,9 @@
                 {{-- ============================================= --}}
                 {{-- STORAGE SECTION (Client cloud storage) --}}
                 {{-- ============================================= --}}
-                @php($navUser = auth()->user())
+                @php
+                    $navUser = auth()->user();
+                @endphp
                 @if($navUser?->client_id)
                 <li class="nav-header">STORAGE</li>
 
