@@ -258,6 +258,14 @@ class SystemSettings extends Component
             'branding.platform_name' => '',
             'branding.company_name' => '',
             'branding.tagline' => '',
+            // Typography settings
+            'branding.typography.font_heading' => $brandDefaults['font_heading'] ?? '',
+            'branding.typography.font_body' => $brandDefaults['font_body'] ?? '',
+            'branding.typography.font_size_base' => $brandDefaults['font_size_base'] ?? '0.9375rem',
+            // Border radius settings - default 6px
+            'branding.design.card_border_radius' => $brandDefaults['card_border_radius'] ?? '6px',
+            'branding.design.button_border_radius' => $brandDefaults['button_border_radius'] ?? '6px',
+            'branding.design.input_border_radius' => $brandDefaults['input_border_radius'] ?? '6px',
         ]);
         // Get defaults from BrandingService
         $defaults = BrandingService::defaults();
@@ -293,6 +301,14 @@ class SystemSettings extends Component
             'platform_name' => $b['branding.platform_name'] ?: '',
             'company_name' => $b['branding.company_name'] ?: '',
             'tagline' => $b['branding.tagline'] ?: '',
+            // Typography settings
+            'font_heading' => $b['branding.typography.font_heading'] ?: '',
+            'font_body' => $b['branding.typography.font_body'] ?: '',
+            'font_size_base' => $b['branding.typography.font_size_base'] ?: '0.9375rem',
+            // Border radius settings - default 6px
+            'card_border_radius' => $b['branding.design.card_border_radius'] ?: '6px',
+            'button_border_radius' => $b['branding.design.button_border_radius'] ?: '6px',
+            'input_border_radius' => $b['branding.design.input_border_radius'] ?: '6px',
         ];
 
         $this->updateStatus = [
@@ -1323,20 +1339,20 @@ class SystemSettings extends Component
             'branding.login_background_path' => $this->branding['login_background_path'] ?? '',
             'branding.favicon_path' => $this->branding['favicon_path'] ?? '',
             'branding.document_logo_path' => $this->branding['document_logo_path'] ?? '',
-            'branding.colors.primary' => $this->branding['color_primary'] ?? '#007bff',
-            'branding.colors.secondary' => $this->branding['color_secondary'] ?? '#6c757d',
-            'branding.colors.accent' => $this->branding['color_accent'] ?? '#28a745',
+            'branding.colors.primary' => $this->branding['color_primary'] ?? '#5F5F82',
+            'branding.colors.secondary' => $this->branding['color_secondary'] ?? '#BFCEE0',
+            'branding.colors.accent' => $this->branding['color_accent'] ?? '#000000',
             'branding.buttons.primary' => $this->branding['button_primary'] ?? '',
             'branding.buttons.primary_hover' => $this->branding['button_primary_hover'] ?? '',
-            'branding.buttons.secondary' => $this->branding['button_secondary'] ?? '',
+            'branding.buttons.secondary' => $this->branding['button_secondary'] ?? '#6c757d',
             'branding.buttons.secondary_hover' => $this->branding['button_secondary_hover'] ?? '',
-            'branding.sidebar.bg' => $this->branding['sidebar_bg'] ?? '#343a40',
-            'branding.sidebar.text' => $this->branding['sidebar_text'] ?? '#c2c7d0',
-            'branding.sidebar.hover' => $this->branding['sidebar_hover'] ?? '#495057',
-            'branding.sidebar.active' => $this->branding['sidebar_active'] ?? '#007bff',
-            'branding.navbar.bg' => $this->branding['navbar_bg'] ?? '#343a40',
-            'branding.navbar.text' => $this->branding['navbar_text'] ?? '#ffffff',
-            'branding.content.bg' => $this->branding['content_bg'] ?? '#f4f6f9',
+            'branding.sidebar.bg' => $this->branding['sidebar_bg'] ?? '#5F5F82',
+            'branding.sidebar.text' => $this->branding['sidebar_text'] ?? '#BFCEE0',
+            'branding.sidebar.hover' => $this->branding['sidebar_hover'] ?? '#4A4A66',
+            'branding.sidebar.active' => $this->branding['sidebar_active'] ?? '#BFCEE0',
+            'branding.navbar.bg' => $this->branding['navbar_bg'] ?? '#ffffff',
+            'branding.navbar.text' => $this->branding['navbar_text'] ?? '#000000',
+            'branding.content.bg' => $this->branding['content_bg'] ?? '#f8fafc',
             'branding.invoice_template' => $this->branding['invoice_template'] ?? 'default',
             'branding.email.header_html' => $this->branding['email_header_html'] ?? '',
             'branding.email.footer_html' => $this->branding['email_footer_html'] ?? '',
@@ -1349,6 +1365,14 @@ class SystemSettings extends Component
             'branding.platform_name' => $this->branding['platform_name'] ?? '',
             'branding.company_name' => $this->branding['company_name'] ?? '',
             'branding.tagline' => $this->branding['tagline'] ?? '',
+            // Typography settings
+            'branding.typography.font_heading' => $this->branding['font_heading'] ?? '',
+            'branding.typography.font_body' => $this->branding['font_body'] ?? '',
+            'branding.typography.font_size_base' => $this->branding['font_size_base'] ?? '0.9375rem',
+            // Border radius settings - default 6px
+            'branding.design.card_border_radius' => $this->branding['card_border_radius'] ?? '6px',
+            'branding.design.button_border_radius' => $this->branding['button_border_radius'] ?? '6px',
+            'branding.design.input_border_radius' => $this->branding['input_border_radius'] ?? '6px',
         ], 'branding');
 
         // Clear all caches to ensure branding changes take effect

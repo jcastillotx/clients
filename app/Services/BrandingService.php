@@ -54,23 +54,29 @@ class BrandingService
         // Button Colors - Will fallback to primary if empty
         'button_primary' => '#5F5F82',
         'button_primary_hover' => '#4A4A66',
-        'button_secondary' => '#BFCEE0',
-        'button_secondary_hover' => '#9BB0C8',
+        'button_secondary' => '#6c757d',    // Gray
+        'button_secondary_hover' => '#5a6268',
+        'button_dark' => '#1e293b',         // Black/dark button
+        'button_dark_hover' => '#334155',
 
-        // Typography
+        // Typography - Separate heading and body fonts
         'font_family' => "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        'font_heading' => '',               // Heading font (fallback to font_family if empty)
+        'font_body' => '',                  // Body font (fallback to font_family if empty)
         'font_size_base' => '0.9375rem',
-        'heading_font_family' => '',
+        'heading_font_family' => '',        // Legacy support
 
-        // Cards & Borders - Slightly rounded for modern look
-        'card_border_radius' => '0.5rem',
-        'button_border_radius' => '0.375rem',
-        'input_border_radius' => '0.375rem',
+        // Cards & Borders - 6px default border radius
+        'card_border_radius' => '6px',
+        'button_border_radius' => '6px',
+        'input_border_radius' => '6px',
+        'border_radius' => '6px',           // General border radius
 
         // Layout
         'sidebar_width' => '250px',
         'sidebar_collapsed_width' => '4.6rem',
         'content_bg' => '#f8fafc',          // Slate 50 - very light gray
+        'content_wrapper_padding' => '1.5rem',
 
         // Custom
         'custom_css' => '',
@@ -128,6 +134,8 @@ class BrandingService
                 'branding.buttons.primary_hover' => 'button_primary_hover',
                 'branding.buttons.secondary' => 'button_secondary',
                 'branding.buttons.secondary_hover' => 'button_secondary_hover',
+                'branding.buttons.dark' => 'button_dark',
+                'branding.buttons.dark_hover' => 'button_dark_hover',
                 'branding.sidebar.bg' => 'sidebar_bg',
                 'branding.sidebar.text' => 'sidebar_text',
                 'branding.sidebar.hover' => 'sidebar_hover',
@@ -136,6 +144,7 @@ class BrandingService
                 'branding.navbar.text' => 'navbar_text',
                 'branding.navbar.variant' => 'navbar_variant',
                 'branding.content.bg' => 'content_bg',
+                'branding.content.wrapper_padding' => 'content_wrapper_padding',
                 'branding.invoice_template' => 'invoice_template',
                 'branding.email.header_html' => 'email_header_html',
                 'branding.email.footer_html' => 'email_footer_html',
@@ -148,6 +157,16 @@ class BrandingService
                 'branding.platform_name' => 'platform_name',
                 'branding.company_name' => 'company_name',
                 'branding.tagline' => 'tagline',
+                // Typography
+                'branding.typography.font_family' => 'font_family',
+                'branding.typography.font_heading' => 'font_heading',
+                'branding.typography.font_body' => 'font_body',
+                'branding.typography.font_size_base' => 'font_size_base',
+                // Border radius settings
+                'branding.design.card_border_radius' => 'card_border_radius',
+                'branding.design.button_border_radius' => 'button_border_radius',
+                'branding.design.input_border_radius' => 'input_border_radius',
+                'branding.design.border_radius' => 'border_radius',
             ];
 
             foreach ($settings as $dbKey => $value) {
