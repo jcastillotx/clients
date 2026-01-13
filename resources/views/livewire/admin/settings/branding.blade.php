@@ -639,6 +639,117 @@
                 </div>
             </div>
 
+            <!-- Typography Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-font mr-2"></i>Typography</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Heading Font</label>
+                        <select class="form-control" wire:model.blur="branding.font_heading">
+                            <option value="">Default (Inter)</option>
+                            <option value="'Inter', -apple-system, BlinkMacSystemFont, sans-serif">Inter</option>
+                            <option value="'Roboto', -apple-system, BlinkMacSystemFont, sans-serif">Roboto</option>
+                            <option value="'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif">Open Sans</option>
+                            <option value="'Lato', -apple-system, BlinkMacSystemFont, sans-serif">Lato</option>
+                            <option value="'Poppins', -apple-system, BlinkMacSystemFont, sans-serif">Poppins</option>
+                            <option value="'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif">Montserrat</option>
+                            <option value="'Nunito', -apple-system, BlinkMacSystemFont, sans-serif">Nunito</option>
+                            <option value="'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif">Source Sans Pro</option>
+                            <option value="'Playfair Display', Georgia, serif">Playfair Display</option>
+                            <option value="'Merriweather', Georgia, serif">Merriweather</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="system-ui, -apple-system, BlinkMacSystemFont, sans-serif">System UI</option>
+                        </select>
+                        <small class="text-muted">Font for headings, titles, card headers</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Body Text Font</label>
+                        <select class="form-control" wire:model.blur="branding.font_body">
+                            <option value="">Default (Inter)</option>
+                            <option value="'Inter', -apple-system, BlinkMacSystemFont, sans-serif">Inter</option>
+                            <option value="'Roboto', -apple-system, BlinkMacSystemFont, sans-serif">Roboto</option>
+                            <option value="'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif">Open Sans</option>
+                            <option value="'Lato', -apple-system, BlinkMacSystemFont, sans-serif">Lato</option>
+                            <option value="'Poppins', -apple-system, BlinkMacSystemFont, sans-serif">Poppins</option>
+                            <option value="'Nunito', -apple-system, BlinkMacSystemFont, sans-serif">Nunito</option>
+                            <option value="'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif">Source Sans Pro</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="system-ui, -apple-system, BlinkMacSystemFont, sans-serif">System UI</option>
+                        </select>
+                        <small class="text-muted">Font for body text, paragraphs, form labels</small>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label>Base Font Size</label>
+                        <select class="form-control" wire:model.blur="branding.font_size_base">
+                            <option value="0.8125rem">Small (13px)</option>
+                            <option value="0.875rem">Medium Small (14px)</option>
+                            <option value="0.9375rem">Default (15px)</option>
+                            <option value="1rem">Medium (16px)</option>
+                            <option value="1.0625rem">Large (17px)</option>
+                        </select>
+                        <small class="text-muted">Base size for body text</small>
+                    </div>
+
+                    <!-- Font Preview -->
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <label class="font-weight-bold mb-2">Preview</label>
+                        <h5 style="font-family: {{ $branding['font_heading'] ?? "'Inter', sans-serif" }}; margin-bottom: 0.5rem;">This is a Heading</h5>
+                        <p style="font-family: {{ $branding['font_body'] ?? "'Inter', sans-serif" }}; margin-bottom: 0; font-size: {{ $branding['font_size_base'] ?? '0.9375rem' }};">This is body text. The quick brown fox jumps over the lazy dog.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Border Radius Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-square mr-2"></i>Border Radius</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Card Border Radius</label>
+                        <select class="form-control" wire:model.blur="branding.card_border_radius">
+                            <option value="0">None (0px)</option>
+                            <option value="4px">Subtle (4px)</option>
+                            <option value="6px">Default (6px)</option>
+                            <option value="8px">Medium (8px)</option>
+                            <option value="12px">Large (12px)</option>
+                            <option value="16px">Extra Large (16px)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Button Border Radius</label>
+                        <select class="form-control" wire:model.blur="branding.button_border_radius">
+                            <option value="0">None (0px)</option>
+                            <option value="4px">Subtle (4px)</option>
+                            <option value="6px">Default (6px)</option>
+                            <option value="8px">Medium (8px)</option>
+                            <option value="20px">Pill (20px)</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label>Input Border Radius</label>
+                        <select class="form-control" wire:model.blur="branding.input_border_radius">
+                            <option value="0">None (0px)</option>
+                            <option value="4px">Subtle (4px)</option>
+                            <option value="6px">Default (6px)</option>
+                            <option value="8px">Medium (8px)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Border Radius Preview -->
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <label class="font-weight-bold mb-2">Preview</label>
+                        <div class="d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
+                            <button type="button" class="btn btn-primary" style="border-radius: {{ $branding['button_border_radius'] ?? '6px' }};">Button</button>
+                            <input type="text" class="form-control" placeholder="Input field" style="border-radius: {{ $branding['input_border_radius'] ?? '6px' }}; max-width: 150px;">
+                            <span class="badge badge-primary" style="border-radius: 4px;">Badge</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Templates & Domain Card -->
             <div class="card">
                 <div class="card-header">

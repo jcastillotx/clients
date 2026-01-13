@@ -31,20 +31,25 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 }
 
-/* ===== Content Area ===== */
+/* ===== Content Area - Consistent white spacing ===== */
+.content-wrapper {
+    background-color: var(--brand-content-bg, #f8fafc);
+}
+
 .content-wrapper > .content {
-    padding: 1.25rem 1.5rem;
+    padding: var(--content-wrapper-padding, 1.5rem);
+    background-color: var(--brand-content-bg, #f8fafc);
 }
 
 @media (min-width: 768px) {
     .content-wrapper > .content {
-        padding: 1.5rem 2rem;
+        padding: var(--content-wrapper-padding, 1.5rem);
     }
 }
 
 @media (min-width: 1200px) {
     .content-wrapper > .content {
-        padding: 2rem 2.5rem;
+        padding: var(--content-wrapper-padding, 1.5rem);
     }
 }
 
@@ -53,9 +58,9 @@ body {
     padding-right: 0;
 }
 
-/* ===== Card Enhancements ===== */
+/* ===== Card Enhancements - 6px border radius ===== */
 .card {
-    border-radius: 0.5rem;
+    border-radius: var(--brand-card-radius, 6px);
     box-shadow: none;
 }
 
@@ -103,16 +108,21 @@ body {
     border-radius: 0.5rem 0 0 0.5rem;
 }
 
-/* ===== Button Enhancements ===== */
+/* ===== Button Enhancements - Solid colors with opacity hover ===== */
 .btn {
-    border-radius: 0.375rem;
+    border-radius: var(--brand-btn-radius, 6px);
     font-weight: 500;
-    transition: all 0.15s ease-in-out;
+    transition: opacity 0.15s ease-in-out;
 }
 
-.btn:hover,
+.btn:hover {
+    transform: none;
+    opacity: 0.85;
+}
+
 .btn:active {
     transform: none;
+    opacity: 0.75;
 }
 
 /* ===== Badge Enhancements ===== */
@@ -121,13 +131,52 @@ body {
     padding: 0.35em 0.65em;
 }
 
-/* ===== Table Enhancements ===== */
+/* ===== Table Enhancements - Responsive with cell spacing ===== */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
 .table thead th {
     font-weight: 600;
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
     color: #6c757d;
+    padding: 12px 16px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.table tbody td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 300px;
+}
+
+/* Responsive table wrapper */
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--brand-radius, 6px);
+}
+
+/* Ensure cells don't overflow */
+.table td,
+.table th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Actions column - prevent wrapping */
+.table td.actions,
+.table th.actions {
+    white-space: nowrap;
 }
 
 /* ===== Form Control Focus ===== */
@@ -184,10 +233,10 @@ body {
     margin-left: 0.125rem;
 }
 
-/* Input fields */
+/* Input fields - 6px border radius */
 .form-input {
     width: 100%;
-    border-radius: 0.75rem;
+    border-radius: var(--brand-input-radius, 6px);
     border: 1px solid var(--slate-300);
     padding: 0.625rem 0.75rem;
     font-size: 0.875rem;
@@ -423,45 +472,41 @@ body {
     cursor: not-allowed;
 }
 
+/* Modern Button Styles - Solid colors with opacity hover */
 .btn-primary-modern {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 0.5rem !important;
-    border-radius: 0.5rem !important;
+    border-radius: var(--brand-btn-radius, 6px) !important;
     padding: 0.625rem 1rem !important;
     font-size: 0.875rem !important;
     font-weight: 600 !important;
-    background-color: #0f172a !important;
+    background-color: var(--brand-btn-primary, var(--brand-primary, #5F5F82)) !important;
     color: #ffffff !important;
     border: none !important;
-    transition: all 0.15s ease !important;
+    transition: opacity 0.15s ease !important;
     cursor: pointer !important;
     text-decoration: none !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 .btn-primary-modern:hover {
-    background-color: #1e293b !important;
+    background-color: var(--brand-btn-primary, var(--brand-primary, #5F5F82)) !important;
     color: #ffffff !important;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+    opacity: 0.85 !important;
 }
 
 .btn-primary-modern:focus {
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.3) !important;
 }
 
 .btn-primary-modern:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+    opacity: 0.75 !important;
 }
 
 .btn-primary-modern:disabled {
     opacity: 0.5 !important;
     cursor: not-allowed !important;
-    transform: none !important;
 }
 
 .btn-secondary-modern {
@@ -469,32 +514,30 @@ body {
     align-items: center !important;
     justify-content: center !important;
     gap: 0.5rem !important;
-    border-radius: 0.5rem !important;
+    border-radius: var(--brand-btn-radius, 6px) !important;
     padding: 0.625rem 1rem !important;
     font-size: 0.875rem !important;
     font-weight: 600 !important;
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    border: 1px solid #cbd5e1 !important;
-    transition: all 0.15s ease !important;
+    background-color: var(--brand-btn-secondary, #6c757d) !important;
+    color: #ffffff !important;
+    border: none !important;
+    transition: opacity 0.15s ease !important;
     cursor: pointer !important;
     text-decoration: none !important;
 }
 
 .btn-secondary-modern:hover {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    background-color: var(--brand-btn-secondary, #6c757d) !important;
+    color: #ffffff !important;
+    opacity: 0.85 !important;
 }
 
 .btn-secondary-modern:focus {
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.3) !important;
 }
 
 .btn-secondary-modern:active {
-    transform: translateY(0);
+    opacity: 0.75 !important;
 }
 
 .btn-secondary-modern:disabled {
@@ -502,31 +545,53 @@ body {
     cursor: not-allowed !important;
 }
 
+/* Dark/Black button */
+.btn-dark-modern {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    border-radius: var(--brand-btn-radius, 6px) !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    background-color: var(--brand-btn-dark, #1e293b) !important;
+    color: #ffffff !important;
+    border: none !important;
+    transition: opacity 0.15s ease !important;
+    cursor: pointer !important;
+}
+
+.btn-dark-modern:hover {
+    background-color: var(--brand-btn-dark, #1e293b) !important;
+    color: #ffffff !important;
+    opacity: 0.85 !important;
+}
+
 .btn-danger-modern {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 0.5rem !important;
-    border-radius: 0.5rem !important;
+    border-radius: var(--brand-btn-radius, 6px) !important;
     padding: 0.625rem 1rem !important;
     font-size: 0.875rem !important;
     font-weight: 600 !important;
-    background-color: #dc2626 !important;
+    background-color: var(--brand-danger, #ef4444) !important;
     color: #ffffff !important;
     border: none !important;
-    transition: all 0.15s ease !important;
+    transition: opacity 0.15s ease !important;
     cursor: pointer !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 .btn-danger-modern:hover {
-    background-color: #b91c1c;
-    color: #fff;
+    background-color: var(--brand-danger, #ef4444) !important;
+    color: #ffffff !important;
+    opacity: 0.85 !important;
 }
 
 .btn-danger-modern:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
 }
 
 .btn-success-modern {
@@ -534,25 +599,25 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    border-radius: 0.5rem;
+    border-radius: var(--brand-btn-radius, 6px);
     padding: 0.625rem 1rem;
     font-size: 0.875rem;
     font-weight: 600;
-    background-color: #059669;
+    background-color: var(--brand-success, #22c55e);
     color: #fff;
     border: none;
-    transition: background-color 0.15s;
+    transition: opacity 0.15s ease;
     cursor: pointer;
 }
 
 .btn-success-modern:hover {
-    background-color: #047857;
+    background-color: var(--brand-success, #22c55e);
     color: #fff;
+    opacity: 0.85;
 }
 
 .btn-success-modern:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.25);
 }
 
 /* Form actions (button row) */
