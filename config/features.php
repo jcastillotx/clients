@@ -148,6 +148,13 @@ return [
             'description' => 'Industry trends and insights',
             'category' => 'research',
         ],
+
+        // Marketing Addons
+        'competitor_analysis' => [
+            'name' => 'Competitor Analysis',
+            'description' => 'AI-powered comprehensive competitor analysis with SWOT, gaps, limitations, and strategic recommendations',
+            'category' => 'marketing',
+        ],
     ],
 
     /*
@@ -221,6 +228,7 @@ return [
             'project_management',
             'research_assistant',
             'competitor_monitoring',
+            'competitor_analysis',
             'industry_insights',
         ],
 
@@ -250,6 +258,7 @@ return [
             'project_management',
             'research_assistant',
             'competitor_monitoring',
+            'competitor_analysis',
             'industry_insights',
         ],
     ],
@@ -291,6 +300,7 @@ return [
             'team_members' => ['max' => 25],
             'ai_assistant' => ['monthly_messages' => 2000],
             'brand_monitoring' => ['tracked_keywords' => 50],
+            'competitor_analysis' => ['monthly_analyses' => 20],
         ],
 
         'enterprise' => [
@@ -299,6 +309,7 @@ return [
             'team_members' => ['max' => null], // unlimited
             'ai_assistant' => ['monthly_messages' => null], // unlimited
             'brand_monitoring' => ['tracked_keywords' => null], // unlimited
+            'competitor_analysis' => ['monthly_analyses' => null], // unlimited
             'api_access' => ['requests_per_minute' => 120],
         ],
     ],

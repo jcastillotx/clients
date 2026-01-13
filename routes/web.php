@@ -119,6 +119,7 @@ use App\Http\Livewire\Admin\Marketing\CampaignManagement;
 use App\Http\Livewire\Marketing\SeoAuditViewer;
 use App\Http\Livewire\Marketing\SocialMediaManager;
 use App\Http\Livewire\Marketing\WebsiteAuditor as MarketingWebsiteAuditor;
+use App\Http\Livewire\Marketing\CompetitorAnalysisDashboard;
 use App\Http\Livewire\Onboarding\OnboardingWizard;
 use App\Http\Livewire\Partners\PartnerManager;
 use App\Http\Livewire\Partners\ReferralDashboard;
@@ -537,6 +538,7 @@ Route::middleware(['auth', 'verified', 'permission:access admin panel', 'admin.i
             Route::get('/campaigns', CampaignAnalyticsDashboard::class)->name('campaigns');
             Route::get('/campaigns/manage', CampaignManagement::class)->name('campaigns.manage');
             Route::get('/brand-monitoring', BrandMonitoringDashboard::class)->name('brand-monitoring');
+            Route::get('/competitor-analysis', CompetitorAnalysisDashboard::class)->name('competitor-analysis');
         });
 
         // Brand monitoring (admin views - no feature check needed, admins see all clients)
