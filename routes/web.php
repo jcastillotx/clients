@@ -93,6 +93,7 @@ use App\Http\Livewire\Client\KnowledgeBase;
 use App\Http\Livewire\Client\Messaging;
 use App\Http\Livewire\Client\NotificationsCenter;
 use App\Http\Livewire\Client\ProjectDashboard;
+use App\Http\Livewire\Client\DataRoomBrowser;
 use App\Http\Livewire\Client\ReportArchive as ClientReportArchive;
 use App\Http\Livewire\Client\SeoDashboard;
 use App\Http\Livewire\Client\CampaignsDashboard;
@@ -313,6 +314,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Client advanced features
     Route::get('/projects', ProjectDashboard::class)->name('client.projects');
+    Route::get('/data-rooms', DataRoomBrowser::class)->name('client.data-rooms');
+    Route::get('/data-rooms/{roomId}', DataRoomBrowser::class)->name('client.data-rooms.show');
     Route::get('/messages', Messaging::class)->name('client.messaging');
     Route::get('/knowledge-base', KnowledgeBase::class)->name('client.knowledge-base');
     Route::get('/notifications', NotificationsCenter::class)->name('client.notifications');
