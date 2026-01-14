@@ -49,7 +49,7 @@
         </div>
     @endif
 
-    <div class="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+    <div class="form-card form-modern position-relative">
         <!-- Submit overlay -->
         <div wire:loading.flex wire:target="submit" class="absolute inset-0 z-10 items-center justify-center rounded-2xl bg-white/70 backdrop-blur-sm">
             <div class="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-lg ring-1 ring-black/5">
@@ -62,69 +62,49 @@
         </div>
 
         <div>
-            <label class="text-xs font-semibold text-slate-600">Subject <span class="text-rose-600">*</span></label>
-            <input wire:model.live.debounce.300ms="subject" type="text" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="Brief description of your issue" />
+            <label class="form-label-modern">Subject <span class="required">*</span></label>
+            <input wire:model.live.debounce.300ms="subject" type="text" class="form-input" placeholder="Brief description of your issue" />
             @error('subject')
-                <div class="mt-1 flex items-start gap-2 text-xs font-medium text-rose-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v3a1 1 0 102 0v-3z" clip-rule="evenodd" />
-                    </svg>
-                    <span>{{ $message }}</span>
-                </div>
+                <div class="form-error">{{ $message }}</div>
             @enderror
         </div>
 
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="form-grid-2">
             <div>
-                <label class="text-xs font-semibold text-slate-600">Category <span class="text-rose-600">*</span></label>
-                <select wire:model.live="category" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
+                <label class="form-label-modern">Category <span class="required">*</span></label>
+                <select wire:model.live="category" class="form-select-modern">
                     @foreach($categories as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </select>
                 @error('category')
-                    <div class="mt-1 flex items-start gap-2 text-xs font-medium text-rose-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                        </svg>
-                        <span>{{ $message }}</span>
-                    </div>
+                    <div class="form-error">{{ $message }}</div>
                 @enderror
             </div>
 
             <div>
-                <label class="text-xs font-semibold text-slate-600">Priority</label>
-                <select wire:model.live="priority" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
+                <label class="form-label-modern">Priority</label>
+                <select wire:model.live="priority" class="form-select-modern">
                     @foreach($priorities as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </select>
-                <div class="mt-1 text-xs text-slate-500">Higher priority issues are addressed sooner.</div>
+                <div class="form-hint">Higher priority issues are addressed sooner.</div>
                 @error('priority')
-                    <div class="mt-1 flex items-start gap-2 text-xs font-medium text-rose-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                        </svg>
-                        <span>{{ $message }}</span>
-                    </div>
+                    <div class="form-error">{{ $message }}</div>
                 @enderror
             </div>
         </div>
 
         <div>
-            <label class="text-xs font-semibold text-slate-600">Description <span class="text-rose-600">*</span></label>
-            <textarea wire:model.live.debounce.400ms="description" rows="6" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="Please describe your issue in detail. Include steps to reproduce if applicable, any error messages, and what you expected to happen."></textarea>
+            <label class="form-label-modern">Description <span class="required">*</span></label>
+            <textarea wire:model.live.debounce.400ms="description" rows="6" class="form-textarea" placeholder="Please describe your issue in detail. Include steps to reproduce if applicable, any error messages, and what you expected to happen."></textarea>
             @error('description')
-                <div class="mt-1 flex items-start gap-2 text-xs font-medium text-rose-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 flex-none" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm1 3a1 1 0 10-2 0v4a1 1 0 102 0V10z" clip-rule="evenodd" />
-                    </svg>
-                    <span>{{ $message }}</span>
-                </div>
+                <div class="form-error">{{ $message }}</div>
             @enderror
         </div>
 
-        <div class="pt-4 flex flex-wrap items-center gap-3 border-t border-slate-200">
+        <div class="form-actions border-top">
             <button type="button" wire:click="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 flex items-center gap-2" wire:loading.attr="disabled" wire:target="submit">
                 <span wire:loading.remove wire:target="submit">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

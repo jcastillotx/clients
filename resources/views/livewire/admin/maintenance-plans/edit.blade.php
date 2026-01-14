@@ -18,91 +18,91 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Main Form -->
         <div class="lg:col-span-2">
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+            <div class="form-card form-modern">
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Client <span class="text-rose-600">*</span></label>
-                    <select wire:model="clientId" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
+                    <label class="form-label-modern">Client <span class="required">*</span></label>
+                    <select wire:model="clientId" class="form-select-modern">
                         <option value="">Select a client</option>
                         @foreach($clients as $client)
                             <option value="{{ $client->id }}">{{ $client->company_name }}</option>
                         @endforeach
                     </select>
                     @error('clientId')
-                        <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                        <div class="form-error">{{ $message }}</div>
                     @enderror
                 </div>
 
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Plan Name <span class="text-rose-600">*</span></label>
-                    <input wire:model="name" type="text" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="e.g., Monthly Maintenance" />
+                    <label class="form-label-modern">Plan Name <span class="required">*</span></label>
+                    <input wire:model="name" type="text" class="form-input" placeholder="e.g., Monthly Maintenance" />
                     @error('name')
-                        <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                        <div class="form-error">{{ $message }}</div>
                     @enderror
                 </div>
 
                 <div>
-                    <label class="text-xs font-semibold text-slate-600">Description</label>
-                    <textarea wire:model="description" rows="3" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="Description of what this plan covers"></textarea>
+                    <label class="form-label-modern">Description</label>
+                    <textarea wire:model="description" rows="3" class="form-textarea" placeholder="Description of what this plan covers"></textarea>
                     @error('description')
-                        <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                        <div class="form-error">{{ $message }}</div>
                     @enderror
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="form-grid-2">
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Status <span class="text-rose-600">*</span></label>
-                        <select wire:model="status" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900">
+                        <label class="form-label-modern">Status <span class="required">*</span></label>
+                        <select wire:model="status" class="form-select-modern">
                             @foreach($statuses as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
                         </select>
                         @error('status')
-                            <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Monthly Rate ($)</label>
-                        <input wire:model="monthlyRate" type="number" step="0.01" min="0" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="0.00" />
+                        <label class="form-label-modern">Monthly Rate ($)</label>
+                        <input wire:model="monthlyRate" type="number" step="0.01" min="0" class="form-input" placeholder="0.00" />
                         @error('monthlyRate')
-                            <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Included Hours <span class="text-rose-600">*</span></label>
-                        <input wire:model="includedHours" type="number" min="0" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="0" />
+                        <label class="form-label-modern">Included Hours <span class="required">*</span></label>
+                        <input wire:model="includedHours" type="number" min="0" class="form-input" placeholder="0" />
                         @error('includedHours')
-                            <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Overage Hourly Rate ($)</label>
-                        <input wire:model="hourlyRateOverage" type="number" step="0.01" min="0" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" placeholder="0.00" />
+                        <label class="form-label-modern">Overage Hourly Rate ($)</label>
+                        <input wire:model="hourlyRateOverage" type="number" step="0.01" min="0" class="form-input" placeholder="0.00" />
                         @error('hourlyRateOverage')
-                            <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">Start Date <span class="text-rose-600">*</span></label>
-                        <input wire:model="startDate" type="date" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" />
+                        <label class="form-label-modern">Start Date <span class="required">*</span></label>
+                        <input wire:model="startDate" type="date" class="form-input" />
                         @error('startDate')
-                            <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div>
-                        <label class="text-xs font-semibold text-slate-600">End Date</label>
-                        <input wire:model="endDate" type="date" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:ring-1 focus:ring-slate-900" />
+                        <label class="form-label-modern">End Date</label>
+                        <input wire:model="endDate" type="date" class="form-input" />
                         @error('endDate')
-                            <div class="mt-1 text-xs text-rose-600">{{ $message }}</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
 
-                <div class="pt-4 flex items-center gap-3 border-t border-slate-200">
+                <div class="form-actions border-top">
                     <button wire:click="save" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
                         Save Changes
                     </button>

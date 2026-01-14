@@ -272,7 +272,7 @@ body {
 /* Select fields */
 .form-select-modern {
     width: 100%;
-    border-radius: 0.75rem;
+    border-radius: var(--brand-input-radius, 6px);
     border: 1px solid var(--slate-300);
     padding: 0.625rem 2.5rem 0.625rem 0.75rem;
     font-size: 0.875rem;
@@ -300,10 +300,17 @@ body {
     cursor: not-allowed;
 }
 
+/* Compact select fields for inline table controls */
+.form-select-compact {
+    padding: 0.35rem 2.25rem 0.35rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: var(--brand-input-radius, 6px);
+}
+
 /* Textarea */
 .form-textarea {
     width: 100%;
-    border-radius: 0.75rem;
+    border-radius: var(--brand-input-radius, 6px);
     border: 1px solid var(--slate-300);
     padding: 0.625rem 0.75rem;
     font-size: 0.875rem;
@@ -442,6 +449,42 @@ body {
 @media (min-width: 992px) {
     .form-grid-3 {
         grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.form-grid-5 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 576px) {
+    .form-grid-5 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .form-grid-5 {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+.form-grid-4 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 576px) {
+    .form-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 992px) {
+    .form-grid-4 {
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 

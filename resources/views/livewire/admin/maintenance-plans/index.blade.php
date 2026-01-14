@@ -47,21 +47,21 @@
     </div>
 
     <!-- Filters -->
-    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <div class="form-card">
+        <div class="form-grid-3">
             <div>
-                <label class="text-xs font-semibold text-slate-600">Search</label>
+                <label class="form-label-modern">Search</label>
                 <input
                     wire:model.live.debounce.250ms="search"
                     type="text"
                     placeholder="Search by name..."
-                    class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                    class="form-input"
                 />
             </div>
 
             <div>
-                <label class="text-xs font-semibold text-slate-600">Status</label>
-                <select wire:model.live="status" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900">
+                <label class="form-label-modern">Status</label>
+                <select wire:model.live="status" class="form-select-modern">
                     <option value="">All statuses</option>
                     @foreach($statuses as $key => $label)
                         <option value="{{ $key }}">{{ $label }}</option>
@@ -70,8 +70,8 @@
             </div>
 
             <div>
-                <label class="text-xs font-semibold text-slate-600">Client</label>
-                <select wire:model.live="clientId" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900">
+                <label class="form-label-modern">Client</label>
+                <select wire:model.live="clientId" class="form-select-modern">
                     <option value="">All clients</option>
                     @foreach($clients as $client)
                         <option value="{{ $client->id }}">{{ $client->company_name }}</option>
@@ -82,38 +82,38 @@
     </div>
 
     <!-- Table -->
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200">
-                <thead class="bg-slate-50">
+    <div class="form-card p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Plan Name</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Client</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Monthly Rate</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Included Hours</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Start Date</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Tickets</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Actions</th>
+                        <th>Plan Name</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Monthly Rate</th>
+                        <th>Included Hours</th>
+                        <th>Start Date</th>
+                        <th>Tickets</th>
+                        <th class="actions text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody>
                     @forelse($plans as $plan)
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 text-sm font-semibold text-slate-900">{{ $plan->name }}</td>
-                            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{{ $plan->client?->company_name ?? 'N/A' }}</td>
-                            <td class="whitespace-nowrap px-4 py-3 text-sm">
+                        <tr>
+                            <td class="text-sm font-semibold text-slate-900">{{ $plan->name }}</td>
+                            <td class="text-sm text-slate-600">{{ $plan->client?->company_name ?? 'N/A' }}</td>
+                            <td class="text-sm">
                                 <span class="inline-flex items-center rounded-full bg-{{ $plan->status_color }}-100 px-2.5 py-1 text-xs font-semibold text-{{ $plan->status_color }}-800">
                                     {{ ucfirst($plan->status) }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
+                            <td class="text-sm text-slate-600">
                                 {{ $plan->monthly_rate ? '$' . number_format($plan->monthly_rate, 2) : '-' }}
                             </td>
-                            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{{ $plan->included_hours }} hrs</td>
-                            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{{ $plan->start_date?->format('M d, Y') }}</td>
-                            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-600">{{ $plan->supportTickets->count() }}</td>
-                            <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
+                            <td class="text-sm text-slate-600">{{ $plan->included_hours }} hrs</td>
+                            <td class="text-sm text-slate-600">{{ $plan->start_date?->format('M d, Y') }}</td>
+                            <td class="text-sm text-slate-600">{{ $plan->supportTickets->count() }}</td>
+                            <td class="actions text-right text-sm">
                                 <div class="flex justify-end gap-2">
                                     <a href="{{ route('admin.maintenance-plans.edit', $plan) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-50">
                                         Edit
