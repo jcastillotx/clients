@@ -1,6 +1,8 @@
-<x-admin-tailwind-layout>
-    <x-slot name="title">Messaging</x-slot>
+@extends('layouts.admin-tailwind')
 
+@section('title', 'Messaging')
+
+@section('content')
     <div class="space-y-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
@@ -146,7 +148,8 @@
                                 @foreach($pinned as $pm)
                                     <div class="text-sm bg-white border border-amber-200 rounded-lg p-2">
                                         <div class="text-xs text-slate-600">{{ $pm->sender?->name ?? 'System' }} ·
-                                            {{ $pm->created_at?->format('Y-m-d H:i') }}</div>
+                                            {{ $pm->created_at?->format('Y-m-d H:i') }}
+                                        </div>
                                         <div class="mt-1 whitespace-pre-wrap">{{ $pm->body ?? '—' }}</div>
                                     </div>
                                 @endforeach
@@ -200,8 +203,8 @@
                     <!-- Message Input -->
                     <div class="px-6 py-4 border-t border-slate-200">
                         <div class="flex gap-2">
-                            <input type="text" wire:model="message" wire:keydown="typing"
-                                wire:keydown.enter.prevent="send" placeholder="Type a message... (use @name to mention)"
+                            <input type="text" wire:model="message" wire:keydown="typing" wire:keydown.enter.prevent="send"
+                                placeholder="Type a message... (use @name to mention)"
                                 class="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <label
                                 class="inline-flex items-center justify-center px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer"
@@ -228,8 +231,8 @@
     @if($showNewConversationModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4">
-                <div class="fixed inset-0 bg-slate-900 bg-opacity-50 transition-opacity"
-                    wire:click="closeNewConversationModal"></div>
+                <div class="fixed inset-0 bg-slate-900 bg-opacity-50 transition-opacity" wire:click="closeNewConversationModal">
+                </div>
 
                 <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full">
                     <!-- Modal Header -->
@@ -338,4 +341,4 @@
             });
         </script>
     @endpush
-</x-admin-tailwind-layout>
+@endsection

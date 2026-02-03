@@ -178,8 +178,8 @@
             <main class="flex-1 lg:ml-0 pt-16 lg:pt-0">
                 <!-- Top Bar (Desktop) -->
                 <div class="hidden lg:flex items-center justify-between h-16 bg-white border-b border-slate-200 px-6">
-                    <div class="flex items-center gap-4">
-                        <h1 class="text-xl font-semibold text-slate-900">{{ $title ?? 'Admin Dashboard' }}</h1>
+                    <div>
+                        <h1 class="text-xl font-semibold text-slate-900">@yield('title', 'Admin Dashboard')</h1>
                     </div>
                     <div class="flex items-center gap-4">
                         <!-- User Menu -->
@@ -210,7 +210,7 @@
 
                 <!-- Page Content -->
                 <div class="p-6">
-                    {{ $slot }}
+                    @yield('content')
                 </div>
 
                 <!-- Footer -->
