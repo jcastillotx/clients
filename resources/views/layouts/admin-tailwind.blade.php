@@ -121,22 +121,10 @@
                         <span>Support Tickets</span>
                     </a>
 
-                    <a href="{{ route('admin.contracts.index') }}"
-                        class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.contracts.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                        <i class="fas fa-file-contract w-5"></i>
-                        <span>Contracts</span>
-                    </a>
-
                     <a href="{{ route('admin.invoices.index') }}"
                         class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.invoices.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                         <i class="fas fa-file-invoice-dollar w-5"></i>
                         <span>Invoices & Payments</span>
-                    </a>
-
-                    <a href="{{ route('admin.documents.index') }}"
-                        class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.documents.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                        <i class="fas fa-folder w-5"></i>
-                        <span>Documents</span>
                     </a>
 
                     <!-- Admin Section -->
