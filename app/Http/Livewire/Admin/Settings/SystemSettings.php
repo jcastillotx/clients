@@ -19,6 +19,8 @@ class SystemSettings extends Component
 {
     use WithFileUploads;
 
+    public $layout = 'layouts.admin-tailwind';
+
     public string $tab = 'general';
 
     public array $general = [];
