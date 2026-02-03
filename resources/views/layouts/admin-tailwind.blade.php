@@ -31,8 +31,8 @@
     <!-- Livewire Styles -->
     @livewireStyles
 
-    <!-- Dynamic Brand Styles -->
-    @include('layouts.partials.brand-styles')
+    <!-- Minimal Brand Styles (CSS Variables Only) -->
+    @include('layouts.partials.brand-styles-tailwind')
 </head>
 
 <body class="bg-slate-50 font-sans antialiased">
