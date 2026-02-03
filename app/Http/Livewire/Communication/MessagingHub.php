@@ -21,6 +21,8 @@ class MessagingHub extends Component
 {
     use WithFileUploads;
 
+    public $layout = 'layouts.admin-tailwind';
+
     public ?int $conversationId = null;
 
     public string $message = '';
