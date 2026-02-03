@@ -156,14 +156,14 @@
                         <span>Users</span>
                     </a>
 
-                    <a href="{{ route('admin.messages.index') }}"
-                        class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.messages.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <a href="{{ route('admin.messages') }}"
+                        class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.messages') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                         <i class="fas fa-comments w-5"></i>
                         <span>Messages</span>
                     </a>
 
-                    <a href="{{ route('admin.reporting.index') }}"
-                        class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reporting.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <a href="{{ route('admin.reports') }}"
+                        class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reports*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                         <i class="fas fa-chart-line w-5"></i>
                         <span>Reporting</span>
                     </a>
