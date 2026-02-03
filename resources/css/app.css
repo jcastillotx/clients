@@ -110,5 +110,17 @@
   .table-hover tbody tr:hover {
     background-color: rgb(248 250 252);
   }
+
+  /* Bootstrap Button Overrides */
+  .btn {
+    font-weight: 400 !important;
+  }
+
+  .btn .fas,
+  .btn .far,
+  .btn .fa {
+    margin-right: 0.25rem;
+  }
 }
+
 
