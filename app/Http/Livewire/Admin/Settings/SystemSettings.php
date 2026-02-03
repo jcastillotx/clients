@@ -1494,6 +1494,6 @@ class SystemSettings extends Component
             'platformModuleDefinitions' => PlatformFeatureService::$modules,
             'platformCategoryLabels' => PlatformFeatureService::categoryLabels(),
             'isSuperAdmin' => Auth::user()?->hasRole('super_admin') ?? false,
-        ])->layout('layouts.admin');
+        ])->layout('layouts.admin-tailwind');
     }
 }
