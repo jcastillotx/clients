@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,7 +16,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     @if(config('branding.typography.google_fonts'))
-    <link href="https://fonts.googleapis.com/css2?family={{ config('branding.typography.google_fonts') }}&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family={{ config('branding.typography.google_fonts') }}&display=swap"
+            rel="stylesheet">
     @endif
 
     <!-- Font Awesome -->
@@ -54,8 +56,9 @@
     @php
         $brandingService = app(\App\Services\BrandingService::class);
     @endphp
-    {!! $brandingService->get('site_header_html') !!}
+    {!! \App\Helpers\HtmlSanitizer::sanitizeAdmin($brandingService->get('site_header_html')) !!}
 </head>
+
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
         <!-- Navbar -->
@@ -69,23 +72,23 @@
             <section class="content pt-3">
                 <div class="container-fluid">
                     @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle mr-2"></i>
-                        {{ session('success') }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            {{ session('success') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     @endif
 
                     @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-circle mr-2"></i>
-                        {{ session('error') }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            {{ session('error') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     @endif
 
                     {{ $slot ?? '' }}
@@ -132,6 +135,7 @@
     @stack('scripts')
 
     {{-- Site footer HTML (branding setting from database) --}}
-    {!! app(\App\Services\BrandingService::class)->get('site_footer_html') !!}
+    {!! \App\Helpers\HtmlSanitizer::sanitizeAdmin(app(\App\Services\BrandingService::class)->get('site_footer_html')) !!}
 </body>
+
 </html>

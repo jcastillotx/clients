@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,7 +22,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     @if(config('branding.typography.google_fonts'))
-    <link href="https://fonts.googleapis.com/css2?family={{ config('branding.typography.google_fonts') }}&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family={{ config('branding.typography.google_fonts') }}&display=swap"
+            rel="stylesheet">
     @endif
 
     <!-- Font Awesome -->
@@ -60,12 +62,14 @@
     @php
         $brandingService = app(\App\Services\BrandingService::class);
     @endphp
-    {!! $brandingService->get('site_header_html') !!}
+    {!! \App\Helpers\HtmlSanitizer::sanitizeClient($brandingService->get('site_header_html')) !!}
 </head>
+
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
         <!-- PWA offline indicator -->
-        <div id="offline-indicator" class="alert alert-warning alert-dismissible fade show d-none m-2" role="status" style="position: sticky; top: 0; z-index: 1050;">
+        <div id="offline-indicator" class="alert alert-warning alert-dismissible fade show d-none m-2" role="status"
+            style="position: sticky; top: 0; z-index: 1050;">
             <i class="fas fa-wifi mr-2"></i>
             You’re offline. Some actions will be queued.
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -74,7 +78,8 @@
         </div>
 
         <!-- PWA install prompt -->
-        <div id="pwa-install-banner" class="alert alert-info d-none m-2" role="status" style="position: sticky; top: 0; z-index: 1050;">
+        <div id="pwa-install-banner" class="alert alert-info d-none m-2" role="status"
+            style="position: sticky; top: 0; z-index: 1050;">
             <div class="d-flex align-items-center justify-content-between" style="gap: 12px;">
                 <div>
                     <strong>Install the portal</strong>
@@ -82,7 +87,8 @@
                 </div>
                 <div class="d-flex" style="gap: 8px;">
                     <button id="pwa-install-btn" type="button" class="btn btn-sm btn-primary">Install</button>
-                    <button id="pwa-install-dismiss" type="button" class="btn btn-sm btn-outline-secondary">Not now</button>
+                    <button id="pwa-install-dismiss" type="button" class="btn btn-sm btn-outline-secondary">Not
+                        now</button>
                 </div>
             </div>
         </div>
@@ -97,18 +103,18 @@
         <div class="content-wrapper">
             <!-- Content Header (Page header) -->
             @if(isset($header))
-            <div class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1 class="m-0">{{ $header }}</h1>
-                        </div>
-                        <div class="col-sm-6">
-                            {{ $breadcrumb ?? '' }}
+                <div class="content-header">
+                    <div class="container-fluid">
+                        <div class="row mb-2">
+                            <div class="col-sm-6">
+                                <h1 class="m-0">{{ $header }}</h1>
+                            </div>
+                            <div class="col-sm-6">
+                                {{ $breadcrumb ?? '' }}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
             @endif
 
             <!-- Main content -->
@@ -116,23 +122,23 @@
                 <div class="container-fluid">
                     <!-- Flash Messages -->
                     @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle mr-2"></i>
-                        {{ session('success') }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            {{ session('success') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     @endif
 
                     @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-circle mr-2"></i>
-                        {{ session('error') }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            {{ session('error') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     @endif
 
                     {{ $slot }}
@@ -177,6 +183,7 @@
     @stack('scripts')
 
     {{-- Site footer HTML (branding setting from database) --}}
-    {!! app(\App\Services\BrandingService::class)->get('site_footer_html') !!}
+    {!! \App\Helpers\HtmlSanitizer::sanitizeClient(app(\App\Services\BrandingService::class)->get('site_footer_html')) !!}
 </body>
+
 </html>

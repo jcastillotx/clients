@@ -9,6 +9,7 @@
         "aws/aws-sdk-php": "^3.369",
         "barryvdh/laravel-dompdf": "^3.0",
         "dedoc/scramble": "^0.13",
+        "ezyang/htmlpurifier": "^4.19",
         "google/apiclient": "^2.18",
         "guzzlehttp/guzzle": "^7.10",
         "laravel/framework": "^11.0",
@@ -39,7 +40,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/HtmlSanitizer.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
