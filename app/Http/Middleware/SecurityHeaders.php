@@ -43,19 +43,19 @@ class SecurityHeaders
             "default-src 'self'",
 
             // Scripts: self, inline (for Livewire/Alpine), and common CDNs
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://js.stripe.com",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://js.stripe.com https://code.jquery.com https://cdnjs.cloudflare.com https://static.cloudflareinsights.com",
 
-            // Styles: self, inline (for dynamic styles), and Google Fonts
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+            // Styles: self, inline (for dynamic styles), Google Fonts, and CDNs
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
 
-            // Fonts: self and Google Fonts
-            "font-src 'self' https://fonts.gstatic.com data:",
+            // Fonts: self, Google Fonts, and Font Awesome CDN
+            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:",
 
             // Images: self, data URIs, blob URIs (for canvas/uploads), and common image hosts
             "img-src 'self' data: blob: https: http:",
 
-            // Connect: API calls to self, Stripe, Pusher, and configured services
-            "connect-src 'self' https://api.stripe.com wss://*.pusher.com https://*.pusher.com",
+            // Connect: API calls to self, Stripe, Pusher, Cloudflare, and configured services
+            "connect-src 'self' https://api.stripe.com wss://*.pusher.com https://*.pusher.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
 
             // Frames: self and Stripe (for payment iframes)
             "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
