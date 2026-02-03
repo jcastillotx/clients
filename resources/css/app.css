@@ -2,6 +2,7 @@
 
 /* Custom Component Styles */
 @layer components {
+  /* Card Styles */
   .card {
     background-color: white;
     border-radius: 0.5rem;
@@ -25,8 +26,89 @@
     background-color: rgb(248 250 252);
   }
 
-  /* Table full width fix */
+  /* Form Components */
+  .form-card {
+    background-color: white;
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240);
+    padding: 1.5rem;
+  }
+
+  .form-label-modern {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgb(71 85 105);
+    margin-bottom: 0.375rem;
+  }
+
+  .form-input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(203 213 225);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: rgb(15 23 42);
+  }
+
+  .form-input::placeholder {
+    color: rgb(148 163 184);
+  }
+
+  .form-input:focus {
+    border-color: rgb(15 23 42);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 1px rgb(15 23 42);
+  }
+
+  .form-select-modern {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(203 213 225);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: rgb(15 23 42);
+    background-color: white;
+  }
+
+  .form-select-modern:focus {
+    border-color: rgb(15 23 42);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 1px rgb(15 23 42);
+  }
+
+  .form-grid-4 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .form-grid-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .form-grid-4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  /* Table Styles */
   .table {
     width: 100% !important;
   }
+
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgb(248 250 252);
+  }
 }
+
