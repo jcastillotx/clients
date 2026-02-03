@@ -14,19 +14,11 @@
     @endif
 
     {{-- Page Header --}}
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-12">
-                    <h1 class="m-0">
-                        <i class="fas fa-plug text-primary mr-2"></i>
-                        Manage Connections
-                    </h1>
-                    <p class="text-muted mt-2 mb-0">Connect your accounts to unlock powerful marketing and SEO features.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <x-page-header
+        heading="Manage Connections"
+        subheading="Connect your accounts to unlock powerful marketing and SEO features."
+        icon="fas fa-plug"
+    />
 
     <div class="container-fluid">
         {{-- Navigation Tabs --}}

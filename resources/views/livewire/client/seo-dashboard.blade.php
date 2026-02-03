@@ -14,44 +14,40 @@
     @endif
 
     {{-- Page Header --}}
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2 align-items-center">
-                <div class="col-sm-6">
-                    <h1 class="m-0 d-flex align-items-center">
-                        <i class="fas fa-search-dollar text-primary mr-3"></i>
-                        <span>SEO Dashboard</span>
-                        @if($gscConnected)
-                            <span class="badge badge-success ml-3"><i class="fab fa-google mr-1"></i> GSC Connected</span>
-                        @endif
-                    </h1>
-                </div>
-                <div class="col-sm-6">
-                    <div class="d-flex justify-content-end align-items-center">
-                        <select wire:model="dateRange" class="form-control mr-2" style="width: auto;">
-                            <option value="7">Last 7 days</option>
-                            <option value="28">Last 28 days</option>
-                            <option value="90">Last 90 days</option>
-                        </select>
-                        @if($gscConnected)
-                            <button wire:click="syncFromGsc" class="btn btn-outline-primary mr-2" wire:loading.attr="disabled">
-                                <i class="fas fa-sync-alt" wire:loading.class="fa-spin" wire:target="syncFromGsc"></i>
-                                Sync Data
-                            </button>
-                        @endif
-                        <div class="input-group" style="width: 300px;">
-                            <input type="url" wire:model.defer="websiteUrl" class="form-control" placeholder="https://example.com">
-                            <div class="input-group-append">
-                                <button wire:click="runPageSpeedAnalysis" class="btn btn-primary" wire:loading.attr="disabled">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </div>
+    <x-page-header>
+        <x-slot name="title">
+            <h1 class="m-0 d-flex align-items-center">
+                <i class="fas fa-search-dollar text-primary mr-3"></i>
+                <span>SEO Dashboard</span>
+                @if($gscConnected)
+                    <span class="badge badge-success ml-3"><i class="fab fa-google mr-1"></i> GSC Connected</span>
+                @endif
+            </h1>
+        </x-slot>
+        <x-slot name="right">
+            <div class="d-flex justify-content-end align-items-center">
+                <select wire:model="dateRange" class="form-control mr-2" style="width: auto;">
+                    <option value="7">Last 7 days</option>
+                    <option value="28">Last 28 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                @if($gscConnected)
+                    <button wire:click="syncFromGsc" class="btn btn-outline-primary mr-2" wire:loading.attr="disabled">
+                        <i class="fas fa-sync-alt" wire:loading.class="fa-spin" wire:target="syncFromGsc"></i>
+                        Sync Data
+                    </button>
+                @endif
+                <div class="input-group" style="width: 300px;">
+                    <input type="url" wire:model.defer="websiteUrl" class="form-control" placeholder="https://example.com">
+                    <div class="input-group-append">
+                        <button wire:click="runPageSpeedAnalysis" class="btn btn-primary" wire:loading.attr="disabled">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </x-slot>
+    </x-page-header>
 
     {{-- Loading Overlay --}}
     <div wire:loading.flex wire:target="runPageSpeedAnalysis, runSecurityScan, syncFromGsc" class="position-fixed w-100 h-100 d-flex align-items-center justify-content-center" style="top:0;left:0;background:rgba(0,0,0,0.3);z-index:9999;">
