@@ -23,13 +23,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- AdminLTE CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-
-    <!-- Brand Theme CSS -->
-    <link rel="stylesheet" href="{{ asset('css/brand.css') }}">
-
-    <!-- Custom Styles & JavaScript -->
+    <!-- Vite Assets (Tailwind CSS) -->
     @if(!app()->runningUnitTests())
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
@@ -37,8 +31,8 @@
     <!-- Livewire Styles -->
     @livewireStyles
 
-    <!-- Dynamic Brand Styles from Database -->
-    @include('layouts.partials.brand-styles')
+    <!-- Minimal Brand Styles (CSS Variables Only) -->
+    @include('layouts.partials.brand-styles-tailwind')
 
     {{-- Apply theme/density before paint --}}
     <script>
@@ -51,65 +45,147 @@
     </script>
 
     @stack('styles')
-
-    {{-- Site header HTML (branding setting from database) --}}
-    @php
-        $brandingService = app(\App\Services\BrandingService::class);
-    @endphp
-    {!! \App\Helpers\HtmlSanitizer::sanitizeAdmin($brandingService->get('site_header_html')) !!}
 </head>
 
-<body class="hold-transition sidebar-mini layout-fixed">
-    <div class="wrapper">
-        <!-- Navbar -->
-        @include('layouts.partials.navbar')
-
-        <!-- Main Sidebar Container -->
-        @include('layouts.partials.sidebar')
-
-        <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <section class="content pt-3">
-                <div class="container-fluid">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle mr-2"></i>
-                            {{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
+<body class="bg-slate-50 font-sans antialiased">
+    <div class="min-h-screen">
+        <!-- Mobile Menu Button -->
+        <div
+            class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button @click="sidebarOpen = !sidebarOpen" class="text-slate-600 hover:text-slate-900">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2">
+                    @if(config('branding.logo.header'))
+                        <img src="/{{ config('branding.logo.header') }}" alt="Logo" class="h-8">
+                    @else
+                        <span class="text-lg font-bold text-slate-900">{{ config('branding.company.name') }}</span>
                     @endif
-
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            {{ session('error') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                </a>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- User Menu -->
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" class="flex items-center gap-2 text-sm">
+                        <span class="hidden sm:block text-slate-700">{{ auth()->user()->name }}</span>
+                        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                            <i class="fas fa-user text-slate-600 text-sm"></i>
                         </div>
-                    @endif
-
-                    {{ $slot ?? '' }}
-                    @yield('content')
+                    </button>
+                    <div x-show="open" @click.away="open = false"
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+                        <a href="{{ route('profile.edit') }}"
+                            class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                            <i class="fas fa-user-circle mr-2"></i> Profile
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit"
+                                class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </section>
+            </div>
         </div>
 
-        <!-- Footer -->
-        @include('layouts.partials.footer')
+        <div x-data="{ sidebarOpen: false }" class="flex">
+            <!-- Sidebar -->
+            @include('layouts.partials.sidebar-tailwind')
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col min-h-screen lg:ml-64">
+                <!-- Top Navigation (Desktop) -->
+                <header class="hidden lg:block bg-white border-b border-slate-200 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            @if(isset($header))
+                                <h1 class="text-2xl font-bold text-slate-900">{{ $header }}</h1>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <!-- Theme Toggle -->
+                            <button onclick="window.__toggleTheme && window.__toggleTheme()"
+                                class="px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                                <i class="fas fa-adjust mr-2"></i>
+                                <span class="hidden xl:inline">Theme</span>
+                            </button>
+
+                            <!-- Notifications -->
+                            <div x-data="{ open: false }" class="relative">
+                                <button @click="open = !open"
+                                    class="relative px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                                    <i class="far fa-bell text-lg"></i>
+                                </button>
+                                <div x-show="open" @click.away="open = false"
+                                    class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 py-2">
+                                    <div class="px-4 py-2 border-b border-slate-200">
+                                        <h3 class="font-semibold text-slate-900">Notifications</h3>
+                                    </div>
+                                    <div class="px-4 py-3 text-sm text-slate-500">
+                                        No new notifications
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- User Menu -->
+                            <div x-data="{ open: false }" class="relative">
+                                <button @click="open = !open"
+                                    class="flex items-center gap-3 px-3 py-2 hover:bg-slate-100 rounded-lg transition-colors">
+                                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                                        <i class="fas fa-user text-slate-600 text-sm"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-slate-700">{{ auth()->user()->name }}</span>
+                                    <i class="fas fa-chevron-down text-xs text-slate-400"></i>
+                                </button>
+                                <div x-show="open" @click.away="open = false"
+                                    class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+                                    <a href="{{ route('profile.edit') }}"
+                                        class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                                        <i class="fas fa-user-circle mr-2"></i> Profile
+                                    </a>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Page Content -->
+                <main class="flex-1 p-6 lg:p-8">
+                    @yield('content')
+                    {{ $slot ?? '' }}
+                </main>
+
+                <!-- Footer -->
+                <footer class="bg-white border-t border-slate-200 px-6 py-4">
+                    <div class="flex items-center justify-between text-sm text-slate-600">
+                        <div>
+                            <strong>&copy; {{ date('Y') }} <a href="{{ config('branding.company.website') }}"
+                                    class="text-blue-600 hover:text-blue-700">{{ config('branding.company.name') }}</a>.</strong>
+                            All rights reserved.
+                        </div>
+                        <div>
+                            <b>Version</b> 1.0.0
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
     </div>
 
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- Bootstrap 4 -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- AdminLTE App -->
-    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Livewire Scripts -->
+    @livewireScripts
 
-    <!-- Theme/Density toggles -->
+    <!-- Theme Toggle Script -->
     <script>
         (function () {
             window.__toggleTheme = function () {
@@ -118,24 +194,10 @@
                 document.documentElement.setAttribute('data-theme', next);
                 localStorage.setItem('theme', next);
             };
-            window.__cycleDensity = function () {
-                const order = ['comfy', 'compact', 'extreme'];
-                const current = document.documentElement.getAttribute('data-density') || 'comfy';
-                const idx = Math.max(0, order.indexOf(current));
-                const next = order[(idx + 1) % order.length];
-                document.documentElement.setAttribute('data-density', next);
-                localStorage.setItem('density', next);
-            };
         })();
     </script>
 
-    <!-- Livewire Scripts -->
-    @livewireScripts
-
     @stack('scripts')
-
-    {{-- Site footer HTML (branding setting from database) --}}
-    {!! \App\Helpers\HtmlSanitizer::sanitizeAdmin(app(\App\Services\BrandingService::class)->get('site_footer_html')) !!}
 </body>
 
 </html>
