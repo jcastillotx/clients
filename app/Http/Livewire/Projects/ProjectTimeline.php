@@ -19,7 +19,7 @@ class ProjectTimeline extends Component
 
     public function updatedRequestId($value): void
     {
-        $this->requestId = $value ? (int) $value : null;
+        $this->requestId = (is_numeric($value) && $value !== '') ? (int) $value : null;
     }
 
     public function render()
