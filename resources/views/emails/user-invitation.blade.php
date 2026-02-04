@@ -1,26 +1,29 @@
-@extends('emails._layout')
+@php
+    $subject = 'You\'ve been invited';
+    $preheader = 'Set up your account to access the portal';
+@endphp
 
-@section('content')
-    <h1 style="margin:0 0 12px 0;font-size:20px;line-height:1.2;color:#0f172a;">
-        You’ve been invited
-    </h1>
+@component('emails._layout', ['subject' => $subject, 'preheader' => $preheader])
+    <div style="font-size:20px;font-weight:700;margin-bottom:12px;color:#0f172a;">
+        You've been invited
+    </div>
 
-    <p style="margin:0 0 10px 0;color:#334155;line-height:1.6;">
+    <div style="font-size:14px;color:#334155;line-height:1.6;margin-bottom:12px;">
         An account has been created for <strong>{{ $user->email }}</strong> with the role <strong>{{ $roleLabel }}</strong>.
-    </p>
+    </div>
 
-    <p style="margin:0 0 14px 0;color:#334155;line-height:1.6;">
+    <div style="font-size:14px;color:#334155;line-height:1.6;margin-bottom:20px;">
         Set your password to access the portal:
-    </p>
+    </div>
 
-    <p style="margin:0 0 18px 0;">
-        <a href="{{ $setPasswordUrl }}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:700;">
+    <div style="margin:18px 0;">
+        <a href="{{ $setPasswordUrl }}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;">
             Set password
         </a>
-    </p>
+    </div>
 
-    <p style="margin:0;color:#64748b;line-height:1.6;">
-        If you weren’t expecting this invitation, you can ignore this email.
-    </p>
-@endsection
+    <div style="font-size:13px;color:#64748b;line-height:1.6;margin-top:24px;">
+        If you weren't expecting this invitation, you can ignore this email.
+    </div>
+@endcomponent
 

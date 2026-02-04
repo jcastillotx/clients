@@ -2,33 +2,46 @@ import './bootstrap';
 
 // Custom JavaScript for Kre8iv Client Portal
 
-// Initialize tooltips
+// Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    // Auto-hide alerts after 5 seconds
+    // Auto-hide alerts after 5 seconds (vanilla JS)
     const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
     alerts.forEach(function(alert) {
         setTimeout(function() {
-            if (alert.classList.contains('show')) {
-                $(alert).alert('close');
-            }
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
         }, 5000);
+    });
+
+    // Alert dismiss buttons (vanilla JS replacement for Bootstrap)
+    document.querySelectorAll('.alert-close, .alert .close').forEach(button => {
+        button.addEventListener('click', function() {
+            const alert = this.closest('.alert');
+            if (alert) {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }
+        });
     });
 });
 
 // PWA: service worker + install prompt + offline indicator + basic push subscription helper
 document.addEventListener('DOMContentLoaded', function () {
-    // Offline indicator
+    // Offline indicator (Alpine.js compatible)
     const offlineIndicator = document.getElementById('offline-indicator');
     const setOfflineUi = () => {
         if (!offlineIndicator) return;
-        if (navigator.onLine) offlineIndicator.classList.add('d-none');
-        else offlineIndicator.classList.remove('d-none');
+        // Use Alpine.js x-data if available
+        if (offlineIndicator.__x) {
+            offlineIndicator.__x.$data.show = !navigator.onLine;
+        } else {
+            // Fallback to vanilla JS
+            if (navigator.onLine) {
+                offlineIndicator.classList.add('hidden');
+            } else {
+                offlineIndicator.classList.remove('hidden');
+            }
+        }
     };
     window.addEventListener('online', setOfflineUi);
     window.addEventListener('offline', setOfflineUi);
@@ -45,13 +58,22 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         deferredPrompt = e;
         if (banner && !localStorage.getItem(dismissedKey)) {
-            banner.classList.remove('d-none');
+            // Use Alpine.js if available
+            if (banner.__x) {
+                banner.__x.$data.show = true;
+            } else {
+                banner.classList.remove('hidden', 'd-none');
+            }
         }
     });
 
     dismissBtn?.addEventListener('click', () => {
         localStorage.setItem(dismissedKey, '1');
-        banner?.classList.add('d-none');
+        if (banner?.__x) {
+            banner.__x.$data.show = false;
+        } else {
+            banner?.classList.add('hidden', 'd-none');
+        }
     });
 
     installBtn?.addEventListener('click', async () => {
@@ -59,7 +81,11 @@ document.addEventListener('DOMContentLoaded', function () {
         deferredPrompt.prompt();
         try { await deferredPrompt.userChoice; } catch {}
         deferredPrompt = null;
-        banner?.classList.add('d-none');
+        if (banner?.__x) {
+            banner.__x.$data.show = false;
+        } else {
+            banner?.classList.add('hidden', 'd-none');
+        }
     });
 
     // Register service worker
@@ -116,7 +142,7 @@ async function subscribeToPush() {
 // Custom file input label update
 document.addEventListener('change', function(e) {
     if (e.target.classList.contains('custom-file-input')) {
-        const fileName = e.target.files.length > 1 
+        const fileName = e.target.files.length > 1
             ? e.target.files.length + ' files selected'
             : e.target.files[0]?.name || 'Choose file';
         const label = e.target.nextElementSibling;
@@ -153,36 +179,52 @@ function formatCurrency(input) {
 window.ClientPortal = {
     formatCurrency: formatCurrency,
     subscribeToPush: subscribeToPush,
-    
+
     showLoading: function() {
         const overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
+        overlay.className = 'fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center';
         overlay.id = 'loading-overlay';
-        overlay.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>';
+        overlay.innerHTML = '<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>';
         document.body.appendChild(overlay);
     },
-    
+
     hideLoading: function() {
         const overlay = document.getElementById('loading-overlay');
         if (overlay) {
             overlay.remove();
         }
     },
-    
+
     showNotification: function(message, type = 'info') {
         const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        alertDiv.style.cssText = 'top: 70px; right: 20px; z-index: 9999; max-width: 350px;';
+        const colors = {
+            success: 'alert-success',
+            error: 'alert-danger',
+            danger: 'alert-danger',
+            warning: 'alert-warning',
+            info: 'alert-info'
+        };
+        alertDiv.className = `alert ${colors[type] || 'alert-info'} fixed top-20 right-5 z-50 max-w-sm shadow-lg`;
         alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
-            </button>
+            <div class="flex items-center justify-between gap-3">
+                <span>${message}</span>
+                <button type="button" class="alert-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         `;
         document.body.appendChild(alertDiv);
-        
+
+        // Add close functionality
+        alertDiv.querySelector('.alert-close').addEventListener('click', function() {
+            alertDiv.style.opacity = '0';
+            setTimeout(() => alertDiv.remove(), 300);
+        });
+
+        // Auto-remove after 5 seconds
         setTimeout(function() {
-            $(alertDiv).alert('close');
+            alertDiv.style.opacity = '0';
+            setTimeout(() => alertDiv.remove(), 300);
         }, 5000);
     }
 };

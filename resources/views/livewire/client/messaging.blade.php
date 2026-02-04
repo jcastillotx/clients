@@ -1,55 +1,53 @@
 
     <x-slot name="header">Communication Hub</x-slot>
 
-    <div class="row">
-        <div class="col-lg-3">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-comments mr-1"></i> Conversations</h3>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div class="lg:col-span-3">
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                    <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-comments mr-1"></i> Conversations</h3>
                 </div>
-                <div class="card-body">
-                    <input class="form-control mb-2" placeholder="Search messages..." wire:model.live.debounce.300ms="search">
-                    <button class="btn btn-sm btn-outline-primary mb-2" data-toggle="collapse" data-target="#newConversation">
+                <div class="p-4">
+                    <input class="mb-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" placeholder="Search messages..." wire:model.live.debounce.300ms="search">
+                    <button class="mb-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 hover:bg-slate-50" onclick="document.getElementById('newConversation').classList.toggle('hidden')">
                         <i class="fas fa-plus mr-1"></i> New conversation
                     </button>
-                    <div class="collapse mb-2" id="newConversation">
-                        <div class="border rounded p-2">
-                            <div class="form-group mb-2">
-                                <label class="mb-1 small text-muted">Title</label>
-                                <input class="form-control form-control-sm" wire:model="newConversationTitle" placeholder="e.g. Website updates">
-                            </div>
-                            <div class="form-group mb-2">
-                                <label class="mb-1 small text-muted">Related request (optional)</label>
-                                <select class="form-control form-control-sm" wire:model="newConversationRequestId">
-                                    <option value="">None</option>
-                                    @foreach($requests as $r)
-                                        <option value="{{ $r->id }}">#{{ $r->id }} — {{ $r->title }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <button class="btn btn-sm btn-primary" wire:click="createConversation">
-                                Create
-                            </button>
+                    <div class="mb-2 hidden rounded-lg border border-slate-200 p-3" id="newConversation">
+                        <div class="mb-2">
+                            <label class="mb-1 text-xs font-medium text-slate-600">Title</label>
+                            <input class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" wire:model="newConversationTitle" placeholder="e.g. Website updates">
                         </div>
+                        <div class="mb-2">
+                            <label class="mb-1 text-xs font-medium text-slate-600">Related request (optional)</label>
+                            <select class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900" wire:model="newConversationRequestId">
+                                <option value="">None</option>
+                                @foreach($requests as $r)
+                                    <option value="{{ $r->id }}">#{{ $r->id }} — {{ $r->title }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button class="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800" wire:click="createConversation">
+                            Create
+                        </button>
                     </div>
-                    <div class="list-group">
+                    <div class="flex flex-col">
                         @foreach($conversations as $c)
-                            <a href="#" class="list-group-item list-group-item-action {{ $conversationId === $c->id ? 'active' : '' }}"
+                            <a href="#" class="block border-b border-slate-100 px-3 py-3 transition last:border-b-0 hover:bg-slate-50 {{ $conversationId === $c->id ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-900' }}"
                                wire:click.prevent="selectConversation({{ $c->id }})">
-                                <div class="font-weight-bold">{{ $c->title ?? 'Conversation #' . $c->id }}</div>
-                                <div class="small text-muted">
+                                <div class="font-semibold">{{ $c->title ?? 'Conversation #' . $c->id }}</div>
+                                <div class="text-sm {{ $conversationId === $c->id ? 'text-slate-300' : 'text-slate-500' }}">
                                     {{ $c->context_type === 'request' && $c->context_id ? 'Request #' . $c->context_id . ' · ' : '' }}
                                     {{ $c->is_closed ? 'closed' : 'open' }}
                                 </div>
                             </a>
                         @endforeach
                     </div>
-                    <small class="text-muted d-block mt-2">Real-time updates when available.</small>
+                    <small class="mt-2 block text-slate-500">Real-time updates when available.</small>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-9">
+        <div class="lg:col-span-9">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-inbox mr-1"></i> Chat</h3>

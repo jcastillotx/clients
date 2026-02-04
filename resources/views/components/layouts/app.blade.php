@@ -29,22 +29,19 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- AdminLTE CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-
-    <!-- Brand Theme CSS -->
-    <link rel="stylesheet" href="{{ asset('css/brand.css') }}">
-
-    <!-- Tailwind CSS (for custom components) -->
+    <!-- Vite Assets (Tailwind CSS) -->
     @if(!app()->runningUnitTests())
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 
+    <!-- Custom Brand Styles (Tailwind Extension) -->
+    <link rel="stylesheet" href="{{ asset('css/brand-tailwind.css') }}">
+
     <!-- Livewire Styles -->
     @livewireStyles
 
-    <!-- Dynamic Brand Styles from Database -->
-    @include('layouts.partials.brand-styles')
+    <!-- Minimal Brand Styles (CSS Variables Only) -->
+    @include('layouts.partials.brand-styles-tailwind')
 
     {{-- Apply theme/density before paint --}}
     <script>
@@ -65,92 +62,125 @@
     {!! \App\Helpers\HtmlSanitizer::sanitizeClient($brandingService->get('site_header_html')) !!}
 </head>
 
-<body class="hold-transition sidebar-mini layout-fixed">
-    <div class="wrapper">
+<body class="bg-slate-50 font-sans antialiased">
+    <div class="min-h-screen">
         <!-- PWA offline indicator -->
-        <div id="offline-indicator" class="alert alert-warning alert-dismissible fade show d-none m-2" role="status"
-            style="position: sticky; top: 0; z-index: 1050;">
-            <i class="fas fa-wifi mr-2"></i>
-            You’re offline. Some actions will be queued.
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-
-        <!-- PWA install prompt -->
-        <div id="pwa-install-banner" class="alert alert-info d-none m-2" role="status"
-            style="position: sticky; top: 0; z-index: 1050;">
-            <div class="d-flex align-items-center justify-content-between" style="gap: 12px;">
-                <div>
-                    <strong>Install the portal</strong>
-                    <div class="small text-muted">Get an app-like experience and offline support.</div>
-                </div>
-                <div class="d-flex" style="gap: 8px;">
-                    <button id="pwa-install-btn" type="button" class="btn btn-sm btn-primary">Install</button>
-                    <button id="pwa-install-dismiss" type="button" class="btn btn-sm btn-outline-secondary">Not
-                        now</button>
+        <div id="offline-indicator" x-data="{ show: false }" x-show="show" class="fixed top-0 left-0 right-0 z-50 mx-2 mt-2">
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-wifi text-amber-600"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm text-amber-800">
+                            You're offline. Some actions will be queued.
+                        </p>
+                    </div>
+                    <div class="ml-auto pl-3">
+                        <button @click="show = false" class="inline-flex rounded-md bg-amber-50 p-1.5 text-amber-500 hover:bg-amber-100">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Navbar -->
-        @include('layouts.partials.navbar')
+        <!-- PWA install prompt -->
+        <div id="pwa-install-banner" x-data="{ show: false }" x-show="show" class="fixed top-0 left-0 right-0 z-50 mx-2 mt-2">
+            <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <p class="text-sm font-medium text-blue-800">Install the portal</p>
+                        <p class="text-xs text-blue-600">Get an app-like experience and offline support.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="pwa-install-btn" type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Install</button>
+                        <button id="pwa-install-dismiss" type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50">Not now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <!-- Main Sidebar Container -->
-        @include('layouts.partials.sidebar')
+        <!-- Mobile Menu Button -->
+        <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button @click="sidebarOpen = !sidebarOpen" class="text-slate-600 hover:text-slate-900">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <span class="text-lg font-bold text-slate-900">{{ config('branding.company.name') }}</span>
+            </div>
+        </div>
 
-        <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <!-- Content Header (Page header) -->
-            @if(isset($header))
-                <x-page-header :heading="$header" :subheading="$subheader ?? null">
-                    @if(!empty($breadcrumb))
-                        <x-slot name="right">
-                            {{ $breadcrumb }}
-                        </x-slot>
+        <div x-data="{ sidebarOpen: false }" class="flex">
+            <!-- Sidebar -->
+            @include('layouts.partials.sidebar')
+
+            <!-- Overlay for mobile -->
+            <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-30 lg:hidden"></div>
+
+            <!-- Main Content -->
+            <main class="flex-1 lg:ml-0 pt-16 lg:pt-0">
+                <!-- Top Bar -->
+                @include('layouts.partials.navbar')
+
+                <!-- Page Content -->
+                <div class="p-6">
+                    <!-- Content Header -->
+                    @if(isset($header))
+                        <x-page-header :heading="$header" :subheading="$subheader ?? null">
+                            @if(!empty($breadcrumb))
+                                <x-slot name="right">
+                                    {{ $breadcrumb }}
+                                </x-slot>
+                            @endif
+                        </x-page-header>
                     @endif
-                </x-page-header>
-            @endif
 
-            <!-- Main content -->
-            <section class="content">
-                <div class="container-fluid">
                     <!-- Flash Messages -->
                     @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle mr-2"></i>
-                            {{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                        <div x-data="{ show: true }" x-show="show" x-transition class="relative rounded-lg border border-green-200 bg-green-50 p-4 mb-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle text-green-600"></i>
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm text-green-800">{{ session('success') }}</p>
+                                </div>
+                                <div class="ml-auto pl-3">
+                                    <button @click="show = false" class="inline-flex rounded-md bg-green-50 p-1.5 text-green-500 hover:bg-green-100">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
                     @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            {{ session('error') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                        <div x-data="{ show: true }" x-show="show" x-transition class="relative rounded-lg border border-red-200 bg-red-50 p-4 mb-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle text-red-600"></i>
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm text-red-800">{{ session('error') }}</p>
+                                </div>
+                                <div class="ml-auto pl-3">
+                                    <button @click="show = false" class="inline-flex rounded-md bg-red-50 p-1.5 text-red-500 hover:bg-red-100">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
                     {{ $slot }}
                 </div>
-            </section>
+
+                <!-- Footer -->
+                @include('layouts.partials.footer')
+            </main>
         </div>
-
-        <!-- Footer -->
-        @include('layouts.partials.footer')
     </div>
-
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- Bootstrap 4 -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- AdminLTE App -->
-    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 
     <!-- Theme/Density toggles -->
     <script>
@@ -176,6 +206,9 @@
     @livewireScripts
 
     @stack('scripts')
+
+    <!-- Alpine.js for dropdowns and interactive components -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     {{-- Site footer HTML (branding setting from database) --}}
     {!! \App\Helpers\HtmlSanitizer::sanitizeClient(app(\App\Services\BrandingService::class)->get('site_footer_html')) !!}

@@ -68,22 +68,24 @@
             <span>Messages</span>
         </a>
 
-        <a href="{{ route('admin.reports') }}"
+        <a href="{{ route('admin.reports.dashboard') }}"
             class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reports*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
             <i class="fas fa-chart-line w-5"></i>
             <span>Reporting</span>
         </a>
 
         {{-- Settings Section --}}
-        <div class="pt-4 pb-2">
-            <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Settings</p>
-        </div>
+        @can('manage settings')
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Settings</p>
+            </div>
 
-        <a href="{{ route('admin.settings.index') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.settings.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-cog w-5"></i>
-            <span>System Settings</span>
-        </a>
+            <a href="{{ route('admin.settings.index') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.settings.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-cog w-5"></i>
+                <span>System Settings</span>
+            </a>
+        @endcan
     </nav>
 </aside>
 

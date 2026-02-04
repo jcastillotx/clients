@@ -37,6 +37,9 @@
     <!-- Minimal Brand Styles (CSS Variables Only) -->
     @include('layouts.partials.brand-styles-tailwind')
 
+    <!-- Chart.js for Dashboard Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
     {{-- Apply theme/density before paint --}}
     <script>
         (function () {

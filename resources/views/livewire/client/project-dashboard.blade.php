@@ -9,104 +9,98 @@
         </style>
     @endpush
 
-    <div class="row">
-        <div class="col-lg-3">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-folder-open mr-1"></i> Projects</h3>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div class="lg:col-span-3">
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                    <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-folder-open mr-1"></i> Projects</h3>
                 </div>
-                <div class="card-body p-0">
-                    <ul class="nav nav-pills flex-column">
+                <div class="p-0">
+                    <ul class="flex flex-col">
                         @forelse($projects as $p)
-                            <li class="nav-item">
-                                <a href="#" class="nav-link {{ $project?->id === $p->id ? 'active' : '' }}" wire:click.prevent="selectProject({{ $p->id }})">
-                                    <div class="d-flex justify-content-between">
-                                        <span>{{ $p->name }}</span>
-                                        <span class="badge badge-secondary">{{ $p->status }}</span>
+                            <li class="border-b border-slate-100 last:border-b-0">
+                                <a href="#" class="block px-4 py-3 transition hover:bg-slate-50 {{ $project?->id === $p->id ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-900' }}" wire:click.prevent="selectProject({{ $p->id }})">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium">{{ $p->name }}</span>
+                                        <span class="badge">{{ $p->status }}</span>
                                     </div>
-                                    <div class="text-muted small">Progress: {{ $p->calculated_progress_percent }}%</div>
+                                    <div class="mt-1 text-sm {{ $project?->id === $p->id ? 'text-slate-300' : 'text-slate-500' }}">Progress: {{ $p->calculated_progress_percent }}%</div>
                                 </a>
                             </li>
                         @empty
-                            <li class="nav-item p-3 text-muted">No projects yet.</li>
+                            <li class="px-4 py-3 text-slate-500">No projects yet.</li>
                         @endforelse
                     </ul>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-9">
+        <div class="lg:col-span-9">
             @if(!$project)
-                <div class="alert alert-info">Select a project to view timeline and progress.</div>
+                <div class="alert-info">Select a project to view timeline and progress.</div>
             @else
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="small-box bg-info">
-                            <div class="inner">
-                                <h3>{{ $project->calculated_progress_percent }}%</h3>
-                                <p>Progress</p>
-                            </div>
-                            <div class="icon"><i class="fas fa-tasks"></i></div>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-sm">
+                        <div class="relative z-10">
+                            <h3 class="text-3xl font-bold">{{ $project->calculated_progress_percent }}%</h3>
+                            <p class="mt-1 text-sm text-blue-100">Progress</p>
                         </div>
+                        <div class="absolute bottom-4 right-4 text-6xl text-blue-400 opacity-20"><i class="fas fa-tasks"></i></div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="small-box bg-success">
-                            <div class="inner">
-                                <h3>@money($project->budget_amount)</h3>
-                                <p>Budget</p>
-                            </div>
-                            <div class="icon"><i class="fas fa-wallet"></i></div>
+                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 text-white shadow-sm">
+                        <div class="relative z-10">
+                            <h3 class="text-3xl font-bold">@money($project->budget_amount)</h3>
+                            <p class="mt-1 text-sm text-emerald-100">Budget</p>
                         </div>
+                        <div class="absolute bottom-4 right-4 text-6xl text-emerald-400 opacity-20"><i class="fas fa-wallet"></i></div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="small-box bg-warning">
-                            <div class="inner">
-                                <h3>@money($project->actual_spend)</h3>
-                                <p>Actual spend</p>
-                            </div>
-                            <div class="icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 p-6 text-white shadow-sm">
+                        <div class="relative z-10">
+                            <h3 class="text-3xl font-bold">@money($project->actual_spend)</h3>
+                            <p class="mt-1 text-sm text-amber-100">Actual spend</p>
                         </div>
+                        <div class="absolute bottom-4 right-4 text-6xl text-amber-400 opacity-20"><i class="fas fa-chart-line"></i></div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-stream mr-1"></i> Timeline (Gantt)</h3>
+                <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                        <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-stream mr-1"></i> Timeline (Gantt)</h3>
                     </div>
-                    <div class="card-body">
+                    <div class="p-4">
                         <div id="gantt"></div>
-                        <small class="text-muted">Touch-friendly: swipe horizontally to scroll.</small>
+                        <small class="text-slate-500">Touch-friendly: swipe horizontally to scroll.</small>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="fas fa-flag-checkered mr-1"></i> Milestones</h3>
-                            </div>
-                            <div class="card-body p-0">
-                                <table class="table table-sm mb-0">
-                                    <thead>
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-flag-checkered mr-1"></i> Milestones</h3>
+                        </div>
+                        <div class="p-0">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-slate-200">
+                                    <thead class="bg-slate-50">
                                         <tr>
-                                            <th>Milestone</th>
-                                            <th>Due</th>
-                                            <th>Status</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Milestone</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Due</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="divide-y divide-slate-100">
                                         @forelse($milestones as $m)
-                                            <tr>
-                                                <td>{{ $m->name }}</td>
-                                                <td class="text-muted">{{ $m->due_date?->toDateString() ?? '—' }}</td>
-                                                <td>
-                                                    <span class="badge badge-{{ $m->completed_at ? 'success' : 'secondary' }}">
+                                            <tr class="hover:bg-slate-50">
+                                                <td class="px-4 py-3 text-sm text-slate-900">{{ $m->name }}</td>
+                                                <td class="px-4 py-3 text-sm text-slate-500">{{ $m->due_date?->toDateString() ?? '—' }}</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <span class="badge-{{ $m->completed_at ? 'success' : 'secondary' }}">
                                                         {{ $m->completed_at ? 'done' : 'open' }}
                                                     </span>
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="3" class="text-muted text-center py-3">No milestones.</td></tr>
+                                            <tr><td colspan="3" class="px-4 py-3 text-center text-sm text-slate-500">No milestones.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>
@@ -114,77 +108,73 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="fas fa-check-square mr-1"></i> Deliverables</h3>
-                            </div>
-                            <div class="card-body">
-                                @forelse($deliverables as $d)
-                                    <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2">
-                                        <div>
-                                            <div class="font-weight-bold">{{ $d->title }}</div>
-                                            <div class="text-muted small">{{ $d->due_date?->toDateString() ?? '—' }}</div>
-                                        </div>
-                                        <span class="badge badge-{{ $d->is_done ? 'success' : 'secondary' }}">
-                                            {{ $d->is_done ? 'done' : 'open' }}
-                                        </span>
+                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-check-square mr-1"></i> Deliverables</h3>
+                        </div>
+                        <div class="p-4">
+                            @forelse($deliverables as $d)
+                                <div class="mb-2 flex items-center justify-between rounded-lg border border-slate-200 p-3">
+                                    <div>
+                                        <div class="font-semibold text-slate-900">{{ $d->title }}</div>
+                                        <div class="text-sm text-slate-500">{{ $d->due_date?->toDateString() ?? '—' }}</div>
                                     </div>
-                                @empty
-                                    <div class="text-muted">No deliverables.</div>
-                                @endforelse
-                            </div>
+                                    <span class="badge-{{ $d->is_done ? 'success' : 'secondary' }}">
+                                        {{ $d->is_done ? 'done' : 'open' }}
+                                    </span>
+                                </div>
+                            @empty
+                                <div class="text-slate-500">No deliverables.</div>
+                            @endforelse
                         </div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="fas fa-users mr-1"></i> Team</h3>
-                            </div>
-                            <div class="card-body">
-                                @forelse($team as $u)
-                                    <div class="d-flex justify-content-between border rounded p-2 mb-2">
-                                        <div>
-                                            <div class="font-weight-bold">{{ $u->name }}</div>
-                                            <div class="text-muted small">{{ $u->pivot->role ?? 'team' }}</div>
-                                        </div>
-                                        <div class="text-muted small">
-                                            {{ $u->pivot->hourly_rate ? '$' . number_format($u->pivot->hourly_rate, 2) . '/hr' : '' }}
-                                        </div>
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-users mr-1"></i> Team</h3>
+                        </div>
+                        <div class="p-4">
+                            @forelse($team as $u)
+                                <div class="mb-2 flex justify-between rounded-lg border border-slate-200 p-3">
+                                    <div>
+                                        <div class="font-semibold text-slate-900">{{ $u->name }}</div>
+                                        <div class="text-sm text-slate-500">{{ $u->pivot->role ?? 'team' }}</div>
                                     </div>
-                                @empty
-                                    <div class="text-muted">Team not assigned yet.</div>
-                                @endforelse
-                            </div>
+                                    <div class="text-sm text-slate-500">
+                                        {{ $u->pivot->hourly_rate ? '$' . number_format($u->pivot->hourly_rate, 2) . '/hr' : '' }}
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-slate-500">Team not assigned yet.</div>
+                            @endforelse
                         </div>
                     </div>
 
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title"><i class="fas fa-receipt mr-1"></i> Recent cost entries</h3>
-                            </div>
-                            <div class="card-body p-0">
-                                <table class="table table-sm mb-0">
-                                    <thead>
+                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-receipt mr-1"></i> Recent cost entries</h3>
+                        </div>
+                        <div class="p-0">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-slate-200">
+                                    <thead class="bg-slate-50">
                                         <tr>
-                                            <th>When</th>
-                                            <th>Item</th>
-                                            <th class="text-right">Amount</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">When</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Item</th>
+                                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Amount</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="divide-y divide-slate-100">
                                         @forelse($costEntries as $c)
-                                            <tr>
-                                                <td class="text-muted">{{ $c->occurred_on?->toDateString() ?? $c->created_at?->toDateString() }}</td>
-                                                <td>{{ $c->description }}</td>
-                                                <td class="text-right">@money($c->amount)</td>
+                                            <tr class="hover:bg-slate-50">
+                                                <td class="px-4 py-3 text-sm text-slate-500">{{ $c->occurred_on?->toDateString() ?? $c->created_at?->toDateString() }}</td>
+                                                <td class="px-4 py-3 text-sm text-slate-900">{{ $c->description }}</td>
+                                                <td class="px-4 py-3 text-right text-sm text-slate-900">@money($c->amount)</td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="3" class="text-muted text-center py-3">No cost entries.</td></tr>
+                                            <tr><td colspan="3" class="px-4 py-3 text-center text-sm text-slate-500">No cost entries.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>

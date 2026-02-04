@@ -1,53 +1,100 @@
-<div class="row">
-    <div class="col-md-6">
-        <h5 class="mb-3">Authentication</h5>
-        <div class="custom-control custom-switch mb-3">
-            <input type="checkbox" class="custom-control-input" id="enforce_2fa" wire:model="security.enforce_2fa">
-            <label class="custom-control-label" for="enforce_2fa">Enforce Two-Factor Authentication</label>
-        </div>
-        <div class="alert alert-info">
-            2FA enforcement is stored here; implementing the actual 2FA flow requires an authentication feature (e.g. TOTP) if not already present.
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="space-y-6">
+        <div>
+            <h5 class="text-base font-semibold text-slate-900 mb-4">Authentication</h5>
+            <label class="flex items-center gap-3 cursor-pointer mb-4">
+                <input type="checkbox"
+                       class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0"
+                       id="enforce_2fa"
+                       wire:model="security.enforce_2fa">
+                <span class="text-sm text-slate-700">Enforce Two-Factor Authentication</span>
+            </label>
+            <div class="rounded-xl bg-blue-50 border border-blue-200 p-4">
+                <p class="text-sm text-blue-800">
+                    2FA enforcement is stored here; implementing the actual 2FA flow requires an authentication feature (e.g. TOTP) if not already present.
+                </p>
+            </div>
         </div>
 
-        <h5 class="mt-4 mb-3">Password policy</h5>
-        <div class="form-group">
-            <label class="mb-1">Minimum length</label>
-            <input type="number" class="form-control" wire:model="security.password_min_length" min="6" max="128">
-        </div>
-        <div class="custom-control custom-switch mb-2">
-            <input type="checkbox" class="custom-control-input" id="pw_symbols" wire:model="security.password_require_symbols">
-            <label class="custom-control-label" for="pw_symbols">Require symbols</label>
-        </div>
-        <div class="form-group">
-            <label class="mb-1">Expiration (days)</label>
-            <input type="number" class="form-control" wire:model="security.password_expiration_days" min="0">
-            <small class="text-muted">0 = never expires</small>
+        <div>
+            <h5 class="text-base font-semibold text-slate-900 mb-4">Password Policy</h5>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Minimum length</label>
+                    <input type="number"
+                           class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors"
+                           wire:model="security.password_min_length"
+                           min="6"
+                           max="128">
+                </div>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox"
+                           class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 focus:ring-offset-0"
+                           id="pw_symbols"
+                           wire:model="security.password_require_symbols">
+                    <span class="text-sm text-slate-700">Require symbols</span>
+                </label>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Expiration (days)</label>
+                    <input type="number"
+                           class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors"
+                           wire:model="security.password_expiration_days"
+                           min="0">
+                    <small class="block mt-1.5 text-xs text-slate-500">0 = never expires</small>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <h5 class="mb-3">Sessions & Limits</h5>
-        <div class="form-group">
-            <label class="mb-1">Session timeout (minutes)</label>
-            <input type="number" class="form-control" wire:model="security.session_timeout_minutes" min="5" max="10080">
-        </div>
-        <div class="form-group">
-            <label class="mb-1">Login attempt limit</label>
-            <input type="number" class="form-control" wire:model="security.login_max_attempts" min="1" max="100">
-        </div>
-        <div class="form-group">
-            <label class="mb-1">API rate limit (per minute)</label>
-            <input type="number" class="form-control" wire:model="security.api_rate_limit_per_minute" min="1" max="10000">
+    <div class="space-y-6">
+        <div>
+            <h5 class="text-base font-semibold text-slate-900 mb-4">Sessions & Limits</h5>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Session timeout (minutes)</label>
+                    <input type="number"
+                           class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors"
+                           wire:model="security.session_timeout_minutes"
+                           min="5"
+                           max="10080">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Login attempt limit</label>
+                    <input type="number"
+                           class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors"
+                           wire:model="security.login_max_attempts"
+                           min="1"
+                           max="100">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">API rate limit (per minute)</label>
+                    <input type="number"
+                           class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors"
+                           wire:model="security.api_rate_limit_per_minute"
+                           min="1"
+                           max="10000">
+                </div>
+            </div>
         </div>
 
-        <h5 class="mt-4 mb-3">IP access</h5>
-        <div class="form-group">
-            <label class="mb-1">Whitelist (comma separated)</label>
-            <textarea class="form-control" rows="2" wire:model="security.ip_whitelist" placeholder="1.2.3.4, 10.0.0.0/8"></textarea>
-        </div>
-        <div class="form-group">
-            <label class="mb-1">Blacklist (comma separated)</label>
-            <textarea class="form-control" rows="2" wire:model="security.ip_blacklist" placeholder="5.6.7.8, 192.168.1.0/24"></textarea>
+        <div>
+            <h5 class="text-base font-semibold text-slate-900 mb-4">IP Access</h5>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Whitelist (comma separated)</label>
+                    <textarea rows="2"
+                              class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"
+                              wire:model="security.ip_whitelist"
+                              placeholder="1.2.3.4, 10.0.0.0/8"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Blacklist (comma separated)</label>
+                    <textarea rows="2"
+                              class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 focus:outline-none transition-colors resize-y"
+                              wire:model="security.ip_blacklist"
+                              placeholder="5.6.7.8, 192.168.1.0/24"></textarea>
+                </div>
+            </div>
         </div>
     </div>
 </div>

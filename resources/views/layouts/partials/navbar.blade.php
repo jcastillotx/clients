@@ -1,24 +1,22 @@
-<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+<nav class="hidden lg:flex items-center justify-between h-16 bg-white border-b border-slate-200 px-6">
     <!-- Left navbar links -->
-    <ul class="navbar-nav">
-        <li class="nav-item">
-            <a class="nav-link" data-widget="pushmenu" href="#" role="button">
-                <i class="fas fa-bars"></i>
-            </a>
-        </li>
-        <li class="nav-item d-none d-sm-inline-block">
+    <div class="flex items-center gap-4">
+        <button class="lg:hidden text-slate-600 hover:text-slate-900" data-widget="pushmenu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="hidden sm:block">
             @php $isAdminArea = request()->routeIs('admin.*'); @endphp
-            <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="nav-link">
+            <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="text-sm font-medium text-slate-700 hover:text-slate-900">
                 {{ $isAdminArea ? 'Admin Dashboard' : 'Dashboard' }}
             </a>
-        </li>
-    </ul>
+        </div>
+    </div>
 
     <!-- Right navbar links -->
-    <ul class="navbar-nav ml-auto">
+    <div class="flex items-center gap-4">
         <!-- Theme + Density -->
-        <li class="nav-item d-none d-md-flex align-items-center">
-            <button type="button" class="btn-theme-toggle mr-2" onclick="window.__toggleTheme && window.__toggleTheme()" title="Toggle Light/Dark Mode">
+        <div class="hidden md:flex items-center gap-2">
+            <button type="button" class="btn-theme-toggle" onclick="window.__toggleTheme && window.__toggleTheme()" title="Toggle Light/Dark Mode">
                 <i class="fas fa-adjust"></i>
                 <span>Light/Dark</span>
             </button>
@@ -26,12 +24,12 @@
                 <i class="fas fa-compress-arrows-alt"></i>
                 <span>Padding</span>
             </button>
-        </li>
+        </div>
 
         <!-- Notifications Dropdown -->
-        <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#">
-                <i class="far fa-bell"></i>
+        <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" class="relative text-slate-600 hover:text-slate-900">
+                <i class="far fa-bell text-lg"></i>
                 @php
                     $user = auth()->user();
                     $pendingCount = 0;
@@ -44,53 +42,66 @@
                     }
                 @endphp
                 @if(($pendingCount + $unread) > 0)
-                <span class="badge badge-warning navbar-badge">{{ $pendingCount + $unread }}</span>
+                <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-amber-500 rounded-full">{{ $pendingCount + $unread }}</span>
                 @endif
-            </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                <span class="dropdown-item dropdown-header">Notifications</span>
-                <div class="dropdown-divider"></div>
+            </button>
+            <div x-show="open" @click.away="open = false"
+                class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                <div class="px-4 py-3 border-b border-slate-200">
+                    <span class="font-semibold text-slate-900">Notifications</span>
+                </div>
                 @if($unread > 0)
-                <a href="{{ route('client.notifications') }}" class="dropdown-item">
-                    <i class="fas fa-bell mr-2"></i> {{ $unread }} unread notification(s)
-                    <span class="float-right text-muted text-sm">Open</span>
+                <a href="{{ route('client.notifications') }}" class="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <i class="fas fa-bell mr-2"></i> {{ $unread }} unread notification(s)
+                        </div>
+                        <span class="text-xs text-slate-500">Open</span>
+                    </div>
                 </a>
-                <div class="dropdown-divider"></div>
+                <div class="border-t border-slate-200"></div>
                 @endif
                 @if($pendingCount > 0)
-                <a href="{{ route('invoices.index') }}" class="dropdown-item">
-                    <i class="fas fa-file-invoice mr-2"></i> {{ $pendingCount }} pending invoice(s)
-                    <span class="float-right text-muted text-sm">View</span>
+                <a href="{{ route('invoices.index') }}" class="block px-4 py-3 text-sm text-slate-700 hover:bg-slate-50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <i class="fas fa-file-invoice mr-2"></i> {{ $pendingCount }} pending invoice(s)
+                        </div>
+                        <span class="text-xs text-slate-500">View</span>
+                    </div>
                 </a>
                 @else
-                <span class="dropdown-item text-muted">No new notifications</span>
+                <div class="px-4 py-3 text-sm text-slate-500">No new notifications</div>
                 @endif
             </div>
-        </li>
+        </div>
 
         <!-- User Dropdown -->
-        <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#">
+        <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" class="flex items-center gap-2 text-sm">
                 @php $u = auth()->user(); $photo = $u?->profilePhotoUrl(); @endphp
                 @if($photo)
-                    <img src="{{ $photo }}" alt="Profile photo" class="img-circle elevation-1" style="width: 22px; height: 22px; object-fit: cover;">
+                    <img src="{{ $photo }}" alt="Profile photo" class="w-8 h-8 rounded-full object-cover">
                 @else
-                    <i class="far fa-user"></i>
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                        <i class="far fa-user text-slate-600 text-sm"></i>
+                    </div>
                 @endif
-                <span class="d-none d-md-inline ml-1">{{ $u->name }}</span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right">
-                <a href="{{ route('profile.edit') }}" class="dropdown-item">
+                <span class="hidden md:inline text-slate-700">{{ $u->name }}</span>
+            </button>
+            <div x-show="open" @click.away="open = false"
+                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                     <i class="fas fa-user-cog mr-2"></i> Profile Settings
                 </a>
-                <div class="dropdown-divider"></div>
+                <div class="border-t border-slate-200 my-1"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="dropdown-item">
+                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                         <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
                     </button>
                 </form>
             </div>
-        </li>
-    </ul>
+        </div>
+    </div>
 </nav>

@@ -1,117 +1,124 @@
 <div class="space-y-4">
-    <div class="row row-cards">
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="subheader">Total Active Clients</div>
-                    <div class="h1 mb-0">{{ $activeClients }}</div>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="p-6">
+                    <div class="text-sm font-medium text-slate-500 mb-2">Total Active Clients</div>
+                    <div class="text-3xl font-bold text-slate-900">{{ $activeClients }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="subheader">Open Requests</div>
-                    <div class="h1 mb-0">{{ array_sum($openRequestsByStatus) }}</div>
-                    <div class="mt-2 small text-muted">
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="p-6">
+                    <div class="text-sm font-medium text-slate-500 mb-2">Open Requests</div>
+                    <div class="text-3xl font-bold text-slate-900">{{ array_sum($openRequestsByStatus) }}</div>
+                    <div class="mt-2 text-sm text-slate-500">
                         @foreach($openRequestsByStatus as $status => $count)
-                            <span class="me-2">{{ ucfirst(str_replace('_',' ', $status)) }}: <strong>{{ $count }}</strong></span>
+                            <span class="mr-2">{{ ucfirst(str_replace('_',' ', $status)) }}: <strong>{{ $count }}</strong></span>
                         @endforeach
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="subheader">Outstanding Invoice Amount</div>
-                    <div class="h1 mb-0">${{ number_format($outstandingInvoiceAmount, 2) }}</div>
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="p-6">
+                    <div class="text-sm font-medium text-slate-500 mb-2">Outstanding Invoice Amount</div>
+                    <div class="text-3xl font-bold text-slate-900">${{ number_format($outstandingInvoiceAmount, 2) }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-xl-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="subheader">Revenue (This Month / Last Month)</div>
-                    <div class="h1 mb-0">${{ number_format($revenueThisMonth, 2) }}</div>
-                    <div class="mt-1 text-muted small">Last month: ${{ number_format($revenueLastMonth, 2) }}</div>
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="p-6">
+                    <div class="text-sm font-medium text-slate-500 mb-2">Revenue (This Month / Last Month)</div>
+                    <div class="text-3xl font-bold text-slate-900">${{ number_format($revenueThisMonth, 2) }}</div>
+                    <div class="mt-1 text-sm text-slate-500">Last month: ${{ number_format($revenueLastMonth, 2) }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-xl-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="subheader">Active Contracts</div>
-                    <div class="h1 mb-0">{{ $activeContracts }}</div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-4">
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="p-6">
+                    <div class="text-sm font-medium text-slate-500 mb-2">Active Contracts</div>
+                    <div class="text-3xl font-bold text-slate-900">{{ $activeContracts }}</div>
                 </div>
             </div>
         </div>
 
         <!-- Quick actions -->
-        <div class="col-12 col-xl-9">
-            <div class="card">
-                <div class="card-body d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <div class="xl:col-span-3">
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="p-6 flex flex-wrap gap-2 items-center justify-between">
                     <div>
-                        <div class="fw-semibold">Quick actions</div>
-                        <div class="text-muted small">Jump to common admin workflows.</div>
+                        <div class="font-semibold text-slate-900">Quick actions</div>
+                        <div class="text-slate-500 text-sm">Jump to common admin workflows.</div>
                     </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('admin.clients.create') }}" class="btn btn-primary">Create Client</a>
-                        <a href="{{ route('admin.invoices.create') }}" class="btn btn-outline-primary">Create Invoice</a>
-                        <a href="{{ route('admin.requests.index') }}" class="btn btn-outline-primary">Assign Request</a>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="{{ route('admin.clients.create') }}" class="btn-brand-primary">Create Client</a>
+                        <a href="{{ route('admin.invoices.create') }}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">Create Invoice</a>
+                        <a href="{{ route('admin.requests.index') }}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">Assign Request</a>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Charts -->
-        <div class="col-12 col-xl-6">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Request status funnel</div>
+    <!-- Charts -->
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <div class="font-semibold text-slate-900">Request status funnel</div>
                 </div>
-                <div class="card-body">
+                <div class="p-6">
                     <canvas id="adminRequestStatusChart" height="160"></canvas>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-xl-6">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Revenue trend (last 6 months)</div>
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <div class="font-semibold text-slate-900">Revenue trend (last 6 months)</div>
                 </div>
-                <div class="card-body">
+                <div class="p-6">
                     <canvas id="adminRevenueTrendChart" height="160"></canvas>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Overdue invoices -->
-        <div class="col-12 col-xl-6">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Overdue invoices</div>
+    <!-- Overdue invoices and Top clients -->
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <div class="font-semibold text-slate-900">Overdue invoices</div>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-vcenter">
-                        <thead>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th>Invoice</th>
-                                <th>Client</th>
-                                <th class="text-end">Amount</th>
-                                <th>Due</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Invoice</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Client</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Amount</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Due</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-slate-200">
                             @forelse($overdueInvoices as $inv)
-                                <tr>
-                                    <td class="fw-semibold">{{ $inv['invoice_number'] }}</td>
-                                    <td>{{ $inv['client'] }}</td>
-                                    <td class="text-end">${{ number_format((float) $inv['amount'], 2) }}</td>
-                                    <td>{{ $inv['due_date'] ?? '—' }}</td>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3 text-sm font-semibold">{{ $inv['invoice_number'] }}</td>
+                                    <td class="px-4 py-3 text-sm">{{ $inv['client'] }}</td>
+                                    <td class="px-4 py-3 text-sm text-right">${{ number_format((float) $inv['amount'], 2) }}</td>
+                                    <td class="px-4 py-3 text-sm">{{ $inv['due_date'] ?? '—' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-muted">No overdue invoices.</td></tr>
+                                <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No overdue invoices.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -119,57 +126,54 @@
             </div>
         </div>
 
-        <!-- Top clients -->
-        <div class="col-12 col-xl-6">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Top clients by revenue</div>
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <div class="font-semibold text-slate-900">Top clients by revenue</div>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-vcenter">
-                        <thead>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th>Client</th>
-                                <th class="text-end">Revenue</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Client</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Revenue</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-slate-200">
                             @forelse($topClients as $c)
-                                <tr>
-                                    <td class="fw-semibold">{{ $c['company'] }}</td>
-                                    <td class="text-end">${{ number_format((float) $c['total'], 2) }}</td>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-3 text-sm font-semibold">{{ $c['company'] }}</td>
+                                    <td class="px-4 py-3 text-sm text-right">${{ number_format((float) $c['total'], 2) }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="2" class="text-muted">No revenue yet.</td></tr>
+                                <tr><td colspan="2" class="px-4 py-8 text-center text-slate-500">No revenue yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Recent activity -->
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Recent activity (all clients)</div>
+    <!-- Recent activity -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div class="font-semibold text-slate-900">Recent activity (all clients)</div>
+        </div>
+        <div class="divide-y divide-slate-200">
+            @forelse($recentActivity as $a)
+                <div class="p-4 hover:bg-slate-50 transition-colors">
+                    <div class="flex justify-between">
+                        <div class="font-semibold text-slate-900">{{ $a['description'] }}</div>
+                        <div class="text-slate-500 text-sm">{{ $a['when'] }}</div>
+                    </div>
+                    <div class="text-slate-500 text-sm">
+                        {{ $a['user'] }} @if($a['client']) · {{ $a['client'] }} @endif · {{ $a['log'] }}
+                    </div>
                 </div>
-                <div class="list-group list-group-flush">
-                    @forelse($recentActivity as $a)
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between">
-                                <div class="fw-semibold">{{ $a['description'] }}</div>
-                                <div class="text-muted small">{{ $a['when'] }}</div>
-                            </div>
-                            <div class="text-muted small">
-                                {{ $a['user'] }} @if($a['client']) · {{ $a['client'] }} @endif · {{ $a['log'] }}
-                            </div>
-                        </div>
-                    @empty
-                        <div class="list-group-item text-muted">No activity yet.</div>
-                    @endforelse
-                </div>
-            </div>
+            @empty
+                <div class="p-4 text-slate-500">No activity yet.</div>
+            @endforelse
         </div>
     </div>
 </div>

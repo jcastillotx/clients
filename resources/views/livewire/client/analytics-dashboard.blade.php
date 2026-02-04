@@ -1,39 +1,33 @@
-<div>
-    <div class="row">
-        <div class="col-md-3">
-            <div class="small-box bg-danger">
-                <div class="inner">
-                    <h3>@money($unpaid)</h3>
-                    <p>Unpaid invoices</p>
-                </div>
-                <div class="icon"><i class="fas fa-file-invoice-dollar"></i></div>
+<div class="space-y-6">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 p-6 text-white shadow-sm">
+            <div class="relative z-10">
+                <h3 class="text-3xl font-bold">@money($unpaid)</h3>
+                <p class="mt-1 text-sm text-rose-100">Unpaid invoices</p>
             </div>
+            <div class="absolute bottom-4 right-4 text-6xl text-rose-400 opacity-20"><i class="fas fa-file-invoice-dollar"></i></div>
         </div>
-        <div class="col-md-3">
-            <div class="small-box bg-info">
-                <div class="inner">
-                    <h3>{{ $completionRate }}%</h3>
-                    <p>Request completion rate</p>
-                </div>
-                <div class="icon"><i class="fas fa-clipboard-check"></i></div>
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-sm">
+            <div class="relative z-10">
+                <h3 class="text-3xl font-bold">{{ $completionRate }}%</h3>
+                <p class="mt-1 text-sm text-blue-100">Request completion rate</p>
             </div>
+            <div class="absolute bottom-4 right-4 text-6xl text-blue-400 opacity-20"><i class="fas fa-clipboard-check"></i></div>
         </div>
-        <div class="col-md-3">
-            <div class="small-box bg-success">
-                <div class="inner">
-                    <h3>{{ $avgResponseHours ? number_format((float) $avgResponseHours, 1) : '—' }}</h3>
-                    <p>Avg response time (hrs)</p>
-                </div>
-                <div class="icon"><i class="fas fa-stopwatch"></i></div>
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 text-white shadow-sm">
+            <div class="relative z-10">
+                <h3 class="text-3xl font-bold">{{ $avgResponseHours ? number_format((float) $avgResponseHours, 1) : '—' }}</h3>
+                <p class="mt-1 text-sm text-emerald-100">Avg response time (hrs)</p>
             </div>
+            <div class="absolute bottom-4 right-4 text-6xl text-emerald-400 opacity-20"><i class="fas fa-stopwatch"></i></div>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-chart-line mr-1"></i> Monthly spending trend</h3>
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-chart-line mr-1"></i> Monthly spending trend</h3>
         </div>
-        <div class="card-body">
+        <div class="p-4">
             <canvas id="spendChart" height="80"></canvas>
         </div>
     </div>

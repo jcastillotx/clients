@@ -1,28 +1,28 @@
 <div>
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div>
             <div class="page-pretitle">Admin</div>
             <h2 class="page-title mb-0">Request #{{ $request->id }}</h2>
-            <div class="text-muted small">
+            <div class="text-slate-500 text-sm">
                 {{ $request->client?->company_name ?? ('Client #' . $request->client_id) }} ·
                 {{ $request->created_at?->format('Y-m-d H:i') }}
             </div>
         </div>
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-            <span class="badge bg-{{ $request->status_color }}">{{ $statusLabels[$request->status] ?? $request->status }}</span>
-            <a href="{{ route('admin.requests.estimator', $request) }}" class="btn btn-outline-primary">Estimator</a>
-            <a href="{{ route('admin.requests.index') }}" class="btn btn-outline-secondary">Back</a>
+        <div class="flex flex-wrap gap-2 items-center">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-{{ $request->status_color }}-100 text-{{ $request->status_color }}-800">{{ $statusLabels[$request->status] ?? $request->status }}</span>
+            <a href="{{ route('admin.requests.estimator', $request) }}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">Estimator</a>
+            <a href="{{ route('admin.requests.index') }}" class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700">Back</a>
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-xl-8">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <div class="card-title">{{ $request->title }}</div>
+    <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+        <div class="lg:col-span-8">
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-3">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <div class="font-semibold text-slate-900">{{ $request->title }}</div>
                 </div>
-                <div class="card-body">
-                    <div class="text-muted mb-2">
+                <div class="p-6">
+                    <div class="text-slate-500 mb-2">
                         <strong>Type:</strong> {{ $request->type_label }} ·
                         <strong>Priority:</strong> {{ $request->priority_label }} ·
                         <strong>Created by:</strong> {{ $request->creator?->name ?? '—' }}
@@ -31,23 +31,23 @@
                 </div>
             </div>
 
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div class="card-title mb-0">Workflow</div>
-                    <div class="d-flex flex-wrap" style="gap:8px;">
-                        <div class="text-muted small">One-click status updates</div>
-                        <button class="btn btn-sm btn-outline-secondary" wire:click="convertToProject">
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-3">
+                <div class="flex justify-content-between items-center px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <div class="font-semibold text-slate-900">Workflow</div>
+                    <div class="flex flex-wrap gap-2">
+                        <div class="text-slate-500 text-sm">One-click status updates</div>
+                        <button class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100" wire:click="convertToProject">
                             <i class="fas fa-project-diagram mr-1"></i> Convert to project
                         </button>
                     </div>
                 </div>
-                <div class="card-body d-flex flex-wrap gap-2">
-                    <button class="btn btn-outline-info" wire:click="setStatus('in_review')">Move to Review</button>
-                    <button class="btn btn-outline-primary" wire:click="setStatus('approved')">Approve</button>
-                    <button class="btn btn-outline-info" wire:click="setStatus('in_progress')">Start Work</button>
-                    <button class="btn btn-outline-success" wire:click="setStatus('completed')">Complete</button>
-                    <button class="btn btn-outline-secondary" wire:click="setStatus('on_hold')">On Hold</button>
-                    <button class="btn btn-outline-danger" wire:click="setStatus('cancelled')">Cancel</button>
+                <div class="p-6 flex flex-wrap gap-2">
+                    <button class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100" wire:click="setStatus('in_review')">Move to Review</button>
+                    <button class="btn-brand-primary" wire:click="setStatus('approved')">Approve</button>
+                    <button class="inline-flex items-center px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100" wire:click="setStatus('in_progress')">Start Work</button>
+                    <button class="inline-flex items-center px-4 py-2 text-sm font-semibold text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100" wire:click="setStatus('completed')">Complete</button>
+                    <button class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700" wire:click="setStatus('on_hold')">On Hold</button>
+                    <button class="inline-flex items-center px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100" wire:click="setStatus('cancelled')">Cancel</button>
                 </div>
             </div>
 

@@ -1,960 +1,805 @@
-<aside class="main-sidebar sidebar-dark-primary elevation-4">
+<aside class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-slate-900 transform transition-transform duration-200 ease-in-out lg:translate-x-0 pt-16 lg:pt-0">
     <!-- Brand Logo -->
     @php
         $isAdminArea = request()->routeIs('admin.*');
         $logo = config('branding.admin.dashboard_logo') ?: config('branding.logo.main');
     @endphp
-    <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="brand-link {{ !empty($logo) ? 'text-center' : '' }}">
-        @if(!empty($logo))
-            <img src="{{ asset($logo) }}" alt="{{ config('branding.company.name') }}" class="brand-image img-circle elevation-3 mx-auto" style="opacity: .85; margin-right: 0 !important; display: block;" onerror="this.style.display='none'">
-        @else
-            <span class="brand-text font-weight-light">
-                {{ $isAdminArea ? 'Admin' : 'Client Portal' }}
-            </span>
-        @endif
-    </a>
+    <div class="hidden lg:flex items-center justify-center h-16 border-b border-slate-800 px-4">
+        <a href="{{ $isAdminArea ? route('admin.dashboard') : route('dashboard') }}" class="flex items-center gap-2">
+            @if(!empty($logo))
+                <img src="{{ asset($logo) }}" alt="{{ config('branding.company.name') }}" class="h-8">
+            @else
+                <span class="text-lg font-bold text-white">
+                    {{ $isAdminArea ? 'Admin' : 'Client Portal' }}
+                </span>
+            @endif
+        </a>
+    </div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
+    <!-- Sidebar Content -->
+    <div class="flex-1 overflow-y-auto">
         <!-- Sidebar user panel -->
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-            <div class="image">
+        <div class="flex items-center gap-3 px-4 py-4 border-b border-slate-800">
+            <div class="flex-shrink-0">
                 @php $u = auth()->user(); $photo = $u?->profilePhotoUrl(); @endphp
                 @if($photo)
-                    <img src="{{ $photo }}" alt="Profile photo" class="img-circle elevation-2" style="width: 34px; height: 34px; object-fit: cover;">
+                    <img src="{{ $photo }}" alt="Profile photo" class="w-10 h-10 rounded-full object-cover">
                 @else
-                    <div class="img-circle elevation-2 bg-info d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
-                        <span class="text-white font-weight-bold">{{ $u->initials }}</span>
+                    <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">{{ $u->initials }}</span>
                     </div>
                 @endif
             </div>
-            <div class="info">
-                <a href="{{ route('profile.edit') }}" class="d-block">{{ auth()->user()->name }}</a>
+            <div class="flex-1 min-w-0">
+                <a href="{{ route('profile.edit') }}" class="block text-sm font-medium text-white hover:text-slate-200 truncate">{{ auth()->user()->name }}</a>
                 @if(auth()->user()->client)
-                <small class="text-muted">{{ auth()->user()->client->company_name }}</small>
+                <p class="text-xs text-slate-400 truncate">{{ auth()->user()->client->company_name }}</p>
                 @endif
             </div>
         </div>
 
         <!-- Sidebar Menu -->
-        <nav class="mt-2">
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+        <nav class="py-4 px-3 space-y-1">
+            {{-- ============================================= --}}
+            {{-- DASHBOARD --}}
+            {{-- ============================================= --}}
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-tachometer-alt w-5"></i>
+                <span>Dashboard</span>
+            </a>
 
-                {{-- ============================================= --}}
-                {{-- DASHBOARD --}}
-                {{-- ============================================= --}}
-                <li class="nav-item">
-                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-tachometer-alt"></i>
-                        <p>Dashboard</p>
-                    </a>
-                </li>
+            {{-- ============================================= --}}
+            {{-- SERVICES SECTION --}}
+            {{-- ============================================= --}}
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Services</p>
+            </div>
 
-                {{-- ============================================= --}}
-                {{-- SERVICES SECTION --}}
-                {{-- ============================================= --}}
-                <li class="nav-header">SERVICES</li>
-
-                <!-- Service Requests -->
-                @platformFeature('service_requests')
-                <li class="nav-item">
-                    <a href="{{ route('requests.index') }}" class="nav-link {{ request()->routeIs('requests.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-clipboard-list"></i>
-                        <p>
-                            Service Requests
-                            @php
-                                $openRequests = 0;
-                                if (auth()->user()->client) {
-                                    $openRequests = \App\Models\Request::where('client_id', auth()->user()->client_id)
-                                        ->open()
-                                        ->count();
-                                }
-                            @endphp
-                            @if($openRequests > 0)
-                            <span class="badge badge-info right">{{ $openRequests }}</span>
-                            @endif
-                        </p>
-                    </a>
-                </li>
-                @endplatformFeature
-
-                <!-- Support Tickets -->
-                <li class="nav-item">
-                    <a href="{{ route('support-tickets.index') }}" class="nav-link {{ request()->routeIs('support-tickets.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-life-ring"></i>
-                        <p>
-                            Support Tickets
-                            @php
-                                $openTickets = 0;
-                                if (auth()->user()->client) {
-                                    $openTickets = \App\Models\SupportTicket::where('client_id', auth()->user()->client_id)
-                                        ->open()
-                                        ->count();
-                                }
-                            @endphp
-                            @if($openTickets > 0)
-                            <span class="badge badge-warning right">{{ $openTickets }}</span>
-                            @endif
-                        </p>
-                    </a>
-                </li>
-
-                <!-- Contracts -->
-                @platformFeature('contracts')
-                <li class="nav-item">
-                    <a href="{{ route('contracts.index') }}" class="nav-link {{ request()->routeIs('contracts.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-file-contract"></i>
-                        <p>
-                            Contracts
-                            @php
-                                $pendingContracts = 0;
-                                if (auth()->user()->client) {
-                                    $pendingContracts = \App\Models\Contract::where('client_id', auth()->user()->client_id)
-                                        ->pendingSignature()
-                                        ->count();
-                                }
-                            @endphp
-                            @if($pendingContracts > 0)
-                            <span class="badge badge-warning right">{{ $pendingContracts }}</span>
-                            @endif
-                        </p>
-                    </a>
-                </li>
-                @endplatformFeature
-
-                <!-- Invoices -->
-                @platformFeature('invoices')
-                @if(auth()->user()?->can('access admin panel'))
-                    <li class="nav-item">
-                        <a href="{{ route('admin.invoices.index') }}" class="nav-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
-                            <p>Invoices &amp; Payments</p>
-                        </a>
-                    </li>
-                @else
-                    <li class="nav-item">
-                        <a href="{{ route('invoices.index') }}" class="nav-link {{ request()->routeIs('invoices.*') || request()->routeIs('payments.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
-                            <p>
-                                Invoices
-                                @php
-                                    $unpaidInvoices = 0;
-                                    if (auth()->user()->client) {
-                                        $unpaidInvoices = \App\Models\Invoice::where('client_id', auth()->user()->client_id)
-                                            ->unpaid()
-                                            ->count();
-                                    }
-                                @endphp
-                                @if($unpaidInvoices > 0)
-                                <span class="badge badge-danger right">{{ $unpaidInvoices }}</span>
-                                @endif
-                            </p>
-                        </a>
-                    </li>
-                @endif
-                @endplatformFeature
-
-                <!-- Documents -->
-                @platformFeature('documents')
-                <li class="nav-item {{ request()->routeIs('documents.*') ? 'menu-open' : '' }}">
-                    <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-folder-open"></i>
-                        <p>
-                            Documents
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.index') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>My Documents</p>
-                            </a>
-                        </li>
-                        @if(auth()->user()?->client_id || auth()->user()?->can('access admin panel'))
-                            <li class="nav-item">
-                                <a href="{{ route('documents.smart-browser') }}" class="nav-link {{ request()->routeIs('documents.smart-browser') ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Smart Browser</p>
-                                </a>
-                            </li>
-                        @endif
-                        @can('access admin panel')
-                        <li class="nav-item">
-                            <a href="{{ route('documents.templates') }}" class="nav-link {{ request()->routeIs('documents.templates') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Templates</p>
-                            </a>
-                        </li>
-                        @endcan
-                    </ul>
-                </li>
-                @endplatformFeature
-
-                {{-- ============================================= --}}
-                {{-- CLIENT SECTION (Client users only) --}}
-                {{-- ============================================= --}}
-                @if(auth()->user()->isClient())
-                <li class="nav-header">CLIENT</li>
-
-                <li class="nav-item">
-                    <a href="{{ route('client.projects') }}" class="nav-link {{ request()->routeIs('client.projects') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-project-diagram"></i>
-                        <p>Projects</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.onboarding') }}" class="nav-link {{ request()->routeIs('client.onboarding') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-list-check"></i>
-                        <p>Onboarding</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.messaging') }}" class="nav-link {{ request()->routeIs('client.messaging') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-comments"></i>
-                        <p>Messages</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.meetings') }}" class="nav-link {{ request()->routeIs('client.meetings') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-calendar"></i>
-                        <p>Meetings</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.knowledge-base') }}" class="nav-link {{ request()->routeIs('client.knowledge-base') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-book"></i>
-                        <p>Knowledge Base</p>
-                    </a>
-                </li>
-
-                {{-- ============================================= --}}
-                {{-- MARKETING SECTION (Client marketing tools) --}}
-                {{-- ============================================= --}}
-                <li class="nav-header">MARKETING</li>
-
-                <!-- SEO Dashboard -->
-                <li class="nav-item">
-                    <a href="{{ route('client.seo') }}" class="nav-link {{ request()->routeIs('client.seo') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-search-dollar"></i>
-                        <p>SEO Dashboard</p>
-                    </a>
-                </li>
-
-                <!-- Campaigns -->
-                <li class="nav-item {{ request()->routeIs('client.campaigns*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('client.campaigns*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-rocket"></i>
-                        <p>
-                            Campaigns
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('client.campaigns') }}" class="nav-link {{ request()->routeIs('client.campaigns') && !request()->routeIs('client.campaigns.manage') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Dashboard</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('client.campaigns.manage') }}" class="nav-link {{ request()->routeIs('client.campaigns.manage') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Manage Campaigns</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <!-- Brand Monitoring (feature gated) -->
-                @if(auth()->user()->client && auth()->user()->client->hasFeature('brand_monitoring'))
-                <li class="nav-item">
-                    <a href="{{ route('client.brand-monitoring.my-mentions') }}" class="nav-link {{ request()->routeIs('client.brand-monitoring.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-bullhorn"></i>
-                        <p>Brand Monitor</p>
-                    </a>
-                </li>
-                @endif
-
-                <!-- Social Media Management -->
-                <li class="nav-item {{ request()->routeIs('social.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('social.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-share-alt"></i>
-                        <p>
-                            Social Media
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('social.accounts') }}" class="nav-link {{ request()->routeIs('social.accounts') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Accounts</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('social.pending-approvals') }}" class="nav-link {{ request()->routeIs('social.pending-approvals') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>
-                                    Approvals
-                                    @php
-                                        $pendingPosts = 0;
-                                        if (auth()->user()->client) {
-                                            $pendingPosts = \App\Models\ContentCalendarItem::forClient(auth()->user()->client_id)
-                                                ->pendingApproval()
-                                                ->count();
-                                        }
-                                    @endphp
-                                    @if($pendingPosts > 0)
-                                    <span class="badge badge-warning right">{{ $pendingPosts }}</span>
-                                    @endif
-                                </p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                {{-- ============================================= --}}
-                {{-- REPORTS SECTION (Client analytics) --}}
-                {{-- ============================================= --}}
-                <li class="nav-header">REPORTS</li>
-
-                <li class="nav-item">
-                    <a href="{{ route('client.analytics') }}" class="nav-link {{ request()->routeIs('client.analytics') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-pie"></i>
-                        <p>Analytics</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.reports') }}" class="nav-link {{ request()->routeIs('client.reports') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-line"></i>
-                        <p>Reports</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.reports.archive') }}" class="nav-link {{ request()->routeIs('client.reports.archive') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-archive"></i>
-                        <p>Report Archive</p>
-                    </a>
-                </li>
-
-                {{-- ============================================= --}}
-                {{-- STORAGE SECTION (Client cloud storage) --}}
-                {{-- ============================================= --}}
+            <!-- Service Requests -->
+            @platformFeature('service_requests')
+            <a href="{{ route('requests.index') }}" class="flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('requests.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-clipboard-list w-5"></i>
+                    <span>Service Requests</span>
+                </div>
                 @php
-                    $navUser = auth()->user();
+                    $openRequests = 0;
+                    if (auth()->user()->client) {
+                        $openRequests = \App\Models\Request::where('client_id', auth()->user()->client_id)->open()->count();
+                    }
                 @endphp
-                @if($navUser?->client_id)
-                <li class="nav-header">STORAGE</li>
-
-                <li class="nav-item {{ request()->routeIs('storage.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('storage.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-cloud"></i>
-                        <p>
-                            Cloud Storage
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('storage.dashboard') }}" class="nav-link {{ request()->routeIs('storage.dashboard') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Dashboard</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('storage.browser') }}" class="nav-link {{ request()->routeIs('storage.browser') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>File Browser</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('storage.conflicts') }}" class="nav-link {{ request()->routeIs('storage.conflicts') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Conflicts</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('storage.settings') }}" class="nav-link {{ request()->routeIs('storage.settings') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Settings</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+                @if($openRequests > 0)
+                <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-blue-500 rounded-full">{{ $openRequests }}</span>
                 @endif
+            </a>
+            @endplatformFeature
+
+            <!-- Support Tickets -->
+            <a href="{{ route('support-tickets.index') }}" class="flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('support-tickets.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-life-ring w-5"></i>
+                    <span>Support Tickets</span>
+                </div>
+                @php
+                    $openTickets = 0;
+                    if (auth()->user()->client) {
+                        $openTickets = \App\Models\SupportTicket::where('client_id', auth()->user()->client_id)->open()->count();
+                    }
+                @endphp
+                @if($openTickets > 0)
+                <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-amber-500 rounded-full">{{ $openTickets }}</span>
                 @endif
+            </a>
 
-                {{-- ============================================= --}}
-                {{-- ADMIN SECTION --}}
-                {{-- ============================================= --}}
-                @can('access admin panel')
-                <li class="nav-header">ADMIN</li>
-
-                <li class="nav-item">
-                    <a href="{{ route('admin.clients.index') }}" class="nav-link {{ request()->routeIs('admin.clients.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-building"></i>
-                        <p>Clients</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') && !request()->routeIs('admin.users.permissions') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-users"></i>
-                        <p>Users</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.users.permissions') }}" class="nav-link {{ request()->routeIs('admin.users.permissions') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-key"></i>
-                        <p>Permissions</p>
-                    </a>
-                </li>
-
-                @platformFeature('messaging')
-                <li class="nav-item">
-                    <a href="{{ route('admin.messages') }}" class="nav-link {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-comments"></i>
-                        <p>Messages</p>
-                    </a>
-                </li>
-                @endplatformFeature
-
-                @platformFeature('meetings')
-                <li class="nav-item">
-                    <a href="{{ route('admin.meetings') }}" class="nav-link {{ request()->routeIs('admin.meetings') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-calendar-alt"></i>
-                        <p>Meetings</p>
-                    </a>
-                </li>
-                @endplatformFeature
-
-                @platformFeature('reporting')
-                <li class="nav-item">
-                    <a href="{{ route('admin.reports.dashboard') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-line"></i>
-                        <p>Reporting</p>
-                    </a>
-                </li>
-                @endplatformFeature
-
-                @platformFeature('projects')
-                <li class="nav-item {{ request()->routeIs('admin.projects.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.projects.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-stopwatch"></i>
-                        <p>
-                            Projects
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.projects.time') }}" class="nav-link {{ request()->routeIs('admin.projects.time') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Time Tracker</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.projects.time-approvals') }}" class="nav-link {{ request()->routeIs('admin.projects.time-approvals') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Time Approvals</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.projects.budgets') }}" class="nav-link {{ request()->routeIs('admin.projects.budgets') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Budgets</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.projects.board') }}" class="nav-link {{ request()->routeIs('admin.projects.board') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Task Board</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.projects.timeline') }}" class="nav-link {{ request()->routeIs('admin.projects.timeline') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Timeline</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.projects.workload') }}" class="nav-link {{ request()->routeIs('admin.projects.workload') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Team Workload</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endplatformFeature
-
-                <!-- Staff Task Management -->
-                <li class="nav-item">
-                    <a href="{{ route('admin.tasks.index') }}" class="nav-link {{ request()->routeIs('admin.tasks.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-tasks"></i>
-                        <p>Task Management</p>
-                    </a>
-                </li>
-
-                {{-- ============================================= --}}
-                {{-- SUPPORT SECTION (Admin) --}}
-                {{-- ============================================= --}}
-                <li class="nav-header">SUPPORT</li>
-
-                <!-- Support Tickets (Admin) -->
-                <li class="nav-item">
-                    <a href="{{ route('admin.support-tickets.index') }}" class="nav-link {{ request()->routeIs('admin.support-tickets.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-headset"></i>
-                        <p>
-                            Support Tickets
-                            @php
-                                $openAdminTickets = \App\Models\SupportTicket::open()->count();
-                            @endphp
-                            @if($openAdminTickets > 0)
-                            <span class="badge badge-warning right">{{ $openAdminTickets }}</span>
-                            @endif
-                        </p>
-                    </a>
-                </li>
-
-                <!-- Maintenance Plans -->
-                <li class="nav-item">
-                    <a href="{{ route('admin.maintenance-plans.index') }}" class="nav-link {{ request()->routeIs('admin.maintenance-plans.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-tools"></i>
-                        <p>Maintenance Plans</p>
-                    </a>
-                </li>
-
-                {{-- ============================================= --}}
-                {{-- SALES SECTION (Admin) --}}
-                {{-- ============================================= --}}
-                <li class="nav-header">SALES</li>
-
-                @platformFeature('proposals')
-                <li class="nav-item {{ request()->routeIs('admin.proposals.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.proposals.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-file-signature"></i>
-                        <p>
-                            Proposals
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.proposals.builder') }}" class="nav-link {{ request()->routeIs('admin.proposals.builder') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Builder</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endplatformFeature
-
-                @platformFeature('contracts')
-                @if(Route::has('admin.contracts.index'))
-                <li class="nav-item {{ request()->routeIs('admin.contracts.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.contracts.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-file-contract"></i>
-                        <p>
-                            Contracts
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.contracts.index') }}" class="nav-link {{ request()->routeIs('admin.contracts.index') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>All Contracts</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.contracts.create') }}" class="nav-link {{ request()->routeIs('admin.contracts.create') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>New Contract</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.contracts.generator') }}" class="nav-link {{ request()->routeIs('admin.contracts.generator') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>AI Generator</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+            <!-- Contracts -->
+            @platformFeature('contracts')
+            <a href="{{ route('contracts.index') }}" class="flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('contracts.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-file-contract w-5"></i>
+                    <span>Contracts</span>
+                </div>
+                @php
+                    $pendingContracts = 0;
+                    if (auth()->user()->client) {
+                        $pendingContracts = \App\Models\Contract::where('client_id', auth()->user()->client_id)->pendingSignature()->count();
+                    }
+                @endphp
+                @if($pendingContracts > 0)
+                <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-amber-500 rounded-full">{{ $pendingContracts }}</span>
                 @endif
-                @endplatformFeature
+            </a>
+            @endplatformFeature
 
-                @platformFeature('feedback')
-                <li class="nav-item {{ request()->routeIs('admin.feedback.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.feedback.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-poll"></i>
-                        <p>
-                            Feedback
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.feedback.surveys') }}" class="nav-link {{ request()->routeIs('admin.feedback.surveys') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Surveys</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.feedback.testimonials') }}" class="nav-link {{ request()->routeIs('admin.feedback.testimonials') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Testimonials</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endplatformFeature
+            <!-- Invoices -->
+            @platformFeature('invoices')
+            @if(auth()->user()?->can('access admin panel'))
+                <a href="{{ route('admin.invoices.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.invoices.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <i class="fas fa-file-invoice-dollar w-5"></i>
+                    <span>Invoices & Payments</span>
+                </a>
+            @else
+                <a href="{{ route('invoices.index') }}" class="flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('invoices.*') || request()->routeIs('payments.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-invoice-dollar w-5"></i>
+                        <span>Invoices</span>
+                    </div>
+                    @php
+                        $unpaidInvoices = 0;
+                        if (auth()->user()->client) {
+                            $unpaidInvoices = \App\Models\Invoice::where('client_id', auth()->user()->client_id)->unpaid()->count();
+                        }
+                    @endphp
+                    @if($unpaidInvoices > 0)
+                    <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">{{ $unpaidInvoices }}</span>
+                    @endif
+                </a>
+            @endif
+            @endplatformFeature
 
-                @platformFeature('account_management')
-                <li class="nav-item {{ request()->routeIs('admin.account.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.account.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-handshake"></i>
-                        <p>
-                            Account Mgmt
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
+            <!-- Documents -->
+            @platformFeature('documents')
+            <div x-data="{ open: {{ request()->routeIs('documents.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('documents.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-folder-open w-5"></i>
+                        <span>Documents</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ 'rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('documents.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('documents.index') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>My Documents</span>
                     </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.account.health') }}" class="nav-link {{ request()->routeIs('admin.account.health') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Health</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.account.qbrs') }}" class="nav-link {{ request()->routeIs('admin.account.qbrs') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>QBRs</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.account.renewals') }}" class="nav-link {{ request()->routeIs('admin.account.renewals') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Renewals</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.account.upsells') }}" class="nav-link {{ request()->routeIs('admin.account.upsells') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Upsells</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endplatformFeature
+                    @if(auth()->user()?->client_id || auth()->user()?->can('access admin panel'))
+                        <a href="{{ route('documents.smart-browser') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('documents.smart-browser') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                            <i class="far fa-circle text-xs w-5"></i>
+                            <span>Smart Browser</span>
+                        </a>
+                    @endif
+                    @can('access admin panel')
+                    <a href="{{ route('documents.templates') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('documents.templates') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Templates</span>
+                    </a>
+                    @endcan
+                </div>
+            </div>
+            @endplatformFeature
 
-                <!-- Staff How-To Guides (Admin/Staff only) -->
-                @can('access admin panel')
-                <li class="nav-item">
-                    <a href="{{ route('admin.staff-guides') }}" class="nav-link {{ request()->routeIs('admin.staff-guides*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-book-reader"></i>
-                        <p>Staff Guides</p>
-                    </a>
-                </li>
-                @endcan
+            {{-- ============================================= --}}
+            {{-- CLIENT SECTION (Client users only) --}}
+            {{-- ============================================= --}}
+            @if(auth()->user()->isClient())
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Client</p>
+            </div>
 
-                {{-- ============================================= --}}
-                {{-- MARKETING SECTION (Admin marketing tools) --}}
-                {{-- ============================================= --}}
-                <li class="nav-header">MARKETING</li>
+            <a href="{{ route('client.projects') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.projects') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-project-diagram w-5"></i>
+                <span>Projects</span>
+            </a>
+            <a href="{{ route('client.onboarding') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.onboarding') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-list-check w-5"></i>
+                <span>Onboarding</span>
+            </a>
+            <a href="{{ route('client.messaging') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.messaging') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-comments w-5"></i>
+                <span>Messages</span>
+            </a>
+            <a href="{{ route('client.meetings') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.meetings') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-calendar w-5"></i>
+                <span>Meetings</span>
+            </a>
+            <a href="{{ route('client.knowledge-base') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.knowledge-base') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-book w-5"></i>
+                <span>Knowledge Base</span>
+            </a>
 
-                @can('view_any_lead')
-                <li class="nav-item">
-                    <a href="{{ route('admin.marketing.leads') }}" class="nav-link {{ request()->routeIs('admin.marketing.leads') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-plus"></i>
-                        <p>Leads</p>
-                    </a>
-                </li>
-                @endcan
+            {{-- ============================================= --}}
+            {{-- MARKETING SECTION (Client marketing tools) --}}
+            {{-- ============================================= --}}
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Marketing</p>
+            </div>
 
-                <!-- Campaigns -->
-                <li class="nav-item {{ request()->routeIs('admin.marketing.campaigns*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.marketing.campaigns*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-rocket"></i>
-                        <p>
-                            Campaigns
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.marketing.campaigns') }}" class="nav-link {{ request()->routeIs('admin.marketing.campaigns') && !request()->routeIs('admin.marketing.campaigns.manage') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Analytics</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.marketing.campaigns.manage') }}" class="nav-link {{ request()->routeIs('admin.marketing.campaigns.manage') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Manage Campaigns</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+            <!-- SEO Dashboard -->
+            <a href="{{ route('client.seo') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.seo') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-search-dollar w-5"></i>
+                <span>SEO Dashboard</span>
+            </a>
 
-                <!-- Brand Monitoring -->
-                <li class="nav-item {{ request()->routeIs('admin.brand-monitoring.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.brand-monitoring.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-bullhorn"></i>
-                        <p>
-                            Brand Monitor
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
+            <!-- Campaigns -->
+            <div x-data="{ open: {{ request()->routeIs('client.campaigns*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.campaigns*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-rocket w-5"></i>
+                        <span>Campaigns</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('client.campaigns') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('client.campaigns') && !request()->routeIs('client.campaigns.manage') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Dashboard</span>
                     </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.brand-monitoring.dashboard') }}" class="nav-link {{ request()->routeIs('admin.brand-monitoring.dashboard') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Dashboard</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.brand-monitoring.api-status') }}" class="nav-link {{ request()->routeIs('admin.brand-monitoring.api-status') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>API Status</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+                    <a href="{{ route('client.campaigns.manage') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('client.campaigns.manage') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Manage Campaigns</span>
+                    </a>
+                </div>
+            </div>
 
-                <!-- Social Media -->
-                <li class="nav-item {{ request()->routeIs('admin.social.*') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.social.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-share-alt"></i>
-                        <p>
-                            Social Media
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.social.posts') }}" class="nav-link {{ request()->routeIs('admin.social.posts') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Posts</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.social.posts.create') }}" class="nav-link {{ request()->routeIs('admin.social.posts.create') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Create Post</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.social.content-calendar') }}" class="nav-link {{ request()->routeIs('admin.social.content-calendar') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Calendar</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+            <!-- Brand Monitoring -->
+            @if(auth()->user()->client && auth()->user()->client->hasFeature('brand_monitoring'))
+            <a href="{{ route('client.brand-monitoring.my-mentions') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.brand-monitoring.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-bullhorn w-5"></i>
+                <span>Brand Monitor</span>
+            </a>
+            @endif
 
-                @platformFeature('partners')
-                <li class="nav-item {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-friends"></i>
-                        <p>
-                            Partners
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
+            <!-- Social Media Management -->
+            <div x-data="{ open: {{ request()->routeIs('social.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('social.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-share-alt w-5"></i>
+                        <span>Social Media</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('social.accounts') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('social.accounts') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Accounts</span>
                     </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.partners') }}" class="nav-link {{ request()->routeIs('admin.partners') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Partners</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.referrals') }}" class="nav-link {{ request()->routeIs('admin.referrals') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Referrals</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endplatformFeature
+                    <a href="{{ route('social.pending-approvals') }}" class="flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('social.pending-approvals') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="far fa-circle text-xs w-5"></i>
+                            <span>Approvals</span>
+                        </div>
+                        @php
+                            $pendingPosts = 0;
+                            if (auth()->user()->client) {
+                                $pendingPosts = \App\Models\ContentCalendarItem::forClient(auth()->user()->client_id)->pendingApproval()->count();
+                            }
+                        @endphp
+                        @if($pendingPosts > 0)
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-amber-500 rounded-full">{{ $pendingPosts }}</span>
+                        @endif
+                    </a>
+                </div>
+            </div>
 
-                {{-- ============================================= --}}
-                {{-- AI SECTION (Admin AI tools) --}}
-                {{-- ============================================= --}}
-                @platformFeature('ai')
-                <li class="nav-header">AI TOOLS</li>
+            {{-- ============================================= --}}
+            {{-- REPORTS SECTION (Client analytics) --}}
+            {{-- ============================================= --}}
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Reports</p>
+            </div>
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.ai.assistant') }}" class="nav-link {{ request()->routeIs('admin.ai.assistant') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-robot"></i>
-                        <p>AI Assistant</p>
-                    </a>
-                </li>
+            <a href="{{ route('client.analytics') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.analytics') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-chart-pie w-5"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="{{ route('client.reports') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.reports') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-chart-line w-5"></i>
+                <span>Reports</span>
+            </a>
+            <a href="{{ route('client.reports.archive') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.reports.archive') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-archive w-5"></i>
+                <span>Report Archive</span>
+            </a>
 
-                <li class="nav-item {{ request()->routeIs('admin.ai.*') && !request()->routeIs('admin.ai.assistant') ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ request()->routeIs('admin.ai.*') && !request()->routeIs('admin.ai.assistant') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-brain"></i>
-                        <p>
-                            AI Management
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.ai.providers') }}" class="nav-link {{ request()->routeIs('admin.ai.providers*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Providers</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.ai.tasks') }}" class="nav-link {{ request()->routeIs('admin.ai.tasks') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Task Config</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.ai.usage') }}" class="nav-link {{ request()->routeIs('admin.ai.usage') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Usage & Costs</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.ai.quality') }}" class="nav-link {{ request()->routeIs('admin.ai.quality') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Quality Metrics</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.ai.safety') }}" class="nav-link {{ request()->routeIs('admin.ai.safety') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Safety Dashboard</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.ai.review-queue') }}" class="nav-link {{ request()->routeIs('admin.ai.review-queue') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Review Queue</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.ai.knowledge-base') }}" class="nav-link {{ request()->routeIs('admin.ai.knowledge-base') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Knowledge Base</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.ai.prompt-templates') }}" class="nav-link {{ request()->routeIs('admin.ai.prompt-templates') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Prompt Templates</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                @endplatformFeature
+            {{-- ============================================= --}}
+            {{-- STORAGE SECTION (Client cloud storage) --}}
+            {{-- ============================================= --}}
+            @php
+                $navUser = auth()->user();
+            @endphp
+            @if($navUser?->client_id)
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Storage</p>
+            </div>
 
-                {{-- ============================================= --}}
-                {{-- SETTINGS SECTION (Admin system settings) --}}
-                {{-- ============================================= --}}
-                @can('manage settings')
-                <li class="nav-header">SETTINGS</li>
+            <div x-data="{ open: {{ request()->routeIs('storage.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('storage.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-cloud w-5"></i>
+                        <span>Cloud Storage</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('storage.dashboard') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('storage.dashboard') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ route('storage.browser') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('storage.browser') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>File Browser</span>
+                    </a>
+                    <a href="{{ route('storage.conflicts') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('storage.conflicts') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Conflicts</span>
+                    </a>
+                    <a href="{{ route('storage.settings') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('storage.settings') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Settings</span>
+                    </a>
+                </div>
+            </div>
+            @endif
+            @endif
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings') || request()->routeIs('admin.settings.index') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-cogs"></i>
-                        <p>System Settings</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.settings.forms') }}" class="nav-link {{ request()->routeIs('admin.settings.forms*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-wpforms"></i>
-                        <p>Form Templates</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.security.overview') }}" class="nav-link {{ request()->routeIs('admin.security.overview') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-shield-alt"></i>
-                        <p>Security Settings</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.security.privacy-requests') }}" class="nav-link {{ request()->routeIs('admin.security.privacy-requests') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-shield"></i>
-                        <p>Privacy Requests</p>
-                    </a>
-                </li>
-                @platformFeature('storage_integrations')
-                <li class="nav-item">
-                    <a href="{{ route('admin.storage.overview') }}" class="nav-link {{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-database"></i>
-                        <p>Storage Overview</p>
-                    </a>
-                </li>
-                @endplatformFeature
-                @platformFeature('webhooks')
-                <li class="nav-item">
-                    <a href="{{ route('admin.webhooks.index') }}" class="nav-link {{ request()->routeIs('admin.webhooks.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-plug"></i>
-                        <p>Webhooks</p>
-                    </a>
-                </li>
-                @endplatformFeature
-                @platformFeature('automation')
-                <li class="nav-item">
-                    <a href="{{ route('admin.automation.index') }}" class="nav-link {{ request()->routeIs('admin.automation.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-robot"></i>
-                        <p>Automation</p>
-                    </a>
-                </li>
-                @endplatformFeature
-                @endcan
-                @endcan
+            {{-- ============================================= --}}
+            {{-- ADMIN SECTION --}}
+            {{-- ============================================= --}}
+            @can('access admin panel')
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Admin</p>
+            </div>
 
-                {{-- ============================================= --}}
-                {{-- ACCOUNT SECTION (User personal settings) --}}
-                {{-- ============================================= --}}
-                <li class="nav-header">ACCOUNT</li>
+            <a href="{{ route('admin.clients.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.clients.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-building w-5"></i>
+                <span>Clients</span>
+            </a>
+            <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.users.*') && !request()->routeIs('admin.users.permissions') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-users w-5"></i>
+                <span>Users</span>
+            </a>
+            <a href="{{ route('admin.users.permissions') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.users.permissions') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-key w-5"></i>
+                <span>Permissions</span>
+            </a>
 
-                <!-- Profile -->
-                <li class="nav-item">
-                    <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-cog"></i>
-                        <p>Profile Settings</p>
-                    </a>
-                </li>
+            @platformFeature('messaging')
+            <a href="{{ route('admin.messages') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.messages') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-comments w-5"></i>
+                <span>Messages</span>
+            </a>
+            @endplatformFeature
 
-                @if(auth()->user()->isClient())
-                <li class="nav-item">
-                    <a href="{{ route('client.notifications') }}" class="nav-link {{ request()->routeIs('client.notifications') ? 'active' : '' }}">
-                        <i class="nav-icon far fa-bell"></i>
-                        <p>Notifications</p>
+            @platformFeature('meetings')
+            <a href="{{ route('admin.meetings') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.meetings') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-calendar-alt w-5"></i>
+                <span>Meetings</span>
+            </a>
+            @endplatformFeature
+
+            @platformFeature('reporting')
+            <a href="{{ route('admin.reports.dashboard') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reports.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-chart-line w-5"></i>
+                <span>Reporting</span>
+            </a>
+            @endplatformFeature
+
+            @platformFeature('projects')
+            <div x-data="{ open: {{ request()->routeIs('admin.projects.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.projects.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-stopwatch w-5"></i>
+                        <span>Projects</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.projects.time') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.projects.time') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Time Tracker</span>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('client.privacy') }}" class="nav-link {{ request()->routeIs('client.privacy') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-shield"></i>
-                        <p>Privacy</p>
+                    <a href="{{ route('admin.projects.time-approvals') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.projects.time-approvals') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Time Approvals</span>
                     </a>
-                </li>
+                    <a href="{{ route('admin.projects.budgets') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.projects.budgets') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Budgets</span>
+                    </a>
+                    <a href="{{ route('admin.projects.board') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.projects.board') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Task Board</span>
+                    </a>
+                    <a href="{{ route('admin.projects.timeline') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.projects.timeline') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Timeline</span>
+                    </a>
+                    <a href="{{ route('admin.projects.workload') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.projects.workload') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Team Workload</span>
+                    </a>
+                </div>
+            </div>
+            @endplatformFeature
+
+            <!-- Staff Task Management -->
+            <a href="{{ route('admin.tasks.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.tasks.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-tasks w-5"></i>
+                <span>Task Management</span>
+            </a>
+
+            {{-- ============================================= --}}
+            {{-- SUPPORT SECTION (Admin) --}}
+            {{-- ============================================= --}}
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Support</p>
+            </div>
+
+            <!-- Support Tickets (Admin) -->
+            <a href="{{ route('admin.support-tickets.index') }}" class="flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.support-tickets.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-headset w-5"></i>
+                    <span>Support Tickets</span>
+                </div>
+                @php
+                    $openAdminTickets = \App\Models\SupportTicket::open()->count();
+                @endphp
+                @if($openAdminTickets > 0)
+                <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-amber-500 rounded-full">{{ $openAdminTickets }}</span>
                 @endif
+            </a>
 
-                <li class="nav-item">
-                    <a href="{{ route('two-factor.setup') }}" class="nav-link {{ request()->routeIs('two-factor.setup') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-shield-alt"></i>
-                        <p>Two-factor (2FA)</p>
-                    </a>
-                </li>
+            <!-- Maintenance Plans -->
+            <a href="{{ route('admin.maintenance-plans.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.maintenance-plans.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-tools w-5"></i>
+                <span>Maintenance Plans</span>
+            </a>
 
-                <!-- Logout -->
-                <li class="nav-item">
-                    <form method="POST" action="{{ route('logout') }}" id="logout-form">
-                        @csrf
-                    </form>
-                    <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                        <i class="nav-icon fas fa-sign-out-alt"></i>
-                        <p>Sign Out</p>
+            {{-- ============================================= --}}
+            {{-- SALES SECTION (Admin) --}}
+            {{-- ============================================= --}}
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sales</p>
+            </div>
+
+            @platformFeature('proposals')
+            <div x-data="{ open: {{ request()->routeIs('admin.proposals.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.proposals.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-signature w-5"></i>
+                        <span>Proposals</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.proposals.builder') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.proposals.builder') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Builder</span>
                     </a>
-                </li>
-            </ul>
+                </div>
+            </div>
+            @endplatformFeature
+
+            @platformFeature('contracts')
+            @if(Route::has('admin.contracts.index'))
+            <div x-data="{ open: {{ request()->routeIs('admin.contracts.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.contracts.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-contract w-5"></i>
+                        <span>Contracts</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.contracts.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.contracts.index') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>All Contracts</span>
+                    </a>
+                    <a href="{{ route('admin.contracts.create') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.contracts.create') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>New Contract</span>
+                    </a>
+                    <a href="{{ route('admin.contracts.generator') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.contracts.generator') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>AI Generator</span>
+                    </a>
+                </div>
+            </div>
+            @endif
+            @endplatformFeature
+
+            @platformFeature('feedback')
+            <div x-data="{ open: {{ request()->routeIs('admin.feedback.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.feedback.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-poll w-5"></i>
+                        <span>Feedback</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.feedback.surveys') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.feedback.surveys') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Surveys</span>
+                    </a>
+                    <a href="{{ route('admin.feedback.testimonials') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.feedback.testimonials') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Testimonials</span>
+                    </a>
+                </div>
+            </div>
+            @endplatformFeature
+
+            @platformFeature('account_management')
+            <div x-data="{ open: {{ request()->routeIs('admin.account.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.account.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-handshake w-5"></i>
+                        <span>Account Mgmt</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.account.health') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.account.health') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Health</span>
+                    </a>
+                    <a href="{{ route('admin.account.qbrs') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.account.qbrs') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>QBRs</span>
+                    </a>
+                    <a href="{{ route('admin.account.renewals') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.account.renewals') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Renewals</span>
+                    </a>
+                    <a href="{{ route('admin.account.upsells') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.account.upsells') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Upsells</span>
+                    </a>
+                </div>
+            </div>
+            @endplatformFeature
+
+            <!-- Staff How-To Guides -->
+            @can('access admin panel')
+            <a href="{{ route('admin.staff-guides') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.staff-guides*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-book-reader w-5"></i>
+                <span>Staff Guides</span>
+            </a>
+            @endcan
+
+            {{-- ============================================= --}}
+            {{-- MARKETING SECTION (Admin marketing tools) --}}
+            {{-- ============================================= --}}
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Marketing</p>
+            </div>
+
+            @can('view_any_lead')
+            <a href="{{ route('admin.marketing.leads') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.marketing.leads') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-user-plus w-5"></i>
+                <span>Leads</span>
+            </a>
+            @endcan
+
+            <!-- Campaigns -->
+            <div x-data="{ open: {{ request()->routeIs('admin.marketing.campaigns*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.marketing.campaigns*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-rocket w-5"></i>
+                        <span>Campaigns</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.marketing.campaigns') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.marketing.campaigns') && !request()->routeIs('admin.marketing.campaigns.manage') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Analytics</span>
+                    </a>
+                    <a href="{{ route('admin.marketing.campaigns.manage') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.marketing.campaigns.manage') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Manage Campaigns</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Brand Monitoring -->
+            <div x-data="{ open: {{ request()->routeIs('admin.brand-monitoring.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.brand-monitoring.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-bullhorn w-5"></i>
+                        <span>Brand Monitor</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.brand-monitoring.dashboard') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.brand-monitoring.dashboard') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ route('admin.brand-monitoring.api-status') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.brand-monitoring.api-status') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>API Status</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Social Media -->
+            <div x-data="{ open: {{ request()->routeIs('admin.social.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.social.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-share-alt w-5"></i>
+                        <span>Social Media</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.social.posts') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.social.posts') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Posts</span>
+                    </a>
+                    <a href="{{ route('admin.social.posts.create') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.social.posts.create') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Create Post</span>
+                    </a>
+                    <a href="{{ route('admin.social.content-calendar') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.social.content-calendar') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Calendar</span>
+                    </a>
+                </div>
+            </div>
+
+            @platformFeature('partners')
+            <div x-data="{ open: {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.partners') || request()->routeIs('admin.referrals') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-user-friends w-5"></i>
+                        <span>Partners</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.partners') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.partners') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Partners</span>
+                    </a>
+                    <a href="{{ route('admin.referrals') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.referrals') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Referrals</span>
+                    </a>
+                </div>
+            </div>
+            @endplatformFeature
+
+            {{-- ============================================= --}}
+            {{-- AI SECTION (Admin AI tools) --}}
+            {{-- ============================================= --}}
+            @platformFeature('ai')
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">AI Tools</p>
+            </div>
+
+            <a href="{{ route('admin.ai.assistant') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.ai.assistant') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-robot w-5"></i>
+                <span>AI Assistant</span>
+            </a>
+
+            <div x-data="{ open: {{ request()->routeIs('admin.ai.*') && !request()->routeIs('admin.ai.assistant') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="w-full flex items-center justify-between gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.ai.*') && !request()->routeIs('admin.ai.assistant') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-brain w-5"></i>
+                        <span>AI Management</span>
+                    </div>
+                    <i class="fas fa-angle-left transition-transform" :class="{ '-rotate-90': open }"></i>
+                </button>
+                <div x-show="open" class="ml-4 mt-1 space-y-1">
+                    <a href="{{ route('admin.ai.providers') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.ai.providers*') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Providers</span>
+                    </a>
+                    <a href="{{ route('admin.ai.tasks') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.ai.tasks') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Task Config</span>
+                    </a>
+                    <a href="{{ route('admin.ai.usage') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.ai.usage') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Usage & Costs</span>
+                    </a>
+                    <a href="{{ route('admin.ai.quality') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.ai.quality') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Quality Metrics</span>
+                    </a>
+                    <a href="{{ route('admin.ai.safety') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.ai.safety') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Safety Dashboard</span>
+                    </a>
+                    <a href="{{ route('admin.ai.review-queue') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.ai.review-queue') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Review Queue</span>
+                    </a>
+                    <a href="{{ route('admin.ai.knowledge-base') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.ai.knowledge-base') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Knowledge Base</span>
+                    </a>
+                    <a href="{{ route('admin.ai.prompt-templates') }}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg {{ request()->routeIs('admin.ai.prompt-templates') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200' }}">
+                        <i class="far fa-circle text-xs w-5"></i>
+                        <span>Prompt Templates</span>
+                    </a>
+                </div>
+            </div>
+            @endplatformFeature
+
+            {{-- ============================================= --}}
+            {{-- SETTINGS SECTION (Admin system settings) --}}
+            {{-- ============================================= --}}
+            @can('manage settings')
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Settings</p>
+            </div>
+
+            <a href="{{ route('admin.settings.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.settings') || request()->routeIs('admin.settings.index') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-cogs w-5"></i>
+                <span>System Settings</span>
+            </a>
+            <a href="{{ route('admin.settings.forms') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.settings.forms*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-wpforms w-5"></i>
+                <span>Form Templates</span>
+            </a>
+            <a href="{{ route('admin.security.overview') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.security.overview') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-shield-alt w-5"></i>
+                <span>Security Settings</span>
+            </a>
+            <a href="{{ route('admin.security.privacy-requests') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.security.privacy-requests') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-user-shield w-5"></i>
+                <span>Privacy Requests</span>
+            </a>
+            @platformFeature('storage_integrations')
+            <a href="{{ route('admin.storage.overview') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.storage.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-database w-5"></i>
+                <span>Storage Overview</span>
+            </a>
+            @endplatformFeature
+            @platformFeature('webhooks')
+            <a href="{{ route('admin.webhooks.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.webhooks.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-plug w-5"></i>
+                <span>Webhooks</span>
+            </a>
+            @endplatformFeature
+            @platformFeature('automation')
+            <a href="{{ route('admin.automation.index') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.automation.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-robot w-5"></i>
+                <span>Automation</span>
+            </a>
+            @endplatformFeature
+            @endcan
+            @endcan
+
+            {{-- ============================================= --}}
+            {{-- ACCOUNT SECTION (User personal settings) --}}
+            {{-- ============================================= --}}
+            <div class="pt-4 pb-2">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Account</p>
+            </div>
+
+            <!-- Profile -->
+            <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('profile.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-user-cog w-5"></i>
+                <span>Profile Settings</span>
+            </a>
+
+            @if(auth()->user()->isClient())
+            <a href="{{ route('client.notifications') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.notifications') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="far fa-bell w-5"></i>
+                <span>Notifications</span>
+            </a>
+            <a href="{{ route('client.privacy') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('client.privacy') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-user-shield w-5"></i>
+                <span>Privacy</span>
+            </a>
+            @endif
+
+            <a href="{{ route('two-factor.setup') }}" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('two-factor.setup') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-shield-alt w-5"></i>
+                <span>Two-factor (2FA)</span>
+            </a>
+
+            <!-- Logout -->
+            <form method="POST" action="{{ route('logout') }}" id="sidebar-logout-form">
+                @csrf
+            </form>
+            <button onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Sign Out</span>
+            </button>
         </nav>
     </div>
 </aside>
