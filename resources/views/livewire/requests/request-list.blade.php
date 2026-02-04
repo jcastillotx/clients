@@ -37,9 +37,15 @@
                 </div>
                 <div class="col-md-2">
                     @if($search || $status || $type || $priority)
-                    <button wire:click="clearFilters" class="btn btn-outline-secondary btn-block">
-                        <i class="fas fa-times mr-1"></i> Clear
-                    </button>
+                    <x-button 
+                        variant="outline" 
+                        size="sm"
+                        wire:click="clearFilters"
+                        icon="x"
+                        full-width
+                    >
+                        Clear
+                    </x-button>
                     @endif
                 </div>
             </div>
@@ -102,9 +108,13 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <a href="{{ route('requests.show', $request) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye"></i>
-                            </a>
+                            <x-button 
+                                variant="outline-primary" 
+                                size="sm"
+                                href="{{ route('requests.show', $request) }}"
+                                icon="eye"
+                            >
+                            </x-button>
                         </td>
                     </tr>
                     @empty
@@ -114,13 +124,21 @@
                                 <i class="fas fa-clipboard-list fa-3x mb-3"></i>
                                 <p>No requests found.</p>
                                 @if($search || $status || $type || $priority)
-                                <button wire:click="clearFilters" class="btn btn-outline-primary btn-sm">
+                                <x-button 
+                                    variant="outline" 
+                                    size="sm"
+                                    wire:click="clearFilters"
+                                >
                                     Clear Filters
-                                </button>
+                                </x-button>
                                 @else
-                                <a href="{{ route('requests.create') }}" class="btn btn-primary btn-sm">
+                                <x-button 
+                                    variant="primary" 
+                                    size="sm"
+                                    href="{{ route('requests.create') }}"
+                                >
                                     Create Your First Request
-                                </a>
+                                </x-button>
                                 @endif
                             </div>
                         </td>

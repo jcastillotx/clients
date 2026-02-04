@@ -5,9 +5,14 @@
             <div class="text-xl font-semibold text-slate-900">Edit request</div>
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('requests.show', $request) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+            <x-button 
+                variant="outline" 
+                size="sm" 
+                href="{{ route('requests.show', $request) }}"
+                icon="chevron-left"
+            >
                 Back
-            </a>
+            </x-button>
         </div>
     </div>
 
@@ -167,13 +172,25 @@
         </div>
 
         <div class="pt-2 flex items-center gap-2">
-            <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" wire:loading.attr="disabled">
-                <span wire:loading.remove wire:target="save,files">Save changes</span>
-                <span wire:loading wire:target="save,files">Saving…</span>
-            </button>
-            <a href="{{ route('requests.show', $request) }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+            <x-button 
+                type="submit" 
+                variant="primary" 
+                size="md"
+                wire:loading.attr="disabled"
+                wire-target="save,files"
+                loading-text="Saving…"
+                icon="check"
+            >
+                Save changes
+            </x-button>
+            
+            <x-button 
+                variant="outline" 
+                size="md"
+                href="{{ route('requests.show', $request) }}"
+            >
                 Cancel
-            </a>
+            </x-button>
         </div>
     </form>
 </div>

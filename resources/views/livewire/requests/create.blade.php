@@ -4,9 +4,14 @@
             <div class="text-sm text-slate-500">Requests</div>
             <div class="text-xl font-semibold text-slate-900">Create request</div>
         </div>
-        <a href="{{ route('requests.index') }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+        <x-button 
+            variant="outline" 
+            size="sm" 
+            href="{{ route('requests.index') }}"
+            icon="chevron-left"
+        >
             Back
-        </a>
+        </x-button>
     </div>
 
     <!-- Error/Success Messages -->
@@ -185,42 +190,42 @@
 
         <div class="pt-4 flex flex-wrap items-center gap-3 border-t border-slate-200">
             <!-- Submit Request Button (Primary) -->
-            <button type="button" wire:click="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 flex items-center gap-2" wire:loading.attr="disabled" wire:target="saveDraft,submit,files">
-                <span wire:loading.remove wire:target="submit">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                    </svg>
-                    Submit Request
-                </span>
-                <span wire:loading wire:target="submit">
-                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Submitting…
-                </span>
-            </button>
+            <x-button 
+                type="button" 
+                variant="primary" 
+                size="md"
+                wire:click="submit"
+                wire:loading.attr="disabled" 
+                wire:target="saveDraft,submit,files"
+                icon="paper-airplane"
+                wire-target="submit"
+                loading-text="Submitting…"
+            >
+                Submit Request
+            </x-button>
             
             <!-- Save Draft Button (Secondary) -->
-            <button type="button" wire:click="saveDraft" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2" wire:loading.attr="disabled" wire:target="saveDraft,submit,files">
-                <span wire:loading.remove wire:target="saveDraft">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
-                    </svg>
-                    Save Draft
-                </span>
-                <span wire:loading wire:target="saveDraft">
-                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving…
-                </span>
-            </button>
+            <x-button 
+                type="button" 
+                variant="outline" 
+                size="md"
+                wire:click="saveDraft"
+                wire:loading.attr="disabled" 
+                wire:target="saveDraft,submit,files"
+                icon="document-duplicate"
+                wire-target="saveDraft"
+                loading-text="Saving…"
+            >
+                Save Draft
+            </x-button>
             
-            <a href="{{ route('requests.index') }}" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700">
+            <x-button 
+                variant="ghost" 
+                size="md"
+                href="{{ route('requests.index') }}"
+            >
                 Cancel
-            </a>
+            </x-button>
             
             <div class="ml-auto text-xs text-slate-500 hidden sm:block">
                 <span class="font-medium">Tip:</span> Save as draft to continue editing later

@@ -1,12 +1,26 @@
 <div>
     <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div>
-            <div class="page-pretitle">Admin</div>
-            <h2 class="page-title mb-0">All Requests</h2>
+            <div class="text-sm theme-text-muted">Admin</div>
+            <h2 class="text-2xl font-semibold theme-text-primary mb-0">All Requests</h2>
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('admin.requests.create') }}" class="btn-brand-primary">Create Request</a>
-            <button type="button" class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700" wire:click="$set('viewMode','kanban')">Kanban</button>
+            <x-button 
+                variant="primary" 
+                size="md"
+                href="{{ route('admin.requests.create') }}"
+                icon="plus"
+            >
+                Create Request
+            </x-button>
+            <x-button 
+                variant="secondary" 
+                size="md"
+                wire:click="$set('viewMode','kanban')"
+                icon="collection"
+            >
+                Kanban
+            </x-button>
         </div>
     </div>
 
@@ -18,17 +32,17 @@
         @endphp
 
         <div>
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
-                <div class="p-6">
+            <div class="theme-bg-card rounded-lg theme-shadow-sm theme-border-primary border">
+                <div class="density-p-lg">
                     <div class="flex items-center gap-3">
                         <div>
                             <span class="bg-brand-primary text-white flex items-center justify-center w-10 h-10 rounded-full">
-                                <i class="fas fa-list"></i>
+                                <x-icon name="clipboard-list" class="w-5 h-5" />
                             </span>
                         </div>
                         <div>
-                            <div class="font-medium">{{ $totalRequests }}</div>
-                            <div class="text-slate-500 text-sm">Total</div>
+                            <div class="font-medium theme-text-primary">{{ $totalRequests }}</div>
+                            <div class="theme-text-muted text-sm">Total</div>
                         </div>
                     </div>
                 </div>
@@ -36,17 +50,17 @@
         </div>
 
         <div>
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
-                <div class="p-6">
+            <div class="theme-bg-card rounded-lg theme-shadow-sm theme-border-primary border">
+                <div class="density-p-lg">
                     <div class="flex items-center gap-3">
                         <div>
                             <span class="bg-blue-500 text-white flex items-center justify-center w-10 h-10 rounded-full">
-                                <i class="fas fa-spinner"></i>
+                                <x-icon name="clock" class="w-5 h-5" />
                             </span>
                         </div>
                         <div>
-                            <div class="font-medium">{{ $openRequests }}</div>
-                            <div class="text-slate-500 text-sm">Open</div>
+                            <div class="font-medium theme-text-primary">{{ $openRequests }}</div>
+                            <div class="theme-text-muted text-sm">Open</div>
                         </div>
                     </div>
                 </div>
@@ -54,17 +68,17 @@
         </div>
 
         <div>
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
-                <div class="p-6">
+            <div class="theme-bg-card rounded-lg theme-shadow-sm theme-border-primary border">
+                <div class="density-p-lg">
                     <div class="flex items-center gap-3">
                         <div>
                             <span class="bg-amber-500 text-white flex items-center justify-center w-10 h-10 rounded-full">
-                                <i class="fas fa-clock"></i>
+                                <x-icon name="clock" class="w-5 h-5" />
                             </span>
                         </div>
                         <div>
-                            <div class="font-medium">{{ $statusCounts['pending'] ?? 0 }}</div>
-                            <div class="text-slate-500 text-sm">Pending</div>
+                            <div class="font-medium theme-text-primary">{{ $statusCounts['pending'] ?? 0 }}</div>
+                            <div class="theme-text-muted text-sm">Pending</div>
                         </div>
                     </div>
                 </div>
@@ -72,17 +86,17 @@
         </div>
 
         <div>
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
-                <div class="p-6">
+            <div class="theme-bg-card rounded-lg theme-shadow-sm theme-border-primary border">
+                <div class="density-p-lg">
                     <div class="flex items-center gap-3">
                         <div>
                             <span class="bg-cyan-500 text-white flex items-center justify-center w-10 h-10 rounded-full">
-                                <i class="fas fa-tasks"></i>
+                                <x-icon name="briefcase" class="w-5 h-5" />
                             </span>
                         </div>
                         <div>
-                            <div class="font-medium">{{ $statusCounts['in_progress'] ?? 0 }}</div>
-                            <div class="text-slate-500 text-sm">In Progress</div>
+                            <div class="font-medium theme-text-primary">{{ $statusCounts['in_progress'] ?? 0 }}</div>
+                            <div class="theme-text-muted text-sm">In Progress</div>
                         </div>
                     </div>
                 </div>
@@ -90,17 +104,17 @@
         </div>
 
         <div>
-            <div class="bg-white rounded-lg shadow-sm border {{ ($overdueCount ?? 0) > 0 ? 'border-red-500' : 'border-slate-200' }}">
-                <div class="p-6">
+            <div class="theme-bg-card rounded-lg theme-shadow-sm border {{ ($overdueCount ?? 0) > 0 ? 'border-red-500' : 'theme-border-primary' }}">
+                <div class="density-p-lg">
                     <div class="flex items-center gap-3">
                         <div>
                             <span class="bg-red-500 text-white flex items-center justify-center w-10 h-10 rounded-full">
-                                <i class="fas fa-exclamation-triangle"></i>
+                                <x-icon name="exclamation-circle" class="w-5 h-5" />
                             </span>
                         </div>
                         <div>
-                            <div class="font-medium {{ ($overdueCount ?? 0) > 0 ? 'text-red-500' : '' }}">{{ $overdueCount ?? 0 }}</div>
-                            <div class="text-slate-500 text-sm">Overdue</div>
+                            <div class="font-medium {{ ($overdueCount ?? 0) > 0 ? 'text-red-500' : 'theme-text-primary' }}">{{ $overdueCount ?? 0 }}</div>
+                            <div class="theme-text-muted text-sm">Overdue</div>
                         </div>
                     </div>
                 </div>
@@ -108,17 +122,17 @@
         </div>
 
         <div>
-            <div class="bg-white rounded-lg shadow-sm border {{ ($unassignedCount ?? 0) > 0 ? 'border-amber-500' : 'border-slate-200' }}">
-                <div class="p-6">
+            <div class="theme-bg-card rounded-lg theme-shadow-sm border {{ ($unassignedCount ?? 0) > 0 ? 'border-amber-500' : 'theme-border-primary' }}">
+                <div class="density-p-lg">
                     <div class="flex items-center gap-3">
                         <div>
                             <span class="bg-slate-600 text-white flex items-center justify-center w-10 h-10 rounded-full">
-                                <i class="fas fa-user-slash"></i>
+                                <x-icon name="user-circle" class="w-5 h-5" />
                             </span>
                         </div>
                         <div>
-                            <div class="font-medium {{ ($unassignedCount ?? 0) > 0 ? 'text-amber-500' : '' }}">{{ $unassignedCount ?? 0 }}</div>
-                            <div class="text-slate-500 text-sm">Unassigned</div>
+                            <div class="font-medium {{ ($unassignedCount ?? 0) > 0 ? 'text-amber-500' : 'theme-text-primary' }}">{{ $unassignedCount ?? 0 }}</div>
+                            <div class="theme-text-muted text-sm">Unassigned</div>
                         </div>
                     </div>
                 </div>
