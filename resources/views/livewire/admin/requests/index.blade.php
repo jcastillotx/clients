@@ -140,20 +140,20 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-3">
-        <div class="p-6">
+    <div class="theme-bg-card rounded-lg theme-shadow-sm theme-border-primary border mb-3">
+        <div class="density-p-lg">
             <div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Search</label>
-                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="Title, description, client…" wire:model.live.debounce.350ms="search">
+                    <label class="block text-sm font-medium theme-text-secondary mb-1.5">Search</label>
+                    <input type="text" class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="Title, description, client…" wire:model.live.debounce.350ms="search">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Client (search)</label>
-                    <input type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="Start typing…" wire:model.live.debounce.350ms="clientSearch">
+                    <label class="block text-sm font-medium theme-text-secondary mb-1.5">Client (search)</label>
+                    <input type="text" class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="Start typing…" wire:model.live.debounce.350ms="clientSearch">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Client</label>
-                    <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="clientId">
+                    <label class="block text-sm font-medium theme-text-secondary mb-1.5">Client</label>
+                    <select class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="clientId">
                         <option value="">All clients</option>
                         @foreach($clientOptions as $c)
                             <option value="{{ $c['id'] }}">{{ $c['name'] }}</option>
@@ -161,8 +161,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Assigned to</label>
-                    <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="assignedTo">
+                    <label class="block text-sm font-medium theme-text-secondary mb-1.5">Assigned to</label>
+                    <select class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="assignedTo">
                         <option value="">Anyone</option>
                         @foreach($staffOptions as $u)
                             <option value="{{ $u['id'] }}">{{ $u['name'] }}</option>
@@ -171,24 +171,24 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Status (multi)</label>
-                    <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" multiple size="5" wire:model.live="statuses">
+                    <label class="block text-sm font-medium theme-text-secondary mb-1.5">Status (multi)</label>
+                    <select class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" multiple size="5" wire:model.live="statuses">
                         @foreach($statusLabels as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Type (multi)</label>
-                    <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" multiple size="5" wire:model.live="types">
+                    <label class="block text-sm font-medium theme-text-secondary mb-1.5">Type (multi)</label>
+                    <select class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" multiple size="5" wire:model.live="types">
                         @foreach($types as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Priority</label>
-                    <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="priority">
+                    <label class="block text-sm font-medium theme-text-secondary mb-1.5">Priority</label>
+                    <select class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="priority">
                         <option value="">All</option>
                         @foreach($priorities as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
@@ -197,12 +197,12 @@
                 </div>
                 <div class="col-span-1 lg:col-span-2 grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5">From</label>
-                        <input type="date" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="dateFrom">
+                        <label class="block text-sm font-medium theme-text-secondary mb-1.5">From</label>
+                        <input type="date" class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="dateFrom">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5">To</label>
-                        <input type="date" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="dateTo">
+                        <label class="block text-sm font-medium theme-text-secondary mb-1.5">To</label>
+                        <input type="date" class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model.live="dateTo">
                     </div>
                 </div>
             </div>
@@ -210,105 +210,121 @@
     </div>
 
     @if(!empty($selected))
-        <div class="alert alert-info flex flex-wrap items-center gap-2">
+        <div class="alert alert-info flex flex-wrap items-center gap-2 mb-3">
             <div class="flex-1">
                 <strong>{{ count($selected) }}</strong> selected
             </div>
             <div class="flex flex-wrap gap-2">
-                <div class="flex items-center gap-1 bg-white border border-slate-300 rounded-lg overflow-hidden">
-                    <span class="px-3 py-2 bg-slate-100 text-sm font-medium">Status</span>
-                    <select class="px-3 py-2 border-0 focus:ring-0" wire:model="bulkStatus">
+                <div class="flex items-center gap-1 theme-bg-card theme-border-primary border rounded-lg overflow-hidden">
+                    <span class="density-px-sm density-py-sm theme-bg-secondary text-sm font-medium">Status</span>
+                    <select class="density-px-sm density-py-sm border-0 focus:ring-0 theme-bg-card theme-text-primary" wire:model="bulkStatus">
                         <option value="">—</option>
                         @foreach($statusLabels as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
-                    <button class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 font-semibold" wire:click="applyBulkStatus">Apply</button>
+                    <x-button variant="primary" size="sm" wire:click="applyBulkStatus">Apply</x-button>
                 </div>
 
                 @if($canAssign)
-                <div class="flex items-center gap-1 bg-white border border-slate-300 rounded-lg overflow-hidden">
-                    <span class="px-3 py-2 bg-slate-100 text-sm font-medium">Assign</span>
-                    <select class="px-3 py-2 border-0 focus:ring-0" wire:model="bulkAssignedTo">
+                <div class="flex items-center gap-1 theme-bg-card theme-border-primary border rounded-lg overflow-hidden">
+                    <span class="density-px-sm density-py-sm theme-bg-secondary text-sm font-medium">Assign</span>
+                    <select class="density-px-sm density-py-sm border-0 focus:ring-0 theme-bg-card theme-text-primary" wire:model="bulkAssignedTo">
                         <option value="">—</option>
                         @foreach($staffOptions as $u)
                             <option value="{{ $u['id'] }}">{{ $u['name'] }}</option>
                         @endforeach
                     </select>
-                    <button class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 font-semibold" wire:click="applyBulkAssign">Apply</button>
+                    <x-button variant="primary" size="sm" wire:click="applyBulkAssign">Apply</x-button>
                 </div>
                 @endif
 
-                <div class="flex items-center gap-1 bg-white border border-slate-300 rounded-lg overflow-hidden">
-                    <span class="px-3 py-2 bg-slate-100 text-sm font-medium">Priority</span>
-                    <select class="px-3 py-2 border-0 focus:ring-0" wire:model="bulkPriority">
+                <div class="flex items-center gap-1 theme-bg-card theme-border-primary border rounded-lg overflow-hidden">
+                    <span class="density-px-sm density-py-sm theme-bg-secondary text-sm font-medium">Priority</span>
+                    <select class="density-px-sm density-py-sm border-0 focus:ring-0 theme-bg-card theme-text-primary" wire:model="bulkPriority">
                         <option value="">—</option>
                         @foreach($priorities as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
-                    <button class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 font-semibold" wire:click="applyBulkPriority">Apply</button>
+                    <x-button variant="primary" size="sm" wire:click="applyBulkPriority">Apply</x-button>
                 </div>
             </div>
         </div>
     @endif
 
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+    <div class="theme-bg-card rounded-lg theme-shadow-sm theme-border-primary border">
         <div class="overflow-x-auto">
             <table class="w-full border-collapse">
-                <thead class="bg-slate-50 border-b border-slate-200">
+                <thead class="theme-bg-card-header theme-border-primary border-b">
                 <tr>
-                    <th class="px-4 py-3 text-left" style="width:1%">
-                        <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" wire:model="selectPage">
+                    <th class="density-px-md density-py-sm text-left" style="width:1%">
+                        <input type="checkbox" class="w-4 h-4 text-blue-600 rounded theme-border-primary focus:ring-blue-500" wire:model="selectPage">
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">ID</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Client</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Title</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Type</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Status</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Priority</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Assigned To</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Created</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Due</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Actions</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">ID</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">Client</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">Title</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">Type</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">Status</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">Priority</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">Assigned To</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">Created</th>
+                    <th class="density-px-md density-py-sm text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">Due</th>
+                    <th class="density-px-md density-py-sm text-right text-xs font-semibold theme-text-secondary uppercase tracking-wider">Actions</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200">
+                <tbody class="divide-y theme-border-muted">
                 @forelse($requests as $r)
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-4 py-3">
-                            <input type="checkbox" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" value="{{ $r->id }}" wire:model="selected">
+                    <tr class="hover:theme-bg-secondary transition-colors">
+                        <td class="density-px-md density-py-sm">
+                            <input type="checkbox" class="w-4 h-4 text-blue-600 rounded theme-border-primary focus:ring-blue-500" value="{{ $r->id }}" wire:model="selected">
                         </td>
-                        <td class="px-4 py-3 text-slate-500 text-sm">#{{ $r->id }}</td>
-                        <td class="px-4 py-3 text-sm">{{ $r->client?->company_name ?? ('Client #' . $r->client_id) }}</td>
-                        <td class="px-4 py-3 text-sm font-semibold">{{ $r->title }}</td>
-                        <td class="px-4 py-3 text-sm">{{ $types[$r->type] ?? $r->type }}</td>
-                        <td class="px-4 py-3">
+                        <td class="density-px-md density-py-sm theme-text-muted text-sm">#{{ $r->id }}</td>
+                        <td class="density-px-md density-py-sm text-sm theme-text-primary">{{ $r->client?->company_name ?? ('Client #' . $r->client_id) }}</td>
+                        <td class="density-px-md density-py-sm text-sm font-semibold theme-text-primary">{{ $r->title }}</td>
+                        <td class="density-px-md density-py-sm text-sm theme-text-primary">{{ $types[$r->type] ?? $r->type }}</td>
+                        <td class="density-px-md density-py-sm">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-{{ $r->status_color }}-100 text-{{ $r->status_color }}-800">{{ $statusLabels[$r->status] ?? $r->status }}</span>
                         </td>
-                        <td class="px-4 py-3">{!! $r->priority_badge !!}</td>
-                        <td class="px-4 py-3 text-sm">{{ $r->assignee?->name ?? '—' }}</td>
-                        <td class="px-4 py-3 text-slate-500 text-sm">{{ $r->created_at?->format('Y-m-d') }}</td>
-                        <td class="px-4 py-3 text-sm {{ $r->isOverdue() ? 'text-red-500 font-semibold' : 'text-slate-500' }}">
+                        <td class="density-px-md density-py-sm">{!! $r->priority_badge !!}</td>
+                        <td class="density-px-md density-py-sm text-sm theme-text-primary">{{ $r->assignee?->name ?? '—' }}</td>
+                        <td class="density-px-md density-py-sm theme-text-muted text-sm">{{ $r->created_at?->format('Y-m-d') }}</td>
+                        <td class="density-px-md density-py-sm text-sm {{ $r->isOverdue() ? 'text-red-500 font-semibold' : 'theme-text-muted' }}">
                             {{ $r->due_date?->format('Y-m-d') ?? '—' }}
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <a href="{{ route('admin.requests.show', $r) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">Open</a>
-                            @if($canAssign)
-                            <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 ml-2" wire:click="openAssign({{ $r->id }})">Assign</button>
-                            @endif
+                        <td class="density-px-md density-py-sm text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <x-button 
+                                    variant="outline-primary" 
+                                    size="xs"
+                                    href="{{ route('admin.requests.show', $r) }}"
+                                    icon="eye"
+                                >
+                                    Open
+                                </x-button>
+                                @if($canAssign)
+                                <x-button 
+                                    variant="outline" 
+                                    size="xs"
+                                    wire:click="openAssign({{ $r->id }})"
+                                    icon="user-circle"
+                                >
+                                    Assign
+                                </x-button>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11" class="px-4 py-8 text-center text-slate-500">No requests found.</td>
+                        <td colspan="11" class="density-px-md py-8 text-center theme-text-muted">No requests found.</td>
                     </tr>
                 @endforelse
                 </tbody>
             </table>
         </div>
 
-        <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
+        <div class="density-px-lg density-py-md theme-border-primary border-t theme-bg-card-footer">
             {{ $requests->links() }}
         </div>
     </div>
@@ -316,18 +332,18 @@
     @if($showAssign)
         <div class="fixed inset-0 z-50 overflow-y-auto" style="display:block;" tabindex="-1" role="dialog" aria-modal="true">
             <div class="flex min-h-screen items-center justify-center p-4">
-                <div class="relative w-full max-w-2xl bg-white rounded-lg shadow-xl">
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-                        <h5 class="text-lg font-semibold text-slate-900">Assign Request</h5>
-                        <button type="button" class="text-slate-400 hover:text-slate-500" wire:click="$set('showAssign', false)" aria-label="Close">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <div class="relative w-full max-w-2xl theme-bg-card rounded-lg theme-shadow-lg">
+                    <div class="flex items-center justify-between density-px-lg density-py-md theme-border-primary border-b">
+                        <h5 class="text-lg font-semibold theme-text-primary">Assign Request</h5>
+                        <button type="button" class="theme-text-muted hover:theme-text-secondary" wire:click="$set('showAssign', false)" aria-label="Close">
+                            <x-icon name="x" class="w-6 h-6" />
                         </button>
                     </div>
-                    <div class="p-6">
+                    <div class="density-p-lg">
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div class="md:col-span-1">
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Assign to</label>
-                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model="assignToUserId">
+                                <label class="block text-sm font-medium theme-text-secondary mb-1.5">Assign to</label>
+                                <select class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model="assignToUserId">
                                     <option value="">Unassigned</option>
                                     @foreach($staffOptions as $u)
                                         <option value="{{ $u['id'] }}">{{ $u['name'] }} ({{ $u['email'] }})</option>
@@ -335,24 +351,24 @@
                                 </select>
                             </div>
                             <div class="md:col-span-1">
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Due date</label>
-                                <input type="date" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model="assignDueDate">
+                                <label class="block text-sm font-medium theme-text-secondary mb-1.5">Due date</label>
+                                <input type="date" class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" wire:model="assignDueDate">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Internal notes</label>
-                                <textarea class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100" rows="3" placeholder="Visible to staff only…" wire:model="assignInternalNote"></textarea>
+                                <label class="block text-sm font-medium theme-text-secondary mb-1.5">Internal notes</label>
+                                <textarea class="w-full density-px-sm density-py-sm theme-border-primary border rounded-lg theme-bg-card theme-text-primary focus:border-blue-500 focus:ring-4 focus:ring-blue-100" rows="3" placeholder="Visible to staff only…" wire:model="assignInternalNote"></textarea>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="flex items-center">
-                                    <input class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" type="checkbox" wire:model="assignNotify">
-                                    <span class="ml-2 text-sm text-slate-700">Email the assigned staff member</span>
+                                    <input class="w-4 h-4 text-blue-600 rounded theme-border-primary focus:ring-blue-500" type="checkbox" wire:model="assignNotify">
+                                    <span class="ml-2 text-sm theme-text-secondary">Email the assigned staff member</span>
                                 </label>
                             </div>
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-200 bg-slate-50">
-                        <button type="button" class="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900" wire:click="$set('showAssign', false)">Cancel</button>
-                        <button type="button" class="btn-brand-primary" wire:click="saveAssignment" wire:loading.attr="disabled">Save</button>
+                    <div class="flex items-center justify-end gap-2 density-px-lg density-py-md theme-border-primary border-t theme-bg-card-footer">
+                        <x-button variant="ghost" size="md" wire:click="$set('showAssign', false)">Cancel</x-button>
+                        <x-button variant="primary" size="md" wire:click="saveAssignment" wire:loading.attr="disabled">Save</x-button>
                     </div>
                 </div>
             </div>
