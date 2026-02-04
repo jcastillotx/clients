@@ -164,7 +164,7 @@
 
         <div x-data="{ sidebarOpen: false }" class="flex">
             <!-- Sidebar -->
-            @include('layouts.partials.sidebar')
+            @include('layouts.partials.sidebar-tailwind')
 
             <!-- Overlay for mobile -->
             <div x-show="sidebarOpen" @click="sidebarOpen = false"
