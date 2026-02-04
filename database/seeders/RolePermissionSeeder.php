@@ -173,6 +173,61 @@ class RolePermissionSeeder extends Seeder
                 'view reports',
             ]);
 
+            // project_lead - similar to project_manager, manages project execution
+            $projectLeadRole = Role::firstOrCreate(['name' => 'project_lead', 'guard_name' => $guard]);
+            $projectLeadRole->syncPermissions([
+                'access admin panel',
+
+                // Clients
+                'view_any_client',
+                'view_client',
+                'create_client',
+                'update_client',
+
+                // Requests (including assign)
+                'view_any_request',
+                'view_request',
+                'create_request',
+                'update_request',
+                'delete_request',
+                'assign_request',
+
+                // Leads
+                'view_any_lead',
+                'view_lead',
+                'create_lead',
+                'update_lead',
+
+                // Invoices
+                'view_any_invoice',
+                'view_invoice',
+                'create_invoice',
+                'update_invoice',
+                'process_payment',
+
+                // Contracts
+                'view_any_contract',
+                'view_contract',
+                'create_contract',
+                'update_contract',
+
+                // Documents
+                'view_any_document',
+                'view_document',
+                'upload_document',
+                'delete_document',
+
+                // Users (limited)
+                'view_any_user',
+                'view_user',
+
+                // Settings (limited)
+                'manage settings',
+
+                // Reporting
+                'view reports',
+            ]);
+
             // staff - operational access (generic staff without assignment capability)
             $staffRole = Role::firstOrCreate(['name' => 'staff', 'guard_name' => $guard]);
             $staffRole->syncPermissions([
