@@ -28,6 +28,9 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 
+    <!-- Custom Brand Styles (Tailwind Extension) -->
+    <link rel="stylesheet" href="{{ asset('css/brand-tailwind.css') }}">
+
     <!-- Livewire Styles -->
     @livewireStyles
 
