@@ -75,7 +75,15 @@
                                             <td class="font-medium">{{ $m->title }}</td>
                                             <td class="capitalize">{{ $m->meeting_type }}</td>
                                             <td>
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                                @php
+                                                    $statusClasses = match($m->status) {
+                                                        'scheduled' => 'bg-green-100 text-green-800',
+                                                        'completed' => 'bg-blue-100 text-blue-800',
+                                                        'cancelled' => 'bg-red-100 text-red-800',
+                                                        default => 'bg-slate-100 text-slate-800'
+                                                    };
+                                                @endphp
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClasses }}">
                                                     {{ $m->status }}
                                                 </span>
                                             </td>
@@ -128,11 +136,15 @@
                                             <td>{{ $m->title }}</td>
                                             <td class="capitalize">{{ $m->meeting_type }}</td>
                                             <td>
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                                    {{ $m->status === 'scheduled' ? 'bg-green-100 text-green-800' : 
-                                                       ($m->status === 'completed' ? 'bg-blue-100 text-blue-800' : 
-                                                       ($m->status === 'cancelled' ? 'bg-red-100 text-red-800' : 
-                                                       'bg-slate-100 text-slate-800')) }}">
+                                                @php
+                                                    $statusClasses = match($m->status) {
+                                                        'scheduled' => 'bg-green-100 text-green-800',
+                                                        'completed' => 'bg-blue-100 text-blue-800',
+                                                        'cancelled' => 'bg-red-100 text-red-800',
+                                                        default => 'bg-slate-100 text-slate-800'
+                                                    };
+                                                @endphp
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClasses }}">
                                                     {{ $m->status }}
                                                 </span>
                                             </td>
