@@ -1,9 +1,9 @@
-{{-- Tailwind Sidebar --}}
+{{-- Tailwind Admin Sidebar --}}
 <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-slate-900 transform transition-transform duration-200 ease-in-out lg:translate-x-0 pt-16 lg:pt-0">
+    class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-slate-900 transform transition-transform duration-200 ease-in-out lg:translate-x-0 pt-16 lg:pt-0 overflow-y-auto">
 
     {{-- Logo --}}
-    <div class="hidden lg:flex items-center justify-center h-16 border-b border-slate-800 px-4">
+    <div class="hidden lg:flex items-center justify-center h-16 border-b border-slate-800 px-4 flex-shrink-0">
         <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2">
             @if(config('branding.logo.header'))
                 <img src="/{{ config('branding.logo.header') }}" alt="Logo" class="h-8">
@@ -14,7 +14,7 @@
     </div>
 
     {{-- Navigation --}}
-    <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+    <nav class="py-4 px-3 space-y-1">
         {{-- Dashboard --}}
         <a href="{{ route('admin.dashboard') }}"
             class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
@@ -52,7 +52,7 @@
 
         <a href="{{ route('admin.clients.index') }}"
             class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.clients.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-users w-5"></i>
+            <i class="fas fa-building w-5"></i>
             <span>Clients</span>
         </a>
 
@@ -62,17 +62,21 @@
             <span>Users</span>
         </a>
 
-        <a href="{{ route('admin.messages') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.messages') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-comments w-5"></i>
-            <span>Messages</span>
-        </a>
+        @if(Route::has('admin.messages'))
+            <a href="{{ route('admin.messages') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.messages') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-comments w-5"></i>
+                <span>Messages</span>
+            </a>
+        @endif
 
-        <a href="{{ route('admin.reports.dashboard') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reports*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-chart-line w-5"></i>
-            <span>Reporting</span>
-        </a>
+        @if(Route::has('admin.reports.dashboard'))
+            <a href="{{ route('admin.reports.dashboard') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reports.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fas fa-chart-line w-5"></i>
+                <span>Reporting</span>
+            </a>
+        @endif
 
         {{-- Settings Section --}}
         @can('manage settings')
