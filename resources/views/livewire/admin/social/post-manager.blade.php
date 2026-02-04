@@ -83,9 +83,9 @@
     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-700">
             <div class="flex items-center justify-between">
-                <h3 class="flex items-center text-lg font-semibold text-slate-900 dark:text-white">
-                    <i class="fas fa-stream mr-3 text-slate-600 dark:text-slate-400"></i>
-                    Social Media Posts
+                <h3 class="flex items-center gap-3 text-lg font-semibold text-slate-900 dark:text-white">
+                    <i class="fas fa-stream text-slate-600 dark:text-slate-400"></i>
+                    <span>Social Media Posts</span>
                 </h3>
                 <a href="{{ route('admin.social.posts.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2">
                     <i class="fas fa-plus"></i>
@@ -145,7 +145,7 @@
                     </select>
                 </div>
                 <div class="col-span-1">
-                    <button wire:click="clearFilters" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+                    <button wire:click="clearFilters" class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
                         <i class="fas fa-times"></i>
                         <span>Clear Filters</span>
                     </button>
@@ -188,14 +188,7 @@
                                     </div>
                                 </td>
                                 <td class="whitespace-nowrap px-4 py-3">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold 
-                                        @if($post->status_color === 'success') bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300
-                                        @elseif($post->status_color === 'warning') bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300
-                                        @elseif($post->status_color === 'danger') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
-                                        @elseif($post->status_color === 'primary') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
-                                        @elseif($post->status_color === 'info') bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300
-                                        @else bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300
-                                        @endif">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $this->getStatusBadgeClasses($post->status_color) }}">
                                         {{ ucfirst(str_replace('_', ' ', $post->status)) }}
                                     </span>
                                 </td>
