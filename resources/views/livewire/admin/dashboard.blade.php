@@ -92,7 +92,7 @@
             class="col-span-12 xl:col-span-8 rounded-lg border border-slate-200 bg-white px-5 pt-8 pb-5 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:px-8">
             <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
                 <div class="flex w-full flex-wrap gap-3 sm:gap-5">
-                    <div class="flex min-w-47.5">
+                    <div class="flex min-w-48">
                         <span
                             class="mr-2 mt-1 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-emerald-500">
                             <span class="block h-2.5 w-full max-w-2.5 rounded-full bg-emerald-500"></span>
