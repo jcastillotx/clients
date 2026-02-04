@@ -16,20 +16,24 @@
     <div class="flex items-center gap-4">
         <!-- Theme + Density -->
         <div class="hidden md:flex items-center gap-2">
-            <button type="button" class="btn-theme-toggle" onclick="window.__toggleTheme && window.__toggleTheme()" title="Toggle Light/Dark Mode">
-                <i class="fas fa-adjust"></i>
+            <button type="button" class="btn-theme-toggle flex items-center gap-1.5" onclick="window.__toggleTheme && window.__toggleTheme()" title="Toggle Light/Dark Mode" aria-label="Toggle light and dark mode">
+                <x-icon name="adjust" class="w-4 h-4" />
                 <span>Light/Dark</span>
             </button>
-            <button type="button" class="btn-density-toggle" onclick="window.__cycleDensity && window.__cycleDensity()" title="Cycle Padding Density">
-                <i class="fas fa-compress-arrows-alt"></i>
+            <button type="button" class="btn-density-toggle flex items-center gap-1.5" onclick="window.__cycleDensity && window.__cycleDensity()" title="Cycle Padding Density" aria-label="Change layout density">
+                <x-icon name="compress" class="w-4 h-4" />
                 <span>Padding</span>
             </button>
         </div>
 
         <!-- Notifications Dropdown -->
         <div x-data="{ open: false }" class="relative">
-            <button @click="open = !open" class="relative text-slate-600 hover:text-slate-900">
-                <i class="far fa-bell text-lg"></i>
+            <button @click="open = !open"
+                    class="relative text-slate-600 hover:text-slate-900"
+                    aria-label="View notifications"
+                    aria-expanded="false"
+                    x-bind:aria-expanded="open.toString()">
+                <x-icon name="bell" class="w-5 h-5" />
                 @php
                     $user = auth()->user();
                     $pendingCount = 0;
@@ -42,10 +46,17 @@
                     }
                 @endphp
                 @if(($pendingCount + $unread) > 0)
-                <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-amber-500 rounded-full">{{ $pendingCount + $unread }}</span>
+                <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-amber-500 rounded-full" aria-label="{{ $pendingCount + $unread }} unread notifications">{{ $pendingCount + $unread }}</span>
                 @endif
             </button>
-            <div x-show="open" @click.away="open = false"
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 @click.away="open = false"
                 class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
                 <div class="px-4 py-3 border-b border-slate-200">
                     <span class="font-semibold text-slate-900">Notifications</span>
@@ -78,27 +89,40 @@
 
         <!-- User Dropdown -->
         <div x-data="{ open: false }" class="relative">
-            <button @click="open = !open" class="flex items-center gap-2 text-sm">
+            <button @click="open = !open"
+                    class="flex items-center gap-2 text-sm"
+                    aria-label="User menu"
+                    aria-expanded="false"
+                    x-bind:aria-expanded="open.toString()">
                 @php $u = auth()->user(); $photo = $u?->profilePhotoUrl(); @endphp
                 @if($photo)
-                    <img src="{{ $photo }}" alt="Profile photo" class="w-8 h-8 rounded-full object-cover">
+                    <img src="{{ $photo }}" alt="{{ $u->name }} profile photo" class="w-8 h-8 rounded-full object-cover">
                 @else
                     <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                        <i class="far fa-user text-slate-600 text-sm"></i>
+                        <x-icon name="user" class="w-4 h-4 text-slate-600" />
                     </div>
                 @endif
                 <span class="hidden md:inline text-slate-700">{{ $u->name }}</span>
             </button>
-            <div x-show="open" @click.away="open = false"
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 @click.away="open = false"
                 class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
-                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                    <i class="fas fa-user-cog mr-2"></i> Profile Settings
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                    <x-icon name="cog" class="w-4 h-4" />
+                    <span>Profile Settings</span>
                 </a>
                 <div class="border-t border-slate-200 my-1"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
+                    <button type="submit" class="w-full flex items-center gap-2 text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                        <x-icon name="logout" class="w-4 h-4" />
+                        <span>Sign Out</span>
                     </button>
                 </form>
             </div>
