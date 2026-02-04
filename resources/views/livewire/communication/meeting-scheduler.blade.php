@@ -58,37 +58,45 @@
                         <h3 class="card-title"><i class="fas fa-calendar mr-1"></i> Your meetings</h3>
                     </div>
                     <div class="card-body p-0">
-                        <table class="table table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
-                                    <th>When</th>
-                                    <th>Link</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($meetings as $m)
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
                                     <tr>
-                                        <td>{{ $m->title }}</td>
-                                        <td>{{ $m->meeting_type }}</td>
-                                        <td><span class="badge badge-secondary">{{ $m->status }}</span></td>
-                                        <td class="text-muted">{{ $m->scheduled_at?->toDateTimeString() ?? '—' }}</td>
-                                        <td>
-                                            @if($m->meeting_link)
-                                                <a href="{{ $m->meeting_link }}" target="_blank" rel="noopener">Open</a>
-                                            @else
-                                                —
-                                            @endif
-                                        </td>
+                                        <th class="min-w-48">Title</th>
+                                        <th class="min-w-28">Type</th>
+                                        <th class="min-w-28">Status</th>
+                                        <th class="min-w-44">When</th>
+                                        <th class="min-w-20">Link</th>
                                     </tr>
-                                @endforeach
-                                @if($meetings->isEmpty())
-                                    <tr><td colspan="5" class="text-muted p-3">No meetings yet.</td></tr>
-                                @endif
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach($meetings as $m)
+                                        <tr>
+                                            <td class="font-medium">{{ $m->title }}</td>
+                                            <td class="capitalize">{{ $m->meeting_type }}</td>
+                                            <td>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                                    {{ $m->status }}
+                                                </span>
+                                            </td>
+                                            <td class="text-slate-600">{{ $m->scheduled_at?->format('M d, Y g:i A') ?? '—' }}</td>
+                                            <td>
+                                                @if($m->meeting_link)
+                                                    <a href="{{ $m->meeting_link }}" target="_blank" rel="noopener" class="text-blue-600 hover:text-blue-800 hover:underline">
+                                                        Open
+                                                    </a>
+                                                @else
+                                                    <span class="text-slate-400">—</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                    @if($meetings->isEmpty())
+                                        <tr><td colspan="5" class="text-center text-slate-500 py-8">No meetings yet.</td></tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -101,35 +109,45 @@
                         <h3 class="card-title"><i class="fas fa-calendar-alt mr-1"></i> Meeting requests</h3>
                     </div>
                     <div class="card-body p-0">
-                        <table class="table table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Client</th>
-                                    <th>Title</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
-                                    <th>When</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($meetings as $m)
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
                                     <tr>
-                                        <td>{{ $m->client?->company_name }}</td>
-                                        <td>{{ $m->title }}</td>
-                                        <td>{{ $m->meeting_type }}</td>
-                                        <td>{{ $m->status }}</td>
-                                        <td class="text-muted">{{ $m->scheduled_at?->toDateTimeString() ?? '—' }}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary" wire:click="edit({{ $m->id }})">Edit</button>
-                                        </td>
+                                        <th class="min-w-48">Client</th>
+                                        <th class="min-w-48">Title</th>
+                                        <th class="min-w-28">Type</th>
+                                        <th class="min-w-28">Status</th>
+                                        <th class="min-w-44">When</th>
+                                        <th class="w-24"></th>
                                     </tr>
-                                @endforeach
+                                </thead>
+                                <tbody>
+                                    @foreach($meetings as $m)
+                                        <tr>
+                                            <td class="font-medium">{{ $m->client?->company_name }}</td>
+                                            <td>{{ $m->title }}</td>
+                                            <td class="capitalize">{{ $m->meeting_type }}</td>
+                                            <td>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                                    {{ $m->status === 'scheduled' ? 'bg-green-100 text-green-800' : 
+                                                       ($m->status === 'completed' ? 'bg-blue-100 text-blue-800' : 
+                                                       ($m->status === 'cancelled' ? 'bg-red-100 text-red-800' : 
+                                                       'bg-slate-100 text-slate-800')) }}">
+                                                    {{ $m->status }}
+                                                </span>
+                                            </td>
+                                            <td class="text-slate-600">{{ $m->scheduled_at?->format('M d, Y g:i A') ?? '—' }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" wire:click="edit({{ $m->id }})">Edit</button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
                                 @if($meetings->isEmpty())
-                                    <tr><td colspan="6" class="text-muted p-3">No meetings.</td></tr>
+                                    <tr><td colspan="6" class="text-center text-slate-500 py-8">No meetings.</td></tr>
                                 @endif
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
 
