@@ -63,7 +63,7 @@
         Skip to main content
     </a>
 
-    <div class="min-h-screen">
+    <div class="h-screen flex flex-col overflow-hidden">
         <!-- Mobile Menu Button -->
         <div
             class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
@@ -123,12 +123,12 @@
             </div>
         </div>
 
-        <div x-data="{ sidebarOpen: false }" class="flex">
+        <div x-data="{ sidebarOpen: false }" class="flex flex-1 overflow-hidden">
             <!-- Sidebar -->
             @include('layouts.partials.sidebar-tailwind')
 
             <!-- Main Content -->
-            <div class="flex-1 flex flex-col min-h-screen lg:ml-64">
+            <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
                 <!-- Top Navigation (Desktop) -->
                 <header class="hidden lg:block bg-white border-b border-slate-200 px-6 py-4">
                     <div class="flex items-center justify-between">
@@ -215,7 +215,7 @@
                 </header>
 
                 <!-- Page Content -->
-                <main id="main-content" class="flex-1 p-6 lg:p-8" tabindex="-1">
+                <main id="main-content" class="flex-1 overflow-y-auto p-6 lg:p-8" tabindex="-1">
                     @yield('content')
                     {{ $slot ?? '' }}
                 </main>
