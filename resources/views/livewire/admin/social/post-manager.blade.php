@@ -169,7 +169,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                         @forelse($posts as $post)
-                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <tr class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                 <td class="whitespace-nowrap px-4 py-3">
                                     <i class="{{ $post->platform_icon }} text-2xl text-slate-600 dark:text-slate-400"></i>
                                 </td>
