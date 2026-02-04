@@ -22,16 +22,16 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Revenue Card -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md">
             <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary/10 transition-transform duration-300 group-hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <div>
-                        <div class="text-sm font-medium text-slate-500">Revenue</div>
+                        <div class="text-sm font-medium text-brand-muted">Revenue</div>
                         <div class="flex items-center gap-2">
                             <select class="border-0 bg-transparent p-0 text-xs text-slate-400 focus:ring-0" wire:model="selectedCurrency">
                                 <option value="USD">US Dollar...</option>
@@ -44,7 +44,7 @@
                 </div>
             </div>
             <div class="mt-3">
-                <div class="text-2xl font-bold text-slate-900">@money($totalRevenue)</div>
+                <div class="text-2xl font-bold font-heading text-brand-text">@money($totalRevenue)</div>
                 <div class="mt-1 flex items-center gap-1">
                     @if($revenueChange >= 0)
                         <span class="inline-flex items-center text-xs font-medium text-emerald-600">
@@ -67,16 +67,16 @@
         </div>
 
         <!-- Orders Card -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md">
             <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-secondary/40 transition-transform duration-300 group-hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                         </svg>
                     </div>
                     <div>
-                        <div class="text-sm font-medium text-slate-500">Active Requests</div>
+                        <div class="text-sm font-medium text-brand-muted">Active Requests</div>
                     </div>
                 </div>
                 <div class="h-10 w-16">
@@ -84,7 +84,7 @@
                 </div>
             </div>
             <div class="mt-3">
-                <div class="text-2xl font-bold text-slate-900">{{ $totalOrders }}</div>
+                <div class="text-2xl font-bold font-heading text-brand-text">{{ $totalOrders }}</div>
                 <div class="mt-1 flex items-center gap-1">
                     @if($ordersChange >= 0)
                         <span class="inline-flex items-center text-xs font-medium text-emerald-600">
@@ -107,16 +107,16 @@
         </div>
 
         <!-- Open Tickets Card -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md">
             <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 transition-transform duration-300 group-hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                         </svg>
                     </div>
                     <div>
-                        <div class="text-sm font-medium text-slate-500">Open Tickets</div>
+                        <div class="text-sm font-medium text-brand-muted">Open Tickets</div>
                     </div>
                 </div>
                 <div class="h-10 w-16">
@@ -124,7 +124,7 @@
                 </div>
             </div>
             <div class="mt-3">
-                <div class="text-2xl font-bold text-slate-900">{{ $openTickets }}</div>
+                <div class="text-2xl font-bold font-heading text-brand-text">{{ $openTickets }}</div>
                 <div class="mt-1 flex items-center gap-1">
                     @if($ticketsChange >= 0)
                         <span class="inline-flex items-center text-xs font-medium text-emerald-600">
@@ -153,12 +153,12 @@
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-primary/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <div class="text-sm font-semibold text-slate-900">Revenue Overview</div>
+                    <div class="text-sm font-semibold font-heading text-brand-text">Revenue Overview</div>
                 </div>
                 <select class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 focus:border-slate-300 focus:ring-0">
                     <option>US Dollar...</option>
@@ -174,7 +174,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                     </div>
-                    <p class="text-sm text-slate-500">No Revenue Overview found</p>
+                    <p class="text-sm text-brand-muted">No Revenue Overview found</p>
                 </div>
             @endif
         </div>
@@ -182,20 +182,20 @@
         <!-- Recent Open Tickets -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center gap-2">
-                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-rose-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                     </svg>
                 </div>
-                <div class="text-sm font-semibold text-slate-900">Recent Open Tickets</div>
+                <div class="text-sm font-semibold font-heading text-brand-text">Recent Open Tickets</div>
             </div>
             <div class="mt-4 space-y-3">
                 @forelse($recentTickets as $ticket)
-                    <a href="{{ route('support-tickets.show', $ticket) }}" class="block rounded-xl border border-slate-100 bg-white px-3 py-3 transition hover:bg-slate-50">
+                    <a href="{{ route('support-tickets.show', $ticket) }}" class="block rounded-xl border border-slate-100 bg-white px-3 py-3 transition-colors hover:bg-slate-50">
                         <div class="flex items-center justify-between gap-3">
                             <div class="min-w-0 flex-1">
-                                <div class="truncate text-sm font-medium text-slate-900">{{ $ticket->subject }}</div>
-                                <div class="mt-0.5 text-xs text-slate-500">{{ $ticket->ticket_number }} - {{ $ticket->created_at->diffForHumans() }}</div>
+                                <div class="truncate text-sm font-medium text-brand-text">{{ $ticket->subject }}</div>
+                                <div class="mt-0.5 text-xs text-brand-muted">{{ $ticket->ticket_number }} - {{ $ticket->created_at->diffForHumans() }}</div>
                             </div>
                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
                                 @if($ticket->priority === 'urgent') bg-red-100 text-red-700
@@ -214,7 +214,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                             </svg>
                         </div>
-                        <p class="text-sm text-slate-500">No Recent Open Ticket found</p>
+                        <p class="text-sm text-brand-muted">No Recent Open Ticket found</p>
                     </div>
                 @endforelse
             </div>
@@ -224,23 +224,23 @@
     <!-- Unpaid Invoices -->
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-center gap-2">
-            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-primary/10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
                 </svg>
             </div>
-            <div class="text-sm font-semibold text-slate-900">Unpaid Invoices</div>
+            <div class="text-sm font-semibold font-heading text-brand-text">Unpaid Invoices</div>
         </div>
         <div class="mt-4">
             @forelse($upcomingInvoices as $invoice)
-                <a href="{{ route('invoices.show', $invoice) }}" class="block border-b border-slate-100 py-3 last:border-0 hover:bg-slate-50">
+                <a href="{{ route('invoices.show', $invoice) }}" class="block border-b border-slate-100 py-3 last:border-0 transition-colors hover:bg-slate-50">
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <div class="truncate text-sm font-semibold text-slate-900">{{ $invoice->invoice_number }}</div>
-                            <div class="text-xs text-slate-500">Due {{ $invoice->due_date?->format('M d, Y') }}</div>
+                            <div class="truncate text-sm font-semibold text-brand-text">{{ $invoice->invoice_number }}</div>
+                            <div class="text-xs text-brand-muted">Due {{ $invoice->due_date?->format('M d, Y') }}</div>
                         </div>
                         <div class="text-right">
-                            <div class="text-sm font-semibold text-slate-900">@money($invoice->amount)</div>
+                            <div class="text-sm font-semibold text-brand-text">@money($invoice->amount)</div>
                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
                                 @if($invoice->status === 'overdue') bg-red-100 text-red-700
                                 @else bg-amber-100 text-amber-700
@@ -257,7 +257,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 14l2 2 4-4M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
                         </svg>
                     </div>
-                    <p class="text-sm text-slate-500">No Invoices Found</p>
+                    <p class="text-sm text-brand-muted">No Invoices Found</p>
                 </div>
             @endforelse
         </div>
@@ -266,20 +266,20 @@
     <!-- Recent Orders -->
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-center gap-2">
-            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-secondary/40">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
             </div>
-            <div class="text-sm font-semibold text-slate-900">Recent Orders</div>
+            <div class="text-sm font-semibold font-heading text-brand-text">Recent Orders</div>
         </div>
         <div class="mt-4">
             @forelse($recentOrders as $order)
-                <a href="{{ route('requests.show', $order) }}" class="block border-b border-slate-100 py-3 last:border-0 hover:bg-slate-50">
+                <a href="{{ route('requests.show', $order) }}" class="block border-b border-slate-100 py-3 last:border-0 transition-colors hover:bg-slate-50">
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <div class="truncate text-sm font-semibold text-slate-900">{{ $order->title }}</div>
-                            <div class="text-xs text-slate-500">{{ $order->created_at->format('M d, Y') }}</div>
+                            <div class="truncate text-sm font-semibold text-brand-text">{{ $order->title }}</div>
+                            <div class="text-xs text-brand-muted">{{ $order->created_at->format('M d, Y') }}</div>
                         </div>
                         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
                             @if($order->status === 'completed') bg-emerald-100 text-emerald-700
@@ -299,7 +299,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </div>
-                    <p class="text-sm text-slate-500">No Recent Order found</p>
+                    <p class="text-sm text-brand-muted">No Recent Order found</p>
                 </div>
             @endforelse
         </div>
@@ -309,17 +309,17 @@
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <div class="text-base font-semibold text-slate-900">Quick actions</div>
-                <div class="mt-1 text-sm text-slate-500">Common tasks to keep things moving.</div>
+                <div class="text-base font-semibold font-heading text-brand-text">Quick actions</div>
+                <div class="mt-1 text-sm text-brand-muted">Common tasks to keep things moving.</div>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a href="{{ route('requests.create') }}" class="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                <a href="{{ route('requests.create') }}" class="inline-flex items-center rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-primary/90">
                     New Request
                 </a>
-                <a href="{{ route('invoices.index') }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+                <a href="{{ route('invoices.index') }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-brand-text transition-colors hover:bg-slate-50">
                     Pay Invoice
                 </a>
-                <a href="{{ route('contracts.index') }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+                <a href="{{ route('contracts.index') }}" class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-brand-text transition-colors hover:bg-slate-50">
                     View Contracts
                 </a>
             </div>
@@ -331,18 +331,18 @@
         <!-- Recent Activity -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
-                <h2 class="text-base font-semibold text-slate-900">Recent activity</h2>
+                <h2 class="text-base font-semibold font-heading text-brand-text">Recent activity</h2>
                 <span class="text-xs font-medium text-slate-500">Last 10</span>
             </div>
             <div class="mt-4 space-y-3">
                 @forelse($recentActivity as $item)
                     <div class="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
-                        <div class="mt-0.5 h-2.5 w-2.5 rounded-full bg-slate-900/60"></div>
+                        <div class="mt-0.5 h-2.5 w-2.5 rounded-full bg-brand-primary/60"></div>
                         <div class="min-w-0 flex-1">
-                            <div class="text-sm font-medium text-slate-900">
+                            <div class="text-sm font-medium text-brand-text">
                                 {{ $item->description }}
                             </div>
-                            <div class="mt-0.5 text-xs text-slate-500">
+                            <div class="mt-0.5 text-xs text-brand-muted">
                                 {{ $item->created_at?->diffForHumans() }}
                                 @if($item->user)
                                     - {{ $item->user->name }}
@@ -351,7 +351,7 @@
                         </div>
                     </div>
                 @empty
-                    <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+                    <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-brand-muted">
                         No recent activity yet.
                     </div>
                 @endforelse
@@ -360,25 +360,25 @@
 
         <!-- Contract Expirations -->
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-base font-semibold text-slate-900">Contract expirations</h2>
+            <h2 class="text-base font-semibold font-heading text-brand-text">Contract expirations</h2>
             <div class="mt-4 space-y-3">
                 @forelse($upcomingContracts as $contract)
-                    <a href="{{ route('contracts.show', $contract) }}" class="block rounded-xl border border-slate-100 bg-white px-3 py-3 hover:bg-slate-50">
+                    <a href="{{ route('contracts.show', $contract) }}" class="block rounded-xl border border-slate-100 bg-white px-3 py-3 transition-colors hover:bg-slate-50">
                         <div class="flex items-center justify-between gap-3">
                             <div class="min-w-0">
-                                <div class="truncate text-sm font-semibold text-slate-900">{{ $contract->title }}</div>
-                                <div class="text-xs text-slate-500">Ends {{ $contract->end_date?->format('M d, Y') }}</div>
+                                <div class="truncate text-sm font-semibold text-brand-text">{{ $contract->title }}</div>
+                                <div class="text-xs text-brand-muted">Ends {{ $contract->end_date?->format('M d, Y') }}</div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-semibold text-slate-900">
+                                <div class="text-sm font-semibold text-brand-text">
                                     {{ $contract->days_until_expiration ?? $contract->daysUntilExpiration() ?? '---' }}
                                 </div>
-                                <div class="text-xs text-slate-500">days</div>
+                                <div class="text-xs text-brand-muted">days</div>
                             </div>
                         </div>
                     </a>
                 @empty
-                    <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+                    <div class="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-brand-muted">
                         No upcoming expirations.
                     </div>
                 @endforelse
@@ -440,19 +440,19 @@
             // Revenue sparkline
             const revSparkEl = document.getElementById('revenueSparkline');
             if (revSparkEl) {
-                window.__portalCharts.revenueSparkline = new Chart(revSparkEl.getContext('2d'), sparklineConfig(data.revenueSparkline || [0,0,0,0,0,0,0], '#10b981'));
+                window.__portalCharts.revenueSparkline = new Chart(revSparkEl.getContext('2d'), sparklineConfig(data.revenueSparkline || [0,0,0,0,0,0,0], '#5F5F82'));
             }
 
             // Orders sparkline
             const ordSparkEl = document.getElementById('ordersSparkline');
             if (ordSparkEl) {
-                window.__portalCharts.ordersSparkline = new Chart(ordSparkEl.getContext('2d'), sparklineConfig(data.ordersSparkline || [0,0,0,0,0,0,0], '#06b6d4'));
+                window.__portalCharts.ordersSparkline = new Chart(ordSparkEl.getContext('2d'), sparklineConfig(data.ordersSparkline || [0,0,0,0,0,0,0], '#5F5F82'));
             }
 
             // Tickets sparkline
             const tickSparkEl = document.getElementById('ticketsSparkline');
             if (tickSparkEl) {
-                window.__portalCharts.ticketsSparkline = new Chart(tickSparkEl.getContext('2d'), sparklineConfig(data.ticketsSparkline || [0,0,0,0,0,0,0], '#f43f5e'));
+                window.__portalCharts.ticketsSparkline = new Chart(tickSparkEl.getContext('2d'), sparklineConfig(data.ticketsSparkline || [0,0,0,0,0,0,0], '#f59e0b'));
             }
 
             // Revenue Overview Chart
@@ -465,7 +465,7 @@
                         datasets: [{
                             label: 'Revenue',
                             data: data.invoiceTrend.paid || [],
-                            backgroundColor: '#10b981',
+                            backgroundColor: '#5F5F82',
                             borderRadius: 6,
                             barThickness: 24,
                         }],

@@ -5,78 +5,99 @@
         <link rel="stylesheet" href="https://unpkg.com/frappe-gantt@0.6.1/dist/frappe-gantt.css">
         <style>
             #gantt { overflow-x: auto; }
-            .gantt .bar-progress { fill: #28a745; }
+            .gantt .bar-progress { fill: #5F5F82; }
         </style>
-    @endpush
+    @endpush>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {{-- Projects Sidebar --}}
         <div class="lg:col-span-3">
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                    <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-folder-open mr-1"></i> Projects</h3>
+                    <div class="flex items-center gap-2">
+                        <x-icon name="folder-open" class="h-5 w-5 text-brand-primary" />
+                        <h3 class="text-base font-semibold font-heading text-brand-text">Projects</h3>
+                    </div>
                 </div>
                 <div class="p-0">
                     <ul class="flex flex-col">
                         @forelse($projects as $p)
                             <li class="border-b border-slate-100 last:border-b-0">
-                                <a href="#" class="block px-4 py-3 transition hover:bg-slate-50 {{ $project?->id === $p->id ? 'bg-slate-900 text-white hover:bg-slate-800' : 'text-slate-900' }}" wire:click.prevent="selectProject({{ $p->id }})">
+                                <a href="#" class="block px-4 py-3 transition-colors {{ $project?->id === $p->id ? 'bg-brand-primary text-white hover:bg-brand-primary/90' : 'text-slate-900 hover:bg-slate-50' }}" wire:click.prevent="selectProject({{ $p->id }})">
                                     <div class="flex items-center justify-between">
                                         <span class="font-medium">{{ $p->name }}</span>
-                                        <span class="badge">{{ $p->status }}</span>
+                                        <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $project?->id === $p->id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700' }}">{{ $p->status }}</span>
                                     </div>
-                                    <div class="mt-1 text-sm {{ $project?->id === $p->id ? 'text-slate-300' : 'text-slate-500' }}">Progress: {{ $p->calculated_progress_percent }}%</div>
+                                    <div class="mt-1 text-sm {{ $project?->id === $p->id ? 'text-slate-200' : 'text-brand-muted' }}">Progress: {{ $p->calculated_progress_percent }}%</div>
                                 </a>
                             </li>
                         @empty
-                            <li class="px-4 py-3 text-slate-500">No projects yet.</li>
+                            <li class="px-4 py-3 text-sm text-brand-muted">No projects yet.</li>
                         @endforelse
                     </ul>
                 </div>
             </div>
         </div>
 
+        {{-- Main Content --}}
         <div class="lg:col-span-9">
             @if(!$project)
-                <div class="alert-info">Select a project to view timeline and progress.</div>
+                <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                    Select a project to view timeline and progress.
+                </div>
             @else
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-sm">
-                        <div class="relative z-10">
-                            <h3 class="text-3xl font-bold">{{ $project->calculated_progress_percent }}%</h3>
-                            <p class="mt-1 text-sm text-blue-100">Progress</p>
+                {{-- KPI Cards --}}
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3 mb-6">
+                    <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+                        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-primary/10 transition-transform duration-300 group-hover:scale-110">
+                            <x-icon name="clipboard-check" class="h-7 w-7 text-brand-primary" />
                         </div>
-                        <div class="absolute bottom-4 right-4 text-6xl text-blue-400 opacity-20"><i class="fas fa-tasks"></i></div>
+                        <h3 class="mt-4 text-3xl font-bold font-heading tracking-tight text-brand-text">{{ $project->calculated_progress_percent }}%</h3>
+                        <p class="mt-1 text-sm text-brand-muted">Progress</p>
+                        <div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-brand-primary to-brand-secondary opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                     </div>
-                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 text-white shadow-sm">
-                        <div class="relative z-10">
-                            <h3 class="text-3xl font-bold">@money($project->budget_amount)</h3>
-                            <p class="mt-1 text-sm text-emerald-100">Budget</p>
+
+                    <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+                        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-50 transition-transform duration-300 group-hover:scale-110">
+                            <x-icon name="currency-dollar" class="h-7 w-7 text-emerald-600" />
                         </div>
-                        <div class="absolute bottom-4 right-4 text-6xl text-emerald-400 opacity-20"><i class="fas fa-wallet"></i></div>
+                        <h3 class="mt-4 text-3xl font-bold font-heading tracking-tight text-brand-text">@money($project->budget_amount)</h3>
+                        <p class="mt-1 text-sm text-brand-muted">Budget</p>
+                        <div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                     </div>
-                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 p-6 text-white shadow-sm">
-                        <div class="relative z-10">
-                            <h3 class="text-3xl font-bold">@money($project->actual_spend)</h3>
-                            <p class="mt-1 text-sm text-amber-100">Actual spend</p>
+
+                    <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+                        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-50 transition-transform duration-300 group-hover:scale-110">
+                            <x-icon name="chart-bar" class="h-7 w-7 text-amber-600" />
                         </div>
-                        <div class="absolute bottom-4 right-4 text-6xl text-amber-400 opacity-20"><i class="fas fa-chart-line"></i></div>
+                        <h3 class="mt-4 text-3xl font-bold font-heading tracking-tight text-brand-text">@money($project->actual_spend)</h3>
+                        <p class="mt-1 text-sm text-brand-muted">Actual spend</p>
+                        <div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-amber-400 to-amber-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                        <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-stream mr-1"></i> Timeline (Gantt)</h3>
+                {{-- Gantt Chart --}}
+                <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm mb-6">
+                    <div class="border-b border-slate-200 bg-slate-50 px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <x-icon name="calendar" class="h-5 w-5 text-brand-primary" />
+                            <h3 class="text-base font-semibold font-heading text-brand-text">Timeline (Gantt)</h3>
+                        </div>
                     </div>
-                    <div class="p-4">
+                    <div class="p-6">
                         <div id="gantt"></div>
-                        <small class="text-slate-500">Touch-friendly: swipe horizontally to scroll.</small>
+                        <small class="text-brand-muted">Touch-friendly: swipe horizontally to scroll.</small>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                {{-- Milestones & Deliverables --}}
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-6">
+                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                         <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-flag-checkered mr-1"></i> Milestones</h3>
+                            <div class="flex items-center gap-2">
+                                <x-icon name="flag" class="h-5 w-5 text-brand-primary" />
+                                <h3 class="text-base font-semibold font-heading text-brand-text">Milestones</h3>
+                            </div>
                         </div>
                         <div class="p-0">
                             <div class="overflow-x-auto">
@@ -90,17 +111,17 @@
                                     </thead>
                                     <tbody class="divide-y divide-slate-100">
                                         @forelse($milestones as $m)
-                                            <tr class="hover:bg-slate-50">
-                                                <td class="px-4 py-3 text-sm text-slate-900">{{ $m->name }}</td>
-                                                <td class="px-4 py-3 text-sm text-slate-500">{{ $m->due_date?->toDateString() ?? '—' }}</td>
+                                            <tr class="transition-colors hover:bg-slate-50">
+                                                <td class="px-4 py-3 text-sm text-brand-text">{{ $m->name }}</td>
+                                                <td class="px-4 py-3 text-sm text-brand-muted">{{ $m->due_date?->toDateString() ?? '—' }}</td>
                                                 <td class="px-4 py-3 text-sm">
-                                                    <span class="badge-{{ $m->completed_at ? 'success' : 'secondary' }}">
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $m->completed_at ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
                                                         {{ $m->completed_at ? 'done' : 'open' }}
                                                     </span>
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="3" class="px-4 py-3 text-center text-sm text-slate-500">No milestones.</td></tr>
+                                            <tr><td colspan="3" class="px-4 py-3 text-center text-sm text-brand-muted">No milestones.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>
@@ -108,53 +129,63 @@
                         </div>
                     </div>
 
-                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                         <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-check-square mr-1"></i> Deliverables</h3>
+                            <div class="flex items-center gap-2">
+                                <x-icon name="clipboard-check" class="h-5 w-5 text-brand-primary" />
+                                <h3 class="text-base font-semibold font-heading text-brand-text">Deliverables</h3>
+                            </div>
                         </div>
                         <div class="p-4">
                             @forelse($deliverables as $d)
-                                <div class="mb-2 flex items-center justify-between rounded-lg border border-slate-200 p-3">
+                                <div class="mb-2 flex items-center justify-between rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50">
                                     <div>
-                                        <div class="font-semibold text-slate-900">{{ $d->title }}</div>
-                                        <div class="text-sm text-slate-500">{{ $d->due_date?->toDateString() ?? '—' }}</div>
+                                        <div class="font-semibold text-brand-text">{{ $d->title }}</div>
+                                        <div class="text-sm text-brand-muted">{{ $d->due_date?->toDateString() ?? '—' }}</div>
                                     </div>
-                                    <span class="badge-{{ $d->is_done ? 'success' : 'secondary' }}">
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $d->is_done ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
                                         {{ $d->is_done ? 'done' : 'open' }}
                                     </span>
                                 </div>
                             @empty
-                                <div class="text-slate-500">No deliverables.</div>
+                                <div class="text-sm text-brand-muted">No deliverables.</div>
                             @endforelse
                         </div>
                     </div>
                 </div>
 
+                {{-- Team & Cost Entries --}}
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                         <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-users mr-1"></i> Team</h3>
+                            <div class="flex items-center gap-2">
+                                <x-icon name="users" class="h-5 w-5 text-brand-primary" />
+                                <h3 class="text-base font-semibold font-heading text-brand-text">Team</h3>
+                            </div>
                         </div>
                         <div class="p-4">
                             @forelse($team as $u)
-                                <div class="mb-2 flex justify-between rounded-lg border border-slate-200 p-3">
+                                <div class="mb-2 flex justify-between rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50">
                                     <div>
-                                        <div class="font-semibold text-slate-900">{{ $u->name }}</div>
-                                        <div class="text-sm text-slate-500">{{ $u->pivot->role ?? 'team' }}</div>
+                                        <div class="font-semibold text-brand-text">{{ $u->name }}</div>
+                                        <div class="text-sm text-brand-muted">{{ $u->pivot->role ?? 'team' }}</div>
                                     </div>
-                                    <div class="text-sm text-slate-500">
+                                    <div class="text-sm text-brand-muted">
                                         {{ $u->pivot->hourly_rate ? '$' . number_format($u->pivot->hourly_rate, 2) . '/hr' : '' }}
                                     </div>
                                 </div>
                             @empty
-                                <div class="text-slate-500">Team not assigned yet.</div>
+                                <div class="text-sm text-brand-muted">Team not assigned yet.</div>
                             @endforelse
                         </div>
                     </div>
 
-                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                         <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                            <h3 class="text-base font-semibold text-slate-900"><i class="fas fa-receipt mr-1"></i> Recent cost entries</h3>
+                            <div class="flex items-center gap-2">
+                                <x-icon name="document-text" class="h-5 w-5 text-brand-primary" />
+                                <h3 class="text-base font-semibold font-heading text-brand-text">Recent cost entries</h3>
+                            </div>
                         </div>
                         <div class="p-0">
                             <div class="overflow-x-auto">
@@ -168,13 +199,13 @@
                                     </thead>
                                     <tbody class="divide-y divide-slate-100">
                                         @forelse($costEntries as $c)
-                                            <tr class="hover:bg-slate-50">
-                                                <td class="px-4 py-3 text-sm text-slate-500">{{ $c->occurred_on?->toDateString() ?? $c->created_at?->toDateString() }}</td>
-                                                <td class="px-4 py-3 text-sm text-slate-900">{{ $c->description }}</td>
-                                                <td class="px-4 py-3 text-right text-sm text-slate-900">@money($c->amount)</td>
+                                            <tr class="transition-colors hover:bg-slate-50">
+                                                <td class="px-4 py-3 text-sm text-brand-muted">{{ $c->occurred_on?->toDateString() ?? $c->created_at?->toDateString() }}</td>
+                                                <td class="px-4 py-3 text-sm text-brand-text">{{ $c->description }}</td>
+                                                <td class="px-4 py-3 text-right text-sm text-brand-text">@money($c->amount)</td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="3" class="px-4 py-3 text-center text-sm text-slate-500">No cost entries.</td></tr>
+                                            <tr><td colspan="3" class="px-4 py-3 text-center text-sm text-brand-muted">No cost entries.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>
@@ -218,9 +249,8 @@
                 try {
                     new Gantt(el, tasks, { view_mode: 'Week' });
                 } catch (e) {
-                    el.innerHTML = '<div class="text-muted">Unable to render timeline.</div>';
+                    el.innerHTML = '<div class="text-brand-muted">Unable to render timeline.</div>';
                 }
             }
         </script>
     @endpush
-

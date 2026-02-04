@@ -14,11 +14,11 @@
     </div>
 
     {{-- Navigation --}}
-    <nav class="py-4 px-3 space-y-1">
+    <nav class="py-4 px-3 space-y-1" aria-label="Admin navigation">
         {{-- Dashboard --}}
         <a href="{{ route('admin.dashboard') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-home w-5"></i>
+            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+            <x-icon name="home" class="w-5 h-5 flex-shrink-0" />
             <span>Dashboard</span>
         </a>
 
@@ -28,20 +28,20 @@
         </div>
 
         <a href="{{ route('admin.requests.index') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.requests.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-tasks w-5"></i>
+            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.requests.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+            <x-icon name="clipboard-list" class="w-5 h-5 flex-shrink-0" />
             <span>Service Requests</span>
         </a>
 
         <a href="{{ route('admin.support-tickets.index') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.support-tickets.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-life-ring w-5"></i>
+            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.support-tickets.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+            <x-icon name="question-mark-circle" class="w-5 h-5 flex-shrink-0" />
             <span>Support Tickets</span>
         </a>
 
         <a href="{{ route('admin.invoices.index') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.invoices.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-file-invoice-dollar w-5"></i>
+            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.invoices.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+            <x-icon name="currency-dollar" class="w-5 h-5 flex-shrink-0" />
             <span>Invoices & Payments</span>
         </a>
 
@@ -51,29 +51,29 @@
         </div>
 
         <a href="{{ route('admin.clients.index') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.clients.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-building w-5"></i>
+            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.clients.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+            <x-icon name="office-building" class="w-5 h-5 flex-shrink-0" />
             <span>Clients</span>
         </a>
 
         <a href="{{ route('admin.users.index') }}"
-            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.users.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-            <i class="fas fa-user-friends w-5"></i>
+            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.users.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+            <x-icon name="users" class="w-5 h-5 flex-shrink-0" />
             <span>Users</span>
         </a>
 
         @if(Route::has('admin.messages'))
             <a href="{{ route('admin.messages') }}"
-                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.messages') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                <i class="fas fa-comments w-5"></i>
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.messages') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <x-icon name="chat" class="w-5 h-5 flex-shrink-0" />
                 <span>Messages</span>
             </a>
         @endif
 
         @if(Route::has('admin.reports.dashboard'))
             <a href="{{ route('admin.reports.dashboard') }}"
-                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.reports.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                <i class="fas fa-chart-line w-5"></i>
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.reports.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <x-icon name="chart-bar" class="w-5 h-5 flex-shrink-0" />
                 <span>Reporting</span>
             </a>
         @endif
@@ -85,8 +85,8 @@
             </div>
 
             <a href="{{ route('admin.settings.index') }}"
-                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.settings.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                <i class="fas fa-cog w-5"></i>
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.settings.*') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <x-icon name="cog" class="w-5 h-5 flex-shrink-0" />
                 <span>System Settings</span>
             </a>
         @endcan
@@ -94,5 +94,14 @@
 </aside>
 
 {{-- Overlay for mobile --}}
-<div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-30 lg:hidden">
+<div x-show="sidebarOpen"
+     x-transition:enter="transition-opacity ease-linear duration-300"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition-opacity ease-linear duration-300"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     @click="sidebarOpen = false"
+     class="fixed inset-0 bg-slate-900 bg-opacity-50 z-30 lg:hidden"
+     aria-hidden="true">
 </div>

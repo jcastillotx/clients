@@ -1,286 +1,296 @@
-<div class="space-y-6">
-    <!-- Header KPI Cards -->
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <!-- Card: Total Active Clients -->
-        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div class="flex items-center justify-between">
-                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 dark:bg-slate-700">
-                    <i class="fas fa-users text-xl text-blue-600"></i>
+<div class="space-y-8">
+    {{-- Header KPI Cards - Modernized --}}
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        {{-- Card: Total Active Clients --}}
+        <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+            <div class="flex items-start justify-between">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-primary/10 transition-transform duration-300 group-hover:scale-110">
+                    <x-icon name="users" class="h-7 w-7 text-brand-primary" />
                 </div>
-                <!-- Percentage indicator (mock logic for demo, or real if available) -->
                 @php $clientGrowth = 2.5; @endphp
-                <span
-                    class="flex items-center gap-1 text-sm font-medium {{ $clientGrowth >= 0 ? 'text-emerald-500' : 'text-red-500' }}">
-                    {{ abs($clientGrowth) }}%
-                    <i class="fas fa-arrow-{{ $clientGrowth >= 0 ? 'up' : 'down' }}"></i>
-                </span>
+                <div class="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-600 dark:bg-emerald-900/20">
+                    <x-icon name="chevron-up" class="h-4 w-4" />
+                    <span>{{ abs($clientGrowth) }}%</span>
+                </div>
             </div>
-            <div class="mt-4">
-                <h4 class="text-2xl font-bold text-slate-800 dark:text-white">{{ $activeClients }}</h4>
-                <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Active Clients</span>
+            <div class="mt-6">
+                <h3 class="text-3xl font-bold tracking-tight text-brand-text dark:text-white">{{ $activeClients }}</h3>
+                <p class="mt-1 text-sm font-medium text-brand-muted dark:text-slate-400">Total Active Clients</p>
             </div>
+            <div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-brand-primary to-brand-secondary opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
         </div>
 
-        <!-- Card: Open Requests -->
-        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div class="flex items-center justify-between">
-                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 dark:bg-slate-700">
-                    <i class="fas fa-tasks text-xl text-indigo-600"></i>
+        {{-- Card: Open Requests --}}
+        <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+            <div class="flex items-start justify-between">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-50 transition-transform duration-300 group-hover:scale-110">
+                    <x-icon name="clipboard-list" class="h-7 w-7 text-indigo-600" />
                 </div>
-                <div class="flex -space-x-2 overflow-hidden">
-                    <!-- Avatars of assignees could go here, for now using counts -->
-                    <span
-                        class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 ring-2 ring-white text-xs text-slate-500 font-bold dark:ring-slate-800">
-                        {{ array_sum($openRequestsByStatus) }}
-                    </span>
+                <div class="flex items-center justify-center rounded-full bg-indigo-50 px-3 py-1 text-sm font-bold text-indigo-600">
+                    {{ array_sum($openRequestsByStatus) }}
                 </div>
             </div>
-            <div class="mt-4">
-                <h4 class="text-2xl font-bold text-slate-800 dark:text-white">{{ array_sum($openRequestsByStatus) }}
-                </h4>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Open Requests</span>
-                    <span class="text-xs font-medium text-indigo-500">Pending Action</span>
+            <div class="mt-6">
+                <h3 class="text-3xl font-bold tracking-tight text-brand-text dark:text-white">{{ array_sum($openRequestsByStatus) }}</h3>
+                <div class="mt-1 flex items-center justify-between">
+                    <p class="text-sm font-medium text-brand-muted dark:text-slate-400">Open Requests</p>
+                    <span class="text-xs font-medium text-indigo-600">Pending</span>
                 </div>
             </div>
+            <div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-indigo-500 to-indigo-300 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
         </div>
 
-        <!-- Card: Revenue -->
-        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div class="flex items-center justify-between">
-                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 dark:bg-slate-700">
-                    <i class="fas fa-dollar-sign text-xl text-emerald-600"></i>
+        {{-- Card: Revenue --}}
+        <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+            <div class="flex items-start justify-between">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-50 transition-transform duration-300 group-hover:scale-110">
+                    <x-icon name="currency-dollar" class="h-7 w-7 text-emerald-600" />
                 </div>
                 @php
                     $revChange = $revenueLastMonth > 0 ? (($revenueThisMonth - $revenueLastMonth) / $revenueLastMonth) * 100 : 100;
                 @endphp
-                <span
-                    class="flex items-center gap-1 text-sm font-medium {{ $revChange >= 0 ? 'text-emerald-500' : 'text-red-500' }}">
-                    {{ number_format(abs($revChange), 1) }}%
-                    <i class="fas fa-arrow-{{ $revChange >= 0 ? 'up' : 'down' }}"></i>
-                </span>
+                <div class="flex items-center gap-1 rounded-full {{ $revChange >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600' }} px-3 py-1 text-sm font-semibold">
+                    <x-icon name="chevron-{{ $revChange >= 0 ? 'up' : 'down' }}" class="h-4 w-4" />
+                    <span>{{ number_format(abs($revChange), 1) }}%</span>
+                </div>
             </div>
-            <div class="mt-4">
-                <h4 class="text-2xl font-bold text-slate-800 dark:text-white">${{ number_format($revenueThisMonth, 2) }}
-                </h4>
-                <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Revenue (This Month)</span>
+            <div class="mt-6">
+                <h3 class="text-3xl font-bold tracking-tight text-brand-text dark:text-white">${{ number_format($revenueThisMonth, 2) }}</h3>
+                <p class="mt-1 text-sm font-medium text-brand-muted dark:text-slate-400">Revenue This Month</p>
             </div>
+            <div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-emerald-500 to-emerald-300 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
         </div>
 
-        <!-- Card: Outstanding Invoices -->
-        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div class="flex items-center justify-between">
-                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 dark:bg-slate-700">
-                    <i class="fas fa-file-invoice-dollar text-xl text-amber-600"></i>
+        {{-- Card: Outstanding Invoices --}}
+        <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+            <div class="flex items-start justify-between">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-50 transition-transform duration-300 group-hover:scale-110">
+                    <x-icon name="exclamation-circle" class="h-7 w-7 text-amber-600" />
                 </div>
-                <span class="flex items-center gap-1 text-sm font-medium text-amber-500">
-                    Needs Attention
-                </span>
+                <div class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-600">
+                    Attention
+                </div>
             </div>
-            <div class="mt-4">
-                <h4 class="text-2xl font-bold text-slate-800 dark:text-white">
-                    ${{ number_format($outstandingInvoiceAmount, 2) }}</h4>
-                <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Outstanding Invoices</span>
+            <div class="mt-6">
+                <h3 class="text-3xl font-bold tracking-tight text-brand-text dark:text-white">${{ number_format($outstandingInvoiceAmount, 2) }}</h3>
+                <p class="mt-1 text-sm font-medium text-brand-muted dark:text-slate-400">Outstanding Invoices</p>
             </div>
+            <div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-amber-500 to-amber-300 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
         </div>
     </div>
 
-    <!-- Charts Section -->
+    {{-- Charts Section - Modernized --}}
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        <!-- Revenue Trend Chart -->
-        <div
-            class="col-span-12 xl:col-span-8 rounded-lg border border-slate-200 bg-white px-5 pt-8 pb-5 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:px-8">
-            <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
-                <div class="flex w-full flex-wrap gap-3 sm:gap-5">
-                    <div class="flex min-w-48">
-                        <span
-                            class="mr-2 mt-1 flex h-4 w-full max-w-4 items-center justify-center rounded-full border border-emerald-500">
-                            <span class="block h-2.5 w-full max-w-2.5 rounded-full bg-emerald-500"></span>
-                        </span>
-                        <div class="w-full">
-                            <p class="font-semibold text-emerald-500">Total Revenue</p>
-                            <p class="text-sm font-medium text-slate-500">Last 6 Months</p>
-                        </div>
+        {{-- Revenue Trend Chart --}}
+        <div class="col-span-12 xl:col-span-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-heading text-lg font-semibold text-brand-text dark:text-white">Revenue Trend</h4>
+                        <p class="mt-1 text-sm text-brand-muted">Last 6 months performance</p>
+                    </div>
+                    <div class="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-1.5">
+                        <span class="block h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span class="text-sm font-medium text-emerald-600">Total Revenue</span>
                     </div>
                 </div>
             </div>
-            <div class="mt-4 h-80"> <!-- Fixed height for chart -->
-                <canvas id="adminRevenueTrendChart"></canvas>
+            <div class="p-6">
+                <div class="h-80">
+                    <canvas id="adminRevenueTrendChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- Request Status Funnel -->
-        <div
-            class="col-span-12 xl:col-span-4 rounded-lg border border-slate-200 bg-white px-5 pt-8 pb-5 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:px-8">
-            <div class="mb-3 justify-between gap-4 sm:flex">
-                <div>
-                    <h5 class="text-xl font-semibold text-slate-800 dark:text-white">Request Status</h5>
-                </div>
+        {{-- Request Status Distribution --}}
+        <div class="col-span-12 xl:col-span-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-700">
+                <h4 class="font-heading text-lg font-semibold text-brand-text dark:text-white">Request Status</h4>
+                <p class="mt-1 text-sm text-brand-muted">Current distribution</p>
             </div>
-            <div class="mb-2">
-                <div id="chartThree" class="mx-auto flex justify-center h-64"> <!-- Fixed height circle/bar -->
+            <div class="p-6">
+                <div class="h-64">
                     <canvas id="adminRequestStatusChart"></canvas>
                 </div>
-            </div>
-            <div class="flex flex-col gap-2 mt-4 max-h-48 overflow-y-auto">
-                @foreach($openRequestsByStatus as $status => $count)
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="block h-3 w-3 rounded-full bg-blue-600"></span>
-                            <span
-                                class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ ucfirst(str_replace('_', ' ', $status)) }}</span>
+                <div class="mt-6 space-y-3 max-h-48 overflow-y-auto">
+                    @foreach($openRequestsByStatus as $status => $count)
+                        <div class="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3 transition-colors hover:bg-slate-100 dark:bg-slate-700/50 dark:hover:bg-slate-700">
+                            <div class="flex items-center gap-3">
+                                <span class="block h-3 w-3 rounded-full bg-brand-primary"></span>
+                                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ ucfirst(str_replace('_', ' ', $status)) }}</span>
+                            </div>
+                            <span class="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-brand-primary dark:bg-slate-800">{{ $count }}</span>
                         </div>
-                        <span class="text-sm font-semibold text-slate-800 dark:text-white">{{ $count }}</span>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    {{-- Quick Actions - Modernized --}}
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-brand-primary to-brand-primary/90 p-6 shadow-sm">
+        <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-                <h4 class="text-lg font-semibold text-slate-800 dark:text-white">Quick Actions</h4>
-                <p class="text-sm text-slate-500">Common administrative tasks</p>
+                <h4 class="font-heading text-xl font-semibold text-white">Quick Actions</h4>
+                <p class="mt-1 text-sm text-brand-secondary/90">Common administrative tasks</p>
             </div>
             <div class="flex flex-wrap gap-3">
                 <a href="{{ route('admin.clients.create') }}"
-                    class="inline-flex items-center justify-center gap-2.5 rounded-md bg-blue-600 px-6 py-3 text-center text-sm font-medium text-white hover:bg-opacity-90 transition-all">
-                    <i class="fas fa-plus"></i>
-                    New Client
+                    class="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-brand-primary shadow-sm transition-all hover:shadow-md hover:scale-105">
+                    <x-icon name="plus" class="h-4 w-4" />
+                    <span>New Client</span>
                 </a>
                 <a href="{{ route('admin.invoices.create') }}"
-                    class="inline-flex items-center justify-center gap-2.5 rounded-md border border-blue-600 px-6 py-3 text-center text-sm font-medium text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
-                    <i class="fas fa-file-invoice"></i>
-                    New Invoice
+                    class="inline-flex items-center gap-2 rounded-lg border-2 border-white px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-white hover:text-brand-primary">
+                    <x-icon name="document" class="h-4 w-4" />
+                    <span>New Invoice</span>
                 </a>
                 <a href="{{ route('admin.requests.index') }}"
-                    class="inline-flex items-center justify-center gap-2.5 rounded-md bg-slate-100 px-6 py-3 text-center text-sm font-medium text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-white transition-all">
-                    <i class="fas fa-tasks"></i>
-                    Assign Requests
+                    class="inline-flex items-center gap-2 rounded-lg bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20">
+                    <x-icon name="clipboard-list" class="h-4 w-4" />
+                    <span>Assign Requests</span>
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Tables Section -->
+    {{-- Tables Section - Modernized --}}
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <!-- Top Clients -->
-        <div class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div class="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-                <h4 class="text-lg font-semibold text-slate-800 dark:text-white">Top Clients by Revenue</h4>
-            </div>
-            <div class="p-4">
-                <div class="flex flex-col">
-                    <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
-                        <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-                            <table class="min-w-full text-left text-sm font-light">
-                                <thead class="font-medium text-slate-500 dark:text-slate-400">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3">Client Name</th>
-                                        <th scope="col" class="px-6 py-3 text-right">Total Revenue</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($topClients as $c)
-                                        <tr
-                                            class="border-b transition duration-300 ease-in-out hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700">
-                                            <td
-                                                class="whitespace-nowrap px-6 py-4 font-medium text-slate-800 dark:text-white">
-                                                {{ $c['company'] }}
-                                            </td>
-                                            <td class="whitespace-nowrap px-6 py-4 text-right font-bold text-emerald-600">
-                                                ${{ number_format((float) $c['total'], 2) }}
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="2" class="px-6 py-8 text-center text-slate-500">No revenue data
-                                                available.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        {{-- Top Clients --}}
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-700">
+                <div class="flex items-center gap-2">
+                    <x-icon name="office-building" class="h-5 w-5 text-brand-primary" />
+                    <h4 class="font-heading text-lg font-semibold text-brand-text dark:text-white">Top Clients by Revenue</h4>
                 </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-brand-muted">Client Name</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-brand-muted">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                        @forelse($topClients as $c)
+                            <tr class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary/10">
+                                            <span class="text-sm font-bold text-brand-primary">{{ substr($c['company'], 0, 1) }}</span>
+                                        </div>
+                                        <span class="font-medium text-brand-text dark:text-white">{{ $c['company'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-600">
+                                        <x-icon name="currency-dollar" class="h-4 w-4" />
+                                        {{ number_format((float) $c['total'], 2) }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="2" class="px-6 py-12 text-center">
+                                    <x-icon name="inbox" class="mx-auto h-12 w-12 text-slate-300" />
+                                    <p class="mt-2 text-sm text-brand-muted">No revenue data available</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- Overdue Invoices -->
-        <div class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div class="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
+        {{-- Overdue Invoices --}}
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-700">
                 <div class="flex items-center justify-between">
-                    <h4 class="text-lg font-semibold text-slate-800 dark:text-white">Overdue Invoices</h4>
-                    <span
-                        class="inline-flex items-center justify-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                    <div class="flex items-center gap-2">
+                        <x-icon name="exclamation-circle" class="h-5 w-5 text-red-500" />
+                        <h4 class="font-heading text-lg font-semibold text-brand-text dark:text-white">Overdue Invoices</h4>
+                    </div>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">
+                        <x-icon name="clock" class="h-3 w-3" />
                         {{ count($overdueInvoices) }} Pending
                     </span>
                 </div>
             </div>
-            <div class="p-4">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm text-slate-500 dark:text-slate-400">
-                        <thead
-                            class="bg-slate-50 text-xs uppercase text-slate-700 dark:bg-slate-700 dark:text-slate-400">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">Invoice</th>
-                                <th scope="col" class="px-6 py-3">Client</th>
-                                <th scope="col" class="px-6 py-3">Due Date</th>
-                                <th scope="col" class="px-6 py-3 text-right">Amount</th>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-brand-muted">Invoice</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-brand-muted">Client</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-brand-muted">Due Date</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-brand-muted">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                        @forelse($overdueInvoices as $inv)
+                            <tr class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <td class="px-6 py-4">
+                                    <span class="font-mono text-sm font-medium text-brand-text dark:text-white">{{ $inv['invoice_number'] }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-brand-muted">{{ Str::limit($inv['client'], 20) }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600">
+                                        <x-icon name="clock" class="h-3 w-3" />
+                                        {{ $inv['due_date'] ?? 'N/A' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="font-bold text-brand-text dark:text-white">${{ number_format((float) $inv['amount'], 2) }}</span>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                            @forelse($overdueInvoices as $inv)
-                                <tr class="bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700">
-                                    <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                                        {{ $inv['invoice_number'] }}
-                                    </td>
-                                    <td class="px-6 py-4">{{ Str::limit($inv['client'], 20) }}</td>
-                                    <td class="px-6 py-4 text-red-500">{{ $inv['due_date'] ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 text-right font-medium text-slate-900 dark:text-white">
-                                        ${{ number_format((float) $inv['amount'], 2) }}
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="px-6 py-8 text-center text-slate-500">Great job! No overdue
-                                        invoices.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center">
+                                    <x-icon name="check-circle" class="mx-auto h-12 w-12 text-emerald-300" />
+                                    <p class="mt-2 text-sm font-medium text-emerald-600">Great job! No overdue invoices.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <div class="border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-            <h4 class="text-lg font-semibold text-slate-800 dark:text-white">Recent Activity</h4>
+    {{-- Recent Activity - Modernized --}}
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-700">
+            <div class="flex items-center gap-2">
+                <x-icon name="clock" class="h-5 w-5 text-brand-primary" />
+                <h4 class="font-heading text-lg font-semibold text-brand-text dark:text-white">Recent Activity</h4>
+            </div>
         </div>
         <div class="p-6">
-            <div class="flex flex-col gap-4">
+            <div class="space-y-4">
                 @forelse($recentActivity as $a)
-                    <div
-                        class="flex items-start gap-4 pb-4 border-b border-slate-100 last:border-0 last:pb-0 dark:border-slate-700">
-                        <div
-                            class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700">
-                            <i class="fas fa-history text-slate-500 dark:text-slate-300"></i>
+                    <div class="flex items-start gap-4 rounded-lg border border-slate-100 bg-slate-50 p-4 transition-all hover:border-brand-secondary hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-primary/80">
+                            <x-icon name="check-circle" class="h-6 w-6 text-white" />
                         </div>
-                        <div class="w-full">
-                            <div class="mb-1 flex justify-between">
-                                <h5 class="font-medium text-slate-800 dark:text-white">{{ $a['description'] }}</h5>
-                                <span class="text-xs text-slate-400">{{ $a['when'] }}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-start justify-between gap-2">
+                                <h5 class="font-medium text-brand-text dark:text-white">{{ $a['description'] }}</h5>
+                                <span class="shrink-0 text-xs text-brand-muted">{{ $a['when'] }}</span>
                             </div>
-                            <p class="text-sm text-slate-500">{{ $a['user'] }} <span class="mx-1 text-slate-300">|</span>
-                                {{ $a['client'] ?? 'System' }}</p>
+                            <div class="mt-1 flex items-center gap-2 text-sm text-brand-muted">
+                                <x-icon name="user" class="h-4 w-4" />
+                                <span>{{ $a['user'] }}</span>
+                                <span class="text-slate-300">•</span>
+                                <span>{{ $a['client'] ?? 'System' }}</span>
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-4 text-slate-500">No recent activity detected.</div>
+                    <div class="py-12 text-center">
+                        <x-icon name="inbox" class="mx-auto h-16 w-16 text-slate-300" />
+                        <p class="mt-4 text-sm text-brand-muted">No recent activity detected</p>
+                    </div>
                 @endforelse
             </div>
         </div>
@@ -290,11 +300,6 @@
 @push('scripts')
     <script>
         (function () {
-            const calculateTrend = (data) => {
-                // Simple visual enhancement for chart lines
-                return data;
-            };
-
             const status = @json($requestStatusChart);
             const revenue = @json($revenueTrendChart);
 
@@ -307,7 +312,7 @@
 
                 if (!sEl || !rEl) return;
 
-                // Cleanup
+                // Cleanup existing charts
                 ['status', 'revenue'].forEach(key => {
                     if (window.__adminCharts[key]) {
                         window.__adminCharts[key].destroy();
@@ -315,11 +320,15 @@
                     }
                 });
 
-                // Revenue Chart - Area Spline Style
+                // Brand colors
+                const brandPrimary = '#5F5F82';
+                const brandSecondary = '#C8D7EA';
+
+                // Revenue Chart - Modern Area Chart with Brand Colors
                 const ctxRev = rEl.getContext('2d');
                 const gradientRev = ctxRev.createLinearGradient(0, 0, 0, 300);
-                gradientRev.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
-                gradientRev.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                gradientRev.addColorStop(0, 'rgba(95, 95, 130, 0.2)'); // brand-primary with opacity
+                gradientRev.addColorStop(1, 'rgba(95, 95, 130, 0)');
 
                 window.__adminCharts.revenue = new Chart(ctxRev, {
                     type: 'line',
@@ -328,15 +337,19 @@
                         datasets: [{
                             label: 'Revenue',
                             data: revenue.values || [],
-                            borderColor: '#10B981', // Emerald 500
+                            borderColor: brandPrimary,
                             backgroundColor: gradientRev,
-                            borderWidth: 2,
+                            borderWidth: 3,
                             tension: 0.4,
                             fill: true,
                             pointBackgroundColor: '#fff',
-                            pointBorderColor: '#10B981',
-                            pointHoverBackgroundColor: '#10B981',
-                            pointHoverBorderColor: '#fff'
+                            pointBorderColor: brandPrimary,
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointHoverBackgroundColor: brandPrimary,
+                            pointHoverBorderColor: '#fff',
+                            pointHoverBorderWidth: 2,
                         }]
                     },
                     options: {
@@ -345,36 +358,33 @@
                         plugins: {
                             legend: { display: false },
                             tooltip: {
-                                mode: 'index',
-                                intersect: false,
                                 backgroundColor: '#fff',
-                                titleColor: '#1e293b',
-                                bodyColor: '#475569',
-                                borderColor: '#e2e8f0',
+                                titleColor: '#1E293B',
+                                bodyColor: '#64748B',
+                                borderColor: '#E2E8F0',
                                 borderWidth: 1,
-                                padding: 10,
+                                padding: 12,
                                 displayColors: false,
                                 callbacks: {
-                                    label: function (context) {
-                                        return ' Revenue: $' + context.parsed.y.toLocaleString();
-                                    }
+                                    label: (context) => ' Revenue: $' + context.parsed.y.toLocaleString()
                                 }
                             }
                         },
                         scales: {
                             x: {
                                 grid: { display: false, drawBorder: false },
-                                ticks: { color: '#64748b' }
+                                ticks: { color: '#64748B', font: { size: 12 } }
                             },
                             y: {
                                 beginAtZero: true,
                                 grid: {
-                                    color: '#f1f5f9',
-                                    borderDash: [2, 2],
+                                    color: '#F1F5F9',
+                                    borderDash: [3, 3],
                                     drawBorder: false
                                 },
                                 ticks: {
-                                    color: '#64748b',
+                                    color: '#64748B',
+                                    font: { size: 12 },
                                     callback: (v) => '$' + v.toLocaleString()
                                 }
                             }
@@ -386,28 +396,41 @@
                     }
                 });
 
-                // Request Status Chart - Doughnut for Funnel/Distribution (Better Visual)
-                // Or Bar Chart (Request Funnel). Let's stick to Bar but styled cleaner.
+                // Request Status Chart - Modern Doughnut with Brand Colors
+                const statusColors = [
+                    brandPrimary,
+                    brandSecondary,
+                    '#818CF8', // Indigo-400
+                    '#A8B3C8', // Brand accent
+                    '#64748B', // Brand muted
+                ];
+
                 window.__adminCharts.status = new Chart(sEl.getContext('2d'), {
-                    type: 'doughnut', // Changed to Doughnut for nicer 'status distribution' look
+                    type: 'doughnut',
                     data: {
                         labels: status.labels || [],
                         datasets: [{
                             data: status.values || [],
-                            backgroundColor: [
-                                '#3C50E0', '#80CAEE', '#0FADCF', '#6577F3', '#0FADCF', '#F3F5F8'
-                            ],
+                            backgroundColor: statusColors,
                             borderWidth: 0,
-                            hoverOffset: 4
+                            hoverOffset: 8,
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false }
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#fff',
+                                titleColor: '#1E293B',
+                                bodyColor: '#64748B',
+                                borderColor: '#E2E8F0',
+                                borderWidth: 1,
+                                padding: 12,
+                            }
                         },
-                        cutout: '75%'
+                        cutout: '70%',
                     }
                 });
             }

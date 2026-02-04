@@ -9,12 +9,13 @@ export default {
     extend: {
       colors: {
         brand: {
-          primary: '#6366F1',    // Indigo-500
-          secondary: '#818CF8',  // Indigo-400
-          cta: '#10B981',        // Emerald-500
-          background: '#F5F3FF', // Violet-50
-          text: '#1E1B4B',       // Indigo-950
-          muted: '#475569',      // Slate-600
+          primary: '#5F5F82',    // Your brand purple
+          secondary: '#C8D7EA',  // Your brand light blue
+          cta: '#5F5F82',        // Primary for CTA
+          background: '#F8FAFC', // Light slate background
+          text: '#1E293B',       // Dark slate text
+          muted: '#64748B',      // Slate-500
+          accent: '#A8B3C8',     // Complementary mid-blue
         }
       },
       fontFamily: {
