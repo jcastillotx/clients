@@ -19,7 +19,7 @@ class SystemSettings extends Component
 {
     use WithFileUploads;
 
-    public $layout = 'layouts.admin-tailwind';
+    public $layout = 'layouts.admin';
 
     public string $tab = 'general';
 
@@ -1494,6 +1494,6 @@ class SystemSettings extends Component
             'platformModuleDefinitions' => PlatformFeatureService::$modules,
             'platformCategoryLabels' => PlatformFeatureService::categoryLabels(),
             'isSuperAdmin' => Auth::user()?->hasRole('super_admin') ?? false,
-        ])->layout('layouts.admin-tailwind');
+        ])->layout('layouts.admin');
     }
 }
