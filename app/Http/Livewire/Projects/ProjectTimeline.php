@@ -17,6 +17,11 @@ class ProjectTimeline extends Component
         abort_unless($user && ($user->isAdmin() || $user->isStaff()), 403);
     }
 
+    public function updatedRequestId($value): void
+    {
+        $this->requestId = $value ? (int) $value : null;
+    }
+
     public function render()
     {
         $user = Auth::user();
