@@ -54,7 +54,7 @@
     @stack('styles')
 </head>
 
-<body class="bg-slate-50 font-sans antialiased">
+<body class="theme-bg-secondary font-sans antialiased">
     <!-- Skip to Main Content Link -->
     <a href="#main-content"
        class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60]
@@ -66,10 +66,10 @@
     <div class="h-screen flex flex-col overflow-hidden">
         <!-- Mobile Menu Button -->
         <div
-            class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+            class="lg:hidden fixed top-0 left-0 right-0 z-50 theme-bg-card theme-border-primary border-b density-px-md density-py-sm flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <button @click="sidebarOpen = !sidebarOpen"
-                        class="text-slate-600 hover:text-slate-900"
+                        class="theme-text-secondary hover:theme-text-primary"
                         aria-label="Toggle admin navigation menu"
                         aria-expanded="false"
                         x-bind:aria-expanded="sidebarOpen.toString()">
@@ -79,11 +79,14 @@
                     @if(config('branding.logo.header'))
                         <img src="/{{ config('branding.logo.header') }}" alt="Logo" class="h-8">
                     @else
-                        <span class="text-lg font-bold text-slate-900">{{ config('branding.company.name') }}</span>
+                        <span class="text-lg font-bold theme-text-primary">{{ config('branding.company.name') }}</span>
                     @endif
                 </a>
             </div>
             <div class="flex items-center gap-2">
+                <!-- Theme Toggle (Mobile) -->
+                <x-theme-toggle class="scale-75" />
+                
                 <!-- User Menu -->
                 <div x-data="{ open: false }" class="relative">
                     <button @click="open = !open"
@@ -91,9 +94,9 @@
                             aria-label="User menu"
                             aria-expanded="false"
                             x-bind:aria-expanded="open.toString()">
-                        <span class="hidden sm:block text-slate-700">{{ auth()->user()->name }}</span>
-                        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                            <x-icon name="user" class="w-4 h-4 text-slate-600" />
+                        <span class="hidden sm:block theme-text-secondary">{{ auth()->user()->name }}</span>
+                        <div class="w-8 h-8 rounded-full theme-bg-tertiary flex items-center justify-center">
+                            <x-icon name="user" class="w-4 h-4 theme-text-secondary" />
                         </div>
                     </button>
                     <div x-show="open"
@@ -104,16 +107,16 @@
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95"
                          @click.away="open = false"
-                        class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+                        class="absolute right-0 mt-2 w-48 theme-bg-card rounded-lg theme-shadow-lg theme-border-primary border py-1">
                         <a href="{{ route('profile.edit') }}"
-                            class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                            class="flex items-center gap-2 density-px-md density-py-sm text-sm theme-text-secondary hover:theme-bg-secondary">
                             <x-icon name="user-circle" class="w-4 h-4" />
                             <span>Profile</span>
                         </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit"
-                                class="w-full flex items-center gap-2 text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                                class="w-full flex items-center gap-2 text-left density-px-md density-py-sm text-sm theme-text-secondary hover:theme-bg-secondary">
                                 <x-icon name="logout" class="w-4 h-4" />
                                 <span>Logout</span>
                             </button>
@@ -130,26 +133,21 @@
             <!-- Main Content -->
             <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
                 <!-- Top Navigation (Desktop) -->
-                <header class="hidden lg:block bg-white border-b border-slate-200 px-6 py-4">
+                <header class="hidden lg:block theme-bg-card theme-border-primary border-b density-px-lg density-py-md">
                     <div class="flex items-center justify-between">
                         <div>
                             @if(isset($header))
-                                <h1 class="text-2xl font-bold text-slate-900">{{ $header }}</h1>
+                                <h1 class="text-2xl font-bold theme-text-primary">{{ $header }}</h1>
                             @endif
                         </div>
                         <div class="flex items-center gap-4">
-                            <!-- Theme Toggle -->
-                            <button onclick="window.__toggleTheme && window.__toggleTheme()"
-                                class="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                                aria-label="Toggle light and dark theme">
-                                <x-icon name="adjust" class="w-4 h-4" />
-                                <span class="hidden xl:inline">Theme</span>
-                            </button>
+                            <!-- Theme Toggle (Desktop) -->
+                            <x-theme-toggle />
 
                             <!-- Notifications -->
                             <div x-data="{ open: false }" class="relative">
                                 <button @click="open = !open"
-                                    class="relative px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                    class="relative density-px-sm density-py-sm theme-text-secondary hover:theme-text-primary hover:theme-bg-secondary rounded-lg transition-colors"
                                     aria-label="View admin notifications"
                                     aria-expanded="false"
                                     x-bind:aria-expanded="open.toString()">
@@ -163,11 +161,11 @@
                                      x-transition:leave-start="opacity-100 scale-100"
                                      x-transition:leave-end="opacity-0 scale-95"
                                      @click.away="open = false"
-                                    class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 py-2">
-                                    <div class="px-4 py-2 border-b border-slate-200">
-                                        <h3 class="font-semibold text-slate-900">Notifications</h3>
+                                    class="absolute right-0 mt-2 w-80 theme-bg-card rounded-lg theme-shadow-lg theme-border-primary border py-2">
+                                    <div class="density-px-md density-py-sm theme-border-primary border-b">
+                                        <h3 class="font-semibold theme-text-primary">Notifications</h3>
                                     </div>
-                                    <div class="px-4 py-3 text-sm text-slate-500">
+                                    <div class="density-px-md density-py-sm text-sm theme-text-muted">
                                         No new notifications
                                     </div>
                                 </div>
@@ -176,15 +174,15 @@
                             <!-- User Menu -->
                             <div x-data="{ open: false }" class="relative">
                                 <button @click="open = !open"
-                                    class="flex items-center gap-3 px-3 py-2 hover:bg-slate-100 rounded-lg transition-colors"
+                                    class="flex items-center gap-3 density-px-sm density-py-sm hover:theme-bg-secondary rounded-lg transition-colors"
                                     aria-label="Admin user menu"
                                     aria-expanded="false"
                                     x-bind:aria-expanded="open.toString()">
-                                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                                        <x-icon name="user" class="w-4 h-4 text-slate-600" />
+                                    <div class="w-8 h-8 rounded-full theme-bg-tertiary flex items-center justify-center">
+                                        <x-icon name="user" class="w-4 h-4 theme-text-secondary" />
                                     </div>
-                                    <span class="text-sm font-medium text-slate-700">{{ auth()->user()->name }}</span>
-                                    <x-icon name="chevron-down" class="w-3 h-3 text-slate-400" />
+                                    <span class="text-sm font-medium theme-text-secondary">{{ auth()->user()->name }}</span>
+                                    <x-icon name="chevron-down" class="w-3 h-3 theme-text-muted" />
                                 </button>
                                 <div x-show="open"
                                      x-transition:enter="transition ease-out duration-200"
@@ -194,16 +192,16 @@
                                      x-transition:leave-start="opacity-100 scale-100"
                                      x-transition:leave-end="opacity-0 scale-95"
                                      @click.away="open = false"
-                                    class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+                                    class="absolute right-0 mt-2 w-48 theme-bg-card rounded-lg theme-shadow-lg theme-border-primary border py-1">
                                     <a href="{{ route('profile.edit') }}"
-                                        class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                                        class="flex items-center gap-2 density-px-md density-py-sm text-sm theme-text-secondary hover:theme-bg-secondary">
                                         <x-icon name="user-circle" class="w-4 h-4" />
                                         <span>Profile</span>
                                     </a>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <button type="submit"
-                                            class="w-full flex items-center gap-2 text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                                            class="w-full flex items-center gap-2 text-left density-px-md density-py-sm text-sm theme-text-secondary hover:theme-bg-secondary">
                                             <x-icon name="logout" class="w-4 h-4" />
                                             <span>Logout</span>
                                         </button>
@@ -215,14 +213,14 @@
                 </header>
 
                 <!-- Page Content -->
-                <main id="main-content" class="flex-1 overflow-y-auto p-6 lg:p-8" tabindex="-1">
+                <main id="main-content" class="flex-1 overflow-y-auto density-p-lg lg:density-p-xl" tabindex="-1">
                     @yield('content')
                     {{ $slot ?? '' }}
                 </main>
 
                 <!-- Footer -->
-                <footer class="bg-white border-t border-slate-200 px-6 py-4">
-                    <div class="flex items-center justify-between text-sm text-slate-600">
+                <footer class="theme-bg-card theme-border-primary border-t density-px-lg density-py-md">
+                    <div class="flex items-center justify-between text-sm theme-text-muted">
                         <div>
                             <strong>&copy; {{ date('Y') }} <a href="{{ config('branding.company.website') }}"
                                     class="text-blue-600 hover:text-blue-700">{{ config('branding.company.name') }}</a>.</strong>
@@ -239,17 +237,6 @@
 
     <!-- Livewire Scripts -->
     @livewireScripts
-
-    <!-- Theme Toggle Script -->
-    <script>
-        (function () {
-            window.__toggleTheme = function () {
-                const current = document.documentElement.getAttribute('data-theme') || 'light';
-                const next = current === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', next);
-                localStorage.setItem('theme', next);
-            };
-        })();
     </script>
 
     @stack('scripts')

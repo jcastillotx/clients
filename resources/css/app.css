@@ -1,5 +1,229 @@
 @import "tailwindcss";
 
+/* ========================================
+   Theme System - Light/Dark Mode Support
+   ======================================== */
+
+/* Light Mode (Default) */
+:root {
+    --bg-primary: theme('colors.white');
+    --bg-secondary: theme('colors.slate.50');
+    --bg-tertiary: theme('colors.slate.100');
+    --bg-card: theme('colors.white');
+    --bg-card-header: theme('colors.slate.50');
+    --bg-card-footer: theme('colors.slate.100');
+    
+    --text-primary: theme('colors.slate.900');
+    --text-secondary: theme('colors.slate.600');
+    --text-muted: theme('colors.slate.500');
+    --text-inverse: theme('colors.white');
+    
+    --border-primary: theme('colors.slate.200');
+    --border-secondary: theme('colors.slate.300');
+    --border-muted: theme('colors.slate.100');
+    
+    --shadow-sm: theme('boxShadow.sm');
+    --shadow-md: theme('boxShadow.md');
+    --shadow-lg: theme('boxShadow.lg');
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+    --bg-primary: theme('colors.slate.900');
+    --bg-secondary: theme('colors.slate.800');
+    --bg-tertiary: theme('colors.slate.700');
+    --bg-card: theme('colors.slate.800');
+    --bg-card-header: theme('colors.slate.700');
+    --bg-card-footer: #334155; /* slate-750 */
+    
+    --text-primary: theme('colors.slate.100');
+    --text-secondary: theme('colors.slate.300');
+    --text-muted: theme('colors.slate.400');
+    --text-inverse: theme('colors.slate.900');
+    
+    --border-primary: theme('colors.slate.700');
+    --border-secondary: theme('colors.slate.600');
+    --border-muted: theme('colors.slate.800');
+    
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* ========================================
+   Density System - Padding/Spacing Control
+   ======================================== */
+
+/* Comfy (Default) */
+:root {
+    --spacing-xs: theme('spacing.1');
+    --spacing-sm: theme('spacing.2');
+    --spacing-md: theme('spacing.4');
+    --spacing-lg: theme('spacing.6');
+    --spacing-xl: theme('spacing.8');
+    --spacing-2xl: theme('spacing.12');
+    
+    --padding-card: theme('spacing.6');
+    --padding-section: theme('spacing.8');
+    --gap-items: theme('spacing.4');
+}
+
+/* Compact */
+[data-density="compact"] {
+    --spacing-xs: 0.125rem; /* 2px */
+    --spacing-sm: theme('spacing.1');
+    --spacing-md: theme('spacing.2');
+    --spacing-lg: theme('spacing.3');
+    --spacing-xl: theme('spacing.4');
+    --spacing-2xl: theme('spacing.6');
+    
+    --padding-card: theme('spacing.4');
+    --padding-section: theme('spacing.4');
+    --gap-items: theme('spacing.2');
+}
+
+/* Extreme */
+[data-density="extreme"] {
+    --spacing-xs: theme('spacing.0');
+    --spacing-sm: 0.125rem; /* 2px */
+    --spacing-md: theme('spacing.1');
+    --spacing-lg: theme('spacing.2');
+    --spacing-xl: theme('spacing.2');
+    --spacing-2xl: theme('spacing.3');
+    
+    --padding-card: theme('spacing.2');
+    --padding-section: theme('spacing.2');
+    --gap-items: theme('spacing.1');
+}
+
+/* ========================================
+   Dark Mode for Existing Components
+   ======================================== */
+
+[data-theme="dark"] body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .card {
+    background-color: var(--bg-card);
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .card-header {
+    background-color: var(--bg-card-header);
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .card-footer {
+    background-color: var(--bg-card-footer);
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .form-card {
+    background-color: var(--bg-card);
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-control {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-input::placeholder,
+[data-theme="dark"] .form-control::placeholder {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-select-modern {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+[data-theme="dark"] .alert-success {
+    background-color: rgb(22 101 52 / 0.2);
+    border-color: rgb(34 197 94 / 0.3);
+    color: rgb(134 239 172);
+}
+
+[data-theme="dark"] .alert-warning {
+    background-color: rgb(133 77 14 / 0.2);
+    border-color: rgb(245 158 11 / 0.3);
+    color: rgb(253 224 71);
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: rgb(153 27 27 / 0.2);
+    border-color: rgb(239 68 68 / 0.3);
+    color: rgb(252 165 165);
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: rgb(30 64 175 / 0.2);
+    border-color: rgb(59 130 246 / 0.3);
+    color: rgb(147 197 253);
+}
+
+[data-theme="dark"] .badge-primary {
+    background-color: rgb(59 130 246 / 0.3);
+    color: rgb(147 197 253);
+}
+
+[data-theme="dark"] .badge-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .badge-success {
+    background-color: rgb(34 197 94 / 0.3);
+    color: rgb(134 239 172);
+}
+
+[data-theme="dark"] .badge-warning {
+    background-color: rgb(245 158 11 / 0.3);
+    color: rgb(253 224 71);
+}
+
+[data-theme="dark"] .badge-danger {
+    background-color: rgb(239 68 68 / 0.3);
+    color: rgb(252 165 165);
+}
+
+[data-theme="dark"] .badge-info {
+    background-color: rgb(59 130 246 / 0.3);
+    color: rgb(147 197 253);
+}
+
+[data-theme="dark"] .modal-dialog {
+    background-color: var(--bg-card);
+}
+
+[data-theme="dark"] .modal-header {
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .modal-title {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-footer {
+    border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-primary);
+    color: var(--text-secondary);
+}
+
 /* Base Styles */
 @layer base {
   html {
@@ -126,7 +350,6 @@
 
   .table-responsive {
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
   }
 
   .table-hover tbody tr:hover {
@@ -557,5 +780,63 @@
     width: 100%;
   }
 }
+
+/* ========================================
+   Theme-Aware Component Classes
+   ======================================== */
+
+.theme-bg-primary { background-color: var(--bg-primary); }
+.theme-bg-secondary { background-color: var(--bg-secondary); }
+.theme-bg-tertiary { background-color: var(--bg-tertiary); }
+.theme-bg-card { background-color: var(--bg-card); }
+.theme-bg-card-header { background-color: var(--bg-card-header); }
+.theme-bg-card-footer { background-color: var(--bg-card-footer); }
+
+.theme-text-primary { color: var(--text-primary); }
+.theme-text-secondary { color: var(--text-secondary); }
+.theme-text-muted { color: var(--text-muted); }
+.theme-text-inverse { color: var(--text-inverse); }
+
+.theme-border-primary { border-color: var(--border-primary); }
+.theme-border-secondary { border-color: var(--border-secondary); }
+.theme-border-muted { border-color: var(--border-muted); }
+
+.theme-shadow-sm { box-shadow: var(--shadow-sm); }
+.theme-shadow-md { box-shadow: var(--shadow-md); }
+.theme-shadow-lg { box-shadow: var(--shadow-lg); }
+
+/* ========================================
+   Density-Aware Component Classes
+   ======================================== */
+
+.density-p-card { padding: var(--padding-card); }
+.density-p-section { padding: var(--padding-section); }
+.density-gap { gap: var(--gap-items); }
+.density-space-y > * + * { margin-top: var(--gap-items); }
+
+.density-p-xs { padding: var(--spacing-xs); }
+.density-p-sm { padding: var(--spacing-sm); }
+.density-p-md { padding: var(--spacing-md); }
+.density-p-lg { padding: var(--spacing-lg); }
+.density-p-xl { padding: var(--spacing-xl); }
+.density-p-2xl { padding: var(--spacing-2xl); }
+
+.density-px-xs { padding-left: var(--spacing-xs); padding-right: var(--spacing-xs); }
+.density-px-sm { padding-left: var(--spacing-sm); padding-right: var(--spacing-sm); }
+.density-px-md { padding-left: var(--spacing-md); padding-right: var(--spacing-md); }
+.density-px-lg { padding-left: var(--spacing-lg); padding-right: var(--spacing-lg); }
+.density-px-xl { padding-left: var(--spacing-xl); padding-right: var(--spacing-xl); }
+
+.density-py-xs { padding-top: var(--spacing-xs); padding-bottom: var(--spacing-xs); }
+.density-py-sm { padding-top: var(--spacing-sm); padding-bottom: var(--spacing-sm); }
+.density-py-md { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
+.density-py-lg { padding-top: var(--spacing-lg); padding-bottom: var(--spacing-lg); }
+.density-py-xl { padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xl); }
+
+.density-m-xs { margin: var(--spacing-xs); }
+.density-m-sm { margin: var(--spacing-sm); }
+.density-m-md { margin: var(--spacing-md); }
+.density-m-lg { margin: var(--spacing-lg); }
+.density-m-xl { margin: var(--spacing-xl); }
 
 

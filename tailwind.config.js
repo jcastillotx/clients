@@ -16,7 +16,13 @@ export default {
           text: '#1E293B',       // Dark slate text
           muted: '#64748B',      // Slate-500
           accent: '#A8B3C8',     // Complementary mid-blue
+        },
+        slate: {
+          750: '#334155', // Custom slate-750 color
         }
+      },
+      spacing: {
+        '0.5': '0.125rem', // 2px
       },
       fontFamily: {
         heading: ['Poppins', 'sans-serif'],
