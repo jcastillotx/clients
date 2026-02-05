@@ -1,0 +1,102 @@
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import { ClientDetail } from "@/components/clients/client-detail";
+import { ClientRequests } from "@/components/clients/client-requests";
+import { ClientInvoices } from "@/components/clients/client-invoices";
+
+interface ClientDetailPageProps {
+  params: {
+    id: string;
+  };
+}
+
+/**
+ * Client detail page (Server Component)
+ *
+ * Fetches client with all related data (requests, invoices, staff assignments).
+ */
+export default async function ClientDetailPage({ params }: ClientDetailPageProps) {
+  const supabase = createClient();
+
+  // Fetch client with all related data
+  const { data: client, error } = await supabase
+    .from("clients")
+    .select(
+      `
+      *,
+      primary_contact:users!clients_primary_contact_id_fkey(id, name, email, phone, avatar)
+    `,
+    )
+    .eq("id", params.id)
+    .single();
+
+  if (error || !client) {
+    notFound();
+  }
+
+  // Fetch related data in parallel
+  const [{ data: requests, count: requestCount }, { data: invoices }, { data: staffAssignments }] = await Promise.all([
+    supabase
+      .from("requests")
+      .select(
+        `
+        id,
+        title,
+        status,
+        priority,
+        created_at,
+        assigned_user:users!requests_assigned_to_fkey(id, name, avatar)
+      `,
+        { count: "exact" },
+      )
+      .eq("client_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("invoices")
+      .select(
+        `
+        id,
+        invoice_number,
+        amount,
+        status,
+        due_date,
+        created_at
+      `,
+      )
+      .eq("client_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("staff_assignments")
+      .select(
+        `
+        id,
+        role,
+        user:users(id, name, email, avatar)
+      `,
+      )
+      .eq("client_id", params.id),
+  ]);
+
+  // Calculate stats
+  const stats = {
+    totalRequests: requestCount || 0,
+    openRequests: requests?.filter((r) => ["pending", "in_progress"].includes(r.status)).length || 0,
+    totalRevenue: invoices?.reduce((sum, inv) => sum + inv.amount, 0) || 0,
+    paidRevenue: invoices?.filter((inv) => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0) || 0,
+  };
+
+  return (
+    <div className="flex flex-col gap-8 p-8">
+      {/* Client details */}
+      <ClientDetail client={client} staffAssignments={staffAssignments || []} stats={stats} />
+
+      {/* Related data tabs */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <ClientRequests requests={requests || []} clientId={params.id} />
+        <ClientInvoices invoices={invoices || []} clientId={params.id} />
+      </div>
+    </div>
+  );
+}
