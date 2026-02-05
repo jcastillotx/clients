@@ -35,6 +35,22 @@ This portal includes a full “client portal + operations” stack. Major capabi
 - **PDF Generation**: DomPDF
 - **HTTP clients**: Laravel HTTP Client + Guzzle (provider integrations)
 
+## 📚 Styling Documentation
+
+The application is currently undergoing a systematic conversion from Bootstrap to Tailwind CSS. Complete documentation is available:
+
+- **[TAILWIND_AUDIT_SUMMARY.md](./TAILWIND_AUDIT_SUMMARY.md)** - Start here! Executive summary and navigation
+- **[PAGES_INVENTORY.md](./PAGES_INVENTORY.md)** - Complete catalog of all 150+ pages
+- **[STYLING_CONVERSION_REPORT.md](./STYLING_CONVERSION_REPORT.md)** - Detailed analysis of 120 files requiring conversion
+- **[BOOTSTRAP_TO_TAILWIND_GUIDE.md](./BOOTSTRAP_TO_TAILWIND_GUIDE.md)** - Quick reference for developers
+
+### Key Findings
+- **150+ pages** mapped across the application
+- **120 files** contain Bootstrap classes requiring conversion
+- **4-phase conversion strategy** over 8 weeks (80-120 hours)
+
+See [TAILWIND_AUDIT_SUMMARY.md](./TAILWIND_AUDIT_SUMMARY.md) for complete details.
+
 ## Requirements
 
 - PHP 8.2+
