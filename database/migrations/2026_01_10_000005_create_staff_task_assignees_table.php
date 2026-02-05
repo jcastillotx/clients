@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('role', 30)->default('assignee'); // assignee, reviewer, watcher
             $table->timestamp('assigned_at')->useCurrent();
+            $table->timestamps();
 
             $table->unique(['task_id', 'user_id']);
             $table->index(['user_id', 'role']);
