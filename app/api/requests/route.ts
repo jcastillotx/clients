@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createRequestSchema } from "@/lib/validations/request";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 /**
  * GET /api/requests
