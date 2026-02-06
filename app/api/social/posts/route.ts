@@ -23,8 +23,7 @@ export async function GET(request: Request) {
       })
       .from(socialPosts)
       .leftJoin(socialAccounts, eq(socialPosts.accountId, socialAccounts.id))
-      .where(isNull(socialPosts.deletedAt))
-      .orderBy(desc(socialPosts.scheduledFor));
+      .$dynamic();
 
     // Apply filters
     const conditions = [isNull(socialPosts.deletedAt)];
@@ -49,11 +48,11 @@ export async function GET(request: Request) {
       conditions.push(lte(socialPosts.scheduledFor, new Date(endDate)));
     }
 
-    if (conditions.length > 1) {
+    if (conditions.length > 0) {
       query = query.where(and(...conditions));
     }
 
-    const posts = await query;
+    const posts = await query.orderBy(desc(socialPosts.scheduledFor));
 
     return NextResponse.json(posts);
   } catch (error) {
