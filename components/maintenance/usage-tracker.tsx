@@ -56,7 +56,7 @@ export function UsageTracker({
             Usage Tracker
           </CardTitle>
           <Badge
-            variant={isOverage ? "destructive" : isNearThreshold ? "warning" : "default"}
+            variant={isOverage ? "destructive" : isNearThreshold ? "secondary" : "default"}
             className="flex items-center gap-1.5"
           >
             {getStatusIcon()}

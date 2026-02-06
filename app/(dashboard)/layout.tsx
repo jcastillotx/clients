@@ -8,7 +8,7 @@ import { DashboardNav } from "@/components/dashboard/nav";
  * Wraps all dashboard pages with navigation and authentication check.
  */
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

@@ -4,7 +4,7 @@ import { uploadFile, generateFilePath, StorageBuckets } from "@/lib/storage/uplo
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Get authenticated user
     const {

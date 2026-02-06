@@ -16,7 +16,7 @@ interface RouteParams {
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
  */
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

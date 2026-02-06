@@ -14,7 +14,7 @@ export async function isFeatureEnabled(
     roleIds?: string[];
   } = {},
 ): Promise<boolean> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Get feature definition
   const { data: feature } = await supabase
@@ -78,7 +78,7 @@ export async function isFeatureEnabled(
  * Check multiple features at once
  */
 export async function getFeaturesForUser(userId: string, clientId?: string): Promise<Record<string, boolean>> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Get user's roles
   const { data: userRoles } = await supabase.from("user_roles").select("role_id").eq("user_id", userId);
@@ -108,7 +108,7 @@ export async function getFeaturesForUser(userId: string, clientId?: string): Pro
  * Get feature configuration for a client
  */
 export async function getFeatureConfig(featureName: string, clientId: string): Promise<Record<string, any> | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data } = await supabase
     .from("client_features")
@@ -129,7 +129,7 @@ export async function enableFeatureForClient(
   enabledBy: string,
   config?: Record<string, any>,
 ): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: feature } = await supabase.from("features").select("id").eq("name", featureName).single();
 
@@ -161,7 +161,7 @@ export async function disableFeatureForClient(
   disabledBy: string,
   notes?: string,
 ): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: feature } = await supabase.from("features").select("id").eq("name", featureName).single();
 

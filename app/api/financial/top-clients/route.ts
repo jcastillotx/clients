@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Fetch all invoices with client info
     const { data: invoices } = await supabase.from("invoices").select(

@@ -18,7 +18,7 @@ interface SearchParams {
  */
 export default async function NewRequestPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const resolvedSearchParams = await searchParams;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

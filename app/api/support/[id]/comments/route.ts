@@ -10,7 +10,7 @@ import { z } from "zod";
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

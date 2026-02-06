@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
     const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";

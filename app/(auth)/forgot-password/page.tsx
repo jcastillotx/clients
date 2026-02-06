@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function ForgotPasswordPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

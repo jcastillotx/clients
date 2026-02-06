@@ -25,7 +25,7 @@ interface PageProps {
 export default async function ProposalPreviewPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Fetch proposal with relations (no RLS check for public preview)
   const { data: proposal, error } = await supabase

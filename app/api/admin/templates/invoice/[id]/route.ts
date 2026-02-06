@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: template, error } = await supabase
       .from("invoice_templates")
@@ -47,7 +47,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = await request.json();
     const { name, description, htmlContent, cssContent, isDefault, isActive } = body;
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // If setting as default, unset other defaults first
     if (isDefault) {
@@ -107,7 +107,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Soft delete
     const { error } = await supabase

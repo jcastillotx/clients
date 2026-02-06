@@ -13,7 +13,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = await request.json();
     const { name, email, phone, password, client_id, is_active, roles } = body;
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Update auth user if password changed
     if (password) {
@@ -85,7 +85,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Soft delete user
     const { error } = await supabase

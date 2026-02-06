@@ -19,7 +19,7 @@ interface SearchParams {
  */
 export default async function RequestsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const resolvedSearchParams = await searchParams;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Server-side data fetching (no loading state needed!)
   const query = supabase

@@ -17,7 +17,7 @@ interface ClientDetailPageProps {
  */
 export default async function ClientDetailPage({ params }: ClientDetailPageProps) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Fetch client with all related data
   const { data: client, error } = await supabase

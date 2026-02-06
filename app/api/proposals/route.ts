@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
  * Fetch all proposals for the authenticated user's client
  */
 export async function GET(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
  * Create a new proposal
  */
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
  * Update a proposal
  */
 export async function PATCH(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -141,7 +141,7 @@ export async function PATCH(req: NextRequest) {
  * Delete a proposal
  */
 export async function DELETE(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

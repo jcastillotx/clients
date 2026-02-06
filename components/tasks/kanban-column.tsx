@@ -64,7 +64,11 @@ export function KanbanColumn({
           <Badge variant="secondary" className="text-xs">
             {tasks.length}
           </Badge>
-          {isOverWipLimit && <AlertCircle className="h-4 w-4 text-amber-500" title="Over WIP limit" />}
+          {isOverWipLimit && (
+            <span title="Over WIP limit">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+            </span>
+          )}
         </div>
         <Button size="sm" variant="ghost" onClick={onCreateTask}>
           <Plus className="h-4 w-4" />

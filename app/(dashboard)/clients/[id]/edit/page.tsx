@@ -20,7 +20,7 @@ export const metadata = {
  */
 export default async function EditClientPage({ params }: EditClientPageProps) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

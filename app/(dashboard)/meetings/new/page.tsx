@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 async function getClients() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: clients, error } = await supabase
     .from("clients")
@@ -25,7 +25,7 @@ async function getClients() {
 }
 
 async function getUsers() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: users, error } = await supabase
     .from("users")
@@ -47,7 +47,7 @@ export default async function NewMeetingPage({
   searchParams: Promise<{ clientId?: string; requestId?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

@@ -1,5 +1,10 @@
 import { pgTable, uuid, text, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { users } from "./users";
+import { requests } from "./requests";
+import { invoices } from "./invoices";
+import { contracts, documents } from "./documents";
+import { projects } from "./projects";
 
 /**
  * Client status enum
@@ -50,12 +55,12 @@ export const clients = pgTable("clients", {
  * Client relations
  */
 export const clientsRelations = relations(clients, ({ many }) => ({
-  users: many(users),
-  requests: many(requests),
-  invoices: many(invoices),
-  contracts: many(contracts),
-  documents: many(documents),
-  projects: many(projects),
+  users: many(users as any),
+  requests: many(requests as any),
+  invoices: many(invoices as any),
+  contracts: many(contracts as any),
+  documents: many(documents as any),
+  projects: many(projects as any),
 }));
 
 /**

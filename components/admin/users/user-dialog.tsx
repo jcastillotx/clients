@@ -35,10 +35,20 @@ interface User {
   phone: string | null;
   client_id: string | null;
   is_active: boolean;
+  // properties required by parent component
+  avatar: string | null; 
+  status: string;
+  last_login_at: string | null;
+  created_at: string;
+  client?: {
+    id: string;
+    company_name: string;
+  } | null;
   user_roles?: Array<{
     role: {
       id: string;
       name: string;
+      description: string | null;
     };
   }>;
 }

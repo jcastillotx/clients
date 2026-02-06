@@ -50,7 +50,7 @@ export function RequestComments({ requestId, initialComments }: RequestCommentsP
         .eq("request_id", requestId)
         .order("created_at", { ascending: true });
 
-      return data || [];
+      return (data as any) || [];
     },
     initialData: initialComments,
   });
@@ -131,14 +131,14 @@ export function RequestComments({ requestId, initialComments }: RequestCommentsP
           {comments.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No comments yet. Be the first to comment!</p>
           ) : (
-            comments.map((comment) => (
+            comments.map((comment: Comment) => (
               <div key={comment.id} className="flex gap-4">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={comment.user.avatar} />
                   <AvatarFallback>
                     {comment.user.name
                       .split(" ")
-                      .map((n) => n[0])
+                      .map((n: string) => n[0])
                       .join("")}
                   </AvatarFallback>
                 </Avatar>

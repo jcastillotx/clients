@@ -31,7 +31,7 @@ const statusLabels = {
 };
 
 export function DeliverableList({ deliverables, onEdit, onDelete, onStatusChange }: DeliverableListProps) {
-  const sortedDeliverables = [...deliverables].sort((a, b) => a.sortOrder - b.sortOrder);
+  const sortedDeliverables = [...deliverables].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
   return (
     <Card>

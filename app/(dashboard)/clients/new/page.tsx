@@ -13,7 +13,7 @@ export const metadata = {
  * Provides form for creating a new client.
  */
 export default async function NewClientPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

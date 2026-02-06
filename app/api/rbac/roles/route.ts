@@ -5,7 +5,7 @@ import { hasPermission } from "@/lib/rbac/permissions";
 // GET /api/rbac/roles - List all roles
 export async function GET() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
 
     const { name, description, permissionIds } = body;

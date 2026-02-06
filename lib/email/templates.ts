@@ -6,7 +6,7 @@ export async function renderEmailTemplate(
   type: string,
   data: Record<string, any>,
 ): Promise<{ subject: string; html: string; plainText: string } | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Fetch template from database
   const { data: template, error } = await supabase

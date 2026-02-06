@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/admin/dashboard/admin-dashboard";
 
 export default async function AdminPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Get authenticated user
   const {

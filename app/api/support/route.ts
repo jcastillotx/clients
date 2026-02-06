@@ -10,7 +10,7 @@ import { z } from "zod";
  * Fetch all support tickets for the authenticated user's client
  */
 export async function GET(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
  * Create a new support ticket
  */
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

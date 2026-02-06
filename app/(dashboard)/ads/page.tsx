@@ -25,7 +25,7 @@ export default async function AdCampaignsPage({
   searchParams: Promise<SearchParams>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

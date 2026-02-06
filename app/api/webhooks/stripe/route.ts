@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { inngest } from "@/lib/inngest/client";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-11-20.acacia",
+  apiVersion: "2024-11-20.acacia" as any,
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Handle different event types
     switch (event.type) {

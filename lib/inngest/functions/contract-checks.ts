@@ -11,7 +11,7 @@ export const checkContractExpirations = inngest.createFunction(
   },
   { cron: "0 10 * * *" }, // Daily at 10am UTC
   async ({ step }) => {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Step 1: Find contracts expiring in 30 days
     const expiringSoon = await step.run("find-expiring-soon", async () => {

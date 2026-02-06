@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const clientId = searchParams.get("clientId");
     const status = searchParams.get("status");
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Build query
     let query = supabase
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       customFields,
     } = body;
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Generate contract number
     const { data: contractNumber } = await supabase.rpc("generate_contract_number");

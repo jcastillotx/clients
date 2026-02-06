@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
  * Check if the current user has a specific permission
  */
 export async function hasPermission(permissionName: string): Promise<boolean> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -28,7 +28,7 @@ export async function hasPermission(permissionName: string): Promise<boolean> {
  * Check if the current user has a specific role
  */
 export async function hasRole(roleName: string): Promise<boolean> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -54,7 +54,7 @@ export async function hasRole(roleName: string): Promise<boolean> {
 export async function getUserPermissions(): Promise<
   Array<{ permission_name: string; resource: string; action: string }>
 > {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -77,7 +77,7 @@ export async function getUserPermissions(): Promise<
  * Get all roles for the current user
  */
 export async function getUserRoles(): Promise<Array<{ role_id: string; role_name: string; role_description: string }>> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

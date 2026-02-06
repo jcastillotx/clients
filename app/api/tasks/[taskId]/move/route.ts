@@ -11,7 +11,7 @@ import { eq, and, gte, lte, sql } from "drizzle-orm";
 export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const { taskId } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,

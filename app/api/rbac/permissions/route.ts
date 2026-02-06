@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 // GET /api/rbac/permissions - List all permissions
 export async function GET() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },

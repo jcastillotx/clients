@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       const clientMap = new Map<string, any>();
       entries.forEach((entry) => {
         const clientId = entry.clientId || "no-client";
-        const clientName = entry.client?.name || "No Client";
+        const clientName = (entry.client as any)?.name || "No Client";
         if (!clientMap.has(clientId)) {
           clientMap.set(clientId, {
             clientId,
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
       const requestMap = new Map<string, any>();
       entries.forEach((entry) => {
         const requestId = entry.requestId || "no-request";
-        const requestTitle = entry.request?.title || "No Request";
+        const requestTitle = (entry.request as any)?.title || "No Request";
         if (!requestMap.has(requestId)) {
           requestMap.set(requestId, {
             requestId,

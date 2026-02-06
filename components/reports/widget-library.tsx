@@ -171,7 +171,7 @@ export function WidgetLibrary({ onSelectWidget }: WidgetLibraryProps) {
                     <CardContent>
                       <CardDescription className="text-xs">
                         {widget.type === "metric" && "Display a single key metric"}
-                        {widget.type === "chart" && `${widget.config.chartType} chart visualization`}
+                        {widget.type === "chart" && `${(widget.config as any).chartType} chart visualization`}
                         {widget.type === "table" && "Tabular data display"}
                         {widget.type === "list" && "List of items"}
                         {widget.type === "activity" && "Activity feed"}

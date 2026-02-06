@@ -34,7 +34,7 @@ const statusLabels = {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   const budgetPercentage = project.budgetAmount
-    ? (parseFloat(project.spentAmount) / parseFloat(project.budgetAmount)) * 100
+    ? (parseFloat(project.spentAmount || "0") / parseFloat(project.budgetAmount || "0")) * 100
     : 0;
 
   const isOverBudget = budgetPercentage > 100;
@@ -74,8 +74,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
                     Budget
                   </span>
                   <span className={`font-medium ${isOverBudget ? "text-red-600" : ""}`}>
-                    {formatCurrency(parseFloat(project.spentAmount), project.currency)} /{" "}
-                    {formatCurrency(parseFloat(project.budgetAmount), project.currency)}
+                    {formatCurrency(parseFloat(project.spentAmount || "0"), project.currency)} /{" "}
+                    {formatCurrency(parseFloat(project.budgetAmount || "0"), project.currency)}
                   </span>
                 </div>
                 <Progress

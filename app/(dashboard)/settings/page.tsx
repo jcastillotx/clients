@@ -15,7 +15,7 @@ export const metadata = {
  * Provides user profile and account settings.
  */
 export default async function SettingsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

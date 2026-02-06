@@ -11,7 +11,7 @@ export const generateRecurringInvoices = inngest.createFunction(
   },
   { cron: "0 2 * * *" }, // Daily at 2am UTC
   async ({ step }) => {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Step 1: Find active recurring invoices due for generation
     const recurringInvoices = await step.run("find-recurring-invoices", async () => {

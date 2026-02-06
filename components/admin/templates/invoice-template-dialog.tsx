@@ -56,7 +56,7 @@ export function InvoiceTemplateDialog({ open, onOpenChange, template, onSave }: 
 <body>
   <div class="invoice-container">
     <h1>Invoice {{invoice_number}}</h1>
-    <p>Amount: ${{ total }}</p>
+    <p>Amount: \${{ total }}</p>
   </div>
 </body>
 </html>`);

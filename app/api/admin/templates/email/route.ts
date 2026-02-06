@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     let query = supabase
       .from("email_templates")
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     // Extract available variables from the template
     const availableVariables = extractVariables(htmlContent);
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // If setting as default for this type, unset other defaults
     if (isDefault) {

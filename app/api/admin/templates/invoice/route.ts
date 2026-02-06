@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: templates, error } = await supabase
       .from("invoice_templates")
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     // Extract available variables from the template
     const availableVariables = extractVariables(htmlContent);
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // If setting as default, unset other defaults first
     if (isDefault) {

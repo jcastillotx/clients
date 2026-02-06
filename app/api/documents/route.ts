@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Get authenticated user
     const {

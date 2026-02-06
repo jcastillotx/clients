@@ -18,9 +18,12 @@ interface CreateTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   status?: string;
+  boardId?: string;
+  columnId?: string;
+  onSuccess?: () => void;
 }
 
-export function CreateTaskDialog({ open, onOpenChange, status }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ open, onOpenChange, status, boardId, columnId, onSuccess }: CreateTaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 

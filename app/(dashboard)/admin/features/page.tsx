@@ -17,7 +17,7 @@ export const metadata = {
  * - Individual users
  */
 export default async function AdminFeaturesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

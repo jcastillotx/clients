@@ -14,6 +14,7 @@ interface TaskDetailModalProps {
   task: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdate?: (taskId: string) => void;
 }
 
 export function TaskDetailModal({ task, open, onOpenChange }: TaskDetailModalProps) {

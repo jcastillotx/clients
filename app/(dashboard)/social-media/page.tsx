@@ -18,7 +18,7 @@ interface SearchParams {
  */
 export default async function SocialMediaPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const resolvedSearchParams = await searchParams;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

@@ -9,7 +9,7 @@ export default async function ContractsPage({
   searchParams: Promise<{ clientId?: string; status?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Get authenticated user
   const {

@@ -11,7 +11,7 @@ import { eq } from "drizzle-orm";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   },
                 },
                 checklists: {
-                  orderBy: (checklists: any, { asc }) => [asc(checklists.position)],
+                  orderBy: (checklists: any, { asc }: any) => [asc(checklists.position)],
                 },
               },
             },
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,
@@ -133,7 +133,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,

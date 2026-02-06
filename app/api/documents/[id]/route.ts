@@ -5,7 +5,7 @@ import { deleteFile, StorageBuckets } from "@/lib/storage/upload";
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: document, error } = await supabase
       .from("documents")
@@ -45,7 +45,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = await request.json();
     const { name, description, tags, isPublic } = body;
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const updateData: any = {
       updated_at: new Date().toISOString(),
@@ -85,7 +85,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Get document to find storage path
     const { data: document } = await supabase

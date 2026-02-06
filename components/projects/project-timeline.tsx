@@ -11,7 +11,7 @@ interface ProjectTimelineProps {
 }
 
 export function ProjectTimeline({ milestones }: ProjectTimelineProps) {
-  const sortedMilestones = [...milestones].sort((a, b) => a.sortOrder - b.sortOrder);
+  const sortedMilestones = [...milestones].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
   return (
     <Card>

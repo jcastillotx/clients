@@ -23,8 +23,8 @@ const categoryLabels = {
 
 export function BudgetTracker({ budgets, costEntries, currency = "USD" }: BudgetTrackerProps) {
   // Calculate totals
-  const totalAllocated = budgets.reduce((sum, b) => sum + parseFloat(b.allocatedAmount), 0);
-  const totalSpent = budgets.reduce((sum, b) => sum + parseFloat(b.spentAmount), 0);
+  const totalAllocated = budgets.reduce((sum, b) => sum + parseFloat(b.allocatedAmount || "0"), 0);
+  const totalSpent = budgets.reduce((sum, b) => sum + parseFloat(b.spentAmount || "0"), 0);
   const remaining = totalAllocated - totalSpent;
   const percentageUsed = totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0;
   const isOverBudget = percentageUsed > 100;
@@ -91,8 +91,8 @@ export function BudgetTracker({ budgets, costEntries, currency = "USD" }: Budget
         <CardContent>
           <div className="space-y-4">
             {budgets.map((budget) => {
-              const allocated = parseFloat(budget.allocatedAmount);
-              const spent = parseFloat(budget.spentAmount);
+              const allocated = parseFloat(budget.allocatedAmount || "0");
+              const spent = parseFloat(budget.spentAmount || "0");
               const percentage = allocated > 0 ? (spent / allocated) * 100 : 0;
               const isOver = percentage > 100;
 

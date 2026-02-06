@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
  * Allows users to create new support tickets.
  */
 export default async function NewSupportTicketPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

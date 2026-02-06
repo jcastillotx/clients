@@ -23,7 +23,7 @@ interface PageProps {
  */
 export default async function CampaignDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

@@ -16,7 +16,7 @@ interface PageProps {
  */
 export default async function SupportTicketDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check authentication
   const {

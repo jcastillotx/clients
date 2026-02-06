@@ -11,7 +11,7 @@ export const sendInvoiceReminders = inngest.createFunction(
   },
   { cron: "TZ=America/Los_Angeles 0 9 * * *" }, // Daily at 9am PST
   async ({ step }) => {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Step 1: Find invoices due in 7 days
     const dueSoonInvoices = await step.run("find-due-soon-invoices", async () => {

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, phone, password, client_id, is_active, roles } = body;
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Create user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({

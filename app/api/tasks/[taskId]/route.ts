@@ -16,7 +16,7 @@ import { eq } from "drizzle-orm";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const { taskId } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const { taskId } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,
@@ -220,7 +220,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const { taskId } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,

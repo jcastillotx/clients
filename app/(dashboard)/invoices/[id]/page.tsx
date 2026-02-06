@@ -17,7 +17,7 @@ interface InvoiceDetailPageProps {
  */
 export default async function InvoiceDetailPage({ params }: InvoiceDetailPageProps) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Fetch invoice with all related data
   const { data: invoice, error } = await supabase

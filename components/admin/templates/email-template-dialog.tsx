@@ -71,7 +71,7 @@ export function EmailTemplateDialog({ open, onOpenChange, template, onSave }: Em
     <h2>Hello {{client_name}},</h2>
     <p>Your invoice is ready.</p>
     <p><strong>Invoice Number:</strong> {{invoice_number}}</p>
-    <p><strong>Amount:</strong> ${{ amount }}</p>
+    <p><strong>Amount:</strong> \${{ amount }}</p>
     <p>Thank you for your business!</p>
   </div>
 </body>
@@ -81,7 +81,7 @@ export function EmailTemplateDialog({ open, onOpenChange, template, onSave }: Em
 Your invoice is ready.
 
 Invoice Number: {{invoice_number}}
-Amount: ${{ amount }}
+Amount: \${{ amount }}
 
 Thank you for your business!`);
       setIsDefault(false);

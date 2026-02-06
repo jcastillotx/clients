@@ -1,6 +1,7 @@
 import { pgTable, uuid, text, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { clients } from "./clients";
+import { requests } from "./requests";
 
 /**
  * User status enum
@@ -44,8 +45,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.clientId],
     references: [clients.id],
   }),
-  createdRequests: many(requests),
-  assignedRequests: many(requests),
+  createdRequests: many(requests as any),
+  assignedRequests: many(requests as any),
   userRoles: many(userRoles),
 }));
 

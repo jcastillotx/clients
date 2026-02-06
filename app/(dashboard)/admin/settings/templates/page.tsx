@@ -10,7 +10,7 @@ export default async function TemplateSettingsPage() {
     redirect("/dashboard");
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Fetch templates
   const [{ data: invoiceTemplates }, { data: emailTemplates }] = await Promise.all([

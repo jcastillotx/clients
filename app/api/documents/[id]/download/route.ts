@@ -5,7 +5,7 @@ import { getSignedUrl, StorageBuckets } from "@/lib/storage/upload";
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Get authenticated user
     const {

@@ -13,7 +13,7 @@ export const metadata = {
 };
 
 async function getMeetings() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: meetings, error } = await supabase
     .from("meetings")

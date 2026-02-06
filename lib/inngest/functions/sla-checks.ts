@@ -11,7 +11,7 @@ export const checkSLACompliance = inngest.createFunction(
   },
   { cron: "*/5 * * * *" }, // Every 5 minutes
   async ({ step }) => {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Step 1: Find active requests that need SLA monitoring
     const activeRequests = await step.run("find-active-requests", async () => {

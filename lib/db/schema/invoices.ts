@@ -15,7 +15,7 @@ export const invoices = pgTable("invoices", {
   dueDate: timestamp("due_date", { withTimezone: true }),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   notes: text("notes"),
-  items: jsonb("items").$type<InvoiceItem[]>(),
+  items: jsonb("items").$type<any[]>(),
   isRecurring: boolean("is_recurring").default(false),
   recurringInterval: text("recurring_interval", { enum: ["weekly", "monthly", "quarterly", "yearly"] }),
   nextRecurringDate: timestamp("next_recurring_date", { withTimezone: true }),

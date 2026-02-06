@@ -28,11 +28,11 @@ export async function sendEmail(options: EmailOptions) {
       from: EMAIL_FROM,
       to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,
-      html: options.html,
-      text: options.text,
+      html: options.html || "",
+      text: options.text || "",
       cc: options.cc,
       bcc: options.bcc,
-      replyTo: options.replyTo || EMAIL_REPLY_TO,
+      reply_to: options.replyTo || EMAIL_REPLY_TO,
       attachments: options.attachments,
     });
 

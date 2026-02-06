@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const today = new Date();
 
     // Calculate date ranges

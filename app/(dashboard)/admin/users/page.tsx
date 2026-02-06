@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { UserManagement } from "@/components/admin/users/user-management";
 
 export default async function AdminUsersPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Get authenticated user
   const {

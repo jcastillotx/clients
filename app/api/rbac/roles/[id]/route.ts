@@ -6,7 +6,7 @@ import { hasPermission } from "@/lib/rbac/permissions";
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -53,7 +53,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
 
     const { name, description, permissionIds } = body;
@@ -116,7 +116,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Check if role is system role
     const { data: role } = await supabase.from("roles").select("is_system, name").eq("id", id).single();

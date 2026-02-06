@@ -18,7 +18,7 @@ interface RequestDetailPageProps {
  */
 export default async function RequestDetailPage({ params }: RequestDetailPageProps) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Fetch request with all related data
   const { data: request, error } = await supabase
