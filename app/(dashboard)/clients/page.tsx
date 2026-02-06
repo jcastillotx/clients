@@ -18,7 +18,8 @@ interface SearchParams {
  * Fetches clients on the server with RLS automatically filtering by user's access.
  * For super admins, returns all clients. For staff, returns assigned clients only.
  */
-export default async function ClientsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Check authentication
@@ -44,19 +45,19 @@ export default async function ClientsPage({ searchParams }: { searchParams: Sear
     .order("created_at", { ascending: false });
 
   // Apply search filter
-  if (searchParams.search) {
+  if (resolvedSearchParams.search) {
     query = query.or(
-      `company_name.ilike.%${searchParams.search}%,domain.ilike.%${searchParams.search}%,industry.ilike.%${searchParams.search}%`,
+      `company_name.ilike.%${resolvedSearchParams.search}%,domain.ilike.%${resolvedSearchParams.search}%,industry.ilike.%${resolvedSearchParams.search}%`,
     );
   }
 
   // Apply status filter
-  if (searchParams.status && searchParams.status !== "all") {
-    query = query.eq("status", searchParams.status);
+  if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
+    query = query.eq("status", resolvedSearchParams.status);
   }
 
   // Pagination
-  const page = parseInt(searchParams.page || "1");
+  const page = parseInt(resolvedSearchParams.page || "1");
   const pageSize = 20;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;

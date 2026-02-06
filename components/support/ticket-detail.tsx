@@ -15,7 +15,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { updateSupportTicketSchema, type UpdateSupportTicketInput } from "@/lib/validations/support-ticket";
 import { getSlaStatus, formatTimeRemaining, getSlaStatusColor } from "@/lib/utils/sla";
 import { toast } from "sonner";
-import { ClockIcon, UserIcon, TagIcon, AlertTriangleIcon } from "@radix-ui/react-icons";
+import { Clock, User, Tag, AlertTriangle } from "lucide-react";
 
 interface StaffUser {
   id: string;
@@ -227,7 +227,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                    <TagIcon className="h-4 w-4" />
+                    <Tag className="h-4 w-4" />
                     Category
                   </div>
                   <p className="font-medium capitalize">{ticket.category.replace(/_/g, " ")}</p>
@@ -235,7 +235,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
 
                 <div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                    <UserIcon className="h-4 w-4" />
+                    <User className="h-4 w-4" />
                     Assigned To
                   </div>
                   <p className="font-medium">{ticket.assigned_user?.name || "Unassigned"}</p>
@@ -243,7 +243,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
 
                 <div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                    <UserIcon className="h-4 w-4" />
+                    <User className="h-4 w-4" />
                     Created By
                   </div>
                   <p className="font-medium">{ticket.creator?.name}</p>
@@ -254,7 +254,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                    <ClockIcon className="h-4 w-4" />
+                    <Clock className="h-4 w-4" />
                     Created
                   </div>
                   <p className="font-medium">{format(new Date(ticket.created_at), "PPpp")}</p>
@@ -290,7 +290,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangleIcon className="h-5 w-5" />
+            <AlertTriangle className="h-5 w-5" />
             SLA Tracking
           </CardTitle>
           <CardDescription>Service Level Agreement monitoring and escalation</CardDescription>

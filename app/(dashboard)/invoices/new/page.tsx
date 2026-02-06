@@ -16,7 +16,8 @@ interface SearchParams {
  *
  * Fetches clients for the dropdown and pre-selects if client_id provided.
  */
-export default async function NewInvoicePage({ searchParams }: { searchParams: SearchParams }) {
+export default async function NewInvoicePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   const {
@@ -41,7 +42,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: S
         <p className="text-muted-foreground">Create a new invoice</p>
       </div>
 
-      <InvoiceForm clients={clients || []} preselectedClientId={searchParams.client_id} />
+      <InvoiceForm clients={clients || []} preselectedClientId={resolvedSearchParams.client_id} />
     </div>
   );
 }

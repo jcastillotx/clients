@@ -8,9 +8,9 @@ export const metadata = {
 };
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -19,6 +19,7 @@ interface PageProps {
  * Fetches proposal details and displays edit/view mode.
  */
 export default async function ProposalDetailPage({ params }: PageProps) {
+  const { id } = await params;
   const supabase = createClient();
 
   const {
@@ -41,7 +42,7 @@ export default async function ProposalDetailPage({ params }: PageProps) {
       views:proposal_views(*)
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !proposal) {

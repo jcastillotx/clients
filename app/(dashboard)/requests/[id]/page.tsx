@@ -5,9 +5,9 @@ import { RequestComments } from "@/components/requests/request-comments";
 import { RequestRealtime } from "@/components/requests/request-realtime";
 
 interface RequestDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -17,6 +17,7 @@ interface RequestDetailPageProps {
  * Real-time updates handled by client components.
  */
 export default async function RequestDetailPage({ params }: RequestDetailPageProps) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Fetch request with all related data
@@ -36,7 +37,7 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       )
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !request) {
@@ -55,19 +56,19 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       user:users(id, name, avatar)
     `,
     )
-    .eq("request_id", params.id)
+    .eq("request_id", id)
     .order("created_at", { ascending: true });
 
   return (
     <div className="flex flex-col gap-8 p-8">
       {/* Real-time subscription component (doesn't render UI) */}
-      <RequestRealtime requestId={params.id} />
+      <RequestRealtime requestId={id} />
 
       {/* Request details */}
       <RequestDetail request={request} />
 
       {/* Comments section with real-time updates */}
-      <RequestComments requestId={params.id} initialComments={comments || []} />
+      <RequestComments requestId={id} initialComments={comments || []} />
     </div>
   );
 }

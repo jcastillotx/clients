@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { RequestList } from "@/components/requests/request-list";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "@radix-ui/react-icons";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 
 interface SearchParams {
@@ -17,25 +17,26 @@ interface SearchParams {
  * Fetches requests on the server for better performance and SEO.
  * RLS automatically filters to only show requests for user's client.
  */
-export default async function RequestsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function RequestsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Server-side data fetching (no loading state needed!)
   const query = supabase
     .from("requests")
     .select("*, client:clients(company_name), assigned_user:users(name, avatar)")
-    .order(searchParams.sortBy || "created_at", {
-      ascending: searchParams.sortOrder === "asc",
+    .order(resolvedSearchParams.sortBy || "created_at", {
+      ascending: resolvedSearchParams.sortOrder === "asc",
     });
 
   // Apply search filter
-  if (searchParams.search) {
-    query.textSearch("title", searchParams.search);
+  if (resolvedSearchParams.search) {
+    query.textSearch("title", resolvedSearchParams.search);
   }
 
   // Apply status filter
-  if (searchParams.status) {
-    query.eq("status", searchParams.status);
+  if (resolvedSearchParams.status) {
+    query.eq("status", resolvedSearchParams.status);
   }
 
   const { data: requests, error } = await query;
@@ -53,7 +54,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
         </div>
         <Button asChild>
           <Link href="/requests/new">
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             New Request
           </Link>
         </Button>

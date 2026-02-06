@@ -6,8 +6,9 @@ import { DocumentLibrary } from "@/components/documents/document-library";
 export default async function DocumentsPage({
   searchParams,
 }: {
-  searchParams: { clientId?: string; requestId?: string };
+  searchParams: Promise<{ clientId?: string; requestId?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Get authenticated user
@@ -39,12 +40,12 @@ export default async function DocumentsPage({
     .order("created_at", { ascending: false })
     .limit(50);
 
-  if (searchParams.clientId) {
-    query = query.eq("client_id", searchParams.clientId);
+  if (resolvedSearchParams.clientId) {
+    query = query.eq("client_id", resolvedSearchParams.clientId);
   }
 
-  if (searchParams.requestId) {
-    query = query.eq("request_id", searchParams.requestId);
+  if (resolvedSearchParams.requestId) {
+    query = query.eq("request_id", resolvedSearchParams.requestId);
   }
 
   const { data: documents } = await query;
@@ -60,8 +61,8 @@ export default async function DocumentsPage({
         initialDocuments={documents || []}
         clients={clients || []}
         canUpload={canUpload}
-        initialClientId={searchParams.clientId}
-        initialRequestId={searchParams.requestId}
+        initialClientId={resolvedSearchParams.clientId}
+        initialRequestId={resolvedSearchParams.requestId}
       />
     </div>
   );

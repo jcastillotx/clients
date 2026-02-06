@@ -11,9 +11,9 @@ export const metadata = {
 };
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -22,6 +22,7 @@ interface PageProps {
  * Displays detailed metrics and performance for a specific campaign.
  */
 export default async function CampaignDetailPage({ params }: PageProps) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -50,7 +51,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
       )
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .is("deleted_at", null)
     .single();
 

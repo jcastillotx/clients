@@ -17,7 +17,8 @@ interface SearchParams {
  *
  * Fetches invoices on the server with RLS automatically filtering by user's access.
  */
-export default async function InvoicesPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function InvoicesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   const {
@@ -42,17 +43,17 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
     .order("created_at", { ascending: false });
 
   // Apply search filter (invoice number or client name)
-  if (searchParams.search) {
-    query = query.or(`invoice_number.ilike.%${searchParams.search}%`);
+  if (resolvedSearchParams.search) {
+    query = query.or(`invoice_number.ilike.%${resolvedSearchParams.search}%`);
   }
 
   // Apply status filter
-  if (searchParams.status && searchParams.status !== "all") {
-    query = query.eq("status", searchParams.status);
+  if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
+    query = query.eq("status", resolvedSearchParams.status);
   }
 
   // Pagination
-  const page = parseInt(searchParams.page || "1");
+  const page = parseInt(resolvedSearchParams.page || "1");
   const pageSize = 20;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;

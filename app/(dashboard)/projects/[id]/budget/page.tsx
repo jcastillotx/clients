@@ -85,12 +85,17 @@ async function BudgetContent({ id }: { id: string }) {
   );
 }
 
-export default function ProjectBudgetPage({ params }: { params: { id: string } }) {
+export default function ProjectBudgetPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="container mx-auto py-8 px-4">
       <Suspense fallback={<BudgetLoading />}>
-        <BudgetContent id={params.id} />
+        <AsyncBudgetContent params={params} />
       </Suspense>
     </div>
   );
+}
+
+async function AsyncBudgetContent({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <BudgetContent id={id} />;
 }

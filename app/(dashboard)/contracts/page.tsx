@@ -6,8 +6,9 @@ import { ContractList } from "@/components/contracts/contract-list";
 export default async function ContractsPage({
   searchParams,
 }: {
-  searchParams: { clientId?: string; status?: string };
+  searchParams: Promise<{ clientId?: string; status?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Get authenticated user
@@ -37,12 +38,12 @@ export default async function ContractsPage({
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
-  if (searchParams.clientId) {
-    query = query.eq("client_id", searchParams.clientId);
+  if (resolvedSearchParams.clientId) {
+    query = query.eq("client_id", resolvedSearchParams.clientId);
   }
 
-  if (searchParams.status) {
-    query = query.eq("status", searchParams.status);
+  if (resolvedSearchParams.status) {
+    query = query.eq("status", resolvedSearchParams.status);
   }
 
   const { data: contracts } = await query;
@@ -58,8 +59,8 @@ export default async function ContractsPage({
         initialContracts={contracts || []}
         clients={clients || []}
         canCreate={canCreate}
-        initialClientId={searchParams.clientId}
-        initialStatus={searchParams.status}
+        initialClientId={resolvedSearchParams.clientId}
+        initialStatus={resolvedSearchParams.status}
       />
     </div>
   );

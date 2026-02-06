@@ -5,9 +5,9 @@ import { InvoiceItems } from "@/components/invoices/invoice-items";
 import { InvoiceActions } from "@/components/invoices/invoice-actions";
 
 interface InvoiceDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -16,6 +16,7 @@ interface InvoiceDetailPageProps {
  * Fetches invoice with all related data (items, client, payment history).
  */
 export default async function InvoiceDetailPage({ params }: InvoiceDetailPageProps) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Fetch invoice with all related data
@@ -29,7 +30,7 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
       invoice_items(id, description, quantity, unit_price, amount)
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !invoice) {

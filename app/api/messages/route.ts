@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { messages, conversations, messageAttachments, conversationParticipants, users } from "@/lib/db/schema/messages";
+import { messages, conversations, messageAttachments, conversationParticipants, users } from "@/lib/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 

@@ -5,9 +5,9 @@ import { ClientRequests } from "@/components/clients/client-requests";
 import { ClientInvoices } from "@/components/clients/client-invoices";
 
 interface ClientDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -16,6 +16,7 @@ interface ClientDetailPageProps {
  * Fetches client with all related data (requests, invoices, staff assignments).
  */
 export default async function ClientDetailPage({ params }: ClientDetailPageProps) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Fetch client with all related data
@@ -27,7 +28,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
       primary_contact:users!clients_primary_contact_id_fkey(id, name, email, phone, avatar)
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !client) {
@@ -49,7 +50,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
       `,
         { count: "exact" },
       )
-      .eq("client_id", params.id)
+      .eq("client_id", id)
       .order("created_at", { ascending: false })
       .limit(10),
     supabase
@@ -64,7 +65,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
         created_at
       `,
       )
-      .eq("client_id", params.id)
+      .eq("client_id", id)
       .order("created_at", { ascending: false })
       .limit(10),
     supabase
@@ -76,7 +77,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
         user:users(id, name, email, avatar)
       `,
       )
-      .eq("client_id", params.id),
+      .eq("client_id", id),
   ]);
 
   // Calculate stats
@@ -94,8 +95,8 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
 
       {/* Related data tabs */}
       <div className="grid gap-6 md:grid-cols-2">
-        <ClientRequests requests={requests || []} clientId={params.id} />
-        <ClientInvoices invoices={invoices || []} clientId={params.id} />
+        <ClientRequests requests={requests || []} clientId={id} />
+        <ClientInvoices invoices={invoices || []} clientId={id} />
       </div>
     </div>
   );

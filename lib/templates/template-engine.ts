@@ -17,6 +17,22 @@ function getNestedValue(obj: any, path: string): any {
   return path.split(".").reduce((acc, part) => acc && acc[part], obj);
 }
 
+/**
+ * Extract variable names from template string
+ */
+export function extractVariables(template: string): string[] {
+  const matches = template.matchAll(/\{\{(.*?)\}\}/g);
+  const variables = new Set<string>();
+  for (const match of matches) {
+    variables.add(match[1].trim());
+  }
+  return Array.from(variables);
+}
+
+export const renderTemplate = compileTemplate;
+
 export const TemplateEngine = {
   compile: compileTemplate,
+  render: renderTemplate,
+  extract: extractVariables,
 };

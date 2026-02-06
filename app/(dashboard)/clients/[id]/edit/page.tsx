@@ -3,9 +3,9 @@ import { ClientForm } from "@/components/clients/client-form";
 import { notFound, redirect } from "next/navigation";
 
 interface EditClientPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export const metadata = {
@@ -19,6 +19,7 @@ export const metadata = {
  * Fetches existing client data and provides edit form.
  */
 export default async function EditClientPage({ params }: EditClientPageProps) {
+  const { id } = await params;
   const supabase = createClient();
 
   const {
@@ -30,7 +31,7 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
   }
 
   // Fetch client data
-  const { data: client, error } = await supabase.from("clients").select("*").eq("id", params.id).single();
+  const { data: client, error } = await supabase.from("clients").select("*").eq("id", id).single();
 
   if (error || !client) {
     notFound();

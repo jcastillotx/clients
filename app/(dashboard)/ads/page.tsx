@@ -19,7 +19,12 @@ interface SearchParams {
  *
  * Displays all advertising campaigns with performance metrics.
  */
-export default async function AdCampaignsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdCampaignsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Check authentication
@@ -34,7 +39,7 @@ export default async function AdCampaignsPage({ searchParams }: { searchParams: 
   // Fetch user's client ID
   const { data: userData } = await supabase.from("users").select("client_id").eq("id", user.id).single();
 
-  const clientId = searchParams.clientId || userData?.client_id;
+  const clientId = resolvedSearchParams.clientId || userData?.client_id;
 
   if (!clientId) {
     return (
