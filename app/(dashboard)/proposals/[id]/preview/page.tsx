@@ -8,12 +8,12 @@ export const metadata = {
 };
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     token?: string;
-  };
+  }>;
 }
 
 /**
@@ -23,6 +23,8 @@ interface PageProps {
  * Tracks views and allows client to accept/reject.
  */
 export default async function ProposalPreviewPage({ params, searchParams }: PageProps) {
+  const { id } = await params;
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Fetch proposal with relations (no RLS check for public preview)
@@ -36,7 +38,7 @@ export default async function ProposalPreviewPage({ params, searchParams }: Page
       selections:proposal_selections(*)
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !proposal) {
@@ -48,7 +50,7 @@ export default async function ProposalPreviewPage({ params, searchParams }: Page
 
   return (
     <div className="min-h-screen bg-background">
-      <ProposalPreview proposal={proposal} token={searchParams.token} />
+      <ProposalPreview proposal={proposal} token={resolvedSearchParams.token} />
     </div>
   );
 }

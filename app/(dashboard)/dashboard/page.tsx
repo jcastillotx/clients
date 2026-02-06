@@ -82,8 +82,22 @@ export default async function DashboardPage() {
 
       {/* Recent Activity & Upcoming Tasks */}
       <div className="grid gap-6 md:grid-cols-2">
-        <RecentActivity requests={recentRequests || []} />
-        <UpcomingTasks invoices={upcomingInvoices || []} />
+        <RecentActivity
+          requests={
+            (recentRequests || []).map((r: any) => ({
+              ...r,
+              client: Array.isArray(r.client) ? r.client[0] : r.client,
+            })) as any
+          }
+        />
+        <UpcomingTasks
+          invoices={
+            (upcomingInvoices || []).map((inv: any) => ({
+              ...inv,
+              client: Array.isArray(inv.client) ? inv.client[0] : inv.client,
+            })) as any
+          }
+        />
       </div>
     </div>
   );

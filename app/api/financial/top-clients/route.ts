@@ -37,9 +37,9 @@ export async function GET() {
       }
     >();
 
-    invoices?.forEach((invoice) => {
+    invoices?.forEach((invoice: any) => {
       const clientId = invoice.client_id;
-      const clientName = invoice.clients?.company_name || "Unknown";
+      const clientName = Array.isArray(invoice.clients) ? invoice.clients[0]?.company_name : invoice.clients?.company_name || "Unknown";
 
       if (!clientMap.has(clientId)) {
         clientMap.set(clientId, {

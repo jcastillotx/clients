@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { dataPrivacyRequests } from "@/lib/db/schema/additional-features";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 /**
  * GET /api/privacy-requests
@@ -17,17 +17,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Client ID or User ID is required" }, { status: 400 });
     }
 
-    let query = db.select().from(dataPrivacyRequests);
-
+    const conditions = [];
     if (clientId) {
-      query = query.where(eq(dataPrivacyRequests.clientId, clientId));
+      conditions.push(eq(dataPrivacyRequests.clientId, clientId));
     }
-
     if (userId) {
-      query = query.where(eq(dataPrivacyRequests.userId, userId));
+      conditions.push(eq(dataPrivacyRequests.userId, userId));
     }
 
-    const requests = await query.orderBy(desc(dataPrivacyRequests.requestedAt));
+    const requests = await db
+      .select()
+      .from(dataPrivacyRequests)
+      .where(conditions.length > 0 ? (conditions.length > 1 ? and(...conditions) : conditions[0]) : undefined)
+      .orderBy(desc(dataPrivacyRequests.requestedAt));
 
     return NextResponse.json(requests);
   } catch (error) {

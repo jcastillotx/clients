@@ -8,7 +8,8 @@ import { z } from "zod";
  *
  * Fetch a specific support ticket
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       assigned_user:users!support_tickets_assigned_to_fkey(id, name, email, avatar)
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error) {
@@ -50,7 +51,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
  *
  * Update a support ticket
  */
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -81,7 +83,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         const { data: ticket } = await supabase
           .from("support_tickets")
           .select("first_response_at")
-          .eq("id", params.id)
+          .eq("id", id)
           .single();
 
         if (ticket && !ticket.first_response_at) {
@@ -109,7 +111,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const { data, error } = await supabase
       .from("support_tickets")
       .update(updateData)
-      .eq("id", params.id)
+      .eq("id", id)
       .select(
         `
         *,
@@ -141,7 +143,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
  *
  * Soft delete a support ticket
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -157,7 +160,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const { error } = await supabase
     .from("support_tickets")
     .update({ deleted_at: new Date().toISOString() })
-    .eq("id", params.id);
+    .eq("id", id);
 
   if (error) {
     console.error("Error deleting ticket:", error);

@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { getSignedUrl, StorageBuckets } from "@/lib/storage/upload";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const supabase = createClient();
 
@@ -19,7 +20,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const { data: document, error } = await supabase
       .from("documents")
       .select("storage_path, file_name, client_id")
-      .eq("id", params.id)
+      .eq("id", id)
       .is("deleted_at", null)
       .single();
 
@@ -44,7 +45,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         await supabase
           .from("document_shares")
           .select("id")
-          .eq("document_id", params.id)
+          .eq("document_id", id)
           .eq("shared_with_user_id", user.id)
           .single()
       ).data;
@@ -65,9 +66,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
       .from("document_shares")
       .update({
         last_accessed_at: new Date().toISOString(),
-        access_count: supabase.rpc("increment", { row_id: params.id }),
+        access_count: supabase.rpc("increment", { row_id: id }),
       })
-      .eq("document_id", params.id)
+      .eq("document_id", id)
       .eq("shared_with_user_id", user.id);
 
     return NextResponse.json({

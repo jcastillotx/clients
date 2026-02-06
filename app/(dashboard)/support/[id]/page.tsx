@@ -4,9 +4,9 @@ import { SupportTicketComments } from "@/components/support/ticket-comments";
 import { notFound, redirect } from "next/navigation";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -15,6 +15,7 @@ interface PageProps {
  * Displays full ticket details with timeline, SLA tracking, and comments.
  */
 export default async function SupportTicketDetailPage({ params }: PageProps) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -37,7 +38,7 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
       assigned_user:users!support_tickets_assigned_to_fkey(id, name, email, avatar)
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (ticketError || !ticket) {
@@ -53,7 +54,7 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
       user:users(id, name, email, avatar)
     `,
     )
-    .eq("support_ticket_id", params.id)
+    .eq("support_ticket_id", id)
     .order("created_at", { ascending: true });
 
   // Fetch staff users for assignment updates
@@ -64,7 +65,7 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
       <SupportTicketDetail ticket={ticket} staffUsers={staffUsers || []} />
 
       <div className="mt-8">
-        <SupportTicketComments ticketId={params.id} initialComments={comments || []} currentUserId={user.id} />
+        <SupportTicketComments ticketId={id} initialComments={comments || []} currentUserId={user.id} />
       </div>
     </div>
   );

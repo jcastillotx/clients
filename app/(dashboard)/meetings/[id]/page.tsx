@@ -51,7 +51,8 @@ async function getUsers() {
   return users;
 }
 
-export default async function MeetingDetailPage({ params }: { params: { id: string } }) {
+export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -63,7 +64,7 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
     redirect("/login");
   }
 
-  const [meeting, users] = await Promise.all([getMeeting(params.id), getUsers()]);
+  const [meeting, users] = await Promise.all([getMeeting(id), getUsers()]);
 
   if (!meeting) {
     notFound();

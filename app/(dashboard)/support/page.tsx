@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { SupportTicketList } from "@/components/support/ticket-list";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "@radix-ui/react-icons";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 
 interface SearchParams {
@@ -19,7 +19,8 @@ interface SearchParams {
  * Fetches support tickets on the server for better performance and SEO.
  * RLS automatically filters to only show tickets for user's client.
  */
-export default async function SupportTicketsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function SupportTicketsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Check authentication
@@ -42,28 +43,28 @@ export default async function SupportTicketsPage({ searchParams }: { searchParam
       assigned_user:users!support_tickets_assigned_to_fkey(name, avatar)
     `,
     )
-    .order(searchParams.sortBy || "created_at", {
-      ascending: searchParams.sortOrder === "asc",
+    .order(resolvedSearchParams.sortBy || "created_at", {
+      ascending: resolvedSearchParams.sortOrder === "asc",
     });
 
   // Apply search filter
-  if (searchParams.search) {
-    query = query.or(`subject.ilike.%${searchParams.search}%,ticket_number.ilike.%${searchParams.search}%`);
+  if (resolvedSearchParams.search) {
+    query = query.or(`subject.ilike.%${resolvedSearchParams.search}%,ticket_number.ilike.%${resolvedSearchParams.search}%`);
   }
 
   // Apply status filter
-  if (searchParams.status) {
-    query = query.eq("status", searchParams.status);
+  if (resolvedSearchParams.status) {
+    query = query.eq("status", resolvedSearchParams.status);
   }
 
   // Apply priority filter
-  if (searchParams.priority) {
-    query = query.eq("priority", searchParams.priority);
+  if (resolvedSearchParams.priority) {
+    query = query.eq("priority", resolvedSearchParams.priority);
   }
 
   // Apply category filter
-  if (searchParams.category) {
-    query = query.eq("category", searchParams.category);
+  if (resolvedSearchParams.category) {
+    query = query.eq("category", resolvedSearchParams.category);
   }
 
   const { data: tickets, error } = await query;
@@ -82,7 +83,7 @@ export default async function SupportTicketsPage({ searchParams }: { searchParam
         </div>
         <Button asChild>
           <Link href="/support/new">
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             New Ticket
           </Link>
         </Button>

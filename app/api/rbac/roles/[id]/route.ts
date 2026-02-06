@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { hasPermission } from "@/lib/rbac/permissions";
 
 // GET /api/rbac/roles/[id] - Get a specific role
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const supabase = createClient();
 
@@ -25,7 +26,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         )
       `,
       )
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (error) throw error;
@@ -44,7 +45,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 // PATCH /api/rbac/roles/[id] - Update a role
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canUpdate = await hasPermission("roles.update");
     if (!canUpdate) {
@@ -57,7 +59,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const { name, description, permissionIds } = body;
 
     // Check if role is system role
-    const { data: existingRole } = await supabase.from("roles").select("is_system").eq("id", params.id).single();
+    const { data: existingRole } = await supabase.from("roles").select("is_system").eq("id", id).single();
 
     if (existingRole?.is_system && name) {
       return NextResponse.json({ error: "Cannot rename system roles" }, { status: 400 });
@@ -71,7 +73,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         description,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -80,12 +82,12 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     // Update permissions if provided
     if (permissionIds !== undefined) {
       // Delete existing permissions
-      await supabase.from("role_permissions").delete().eq("role_id", params.id);
+      await supabase.from("role_permissions").delete().eq("role_id", id);
 
       // Insert new permissions
       if (permissionIds.length > 0) {
         const rolePermissions = permissionIds.map((permissionId: string) => ({
-          role_id: params.id,
+          role_id: id,
           permission_id: permissionId,
         }));
 
@@ -106,7 +108,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 // DELETE /api/rbac/roles/[id] - Delete a role
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canDelete = await hasPermission("roles.delete");
     if (!canDelete) {
@@ -116,14 +119,14 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const supabase = createClient();
 
     // Check if role is system role
-    const { data: role } = await supabase.from("roles").select("is_system, name").eq("id", params.id).single();
+    const { data: role } = await supabase.from("roles").select("is_system, name").eq("id", id).single();
 
     if (role?.is_system) {
       return NextResponse.json({ error: "Cannot delete system roles" }, { status: 400 });
     }
 
     // Delete role (cascade will delete role_permissions and user_roles)
-    const { error } = await supabase.from("roles").delete().eq("id", params.id);
+    const { error } = await supabase.from("roles").delete().eq("id", id);
 
     if (error) throw error;
 

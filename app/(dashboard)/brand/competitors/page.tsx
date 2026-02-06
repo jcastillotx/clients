@@ -44,7 +44,7 @@ export default function CompetitorsPage() {
 
         <Tabs defaultValue="overview" className="w-full">
           <TabsList>
-            <TabsList value="overview">Overview</TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="active">Active Competitors</TabsTrigger>
             <TabsTrigger value="all">All Competitors</TabsTrigger>
           </TabsList>

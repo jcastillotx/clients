@@ -13,9 +13,9 @@ import { eq, and, isNull } from "drizzle-orm";
  * GET /api/projects/[id]
  * Get a single project with all related data
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
 
     // Fetch project
     const [project] = await db
@@ -80,9 +80,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  * PATCH /api/projects/[id]
  * Update a project
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
     const body = await request.json();
 
     // Check if project exists
@@ -134,9 +134,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * DELETE /api/projects/[id]
  * Soft delete a project
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
 
     // Check if project exists
     const [existingProject] = await db

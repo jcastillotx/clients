@@ -7,9 +7,9 @@ import { eq, desc } from "drizzle-orm";
  * GET /api/projects/[id]/milestones
  * Get all milestones for a project
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
 
     const milestones = await db
       .select()
@@ -53,9 +53,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  * POST /api/projects/[id]/milestones
  * Create a new milestone
  */
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
     const body = await request.json();
 
     const { title, description, dueDate, sortOrder } = body;
@@ -101,7 +101,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
  * PATCH /api/projects/[id]/milestones
  * Update a milestone
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const body = await request.json();
     const { milestoneId, ...updates } = body;
@@ -147,7 +148,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * DELETE /api/projects/[id]/milestones
  * Delete a milestone
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const searchParams = request.nextUrl.searchParams;
     const milestoneId = searchParams.get("milestoneId");

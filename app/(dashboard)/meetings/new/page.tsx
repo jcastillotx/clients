@@ -44,8 +44,9 @@ async function getUsers() {
 export default async function NewMeetingPage({
   searchParams,
 }: {
-  searchParams: { clientId?: string; requestId?: string };
+  searchParams: Promise<{ clientId?: string; requestId?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Check authentication
@@ -69,8 +70,8 @@ export default async function NewMeetingPage({
       <MeetingForm
         clients={clients}
         users={users}
-        preselectedClientId={searchParams.clientId}
-        preselectedRequestId={searchParams.requestId}
+        preselectedClientId={resolvedSearchParams.clientId}
+        preselectedRequestId={resolvedSearchParams.requestId}
       />
     </div>
   );

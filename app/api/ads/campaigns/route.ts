@@ -18,31 +18,23 @@ export async function GET(request: Request) {
     }
 
     // Fetch campaigns with account info
-    let query = db
+    const conditions = [isNull(adCampaigns.deletedAt)];
+    if (adAccountId) {
+      conditions.push(eq(adCampaigns.adAccountId, adAccountId));
+    }
+    if (clientId) {
+      conditions.push(eq(adAccounts.clientId, clientId));
+    }
+
+    const campaigns = await db
       .select({
         campaign: adCampaigns,
         account: adAccounts,
       })
       .from(adCampaigns)
       .leftJoin(adAccounts, eq(adCampaigns.adAccountId, adAccounts.id))
-      .where(isNull(adCampaigns.deletedAt))
+      .where(and(...conditions))
       .orderBy(desc(adCampaigns.createdAt));
-
-    const conditions = [isNull(adCampaigns.deletedAt)];
-
-    if (adAccountId) {
-      conditions.push(eq(adCampaigns.adAccountId, adAccountId));
-    }
-
-    if (clientId) {
-      conditions.push(eq(adAccounts.clientId, clientId));
-    }
-
-    if (conditions.length > 1) {
-      query = query.where(and(...conditions));
-    }
-
-    const campaigns = await query;
 
     // TODO: Aggregate metrics for each campaign
     // For now, returning campaigns without metrics
@@ -82,15 +74,15 @@ export async function POST(request: Request) {
     const [newCampaign] = await db
       .insert(adCampaigns)
       .values({
-        adAccountId,
-        campaignId: campaignId || `campaign_${Date.now()}`,
-        name,
-        objective,
-        status: status || "active",
-        dailyBudget,
-        lifetimeBudget,
-        startDate: startDate ? new Date(startDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
+        adAccountId: adAccountId as string,
+        campaignId: (campaignId || `campaign_${Date.now()}`) as string,
+        name: name as string,
+        objective: objective as string,
+        status: (status || "active") as any,
+        dailyBudget: dailyBudget ? String(dailyBudget) : null,
+        lifetimeBudget: lifetimeBudget ? String(lifetimeBudget) : null,
+        startDate: startDate ? new Date(startDate).toISOString().split("T")[0] : null,
+        endDate: endDate ? new Date(endDate).toISOString().split("T")[0] : null,
         metadata,
       })
       .returning();
@@ -124,10 +116,10 @@ export async function PATCH(request: Request) {
         name,
         objective,
         status,
-        dailyBudget,
-        lifetimeBudget,
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate: endDate ? new Date(endDate) : undefined,
+        dailyBudget: dailyBudget ? String(dailyBudget) : undefined,
+        lifetimeBudget: lifetimeBudget ? String(lifetimeBudget) : undefined,
+        startDate: startDate ? new Date(startDate).toISOString().split("T")[0] : undefined,
+        endDate: endDate ? new Date(endDate).toISOString().split("T")[0] : undefined,
         metadata,
         updatedAt: new Date(),
       })

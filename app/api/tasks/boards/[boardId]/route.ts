@@ -8,7 +8,8 @@ import { eq } from "drizzle-orm";
  * GET /api/tasks/boards/[boardId]
  * Get a specific board with all related data
  */
-export async function GET(request: NextRequest, { params }: { params: { boardId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
+  const { boardId } = await params;
   try {
     const supabase = createClient();
     const {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: { boardId:
     }
 
     const board = await db.query.staffTaskBoards.findFirst({
-      where: eq(staffTaskBoards.id, params.boardId),
+      where: eq(staffTaskBoards.id, boardId),
       with: {
         columns: {
           orderBy: (columns, { asc }) => [asc(columns.position)],
@@ -80,7 +81,8 @@ export async function GET(request: NextRequest, { params }: { params: { boardId:
  * PATCH /api/tasks/boards/[boardId]
  * Update a board
  */
-export async function PATCH(request: NextRequest, { params }: { params: { boardId: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
+  const { boardId } = await params;
   try {
     const supabase = createClient();
     const {
@@ -110,7 +112,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { boardI
         isArchived,
         updatedAt: new Date(),
       })
-      .where(eq(staffTaskBoards.id, params.boardId))
+      .where(eq(staffTaskBoards.id, boardId))
       .returning();
 
     if (!board) {
@@ -128,7 +130,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { boardI
  * DELETE /api/tasks/boards/[boardId]
  * Delete a board (soft delete by archiving)
  */
-export async function DELETE(request: NextRequest, { params }: { params: { boardId: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
+  const { boardId } = await params;
   try {
     const supabase = createClient();
     const {
@@ -146,7 +149,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { board
         isArchived: true,
         updatedAt: new Date(),
       })
-      .where(eq(staffTaskBoards.id, params.boardId))
+      .where(eq(staffTaskBoards.id, boardId))
       .returning();
 
     if (!board) {

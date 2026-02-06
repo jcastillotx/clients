@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasPermission } from "@/lib/rbac/permissions";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canManage = await hasPermission("users.manage");
     if (!canManage) {
@@ -16,7 +17,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
     // Update auth user if password changed
     if (password) {
-      await supabase.auth.admin.updateUserById(params.id, {
+      await supabase.auth.admin.updateUserById(id, {
         password,
         user_metadata: { name, phone, client_id },
       });
@@ -34,7 +35,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         status: is_active ? "active" : "inactive",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -43,13 +44,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     // Update roles
     if (roles) {
       // Remove existing roles
-      await supabase.from("user_roles").delete().eq("user_id", params.id);
+      await supabase.from("user_roles").delete().eq("user_id", id);
 
       // Add new roles
       if (roles.length > 0) {
         await supabase
           .from("user_roles")
-          .insert(roles.map((role_id: string) => ({ user_id: params.id, role_id })));
+          .insert(roles.map((role_id: string) => ({ user_id: id, role_id })));
       }
     }
 
@@ -61,7 +62,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         client:clients(id, company_name),
         user_roles(role:roles(id, name, description))
       `)
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     return NextResponse.json({ user: completeUser });
@@ -76,7 +77,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canManage = await hasPermission("users.manage");
     if (!canManage) {
@@ -89,7 +91,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const { error } = await supabase
       .from("users")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (error) throw error;
 

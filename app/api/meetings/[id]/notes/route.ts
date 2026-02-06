@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -15,6 +15,7 @@ interface RouteParams {
  * Fetch all notes for a meeting
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const { data: notes, error } = await supabase
     .from("meeting_notes")
     .select("*, creator:users(id, name, avatar)")
-    .eq("meeting_id", params.id)
+    .eq("meeting_id", id)
     .order("order_index", { ascending: true });
 
   if (error) {
@@ -46,6 +47,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
  * Create a new meeting note
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const validatedData = createMeetingNoteSchema.parse({
       ...body,
-      meetingId: params.id,
+      meetingId: id,
     });
 
     // Create note
@@ -101,6 +103,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
  * Bulk update meeting notes (save all at once)
  */
 export async function PUT(req: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -130,12 +133,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     // Delete existing notes
-    await supabase.from("meeting_notes").delete().eq("meeting_id", params.id);
+    await supabase.from("meeting_notes").delete().eq("meeting_id", id);
 
     // Insert new notes
     if (notes.length > 0) {
       const notesToInsert = notes.map((note, index) => ({
-        meeting_id: params.id,
+        meeting_id: id,
         section: note.section,
         content: note.content,
         order_index: note.orderIndex ?? index,

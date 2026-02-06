@@ -16,7 +16,8 @@ interface SearchParams {
  *
  * Displays connected social accounts and post scheduler.
  */
-export default async function SocialMediaPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function SocialMediaPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   // Check authentication
@@ -31,7 +32,7 @@ export default async function SocialMediaPage({ searchParams }: { searchParams: 
   // Fetch user's client ID
   const { data: userData } = await supabase.from("users").select("client_id").eq("id", user.id).single();
 
-  const clientId = searchParams.clientId || userData?.client_id;
+  const clientId = resolvedSearchParams.clientId || userData?.client_id;
 
   if (!clientId) {
     return (

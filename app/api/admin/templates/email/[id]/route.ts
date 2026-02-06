@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { extractVariables } from "@/lib/templates/template-engine";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canView = await hasPermission("settings.manage");
     if (!canView) {
@@ -15,7 +16,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const { data: template, error } = await supabase
       .from("email_templates")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .is("deleted_at", null)
       .single();
 
@@ -35,7 +36,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canManage = await hasPermission("settings.manage");
     if (!canManage) {
@@ -51,7 +53,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const { data: currentTemplate } = await supabase
       .from("email_templates")
       .select("type")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     // If setting as default for this type, unset other defaults
@@ -61,7 +63,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         .update({ is_default: false })
         .eq("type", currentTemplate.type)
         .eq("is_default", true)
-        .neq("id", params.id);
+        .neq("id", id);
     }
 
     // Extract available variables from the template
@@ -86,7 +88,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const { data: template, error } = await supabase
       .from("email_templates")
       .update(updateData)
-      .eq("id", params.id)
+      .eq("id", id)
       .is("deleted_at", null)
       .select()
       .single();
@@ -107,7 +109,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canManage = await hasPermission("settings.manage");
     if (!canManage) {
@@ -120,7 +123,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const { error } = await supabase
       .from("email_templates")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", params.id)
+      .eq("id", id)
       .is("deleted_at", null);
 
     if (error) throw error;

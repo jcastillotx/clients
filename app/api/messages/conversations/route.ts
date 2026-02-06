@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { conversations, conversationParticipants, messages, users } from "@/lib/db/schema/messages";
+import { conversations, conversationParticipants, messages } from "@/lib/db/schema/messages";
+import { users } from "@/lib/db/schema/users";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
       allParticipants.map((userId) => ({
         conversationId: conversation.id,
         userId,
-        role: userId === user.id ? "staff" : "client",
+        role: (userId === user.id ? "staff" : "client") as "staff" | "client",
       })),
     );
 

@@ -7,9 +7,9 @@ import { eq, sql, desc } from "drizzle-orm";
  * GET /api/maintenance-plans/[id]
  * Get a specific maintenance plan with usage details
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
 
     // Get plan details with aggregated usage
     const [plan] = await db
@@ -99,9 +99,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  * PATCH /api/maintenance-plans/[id]
  * Update a maintenance plan
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
     const body = await request.json();
 
     // Check if plan exists
@@ -149,9 +149,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * DELETE /api/maintenance-plans/[id]
  * Soft delete a maintenance plan
  */
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
 
     // Check if plan exists
     const [existingPlan] = await db.select().from(maintenancePlans).where(eq(maintenancePlans.id, id)).limit(1);

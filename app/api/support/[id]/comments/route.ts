@@ -8,7 +8,8 @@ import { z } from "zod";
  *
  * Fetch all comments for a support ticket
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       user:users(id, name, email, avatar)
     `,
     )
-    .eq("support_ticket_id", params.id)
+    .eq("support_ticket_id", id)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -44,7 +45,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
  *
  * Add a comment to a support ticket
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const { data: ticket, error: ticketError } = await supabase
       .from("support_tickets")
       .select("id, first_response_at, status")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (ticketError || !ticket) {
@@ -77,7 +79,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const { data, error } = await supabase
       .from("support_ticket_comments")
       .insert({
-        support_ticket_id: params.id,
+        support_ticket_id: id,
         user_id: user.id,
         comment: validatedData.comment,
         is_internal: validatedData.isInternal,
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         .update({
           first_response_at: new Date().toISOString(),
         })
-        .eq("id", params.id);
+        .eq("id", id);
     }
 
     // If ticket was waiting_on_client, move it back to in_progress
@@ -114,7 +116,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           status: "in_progress",
           sla_paused: false,
         })
-        .eq("id", params.id);
+        .eq("id", id);
     }
 
     return NextResponse.json(data, { status: 201 });

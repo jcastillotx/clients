@@ -13,7 +13,8 @@ import { eq } from "drizzle-orm";
  * GET /api/tasks/[taskId]
  * Get a specific task with all related data
  */
-export async function GET(request: NextRequest, { params }: { params: { taskId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+  const { taskId } = await params;
   try {
     const supabase = createClient();
     const {
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
     }
 
     const task = await db.query.staffTasks.findFirst({
-      where: eq(staffTasks.id, params.taskId),
+      where: eq(staffTasks.id, taskId),
       with: {
         board: true,
         column: true,
@@ -92,7 +93,8 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
  * PATCH /api/tasks/[taskId]
  * Update a task
  */
-export async function PATCH(request: NextRequest, { params }: { params: { taskId: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+  const { taskId } = await params;
   try {
     const supabase = createClient();
     const {
@@ -132,7 +134,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { taskId
         completedAt: completedAt ? new Date(completedAt) : null,
         updatedAt: new Date(),
       })
-      .where(eq(staffTasks.id, params.taskId))
+      .where(eq(staffTasks.id, taskId))
       .returning();
 
     if (!task) {
@@ -142,13 +144,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { taskId
     // Update assignees if provided
     if (assignees !== undefined) {
       // Remove existing assignees
-      await db.delete(staffTaskAssignees).where(eq(staffTaskAssignees.taskId, params.taskId));
+      await db.delete(staffTaskAssignees).where(eq(staffTaskAssignees.taskId, taskId));
 
       // Add new assignees
       if (assignees.length > 0) {
         await db.insert(staffTaskAssignees).values(
           assignees.map((userId: string) => ({
-            taskId: params.taskId,
+            taskId: taskId,
             userId,
           })),
         );
@@ -156,7 +158,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { taskId
 
       // Log activity
       await db.insert(staffTaskComments).values({
-        taskId: params.taskId,
+        taskId: taskId,
         userId: user.id,
         content: `Updated assignees`,
         isSystem: true,
@@ -166,13 +168,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { taskId
     // Update labels if provided
     if (labels !== undefined) {
       // Remove existing labels
-      await db.delete(staffTaskLabelRelations).where(eq(staffTaskLabelRelations.taskId, params.taskId));
+      await db.delete(staffTaskLabelRelations).where(eq(staffTaskLabelRelations.taskId, taskId));
 
       // Add new labels
       if (labels.length > 0) {
         await db.insert(staffTaskLabelRelations).values(
           labels.map((labelId: string) => ({
-            taskId: params.taskId,
+            taskId: taskId,
             labelId,
           })),
         );
@@ -181,7 +183,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { taskId
 
     // Fetch updated task with relations
     const updatedTask = await db.query.staffTasks.findFirst({
-      where: eq(staffTasks.id, params.taskId),
+      where: eq(staffTasks.id, taskId),
       with: {
         assignees: {
           with: {
@@ -215,7 +217,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { taskId
  * DELETE /api/tasks/[taskId]
  * Delete a task
  */
-export async function DELETE(request: NextRequest, { params }: { params: { taskId: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+  const { taskId } = await params;
   try {
     const supabase = createClient();
     const {
@@ -227,7 +230,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { taskI
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await db.delete(staffTasks).where(eq(staffTasks.id, params.taskId));
+    await db.delete(staffTasks).where(eq(staffTasks.id, taskId));
 
     return NextResponse.json({ success: true });
   } catch (error) {

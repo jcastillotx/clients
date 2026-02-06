@@ -20,17 +20,17 @@ export async function POST(request: Request) {
     // Check if metrics already exist for this ad and date
     const existingMetrics = await db.select().from(adMetrics).where(eq(adMetrics.adId, adId)).limit(1);
 
-    const metricData = {
+    const metricData: any = {
       adId,
-      metricDate: new Date(date),
-      impressions: metrics.impressions || 0,
-      clicks: metrics.clicks || 0,
-      spend: metrics.spend || 0,
-      conversions: metrics.conversions || 0,
-      ctr: metrics.ctr || 0,
-      cpc: metrics.cpc || 0,
-      cpm: metrics.cpm || 0,
-      roas: metrics.roas || 0,
+      metricDate: new Date(date).toISOString().split("T")[0],
+      impressions: String(metrics.impressions || 0),
+      clicks: String(metrics.clicks || 0),
+      spend: String(metrics.spend || 0),
+      conversions: String(metrics.conversions || 0),
+      ctr: String(metrics.ctr || 0),
+      cpc: String(metrics.cpc || 0),
+      cpm: String(metrics.cpm || 0),
+      roas: String(metrics.roas || 0),
       metadata: {
         videoViews: metrics.videoViews,
         videoViewsP25: metrics.videoViewsP25,

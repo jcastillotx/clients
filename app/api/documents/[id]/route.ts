@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { deleteFile, StorageBuckets } from "@/lib/storage/upload";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const supabase = createClient();
 
@@ -16,7 +17,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         request:requests(id, title)
       `,
       )
-      .eq("id", params.id)
+      .eq("id", id)
       .is("deleted_at", null)
       .single();
 
@@ -38,7 +39,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const body = await request.json();
     const { name, description, tags, isPublic } = body;
@@ -57,7 +59,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const { data: document, error } = await supabase
       .from("documents")
       .update(updateData)
-      .eq("id", params.id)
+      .eq("id", id)
       .is("deleted_at", null)
       .select()
       .single();
@@ -80,7 +82,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const supabase = createClient();
 
@@ -88,7 +91,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const { data: document } = await supabase
       .from("documents")
       .select("storage_path")
-      .eq("id", params.id)
+      .eq("id", id)
       .is("deleted_at", null)
       .single();
 
@@ -100,7 +103,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const { error: dbError } = await supabase
       .from("documents")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (dbError) throw dbError;
 

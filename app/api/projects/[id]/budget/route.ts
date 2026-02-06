@@ -7,9 +7,9 @@ import { eq, sql } from "drizzle-orm";
  * GET /api/projects/[id]/budget
  * Get budget summary and cost entries for a project
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
 
     // Fetch budgets with spent amounts
     const budgets = await db
@@ -63,9 +63,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  * POST /api/projects/[id]/budget
  * Create a new budget category or cost entry
  */
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { id } = params;
     const body = await request.json();
     const { type } = body;
 
@@ -165,7 +165,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
  * PATCH /api/projects/[id]/budget
  * Update budget or approve cost entry
  */
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const body = await request.json();
     const { type, itemId, ...updates } = body;

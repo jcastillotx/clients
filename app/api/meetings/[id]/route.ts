@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -15,6 +15,7 @@ interface RouteParams {
  * Fetch a single meeting by ID
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       attendeeRecords:meeting_attendees(*, user:users(id, name, email, avatar))
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error) {
@@ -58,6 +59,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
  * Update a meeting
  */
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -98,7 +100,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const { data: meeting, error: updateError } = await supabase
       .from("meetings")
       .update(updateData)
-      .eq("id", params.id)
+      .eq("id", id)
       .select(
         `
         *,
@@ -134,6 +136,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
  * Delete a meeting (soft delete)
  */
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
   const supabase = createClient();
 
   // Check authentication
@@ -149,7 +152,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const { error } = await supabase
     .from("meetings")
     .update({ deleted_at: new Date().toISOString() })
-    .eq("id", params.id);
+    .eq("id", id);
 
   if (error) {
     if (error.code === "PGRST116") {

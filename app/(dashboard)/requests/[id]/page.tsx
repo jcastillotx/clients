@@ -68,7 +68,15 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       <RequestDetail request={request} />
 
       {/* Comments section with real-time updates */}
-      <RequestComments requestId={id} initialComments={comments || []} />
+      <RequestComments
+        requestId={id}
+        initialComments={
+          (comments || []).map((c: any) => ({
+            ...c,
+            user: Array.isArray(c.user) ? c.user[0] : c.user,
+          })) as any
+        }
+      />
     </div>
   );
 }

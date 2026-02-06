@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { maintenancePlans } from "@/lib/db/schema/maintenance-plans";
-import { eq, and, or, desc, sql, gte, lte } from "drizzle-orm";
+import { eq, and, or, desc, sql, gte, lte, isNull } from "drizzle-orm";
 
 /**
  * GET /api/maintenance-plans
@@ -15,7 +15,26 @@ export async function GET(request: NextRequest) {
     const planType = searchParams.get("planType");
     const activeOnly = searchParams.get("activeOnly") === "true";
 
-    let query = db
+    const filters = [isNull(maintenancePlans.deletedAt)];
+    if (clientId) {
+      filters.push(eq(maintenancePlans.clientId, clientId));
+    }
+    if (status) {
+      filters.push(eq(maintenancePlans.status, status as any));
+    }
+    if (planType) {
+      filters.push(eq(maintenancePlans.planType, planType));
+    }
+    if (activeOnly) {
+      filters.push(
+        and(
+          eq(maintenancePlans.status, "active"),
+          or(sql`${maintenancePlans.endDate} IS NULL`, gte(maintenancePlans.endDate, new Date().toISOString().split("T")[0])),
+        ) as any,
+      );
+    }
+
+    const plans = await db
       .select({
         plan: maintenancePlans,
         client: {
@@ -42,34 +61,8 @@ export async function GET(request: NextRequest) {
       .from(maintenancePlans)
       .leftJoin(sql`clients`, sql`clients.id = ${maintenancePlans.clientId}`)
       .leftJoin(sql`users`, sql`users.id = ${maintenancePlans.createdBy}`)
-      .where(sql`${maintenancePlans.deletedAt} IS NULL`)
+      .where(and(...filters) as any)
       .orderBy(desc(maintenancePlans.createdAt));
-
-    // Apply filters
-    const filters = [];
-    if (clientId) {
-      filters.push(eq(maintenancePlans.clientId, clientId));
-    }
-    if (status) {
-      filters.push(eq(maintenancePlans.status, status as any));
-    }
-    if (planType) {
-      filters.push(eq(maintenancePlans.planType, planType));
-    }
-    if (activeOnly) {
-      filters.push(
-        and(
-          eq(maintenancePlans.status, "active"),
-          or(sql`${maintenancePlans.endDate} IS NULL`, gte(maintenancePlans.endDate, new Date())),
-        ),
-      );
-    }
-
-    if (filters.length > 0) {
-      query = query.where(and(...filters)) as any;
-    }
-
-    const plans = await query;
 
     return NextResponse.json({
       success: true,

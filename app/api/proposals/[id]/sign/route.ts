@@ -6,11 +6,11 @@ import { NextRequest, NextResponse } from "next/server";
  *
  * Accept or reject a proposal with signature
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   try {
-    const { id } = params;
     const body = await req.json();
     const { action, signatureData, signerName, signerEmail, token } = body;
 

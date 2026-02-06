@@ -3,7 +3,8 @@ import { InvoicePDF } from "@/lib/pdf/invoice-pdf";
 import { renderToStream } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const supabase = createClient();
 
@@ -41,7 +42,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         )
       `
       )
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (invoiceError || !invoice) {
@@ -52,7 +53,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const stream = await renderToStream(<InvoicePDF invoice={invoice} />);
 
     // Convert stream to buffer for Next.js response
-    const chunks: Uint8Array[] = [];
+    const chunks: any[] = [];
     for await (const chunk of stream) {
       chunks.push(chunk);
     }

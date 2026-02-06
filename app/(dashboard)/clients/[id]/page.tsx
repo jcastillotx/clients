@@ -91,11 +91,28 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
   return (
     <div className="flex flex-col gap-8 p-8">
       {/* Client details */}
-      <ClientDetail client={client} staffAssignments={staffAssignments || []} stats={stats} />
+      <ClientDetail
+        client={client}
+        staffAssignments={
+          (staffAssignments || []).map((sa: any) => ({
+            ...sa,
+            user: Array.isArray(sa.user) ? sa.user[0] : sa.user,
+          })) as any
+        }
+        stats={stats}
+      />
 
       {/* Related data tabs */}
       <div className="grid gap-6 md:grid-cols-2">
-        <ClientRequests requests={requests || []} clientId={id} />
+        <ClientRequests
+          requests={
+            (requests || []).map((r: any) => ({
+              ...r,
+              assigned_user: Array.isArray(r.assigned_user) ? r.assigned_user[0] : r.assigned_user,
+            })) as any
+          }
+          clientId={id}
+        />
         <ClientInvoices invoices={invoices || []} clientId={id} />
       </div>
     </div>

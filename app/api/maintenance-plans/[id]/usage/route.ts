@@ -7,9 +7,9 @@ import { eq, sql } from "drizzle-orm";
  * POST /api/maintenance-plans/[id]/usage
  * Log hours against a maintenance plan
  */
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: planId } = await params;
   try {
-    const { id: planId } = params;
     const body = await request.json();
 
     // Validate required fields
@@ -149,9 +149,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
  * GET /api/maintenance-plans/[id]/usage
  * Get usage history for a maintenance plan
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: planId } = await params;
   try {
-    const { id: planId } = params;
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");

@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { hasPermission } from "@/lib/rbac/permissions";
 
 // GET /api/rbac/users/[id]/roles - Get user's roles
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canRead = await hasPermission("users.read");
     if (!canRead) {
@@ -20,7 +21,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         role:roles(*)
       `,
       )
-      .eq("user_id", params.id);
+      .eq("user_id", id);
 
     if (error) throw error;
 
@@ -35,7 +36,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 // POST /api/rbac/users/[id]/roles - Assign role to user
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canAssign = await hasPermission("users.assign_roles");
     if (!canAssign) {
@@ -57,7 +59,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const { data: existing } = await supabase
       .from("user_roles")
       .select("*")
-      .eq("user_id", params.id)
+      .eq("user_id", id)
       .eq("role_id", roleId)
       .single();
 
@@ -69,7 +71,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const { data: userRole, error } = await supabase
       .from("user_roles")
       .insert({
-        user_id: params.id,
+        user_id: id,
         role_id: roleId,
         assigned_by: user?.id,
       })
@@ -94,7 +96,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
 }
 
 // DELETE /api/rbac/users/[id]/roles/[roleId] - Remove role from user
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const canAssign = await hasPermission("users.assign_roles");
     if (!canAssign) {
@@ -109,7 +112,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ error: "Role ID is required" }, { status: 400 });
     }
 
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", params.id).eq("role_id", roleId);
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", id).eq("role_id", roleId);
 
     if (error) throw error;
 

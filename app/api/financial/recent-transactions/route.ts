@@ -31,10 +31,10 @@ export async function GET() {
       .limit(10);
 
     // Transform data
-    const transactions = invoices?.map((invoice) => ({
+    const transactions = invoices?.map((invoice: any) => ({
       id: invoice.id,
       invoice_number: invoice.invoice_number,
-      client_name: invoice.clients?.company_name || "Unknown",
+      client_name: Array.isArray(invoice.clients) ? invoice.clients[0]?.company_name : invoice.clients?.company_name || "Unknown",
       amount: invoice.amount,
       status: invoice.status,
       date: invoice.paid_at || invoice.created_at,

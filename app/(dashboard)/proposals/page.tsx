@@ -18,7 +18,8 @@ interface SearchParams {
  *
  * Fetches proposals on the server with RLS automatically filtering by user's access.
  */
-export default async function ProposalsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function ProposalsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   const {
@@ -43,17 +44,17 @@ export default async function ProposalsPage({ searchParams }: { searchParams: Se
     .order("created_at", { ascending: false });
 
   // Apply search filter (title or client name)
-  if (searchParams.search) {
-    query = query.or(`title.ilike.%${searchParams.search}%`);
+  if (resolvedSearchParams.search) {
+    query = query.or(`title.ilike.%${resolvedSearchParams.search}%`);
   }
 
   // Apply status filter
-  if (searchParams.status && searchParams.status !== "all") {
-    query = query.eq("status", searchParams.status);
+  if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
+    query = query.eq("status", resolvedSearchParams.status);
   }
 
   // Pagination
-  const page = parseInt(searchParams.page || "1");
+  const page = parseInt(resolvedSearchParams.page || "1");
   const pageSize = 20;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;

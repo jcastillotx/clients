@@ -18,7 +18,7 @@ export default function CustomDashboardPage() {
   const [dashboard, setDashboard] = useState({
     name: "My Custom Dashboard",
     layout: { type: "grid" as const, columns: 12, gap: 4 },
-    widgets: [],
+    widgets: [] as any[],
   });
 
   const handleAddWidget = (widget: any) => {

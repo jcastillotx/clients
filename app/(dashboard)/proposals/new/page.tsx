@@ -16,7 +16,8 @@ interface SearchParams {
  *
  * Fetches clients for the wizard and pre-selects if client_id provided.
  */
-export default async function NewProposalPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function NewProposalPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = createClient();
 
   const {
@@ -41,7 +42,7 @@ export default async function NewProposalPage({ searchParams }: { searchParams: 
         <p className="text-muted-foreground">Create a new business proposal</p>
       </div>
 
-      <ProposalWizard clients={clients || []} preselectedClientId={searchParams.client_id} />
+      <ProposalWizard clients={clients || []} preselectedClientId={resolvedSearchParams.client_id} />
     </div>
   );
 }

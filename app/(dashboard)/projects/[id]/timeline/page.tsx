@@ -83,12 +83,17 @@ async function TimelineContent({ id }: { id: string }) {
   );
 }
 
-export default function ProjectTimelinePage({ params }: { params: { id: string } }) {
+export default function ProjectTimelinePage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="container mx-auto py-8 px-4">
       <Suspense fallback={<TimelineLoading />}>
-        <TimelineContent id={params.id} />
+        <AsyncTimelineContent params={params} />
       </Suspense>
     </div>
   );
+}
+
+async function AsyncTimelineContent({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <TimelineContent id={id} />;
 }

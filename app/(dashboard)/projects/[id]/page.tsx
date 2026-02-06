@@ -87,9 +87,9 @@ async function ProjectDetails({ id }: { id: string }) {
     notFound();
   }
 
-  const budgetPercentage = project.budgetAmount
-    ? (parseFloat(project.spentAmount) / parseFloat(project.budgetAmount)) * 100
-    : 0;
+  const budgetAmount = parseFloat(project.budgetAmount || "0");
+  const spentAmount = parseFloat(project.spentAmount || "0");
+  const budgetPercentage = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
   const isOverBudget = budgetPercentage > 100;
 
   const totalBudget = project.budgets.reduce((sum, b) => sum + parseFloat(b.allocatedAmount), 0);
@@ -138,10 +138,10 @@ async function ProjectDetails({ id }: { id: string }) {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${isOverBudget ? "text-red-600" : ""}`}>
-              {formatCurrency(totalSpent, project.currency)}
+              {formatCurrency(totalSpent || spentAmount, project.currency)}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              of {formatCurrency(totalBudget || parseFloat(project.budgetAmount || "0"), project.currency)}
+              of {formatCurrency(totalBudget || budgetAmount, project.currency)}
             </div>
           </CardContent>
         </Card>
@@ -312,12 +312,17 @@ async function ProjectDetails({ id }: { id: string }) {
   );
 }
 
-export default function ProjectPage({ params }: { params: { id: string } }) {
+export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="container mx-auto py-8 px-4">
       <Suspense fallback={<ProjectLoading />}>
-        <ProjectDetails id={params.id} />
+        <AsyncProjectDetails params={params} />
       </Suspense>
     </div>
   );
+}
+
+async function AsyncProjectDetails({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <ProjectDetails id={id} />;
 }

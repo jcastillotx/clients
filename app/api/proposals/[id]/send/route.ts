@@ -6,7 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
  *
  * Send proposal to client via email and update status
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = createClient();
 
   const {
@@ -18,7 +19,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   try {
-    const { id } = params;
 
     // Fetch proposal with client details
     const { data: proposal, error: fetchError } = await supabase

@@ -12,11 +12,11 @@ export function formatDateTime(date: string | Date | number) {
   return format(dateObj, "MMM d, yyyy h:mm a");
 }
 
-export function formatCurrency(amount: number | string) {
+export function formatCurrency(amount: number | string, currency: string = "USD") {
   const numericAmount = typeof amount === "string" ? parseFloat(amount) : amount;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: currency || "USD",
   }).format(numericAmount || 0);
 }
 

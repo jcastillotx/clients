@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { staffTasks, staffTaskComments } from "@/lib/db/schema/staff-tasks";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
 
 /**
  * POST /api/tasks/[taskId]/move
  * Move a task to a different column and/or position
  */
-export async function POST(request: NextRequest, { params }: { params: { taskId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+  const { taskId } = await params;
   try {
     const supabase = createClient();
     const {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest, { params }: { params: { taskId:
 
     // Get current task
     const task = await db.query.staffTasks.findFirst({
-      where: eq(staffTasks.id, params.taskId),
+      where: eq(staffTasks.id, taskId),
       with: {
         column: true,
       },
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: { taskId:
       await db
         .update(staffTasks)
         .set({
-          position: db.raw("position - 1"),
+          position: sql`position - 1`,
           updatedAt: new Date(),
         })
         .where(and(eq(staffTasks.columnId, oldColumnId), gte(staffTasks.position, oldPosition)));
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest, { params }: { params: { taskId:
       await db
         .update(staffTasks)
         .set({
-          position: db.raw("position + 1"),
+          position: sql`position + 1`,
           updatedAt: new Date(),
         })
         .where(and(eq(staffTasks.columnId, columnId), gte(staffTasks.position, position)));
@@ -70,12 +71,12 @@ export async function POST(request: NextRequest, { params }: { params: { taskId:
           position,
           updatedAt: new Date(),
         })
-        .where(eq(staffTasks.id, params.taskId))
+        .where(eq(staffTasks.id, taskId))
         .returning();
 
       // Log activity
       await db.insert(staffTaskComments).values({
-        taskId: params.taskId,
+        taskId: taskId,
         userId: user.id,
         content: `Moved task from ${task.column.name} to new column`,
         isSystem: true,
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest, { params }: { params: { taskId:
         await db
           .update(staffTasks)
           .set({
-            position: db.raw("position - 1"),
+            position: sql`position - 1`,
             updatedAt: new Date(),
           })
           .where(
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest, { params }: { params: { taskId:
         await db
           .update(staffTasks)
           .set({
-            position: db.raw("position + 1"),
+            position: sql`position + 1`,
             updatedAt: new Date(),
           })
           .where(
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest, { params }: { params: { taskId:
           position,
           updatedAt: new Date(),
         })
-        .where(eq(staffTasks.id, params.taskId))
+        .where(eq(staffTasks.id, taskId))
         .returning();
 
       return NextResponse.json({ task: updatedTask });
