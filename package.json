@@ -12,9 +12,15 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate:pg",
     "db:push": "drizzle-kit push:pg",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "add:ai-elements": "npx ai-elements@latest add",
+    "add:basecn": "npx shadcn@latest add --registry https://basecn.dev/api/registry",
+    "add:billing": "npx @billingsdk/cli add"
   },
   "dependencies": {
+    "@better-upload/react": "^1.0.0",
+    "@better-upload/server": "^1.0.0",
+    "@billingsdk/react": "^1.0.0",
     "@hookform/resolvers": "^3.3.4",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",
