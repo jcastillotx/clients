@@ -118,7 +118,7 @@ export function StatsGrid() {
 
 ---
 
-## 1. Better Upload
+## 2. Better Upload
 
 ### What It Is
 
@@ -204,7 +204,7 @@ export const POST = createUploadRouteHandler({
 
 ---
 
-## 2. AI Elements
+## 3. AI Elements
 
 ### What It Is
 
@@ -289,7 +289,7 @@ export function AIAssistant() {
 
 ---
 
-## 3. BaseCN
+## 4. BaseCN
 
 ### What It Is
 
@@ -353,7 +353,7 @@ import { Dialog } from "@/components/ui/dialog"; // Same API
 
 ---
 
-## 4. BillingSDK
+## 5. BillingSDK
 
 ### What It Is
 
@@ -440,14 +440,23 @@ export function BillingDashboard({ subscription }) {
 
 ## Implementation Roadmap
 
-### Phase 1: File Upload Enhancement (1-2 hours)
+### Phase 1: Blocks.so Integration (30 minutes)
+
+1. Browse https://blocks.so
+2. Copy stat cards for dashboard
+3. Copy command menu for global search
+4. Copy enhanced data table
+5. Copy sidebar component
+6. Copy login/signup forms
+
+### Phase 2: File Upload Enhancement (1-2 hours)
 
 1. Install Better Upload
 2. Replace file upload in document library
 3. Add to support tickets
 4. Add to contract attachments
 
-### Phase 2: AI Components (2-3 hours)
+### Phase 3: AI Components (2-3 hours)
 
 1. Install AI Elements
 2. Enhance AI chat assistant
@@ -455,7 +464,7 @@ export function BillingDashboard({ subscription }) {
 4. Add code block rendering
 5. Consider voice components for future
 
-### Phase 3: Billing Enhancement (2-3 hours)
+### Phase 4: Billing Enhancement (2-3 hours)
 
 1. Install BillingSDK
 2. Enhance invoice display
@@ -463,7 +472,7 @@ export function BillingDashboard({ subscription }) {
 4. Add usage meters for maintenance plans
 5. Improve payment method management
 
-### Phase 4: Base UI Migration (Optional, 1 week)
+### Phase 5: Base UI Migration (Optional, 1 week)
 
 1. Profile performance bottlenecks
 2. Identify components to migrate
@@ -495,6 +504,7 @@ After installation, `package.json` will include:
 
 All libraries are **free and open-source**:
 
+- ✅ Blocks.so - Open Source (Copy-Paste)
 - ✅ Better Upload - MIT License
 - ✅ AI Elements - Apache 2.0 License
 - ✅ BaseCN - MIT License
@@ -503,6 +513,13 @@ All libraries are **free and open-source**:
 ---
 
 ## Benefits Summary
+
+### Blocks.so
+
+- **Provides**: 60+ production-ready UI blocks
+- **Saves**: Weeks of UI development time
+- **Improves**: Consistent, professional design
+- **Zero Cost**: No packages, no dependencies
 
 ### Better Upload
 
