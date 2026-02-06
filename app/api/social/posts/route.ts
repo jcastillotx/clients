@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { socialPosts, socialAccounts } from "@/lib/db/schema/social-media";
+import { socialPosts, socialAccounts, postStatusEnum, type PostStatus } from "@/lib/db/schema/social-media";
 import { eq, and, isNull, desc, gte, lte } from "drizzle-orm";
 
 /**
@@ -37,8 +37,8 @@ export async function GET(request: Request) {
       conditions.push(eq(socialAccounts.clientId, clientId));
     }
 
-    if (status) {
-      conditions.push(eq(socialPosts.status, status));
+    if (status && (postStatusEnum as readonly string[]).includes(status)) {
+      conditions.push(eq(socialPosts.status, status as PostStatus));
     }
 
     if (startDate) {
