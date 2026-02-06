@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- Maskable icon: full-bleed background -->
-  <rect width="512" height="512" fill="#3c8dbc"/>
-  <g fill="#ffffff">
-    <path d="M154 148h204c16.6 0 30 13.4 30 30v168c0 16.6-13.4 30-30 30H154c-16.6 0-30-13.4-30-30V178c0-16.6 13.4-30 30-30zm0 44v184h204V192H154z"/>
-    <path d="M176 240h160v28H176v-28zm0 52h122v28H176v-28z"/>
-  </g>
-</svg>

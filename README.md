@@ -1,405 +1,249 @@
-# Kre8iv Designs Client Portal
+# Laravel to Next.js Migration
 
-A self-service client management portal built with Laravel 11, Livewire 3, and AdminLTE. This portal enables clients to view and manage service requests, contracts, invoices, and documents.
+**Status**: Planning Complete, Ready for Implementation
+**Timeline**: 8-10 weeks
+**Team Size**: 4-5 developers (2 backend, 2-3 full-stack)
 
-## Features
+## Quick Links
 
-- **Client Authentication & Dashboard** - Secure login with role-based access control
-- **Service Request Management** - Create, view, edit, and comment on service requests
-- **Contract Management** - View contracts with e-signature capability
-- **Invoice Display & Payments** - View invoices with Stripe payment integration
-- **Document Library** - Upload and download documents
-- **Activity Logging** - Complete audit trail for all actions
-- **Marketing Toolkit (MVP scaffolding)** - Website audits, SEO/brand/content/campaign/reputation data models + scheduled runners (feature flags via config/env)
+- [Migration Plan](./MIGRATION_PLAN.md) - Full implementation plan
+- [Week-by-Week Breakdown](./WEEKLY_BREAKDOWN.md) - Detailed weekly tasks
+- [Tech Stack](./TECH_STACK.md) - Complete technology choices
+- [Rollback Plan](./ROLLBACK_PLAN.md) - Emergency procedures
+- [Verification Checklist](./VERIFICATION_CHECKLIST.md) - Post-migration testing
 
-## Capabilities
+## Current State
 
-This portal includes a full “client portal + operations” stack. Major capabilities include:
+- **Laravel 11** + Livewire 3 multi-tenant SaaS
+- **165+ Eloquent models** across 130+ MySQL tables
+- **Critical UX/UI issues**: Bootstrap+Tailwind conflicts, monolithic components, poor mobile responsiveness
+- **Complex features**: Client management, invoicing, contracts, AI automation, webhooks
 
-- **Client portal core**: Client/staff/admin auth, role/permission controls, service requests with attachments, contracts + signing flow, invoices + PDF generation, payments, and audit logging.
-- **Feature gating**: Fine-grained features can be enabled/disabled per client tier/contract (see `config/features.php`).
-- **AI workflows**: AI assistants, document analysis/chat, request triage, estimate drafting, contract drafting, usage/cost tracking, and safety/compliance logging.
-- **Social media management**: Social account connections (OAuth), AI-assisted post creation, content calendar, client approval workflow, scheduled publishing, and notifications.
-- **Cloud storage integrations**: Connect and sync files with **AWS S3**, **Dropbox**, and **Google Drive** (plus a unified download experience in the portal).
-- **Marketing + brand monitoring**: Website auditing scaffolding + brand mention monitoring using free/low-cost APIs (NewsAPI, Google News RSS, Yelp, Google Places, Reddit, YouTube, Google Custom Search, Bing, RSS feeds).
-- **White-label branding**: Environment-driven branding + generated CSS, branded emails, and configurable assets (see `docs/branding-setup.md`).
+## Target State
 
-## Tech Stack
+- **Next.js 15** (App Router) + TypeScript
+- **Supabase** (PostgreSQL + Auth + Storage + Realtime)
+- **shadcn/ui** for consistent, accessible component library
+- **Inngest** for durable background jobs
+- **Vercel** for deployment and edge functions
 
-- **Framework**: Laravel 11
-- **Frontend**: Livewire 3 + Tailwind CSS + AdminLTE 3
-- **Database**: MySQL
-- **Authentication**: Laravel Breeze
-- **Authorization**: Spatie Laravel Permission
-- **Payments**: Stripe PHP SDK
-- **PDF Generation**: DomPDF
-- **HTTP clients**: Laravel HTTP Client + Guzzle (provider integrations)
+## Migration Strategy
 
-## 📚 Styling Documentation
+**Big Bang Approach** (8-10 weeks):
 
-The application is currently undergoing a systematic conversion from Bootstrap to Tailwind CSS. Complete documentation is available:
+1. **Week 1-2**: Database migration (MySQL → PostgreSQL with RLS)
+2. **Week 3**: Core features (Client management)
+3. **Week 4**: Service requests
+4. **Week 5**: Invoicing & payments
+5. **Week 6**: Documents & contracts
+6. **Week 7**: Background jobs & automation
+7. **Week 8**: Admin panel & testing
+8. **Week 9-10**: Deployment & launch
 
-- **[TAILWIND_AUDIT_SUMMARY.md](./TAILWIND_AUDIT_SUMMARY.md)** - Start here! Executive summary and navigation
-- **[PAGES_INVENTORY.md](./PAGES_INVENTORY.md)** - Complete catalog of all 150+ pages
-- **[STYLING_CONVERSION_REPORT.md](./STYLING_CONVERSION_REPORT.md)** - Detailed analysis of 120 files requiring conversion
-- **[BOOTSTRAP_TO_TAILWIND_GUIDE.md](./BOOTSTRAP_TO_TAILWIND_GUIDE.md)** - Quick reference for developers
+## Why Migrate?
 
-### Key Findings
-- **150+ pages** mapped across the application
-- **120 files** contain Bootstrap classes requiring conversion
-- **4-phase conversion strategy** over 8 weeks (80-120 hours)
+### Critical UX/UI Problems
 
-See [TAILWIND_AUDIT_SUMMARY.md](./TAILWIND_AUDIT_SUMMARY.md) for complete details.
+1. **Bootstrap + Tailwind Conflict** (Most Severe)
+   - 112 views mixing incompatible CSS frameworks
+   - Unpredictable styling, visual inconsistencies
+   - **Fix**: Pure Tailwind with shadcn/ui
 
-## Requirements
+2. **Monolithic Components**
+   - SEO Dashboard: 1,107 lines
+   - Branding Settings: 958 lines
+   - **Fix**: Server Components, proper composition
 
-- PHP 8.2+
-- PHP extensions: `mbstring`, `xml`, `curl`, `zip`, `gd` (Excel exports), `sqlite3` (tests)
-- Composer 2.x
-- Node.js 18+ & NPM
-- MySQL 8.0+
+3. **No Lazy Loading**
+   - Only 1 lazy-loaded component
+   - **Fix**: Next.js dynamic imports, Suspense boundaries
 
-## Installation
+4. **Performance Issues**
+   - 1,795 wire directives = constant HTTP requests
+   - **Fix**: Server Components + TanStack Query caching
 
-### 1. Clone the Repository
+5. **Accessibility Gaps**
+   - Missing ARIA attributes, poor keyboard navigation
+   - **Fix**: Radix UI primitives (shadcn/ui foundation)
+
+6. **Poor Mobile Responsiveness**
+   - Mixed grid systems, overflowing tables
+   - **Fix**: Mobile-first Tailwind, responsive components
+
+## Success Criteria
+
+- ✅ **Zero data loss** during migration
+- ✅ **100% feature parity** with Laravel version
+- ✅ **Single CSS framework** (Tailwind only)
+- ✅ **Accessible** (WCAG 2.1 AA compliance)
+- ✅ **Mobile-first** responsive design
+- ✅ **Performance** <2s page loads
+- ✅ **Type-safe** end-to-end TypeScript
+
+## Getting Started
+
+### Prerequisites
 
 ```bash
-git clone https://github.com/your-repo/client-portal.git
-cd client-portal
+# Required versions
+node -v  # 20+
+pnpm -v  # 9+
 ```
 
-### 2. Install PHP Dependencies
+### Environment Setup
+
+1. **Clone and navigate**:
+
+   ```bash
+   cd /Users/jlaptop/Apps/clients/migration
+   ```
+
+2. **Review the plan**:
+
+   ```bash
+   cat MIGRATION_PLAN.md
+   ```
+
+3. **Set up Supabase project**:
+   - Go to https://supabase.com
+   - Create new project
+   - Save credentials to `.env.local`
+
+4. **Set up Vercel account**:
+   - Go to https://vercel.com
+   - Connect GitHub repository
+   - Configure environment variables
+
+### Week 1: Database Migration
 
 ```bash
-composer install
-```
+# Export MySQL schema
+mysqldump -u root -p --no-data kre8iv_clients > schema.sql
 
-If you see an error about `bootstrap/cache` not being writable, ensure it exists and is writable:
+# Convert to PostgreSQL (manual refinement needed)
+# See /migration/scripts/convert-schema.sql
 
-```bash
-mkdir -p bootstrap/cache
-chmod -R 775 bootstrap/cache
-```
-
-### 3. Install Node Dependencies
-
-```bash
-npm install
-```
-
-### 4. Environment Configuration
-
-```bash
-cp .env.example .env
-php artisan key:generate
-```
-
-Edit `.env` and configure:
-- Database credentials (`DB_*`)
-- Mail settings (`MAIL_*`)
-- Stripe keys (`STRIPE_*`)
-
-### 5. Database Setup
-
-```bash
-php artisan migrate
-php artisan db:seed
-```
-
-### 6. Build Assets
-
-```bash
-npm run build
-```
-
-### 7. Storage Link
-
-```bash
-php artisan storage:link
-```
-
-### 8. Start Development Server
-
-```bash
-php artisan serve
-```
-
-Visit `http://localhost:8000`
-
-## Development
-
-### Code style (Pint)
-
-```bash
-./vendor/bin/pint
-```
-
-Check formatting without modifying files:
-
-```bash
-./vendor/bin/pint --test
-```
-
-### Running tests
-
-```bash
-php artisan test
-```
-
-Notes:
-- The PHPUnit config is set up to use **SQLite in-memory** by default, so you typically don’t need to configure a database just to run tests.
-- Some tests may emit **warnings** when optional integration credentials are not present (for example, Stripe/S3/Drive/Dropbox). These are treated as warnings (not failures) so local/CI runs can still pass without external service configuration.
-
-## Configuration (Environment Variables)
-
-Most configuration is environment-driven. Start from `.env.example`, then update the sections you need.
-
-### Optional integrations / keys
-
-| Area | Variables | Notes |
-|------|-----------|-------|
-| **Payments (Stripe)** | `STRIPE_KEY`, `STRIPE_SECRET`, `STRIPE_WEBHOOK_SECRET` | Required only if you want payment processing + webhook verification. |
-| **Cloud storage (AWS S3)** | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_URL`, `AWS_ENDPOINT`, `AWS_USE_PATH_STYLE_ENDPOINT` | Used by the S3 disk (`config/filesystems.php`). |
-| **Cloud storage (Dropbox OAuth)** | `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET`, `DROPBOX_REDIRECT_URI` | Used for Dropbox connection flow (`config/storage-providers.php`). |
-| **Cloud storage (Google Drive OAuth)** | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | Used for Google Drive connection flow (`config/storage-providers.php`). |
-| **Social media OAuth** | `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | Used for social account connections (`config/services.php`). |
-| **AI providers** | `AI_DEFAULT_PROVIDER`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `PERPLEXITY_API_KEY` (plus provider/model vars) | Defaults live in `config/ai-providers.php` and can be overridden via DB at runtime. |
-| **Website auditor** | `GOOGLE_PAGESPEED_API_KEY`, `GOOGLE_SEARCH_CONSOLE_ENABLED`, `GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_SEARCH_CONSOLE_PROPERTY` | See `config/website-auditor.php`. |
-| **Brand monitoring APIs** | `NEWSAPI_ENABLED`, `NEWSAPI_API_KEY`, `YELP_API_ENABLED`, `YELP_API_KEY`, `GOOGLE_PLACES_ENABLED`, `GOOGLE_PLACES_API_KEY`, `REDDIT_API_ENABLED`, `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `YOUTUBE_API_ENABLED`, `YOUTUBE_API_KEY`, `GOOGLE_SEARCH_ENABLED`, `GOOGLE_SEARCH_API_KEY`, `GOOGLE_SEARCH_ENGINE_ID`, `BING_SEARCH_ENABLED`, `BING_SEARCH_API_KEY`, `RSS_MONITORING_ENABLED` | See `config/brand-monitoring.php` and `.env.example` for defaults. |
-| **Email delivery** | `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Required if you want email notifications outside local. |
-| **White-label / branding** | `BRAND_*` | See `docs/branding-setup.md` and `config/branding.php`. |
-
-## Default Login Credentials
-
-After running seeders (local/dev only):
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@kre8ivdesigns.com | password |
-| Staff | staff@kre8ivdesigns.com | password |
-| Client | client@demo.com | password |
-
-**Do not use these seeders/credentials in production.** In production, create the initial admin via:
-
-```bash
-php artisan portal:bootstrap-admin admin@yourdomain.com --name="Your Name" --password="use-a-strong-password"
+# Apply to Supabase
+psql -h db.xxx.supabase.co -U postgres -d postgres -f schema-postgres.sql
 ```
 
 ## Directory Structure
 
 ```
-├── app/
-│   ├── Http/Controllers/    # HTTP controllers
-│   ├── Livewire/           # Livewire components
-│   ├── Models/             # Eloquent models
-│   ├── Providers/          # Service providers
-│   └── View/Components/    # Blade components
-├── config/
-│   ├── client-portal.php   # Portal-specific config
-│   └── ...
-├── database/
-│   ├── migrations/         # Database migrations
-│   └── seeders/           # Database seeders
-├── resources/
-│   ├── css/               # Stylesheets
-│   ├── js/                # JavaScript
-│   └── views/             # Blade templates
-├── routes/
-│   ├── web.php            # Web routes
-│   └── auth.php           # Auth routes
-└── storage/
-    └── app/
-        ├── documents/     # Client documents
-        ├── contracts/     # Contract files
-        ├── invoices/      # Generated invoices
-        └── attachments/   # Request attachments
+migration/
+├── README.md (this file)
+├── MIGRATION_PLAN.md
+├── WEEKLY_BREAKDOWN.md
+├── TECH_STACK.md
+├── ROLLBACK_PLAN.md
+├── VERIFICATION_CHECKLIST.md
+├── scripts/
+│   ├── convert-schema.sql
+│   ├── migrate-data.ts
+│   ├── migrate-users.ts
+│   └── verify-migration.ts
+├── docs/
+│   ├── database-schema.md
+│   ├── rls-policies.md
+│   ├── api-routes.md
+│   └── component-mapping.md
+└── next-app/ (created in Week 3)
+    ├── app/
+    ├── components/
+    ├── lib/
+    └── ...
 ```
 
-## Deployment to cPanel
+## Team Roles
 
-### 1. Upload Files
+### Backend Developers (2)
 
-Upload all files to your cPanel account via File Manager or FTP.
+- Database schema conversion
+- RLS policy implementation
+- Data migration scripts
+- API route development
+- Background job migration
 
-### 2. Point Domain to Public Directory
+### Full-Stack Developers (2-3)
 
-Configure `clients.kre8ivdesigns.com` to point to the `public/` directory.
+- Next.js application setup
+- Component development (shadcn/ui)
+- Form handling (React Hook Form + Zod)
+- State management (Server Components + TanStack Query)
+- Integration testing
 
-### 3. Configure PHP Version
+### QA Engineer (1, Week 8+)
 
-Ensure PHP 8.2+ is selected in cPanel's MultiPHP Manager.
+- End-to-end testing (Playwright)
+- Accessibility audit
+- Mobile responsiveness testing
+- Performance testing
+- UAT coordination
 
-### 4. Environment Variables
+## Risk Mitigation
 
-Create/edit `.env` file with production settings:
+### High-Risk Areas
 
-```env
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://clients.kre8ivdesigns.com
-```
+1. **Data Migration**
+   - **Risk**: Data loss, corruption
+   - **Mitigation**: Staging migration first, row count validation, spot checks
 
-### 5. Run Migrations
+2. **Polymorphic Relationships**
+   - **Risk**: Complex queries fail
+   - **Mitigation**: Composite indexes, test extensively
 
-Via SSH or cPanel Terminal:
+3. **Large File Uploads**
+   - **Risk**: 100MB+ file failures
+   - **Mitigation**: Resumable uploads with chunking
 
-```bash
-php artisan migrate --force
-php artisan db:seed --class=Database\\Seeders\\RoleAndPermissionSeeder --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-```
+4. **Background Jobs**
+   - **Risk**: Missed scheduled tasks
+   - **Mitigation**: Parallel running Laravel + Inngest for 1 week
 
-### 6. Set Permissions
+### Rollback Plan
 
-```bash
-chmod -R 755 storage bootstrap/cache
-```
+If critical issues occur:
 
-### 7. Setup Cron Job
+1. **DNS revert** to Laravel (5 minutes)
+2. **Database sync** back to MySQL (30 minutes)
+3. **User communication** (15 minutes)
 
-Add to cPanel Cron Jobs (run every minute):
+**Rollback triggers**:
 
-```
-* * * * * cd /home/username/public_html/clients && php artisan schedule:run >> /dev/null 2>&1
-```
+- Critical bugs affecting >50% of users
+- Data corruption or loss
+- Payment processing failures
+- Security vulnerabilities
 
-### Production deployment guide + scripts
-- Guide: `docs/deployment/production.md`
-- Example production env: `.env.production.example`
-- Scripts:
-  - cPanel releases deploy: `scripts/deploy/cpanel/deploy_release.sh`
-  - Preflight checks: `scripts/deploy/cpanel/preflight.sh`
-  - Post-deploy verify: `scripts/deploy/cpanel/post_deploy_verify.sh`
-  - Backups: `scripts/backup/`
-  - Cron templates: `scripts/cron/cpanel-cron.txt`
+## Communication Plan
 
-## Stripe Configuration
+### Stakeholders
 
-1. Create a Stripe account at `https://stripe.com`
-2. Get API keys from Dashboard → Developers → API keys
-3. Add to `.env`:
-   ```
-   STRIPE_KEY=pk_live_xxx
-   STRIPE_SECRET=sk_live_xxx
-   STRIPE_WEBHOOK_SECRET=whsec_xxx
-   ```
-4. Set up webhook endpoint: `https://clients.kre8ivdesigns.com/webhooks/stripe`
-5. Subscribe to events:
-   - `payment_intent.succeeded`
-   - `payment_intent.payment_failed`
-   - `charge.refunded`
+- **Product Owner**: Weekly progress updates
+- **Development Team**: Daily standups, Slack channel
+- **QA**: Bug reports via GitHub Issues
+- **End Users**: Pre-launch email, in-app notifications
 
-## Customization
+### Status Updates
 
-### Adding Request Types
-
-Edit `config/client-portal.php`:
-
-```php
-'request_types' => [
-    'web_development' => 'Web Development',
-    'your_new_type' => 'Your New Type',
-    // ...
-],
-```
-
-### Modifying Invoice Template
-
-Edit `resources/views/invoices/pdf.blade.php` to customize the PDF invoice template.
-
-### Changing Branding
-
-1. Update logo: `public/images/logo.png`
-2. Edit colors in `resources/css/app.css`
-3. Rebuild: `npm run build`
-
-## Security
-
-- All client data is scoped to their account
-- CSRF protection on all forms
-- Password hashing with bcrypt
-- Rate limiting on authentication routes
-- SQL injection protection via Eloquent ORM
-- XSS protection via Blade templating
-
-## Maintenance
-
-### Clear Caches
-
-```bash
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-```
-
-### Check Overdue Invoices
-
-Runs automatically via scheduler, or manually:
-
-```bash
-php artisan schedule:run
-```
-
-## Marketing Toolkit (Audits, SEO, Brand, Content, Campaigns)
-
-This repo includes a **Marketing module** (under `app/Services/Marketing/`) that provides:
-
-- **Website auditing**: crawl + SEO/performance/security/mobile/accessibility checks with optional AI recommendations.
-- **SEO monitoring scaffolding**: keyword tracking tables, rankings history, backlink tables, recommendation tracking.
-- **Brand audit + brand guide scaffolding**: brand audits, assets, competitors, and digital brand guide data structures.
-- **Content planning scaffolding**: content calendar, themes, templates, and social account connections.
-- **Campaign management scaffolding**: campaigns, links/UTMs, assets, metrics history.
-- **Unified analytics scaffolding**: normalized `marketing_metrics` plus dashboard + scheduled report tables.
-- **Leads, assets, reviews scaffolding**: leads + nurture sequences, centralized asset rows, review storage.
-
-### Scheduler / Queue requirements
-
-Marketing workflows rely on:
-
-- **Laravel scheduler** (`php artisan schedule:run`) for periodic runners (every 5 minutes).
-- **Queue worker** for long-running audits and external API calls.
-
-The scheduler is already wired in `routes/console.php` for:
-- `send-scheduled-admin-reports`
-- `run-scheduled-website-audits`
-
-### Key environment variables
-
-Website auditing + integrations (see `config/website-auditor.php`):
-
-```env
-# Crawl behavior
-WEBSITE_AUDIT_MAX_PAGES=50
-WEBSITE_AUDIT_RESPECT_ROBOTS=true
-WEBSITE_AUDIT_MAX_LINK_CHECKS=200
-
-# Google PageSpeed Insights (optional)
-GOOGLE_PAGESPEED_API_KEY=
-
-# Provider placeholders (optional)
-WEBPAGETEST_API_KEY=
-GTMETRIX_EMAIL=
-GTMETRIX_API_KEY=
-AHREFS_API_KEY=
-SEMRUSH_API_KEY=
-MOZ_ACCESS_ID=
-MOZ_SECRET_KEY=
-```
-
-### Admin UI (Website Auditor MVP)
-
-If you have `permission:access admin panel`:
-- Website auditor: `/admin/marketing/website-auditor`
-- Audit results: `/admin/marketing/audit-results`
-- PDF export: available per completed audit in results table
+- **Weekly**: Progress report against timeline
+- **Critical Issues**: Immediate Slack notification
+- **Pre-Launch**: 1 week warning to users
+- **Post-Launch**: 48-hour monitoring report
 
 ## Support
 
-For support, email support@kre8ivdesigns.com
+- **Slack**: #laravel-to-nextjs-migration
+- **GitHub**: https://github.com/yourorg/clients/issues
+- **Documentation**: /migration/docs/
+- **Questions**: Tag @migration-team in Slack
 
-## License
+---
 
-Proprietary - Kre8iv Designs LLC
+**Next Steps**:
+
+1. Review this README and migration plan
+2. Provision Supabase project
+3. Set up Vercel account
+4. Assemble development team
+5. Begin Week 1: Database migration

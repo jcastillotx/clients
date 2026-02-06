@@ -1,1 +1,0 @@
-../../layouts/app.blade.php

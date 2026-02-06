@@ -1,0 +1,217 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2, Calendar, Filter, Download } from "lucide-react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+
+interface TimeEntryListProps {
+  refreshTrigger?: number;
+}
+
+export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
+  const [entries, setEntries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  useEffect(() => {
+    fetchEntries();
+  }, [refreshTrigger]);
+
+  const fetchEntries = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      if (statusFilter) params.append("status", statusFilter);
+
+      const response = await fetch(`/api/time-tracking?${params}`);
+      const data = await response.json();
+      setEntries(data);
+    } catch (error) {
+      toast.error("Failed to fetch time entries");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteEntry = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this entry?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/time-tracking?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error);
+      }
+
+      toast.success("Entry deleted");
+      fetchEntries();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete entry");
+    }
+  };
+
+  const formatDuration = (minutes: number | null): string => {
+    if (!minutes) return "0h 0m";
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      pending: "secondary",
+      approved: "default",
+      billed: "outline",
+      rejected: "destructive",
+    };
+    return <Badge variant={variants[status] || "default"}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
+  };
+
+  const getTotalHours = (): string => {
+    const totalMinutes = entries.reduce((sum, entry) => sum + (entry.durationMinutes || 0), 0);
+    return formatDuration(totalMinutes);
+  };
+
+  const getTotalAmount = (): string => {
+    const total = entries.reduce((sum, entry) => sum + parseFloat(entry.totalAmount || "0"), 0);
+    return `$${total.toFixed(2)}`;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>Time Entries</span>
+          <div className="text-sm font-normal text-muted-foreground">
+            Total: {getTotalHours()} | {getTotalAmount()}
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="startDate">Start Date</Label>
+            <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="endDate">End Date</Label>
+            <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <select
+              id="status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background"
+            >
+              <option value="">All</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="billed">Billed</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div className="flex items-end gap-2">
+            <Button onClick={fetchEntries} className="gap-2">
+              <Filter className="h-4 w-4" />
+              Apply Filters
+            </Button>
+          </div>
+        </div>
+
+        {/* Entries Table */}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Client/Request</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Rate</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Billable</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8">
+                    Loading entries...
+                  </TableCell>
+                </TableRow>
+              ) : entries.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8">
+                    No time entries found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                entries.map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell>{entry.startedAt ? format(new Date(entry.startedAt), "MMM dd, yyyy") : "N/A"}</TableCell>
+                    <TableCell className="max-w-xs truncate">{entry.description || "No description"}</TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {entry.client?.name && <div className="font-medium">{entry.client.name}</div>}
+                        {entry.request?.title && <div className="text-muted-foreground">{entry.request.title}</div>}
+                      </div>
+                    </TableCell>
+                    <TableCell>{formatDuration(entry.durationMinutes)}</TableCell>
+                    <TableCell>{entry.hourlyRate ? `$${parseFloat(entry.hourlyRate).toFixed(2)}` : "-"}</TableCell>
+                    <TableCell>{entry.totalAmount ? `$${parseFloat(entry.totalAmount).toFixed(2)}` : "-"}</TableCell>
+                    <TableCell>
+                      {entry.isBillable ? <Badge variant="default">Yes</Badge> : <Badge variant="secondary">No</Badge>}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        {!entry.lockedAt && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => toast.info("Edit functionality coming soon")}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => deleteEntry(entry.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
