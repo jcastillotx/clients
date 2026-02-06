@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FileText, Image, FileArchive, File, Download, MoreVertical, Trash2, Share2, Eye } from "lucide-react";
-import { formatFileSize } from "@/lib/storage/upload";
+import { formatFileSize } from "@/lib/storage/utils";
 import { formatDistanceToNow } from "date-fns";
 
 interface Document {

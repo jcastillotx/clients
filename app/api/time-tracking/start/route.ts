@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { timeEntries } from "@/lib/db/schema/time-tracking";
 import { eq, and, isNull } from "drizzle-orm";
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/time-tracking/start
@@ -10,10 +10,13 @@ import { auth } from "@clerk/nextjs/server";
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.id;
 
     // Check if there's already a running timer
     const [runningTimer] = await db
@@ -61,10 +64,13 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.id;
 
     const [runningTimer] = await db.query.timeEntries.findMany({
       where: and(eq(timeEntries.userId, userId), isNull(timeEntries.endedAt)),

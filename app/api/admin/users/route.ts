@@ -55,11 +55,11 @@ export async function POST(request: Request) {
     // Fetch complete user with roles
     const { data: completeUser } = await supabase
       .from("users")
-      .select(\`
+      .select(`
         *,
         client:clients(id, company_name),
         user_roles(role:roles(id, name, description))
-      \`)
+      `)
       .eq("id", user.id)
       .single();
 

@@ -53,7 +53,7 @@ export async function POST(req: Request) {
           await supabase.from("activity_logs").insert({
             subject_type: "invoice",
             subject_id: invoiceId,
-            description: \`Payment received: \${paymentIntent.amount / 100} \${paymentIntent.currency.toUpperCase()}\`,
+            description: `Payment received: ${paymentIntent.amount / 100} ${paymentIntent.currency.toUpperCase()}`,
             properties: {
               payment_intent_id: paymentIntent.id,
               amount: paymentIntent.amount,
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
             await supabase.from("activity_logs").insert({
               subject_type: "invoice",
               subject_id: invoice.id,
-              description: \`Payment refunded: \${charge.amount_refunded / 100} \${charge.currency.toUpperCase()}\`,
+              description: `Payment refunded: ${charge.amount_refunded / 100} ${charge.currency.toUpperCase()}`,
               properties: {
                 charge_id: charge.id,
                 amount_refunded: charge.amount_refunded,
@@ -143,7 +143,7 @@ export async function POST(req: Request) {
           await supabase.from("activity_logs").insert({
             subject_type: "client",
             subject_id: clientId,
-            description: \`Subscription \${event.type.split(".").pop()}: \${subscription.id}\`,
+            description: `Subscription ${event.type.split(".").pop()}: ${subscription.id}`,
             properties: {
               subscription_id: subscription.id,
               status: subscription.status,
@@ -155,7 +155,7 @@ export async function POST(req: Request) {
       }
 
       default:
-        console.log(\`Unhandled event type: \${event.type}\`);
+        console.log(`Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });

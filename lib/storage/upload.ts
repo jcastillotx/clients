@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { formatFileSize, generateFilePath, validateFileType } from "./utils";
 
 export interface UploadOptions {
   bucket: string;
@@ -14,6 +14,21 @@ export interface UploadResult {
   error?: string;
 }
 
+// Re-export utils for backward compatibility
+export { formatFileSize, generateFilePath, validateFileType };
+
+async function getSupabaseClient() {
+  if (typeof window !== "undefined") {
+    const { createClient } = await import("@/lib/supabase/client");
+    return createClient();
+  } else {
+    // Dynamically import server client ONLY if on server
+    // This still might be picked up by some bundlers, but it's better
+    const { createClient } = await import("@/lib/supabase/server");
+    return createClient();
+  }
+}
+
 /**
  * Upload a file to Supabase Storage
  */
@@ -25,7 +40,7 @@ export async function uploadFile({
   cacheControl = "3600",
 }: UploadOptions): Promise<UploadResult> {
   try {
-    const supabase = createClient();
+    const supabase = await getSupabaseClient();
 
     // Upload the file
     const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
@@ -61,7 +76,7 @@ export async function uploadLargeFile(
 ): Promise<UploadResult> {
   try {
     const { bucket, path, file } = options;
-    const supabase = createClient();
+    const supabase = await getSupabaseClient();
 
     const chunkSize = 5 * 1024 * 1024; // 5MB chunks
     const totalChunks = Math.ceil(file.size / chunkSize);
@@ -116,7 +131,7 @@ export async function uploadLargeFile(
  */
 export async function deleteFile(bucket: string, path: string): Promise<{ error?: string }> {
   try {
-    const supabase = createClient();
+    const supabase = await getSupabaseClient();
 
     const { error } = await supabase.storage.from(bucket).remove([path]);
 
@@ -141,7 +156,7 @@ export async function getSignedUrl(
   expiresIn = 3600,
 ): Promise<{ url?: string; error?: string }> {
   try {
-    const supabase = createClient();
+    const supabase = await getSupabaseClient();
 
     const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
 
@@ -162,7 +177,7 @@ export async function getSignedUrl(
  */
 export async function downloadFile(bucket: string, path: string): Promise<{ data?: Blob; error?: string }> {
   try {
-    const supabase = createClient();
+    const supabase = await getSupabaseClient();
 
     const { data, error } = await supabase.storage.from(bucket).download(path);
 
@@ -191,7 +206,7 @@ export async function listFiles(
   },
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await getSupabaseClient();
 
     const { data, error } = await supabase.storage.from(bucket).list(path, options);
 
@@ -217,40 +232,3 @@ export const StorageBuckets = {
   AVATARS: "avatars",
   INVOICES: "invoices",
 } as const;
-
-/**
- * Generate a unique file path
- */
-export function generateFilePath(clientId: string, folder: string, fileName: string): string {
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(7);
-  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-
-  return `${clientId}/${folder}/${timestamp}-${randomString}-${sanitizedFileName}`;
-}
-
-/**
- * Validate file type
- */
-export function validateFileType(file: File, allowedTypes: string[]): boolean {
-  return allowedTypes.some((type) => {
-    if (type.endsWith("/*")) {
-      const baseType = type.split("/")[0];
-      return file.type.startsWith(baseType + "/");
-    }
-    return file.type === type;
-  });
-}
-
-/**
- * Format file size for display
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
-}

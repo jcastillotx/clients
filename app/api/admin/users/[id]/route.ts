@@ -56,11 +56,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     // Fetch complete user with roles
     const { data: completeUser } = await supabase
       .from("users")
-      .select(\`
+      .select(`
         *,
         client:clients(id, company_name),
         user_roles(role:roles(id, name, description))
-      \`)
+      `)
       .eq("id", params.id)
       .single();
 

@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, X, FileIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { formatFileSize } from "@/lib/storage/upload";
+import { formatFileSize } from "@/lib/storage/utils";
 
 interface Client {
   id: string;
