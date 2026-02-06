@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           orderBy: (columns, { asc }) => [asc(columns.position)],
           with: {
             tasks: {
-              orderBy: (tasks, { asc }) => [asc(tasks.position)],
+              orderBy: (tasks: any, { asc }: any) => [asc(tasks.position)],
               with: {
                 assignees: {
                   with: {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   },
                 },
                 checklists: {
-                  orderBy: (checklists, { asc }) => [asc(checklists.position)],
+                  orderBy: (checklists: any, { asc }) => [asc(checklists.position)],
                 },
               },
             },

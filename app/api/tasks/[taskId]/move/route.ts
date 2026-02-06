@@ -40,6 +40,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
+    // Force cast to ensure TS understands the shape, though Drizzle usually infers this.
+    // The error suggests it might think 'column' is an array or untyped object.
+    const currentColumn = task.column as unknown as { name: string };
+    const currentColumnName = currentColumn?.name || "Unknown Column";
+
     const oldColumnId = task.columnId;
     const oldPosition = task.position;
 
@@ -78,7 +83,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await db.insert(staffTaskComments).values({
         taskId: taskId,
         userId: user.id,
-        content: `Moved task from ${task.column.name} to new column`,
+        content: `Moved task from ${currentColumnName} to new column`,
         isSystem: true,
       });
 
