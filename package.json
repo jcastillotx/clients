@@ -76,8 +76,8 @@
     "@tailwindcss/typography": "^0.5.10",
     "@tanstack/react-query-devtools": "^5.91.3",
     "@types/node": "^20.11.19",
-    "@types/react": "^18.2.55",
-    "@types/react-dom": "^18.2.19",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@types/react-signature-canvas": "^1.0.7",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.17",
@@ -96,6 +96,6 @@
     "@react-pdf/renderer": "4.3.2"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   }
 }
