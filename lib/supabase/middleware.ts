@@ -37,8 +37,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log("[v0] middleware path:", request.nextUrl.pathname, "user:", user?.email ?? "none");
-
   // Protect dashboard routes
   if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
     const url = request.nextUrl.clone();

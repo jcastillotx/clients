@@ -18,24 +18,21 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log("[v0] page.tsx user:", user?.email ?? "none");
-
   if (user) {
-    console.log("[v0] page.tsx redirecting to /dashboard");
     redirect("/dashboard");
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="grid h-screen lg:grid-cols-2">
       {/* Left side - Login Form */}
-      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24">
+      <div className="flex flex-col justify-center overflow-y-auto bg-background px-6 py-12 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-md">
           <LoginForm />
         </div>
       </div>
 
       {/* Right side - Hero Image with overlay */}
-      <div className="relative hidden lg:flex lg:w-1/2">
+      <div className="relative hidden lg:block">
         <Image
           src="/images/login-hero.jpg"
           alt="Creative workspace"
@@ -47,7 +44,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-foreground/70" />
 
         {/* Overlay content */}
-        <div className="relative z-10 flex flex-col justify-end p-12 xl:p-16">
+        <div className="absolute inset-0 z-10 flex flex-col justify-end p-12 xl:p-16">
           <h2 className="text-3xl font-bold leading-tight text-background xl:text-4xl text-balance">
             Manage your clients and projects with ease.
           </h2>
