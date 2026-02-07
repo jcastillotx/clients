@@ -18,7 +18,10 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  console.log("[v0] page.tsx user:", user?.email ?? "none");
+
   if (user) {
+    console.log("[v0] page.tsx redirecting to /dashboard");
     redirect("/dashboard");
   }
 
