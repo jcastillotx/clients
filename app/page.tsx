@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
+import { isRedirectError } from "next/dist/client/components/redirect-error"
 import { LoginForm } from "@/components/auth/login-form"
 import Image from "next/image"
 import { CheckCircle2 } from "lucide-react"
@@ -12,14 +13,19 @@ export const metadata = {
 }
 
 export default async function HomePage() {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (user) {
-    redirect("/dashboard")
+    if (user) {
+      redirect("/dashboard")
+    }
+  } catch (e) {
+    // redirect() throws internally — let it propagate
+    if (isRedirectError(e)) throw e
+    // Otherwise Supabase is not configured — just show the login form
   }
 
   return (
