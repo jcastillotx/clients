@@ -1,40 +1,26 @@
-import { LoginForm } from "@/components/auth/login-form"
-import Image from "next/image"
-import { CheckCircle2 } from "lucide-react"
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { LoginForm } from "@/components/auth/login-form";
+import Image from "next/image";
+import { CheckCircle2 } from "lucide-react";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Sign In | KRE8IV",
   description: "Sign in to your KRE8IV account",
-}
-
-async function checkAuth() {
-  try {
-    const { createClient } = await import("@/lib/supabase/server")
-    const { redirect } = await import("next/navigation")
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (user) {
-      redirect("/dashboard")
-    }
-  } catch (e: unknown) {
-    // redirect() throws a NEXT_REDIRECT error — re-throw it
-    if (e && typeof e === "object" && "digest" in e) {
-      const digest = (e as { digest: string }).digest
-      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
-        throw e
-      }
-    }
-    // Supabase not configured or other error — continue to show login
-  }
-}
+};
 
 export default async function HomePage() {
-  await checkAuth()
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -92,5 +78,5 @@ export default async function HomePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
