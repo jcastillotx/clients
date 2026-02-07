@@ -67,10 +67,11 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-8 p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, {user.user_metadata?.name || "User"}!</p>
+    <div className="flex flex-col gap-8 p-5 md:p-8">
+      <div className="rounded-2xl border border-border/70 bg-card/70 p-6 shadow-sm backdrop-blur">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Overview</p>
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Dashboard</h1>
+        <p className="mt-2 text-muted-foreground">Welcome back, {user.user_metadata?.name || "User"}!</p>
       </div>
 
       {/* Stats Overview */}
@@ -81,7 +82,7 @@ export default async function DashboardPage() {
       />
 
       {/* Recent Activity & Upcoming Tasks */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         <RecentActivity
           requests={
             (recentRequests || []).map((r: any) => ({

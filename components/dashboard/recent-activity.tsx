@@ -23,7 +23,7 @@ interface RecentActivityProps {
 
 export function RecentActivity({ requests }: RecentActivityProps) {
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-card to-secondary/20">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
@@ -32,14 +32,14 @@ export function RecentActivity({ requests }: RecentActivityProps) {
       </CardHeader>
       <CardContent>
         {requests.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No recent requests</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">No recent requests</p>
         ) : (
           <div className="space-y-4">
             {requests.map((request) => (
               <Link
                 key={request.id}
                 href={`/requests/${request.id}`}
-                className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                className="block rounded-xl border border-border/70 bg-background/80 p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5"
               >
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium text-sm">{request.title}</h4>

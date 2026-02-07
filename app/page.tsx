@@ -38,10 +38,13 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="grid h-screen lg:grid-cols-2">
+    <div className="grid min-h-screen bg-gradient-to-br from-background via-secondary/40 to-background lg:grid-cols-[1.05fr_0.95fr]">
       {/* Left side - Login Form */}
-      <div className="flex flex-col justify-center overflow-y-auto bg-background px-6 py-12 lg:px-16 xl:px-24">
-        <div className="mx-auto w-full max-w-md">
+      <div className="relative flex flex-col justify-center overflow-y-auto px-6 py-12 lg:px-16 xl:px-24">
+        <div className="pointer-events-none absolute inset-0 opacity-60 mix-blend-multiply">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(95,95,130,0.12),transparent_32%),radial-gradient(circle_at_80%_0%,rgba(95,95,130,0.08),transparent_26%),radial-gradient(circle_at_40%_80%,rgba(64,77,102,0.12),transparent_30%)]" />
+        </div>
+        <div className="mx-auto w-full max-w-md relative">
           <LoginForm />
         </div>
       </div>
@@ -55,39 +58,38 @@ export default async function HomePage() {
           className="object-cover"
           priority
         />
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-foreground/70" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/85 via-primary/75 to-background/10" />
 
         {/* Overlay content */}
         <div className="absolute inset-0 z-10 flex flex-col justify-end p-12 xl:p-16">
-          <h2 className="text-3xl font-bold leading-tight text-background xl:text-4xl text-balance">
-            Manage your clients and projects with ease.
+          <div className="flex items-center gap-2 text-background/80">
+            <div className="h-[1px] flex-1 bg-background/30" />
+            <span className="text-xs font-semibold tracking-[0.2em] uppercase">
+              Powered Workflow
+            </span>
+            <div className="h-[1px] flex-1 bg-background/30" />
+          </div>
+          <h2 className="mt-6 text-4xl font-bold leading-tight text-background xl:text-5xl text-balance drop-shadow-md">
+            Manage clients and projects with clarity.
           </h2>
 
-          <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-4">
+          <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-5 text-background/90">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-              <span className="text-sm text-background/90">
-                Client Management
-              </span>
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-accent" />
+              <span className="text-sm">Client Management</span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-              <span className="text-sm text-background/90">
-                Project Tracking
-              </span>
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-accent" />
+              <span className="text-sm">Project Tracking</span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-              <span className="text-sm text-background/90">
-                Invoice Generation
-              </span>
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-accent" />
+              <span className="text-sm">Invoice Generation</span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-              <span className="text-sm text-background/90">
-                Team Collaboration
-              </span>
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-accent" />
+              <span className="text-sm">Team Collaboration</span>
             </div>
           </div>
         </div>

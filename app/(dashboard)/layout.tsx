@@ -23,12 +23,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
       {/* Sidebar Navigation */}
       <DashboardNav user={user} />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-background">{children}</main>
+      <main className="relative flex-1 overflow-y-auto">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-primary/8 to-transparent" />
+        <div className="relative">{children}</div>
+      </main>
     </div>
   );
 }

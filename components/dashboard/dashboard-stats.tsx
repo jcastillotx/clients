@@ -34,13 +34,15 @@ export function DashboardStats({ totalRequests, openRequests, totalInvoices }: D
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {stats.map((stat) => (
-        <Card key={stat.title}>
+        <Card key={stat.title} className="bg-gradient-to-br from-card to-secondary/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-            <stat.icon className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+              <stat.icon className="h-4 w-4" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
+            <div className="text-3xl font-bold">{stat.value}</div>
             <p className="text-xs text-muted-foreground">{stat.description}</p>
           </CardContent>
         </Card>

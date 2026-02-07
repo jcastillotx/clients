@@ -23,7 +23,7 @@ interface UpcomingTasksProps {
 
 export function UpcomingTasks({ invoices }: UpcomingTasksProps) {
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-card to-secondary/20">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Receipt className="h-5 w-5" />
@@ -32,7 +32,7 @@ export function UpcomingTasks({ invoices }: UpcomingTasksProps) {
       </CardHeader>
       <CardContent>
         {invoices.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No upcoming invoices</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">No upcoming invoices</p>
         ) : (
           <div className="space-y-4">
             {invoices.map((invoice) => {
@@ -41,7 +41,7 @@ export function UpcomingTasks({ invoices }: UpcomingTasksProps) {
                 <Link
                   key={invoice.id}
                   href={`/invoices/${invoice.id}`}
-                  className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                  className="block rounded-xl border border-border/70 bg-background/80 p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">

@@ -58,22 +58,30 @@ export function LoginForm() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 rounded-2xl border border-border/60 bg-card/80 p-8 shadow-xl backdrop-blur">
       {/* Brand */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">
-          <span className="text-primary">K</span>RE8IV
-        </h2>
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
+          K
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            Client Portal
+          </p>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            KRE8IV
+          </h2>
+        </div>
       </div>
 
       {/* Heading */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-foreground">Sign In</h1>
+        <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
         <p className="text-sm text-muted-foreground">
           {"Don't have an account? "}
           <Link
             href="/register"
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
             Sign up
           </Link>
@@ -83,7 +91,7 @@ export function LoginForm() {
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         {error && (
-          <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
             {error}
           </div>
         )}
@@ -99,7 +107,7 @@ export function LoginForm() {
               id="email"
               type="email"
               placeholder="Enter email to get started"
-              className="pl-10 h-12 bg-muted/50 border-border"
+              className="h-12 rounded-lg border-border/70 bg-background/70 pl-10 shadow-sm transition focus:ring-2 focus:ring-primary/50"
               {...register("email")}
             />
           </div>
@@ -130,7 +138,7 @@ export function LoginForm() {
               id="password"
               type="password"
               placeholder="Enter your password"
-              className="pl-10 h-12 bg-muted/50 border-border"
+              className="h-12 rounded-lg border-border/70 bg-background/70 pl-10 shadow-sm transition focus:ring-2 focus:ring-primary/50"
               {...register("password")}
             />
           </div>
@@ -144,7 +152,7 @@ export function LoginForm() {
         {/* Sign In button */}
         <Button
           type="submit"
-          className="w-full h-12 text-base font-semibold"
+          className="h-12 w-full rounded-lg text-base font-semibold shadow-lg shadow-primary/10 transition hover:-translate-y-[1px] hover:shadow-primary/20"
           disabled={isSubmitting}
         >
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

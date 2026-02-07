@@ -91,8 +91,8 @@ const config: Config = {
         "slide-up": "slide-up 0.3s ease-out",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        heading: ["var(--font-poppins)", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "ui-sans-serif", "sans-serif"],
+        heading: ["var(--font-display)", "ui-sans-serif", "sans-serif"],
       },
     },
   },
