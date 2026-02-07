@@ -44,12 +44,14 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    provider: "",
+    provider: "s3",
     connectionName: "",
     bucket: "",
     region: "",
-    accessKey: "",
-    secretKey: "",
+    accessKeyId: "",
+    secretAccessKey: "",
+    serviceAccountJson: "",
+    projectId: "",
   });
 
   useEffect(() => {
@@ -74,6 +76,19 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
 
   const handleCreate = async () => {
     try {
+      if (!formData.connectionName || !formData.bucket) {
+        toast.error("Connection name and bucket are required");
+        return;
+      }
+      if (formData.provider === "s3" && (!formData.accessKeyId || !formData.secretAccessKey)) {
+        toast.error("AWS credentials are required");
+        return;
+      }
+      if (formData.provider === "gcs" && (!formData.projectId || !formData.serviceAccountJson)) {
+        toast.error("GCP project ID and service account JSON are required");
+        return;
+      }
+
       const response = await fetch("/api/storage-connections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,10 +96,16 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
           clientId,
           provider: formData.provider,
           connectionName: formData.connectionName,
-          credentials: {
-            accessKey: formData.accessKey,
-            secretKey: formData.secretKey,
-          },
+          credentials:
+            formData.provider === "gcs"
+              ? {
+                  projectId: formData.projectId,
+                  serviceAccountJson: formData.serviceAccountJson,
+                }
+              : {
+                  accessKeyId: formData.accessKeyId,
+                  secretAccessKey: formData.secretAccessKey,
+                },
           config: {
             bucket: formData.bucket,
             region: formData.region,
@@ -100,12 +121,14 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
       setDialogOpen(false);
       fetchConnections();
       setFormData({
-        provider: "",
+        provider: "s3",
         connectionName: "",
         bucket: "",
         region: "",
-        accessKey: "",
-        secretKey: "",
+        accessKeyId: "",
+        secretAccessKey: "",
+        serviceAccountJson: "",
+        projectId: "",
       });
     } catch (error) {
       toast.error("Failed to create connection");
@@ -169,8 +192,6 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
                   <SelectContent>
                     <SelectItem value="s3">Amazon S3</SelectItem>
                     <SelectItem value="gcs">Google Cloud Storage</SelectItem>
-                    <SelectItem value="azure">Azure Storage</SelectItem>
-                    <SelectItem value="dropbox">Dropbox</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -198,22 +219,45 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
                   placeholder="us-east-1"
                 />
               </div>
-              <div>
-                <Label>Access Key</Label>
-                <Input
-                  value={formData.accessKey}
-                  onChange={(e) => setFormData({ ...formData, accessKey: e.target.value })}
-                  type="password"
-                />
-              </div>
-              <div>
-                <Label>Secret Key</Label>
-                <Input
-                  value={formData.secretKey}
-                  onChange={(e) => setFormData({ ...formData, secretKey: e.target.value })}
-                  type="password"
-                />
-              </div>
+              {formData.provider === "s3" ? (
+                <>
+                  <div>
+                    <Label>AWS Access Key ID</Label>
+                    <Input
+                      value={formData.accessKeyId}
+                      onChange={(e) => setFormData({ ...formData, accessKeyId: e.target.value })}
+                      placeholder="AKIA..."
+                    />
+                  </div>
+                  <div>
+                    <Label>AWS Secret Access Key</Label>
+                    <Input
+                      value={formData.secretAccessKey}
+                      onChange={(e) => setFormData({ ...formData, secretAccessKey: e.target.value })}
+                      type="password"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <Label>GCP Project ID</Label>
+                    <Input
+                      value={formData.projectId}
+                      onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                      placeholder="my-gcp-project"
+                    />
+                  </div>
+                  <div>
+                    <Label>Service Account JSON</Label>
+                    <Input
+                      value={formData.serviceAccountJson}
+                      onChange={(e) => setFormData({ ...formData, serviceAccountJson: e.target.value })}
+                      placeholder='{"type":"service_account",...}'
+                    />
+                  </div>
+                </>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>

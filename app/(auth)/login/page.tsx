@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
+import { headers } from "next/headers";
+import { getPortalBranding } from "@/lib/branding/get-branding";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,10 @@ export const metadata = {
 };
 
 export default async function LoginPage() {
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") || headerList.get("host") || undefined;
+  const branding = await getPortalBranding(host);
+
   const supabase = await createClient();
 
   const {
@@ -29,7 +35,7 @@ export default async function LoginPage() {
           <p className="mt-2 text-sm text-muted-foreground">Sign in to your account to continue</p>
         </div>
 
-        <LoginForm />
+        <LoginForm logoUrl={branding.logoUrl} />
       </div>
     </div>
   );

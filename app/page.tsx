@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { LoginForm } from "@/components/auth/login-form";
 import { CheckCircle2 } from "lucide-react";
+import { getPortalBranding } from "@/lib/branding/get-branding";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,10 @@ export const metadata = {
 };
 
 export default async function HomePage() {
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") || headerList.get("host") || undefined;
+  const branding = await getPortalBranding(host);
+
   // Check if user is already authenticated — redirect to dashboard
   // Wrapped in try/catch so the page still renders if Supabase is unavailable
   try {
@@ -44,7 +50,7 @@ export default async function HomePage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(95,95,130,0.12),transparent_32%),radial-gradient(circle_at_80%_0%,rgba(95,95,130,0.08),transparent_26%),radial-gradient(circle_at_40%_80%,rgba(64,77,102,0.12),transparent_30%)]" />
         </div>
         <div className="mx-auto w-full max-w-md relative">
-          <LoginForm />
+          <LoginForm logoUrl={branding.logoUrl} />
         </div>
       </div>
 

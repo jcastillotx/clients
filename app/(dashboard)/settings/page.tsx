@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { UserSettings } from "@/components/settings/user-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
+import { BrandingSettings } from "@/components/settings/branding-settings";
+import { StorageConnections } from "@/components/features/storage-connections";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const metadata = {
@@ -27,6 +29,26 @@ export default async function SettingsPage() {
 
   // Fetch full user data
   const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
+  const clientId = userData?.client_id ?? null;
+
+  const { data: brandingConfig } = clientId
+    ? await supabase.from("white_label_configs").select("*").eq("client_id", clientId).maybeSingle()
+    : { data: null };
+
+  const userRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role:roles(name)")
+    .eq("user_id", user.id);
+
+  const hasAdminRole = (roleData || []).some((row: any) => {
+    const roleName = row?.role?.name || row?.role?.[0]?.name;
+    return roleName === "admin" || roleName === "super_admin";
+  });
+
+  const canManageBranding = Boolean(
+    userData?.is_super_admin || userRole === "admin" || userRole === "super_admin" || hasAdminRole,
+  );
 
   return (
     <div className="flex flex-col gap-8 p-8 max-w-4xl mx-auto">
@@ -36,9 +58,11 @@ export default async function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${canManageBranding ? "grid-cols-4" : "grid-cols-2"}`}>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
+          {canManageBranding ? <TabsTrigger value="branding">Branding</TabsTrigger> : null}
+          {canManageBranding ? <TabsTrigger value="storage">Storage</TabsTrigger> : null}
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
@@ -48,6 +72,22 @@ export default async function SettingsPage() {
         <TabsContent value="account" className="mt-6">
           <AccountSettings user={user} />
         </TabsContent>
+
+        {canManageBranding ? (
+          <TabsContent value="branding" className="mt-6">
+            <BrandingSettings
+              clientId={clientId}
+              initialLogoUrl={brandingConfig?.logo_url ?? null}
+              initialDomain={brandingConfig?.domain ?? null}
+            />
+          </TabsContent>
+        ) : null}
+
+        {canManageBranding && clientId ? (
+          <TabsContent value="storage" className="mt-6">
+            <StorageConnections clientId={clientId} />
+          </TabsContent>
+        ) : null}
       </Tabs>
     </div>
   );

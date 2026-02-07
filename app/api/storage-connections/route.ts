@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { storageConnections } from "@/lib/db/schema/additional-features";
 import { eq } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
+import { users } from "@/lib/db/schema/users";
+import { and } from "drizzle-orm";
 
 /**
  * GET /api/storage-connections
@@ -9,11 +12,29 @@ import { eq } from "drizzle-orm";
  */
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const clientId = searchParams.get("clientId");
 
     if (!clientId) {
       return NextResponse.json({ error: "Client ID is required" }, { status: 400 });
+    }
+
+    const [dbUser] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const isAdmin = Boolean(dbUser.isSuperAdmin || user.user_metadata?.is_super_admin === true);
+    if (!isAdmin && dbUser.clientId !== clientId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const connections = await db.select().from(storageConnections).where(eq(storageConnections.clientId, clientId));
@@ -37,11 +58,29 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { clientId, provider, connectionName, credentials, syncEnabled, config } = body;
 
     if (!clientId || !provider || !connectionName || !credentials) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const [dbUser] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const isAdmin = Boolean(dbUser.isSuperAdmin || user.user_metadata?.is_super_admin === true);
+    if (!isAdmin && dbUser.clientId !== clientId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // TODO: Implement encryption for credentials
@@ -78,6 +117,14 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get("id");
 
@@ -85,7 +132,22 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Connection ID is required" }, { status: 400 });
     }
 
-    await db.delete(storageConnections).where(eq(storageConnections.id, id));
+    const [dbUser] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const [connection] = await db.select().from(storageConnections).where(eq(storageConnections.id, id)).limit(1);
+    if (!connection) {
+      return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    }
+
+    const isAdmin = Boolean(dbUser.isSuperAdmin || user.user_metadata?.is_super_admin === true);
+    if (!isAdmin && dbUser.clientId !== connection.clientId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await db.delete(storageConnections).where(and(eq(storageConnections.id, id), eq(storageConnections.clientId, connection.clientId)));
 
     return NextResponse.json({ success: true });
   } catch (error) {

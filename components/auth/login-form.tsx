@@ -22,7 +22,11 @@ const loginSchema = emailSchema.extend({
 type LoginFormInput = z.infer<typeof loginSchema>;
 type AuthMode = "password" | "magic_link";
 
-export function LoginForm() {
+interface LoginFormProps {
+  logoUrl?: string | null;
+}
+
+export function LoginForm({ logoUrl }: LoginFormProps) {
   const router = useRouter();
   const [authMode, setAuthMode] = useState<AuthMode>("password");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -117,9 +121,17 @@ export function LoginForm() {
     <div className="flex flex-col gap-8 rounded-2xl border border-border/60 bg-card/80 p-8 shadow-xl backdrop-blur">
       {/* Brand */}
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
-          K
-        </div>
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt="Company logo"
+            className="h-11 w-11 rounded-xl border border-border/60 bg-background/80 object-cover p-1"
+          />
+        ) : (
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold text-primary">
+            K
+          </div>
+        )}
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Client Portal
