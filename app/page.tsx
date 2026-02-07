@@ -4,6 +4,8 @@ import { LoginForm } from "@/components/auth/login-form"
 import Image from "next/image"
 import { CheckCircle2 } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Sign In | KRE8IV",
   description: "Sign in to your KRE8IV account",
