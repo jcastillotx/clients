@@ -1,19 +1,9 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-/**
- * Middleware for Supabase authentication
- *
- * This middleware:
- * 1. Refreshes the user's session if needed
- * 2. Protects routes based on authentication status
- * 3. Maintains session cookies
- */
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+  let supabaseResponse = NextResponse.next({
+    request,
   });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -21,7 +11,7 @@ export async function updateSession(request: NextRequest) {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     // Supabase not configured — skip auth checks
-    return response;
+    return supabaseResponse;
   }
 
   const supabase = createServerClient(
@@ -29,74 +19,66 @@ export async function updateSession(request: NextRequest) {
     supabaseAnonKey,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({
+            request,
           });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
       },
-    },
+    }
   );
 
-  // Refresh session if expired
+  // Do not run code between createServerClient and
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // issues with users being randomly logged out.
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   // Protect dashboard routes
   if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
   }
 
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith("/admin")) {
     if (!user) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
     }
 
-    // Check if user is admin
     const isSuperAdmin = user.user_metadata?.is_super_admin === true;
     if (!isSuperAdmin) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
     }
   }
 
-  // Redirect to dashboard if already logged in
-  if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register") && user) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Redirect to dashboard if already logged in and visiting auth pages
+  if (
+    (request.nextUrl.pathname === "/login" ||
+      request.nextUrl.pathname === "/register") &&
+    user
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
   }
 
-  return response;
+  // IMPORTANT: You *must* return the supabaseResponse object as-is.
+  return supabaseResponse;
 }

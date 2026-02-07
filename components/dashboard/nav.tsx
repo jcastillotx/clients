@@ -34,7 +34,9 @@ export function DashboardNav({ user }: DashboardNavProps) {
     <div className="flex h-full w-64 flex-col border-r bg-muted/40">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <h1 className="text-xl font-bold">KRE8IV</h1>
+        <h1 className="text-xl font-bold font-heading">
+          <span className="text-primary">K</span>RE8IV
+        </h1>
       </div>
 
       {/* Navigation */}

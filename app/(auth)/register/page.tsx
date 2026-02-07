@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { RegisterForm } from "@/components/auth/register-form";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Register | KRE8IV",
   description: "Create your account",

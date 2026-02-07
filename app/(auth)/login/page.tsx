@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Login | KRE8IV",
   description: "Sign in to your account",

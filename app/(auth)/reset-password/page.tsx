@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Reset Password | KRE8IV",
   description: "Set your new password",
