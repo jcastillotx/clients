@@ -50,11 +50,12 @@ export default async function HomePage() {
 
       {/* Right side - Marketing Portal Hero */}
       <div className="relative hidden lg:block">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_28%),radial-gradient(circle_at_78%_12%,rgba(255,255,255,0.1),transparent_20%),linear-gradient(140deg,#5F5F82_0%,#4d5b7a_52%,#2d3e57_100%)]" />
-        <div className="absolute inset-0 opacity-40 bg-[linear-gradient(to_right,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:52px_52px]" />
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1800&q=80')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_28%),radial-gradient(circle_at_78%_12%,rgba(255,255,255,0.1),transparent_20%),linear-gradient(140deg,rgba(95,95,130,0.88)_0%,rgba(77,91,122,0.86)_52%,rgba(45,62,87,0.9)_100%)]" />
+        <div className="absolute inset-0 opacity-35 bg-[linear-gradient(to_right,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:52px_52px]" />
 
         {/* Floating analytics cards */}
-        <div className="absolute left-10 top-12 w-[320px] rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-md">
+        <div className="absolute left-10 top-12 z-20 w-[320px] rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-md">
           <p className="text-xs uppercase tracking-[0.16em] text-white/75">Campaign Performance</p>
           <div className="mt-4 flex items-end gap-2">
             <div className="h-10 w-6 rounded-t-md bg-white/35" />
@@ -79,7 +80,7 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-        <div className="absolute right-10 top-24 w-[250px] rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
+        <div className="absolute right-10 top-24 z-20 w-[250px] rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
           <p className="text-xs uppercase tracking-[0.16em] text-white/75">Growth Signal</p>
           <div className="mt-3 h-1.5 rounded-full bg-white/25">
             <div className="h-1.5 w-[72%] rounded-full bg-accent" />
@@ -88,7 +89,7 @@ export default async function HomePage() {
         </div>
 
         {/* Overlay content */}
-        <div className="absolute inset-0 z-10 flex flex-col justify-end p-12 xl:p-16">
+        <div className="absolute inset-0 z-20 flex flex-col justify-end p-12 xl:p-16">
           <div className="flex items-center gap-2 text-background/80">
             <div className="h-[1px] flex-1 bg-background/30" />
             <span className="text-xs font-semibold tracking-[0.2em] uppercase">
