@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import Image from "next/image";
@@ -12,14 +11,30 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const supabase = await createClient();
+  // Check if user is already authenticated — redirect to dashboard
+  // Wrapped in try/catch so the page still renders if Supabase is unavailable
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    redirect("/dashboard");
+    if (user) {
+      redirect("/dashboard");
+    }
+  } catch (error: unknown) {
+    // Next.js redirect() works by throwing — let it propagate
+    if (
+      error &&
+      typeof error === "object" &&
+      "digest" in error &&
+      typeof (error as Record<string, unknown>).digest === "string" &&
+      ((error as Record<string, unknown>).digest as string).startsWith("NEXT_REDIRECT")
+    ) {
+      throw error;
+    }
+    // Supabase not ready — fall through and render the login form
   }
 
   return (
