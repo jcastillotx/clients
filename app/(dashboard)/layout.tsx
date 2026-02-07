@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard/nav";
 
+// All dashboard pages require authentication (cookies), so they cannot be statically generated
+export const dynamic = "force-dynamic";
+
 /**
  * Dashboard layout (Server Component)
  *
