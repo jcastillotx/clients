@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { LoginForm } from "@/components/auth/login-form"
+import Image from "next/image"
+import { CheckCircle2 } from "lucide-react"
 
 export const metadata = {
-  title: "Login | KRE8IV",
-  description: "Sign in to your account",
+  title: "Sign In | KRE8IV",
+  description: "Sign in to your KRE8IV account",
 }
 
 export default async function HomePage() {
@@ -19,18 +21,59 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40">
-      <div className="w-full max-w-md space-y-8 px-4">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Welcome back
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to your account to continue
-          </p>
+    <div className="flex min-h-screen bg-background">
+      {/* Left side - Login Form */}
+      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24">
+        <div className="mx-auto w-full max-w-md">
+          <LoginForm />
         </div>
+      </div>
 
-        <LoginForm />
+      {/* Right side - Hero Image with overlay */}
+      <div className="relative hidden lg:flex lg:w-1/2">
+        <Image
+          src="/images/login-hero.jpg"
+          alt="Creative workspace"
+          fill
+          className="object-cover"
+          priority
+        />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-foreground/70" />
+
+        {/* Overlay content */}
+        <div className="relative z-10 flex flex-col justify-end p-12 xl:p-16">
+          <h2 className="text-3xl font-bold leading-tight text-background xl:text-4xl text-balance">
+            Manage your clients and projects with ease.
+          </h2>
+
+          <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+              <span className="text-sm text-background/90">
+                Client Management
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+              <span className="text-sm text-background/90">
+                Project Tracking
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+              <span className="text-sm text-background/90">
+                Invoice Generation
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+              <span className="text-sm text-background/90">
+                Team Collaboration
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
