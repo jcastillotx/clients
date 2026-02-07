@@ -94,6 +94,16 @@
   "overrides": {
     "@react-pdf/renderer": "4.3.2"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@sentry/cli",
+      "esbuild",
+      "sharp",
+      "protobufjs",
+      "unrs-resolver",
+      "es5-ext"
+    ]
+  },
   "engines": {
     "node": ">=20"
   }
