@@ -51,25 +51,25 @@ export default async function HomePage() {
 
           <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-4">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
               <span className="text-sm text-background/90">
                 Client Management
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
               <span className="text-sm text-background/90">
                 Project Tracking
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
               <span className="text-sm text-background/90">
                 Invoice Generation
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
               <span className="text-sm text-background/90">
                 Team Collaboration
               </span>

@@ -46,6 +46,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
         // Brand colors from Laravel
         brand: {
           purple: "#8B5CF6",
@@ -87,7 +91,7 @@ const config: Config = {
         "slide-up": "slide-up 0.3s ease-out",
       },
       fontFamily: {
-        sans: ["var(--font-open-sans)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
         heading: ["var(--font-poppins)", "system-ui", "sans-serif"],
       },
     },
