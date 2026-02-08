@@ -55,7 +55,7 @@ export function RegisterForm() {
           data: {
             name: data.name,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/dashboard`,
         },
       });
 

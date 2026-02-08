@@ -101,7 +101,7 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
       const { error } = await supabase.auth.signInWithOtp({
         email: parsed.data.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/dashboard`,
         },
       });
 

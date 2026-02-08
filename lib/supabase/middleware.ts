@@ -37,20 +37,18 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // If there's a `code` param (from Supabase email verification redirect),
-  // redirect to /auth/callback so the code gets exchanged for a session
+  // If a Supabase email auth token is present, route to /auth/confirm first
+  // so the token can be exchanged/verified before we check the session.
   const code = request.nextUrl.searchParams.get("code");
-  if (code && !request.nextUrl.pathname.startsWith("/auth/callback")) {
-    const callbackUrl = request.nextUrl.clone();
-    callbackUrl.pathname = "/auth/callback";
-    // Preserve the `next` param if present, otherwise detect recovery type
-    if (!callbackUrl.searchParams.has("next")) {
-      const type = request.nextUrl.searchParams.get("type");
-      if (type === "recovery") {
-        callbackUrl.searchParams.set("next", "/reset-password");
-      }
+  const tokenHash = request.nextUrl.searchParams.get("token_hash");
+  const hasAuthTokenParam = Boolean(code || tokenHash);
+  if (hasAuthTokenParam && !request.nextUrl.pathname.startsWith("/auth/confirm") && !request.nextUrl.pathname.startsWith("/auth/callback")) {
+    const confirmUrl = request.nextUrl.clone();
+    confirmUrl.pathname = "/auth/confirm";
+    if (!confirmUrl.searchParams.has("next") && request.nextUrl.searchParams.get("type") === "recovery") {
+      confirmUrl.searchParams.set("next", "/reset-password");
     }
-    return NextResponse.redirect(callbackUrl);
+    return NextResponse.redirect(confirmUrl);
   }
 
   // Do not run code between createServerClient and
