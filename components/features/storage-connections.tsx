@@ -156,6 +156,17 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
     return <Cloud className="h-5 w-5" />;
   };
 
+  const getProviderLabel = (provider: string) => {
+    switch (provider) {
+      case "s3":
+        return "AWS S3";
+      case "gcs":
+        return "Google Cloud Storage";
+      default:
+        return provider;
+    }
+  };
+
   if (loading) {
     return <div className="text-center p-8">Loading connections...</div>;
   }
@@ -278,7 +289,7 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
                   {getProviderIcon(connection.provider)}
                   <div>
                     <CardTitle className="text-lg">{connection.connectionName}</CardTitle>
-                    <CardDescription className="capitalize">{connection.provider}</CardDescription>
+                    <CardDescription>{getProviderLabel(connection.provider)}</CardDescription>
                   </div>
                 </div>
                 <Badge variant={connection.syncEnabled ? "default" : "secondary"}>
