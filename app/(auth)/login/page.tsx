@@ -1,5 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { headers } from "next/headers";
 import { getPortalBranding } from "@/lib/branding/get-branding";
@@ -11,21 +9,11 @@ export const metadata = {
   description: "Sign in to your account",
 };
 
+// Middleware handles redirecting authenticated users from "/login" to "/dashboard".
 export default async function LoginPage() {
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") || headerList.get("host") || undefined;
   const branding = await getPortalBranding(host);
-
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // If user is already logged in, redirect to dashboard
-  if (user) {
-    redirect("/dashboard");
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">

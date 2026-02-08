@@ -6,15 +6,7 @@ import { AdminDashboard } from "@/components/admin/dashboard/admin-dashboard";
 export default async function AdminPage() {
   const supabase = await createClient();
 
-  // Get authenticated user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
+  // Authentication is handled by the dashboard layout and middleware admin guard.
   // Check admin access
   const isAdmin = await hasPermission("admin.access");
   if (!isAdmin) {
