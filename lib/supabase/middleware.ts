@@ -74,8 +74,24 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const isSuperAdmin = user.user_metadata?.is_super_admin === true;
-    if (!isSuperAdmin) {
+    const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
+    let isAdmin = Boolean(
+      user.user_metadata?.is_super_admin === true || metadataRole === "admin" || metadataRole === "super_admin",
+    );
+
+    if (!isAdmin) {
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("role:roles(name)")
+        .eq("user_id", user.id);
+
+      isAdmin = (roleRows || []).some((row: any) => {
+        const roleName = String(row?.role?.name || row?.role?.[0]?.name || "").toLowerCase();
+        return roleName === "admin" || roleName === "super_admin";
+      });
+    }
+
+    if (!isAdmin) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { FeatureManagement } from "@/components/admin/features/feature-management";
 import { redirect } from "next/navigation";
+import { hasPermission } from "@/lib/rbac/permissions";
 
 export const metadata = {
   title: "Feature Management | Admin",
@@ -27,10 +28,8 @@ export default async function AdminFeaturesPage() {
     redirect("/login");
   }
 
-  // Check if user is admin
-  const { data: userData } = await supabase.from("users").select("is_super_admin").eq("id", user.id).single();
-
-  if (!userData?.is_super_admin) {
+  const canAccessAdmin = await hasPermission("admin.access");
+  if (!canAccessAdmin) {
     redirect("/dashboard");
   }
 

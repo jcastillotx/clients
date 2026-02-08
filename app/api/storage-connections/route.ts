@@ -6,6 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 import { users } from "@/lib/db/schema/users";
 import { and } from "drizzle-orm";
 
+function isAdminUser(user: any, dbUser: any) {
+  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
+  return Boolean(
+    dbUser?.isSuperAdmin ||
+      user?.user_metadata?.is_super_admin === true ||
+      metadataRole === "admin" ||
+      metadataRole === "super_admin",
+  );
+}
+
 /**
  * GET /api/storage-connections
  * Retrieve storage connections for a client
@@ -32,7 +42,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isAdmin = Boolean(dbUser.isSuperAdmin || user.user_metadata?.is_super_admin === true);
+    const isAdmin = isAdminUser(user, dbUser);
     if (!isAdmin && dbUser.clientId !== clientId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -78,7 +88,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isAdmin = Boolean(dbUser.isSuperAdmin || user.user_metadata?.is_super_admin === true);
+    const isAdmin = isAdminUser(user, dbUser);
     if (!isAdmin && dbUser.clientId !== clientId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -142,7 +152,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
     }
 
-    const isAdmin = Boolean(dbUser.isSuperAdmin || user.user_metadata?.is_super_admin === true);
+    const isAdmin = isAdminUser(user, dbUser);
     if (!isAdmin && dbUser.clientId !== connection.clientId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
