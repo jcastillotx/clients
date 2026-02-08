@@ -75,15 +75,63 @@ export async function POST(req: NextRequest) {
   try {
     const validatedData = createRequestSchema.parse(body);
 
-    // Create request (RLS automatically filters by client_id)
+    const { data: dbUser } = await supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle();
+    if (!dbUser) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+    }
+
+    const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
+    let isAdmin = Boolean(
+      dbUser.is_super_admin ||
+        user.user_metadata?.is_super_admin === true ||
+        metadataRole === "admin" ||
+        metadataRole === "super_admin",
+    );
+
+    if (!isAdmin) {
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("role:roles(name)")
+        .eq("user_id", user.id);
+      isAdmin = (roleRows || []).some((row: any) => {
+        const roleName = String(row?.role?.name || row?.role?.[0]?.name || "").toLowerCase();
+        return roleName === "admin" || roleName === "super_admin";
+      });
+    }
+
+    const effectiveClientId = isAdmin ? validatedData.clientId : dbUser.client_id;
+    if (!effectiveClientId) {
+      return NextResponse.json({ error: "No client is assigned to this user" }, { status: 400 });
+    }
+
+    if (!isAdmin && validatedData.clientId !== dbUser.client_id) {
+      return NextResponse.json({ error: "You can only create requests for your assigned client" }, { status: 403 });
+    }
+
+    const customFields = {
+      ...(validatedData.customFields || {}),
+      type: validatedData.type,
+    };
+
+    const insertPayload: Record<string, any> = {
+      title: validatedData.title,
+      description: validatedData.description,
+      priority: validatedData.priority,
+      status: validatedData.status || "pending",
+      due_date: validatedData.dueDate || null,
+      created_by: user.id,
+      client_id: effectiveClientId,
+      custom_fields: customFields,
+    };
+
+    if (validatedData.assignedTo && isAdmin) {
+      insertPayload.assigned_to = validatedData.assignedTo;
+    }
+
+    // Create request
     const { data, error } = await supabase
       .from("requests")
-      .insert({
-        ...validatedData,
-        created_by: user.id,
-        client_id: user.user_metadata.client_id,
-        status: "pending",
-      })
+      .insert(insertPayload)
       .select("*, client:clients(company_name), assigned_user:users(name, avatar)")
       .single();
 

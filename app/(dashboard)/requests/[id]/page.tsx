@@ -20,6 +20,10 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
   const { id } = await params;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   // Fetch request with all related data
   const { data: request, error } = await supabase
     .from("requests")
@@ -59,13 +63,41 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
     .eq("request_id", id)
     .order("created_at", { ascending: true });
 
+  const { data: dbUser } = user
+    ? await supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle()
+    : { data: null };
+
+  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
+  let canManageWorkflow = Boolean(
+    dbUser?.is_super_admin ||
+      user?.user_metadata?.is_super_admin === true ||
+      metadataRole === "admin" ||
+      metadataRole === "super_admin" ||
+      metadataRole === "staff",
+  );
+
+  if (!canManageWorkflow && user) {
+    const { data: roleRows } = await supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id);
+    canManageWorkflow = (roleRows || []).some((row: any) => {
+      const roleName = String(row?.role?.name || row?.role?.[0]?.name || "").toLowerCase();
+      return roleName === "admin" || roleName === "super_admin" || roleName === "staff";
+    });
+  }
+
+  const { data: assignableUsers } = canManageWorkflow
+    ? await supabase.from("users").select("id, name, email").is("deleted_at", null).order("name")
+    : { data: [] };
+
   return (
     <div className="flex flex-col gap-8 p-8">
       {/* Real-time subscription component (doesn't render UI) */}
       <RequestRealtime requestId={id} />
 
       {/* Request details */}
-      <RequestDetail request={request} />
+      <RequestDetail request={request} assignableUsers={assignableUsers || []} canManageWorkflow={canManageWorkflow} />
 
       {/* Comments section with real-time updates */}
       <RequestComments

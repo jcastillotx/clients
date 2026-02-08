@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { Calendar, Clock, User, Building2, AlertCircle, CheckCircle2, XCircle, Pause } from "lucide-react";
 
@@ -18,6 +20,7 @@ interface RequestDetailProps {
     created_at: string;
     updated_at: string;
     due_date?: string;
+    custom_fields?: Record<string, any>;
     client: {
       id: string;
       company_name: string;
@@ -34,9 +37,53 @@ interface RequestDetailProps {
       avatar?: string;
     } | null;
   };
+  assignableUsers?: Array<{
+    id: string;
+    name: string;
+    email?: string | null;
+  }>;
+  canManageWorkflow?: boolean;
 }
 
-export function RequestDetail({ request }: RequestDetailProps) {
+const requestStatuses = [
+  "pending",
+  "in_progress",
+  "awaiting_approval",
+  "approved",
+  "on_hold",
+  "rejected",
+  "completed",
+  "cancelled",
+] as const;
+
+export function RequestDetail({ request, assignableUsers = [], canManageWorkflow = false }: RequestDetailProps) {
+  const [currentStatus, setCurrentStatus] = useState(request.status);
+  const [assignedToId, setAssignedToId] = useState<string>(request.assigned_user?.id || "unassigned");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const requestType = String(request.custom_fields?.type || "support");
+
+  const updateRequest = async (payload: Record<string, any>) => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/requests/${request.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body?.error || "Failed to update request");
+      }
+      window.location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update request");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -68,9 +115,18 @@ export function RequestDetail({ request }: RequestDetailProps) {
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline">Edit</Button>
-          <Button>Update Status</Button>
+        <div className="flex flex-col items-end gap-2">
+          {error ? <p className="text-xs text-destructive">{error}</p> : null}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => window.history.back()}>
+              Back
+            </Button>
+            {canManageWorkflow ? (
+              <Button disabled={isSaving} onClick={() => updateRequest({ status: currentStatus })}>
+                Update Status
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -129,36 +185,35 @@ export function RequestDetail({ request }: RequestDetailProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm font-medium mb-2">Assigned To</p>
-                {request.assigned_user ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={request.assigned_user.avatar} />
-                      <AvatarFallback>
-                        {request.assigned_user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm">{request.assigned_user.name}</span>
-                  </div>
-                ) : (
-                  <Button variant="outline" size="sm" className="w-full">
-                    <User className="mr-2 h-4 w-4" />
-                    Assign
-                  </Button>
-                )}
+                <p className="text-sm font-medium mb-2">Type</p>
+                <Badge variant="secondary" className="w-full justify-center capitalize">
+                  {requestType.replace(/_/g, " ")}
+                </Badge>
               </div>
 
               <Separator />
 
               <div>
                 <p className="text-sm font-medium mb-2">Status</p>
-                <Badge variant={getStatusVariant(request.status)} className="w-full justify-center">
-                  {getStatusIcon(request.status)}
-                  <span className="ml-1.5">{request.status.replace("_", " ")}</span>
-                </Badge>
+                {canManageWorkflow ? (
+                  <Select value={currentStatus} onValueChange={(value) => setCurrentStatus(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {requestStatuses.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status.replace(/_/g, " ")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Badge variant={getStatusVariant(request.status)} className="w-full justify-center">
+                    {getStatusIcon(request.status)}
+                    <span className="ml-1.5">{request.status.replace("_", " ")}</span>
+                  </Badge>
+                )}
               </div>
 
               <Separator />
@@ -178,6 +233,54 @@ export function RequestDetail({ request }: RequestDetailProps) {
                   <Building2 className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{request.client.company_name}</span>
                 </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <p className="text-sm font-medium mb-2">Assigned To</p>
+                {canManageWorkflow ? (
+                  <div className="space-y-2">
+                    <Select value={assignedToId} onValueChange={(value) => setAssignedToId(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        {assignableUsers.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.name || u.email || "User"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      variant="outline"
+                      disabled={isSaving}
+                      onClick={() => updateRequest({ assignedTo: assignedToId === "unassigned" ? null : assignedToId })}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      Save Assignment
+                    </Button>
+                  </div>
+                ) : request.assigned_user ? (
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={request.assigned_user.avatar} />
+                      <AvatarFallback>
+                        {request.assigned_user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm">{request.assigned_user.name}</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Unassigned</p>
+                )}
               </div>
 
               <Separator />
