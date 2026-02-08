@@ -15,6 +15,7 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
   const next = isSafeNextPath(requestUrl.searchParams.get("next"))
     ? (requestUrl.searchParams.get("next") as string)
     : fallbackNext;
+  const redirectTarget = new URL(next, request.url);
 
   const supabase = await createClient();
 
@@ -30,7 +31,7 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
       return NextResponse.redirect(loginUrl);
     }
 
-    return NextResponse.redirect(new URL(next, request.url));
+    return NextResponse.redirect(redirectTarget);
   }
 
   if (code) {
@@ -42,7 +43,7 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
       return NextResponse.redirect(loginUrl);
     }
 
-    return NextResponse.redirect(new URL(next, request.url));
+    return NextResponse.redirect(redirectTarget);
   }
 
   return NextResponse.redirect(new URL("/login", request.url));
