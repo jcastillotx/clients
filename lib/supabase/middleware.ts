@@ -37,6 +37,22 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // If there's a `code` param (from Supabase email verification redirect),
+  // redirect to /auth/callback so the code gets exchanged for a session
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && !request.nextUrl.pathname.startsWith("/auth/callback")) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    // Preserve the `next` param if present, otherwise detect recovery type
+    if (!callbackUrl.searchParams.has("next")) {
+      const type = request.nextUrl.searchParams.get("type");
+      if (type === "recovery") {
+        callbackUrl.searchParams.set("next", "/reset-password");
+      }
+    }
+    return NextResponse.redirect(callbackUrl);
+  }
+
   // Do not run code between createServerClient and
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
