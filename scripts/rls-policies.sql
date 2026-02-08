@@ -146,12 +146,12 @@ CREATE POLICY staff_assigned_client_requests ON requests
     client_id IN (SELECT client_id FROM auth.user_assigned_client_ids())
   );
 
--- Users with 'manage_requests' permission can create requests
+-- Users with 'requests.create' permission can create requests
 CREATE POLICY create_requests ON requests
   FOR INSERT
   WITH CHECK (
     client_id = auth.user_client_id()
-    AND auth.user_has_permission('manage_requests')
+    AND auth.user_has_permission('requests.create')
   );
 
 -- Request creator or assigned user can update
@@ -183,13 +183,13 @@ CREATE POLICY staff_assigned_client_invoices ON invoices
     client_id IN (SELECT client_id FROM auth.user_assigned_client_ids())
   );
 
--- Only staff with 'manage_invoices' permission can create/update
+-- Only staff with 'invoices.update' permission can create/update
 CREATE POLICY staff_manage_invoices ON invoices
   FOR ALL
   USING (
     auth.is_staff()
     AND client_id IN (SELECT client_id FROM auth.user_assigned_client_ids())
-    AND auth.user_has_permission('manage_invoices')
+    AND auth.user_has_permission('invoices.update')
   );
 
 -- ============================================================================
@@ -213,13 +213,13 @@ CREATE POLICY staff_assigned_client_contracts ON contracts
     client_id IN (SELECT client_id FROM auth.user_assigned_client_ids())
   );
 
--- Only staff with 'manage_contracts' permission can create/update
+-- Only staff with 'contracts.update' permission can create/update
 CREATE POLICY staff_manage_contracts ON contracts
   FOR ALL
   USING (
     auth.is_staff()
     AND client_id IN (SELECT client_id FROM auth.user_assigned_client_ids())
-    AND auth.user_has_permission('manage_contracts')
+    AND auth.user_has_permission('contracts.update')
   );
 
 -- ============================================================================

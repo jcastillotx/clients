@@ -102,7 +102,8 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect to dashboard if already logged in and visiting auth pages
   if (
-    (request.nextUrl.pathname === "/login" ||
+    (request.nextUrl.pathname === "/" ||
+      request.nextUrl.pathname === "/login" ||
       request.nextUrl.pathname === "/register") &&
     user
   ) {

@@ -67,7 +67,7 @@
 ### RBAC System
 
 - [ ] **Roles created** - admin, manager, staff, client_user, etc.
-- [ ] **Permissions created** - manage_requests, manage_invoices, etc.
+- [ ] **Permissions created** - requests.create, invoices.update, contracts.update, etc.
 - [ ] **Role assignments** migrated - user_roles table populated
 - [ ] **Permission checks** working - hasPermission() function correct
 - [ ] **Manual permissions** respected - JSON array in users.manual_permissions
