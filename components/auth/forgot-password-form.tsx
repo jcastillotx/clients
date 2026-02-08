@@ -22,6 +22,7 @@ export function ForgotPasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const {
     register,
@@ -31,7 +32,22 @@ export function ForgotPasswordForm() {
     resolver: zodResolver(forgotPasswordSchema),
   });
 
+  const startCooldown = (seconds: number) => {
+    setCooldown(seconds);
+    const interval = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const onSubmit = async (data: ForgotPasswordFormInput) => {
+    if (cooldown > 0) return;
+
     setIsSubmitting(true);
     setError(null);
 
@@ -43,10 +59,16 @@ export function ForgotPasswordForm() {
       });
 
       if (resetError) {
+        if (resetError.message.toLowerCase().includes("rate limit")) {
+          setError("Too many attempts. Please wait a few minutes before trying again.");
+          startCooldown(60);
+          return;
+        }
         throw resetError;
       }
 
       setSuccess(true);
+      startCooldown(60);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send reset email");
     } finally {
@@ -91,9 +113,9 @@ export function ForgotPasswordForm() {
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" className="w-full" disabled={isSubmitting || cooldown > 0}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Send Reset Link
+            {cooldown > 0 ? `Try again in ${cooldown}s` : "Send Reset Link"}
           </Button>
         </form>
       </CardContent>
