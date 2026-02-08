@@ -26,9 +26,9 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
     });
 
     if (error) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("error", "Could not verify your link. Please request a new one.");
-      return NextResponse.redirect(loginUrl);
+      const errorUrl = new URL(type === "recovery" ? "/reset-password" : "/login", request.url);
+      errorUrl.searchParams.set("error", "Could not verify your link. Please request a new one.");
+      return NextResponse.redirect(errorUrl);
     }
 
     return NextResponse.redirect(redirectTarget);
@@ -38,9 +38,9 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("error", "Could not verify your identity. Please try again.");
-      return NextResponse.redirect(loginUrl);
+      const errorUrl = new URL(type === "recovery" ? "/reset-password" : "/login", request.url);
+      errorUrl.searchParams.set("error", "Could not verify your identity. Please try again.");
+      return NextResponse.redirect(errorUrl);
     }
 
     return NextResponse.redirect(redirectTarget);

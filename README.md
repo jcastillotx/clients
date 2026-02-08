@@ -2,6 +2,17 @@
 
 Modern client management platform built with Next.js 15, Supabase, and TypeScript.
 
+## Current Version
+
+- **Application**: `v1.1.0`
+- **Package**: `kre8iv-clients-nextjs@1.0.0` (from `package.json`)
+- **Last Updated**: 2026-02-08
+- **Recent Platform Updates**:
+  - Supabase Auth callback/confirm flow hardened for password recovery and magic links
+  - Admin visibility improvements across dashboard and client listings
+  - Expanded dashboard route coverage for marketing/admin capabilities
+  - Storage integrations updated to include AWS S3 and GCS setup guidance
+
 ## Tech Stack
 
 - **Framework**: Next.js 15 (App Router)
@@ -17,6 +28,14 @@ Modern client management platform built with Next.js 15, Supabase, and TypeScrip
 - **Email**: Resend
 - **Payments**: Stripe
 - **Analytics**: Vercel Analytics + Sentry
+
+### Core Architecture Notes
+
+- **Auth**: Supabase Auth (email/password + magic link + password recovery), SSR session refresh in middleware
+- **Authorization**: RBAC via `roles`, `user_roles`, and permission checks; admin/super_admin support
+- **Data Layer**: Supabase Postgres + Drizzle schema/migrations
+- **Deployment**: Vercel (Next.js build/runtime)
+- **Integrations**: Stripe, Resend, Inngest, AWS S3, Google Cloud Storage
 
 ## Features
 
@@ -127,6 +146,40 @@ See `.env.example` for all required environment variables:
 - **Resend**: Email sending
 - **Stripe**: Payment processing
 - **Sentry**: Error tracking (optional)
+- **Session/Domain (recommended for multi-subdomain auth)**:
+  - `NEXT_PUBLIC_AUTH_COOKIE_DOMAIN=.kre8ivdesigns.com`
+- **Client filtering**:
+  - `PARENT_CLIENT_IDS` (comma-separated client UUIDs to exclude from client listing)
+  - `PARENT_COMPANY_NAMES` (comma-separated names to exclude; default includes `Kre8ivTech,Kre8iv Designs`)
+
+## Test Accounts (Seeded)
+
+Use the SQL seed script (provided in setup notes/chat) to create these users.
+
+- **Default password for seeded users**: `TempPass123!`
+- **Important**: rotate these passwords immediately outside development.
+
+### Platform Accounts
+
+- `superadmin+test@example.com` (`super_admin`)
+- `admin+test@example.com` (`admin`)
+- `staff+test@example.com` (`staff`)
+
+### Client Accounts
+
+- `admin.acme@example.com` / `staff.acme@example.com`
+- `admin.blue@example.com` / `staff.blue@example.com`
+- `admin.north@example.com` / `staff.north@example.com`
+- `admin.sunset@example.com` / `staff.sunset@example.com`
+- `admin.vertex@example.com` / `staff.vertex@example.com`
+
+### Seeded Test Clients
+
+- Acme Dental Group
+- Blue River Law
+- North Peak Fitness
+- Sunset Realty Partners
+- Vertex Logistics
 
 ## Project Structure
 

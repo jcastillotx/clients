@@ -106,8 +106,13 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname === "/register") &&
     user
   ) {
+    const hasAuthMessage = request.nextUrl.searchParams.has("error") || request.nextUrl.searchParams.has("message");
+    if (hasAuthMessage) {
+      return supabaseResponse;
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
