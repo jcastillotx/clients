@@ -21,22 +21,38 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
   // Server-side data fetching (no loading state needed!)
-  const query = supabase
+  let query = supabase
     .from("requests")
-    .select("*, client:clients(company_name), assigned_user:users(name, avatar)")
+    .select(
+      `
+      *,
+      client:clients(company_name),
+      assigned_user:users!requests_assigned_to_fkey(name, avatar)
+    `,
+    )
     .order(resolvedSearchParams.sortBy || "created_at", {
       ascending: resolvedSearchParams.sortOrder === "asc",
     });
 
   // Apply search filter
   if (resolvedSearchParams.search) {
-    query.textSearch("title", resolvedSearchParams.search);
+    query = query.or(
+      `title.ilike.%${resolvedSearchParams.search}%,description.ilike.%${resolvedSearchParams.search}%`,
+    );
   }
 
   // Apply status filter
   if (resolvedSearchParams.status) {
-    query.eq("status", resolvedSearchParams.status);
+    query = query.eq("status", resolvedSearchParams.status);
   }
 
   const { data: requests, error } = await query;
