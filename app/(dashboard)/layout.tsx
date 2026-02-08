@@ -22,10 +22,28 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/login");
   }
 
+  const { data: dbUser } = await supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle();
+  const { data: roleRows } = await supabase
+    .from("user_roles")
+    .select("role:roles(name)")
+    .eq("user_id", user.id);
+
+  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
+  const roleNames = new Set<string>();
+  if (metadataRole) roleNames.add(metadataRole);
+  for (const row of roleRows || []) {
+    const roleName = String((row as any)?.role?.name || (row as any)?.role?.[0]?.name || "").toLowerCase();
+    if (roleName) roleNames.add(roleName);
+  }
+
+  const isSuperAdmin = Boolean(dbUser?.is_super_admin || user.user_metadata?.is_super_admin === true);
+  const isAdmin = isSuperAdmin || roleNames.has("admin") || roleNames.has("super_admin");
+  const isStaff = isAdmin || roleNames.has("staff");
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
       {/* Sidebar Navigation */}
-      <DashboardNav user={user} />
+      <DashboardNav user={user} isStaff={isStaff} isAdmin={isAdmin} />
 
       {/* Main Content */}
       <main className="relative flex-1 overflow-y-auto">

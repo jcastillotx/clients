@@ -5,7 +5,42 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutDashboard, Building2, FileText, Receipt, FolderOpen, Settings, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileText,
+  Receipt,
+  Settings,
+  LogOut,
+  Megaphone,
+  Sparkles,
+  Bot,
+  ClipboardCheck,
+  CircleHelp,
+  ShieldCheck,
+  Clock3,
+  Columns3,
+  CalendarRange,
+  BriefcaseBusiness,
+  MessageSquareText,
+  CalendarDays,
+  NotebookText,
+  Mail,
+  Share2,
+  TrendingUp,
+  Globe,
+  BrainCircuit,
+  BarChart3,
+  Users,
+  Link as LinkIcon,
+  Star,
+  GraduationCap,
+  MessageCircleMore,
+  Heart,
+  Database,
+  Shield,
+  EyeOff,
+  Cog,
+} from "lucide-react";
 
 interface DashboardNavProps {
   user: {
@@ -16,18 +51,124 @@ interface DashboardNavProps {
       avatar?: string;
     };
   };
+  isStaff: boolean;
+  isAdmin: boolean;
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Clients", href: "/clients", icon: Building2 },
-  { name: "Requests", href: "/requests", icon: FileText },
-  { name: "Invoices", href: "/invoices", icon: Receipt },
-  { name: "Documents", href: "/documents", icon: FolderOpen },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+type AccessLevel = "all" | "staff" | "admin";
 
-export function DashboardNav({ user }: DashboardNavProps) {
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+  access?: AccessLevel;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+function canAccessItem(access: AccessLevel | undefined, isStaff: boolean, isAdmin: boolean) {
+  if (!access || access === "all") return true;
+  if (access === "staff") return isStaff || isAdmin;
+  return isAdmin;
+}
+
+const navigationSections = [
+  {
+    title: "Services",
+    items: [
+      { name: "Service Requests", href: "/requests", icon: ClipboardCheck },
+      { name: "Support Tickets", href: "/support", icon: CircleHelp },
+      { name: "Maintenance Plans", href: "/maintenance-plans", icon: ShieldCheck },
+      { name: "Proposals", href: "/proposals", icon: FileText },
+      { name: "Invoices & Payments", href: "/invoices", icon: Receipt },
+    ],
+  },
+  {
+    title: "Projects & Time",
+    items: [
+      { name: "Time Tracking", href: "/time-tracking", icon: Clock3 },
+      { name: "Task Board", href: "/tasks", icon: Columns3 },
+      { name: "Project Timeline", href: "/projects", icon: CalendarRange },
+      { name: "Project Budgets", href: "/projects", icon: BriefcaseBusiness },
+      { name: "Staff Tasks", href: "/tasks", icon: ClipboardCheck, access: "staff" },
+    ],
+  },
+  {
+    title: "Communication",
+    items: [
+      { name: "Messages", href: "/messages", icon: MessageSquareText },
+      { name: "Meetings", href: "/meetings", icon: CalendarDays, access: "staff" },
+      { name: "Meeting Notes", href: "/meetings", icon: NotebookText, access: "staff" },
+      { name: "Email Assistant", href: "/messages", icon: Mail, access: "staff" },
+    ],
+  },
+  {
+    title: "Marketing",
+    items: [
+      { name: "Marketing Tools", href: "/marketing/campaigns", icon: Megaphone, access: "staff" },
+      { name: "Social Media", href: "/social-media", icon: Share2, access: "staff" },
+      { name: "Ad Management", href: "/ads", icon: TrendingUp, access: "staff" },
+      { name: "Brand Monitoring", href: "/brand/monitoring", icon: Globe, access: "staff" },
+    ],
+  },
+  {
+    title: "AI & Automation",
+    items: [
+      { name: "AI Management", href: "/ai/workflows", icon: BrainCircuit, access: "staff" },
+      { name: "AI Assistant", href: "/ai/assistant", icon: Bot, access: "staff" },
+      { name: "Automation", href: "/automation", icon: Sparkles, access: "staff" },
+      { name: "AI Analytics", href: "/ai/analytics", icon: BarChart3, access: "staff" },
+    ],
+  },
+  {
+    title: "Reports",
+    items: [
+      { name: "Reports Dashboard", href: "/reports", icon: BarChart3, access: "staff" },
+      { name: "Team Workload", href: "/time-tracking/reports", icon: Users, access: "staff" },
+      { name: "Client Reports", href: "/reports/custom", icon: FileText, access: "staff" },
+      { name: "Activity Log", href: "/reports", icon: Clock3, access: "staff" },
+    ],
+  },
+  {
+    title: "Management",
+    items: [
+      { name: "Clients", href: "/clients", icon: BriefcaseBusiness, access: "staff" },
+      { name: "Users", href: "/admin/users", icon: Users, access: "admin" },
+      { name: "Partners", href: "/partners", icon: LinkIcon, access: "staff" },
+      { name: "Referrals", href: "/referrals", icon: Star, access: "staff" },
+      { name: "Staff Guides", href: "/staff-guides", icon: GraduationCap, access: "staff" },
+      { name: "Feedback & Surveys", href: "/surveys", icon: MessageCircleMore, access: "staff" },
+      { name: "Account Health", href: "/account-health", icon: Heart, access: "staff" },
+    ],
+  },
+  {
+    title: "Storage & Integration",
+    items: [
+      { name: "Storage Management", href: "/settings?tab=storage", icon: Database, access: "admin" },
+      { name: "Webhooks", href: "/webhooks", icon: LinkIcon, access: "admin" },
+    ],
+  },
+  {
+    title: "Security",
+    items: [
+      { name: "Security Overview", href: "/security-overview", icon: Shield, access: "staff" },
+      { name: "Privacy Requests", href: "/privacy-requests", icon: EyeOff, access: "staff" },
+    ],
+  },
+  {
+    title: "Settings",
+    items: [
+      { name: "System Settings", href: "/settings", icon: Cog, access: "staff" },
+      { name: "Form Templates", href: "/admin/settings/templates", icon: FileText, access: "admin" },
+      { name: "White Label", href: "/settings?tab=branding", icon: Settings, access: "admin" },
+    ],
+  },
+] satisfies NavSection[];
+
+export function DashboardNav({ user, isStaff, isAdmin }: DashboardNavProps) {
   const pathname = usePathname();
 
   return (
@@ -45,24 +186,52 @@ export function DashboardNav({ user }: DashboardNavProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="relative flex-1 space-y-1.5 px-4 py-5">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <nav className="relative flex-1 space-y-6 overflow-y-auto px-4 py-5">
+        <Link href="/dashboard">
+          <Button
+            variant={pathname === "/dashboard" ? "secondary" : "ghost"}
+            className={cn(
+              "h-11 w-full justify-center rounded-xl px-3.5 text-[0.95rem] md:justify-start",
+              pathname === "/dashboard" && "bg-primary/12 text-primary shadow-sm",
+            )}
+          >
+            <LayoutDashboard className="h-4 w-4 md:mr-3" />
+            <span className="hidden md:inline">Dashboard</span>
+          </Button>
+        </Link>
+
+        {navigationSections.map((section) => {
+          const visibleItems = section.items.filter((item) => canAccessItem(item.access, isStaff, isAdmin));
+          if (visibleItems.length === 0) return null;
+
           return (
-            <Link key={item.name} href={item.href}>
-              <Button
-                variant={isActive ? "secondary" : "ghost"}
-                className={cn(
-                  "h-11 w-full justify-center rounded-xl px-3.5 text-[0.95rem] md:justify-start",
-                  isActive && "bg-primary/12 text-primary shadow-sm",
-                )}
-              >
-                <item.icon className="h-4 w-4 md:mr-3" />
-                <span className="hidden md:inline">{item.name}</span>
-              </Button>
-            </Link>
+            <div key={section.title}>
+            <p className="mb-2 hidden px-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground/90 md:block">
+              {section.title}
+            </p>
+            <div className="space-y-1.5">
+              {visibleItems.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link key={item.name} href={item.href}>
+                    <Button
+                      variant={isActive ? "secondary" : "ghost"}
+                      className={cn(
+                        "h-10 w-full justify-center rounded-xl px-3 text-[0.93rem] md:justify-start",
+                        isActive && "bg-primary/12 text-primary shadow-sm",
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 md:mr-3" />
+                      <span className="hidden md:inline">{item.name}</span>
+                    </Button>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
           );
         })}
+
       </nav>
 
       {/* User section */}
