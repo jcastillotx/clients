@@ -109,6 +109,8 @@ const navigationSections = [
     title: "Marketing",
     items: [
       { name: "Marketing Tools", href: "/marketing/campaigns", icon: Megaphone, access: "staff" },
+      { name: "Lead Management", href: "/marketing/leads", icon: Users, access: "staff" },
+      { name: "Content Calendar", href: "/marketing/content-calendar", icon: CalendarDays, access: "staff" },
       { name: "Social Media", href: "/social-media", icon: Share2, access: "staff" },
       { name: "Ad Management", href: "/ads", icon: TrendingUp, access: "staff" },
       { name: "Brand Monitoring", href: "/brand/monitoring", icon: Globe, access: "staff" },
