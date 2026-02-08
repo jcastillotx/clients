@@ -22,10 +22,12 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
-  // Authentication is handled by the dashboard layout - no redundant check needed.
+  // Authentication is handled by the dashboard layout - no redundant redirect needed.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) return null; // Type narrowing only; layout already guards auth
 
   const metadataRole = String(user.user_metadata?.role ?? "").toLowerCase();
   const [userRowRes, userRolesRes] = await Promise.all([

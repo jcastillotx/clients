@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { UserSettings } from "@/components/settings/user-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
 import { BrandingSettings } from "@/components/settings/branding-settings";
@@ -26,10 +25,12 @@ export default async function SettingsPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
-  // Authentication is handled by the dashboard layout - no redundant check needed.
+  // Authentication is handled by the dashboard layout - no redundant redirect needed.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) return null; // Type narrowing only; layout already guards auth
 
   // Fetch full user data
   const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
