@@ -16,13 +16,11 @@ export const metadata = {
 export default async function DashboardPage() {
   const supabase = await createClient();
 
+  // Authentication is handled by the dashboard layout - no redundant getUser() needed here.
+  // We still need the user for display, so we call getUser() once (layout already validated auth).
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
 
   // Fetch dashboard stats in parallel
   const [

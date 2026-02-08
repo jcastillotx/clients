@@ -21,14 +21,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
+  // Authentication is handled by the dashboard layout - no redundant check needed.
   // Build query with filters
   let query = supabase
     .from("invoices")

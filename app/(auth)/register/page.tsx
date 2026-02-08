@@ -1,5 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { RegisterForm } from "@/components/auth/register-form";
 
 export const dynamic = "force-dynamic";
@@ -9,17 +7,8 @@ export const metadata = {
   description: "Create your account",
 };
 
+// Middleware handles redirecting authenticated users from "/register" to "/dashboard".
 export default async function RegisterPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // If user is already logged in, redirect to dashboard
-  if (user) {
-    redirect("/dashboard");
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">

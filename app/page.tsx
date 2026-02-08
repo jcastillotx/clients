@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { LoginForm } from "@/components/auth/login-form";
 import { CheckCircle2 } from "lucide-react";
@@ -16,31 +15,8 @@ export default async function HomePage() {
   const host = headerList.get("x-forwarded-host") || headerList.get("host") || undefined;
   const branding = await getPortalBranding(host);
 
-  // Check if user is already authenticated — redirect to dashboard
-  // Wrapped in try/catch so the page still renders if Supabase is unavailable
-  try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      redirect("/dashboard");
-    }
-  } catch (error: unknown) {
-    // Next.js redirect() works by throwing — let it propagate
-    if (
-      error &&
-      typeof error === "object" &&
-      "digest" in error &&
-      typeof (error as Record<string, unknown>).digest === "string" &&
-      ((error as Record<string, unknown>).digest as string).startsWith("NEXT_REDIRECT")
-    ) {
-      throw error;
-    }
-    // Supabase not ready — fall through and render the login form
-  }
+  // Middleware handles redirecting authenticated users from "/" to "/dashboard".
+  // No server-side auth check needed here — the login form renders for unauthenticated visitors.
 
   return (
     <div className="grid min-h-screen bg-gradient-to-br from-background via-secondary/40 to-background lg:grid-cols-[1.05fr_0.95fr]">

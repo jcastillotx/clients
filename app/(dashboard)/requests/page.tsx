@@ -21,14 +21,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
+  // Authentication is handled by the dashboard layout - no redundant check needed.
   // Server-side data fetching (no loading state needed!)
   let query = supabase
     .from("requests")

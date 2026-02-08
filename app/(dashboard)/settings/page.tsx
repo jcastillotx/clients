@@ -26,13 +26,10 @@ export default async function SettingsPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
+  // Authentication is handled by the dashboard layout - no redundant check needed.
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
 
   // Fetch full user data
   const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
