@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { ClientList } from "@/components/clients/client-list";
 
 export const metadata = {
@@ -31,8 +31,41 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     return null; // Middleware will redirect
   }
 
+  const metadataRole = String(user.user_metadata?.role ?? "").toLowerCase();
+  const [userRowRes, userRolesRes] = await Promise.all([
+    supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle(),
+    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+  ]);
+
+  const userRow = userRowRes.data;
+  const roleNames = new Set(
+    (userRolesRes.data ?? []).flatMap((entry: any) => {
+      const roleValue = Array.isArray(entry.role) ? entry.role[0]?.name : entry.role?.name;
+      return typeof roleValue === "string" ? [roleValue.toLowerCase()] : [];
+    }),
+  );
+
+  const isAdminUser =
+    Boolean(userRow?.is_super_admin) ||
+    user.user_metadata?.is_super_admin === true ||
+    metadataRole === "admin" ||
+    metadataRole === "super_admin" ||
+    roleNames.has("admin") ||
+    roleNames.has("super_admin");
+
+  const dbClient = isAdminUser ? createAdminClient() : supabase;
+
+  const excludedClientIds = (process.env.PARENT_CLIENT_IDS ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const excludedCompanyNames = (process.env.PARENT_COMPANY_NAMES ?? "Kre8ivTech,Kre8iv Designs")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
   // Build query with filters
-  let query = supabase
+  let query = dbClient
     .from("clients")
     .select(
       `
@@ -43,6 +76,16 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       { count: "exact" },
     )
     .order("created_at", { ascending: false });
+
+  if (excludedClientIds.length > 0) {
+    const formattedIds = excludedClientIds.map((id) => `"${id}"`).join(",");
+    query = query.not("id", "in", `(${formattedIds})`);
+  }
+
+  if (excludedCompanyNames.length > 0) {
+    const formattedNames = excludedCompanyNames.map((name) => `"${name}"`).join(",");
+    query = query.not("company_name", "in", `(${formattedNames})`);
+  }
 
   // Apply search filter
   if (resolvedSearchParams.search) {
@@ -71,6 +114,11 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     return <div>Error loading clients</div>;
   }
 
+  const filteredClients = (clients ?? []).filter((client) => {
+    const companyName = String(client.company_name ?? "").trim().toLowerCase();
+    return !excludedCompanyNames.includes(companyName);
+  });
+
   return (
     <div className="flex flex-col gap-8 p-8">
       <div className="flex items-center justify-between">
@@ -80,7 +128,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      <ClientList initialData={clients || []} totalCount={count || 0} currentPage={page} pageSize={pageSize} />
+      <ClientList initialData={filteredClients} totalCount={count || 0} currentPage={page} pageSize={pageSize} />
     </div>
   );
 }

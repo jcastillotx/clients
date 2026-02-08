@@ -191,6 +191,27 @@ export function StorageConnections({ clientId }: StorageConnectionsProps) {
               <DialogDescription>Connect an external storage provider to sync files</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              <div className="rounded-md border border-border/70 bg-muted/30 p-3 text-sm">
+                <p className="font-medium">How to get keys</p>
+                {formData.provider === "s3" ? (
+                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+                    <li>Open AWS Console and go to `IAM`.</li>
+                    <li>Create or select a user with programmatic access.</li>
+                    <li>Attach permissions for your bucket (for example `AmazonS3FullAccess` or a scoped bucket policy).</li>
+                    <li>Copy `Access key ID` and `Secret access key`.</li>
+                    <li>Enter your bucket name and region (for example `us-east-1`).</li>
+                  </ol>
+                ) : (
+                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+                    <li>Open Google Cloud Console and go to `IAM & Admin` -&gt; `Service Accounts`.</li>
+                    <li>Create a service account and grant Storage permissions on your bucket.</li>
+                    <li>Create a JSON key and download it.</li>
+                    <li>Paste `project_id` as Project ID and the full key file contents as Service Account JSON.</li>
+                    <li>Enter your GCS bucket name.</li>
+                  </ol>
+                )}
+              </div>
+
               <div>
                 <Label>Provider</Label>
                 <Select

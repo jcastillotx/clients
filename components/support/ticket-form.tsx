@@ -27,6 +27,9 @@ interface SupportTicketFormProps {
 export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requestedDueDate, setRequestedDueDate] = useState(
+    ticket?.metadata?.customFields?.requestedDueDate ? String(ticket.metadata.customFields.requestedDueDate).slice(0, 10) : "",
+  );
 
   const form = useForm<CreateSupportTicketInput>({
     resolver: zodResolver(createSupportTicketSchema),
@@ -43,12 +46,23 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
     setIsSubmitting(true);
 
     try {
+      const payload: CreateSupportTicketInput = {
+        ...data,
+        metadata: {
+          ...(data.metadata || {}),
+          customFields: {
+            ...(data.metadata?.customFields || {}),
+            requestedDueDate: requestedDueDate || null,
+          },
+        },
+      };
+
       const response = await fetch("/api/support", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -115,7 +129,7 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormField
                 control={form.control}
                 name="category"
@@ -165,10 +179,22 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
                     <FormDescription>
                       Priority determines response time (Urgent: 1h, High: 4h, Medium: 8h, Low: 24h)
                     </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+              <FormItem>
+                <FormLabel>Requested Due Date</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    value={requestedDueDate}
+                    onChange={(e) => setRequestedDueDate(e.target.value)}
+                  />
+                </FormControl>
+                <FormDescription>Optional target date for resolution</FormDescription>
+              </FormItem>
             </div>
 
             {staffUsers.length > 0 && (
