@@ -11,12 +11,19 @@ export const metadata = {
   description: "Manage your account settings",
 };
 
+const allowedTabs = new Set(["profile", "account", "branding", "storage"]);
+
 /**
  * Settings page (Server Component)
  *
  * Provides user profile and account settings.
  */
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -50,6 +57,14 @@ export default async function SettingsPage() {
     userData?.is_super_admin || userRole === "admin" || userRole === "super_admin" || hasAdminRole,
   );
 
+  const requestedTab = (resolvedSearchParams.tab || "").toLowerCase();
+  const tabIsAllowed = allowedTabs.has(requestedTab);
+  const canUseRequestedTab =
+    requestedTab === "profile" ||
+    requestedTab === "account" ||
+    (canManageBranding && (requestedTab === "branding" || requestedTab === "storage"));
+  const defaultTab = tabIsAllowed && canUseRequestedTab ? requestedTab : "profile";
+
   return (
     <div className="flex flex-col gap-8 p-8 max-w-4xl mx-auto">
       <div>
@@ -57,7 +72,7 @@ export default async function SettingsPage() {
         <p className="text-muted-foreground">Manage your account settings and preferences</p>
       </div>
 
-      <Tabs defaultValue="profile" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className={`grid w-full ${canManageBranding ? "grid-cols-4" : "grid-cols-2"}`}>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
