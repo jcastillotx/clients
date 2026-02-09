@@ -24,8 +24,30 @@ export function getAuthBaseUrl(): string {
   return "http://localhost:3000";
 }
 
+function isSafeNextPath(nextPath: string): boolean {
+  // Only allow same-origin relative paths (e.g. "/dashboard").
+  // Disallow protocol-relative URLs ("//evil.com") and absolute URLs.
+  if (!nextPath) return false;
+  if (!nextPath.startsWith("/")) return false;
+  if (nextPath.startsWith("//")) return false;
+
+  try {
+    // If parsing as a URL succeeds *with* a scheme, it's not a plain path.
+    const url = new URL(nextPath);
+    // If it has a protocol, treat it as unsafe.
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return false;
+    }
+  } catch {
+    // Parsing failed, which is expected for plain paths like "/foo".
+  }
+
+  return true;
+}
+
 export function getAuthConfirmUrl(nextPath: string): string {
   const callbackUrl = new URL("/auth/confirm", getAuthBaseUrl());
-  callbackUrl.searchParams.set("next", nextPath);
+  const safeNextPath = isSafeNextPath(nextPath) ? nextPath : "/";
+  callbackUrl.searchParams.set("next", safeNextPath);
   return callbackUrl.toString();
 }
