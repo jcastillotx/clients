@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { Loader2 } from "lucide-react";
 
 const forgotPasswordSchema = z.object({
@@ -55,7 +56,7 @@ export function ForgotPasswordForm() {
       const supabase = createClient();
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/auth/confirm?next=/reset-password`,
+        redirectTo: getAuthConfirmUrl("/reset-password"),
       });
 
       if (resetError) {
