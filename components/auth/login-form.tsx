@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { Loader2, User, Lock, Mail } from "lucide-react";
 
 const emailSchema = z.object({
@@ -101,7 +102,7 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
       const { error } = await supabase.auth.signInWithOtp({
         email: parsed.data.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/dashboard`,
+          emailRedirectTo: getAuthConfirmUrl("/dashboard"),
         },
       });
 
