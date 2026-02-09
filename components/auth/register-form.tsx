@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { Loader2 } from "lucide-react";
 
 const registerSchema = z
@@ -55,7 +56,7 @@ export function RegisterForm() {
           data: {
             name: data.name,
           },
-          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/dashboard`,
+          emailRedirectTo: getAuthConfirmUrl("/dashboard"),
         },
       });
 
