@@ -10,17 +10,37 @@ function normalizeBaseUrl(value: string | undefined | null): string | null {
 }
 
 export function getAuthBaseUrl(): string {
-  const envBaseUrl =
+  const publicEnvBaseUrl =
     normalizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL) ||
-    normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_URL) ||
-    normalizeBaseUrl(process.env.VERCEL_URL);
+    normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_URL);
 
-  if (envBaseUrl) return envBaseUrl;
-
+  // Browser runtime: only NEXT_PUBLIC_* vars are available.
   if (typeof window !== "undefined") {
-    return window.location.origin;
+    if (publicEnvBaseUrl) {
+      return publicEnvBaseUrl;
+    }
+
+    const hostname = window.location.hostname;
+    const isLocalhost =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1";
+
+    // Allow falling back to the current origin only for localhost / dev.
+    if (isLocalhost || process.env.NODE_ENV !== "production") {
+      return window.location.origin;
+    }
+
+    throw new Error(
+      "getAuthBaseUrl: NEXT_PUBLIC_SITE_URL or NEXT_PUBLIC_VERCEL_URL must be set in production."
+    );
   }
 
+  // Server runtime: VERCEL_URL is available.
+  const envBaseUrl =
+    publicEnvBaseUrl || normalizeBaseUrl(process.env.VERCEL_URL);
+
+  if (envBaseUrl) return envBaseUrl;
   return "http://localhost:3000";
 }
 
