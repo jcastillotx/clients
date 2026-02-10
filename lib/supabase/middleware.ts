@@ -118,5 +118,6 @@ export async function updateSession(request: NextRequest) {
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as-is.
+  // This ensures cookies are properly forwarded to the browser.
   return supabaseResponse;
 }
