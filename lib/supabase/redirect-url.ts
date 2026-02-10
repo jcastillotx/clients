@@ -25,11 +25,51 @@ export function getAuthBaseUrl(): string {
 
   if (envBaseUrl) return envBaseUrl;
 
-  return "http://localhost:3000";
+  // Development fallback - only used when no env vars are set
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:3000";
+  }
+
+  // Production should always have a configured base URL
+  throw new Error(
+    "No base URL configured. Please set NEXT_PUBLIC_APP_URL environment variable."
+  );
+}
+
+function isSafeNextPathForConfirm(nextPath: string | null | undefined): boolean {
+  // Must be a relative path that starts with "/" but not a protocol-relative URL ("//").
+  // Also reject paths with ".." to prevent path traversal attacks.
+  if (!nextPath || typeof nextPath !== "string") {
+    return false;
+  }
+  
+  // Iteratively decode URL-encoded characters to handle double-encoding attacks
+  let decodedPath = nextPath;
+  let previousPath = "";
+  let iterations = 0;
+  const maxIterations = 5; // Prevent infinite loops
+  
+  try {
+    while (decodedPath !== previousPath && iterations < maxIterations) {
+      previousPath = decodedPath;
+      decodedPath = decodeURIComponent(decodedPath);
+      iterations++;
+    }
+  } catch (e) {
+    // Invalid URI sequence - reject it
+    return false;
+  }
+  
+  return (
+    decodedPath.startsWith("/") &&
+    !decodedPath.startsWith("//") &&
+    !decodedPath.includes("..")
+  );
 }
 
 export function getAuthConfirmUrl(nextPath: string): string {
   const callbackUrl = new URL("/auth/confirm", getAuthBaseUrl());
-  callbackUrl.searchParams.set("next", nextPath);
+  const safeNextPath = isSafeNextPathForConfirm(nextPath) ? nextPath : "/";
+  callbackUrl.searchParams.set("next", safeNextPath);
   return callbackUrl.toString();
 }
