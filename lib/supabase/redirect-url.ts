@@ -36,9 +36,21 @@ export function getAuthBaseUrl(): string {
   );
 }
 
-function isSafeNextPathForConfirm(nextPath: string): boolean {
+function isSafeNextPathForConfirm(nextPath: string | null | undefined): boolean {
   // Must be a relative path that starts with "/" but not a protocol-relative URL ("//").
-  return nextPath.startsWith("/") && !nextPath.startsWith("//");
+  // Also reject paths with ".." to prevent path traversal attacks.
+  if (!nextPath || typeof nextPath !== "string") {
+    return false;
+  }
+  
+  // Normalize the path to decode any URL-encoded characters
+  const decodedPath = decodeURIComponent(nextPath);
+  
+  return (
+    decodedPath.startsWith("/") &&
+    !decodedPath.startsWith("//") &&
+    !decodedPath.includes("..")
+  );
 }
 
 export function getAuthConfirmUrl(nextPath: string): string {
