@@ -77,7 +77,7 @@ function canAccessItem(access: AccessLevel | undefined, isStaff: boolean, isAdmi
   return isAdmin;
 }
 
-const navigationSections = [
+const navigationSections: NavSection[] = [
   {
     title: "Services",
     items: [
@@ -173,7 +173,7 @@ const navigationSections = [
       { name: "White Label", href: "/settings?tab=branding", icon: Settings, access: "admin" },
     ],
   },
-] satisfies NavSection[];
+];
 
 export function DashboardNav({ user, isStaff, isAdmin }: DashboardNavProps) {
   const pathname = usePathname();
