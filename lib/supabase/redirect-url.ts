@@ -25,11 +25,25 @@ export function getAuthBaseUrl(): string {
 
   if (envBaseUrl) return envBaseUrl;
 
-  return "http://localhost:3000";
+  // Development fallback - only used when no env vars are set
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:3000";
+  }
+
+  // Production should always have a configured base URL
+  throw new Error(
+    "No base URL configured. Please set NEXT_PUBLIC_APP_URL environment variable."
+  );
+}
+
+function isSafeNextPathForConfirm(nextPath: string): boolean {
+  // Must be a relative path that starts with "/" but not a protocol-relative URL ("//").
+  return nextPath.startsWith("/") && !nextPath.startsWith("//");
 }
 
 export function getAuthConfirmUrl(nextPath: string): string {
   const callbackUrl = new URL("/auth/confirm", getAuthBaseUrl());
-  callbackUrl.searchParams.set("next", nextPath);
+  const safeNextPath = isSafeNextPathForConfirm(nextPath) ? nextPath : "/";
+  callbackUrl.searchParams.set("next", safeNextPath);
   return callbackUrl.toString();
 }
