@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -62,6 +62,7 @@ interface NavItem {
   href: string;
   icon: any;
   access?: AccessLevel;
+  matchesTab?: string;
 }
 
 interface NavSection {
@@ -163,7 +164,9 @@ const navigationSections = [
   {
     title: "Settings",
     items: [
-      { name: "System Settings", href: "/settings", icon: Cog, access: "staff" },
+      { name: "Profile", href: "/settings?tab=profile", icon: Users },
+      { name: "Password", href: "/settings?tab=account", icon: Shield },
+      { name: "System Settings", href: "/settings", icon: Cog, access: "staff", matchesTab: "profile" },
       { name: "Form Templates", href: "/admin/settings/templates", icon: FileText, access: "admin" },
       { name: "White Label", href: "/settings?tab=branding", icon: Settings, access: "admin" },
     ],
@@ -172,6 +175,7 @@ const navigationSections = [
 
 export function DashboardNav({ user, isStaff, isAdmin }: DashboardNavProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   return (
     <aside className="relative flex h-screen w-20 shrink-0 flex-col border-r border-border/70 bg-card/75 backdrop-blur md:w-72">
@@ -213,7 +217,11 @@ export function DashboardNav({ user, isStaff, isAdmin }: DashboardNavProps) {
             </p>
             <div className="space-y-1.5">
               {visibleItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const [itemPathname, itemSearch] = item.href.split("?");
+                const itemTab = item.matchesTab ?? new URLSearchParams(itemSearch).get("tab");
+                const currentTab = searchParams.get("tab");
+                const isTabMatch = itemTab ? currentTab === itemTab : true;
+                const isActive = (pathname === itemPathname && isTabMatch) || pathname.startsWith(`${itemPathname}/`);
                 return (
                   <Link key={item.name} href={item.href}>
                     <Button
