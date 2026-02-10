@@ -43,8 +43,22 @@ function isSafeNextPathForConfirm(nextPath: string | null | undefined): boolean 
     return false;
   }
   
-  // Normalize the path to decode any URL-encoded characters
-  const decodedPath = decodeURIComponent(nextPath);
+  // Iteratively decode URL-encoded characters to handle double-encoding attacks
+  let decodedPath = nextPath;
+  let previousPath = "";
+  let iterations = 0;
+  const maxIterations = 5; // Prevent infinite loops
+  
+  try {
+    while (decodedPath !== previousPath && iterations < maxIterations) {
+      previousPath = decodedPath;
+      decodedPath = decodeURIComponent(decodedPath);
+      iterations++;
+    }
+  } catch (e) {
+    // Invalid URI sequence - reject it
+    return false;
+  }
   
   return (
     decodedPath.startsWith("/") &&
