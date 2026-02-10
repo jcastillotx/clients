@@ -36,8 +36,7 @@ export default async function ProposalsPage({ searchParams }: { searchParams: Pr
     .select(
       `
       *,
-      client:clients(id, company_name),
-      creator:users!proposals_created_by_fkey(id, name)
+      client:clients(id, company_name)
     `,
       { count: "exact" },
     )
