@@ -10,6 +10,8 @@ function normalizeBaseUrl(value: string | undefined | null): string | null {
 }
 
 export function getAuthBaseUrl(): string {
+  const appUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+  if (appUrl) return appUrl;
   const siteUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL);
   if (siteUrl) return siteUrl;
 
