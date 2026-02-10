@@ -37,6 +37,7 @@ import {
   MessageCircleMore,
   Heart,
   Database,
+  FolderOpen,
   Shield,
   EyeOff,
   Cog,
@@ -83,6 +84,7 @@ const navigationSections = [
       { name: "Service Requests", href: "/requests", icon: ClipboardCheck },
       { name: "Support Tickets", href: "/support", icon: HelpCircle },
       { name: "Maintenance Plans", href: "/maintenance-plans", icon: ShieldCheck },
+      { name: "File Storage", href: "/documents", icon: FolderOpen },
       { name: "Proposals", href: "/proposals", icon: FileText },
       { name: "Invoices & Payments", href: "/invoices", icon: Receipt },
     ],
@@ -109,11 +111,11 @@ const navigationSections = [
   {
     title: "Marketing",
     items: [
-      { name: "Marketing Tools", href: "/marketing/campaigns", icon: Megaphone, access: "staff" },
-      { name: "Lead Management", href: "/marketing/leads", icon: Users, access: "staff" },
-      { name: "Content Calendar", href: "/marketing/content-calendar", icon: CalendarDays, access: "staff" },
-      { name: "Social Media", href: "/social-media", icon: Share2, access: "staff" },
-      { name: "Ad Management", href: "/ads", icon: TrendingUp, access: "staff" },
+      { name: "Marketing Tools", href: "/marketing/campaigns", icon: Megaphone },
+      { name: "Lead Management", href: "/marketing/leads", icon: Users },
+      { name: "Content Calendar", href: "/marketing/content-calendar", icon: CalendarDays },
+      { name: "Social Media", href: "/social-media", icon: Share2 },
+      { name: "Ad Management", href: "/ads", icon: TrendingUp },
       { name: "Brand Monitoring", href: "/brand/monitoring", icon: Globe, access: "staff" },
     ],
   },
@@ -150,7 +152,7 @@ const navigationSections = [
   {
     title: "Storage & Integration",
     items: [
-      { name: "Storage Management", href: "/settings?tab=storage", icon: Database, access: "admin" },
+      { name: "Storage Management", href: "/settings?tab=storage", icon: Database, access: "staff" },
       { name: "Webhooks", href: "/webhooks", icon: LinkIcon, access: "admin" },
     ],
   },
