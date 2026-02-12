@@ -15,6 +15,7 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
   const next = isSafeNextPath(requestUrl.searchParams.get("next"))
     ? (requestUrl.searchParams.get("next") as string)
     : fallbackNext;
+  const isRecoveryFlow = type === "recovery" || next === "/reset-password";
   const redirectTarget = new URL(next, request.url);
 
   const supabase = await createClient();
@@ -26,7 +27,7 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
     });
 
     if (error) {
-      const errorUrl = new URL(type === "recovery" ? "/reset-password" : "/login", request.url);
+      const errorUrl = new URL(isRecoveryFlow ? "/reset-password" : "/login", request.url);
       errorUrl.searchParams.set("error", "Could not verify your link. Please request a new one.");
       return NextResponse.redirect(errorUrl);
     }
@@ -38,8 +39,16 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      const errorUrl = new URL(type === "recovery" ? "/reset-password" : "/login", request.url);
-      errorUrl.searchParams.set("error", "Could not verify your identity. Please try again.");
+      const errorUrl = new URL(isRecoveryFlow ? "/reset-password" : "/login", request.url);
+      const isLikelyCodeVerifierMismatch = /code verifier|pkce|both auth code and code verifier/i.test(
+        error.message,
+      );
+      errorUrl.searchParams.set(
+        "error",
+        isLikelyCodeVerifierMismatch
+          ? "This sign-in link was opened on a different domain. Request a new link and open it on the same domain."
+          : "Could not verify your identity. Please try again.",
+      );
       return NextResponse.redirect(errorUrl);
     }
 
