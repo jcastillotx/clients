@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { hasPermission } from "@/lib/rbac/permissions";
+import { hasAnyPermission, hasPermission } from "@/lib/rbac/permissions";
 
 // GET /api/rbac/roles - List all roles
 export async function GET() {
@@ -13,6 +13,13 @@ export async function GET() {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // RBAC read policy: allow users with either roles.read (RBAC scope)
+    // or settings.read (broader settings visibility).
+    const canReadRbac = await hasAnyPermission(["roles.read", "settings.read"]);
+    if (!canReadRbac) {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
     // Fetch roles with their permissions
