@@ -158,8 +158,11 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 **App Configuration:**
 ```bash
 NEXT_PUBLIC_APP_URL=https://yourdomain.com
+NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 NODE_ENV=production
 ```
+
+Use your actual user-facing domain here (not the `*.vercel.app` preview domain) so Supabase email links resolve to the same host where users requested them.
 
 **Inngest:**
 ```bash
@@ -203,6 +206,17 @@ vercel domains add yourdomain.com
 # Name: @ (or subdomain)
 # Value: cname.vercel-dns.com
 ```
+
+### 2.5 Configure Supabase Auth Redirect URLs
+
+In Supabase Dashboard (Authentication > URL Configuration):
+
+- **Site URL**: `https://yourdomain.com`
+- **Additional Redirect URLs** should include at least:
+  - `https://yourdomain.com/auth/confirm`
+  - `https://yourdomain.com/reset-password`
+
+If these point to a `*.vercel.app` URL while users are on a custom domain, email/magic-link verification can fail.
 
 ## Part 3: Inngest Cloud Setup
 
