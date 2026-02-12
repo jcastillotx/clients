@@ -10,14 +10,16 @@ function normalizeBaseUrl(value: string | undefined | null): string | null {
 }
 
 export function getAuthBaseUrl(): string {
+  // In browser contexts, prefer the active origin so auth links always use the
+  // domain the user is currently on (e.g. custom production domain vs vercel.app).
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
   const appUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
   if (appUrl) return appUrl;
   const siteUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL);
   if (siteUrl) return siteUrl;
-
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
 
   const envBaseUrl =
     normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_URL) ||
