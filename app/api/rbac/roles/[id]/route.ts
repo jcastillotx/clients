@@ -18,7 +18,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // RBAC read policy: allow users with either roles.read (RBAC scope)
     // or settings.read (broader settings visibility).
-    const canReadRbac = await hasAnyPermission(["roles.read", "settings.read"]);
+    const canReadRbac = await hasAnyPermission(["roles.read", "settings.read"], {
+      supabase,
+      userId: user.id,
+    });
     if (!canReadRbac) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
