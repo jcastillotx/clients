@@ -62,6 +62,11 @@ export function RoleList({ initialRoles, permissions }: RoleListProps) {
 
       if (!response.ok) {
         const data = await response.json();
+
+        if (response.status === 403) {
+          throw new Error("You do not have permission to manage roles.");
+        }
+
         throw new Error(data.error || "Failed to delete role");
       }
 

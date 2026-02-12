@@ -10,22 +10,26 @@ function normalizeBaseUrl(value: string | undefined | null): string | null {
 }
 
 export function getAuthBaseUrl(): string {
-  // In browser contexts, prefer the active origin so auth links always use the
-  // domain the user is currently on (e.g. custom production domain vs vercel.app).
   if (typeof window !== "undefined") {
-    return window.location.origin;
+    // Use the active browser origin first so auth links stay on the same
+    // domain the user is currently using (custom domains, staging aliases).
+    const browserOrigin = normalizeBaseUrl(window.location.origin);
+    if (browserOrigin) return browserOrigin;
   }
 
-  const appUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
-  if (appUrl) return appUrl;
   const siteUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL);
   if (siteUrl) return siteUrl;
 
+  const appUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
+  if (appUrl) return appUrl;
+
   const envBaseUrl =
+    normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) ||
+    normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
     normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_URL) ||
     normalizeBaseUrl(process.env.VERCEL_URL);
 
-  if (envBaseUrl) return envBaseUrl;
+  if (envBaseUrl && process.env.VERCEL_ENV !== "production") return envBaseUrl;
 
   // Development fallback - only used when no env vars are set
   if (process.env.NODE_ENV === "development") {
@@ -34,7 +38,7 @@ export function getAuthBaseUrl(): string {
 
   // Production should always have a configured base URL
   throw new Error(
-    "No base URL configured. Please set NEXT_PUBLIC_APP_URL environment variable."
+    "No base URL configured. Please set NEXT_PUBLIC_SITE_URL or NEXT_PUBLIC_APP_URL."
   );
 }
 
@@ -57,7 +61,7 @@ function isSafeNextPathForConfirm(nextPath: string | null | undefined): boolean 
       decodedPath = decodeURIComponent(decodedPath);
       iterations++;
     }
-  } catch (e) {
+  } catch {
     // Invalid URI sequence - reject it
     return false;
   }
