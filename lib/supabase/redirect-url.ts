@@ -61,7 +61,7 @@ function isSafeNextPathForConfirm(nextPath: string | null | undefined): boolean 
       decodedPath = decodeURIComponent(decodedPath);
       iterations++;
     }
-  } catch (e) {
+  } catch {
     // Invalid URI sequence - reject it
     return false;
   }
