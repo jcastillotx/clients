@@ -103,6 +103,11 @@ export function RoleDialog({ role, permissions, open, onOpenChange, onRoleCreate
 
       if (!response.ok) {
         const responseData = await response.json();
+
+        if (response.status === 403) {
+          throw new Error("You do not have permission to manage roles.");
+        }
+
         throw new Error(responseData.error || "Failed to save role");
       }
 
