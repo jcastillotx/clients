@@ -2,17 +2,26 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * Check if the current user has a specific permission
+ * @param permissionName - The permission to check
+ * @param options - Optional supabase client and userId to avoid redundant auth calls
  */
-export async function hasPermission(permissionName: string): Promise<boolean> {
-  const supabase = await createClient();
+export async function hasPermission(
+  permissionName: string,
+  options?: { supabase?: Awaited<ReturnType<typeof createClient>>; userId?: string }
+): Promise<boolean> {
+  const supabase = options?.supabase ?? (await createClient());
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
+  let userId = options?.userId;
+  if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
+    userId = user.id;
+  }
 
   const { data, error } = await supabase.rpc("user_has_permission", {
-    p_user_id: user.id,
+    p_user_id: userId,
     p_permission_name: permissionName,
   });
 
@@ -98,11 +107,19 @@ export async function getUserRoles(): Promise<Array<{ role_id: string; role_name
 
 /**
  * Check if user has any of the specified permissions
+ * @param permissionNames - Array of permissions to check
+ * @param options - Optional supabase client and userId to avoid redundant auth calls
  */
-export async function hasAnyPermission(permissionNames: string[]): Promise<boolean> {
-  const permissions = await getUserPermissions();
-  const userPermissionNames = permissions.map((p) => p.permission_name);
-  return permissionNames.some((name) => userPermissionNames.includes(name));
+export async function hasAnyPermission(
+  permissionNames: string[],
+  options?: { supabase?: Awaited<ReturnType<typeof createClient>>; userId?: string }
+): Promise<boolean> {
+  // Use hasPermission for each check to leverage the optimized path
+  for (const permissionName of permissionNames) {
+    const hasIt = await hasPermission(permissionName, options);
+    if (hasIt) return true;
+  }
+  return false;
 }
 
 /**
