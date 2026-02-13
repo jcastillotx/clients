@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
 
 /**
  * Legacy callback route - redirects to the canonical /auth/confirm handler.
@@ -7,7 +8,9 @@ import { NextResponse } from "next/server";
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const confirmUrl = new URL("/auth/confirm", requestUrl.origin);
+  // Use the canonical base URL (custom domain) instead of requestUrl.origin
+  // which may resolve to an internal *.vercel.app hostname.
+  const confirmUrl = new URL("/auth/confirm", getAuthBaseUrl());
   requestUrl.searchParams.forEach((value, key) => {
     confirmUrl.searchParams.set(key, value);
   });

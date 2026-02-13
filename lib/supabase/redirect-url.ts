@@ -9,36 +9,56 @@ function normalizeBaseUrl(value: string | undefined | null): string | null {
   }
 }
 
+/**
+ * Returns the canonical base URL for this application.
+ *
+ * Priority (highest first):
+ * 1. NEXT_PUBLIC_SITE_URL  – explicitly configured custom domain
+ * 2. NEXT_PUBLIC_APP_URL   – alias / legacy env var
+ * 3. Browser window.location.origin (client-side only)
+ * 4. VERCEL_PROJECT_PRODUCTION_URL – Vercel-provided production domain
+ * 5. VERCEL_URL – Vercel deployment URL (preview / branch deploys only)
+ * 6. localhost fallback for development
+ *
+ * The explicit env vars are checked FIRST on both client and server so that
+ * auth emails, magic links, and OAuth callbacks always point to the real
+ * custom domain rather than an internal *.vercel.app hostname.
+ */
 export function getAuthBaseUrl(): string {
-  if (typeof window !== "undefined") {
-    // Use the active browser origin first so auth links stay on the same
-    // domain the user is currently using (custom domains, staging aliases).
-    const browserOrigin = normalizeBaseUrl(window.location.origin);
-    if (browserOrigin) return browserOrigin;
-  }
-
+  // 1 & 2 – Explicit configuration always wins (works on both client & server)
   const siteUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL);
   if (siteUrl) return siteUrl;
 
   const appUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL);
   if (appUrl) return appUrl;
 
-  const envBaseUrl =
+  // 3 – On the client, use the browser origin so the user stays on whatever
+  //     domain they navigated to (custom domain, preview alias, etc.)
+  if (typeof window !== "undefined") {
+    const browserOrigin = normalizeBaseUrl(window.location.origin);
+    if (browserOrigin) return browserOrigin;
+  }
+
+  // 4 & 5 – Vercel-provided URLs (useful for preview / branch deploys)
+  const prodUrl =
     normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) ||
-    normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
+    normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+  if (prodUrl) return prodUrl;
+
+  // For non-production Vercel environments fall back to the deployment URL
+  const vercelUrl =
     normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_URL) ||
     normalizeBaseUrl(process.env.VERCEL_URL);
+  if (vercelUrl) return vercelUrl;
 
-  if (envBaseUrl && process.env.VERCEL_ENV !== "production") return envBaseUrl;
-
-  // Development fallback - only used when no env vars are set
+  // 6 – Development fallback
   if (process.env.NODE_ENV === "development") {
     return "http://localhost:3000";
   }
 
   // Production should always have a configured base URL
   throw new Error(
-    "No base URL configured. Please set NEXT_PUBLIC_SITE_URL or NEXT_PUBLIC_APP_URL."
+    "No base URL configured. Please set NEXT_PUBLIC_SITE_URL to your custom domain (e.g. https://clients.kre8ivdesigns.com)."
   );
 }
 

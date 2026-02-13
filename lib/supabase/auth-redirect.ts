@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
 
 function isSafeNextPath(value: string | null): value is string {
   return typeof value === "string" && value.startsWith("/") && !value.startsWith("//");
@@ -16,7 +17,11 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
     ? (requestUrl.searchParams.get("next") as string)
     : fallbackNext;
   const isRecoveryFlow = type === "recovery" || next === "/reset-password";
-  const redirectTarget = new URL(next, request.url);
+
+  // Use the canonical base URL (custom domain) instead of request.url which
+  // may resolve to an internal *.vercel.app hostname on Vercel deployments.
+  const baseUrl = getAuthBaseUrl();
+  const redirectTarget = new URL(next, baseUrl);
 
   const supabase = await createClient();
 
@@ -27,7 +32,7 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
     });
 
     if (error) {
-      const errorUrl = new URL(isRecoveryFlow ? "/reset-password" : "/login", request.url);
+      const errorUrl = new URL(isRecoveryFlow ? "/reset-password" : "/login", baseUrl);
       errorUrl.searchParams.set("error", "Could not verify your link. Please request a new one.");
       return NextResponse.redirect(errorUrl);
     }
@@ -39,7 +44,7 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      const errorUrl = new URL(isRecoveryFlow ? "/reset-password" : "/login", request.url);
+      const errorUrl = new URL(isRecoveryFlow ? "/reset-password" : "/login", baseUrl);
       const isLikelyCodeVerifierMismatch = /code verifier|pkce|both auth code and code verifier/i.test(
         error.message,
       );
@@ -55,5 +60,5 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
     return NextResponse.redirect(redirectTarget);
   }
 
-  return NextResponse.redirect(new URL("/login", request.url));
+  return NextResponse.redirect(new URL("/login", baseUrl));
 }
