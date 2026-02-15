@@ -32,13 +32,15 @@ Connect to your database and run migrations in order:
 # Set your database connection string
 export DATABASE_URL="postgresql://postgres:[PASSWORD]@db.xxx.supabase.co:5432/postgres"
 
-# Run migrations in order (IMPORTANT: 000 must run first!)
+# Run migrations in order (IMPORTANT: Must follow exact sequence!)
 psql $DATABASE_URL -f lib/db/migrations/000_create_core_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/001_create_rbac_tables.sql
+psql $DATABASE_URL -f lib/db/migrations/001.5_add_rbac_policies.sql
 psql $DATABASE_URL -f lib/db/migrations/002_create_template_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/003_create_document_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/004_create_support_tickets_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/005_create_application_tables.sql
+psql $DATABASE_URL -f lib/db/migrations/006_create_announcements_table.sql
 psql $DATABASE_URL -f lib/db/migrations/010_feature_flags.sql
 ```
 
