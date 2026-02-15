@@ -177,7 +177,8 @@ Added missing tables to migration 005:
 | 1 | User ID sync | CRITICAL | ✅ Fixed | 2905208 |
 | 2 | Migration deps | CRITICAL | ✅ Fixed | ec6f817 |
 | 3 | Incomplete RLS | HIGH | ✅ Fixed | 2ed96e7 |
-| 4 | Missing tables | CRITICAL | ✅ Fixed | b649123 |
+| 4 | Missing time tables | CRITICAL | ✅ Fixed | b649123 |
+| 5 | Proposals schema | CRITICAL | ✅ Fixed | 48e9dc2 |
 
 **All Critical Issues**: ✅ RESOLVED
 
