@@ -12,7 +12,8 @@ Migrations are numbered sequentially and should be run in order:
 3. `003_create_document_tables.sql` - Document library tables
 4. `004_create_support_tickets_tables.sql` - Support tickets and comments tables
 5. `005_create_application_tables.sql` - Application tables (invoices, requests, time, projects, proposals)
-6. `010_feature_flags.sql` - Feature flags system
+6. `006_create_announcements_table.sql` - Announcements for client news ticker
+7. `010_feature_flags.sql` - Feature flags system
 
 ## Running Migrations
 

@@ -82,6 +82,7 @@ async function main() {
     '003_create_document_tables.sql',
     '004_create_support_tickets_tables.sql',
     '005_create_application_tables.sql',
+    '006_create_announcements_table.sql',
     '010_feature_flags.sql'
   ];
 
