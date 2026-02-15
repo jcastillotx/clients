@@ -3,7 +3,7 @@
 
 -- Create features table
 CREATE TABLE IF NOT EXISTS features (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
   display_name TEXT NOT NULL,
   description TEXT,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS features (
 
 -- Create client_features table
 CREATE TABLE IF NOT EXISTS client_features (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   feature_id UUID NOT NULL REFERENCES features(id) ON DELETE CASCADE,
   is_enabled BOOLEAN NOT NULL DEFAULT true,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS client_features (
 
 -- Create role_features table
 CREATE TABLE IF NOT EXISTS role_features (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
   feature_id UUID NOT NULL REFERENCES features(id) ON DELETE CASCADE,
   is_enabled BOOLEAN NOT NULL DEFAULT true,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS role_features (
 
 -- Create user_features table
 CREATE TABLE IF NOT EXISTS user_features (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   feature_id UUID NOT NULL REFERENCES features(id) ON DELETE CASCADE,
   is_enabled BOOLEAN NOT NULL DEFAULT true,

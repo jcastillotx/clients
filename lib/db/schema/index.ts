@@ -20,6 +20,7 @@ export * from "./feature-flags";
 export * from "./partners-kb";
 export * from "./staff-tasks";
 export * from "./proposals";
+export * from "./activity-logs";
 
 // Explicitly export from users to avoid conflicts with rbac
 export { users, usersRelations, userStatusEnum } from "./users";

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS public.time_entries (
   client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
   request_id UUID REFERENCES public.requests(id) ON DELETE SET NULL,
   task_id UUID,
-  project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
+  project_id UUID, -- FK added after projects table is created
   description TEXT,
   started_at TIMESTAMPTZ,
   ended_at TIMESTAMPTZ,
@@ -154,6 +154,11 @@ CREATE TABLE IF NOT EXISTS public.projects (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
+
+-- Add deferred foreign key from time_entries to projects (projects table now exists)
+ALTER TABLE public.time_entries
+  ADD CONSTRAINT fk_time_entries_project_id
+  FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
 
 -- Create project_budgets table
 -- Breakdown of project budget by category for detailed expense tracking
