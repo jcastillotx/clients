@@ -57,7 +57,17 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
   if (error) {
     console.error("Error fetching invoices:", error);
-    return <div>Error loading invoices</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="text-destructive font-semibold">Error loading invoices</div>
+        <div className="text-sm text-muted-foreground max-w-md text-center">
+          {error.message || "An unexpected error occurred"}
+        </div>
+        <pre className="text-xs bg-muted p-4 rounded max-w-2xl overflow-auto">
+          {JSON.stringify(error, null, 2)}
+        </pre>
+      </div>
+    );
   }
 
   // Calculate revenue stats
