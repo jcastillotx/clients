@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard/nav";
-import { Badge } from "@/components/ui/badge";
+import { TopBar } from "@/components/layout/top-bar";
 
 // All dashboard pages require authentication (cookies), so they cannot be statically generated
 export const dynamic = "force-dynamic";
@@ -41,7 +41,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const isAdmin = isSuperAdmin || roleNames.has("admin") || roleNames.has("super_admin");
   const isStaff = isAdmin || roleNames.has("staff");
 
-  const dashboardLabel = isAdmin ? "Admin Dashboard" : isStaff ? "Staff Dashboard" : "Client Dashboard";
+  const userRole = isAdmin ? "admin" : isStaff ? "staff" : "client";
+  const { data: userData } = await supabase.from("users").select("name, email").eq("id", user.id).single();
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
@@ -50,12 +51,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* Main Content */}
       <main className="relative flex-1 overflow-y-auto">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-primary/8 to-transparent" />
-        <div className="absolute right-5 top-5 z-10 md:right-8 md:top-6">
-          <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">
-            {dashboardLabel}
-          </Badge>
-        </div>
+        {/* Top Bar */}
+        <TopBar 
+          userRole={userRole} 
+          userName={userData?.name || user.email || "User"} 
+          userEmail={userData?.email || user.email || ""} 
+        />
+
+        {/* Page Content */}
         <div className="relative">{children}</div>
       </main>
     </div>
