@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * GET /api/ads/campaigns
+ * GET /api/marketing/campaigns
  * 
- * Fetch all ad campaigns
+ * Fetch all marketing campaigns for the authenticated user's client
  */
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -19,10 +19,11 @@ export async function GET(req: NextRequest) {
 
   try {
     const { data, error } = await supabase
-      .from("ad_campaigns")
+      .from("campaigns")
       .select(`
         *,
-        account:ad_accounts(id, platform, account_name, currency)
+        client:clients(id, company_name),
+        created_by_user:users!campaigns_created_by_fkey(id, name)
       `)
       .order("created_at", { ascending: false });
 
@@ -30,15 +31,15 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching ad campaigns:", error);
-    return NextResponse.json({ error: "Failed to fetch ad campaigns" }, { status: 500 });
+    console.error("Error fetching campaigns:", error);
+    return NextResponse.json({ error: "Failed to fetch campaigns" }, { status: 500 });
   }
 }
 
 /**
- * POST /api/ads/campaigns
+ * POST /api/marketing/campaigns
  * 
- * Create a new ad campaign
+ * Create a new marketing campaign
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -54,17 +55,26 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    // Get user's client_id
+    const { data: userData } = await supabase.from("users").select("client_id").eq("id", user.id).single();
+
+    if (!userData?.client_id) {
+      return NextResponse.json({ error: "User not associated with a client" }, { status: 400 });
+    }
+
     const { data, error } = await supabase
-      .from("ad_campaigns")
+      .from("campaigns")
       .insert({
-        ad_account_id: body.ad_account_id,
+        client_id: userData.client_id,
         name: body.name,
-        objective: body.objective,
+        description: body.description,
+        campaign_type: body.type,
         status: body.status || "draft",
-        budget: body.budget,
-        budget_type: body.budget_type || "daily",
         start_date: body.start_date,
         end_date: body.end_date,
+        budget: body.budget,
+        currency: body.currency || "USD",
+        created_by: user.id,
         metadata: body.metadata,
       })
       .select()
@@ -74,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error("Error creating ad campaign:", error);
-    return NextResponse.json({ error: "Failed to create ad campaign" }, { status: 500 });
+    console.error("Error creating campaign:", error);
+    return NextResponse.json({ error: "Failed to create campaign" }, { status: 500 });
   }
 }

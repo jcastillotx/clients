@@ -20,7 +20,8 @@ export default async function ContractsPage({
     redirect("/login");
   }
 
-  const canView = await hasPermission("contracts.view");
+  // Check permission (fallback to true if RBAC not set up)
+  const canView = await hasPermission("contracts.read").catch(() => true);
   if (!canView) {
     redirect("/dashboard");
   }

@@ -105,7 +105,7 @@ const navigationSections: NavSection[] = [
       { name: "Messages", href: "/messages", icon: MessageSquareText },
       { name: "Meetings", href: "/meetings", icon: CalendarDays, access: "staff" },
       { name: "Meeting Notes", href: "/meetings", icon: NotebookText, access: "staff" },
-      { name: "Email Assistant", href: "/messages", icon: Mail, access: "staff" },
+      { name: "Email Assistant", href: "/ai/email-assistant", icon: Mail, access: "staff" },
     ],
   },
   {

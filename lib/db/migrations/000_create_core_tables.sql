@@ -29,8 +29,9 @@ CREATE TABLE IF NOT EXISTS public.clients (
 );
 
 -- Create users table
+-- IMPORTANT: id references auth.users(id) to keep auth and profile in sync
 CREATE TABLE IF NOT EXISTS public.users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   phone TEXT,
@@ -60,53 +61,46 @@ CREATE INDEX IF NOT EXISTS idx_users_status ON public.users(status) WHERE delete
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for clients
+-- Simple RLS Policies (no RBAC dependencies - those are added in migration 001.5)
+-- These allow basic access for initial setup
+
+-- Clients: Users can view their own client
+DROP POLICY IF EXISTS "Users can view their own client" ON public.clients;
 CREATE POLICY "Users can view their own client" ON public.clients
   FOR SELECT
   USING (
     id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
-    OR
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
   );
 
-CREATE POLICY "Admins can manage clients" ON public.clients
+-- Clients: Allow all operations for now (will be restricted in 001.5)
+DROP POLICY IF EXISTS "Users can manage their own client" ON public.clients;
+CREATE POLICY "Users can manage their own client" ON public.clients
   FOR ALL
   USING (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
+    id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
   );
 
--- RLS Policies for users
-CREATE POLICY "Users can view users from their client" ON public.users
+-- Users: Can view their own record
+DROP POLICY IF EXISTS "Users can view themselves" ON public.users;
+CREATE POLICY "Users can view themselves" ON public.users
+  FOR SELECT
+  USING (id = auth.uid());
+
+-- Users: Can view users from same client (non-recursive)
+DROP POLICY IF EXISTS "Users can view same client" ON public.users;
+CREATE POLICY "Users can view same client" ON public.users
   FOR SELECT
   USING (
-    client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
-    OR
-    id = auth.uid()
-    OR
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
+    client_id = (
+      SELECT u.client_id FROM public.users u WHERE u.id = auth.uid() LIMIT 1
     )
   );
 
-CREATE POLICY "Admins can manage users" ON public.users
-  FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-  );
+-- Users: Allow updates to own record
+DROP POLICY IF EXISTS "Users can update themselves" ON public.users;
+CREATE POLICY "Users can update themselves" ON public.users
+  FOR UPDATE
+  USING (id = auth.uid());
 
 -- Create update trigger function
 CREATE OR REPLACE FUNCTION update_core_tables_updated_at()
@@ -136,8 +130,38 @@ GRANT ALL ON public.users TO authenticated;
 GRANT ALL ON public.clients TO service_role;
 GRANT ALL ON public.users TO service_role;
 
+-- Create function to handle new user signup (auto-create public.users profile)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, name, email, client_id, is_super_admin)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
+    NEW.email,
+    (NEW.raw_user_meta_data->>'client_id')::uuid,
+    COALESCE((NEW.raw_user_meta_data->>'is_super_admin')::boolean, false)
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    email = EXCLUDED.email,
+    updated_at = NOW();
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger on auth.users to auto-create public.users profile
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
 -- Add comments for documentation
 COMMENT ON TABLE public.clients IS 'Client companies in the multi-tenant system';
-COMMENT ON TABLE public.users IS 'User accounts linked to clients';
+COMMENT ON TABLE public.users IS 'User accounts linked to clients - synced with auth.users';
+COMMENT ON COLUMN public.users.id IS 'References auth.users(id) - kept in sync via trigger';
 COMMENT ON COLUMN public.users.client_id IS 'Links user to their client company (NULL for super admins)';
 COMMENT ON COLUMN public.users.is_super_admin IS 'Super admins can access all clients';
+COMMENT ON FUNCTION public.handle_new_user() IS 'Trigger function to auto-create public.users profile when auth.users record is created';

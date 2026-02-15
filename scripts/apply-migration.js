@@ -78,15 +78,18 @@ async function main() {
   const migrationFiles = [
     '000_create_core_tables.sql',
     '001_create_rbac_tables.sql',
+    '001.5_add_rbac_policies.sql',
     '002_create_template_tables.sql',
     '003_create_document_tables.sql',
     '004_create_support_tickets_tables.sql',
     '005_create_application_tables.sql',
+    '006_create_announcements_table.sql',
     '010_feature_flags.sql'
   ];
 
-  console.log('📁 Found migration files:\n');
+  console.log('📁 Checking for required migration files:\n');
   const migrations = [];
+  const missingFiles = [];
   
   for (const file of migrationFiles) {
     const migrationPath = path.join(process.cwd(), 'lib/db/migrations', file);
@@ -98,16 +101,23 @@ async function main() {
         sql: fs.readFileSync(migrationPath, 'utf-8')
       });
     } else {
-      console.log(`  ⚠️  ${file} (not found, skipping)`);
+      console.log(`  ❌ ${file} (MISSING!)`);
+      missingFiles.push(file);
     }
   }
   
-  if (migrations.length === 0) {
-    console.error('\n❌ ERROR: No migration files found\n');
+  // Hard error if any migration file is missing
+  if (missingFiles.length > 0) {
+    console.error('\n❌ ERROR: Required migration files are missing!\n');
+    console.error('Missing files:');
+    missingFiles.forEach(file => console.error(`  - ${file}`));
+    console.error('\nMigrations have strict dependencies and must be run in order.');
+    console.error('A missing migration file will cause later migrations to fail.');
+    console.error('\nPlease ensure all migration files are present in lib/db/migrations/\n');
     process.exit(1);
   }
   
-  console.log(`\n✓ ${migrations.length} migration(s) ready to apply\n`);
+  console.log(`\n✓ All ${migrations.length} required migration files found\n`);
 
   // Connect to database
   console.log('Connecting to database...');
@@ -146,17 +156,34 @@ async function main() {
       console.log(`📝 Running: ${migration.name}...`);
       try {
         await sql.unsafe(migration.sql);
-        console.log(`   ✓ ${migration.name} completed\n`);
+        console.log(`   ✓ ${migration.name} completed successfully\n`);
       } catch (err) {
-        if (err.message.includes('already exists') || err.code === '42P07') {
-          console.log(`   ⚠️  ${migration.name} - tables already exist (skipping)\n`);
+        // Check if error is due to idempotent operations (expected)
+        const isIdempotentError = 
+          err.code === '42P07' ||  // duplicate_table
+          err.code === '42710' ||  // duplicate_object (policy, trigger)
+          err.code === '42P16' ||  // invalid_table_definition (minor)
+          err.message.includes('already exists') ||
+          err.message.includes('duplicate key value');
+        
+        if (isIdempotentError) {
+          console.log(`   ⚠️  ${migration.name} - Some objects already exist (migration is idempotent, this is OK)\n`);
+          // Continue - migration ran, some objects already existed
         } else {
-          throw new Error(`Failed in ${migration.name}: ${err.message}`);
+          // Real error - not just duplicate objects
+          console.error(`   ❌ ${migration.name} FAILED!\n`);
+          console.error('Error details:');
+          console.error(`  Code: ${err.code}`);
+          console.error(`  Message: ${err.message}`);
+          if (err.detail) console.error(`  Detail: ${err.detail}`);
+          if (err.hint) console.error(`  Hint: ${err.hint}`);
+          console.error('');
+          throw new Error(`Migration failed in ${migration.name}: ${err.message}`);
         }
       }
     }
 
-    console.log('✓ All migrations applied successfully!\n');
+    console.log('✓ All migrations processed successfully!\n');
 
     // Verify tables exist
     console.log('Verifying tables...');

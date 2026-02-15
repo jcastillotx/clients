@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { createSupportTicketSchema, type CreateSupportTicketInput } from "@/lib/validations/support-ticket";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface StaffUser {
   id: string;
@@ -30,6 +32,9 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
   const [requestedDueDate, setRequestedDueDate] = useState(
     ticket?.metadata?.customFields?.requestedDueDate ? String(ticket.metadata.customFields.requestedDueDate).slice(0, 10) : "",
   );
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; url: string; type: string; size: number }>>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const supabase = createClient();
 
   const form = useForm<CreateSupportTicketInput>({
     resolver: zodResolver(createSupportTicketSchema),
@@ -41,6 +46,75 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
       assignedTo: ticket?.assigned_to || undefined,
     },
   });
+
+  async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+
+    try {
+      const uploadedUrls: Array<{ name: string; url: string; type: string; size: number }> = [];
+
+      for (const file of Array.from(files)) {
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+          toast.error(`${file.name} is not an image file`);
+          continue;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name} is too large (max 5MB)`);
+          continue;
+        }
+
+        // Create unique filename
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `support-tickets/${fileName}`;
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage.from("attachments").upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+        if (error) {
+          console.error("Upload error:", error);
+          toast.error(`Failed to upload ${file.name}`);
+          continue;
+        }
+
+        // Get public URL
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("attachments").getPublicUrl(filePath);
+
+        uploadedUrls.push({
+          name: file.name,
+          url: publicUrl,
+          type: file.type,
+          size: file.size,
+        });
+      }
+
+      setUploadedFiles([...uploadedFiles, ...uploadedUrls]);
+      toast.success(`${uploadedUrls.length} file(s) uploaded successfully`);
+
+      // Reset file input
+      event.target.value = "";
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      toast.error("Failed to upload files");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function removeFile(index: number) {
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+  }
 
   async function onSubmit(data: CreateSupportTicketInput) {
     setIsSubmitting(true);
@@ -54,6 +128,7 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
             ...(data.metadata?.customFields || {}),
             requestedDueDate: requestedDueDate || null,
           },
+          attachments: uploadedFiles,
         },
       };
 
@@ -225,6 +300,56 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
                 )}
               />
             )}
+
+            <FormItem>
+              <FormLabel>Attachments</FormLabel>
+              <FormControl>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                      className="cursor-pointer"
+                    />
+                    {isUploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
+                  </div>
+
+                  {uploadedFiles.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="relative group border rounded-lg overflow-hidden">
+                          <img src={file.url} alt={file.name} className="w-full h-32 object-cover" />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeFile(index)}
+                              className="gap-2"
+                            >
+                              <X className="h-4 w-4" />
+                              Remove
+                            </Button>
+                          </div>
+                          <div className="p-2 bg-muted">
+                            <p className="text-xs truncate" title={file.name}>
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </FormControl>
+              <FormDescription>
+                Upload images related to your issue (max 5MB per file, image formats only)
+              </FormDescription>
+            </FormItem>
 
             <div className="flex gap-4">
               <Button type="submit" disabled={isSubmitting}>
