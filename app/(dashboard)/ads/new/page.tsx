@@ -66,8 +66,8 @@ export default function NewAdCampaignPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: data.name,
           ad_account_id: data.adAccountId,
+          name: data.name,
           objective: data.objective,
           status: data.status,
           budget: data.budget ? parseFloat(data.budget) : null,

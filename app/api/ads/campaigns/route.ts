@@ -54,15 +54,23 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    // Generate platform-specific campaign ID (or use provided one)
+    const campaignId = body.campaign_id || `camp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+    // Map budget based on budget_type
+    const dailyBudget = body.budget_type === 'daily' ? body.budget : null;
+    const lifetimeBudget = body.budget_type === 'lifetime' ? body.budget : null;
+
     const { data, error } = await supabase
       .from("ad_campaigns")
       .insert({
         ad_account_id: body.ad_account_id,
+        campaign_id: campaignId,
         name: body.name,
         objective: body.objective,
         status: body.status || "draft",
-        budget: body.budget,
-        budget_type: body.budget_type || "daily",
+        daily_budget: dailyBudget,
+        lifetime_budget: lifetimeBudget,
         start_date: body.start_date,
         end_date: body.end_date,
         metadata: body.metadata,
