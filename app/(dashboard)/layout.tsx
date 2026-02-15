@@ -42,7 +42,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const isStaff = isAdmin || roleNames.has("staff");
 
   const userRole = isAdmin ? "admin" : isStaff ? "staff" : "client";
-  const { data: userData } = await supabase.from("users").select("name, email").eq("id", user.id).single();
+  const { data: userData } = await supabase.from("users").select("name, email, client_id").eq("id", user.id).single();
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
@@ -51,11 +51,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* Main Content */}
       <main className="relative flex-1 overflow-y-auto">
-        {/* Top Bar */}
+        {/* Top Bar - Different for clients vs staff/admin */}
         <TopBar 
           userRole={userRole} 
           userName={userData?.name || user.email || "User"} 
           userEmail={userData?.email || user.email || ""} 
+          clientId={userData?.client_id || undefined}
         />
 
         {/* Page Content */}

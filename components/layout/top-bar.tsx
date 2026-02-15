@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Pause, Square, Clock, Activity, CheckCircle2, AlertCircle } from "lucide-react";
+import { Play, Pause, Square, Clock, Activity, CheckCircle2, AlertCircle, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
@@ -15,6 +15,7 @@ interface TopBarProps {
   userRole: "admin" | "staff" | "client";
   userName: string;
   userEmail: string;
+  clientId?: string;
 }
 
 interface ActiveTimer {
@@ -24,7 +25,99 @@ interface ActiveTimer {
   requestId?: string;
 }
 
-export function TopBar({ userRole, userName, userEmail }: TopBarProps) {
+export function TopBar({ userRole, userName, userEmail, clientId }: TopBarProps) {
+  // If client role, show news ticker instead
+  if (userRole === "client") {
+    return <ClientNewsTicker clientId={clientId} />;
+  }
+
+  // Admin and Staff get the full top bar
+  return <StaffTopBar userRole={userRole} userName={userName} userEmail={userEmail} />;
+}
+
+/**
+ * News Ticker for Clients
+ */
+function ClientNewsTicker({ clientId }: { clientId?: string }) {
+  const [newsItems, setNewsItems] = useState<Array<{ id: string; title: string; content: string; created_at: string }>>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchNews() {
+      // Fetch announcements/news for the client
+      const { data } = await supabase
+        .from("announcements")
+        .select("*")
+        .or(`client_id.eq.${clientId},client_id.is.null`) // Client-specific or global news
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (data && data.length > 0) {
+        setNewsItems(data);
+      } else {
+        // Default news if no announcements
+        setNewsItems([
+          { id: "1", title: "Welcome!", content: "Welcome to your client dashboard", created_at: new Date().toISOString() },
+          { id: "2", title: "Need Help?", content: "Click 'Support' to create a ticket for assistance", created_at: new Date().toISOString() },
+          { id: "3", title: "View Invoices", content: "Check your invoices and payment history anytime", created_at: new Date().toISOString() },
+        ]);
+      }
+    }
+    fetchNews();
+  }, [clientId]);
+
+  // Auto-rotate news items every 5 seconds
+  useEffect(() => {
+    if (newsItems.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % newsItems.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [newsItems.length]);
+
+  const currentNews = newsItems[currentIndex];
+
+  return (
+    <div className="sticky top-0 z-50 border-b bg-gradient-to-r from-primary/10 via-background to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-14 items-center px-4 md:px-6">
+        <div className="flex items-center gap-3 flex-1 overflow-hidden">
+          <Megaphone className="h-5 w-5 text-primary flex-shrink-0 animate-pulse" />
+          <div className="flex-1 overflow-hidden">
+            {currentNews && (
+              <div className="animate-in fade-in slide-in-from-right-2 duration-500">
+                <span className="font-semibold text-primary">{currentNews.title}:</span>{" "}
+                <span className="text-muted-foreground">{currentNews.content}</span>
+              </div>
+            )}
+          </div>
+          {newsItems.length > 1 && (
+            <div className="flex gap-1.5 flex-shrink-0">
+              {newsItems.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`h-1.5 rounded-full transition-all ${
+                    index === currentIndex ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  }`}
+                  aria-label={`Go to news item ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Staff/Admin Top Bar with Timer
+ */
+function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "staff"; userName: string; userEmail: string }) {
   const [systemStatus, setSystemStatus] = useState<"operational" | "degraded" | "down">("operational");
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
