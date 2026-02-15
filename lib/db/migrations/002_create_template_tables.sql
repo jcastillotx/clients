@@ -1,6 +1,6 @@
 -- Create invoice templates table
 CREATE TABLE IF NOT EXISTS invoice_templates (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
   html_content TEXT NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS invoice_templates (
 
 -- Create email templates table
 CREATE TABLE IF NOT EXISTS email_templates (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
   type TEXT NOT NULL,
