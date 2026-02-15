@@ -162,22 +162,42 @@ CREATE TABLE IF NOT EXISTS public.proposals (
   title TEXT NOT NULL,
   description TEXT,
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired')),
-  total_amount DECIMAL(12, 2),
-  currency TEXT DEFAULT 'USD',
+  total_amount DECIMAL(10, 2) NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR', 'GBP', 'CAD')),
   valid_until TIMESTAMPTZ,
+  created_by UUID NOT NULL REFERENCES public.users(id),
+  sent_at TIMESTAMPTZ,
+  viewed_at TIMESTAMPTZ,
   accepted_at TIMESTAMPTZ,
   rejected_at TIMESTAMPTZ,
-  rejection_reason TEXT,
-  sections JSONB,
-  pricing_options JSONB,
+  signature_data JSONB,
   terms TEXT,
-  signature_data TEXT,
-  signed_by TEXT,
-  signed_at TIMESTAMPTZ,
-  created_by UUID REFERENCES public.users(id),
+  line_items JSONB NOT NULL,
+  metadata JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
+);
+
+-- Create proposal_selections table
+-- Stores client selections for proposal sections with multiple options
+CREATE TABLE IF NOT EXISTS public.proposal_selections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  proposal_id UUID NOT NULL REFERENCES public.proposals(id) ON DELETE CASCADE,
+  section_name TEXT NOT NULL,
+  selected_option TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create proposal_views table
+-- Tracks when and by whom proposals are viewed (analytics)
+CREATE TABLE IF NOT EXISTS public.proposal_views (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  proposal_id UUID NOT NULL REFERENCES public.proposals(id) ON DELETE CASCADE,
+  viewed_by_ip TEXT,
+  viewed_by_user_id UUID REFERENCES public.users(id),
+  viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================================
@@ -233,6 +253,17 @@ CREATE INDEX IF NOT EXISTS idx_projects_project_manager_id ON public.projects(pr
 CREATE INDEX IF NOT EXISTS idx_proposals_client_id ON public.proposals(client_id) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_proposals_status ON public.proposals(status) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_proposals_created_by ON public.proposals(created_by);
+CREATE INDEX IF NOT EXISTS idx_proposals_sent_at ON public.proposals(sent_at) WHERE sent_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_proposals_valid_until ON public.proposals(valid_until) WHERE valid_until > NOW();
+
+-- Proposal selections indexes
+CREATE INDEX IF NOT EXISTS idx_proposal_selections_proposal_id ON public.proposal_selections(proposal_id);
+
+-- Proposal views indexes
+CREATE INDEX IF NOT EXISTS idx_proposal_views_proposal_id ON public.proposal_views(proposal_id);
+CREATE INDEX IF NOT EXISTS idx_proposal_views_user_id ON public.proposal_views(viewed_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_proposal_views_ip ON public.proposal_views(viewed_by_ip);
+CREATE INDEX IF NOT EXISTS idx_proposal_views_viewed_at ON public.proposal_views(viewed_at);
 
 -- ============================================================================
 -- ROW LEVEL SECURITY
@@ -248,6 +279,8 @@ ALTER TABLE public.time_entry_locks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.request_time_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.proposal_selections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.proposal_views ENABLE ROW LEVEL SECURITY;
 
 -- Invoices RLS Policies
 CREATE POLICY "Users can view their client's invoices" ON public.invoices
@@ -616,6 +649,52 @@ CREATE POLICY "Staff can manage proposals" ON public.proposals
     )
   );
 
+-- Proposal Selections RLS
+CREATE POLICY "Users can view selections for their client's proposals" ON public.proposal_selections
+  FOR SELECT
+  USING (
+    proposal_id IN (
+      SELECT id FROM public.proposals
+      WHERE client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
+    )
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+CREATE POLICY "Staff can manage proposal selections" ON public.proposal_selections
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+-- Proposal Views RLS (public viewing tracking)
+CREATE POLICY "Anyone can insert proposal views" ON public.proposal_views
+  FOR INSERT
+  WITH CHECK (true);  -- Allow anonymous view tracking
+
+CREATE POLICY "Users can view their client's proposal views" ON public.proposal_views
+  FOR SELECT
+  USING (
+    proposal_id IN (
+      SELECT id FROM public.proposals
+      WHERE client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
+    )
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
 -- ============================================================================
 -- TRIGGERS
 -- ============================================================================
@@ -684,6 +763,12 @@ CREATE TRIGGER trigger_proposals_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_application_tables_updated_at();
 
+DROP TRIGGER IF EXISTS trigger_proposal_selections_updated_at ON public.proposal_selections;
+CREATE TRIGGER trigger_proposal_selections_updated_at
+  BEFORE UPDATE ON public.proposal_selections
+  FOR EACH ROW
+  EXECUTE FUNCTION update_application_tables_updated_at();
+
 -- ============================================================================
 -- PERMISSIONS
 -- ============================================================================
@@ -697,6 +782,9 @@ GRANT ALL ON public.time_entry_locks TO authenticated;
 GRANT ALL ON public.request_time_entries TO authenticated;
 GRANT ALL ON public.projects TO authenticated;
 GRANT ALL ON public.proposals TO authenticated;
+GRANT ALL ON public.proposal_selections TO authenticated;
+GRANT ALL ON public.proposal_views TO authenticated;
+GRANT ALL ON public.proposal_views TO anon;  -- Allow anonymous view tracking
 
 GRANT ALL ON public.invoices TO service_role;
 GRANT ALL ON public.invoice_items TO service_role;
@@ -707,6 +795,8 @@ GRANT ALL ON public.time_entry_locks TO service_role;
 GRANT ALL ON public.request_time_entries TO service_role;
 GRANT ALL ON public.projects TO service_role;
 GRANT ALL ON public.proposals TO service_role;
+GRANT ALL ON public.proposal_selections TO service_role;
+GRANT ALL ON public.proposal_views TO service_role;
 
 -- ============================================================================
 -- COMMENTS
@@ -720,4 +810,9 @@ COMMENT ON TABLE public.time_entries IS 'Time tracking entries for billable work
 COMMENT ON TABLE public.time_entry_locks IS 'Period locks for time entries (prevents editing locked periods for payroll/billing)';
 COMMENT ON TABLE public.request_time_entries IS 'Simplified time tracking for service requests';
 COMMENT ON TABLE public.projects IS 'Client projects';
-COMMENT ON TABLE public.proposals IS 'Client proposals with e-signature support';
+COMMENT ON TABLE public.proposals IS 'Client proposals with e-signature support, line items, and tracking';
+COMMENT ON TABLE public.proposal_selections IS 'Client selections for proposal sections with multiple options';
+COMMENT ON TABLE public.proposal_views IS 'Tracks when and by whom proposals are viewed for analytics';
+COMMENT ON COLUMN public.proposals.line_items IS 'Array of line items with description, quantity, price (JSONB)';
+COMMENT ON COLUMN public.proposals.metadata IS 'Additional metadata including notes, tags, attachments (JSONB)';
+COMMENT ON COLUMN public.proposals.signature_data IS 'E-signature data including image, signer info, timestamp (JSONB)';
