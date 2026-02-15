@@ -59,8 +59,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           clientId={userData?.client_id || undefined}
         />
 
-        {/* Page Content */}
-        <div className="relative">{children}</div>
+        {/* Page Content with consistent spacing */}
+        <div className="relative p-6 md:p-8">{children}</div>
       </main>
     </div>
   );

@@ -278,14 +278,15 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
   return (
     <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
-        {/* Left: Role Badge */}
-        <div className="flex items-center gap-4">
-          <Badge variant={roleConfig[userRole].variant} className="gap-1.5 px-3 py-1.5">
-            <span className="text-base">{roleConfig[userRole].icon}</span>
-            <span className="font-semibold">{roleConfig[userRole].label}</span>
+        {/* Left: Role Badge - Always visible */}
+        <div className="flex items-center gap-3">
+          <Badge variant={roleConfig[userRole].variant} className="gap-1.5 px-3 py-1.5 text-sm">
+            <span className="text-base leading-none">{roleConfig[userRole].icon}</span>
+            <span className="font-semibold leading-none">{roleConfig[userRole].label}</span>
           </Badge>
-          <div className="hidden md:block text-sm text-muted-foreground">
-            {userName} <span className="text-xs">({userEmail})</span>
+          <div className="hidden lg:flex flex-col">
+            <span className="text-sm font-medium">{userName}</span>
+            <span className="text-xs text-muted-foreground">{userEmail}</span>
           </div>
         </div>
 
