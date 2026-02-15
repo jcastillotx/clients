@@ -181,6 +181,7 @@ Added missing tables to migration 005:
 | 5 | Proposals schema | CRITICAL | ✅ Fixed | 48e9dc2 |
 | 6 | Projects schema | CRITICAL | ✅ Fixed | 9ab3959 |
 | 7 | Timer save bug | CRITICAL | ✅ Fixed | 397722e |
+| 8 | Ad campaigns schema | HIGH | ✅ Fixed | aeb3836 |
 
 **All Critical Issues**: ✅ RESOLVED
 
