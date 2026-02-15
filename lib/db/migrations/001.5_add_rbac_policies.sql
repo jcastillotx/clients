@@ -5,6 +5,21 @@
 -- Dependencies: Requires 000 (clients, users) and 001 (roles, user_roles)
 
 -- ============================================================================
+-- CREATE HELPER FUNCTIONS FIRST (before policies that use them)
+-- ============================================================================
+
+-- Create helper function to prevent recursion
+-- This must be created BEFORE policies that reference it
+CREATE OR REPLACE FUNCTION public.get_current_user_client_id()
+RETURNS UUID
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT client_id FROM public.users WHERE id = auth.uid() LIMIT 1;
+$$;
+
+-- ============================================================================
 -- ADD RBAC-BASED POLICIES TO CLIENTS TABLE
 -- ============================================================================
 
@@ -16,8 +31,8 @@ DROP POLICY IF EXISTS "Users can manage their own client" ON public.clients;
 CREATE POLICY "Users can view their client or admins view all" ON public.clients
   FOR SELECT
   USING (
-    -- Own client
-    id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
+    -- Own client (use helper function to prevent recursion)
+    id = public.get_current_user_client_id()
     OR
     -- Admins can see all
     EXISTS (
@@ -46,16 +61,6 @@ CREATE POLICY "Admins can manage clients" ON public.clients
 DROP POLICY IF EXISTS "Users can view themselves" ON public.users;
 DROP POLICY IF EXISTS "Users can view same client" ON public.users;
 DROP POLICY IF EXISTS "Users can update themselves" ON public.users;
-
--- Create helper function to prevent recursion
-CREATE OR REPLACE FUNCTION public.get_current_user_client_id()
-RETURNS UUID
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-AS $$
-  SELECT client_id FROM public.users WHERE id = auth.uid() LIMIT 1;
-$$;
 
 -- Users: Can view their own record
 CREATE POLICY "users_select_own" ON public.users
