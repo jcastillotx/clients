@@ -46,11 +46,21 @@ function ClientNewsTicker({ clientId }: { clientId?: string }) {
   useEffect(() => {
     async function fetchNews() {
       // Fetch announcements/news for the client
-      const { data } = await supabase
+      // Build query conditionally to avoid undefined in string interpolation
+      let query = supabase
         .from("announcements")
         .select("*")
-        .or(`client_id.eq.${clientId},client_id.is.null`) // Client-specific or global news
-        .eq("is_active", true)
+        .eq("is_active", true);
+
+      // Add client filter only if clientId exists
+      if (clientId) {
+        query = query.or(`client_id.eq.${clientId},client_id.is.null`);
+      } else {
+        // If no clientId, only fetch global announcements
+        query = query.is("client_id", null);
+      }
+
+      const { data } = await query
         .order("created_at", { ascending: false })
         .limit(10);
 
