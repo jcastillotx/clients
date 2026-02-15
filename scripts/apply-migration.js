@@ -87,8 +87,9 @@ async function main() {
     '010_feature_flags.sql'
   ];
 
-  console.log('📁 Found migration files:\n');
+  console.log('📁 Checking for required migration files:\n');
   const migrations = [];
+  const missingFiles = [];
   
   for (const file of migrationFiles) {
     const migrationPath = path.join(process.cwd(), 'lib/db/migrations', file);
@@ -100,16 +101,23 @@ async function main() {
         sql: fs.readFileSync(migrationPath, 'utf-8')
       });
     } else {
-      console.log(`  ⚠️  ${file} (not found, skipping)`);
+      console.log(`  ❌ ${file} (MISSING!)`);
+      missingFiles.push(file);
     }
   }
   
-  if (migrations.length === 0) {
-    console.error('\n❌ ERROR: No migration files found\n');
+  // Hard error if any migration file is missing
+  if (missingFiles.length > 0) {
+    console.error('\n❌ ERROR: Required migration files are missing!\n');
+    console.error('Missing files:');
+    missingFiles.forEach(file => console.error(`  - ${file}`));
+    console.error('\nMigrations have strict dependencies and must be run in order.');
+    console.error('A missing migration file will cause later migrations to fail.');
+    console.error('\nPlease ensure all migration files are present in lib/db/migrations/\n');
     process.exit(1);
   }
   
-  console.log(`\n✓ ${migrations.length} migration(s) ready to apply\n`);
+  console.log(`\n✓ All ${migrations.length} required migration files found\n`);
 
   // Connect to database
   console.log('Connecting to database...');
