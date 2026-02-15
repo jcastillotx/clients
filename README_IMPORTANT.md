@@ -2,7 +2,7 @@
 
 ## Quick Summary
 
-**Current Migrations Create**: 29 core business tables  
+**Current Migrations Create**: 33 core business tables  
 **Drizzle Schemas Define**: 117 total tables  
 **Coverage**: 25% (core features only)  
 

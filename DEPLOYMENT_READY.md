@@ -49,13 +49,13 @@
 7.   010_feature_flags.sql            (feature flags)
 ```
 
-### Creates 29 Tables:
+### Creates 33 Tables:
 - 2 core (clients, users)
 - 4 RBAC (roles, permissions, user_roles, role_permissions)
 - 2 templates
 - 3 documents
 - 2 support
-- 12 applications (invoices, time tracking, proposals, etc.)
+- 16 applications (invoices, time tracking, projects with budgets/milestones, proposals, etc.)
 - 1 announcements
 - 4 feature flags
 
