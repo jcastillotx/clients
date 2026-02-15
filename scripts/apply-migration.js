@@ -74,19 +74,40 @@ async function main() {
 
   console.log('✓ Dependencies found\n');
 
-  // Read migration file
-  const migrationPath = path.join(process.cwd(), 'lib/db/migrations/004_create_support_tickets_tables.sql');
+  // Read all migration files in order
+  const migrationFiles = [
+    '000_create_core_tables.sql',
+    '001_create_rbac_tables.sql',
+    '002_create_template_tables.sql',
+    '003_create_document_tables.sql',
+    '004_create_support_tickets_tables.sql',
+    '005_create_application_tables.sql',
+    '010_feature_flags.sql'
+  ];
+
+  console.log('📁 Found migration files:\n');
+  const migrations = [];
   
-  if (!fs.existsSync(migrationPath)) {
-    console.error('❌ ERROR: Migration file not found\n');
-    console.error(`Expected: ${migrationPath}\n`);
+  for (const file of migrationFiles) {
+    const migrationPath = path.join(process.cwd(), 'lib/db/migrations', file);
+    if (fs.existsSync(migrationPath)) {
+      console.log(`  ✓ ${file}`);
+      migrations.push({
+        name: file,
+        path: migrationPath,
+        sql: fs.readFileSync(migrationPath, 'utf-8')
+      });
+    } else {
+      console.log(`  ⚠️  ${file} (not found, skipping)`);
+    }
+  }
+  
+  if (migrations.length === 0) {
+    console.error('\n❌ ERROR: No migration files found\n');
     process.exit(1);
   }
-
-  console.log('✓ Migration file found');
-  console.log(`  ${migrationPath}\n`);
-
-  const migrationSQL = fs.readFileSync(migrationPath, 'utf-8');
+  
+  console.log(`\n✓ ${migrations.length} migration(s) ready to apply\n`);
 
   // Connect to database
   console.log('Connecting to database...');
@@ -117,13 +138,25 @@ async function main() {
       console.log('Existing data will not be affected.\n');
     }
 
-    // Apply migration
-    console.log('Applying migration...');
-    console.log('This may take 10-30 seconds...\n');
+    // Apply migrations in order
+    console.log('Applying migrations...');
+    console.log('This may take 30-60 seconds...\n');
 
-    await sql.unsafe(migrationSQL);
+    for (const migration of migrations) {
+      console.log(`📝 Running: ${migration.name}...`);
+      try {
+        await sql.unsafe(migration.sql);
+        console.log(`   ✓ ${migration.name} completed\n`);
+      } catch (err) {
+        if (err.message.includes('already exists') || err.code === '42P07') {
+          console.log(`   ⚠️  ${migration.name} - tables already exist (skipping)\n`);
+        } else {
+          throw new Error(`Failed in ${migration.name}: ${err.message}`);
+        }
+      }
+    }
 
-    console.log('✓ Migration applied successfully!\n');
+    console.log('✓ All migrations applied successfully!\n');
 
     // Verify tables exist
     console.log('Verifying tables...');
