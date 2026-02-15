@@ -29,8 +29,9 @@ CREATE TABLE IF NOT EXISTS public.clients (
 );
 
 -- Create users table
+-- IMPORTANT: id references auth.users(id) to keep auth and profile in sync
 CREATE TABLE IF NOT EXISTS public.users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   phone TEXT,
@@ -129,8 +130,38 @@ GRANT ALL ON public.users TO authenticated;
 GRANT ALL ON public.clients TO service_role;
 GRANT ALL ON public.users TO service_role;
 
+-- Create function to handle new user signup (auto-create public.users profile)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, name, email, client_id, is_super_admin)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
+    NEW.email,
+    (NEW.raw_user_meta_data->>'client_id')::uuid,
+    COALESCE((NEW.raw_user_meta_data->>'is_super_admin')::boolean, false)
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    email = EXCLUDED.email,
+    updated_at = NOW();
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger on auth.users to auto-create public.users profile
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
 -- Add comments for documentation
 COMMENT ON TABLE public.clients IS 'Client companies in the multi-tenant system';
-COMMENT ON TABLE public.users IS 'User accounts linked to clients';
+COMMENT ON TABLE public.users IS 'User accounts linked to clients - synced with auth.users';
+COMMENT ON COLUMN public.users.id IS 'References auth.users(id) - kept in sync via trigger';
 COMMENT ON COLUMN public.users.client_id IS 'Links user to their client company (NULL for super admins)';
 COMMENT ON COLUMN public.users.is_super_admin IS 'Super admins can access all clients';
+COMMENT ON FUNCTION public.handle_new_user() IS 'Trigger function to auto-create public.users profile when auth.users record is created';
