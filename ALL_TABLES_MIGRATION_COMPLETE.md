@@ -32,7 +32,7 @@ Error: Could not find the table 'public.invoices' in the schema cache
 
 ## Complete Migration Solution
 
-### 7 Migration Files (In Order)
+### 9 Migration Files (In Order)
 
 #### 0. `000_create_core_tables.sql` (MUST RUN FIRST)
 **Purpose**: Foundation tables that everything else depends on
@@ -216,7 +216,7 @@ The script will:
 2. Run each migration file in order:
    - Copy contents of `000_create_core_tables.sql`
    - Paste in SQL Editor and click Run
-   - Repeat for migrations 001, 002, 003, 004, 005, 010
+   - Repeat for migrations 001, 001.5, 002, 003, 004, 005, 006, 010
 
 ### Manual via psql
 
@@ -506,5 +506,5 @@ GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
 **Created**: February 15, 2026  
 **Issue**: #8270  
 **Branch**: cursor/missing-support-tickets-table-8270  
-**Migrations**: 7 files, 24 tables, full schema  
+**Migrations**: 9 files, 31 tables, full schema  
 **Status**: Complete and ready to run

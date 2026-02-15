@@ -47,7 +47,7 @@ Changes:
 **IMPROVED**: Now runs ALL migrations in correct order.
 
 Features:
-- ✅ Runs migrations 000 → 001 → 002 → 003 → 004 → 010
+- ✅ Runs migrations 000 → 001 → 001.5 → 002 → 003 → 004 → 005 → 006 → 010
 - ✅ Validates each migration file exists
 - ✅ Handles "already exists" errors gracefully
 - ✅ Shows progress for each migration
@@ -62,12 +62,15 @@ Features:
 **CRITICAL**: Migrations MUST be run in this order:
 
 ```
-0. 000_create_core_tables.sql          (clients, users)
-1. 001_create_rbac_tables.sql          (roles, permissions, user_roles)
-2. 002_create_template_tables.sql      (email/invoice templates)
-3. 003_create_document_tables.sql      (documents, contracts)
-4. 004_create_support_tickets_tables.sql (support tickets)
-5. 010_feature_flags.sql               (feature flags)
+0.   000_create_core_tables.sql          (clients, users)
+1.   001_create_rbac_tables.sql          (roles, permissions, user_roles)
+1.5. 001.5_add_rbac_policies.sql         (RBAC-enhanced policies)
+2.   002_create_template_tables.sql      (email/invoice templates)
+3.   003_create_document_tables.sql      (documents, contracts)
+4.   004_create_support_tickets_tables.sql (support tickets)
+5.   005_create_application_tables.sql   (invoices, requests, time tracking, projects, proposals)
+6.   006_create_announcements_table.sql  (announcements for news ticker)
+7.   010_feature_flags.sql               (feature flags)
 ```
 
 ## How to Apply Fixed Migrations
@@ -90,10 +93,13 @@ Run each migration in order in SQL Editor:
 
 1. **000_create_core_tables.sql** ← START HERE
 2. **001_create_rbac_tables.sql**
-3. **002_create_template_tables.sql**
-4. **003_create_document_tables.sql**
-5. **004_create_support_tickets_tables.sql**
-6. **010_feature_flags.sql**
+3. **001.5_add_rbac_policies.sql**
+4. **002_create_template_tables.sql**
+5. **003_create_document_tables.sql**
+6. **004_create_support_tickets_tables.sql**
+7. **005_create_application_tables.sql**
+8. **006_create_announcements_table.sql**
+9. **010_feature_flags.sql**
 
 ### Method 3: Direct psql
 
