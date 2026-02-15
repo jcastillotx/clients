@@ -179,8 +179,14 @@ Added missing tables to migration 005:
 | 3 | Incomplete RLS | HIGH | ✅ Fixed | 2ed96e7 |
 | 4 | Missing time tables | CRITICAL | ✅ Fixed | b649123 |
 | 5 | Proposals schema | CRITICAL | ✅ Fixed | 48e9dc2 |
+| 6 | Projects schema | CRITICAL | ✅ Fixed | 9ab3959 |
+| 7 | Timer save bug | CRITICAL | ✅ Fixed | 397722e |
 
 **All Critical Issues**: ✅ RESOLVED
+
+**Plus Safety Improvements**:
+- Migration script: Fail-fast on missing files (6ccffeb)
+- Migration script: Idempotent error handling (a89dbf0)
 
 ---
 
