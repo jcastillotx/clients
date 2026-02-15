@@ -362,6 +362,32 @@ CREATE POLICY "Users can create comments" ON public.request_comments
     )
   );
 
+-- Users can update their own comments
+CREATE POLICY "Users can update own comments" ON public.request_comments
+  FOR UPDATE
+  USING (
+    user_id = auth.uid()
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
+    )
+  );
+
+-- Users can delete their own comments
+CREATE POLICY "Users can delete own comments" ON public.request_comments
+  FOR DELETE
+  USING (
+    user_id = auth.uid()
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
+    )
+  );
+
 -- Time Entries RLS
 CREATE POLICY "Users can view their own time entries" ON public.time_entries
   FOR SELECT
