@@ -11,7 +11,8 @@ Migrations are numbered sequentially and should be run in order:
 2. `002_create_template_tables.sql` - Email and invoice template tables
 3. `003_create_document_tables.sql` - Document library tables
 4. `004_create_support_tickets_tables.sql` - Support tickets and comments tables
-5. `010_feature_flags.sql` - Feature flags system
+5. `005_create_application_tables.sql` - Application tables (invoices, requests, time, projects, proposals)
+6. `010_feature_flags.sql` - Feature flags system
 
 ## Running Migrations
 
@@ -35,6 +36,7 @@ psql $DATABASE_URL -f lib/db/migrations/001_create_rbac_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/002_create_template_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/003_create_document_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/004_create_support_tickets_tables.sql
+psql $DATABASE_URL -f lib/db/migrations/005_create_application_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/010_feature_flags.sql
 ```
 
