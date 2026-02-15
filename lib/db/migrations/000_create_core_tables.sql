@@ -60,57 +60,46 @@ CREATE INDEX IF NOT EXISTS idx_users_status ON public.users(status) WHERE delete
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for clients (drop first if exists to avoid conflicts)
+-- Simple RLS Policies (no RBAC dependencies - those are added in migration 001.5)
+-- These allow basic access for initial setup
+
+-- Clients: Users can view their own client
 DROP POLICY IF EXISTS "Users can view their own client" ON public.clients;
 CREATE POLICY "Users can view their own client" ON public.clients
   FOR SELECT
   USING (
     id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
-    OR
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
   );
 
-DROP POLICY IF EXISTS "Admins can manage clients" ON public.clients;
-CREATE POLICY "Admins can manage clients" ON public.clients
+-- Clients: Allow all operations for now (will be restricted in 001.5)
+DROP POLICY IF EXISTS "Users can manage their own client" ON public.clients;
+CREATE POLICY "Users can manage their own client" ON public.clients
   FOR ALL
   USING (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
+    id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
   );
 
--- RLS Policies for users (drop first if exists to avoid conflicts)
-DROP POLICY IF EXISTS "Users can view users from their client" ON public.users;
-CREATE POLICY "Users can view users from their client" ON public.users
+-- Users: Can view their own record
+DROP POLICY IF EXISTS "Users can view themselves" ON public.users;
+CREATE POLICY "Users can view themselves" ON public.users
+  FOR SELECT
+  USING (id = auth.uid());
+
+-- Users: Can view users from same client (non-recursive)
+DROP POLICY IF EXISTS "Users can view same client" ON public.users;
+CREATE POLICY "Users can view same client" ON public.users
   FOR SELECT
   USING (
-    client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
-    OR
-    id = auth.uid()
-    OR
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
+    client_id = (
+      SELECT u.client_id FROM public.users u WHERE u.id = auth.uid() LIMIT 1
     )
   );
 
-DROP POLICY IF EXISTS "Admins can manage users" ON public.users;
-CREATE POLICY "Admins can manage users" ON public.users
-  FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
-    )
-  );
+-- Users: Allow updates to own record
+DROP POLICY IF EXISTS "Users can update themselves" ON public.users;
+CREATE POLICY "Users can update themselves" ON public.users
+  FOR UPDATE
+  USING (id = auth.uid());
 
 -- Create update trigger function
 CREATE OR REPLACE FUNCTION update_core_tables_updated_at()

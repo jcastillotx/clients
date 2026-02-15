@@ -6,8 +6,9 @@ This directory contains SQL migration files for the Kre8iv Clients Platform data
 
 Migrations are numbered sequentially and should be run in order:
 
-0. `000_create_core_tables.sql` - Core tables (clients, users) - **RUN FIRST**
+0. `000_create_core_tables.sql` - Core tables (clients, users) with basic RLS - **RUN FIRST**
 1. `001_create_rbac_tables.sql` - Role-Based Access Control tables
+1.5. `001.5_add_rbac_policies.sql` - Add RBAC-based policies to core tables (requires 001)
 2. `002_create_template_tables.sql` - Email and invoice template tables
 3. `003_create_document_tables.sql` - Document library tables
 4. `004_create_support_tickets_tables.sql` - Support tickets and comments tables

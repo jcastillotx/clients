@@ -78,6 +78,7 @@ async function main() {
   const migrationFiles = [
     '000_create_core_tables.sql',
     '001_create_rbac_tables.sql',
+    '001.5_add_rbac_policies.sql',
     '002_create_template_tables.sql',
     '003_create_document_tables.sql',
     '004_create_support_tickets_tables.sql',
