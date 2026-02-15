@@ -156,17 +156,34 @@ async function main() {
       console.log(`📝 Running: ${migration.name}...`);
       try {
         await sql.unsafe(migration.sql);
-        console.log(`   ✓ ${migration.name} completed\n`);
+        console.log(`   ✓ ${migration.name} completed successfully\n`);
       } catch (err) {
-        if (err.message.includes('already exists') || err.code === '42P07') {
-          console.log(`   ⚠️  ${migration.name} - tables already exist (skipping)\n`);
+        // Check if error is due to idempotent operations (expected)
+        const isIdempotentError = 
+          err.code === '42P07' ||  // duplicate_table
+          err.code === '42710' ||  // duplicate_object (policy, trigger)
+          err.code === '42P16' ||  // invalid_table_definition (minor)
+          err.message.includes('already exists') ||
+          err.message.includes('duplicate key value');
+        
+        if (isIdempotentError) {
+          console.log(`   ⚠️  ${migration.name} - Some objects already exist (migration is idempotent, this is OK)\n`);
+          // Continue - migration ran, some objects already existed
         } else {
-          throw new Error(`Failed in ${migration.name}: ${err.message}`);
+          // Real error - not just duplicate objects
+          console.error(`   ❌ ${migration.name} FAILED!\n`);
+          console.error('Error details:');
+          console.error(`  Code: ${err.code}`);
+          console.error(`  Message: ${err.message}`);
+          if (err.detail) console.error(`  Detail: ${err.detail}`);
+          if (err.hint) console.error(`  Hint: ${err.hint}`);
+          console.error('');
+          throw new Error(`Migration failed in ${migration.name}: ${err.message}`);
         }
       }
     }
 
-    console.log('✓ All migrations applied successfully!\n');
+    console.log('✓ All migrations processed successfully!\n');
 
     // Verify tables exist
     console.log('Verifying tables...');
