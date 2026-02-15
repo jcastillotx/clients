@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm build",
+  "buildCommand": "pnpm db:push && pnpm build",
   "devCommand": "pnpm dev",
   "installCommand": "rm -rf node_modules && pnpm install",
   "framework": "nextjs",
