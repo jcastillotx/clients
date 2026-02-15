@@ -125,7 +125,8 @@
 
 ### Database Metrics:
 - **Migration Files**: 9 SQL files
-- **Tables Created**: 31 tables
+- **Tables Created**: 29 core tables (out of 117 in schemas)
+- **Coverage**: Core business features (invoices, tickets, time, projects, proposals)
 - **Indexes Created**: 95+ indexes
 - **RLS Policies**: 70+ policies
 - **Triggers**: 20+ triggers
