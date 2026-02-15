@@ -51,7 +51,23 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
   const { data: requests, error } = await query;
 
   if (error) {
-    throw new Error("Failed to fetch requests");
+    console.error("Error fetching requests:", error);
+    return (
+      <div className="container mx-auto py-8">
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <div className="text-destructive font-semibold text-lg">Error Loading Requests</div>
+          <div className="text-sm text-muted-foreground max-w-md text-center">
+            {error.message || "An unexpected error occurred"}
+          </div>
+          <pre className="text-xs bg-muted p-4 rounded max-w-2xl overflow-auto">
+            {JSON.stringify(error, null, 2)}
+          </pre>
+          <p className="text-xs text-muted-foreground mt-4">
+            This might be an RLS policy issue. Check the server logs for details.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
