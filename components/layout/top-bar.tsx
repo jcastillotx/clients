@@ -209,10 +209,19 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
     if (!activeTimer) return;
 
     try {
+      // Get current user ID
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        toast.error("User not authenticated");
+        return;
+      }
+
       const durationMinutes = Math.floor(elapsedTime / 60);
 
       // Save time entry to database
       const { error } = await supabase.from("time_entries").insert({
+        user_id: user.id,  // Required field
         description: activeTimer.description,
         started_at: activeTimer.startedAt.toISOString(),
         ended_at: new Date().toISOString(),
