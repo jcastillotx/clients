@@ -61,7 +61,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .select("*")
       .eq("user_id", id)
       .eq("role_id", roleId)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return NextResponse.json({ error: "User already has this role" }, { status: 400 });

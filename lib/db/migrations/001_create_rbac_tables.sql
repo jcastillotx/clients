@@ -99,7 +99,17 @@ INSERT INTO permissions (name, description, resource, action) VALUES
 
   -- Settings permissions
   ('settings.read', 'View system settings', 'settings', 'read'),
-  ('settings.update', 'Update system settings', 'settings', 'update')
+  ('settings.update', 'Update system settings', 'settings', 'update'),
+  ('settings.manage', 'Full settings management access', 'settings', 'manage'),
+
+  -- Contract permissions
+  ('contracts.create', 'Create new contracts', 'contracts', 'create'),
+  ('contracts.read', 'View contracts', 'contracts', 'read'),
+  ('contracts.update', 'Update contracts', 'contracts', 'update'),
+  ('contracts.delete', 'Delete contracts', 'contracts', 'delete'),
+
+  -- User management aggregate permission
+  ('users.manage', 'Full user management access', 'users', 'manage')
 ON CONFLICT (name) DO NOTHING;
 
 -- Assign permissions to super_admin role (all permissions)
@@ -116,7 +126,7 @@ SELECT r.id, p.id
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.name = 'admin'
-  AND p.name NOT IN ('settings.update', 'roles.delete')
+  AND p.name NOT IN ('settings.update', 'settings.manage', 'roles.delete')
 ON CONFLICT DO NOTHING;
 
 -- Assign permissions to account_manager role
@@ -130,6 +140,7 @@ WHERE r.name = 'account_manager'
     'invoices.create', 'invoices.read', 'invoices.update', 'invoices.send',
     'requests.create', 'requests.read', 'requests.update', 'requests.assign',
     'documents.create', 'documents.read', 'documents.update',
+    'contracts.create', 'contracts.read', 'contracts.update',
     'reports.financial', 'reports.analytics', 'reports.export'
   )
 ON CONFLICT DO NOTHING;
@@ -144,7 +155,8 @@ WHERE r.name = 'staff'
     'clients.read',
     'invoices.read',
     'requests.read', 'requests.update',
-    'documents.read'
+    'documents.read',
+    'contracts.read'
   )
 ON CONFLICT DO NOTHING;
 
@@ -158,7 +170,8 @@ WHERE r.name = 'client'
     'clients.read',
     'invoices.read', 'invoices.pay',
     'requests.create', 'requests.read',
-    'documents.read'
+    'documents.read',
+    'contracts.read'
   )
 ON CONFLICT DO NOTHING;
 

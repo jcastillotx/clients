@@ -182,6 +182,7 @@ export const Permissions = {
   USERS_UPDATE: "users.update",
   USERS_DELETE: "users.delete",
   USERS_ASSIGN_ROLES: "users.assign_roles",
+  USERS_MANAGE: "users.manage",
 
   // Roles
   ROLES_CREATE: "roles.create",
@@ -200,9 +201,16 @@ export const Permissions = {
   REPORTS_ANALYTICS: "reports.analytics",
   REPORTS_EXPORT: "reports.export",
 
+  // Contracts
+  CONTRACTS_CREATE: "contracts.create",
+  CONTRACTS_READ: "contracts.read",
+  CONTRACTS_UPDATE: "contracts.update",
+  CONTRACTS_DELETE: "contracts.delete",
+
   // Settings
   SETTINGS_READ: "settings.read",
   SETTINGS_UPDATE: "settings.update",
+  SETTINGS_MANAGE: "settings.manage",
 } as const;
 
 /**
