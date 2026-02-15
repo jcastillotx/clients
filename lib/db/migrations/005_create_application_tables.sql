@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS public.time_entries (
   client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
   request_id UUID REFERENCES public.requests(id) ON DELETE SET NULL,
   task_id UUID,
-  project_id UUID,
+  project_id UUID REFERENCES public.projects(id) ON DELETE SET NULL,
   description TEXT,
   started_at TIMESTAMPTZ,
   ended_at TIMESTAMPTZ,
@@ -96,6 +96,34 @@ CREATE TABLE IF NOT EXISTS public.time_entries (
   approved_at TIMESTAMPTZ,
   billed_at TIMESTAMPTZ,
   metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create time_entry_locks table
+-- Prevents editing time entries for locked periods (typically weekly locks for payroll/billing)
+CREATE TABLE IF NOT EXISTS public.time_entry_locks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  locked_at TIMESTAMPTZ NOT NULL,
+  locked_by UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, period_start)
+);
+
+-- Create request_time_entries table
+-- Simplified time tracking specifically for requests (when detailed start/end not needed)
+CREATE TABLE IF NOT EXISTS public.request_time_entries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id UUID NOT NULL REFERENCES public.requests(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  hours DECIMAL(5, 2) NOT NULL,
+  note TEXT,
+  logged_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -182,6 +210,19 @@ CREATE INDEX IF NOT EXISTS idx_time_entries_client_id ON public.time_entries(cli
 CREATE INDEX IF NOT EXISTS idx_time_entries_request_id ON public.time_entries(request_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_status ON public.time_entries(status);
 CREATE INDEX IF NOT EXISTS idx_time_entries_started_at ON public.time_entries(started_at);
+CREATE INDEX IF NOT EXISTS idx_time_entries_user_started_at ON public.time_entries(user_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_time_entries_request_started_at ON public.time_entries(request_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_time_entries_client_started_at ON public.time_entries(client_id, started_at);
+
+-- Time entry locks indexes
+CREATE INDEX IF NOT EXISTS idx_time_entry_locks_user_id ON public.time_entry_locks(user_id);
+CREATE INDEX IF NOT EXISTS idx_time_entry_locks_period ON public.time_entry_locks(period_start, period_end);
+
+-- Request time entries indexes
+CREATE INDEX IF NOT EXISTS idx_request_time_entries_request_id ON public.request_time_entries(request_id);
+CREATE INDEX IF NOT EXISTS idx_request_time_entries_user_id ON public.request_time_entries(user_id);
+CREATE INDEX IF NOT EXISTS idx_request_time_entries_request_logged_at ON public.request_time_entries(request_id, logged_at);
+CREATE INDEX IF NOT EXISTS idx_request_time_entries_user_logged_at ON public.request_time_entries(user_id, logged_at);
 
 -- Projects indexes
 CREATE INDEX IF NOT EXISTS idx_projects_client_id ON public.projects(client_id) WHERE deleted_at IS NULL;
@@ -203,6 +244,8 @@ ALTER TABLE public.invoice_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.request_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.time_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.time_entry_locks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.request_time_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proposals ENABLE ROW LEVEL SECURITY;
 
@@ -440,6 +483,93 @@ CREATE POLICY "Users can delete their own time entries" ON public.time_entries
     )
   );
 
+-- Time Entry Locks RLS Policies
+CREATE POLICY "Users can view their own locks" ON public.time_entry_locks
+  FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+CREATE POLICY "Admins can create period locks" ON public.time_entry_locks
+  FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+CREATE POLICY "Admins can manage locks" ON public.time_entry_locks
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+-- Request Time Entries RLS Policies
+CREATE POLICY "Users can view request time entries" ON public.request_time_entries
+  FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR
+    request_id IN (
+      SELECT id FROM public.requests
+      WHERE client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
+    )
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin')
+    )
+  );
+
+CREATE POLICY "Users can create request time entries" ON public.request_time_entries
+  FOR INSERT
+  WITH CHECK (
+    user_id = auth.uid()
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+CREATE POLICY "Users can update their own request time entries" ON public.request_time_entries
+  FOR UPDATE
+  USING (
+    user_id = auth.uid()
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+CREATE POLICY "Users can delete their own request time entries" ON public.request_time_entries
+  FOR DELETE
+  USING (
+    user_id = auth.uid()
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
 -- Projects RLS
 CREATE POLICY "Users can view their client's projects" ON public.projects
   FOR SELECT
@@ -530,6 +660,18 @@ CREATE TRIGGER trigger_time_entries_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_application_tables_updated_at();
 
+DROP TRIGGER IF EXISTS trigger_time_entry_locks_updated_at ON public.time_entry_locks;
+CREATE TRIGGER trigger_time_entry_locks_updated_at
+  BEFORE UPDATE ON public.time_entry_locks
+  FOR EACH ROW
+  EXECUTE FUNCTION update_application_tables_updated_at();
+
+DROP TRIGGER IF EXISTS trigger_request_time_entries_updated_at ON public.request_time_entries;
+CREATE TRIGGER trigger_request_time_entries_updated_at
+  BEFORE UPDATE ON public.request_time_entries
+  FOR EACH ROW
+  EXECUTE FUNCTION update_application_tables_updated_at();
+
 DROP TRIGGER IF EXISTS trigger_projects_updated_at ON public.projects;
 CREATE TRIGGER trigger_projects_updated_at
   BEFORE UPDATE ON public.projects
@@ -551,6 +693,8 @@ GRANT ALL ON public.invoice_items TO authenticated;
 GRANT ALL ON public.requests TO authenticated;
 GRANT ALL ON public.request_comments TO authenticated;
 GRANT ALL ON public.time_entries TO authenticated;
+GRANT ALL ON public.time_entry_locks TO authenticated;
+GRANT ALL ON public.request_time_entries TO authenticated;
 GRANT ALL ON public.projects TO authenticated;
 GRANT ALL ON public.proposals TO authenticated;
 
@@ -559,6 +703,8 @@ GRANT ALL ON public.invoice_items TO service_role;
 GRANT ALL ON public.requests TO service_role;
 GRANT ALL ON public.request_comments TO service_role;
 GRANT ALL ON public.time_entries TO service_role;
+GRANT ALL ON public.time_entry_locks TO service_role;
+GRANT ALL ON public.request_time_entries TO service_role;
 GRANT ALL ON public.projects TO service_role;
 GRANT ALL ON public.proposals TO service_role;
 
@@ -571,5 +717,7 @@ COMMENT ON TABLE public.invoice_items IS 'Line items for invoices';
 COMMENT ON TABLE public.requests IS 'Service requests from clients';
 COMMENT ON TABLE public.request_comments IS 'Comments on service requests';
 COMMENT ON TABLE public.time_entries IS 'Time tracking entries for billable work';
+COMMENT ON TABLE public.time_entry_locks IS 'Period locks for time entries (prevents editing locked periods for payroll/billing)';
+COMMENT ON TABLE public.request_time_entries IS 'Simplified time tracking for service requests';
 COMMENT ON TABLE public.projects IS 'Client projects';
 COMMENT ON TABLE public.proposals IS 'Client proposals with e-signature support';
