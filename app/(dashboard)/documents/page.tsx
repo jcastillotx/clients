@@ -20,7 +20,7 @@ export default async function DocumentsPage({
     redirect("/login");
   }
 
-  const canView = await hasPermission("documents.view");
+  const canView = await hasPermission("documents.read");
   if (!canView) {
     redirect("/dashboard");
   }
