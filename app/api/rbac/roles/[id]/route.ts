@@ -69,9 +69,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { name, description, permissionIds } = body;
 
     // Check if role is system role
-    const { data: existingRole } = await supabase.from("roles").select("is_system").eq("id", id).single();
+    const { data: existingRole } = await supabase.from("roles").select("is_system").eq("id", id).maybeSingle();
 
-    if (existingRole?.is_system && name) {
+    if (!existingRole) {
+      return NextResponse.json({ error: "Role not found" }, { status: 404 });
+    }
+
+    if (existingRole.is_system && name) {
       return NextResponse.json({ error: "Cannot rename system roles" }, { status: 400 });
     }
 
@@ -129,9 +133,13 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const supabase = await createClient();
 
     // Check if role is system role
-    const { data: role } = await supabase.from("roles").select("is_system, name").eq("id", id).single();
+    const { data: role } = await supabase.from("roles").select("is_system, name").eq("id", id).maybeSingle();
 
-    if (role?.is_system) {
+    if (!role) {
+      return NextResponse.json({ error: "Role not found" }, { status: 404 });
+    }
+
+    if (role.is_system) {
       return NextResponse.json({ error: "Cannot delete system roles" }, { status: 400 });
     }
 

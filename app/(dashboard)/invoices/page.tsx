@@ -22,38 +22,54 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const supabase = await createClient();
 
   // Authentication is handled by the dashboard layout - no redundant check needed.
-  // Build query with filters
-  let query = supabase
-    .from("invoices")
-    .select(
-      `
-      *,
-      client:clients(id, company_name),
-      created_by_user:users!invoices_created_by_fkey(id, name)
-    `,
-      { count: "exact" },
-    )
-    .order("created_at", { ascending: false });
-
-  // Apply search filter (invoice number or client name)
-  if (resolvedSearchParams.search) {
-    query = query.or(`invoice_number.ilike.%${resolvedSearchParams.search}%`);
-  }
-
-  // Apply status filter
-  if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
-    query = query.eq("status", resolvedSearchParams.status);
-  }
-
-  // Pagination
   const page = parseInt(resolvedSearchParams.page || "1");
   const pageSize = 20;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  query = query.range(from, to);
+  // Try query with user join first, fall back to simpler query if FK doesn't exist
+  let invoices: any[] | null = null;
+  let error: any = null;
+  let count: number | null = null;
 
-  const { data: invoices, error, count } = await query;
+  const buildQuery = (select: string) => {
+    let query = supabase
+      .from("invoices")
+      .select(select, { count: "exact" })
+      .order("created_at", { ascending: false });
+
+    if (resolvedSearchParams.search) {
+      query = query.or(`invoice_number.ilike.%${resolvedSearchParams.search}%`);
+    }
+
+    if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
+      query = query.eq("status", resolvedSearchParams.status);
+    }
+
+    return query.range(from, to);
+  };
+
+  // Try with created_by_user join
+  const result = await buildQuery(`
+    *,
+    client:clients(id, company_name),
+    created_by_user:users!invoices_created_by_fkey(id, name)
+  `);
+
+  if (result.error?.code === "PGRST200") {
+    // FK relationship not found - fall back to query without user join
+    const fallback = await buildQuery(`
+      *,
+      client:clients(id, company_name)
+    `);
+    invoices = fallback.data;
+    error = fallback.error;
+    count = fallback.count;
+  } else {
+    invoices = result.data;
+    error = result.error;
+    count = result.count;
+  }
 
   if (error) {
     console.error("Error fetching invoices:", error);

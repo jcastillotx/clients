@@ -20,7 +20,10 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
   const supabase = await createClient();
 
   // Fetch invoice with all related data
-  const { data: invoice, error } = await supabase
+  // Try with full FK joins first, fall back if FK constraints don't exist
+  let invoice: any = null;
+
+  const { data, error } = await supabase
     .from("invoices")
     .select(
       `
@@ -33,8 +36,28 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
     .eq("id", id)
     .single();
 
-  if (error || !invoice) {
+  if (error?.code === "PGRST200") {
+    // FK relationship not found - fall back to simpler query
+    const fallback = await supabase
+      .from("invoices")
+      .select(
+        `
+        *,
+        client:clients(id, company_name, domain),
+        invoice_items(id, description, quantity, unit_price, amount)
+      `,
+      )
+      .eq("id", id)
+      .single();
+
+    invoice = fallback.data;
+    if (fallback.error || !invoice) {
+      notFound();
+    }
+  } else if (error || !data) {
     notFound();
+  } else {
+    invoice = data;
   }
 
   return (
