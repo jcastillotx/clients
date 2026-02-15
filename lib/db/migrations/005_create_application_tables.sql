@@ -229,9 +229,58 @@ CREATE POLICY "Staff can manage invoices" ON public.invoices
     )
   );
 
--- Invoice Items RLS (inherit from invoice)
+-- Invoice Items RLS Policies
+-- Users can view invoice items for their client's invoices
 CREATE POLICY "Users can view invoice items" ON public.invoice_items
   FOR SELECT
+  USING (
+    invoice_id IN (
+      SELECT id FROM public.invoices
+      WHERE client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
+    )
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+-- Users can insert invoice items for their client's invoices
+CREATE POLICY "Users can insert invoice items" ON public.invoice_items
+  FOR INSERT
+  WITH CHECK (
+    invoice_id IN (
+      SELECT id FROM public.invoices
+      WHERE client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
+    )
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+-- Users can update invoice items for their client's invoices
+CREATE POLICY "Users can update invoice items" ON public.invoice_items
+  FOR UPDATE
+  USING (
+    invoice_id IN (
+      SELECT id FROM public.invoices
+      WHERE client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
+    )
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
+-- Users can delete invoice items for their client's invoices
+CREATE POLICY "Users can delete invoice items" ON public.invoice_items
+  FOR DELETE
   USING (
     invoice_id IN (
       SELECT id FROM public.invoices
