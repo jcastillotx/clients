@@ -6,6 +6,7 @@ This directory contains SQL migration files for the Kre8iv Clients Platform data
 
 Migrations are numbered sequentially and should be run in order:
 
+0. `000_create_core_tables.sql` - Core tables (clients, users) - **RUN FIRST**
 1. `001_create_rbac_tables.sql` - Role-Based Access Control tables
 2. `002_create_template_tables.sql` - Email and invoice template tables
 3. `003_create_document_tables.sql` - Document library tables
@@ -28,7 +29,8 @@ Connect to your database and run migrations in order:
 # Set your database connection string
 export DATABASE_URL="postgresql://postgres:[PASSWORD]@db.xxx.supabase.co:5432/postgres"
 
-# Run migrations in order
+# Run migrations in order (IMPORTANT: 000 must run first!)
+psql $DATABASE_URL -f lib/db/migrations/000_create_core_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/001_create_rbac_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/002_create_template_tables.sql
 psql $DATABASE_URL -f lib/db/migrations/003_create_document_tables.sql
