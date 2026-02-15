@@ -427,6 +427,19 @@ CREATE POLICY "Users can update their own time entries" ON public.time_entries
     )
   );
 
+-- Users can delete their own time entries (if not locked/billed)
+CREATE POLICY "Users can delete their own time entries" ON public.time_entries
+  FOR DELETE
+  USING (
+    (user_id = auth.uid() AND locked_at IS NULL AND billed_at IS NULL)
+    OR
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid() AND r.name IN ('super_admin', 'admin', 'account_manager')
+    )
+  );
+
 -- Projects RLS
 CREATE POLICY "Users can view their client's projects" ON public.projects
   FOR SELECT
