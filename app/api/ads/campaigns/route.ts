@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     const validatedData = createAdCampaignSchema.parse(body);
 
     // Generate platform-specific campaign ID (or use provided one)
-    const campaignId = validatedData.campaign_id || `camp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const campaignId = validatedData.campaign_id || `camp_${crypto.randomUUID()}`;
 
     // Map budget based on budget_type
     const dailyBudget = validatedData.budget_type === 'daily' ? validatedData.budget : null;
