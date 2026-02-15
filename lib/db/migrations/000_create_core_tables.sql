@@ -60,7 +60,8 @@ CREATE INDEX IF NOT EXISTS idx_users_status ON public.users(status) WHERE delete
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for clients
+-- RLS Policies for clients (drop first if exists to avoid conflicts)
+DROP POLICY IF EXISTS "Users can view their own client" ON public.clients;
 CREATE POLICY "Users can view their own client" ON public.clients
   FOR SELECT
   USING (
@@ -73,6 +74,7 @@ CREATE POLICY "Users can view their own client" ON public.clients
     )
   );
 
+DROP POLICY IF EXISTS "Admins can manage clients" ON public.clients;
 CREATE POLICY "Admins can manage clients" ON public.clients
   FOR ALL
   USING (
@@ -83,7 +85,8 @@ CREATE POLICY "Admins can manage clients" ON public.clients
     )
   );
 
--- RLS Policies for users
+-- RLS Policies for users (drop first if exists to avoid conflicts)
+DROP POLICY IF EXISTS "Users can view users from their client" ON public.users;
 CREATE POLICY "Users can view users from their client" ON public.users
   FOR SELECT
   USING (
@@ -98,6 +101,7 @@ CREATE POLICY "Users can view users from their client" ON public.users
     )
   );
 
+DROP POLICY IF EXISTS "Admins can manage users" ON public.users;
 CREATE POLICY "Admins can manage users" ON public.users
   FOR ALL
   USING (
