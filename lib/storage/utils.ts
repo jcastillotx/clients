@@ -15,11 +15,10 @@ export function formatFileSize(bytes: number): string {
  * Generate a unique file path
  */
 export function generateFilePath(clientId: string, folder: string, fileName: string): string {
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(7);
+  const uniqueId = crypto.randomUUID();
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
 
-  return `${clientId}/${folder}/${timestamp}-${randomString}-${sanitizedFileName}`;
+  return `${clientId}/${folder}/${uniqueId}-${sanitizedFileName}`;
 }
 
 /**

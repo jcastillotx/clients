@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { projects, projectBudgets, projectMilestones, projectDeliverables } from "@/lib/db/schema/projects";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { z } from "zod";
+import { createProjectSchema } from "@/lib/validations/project";
 
 /**
  * GET /api/projects

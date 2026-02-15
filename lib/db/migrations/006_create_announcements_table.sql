@@ -52,8 +52,8 @@ CREATE POLICY "Clients can view their announcements" ON public.announcements
     -- Global announcements (client_id is NULL)
     client_id IS NULL
     OR
-    -- Client-specific announcements
-    client_id IN (SELECT client_id FROM public.users WHERE id = auth.uid())
+    -- Client-specific announcements (use helper function to prevent recursion)
+    client_id = public.get_current_user_client_id()
     OR
     -- Staff can see all
     EXISTS (

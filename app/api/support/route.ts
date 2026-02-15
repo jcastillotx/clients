@@ -155,7 +155,8 @@ export async function POST(req: NextRequest) {
 async function generateTicketNumber(): Promise<string> {
   const prefix = "TKT-";
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  // Use crypto.randomUUID() for better uniqueness guarantee
+  const uniquePart = crypto.randomUUID().substring(0, 8).toUpperCase();
 
-  return `${prefix}${date}-${random}`;
+  return `${prefix}${date}-${uniquePart}`;
 }

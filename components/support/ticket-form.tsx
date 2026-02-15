@@ -69,9 +69,10 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
           continue;
         }
 
-        // Create unique filename
+        // Create unique filename using crypto.randomUUID() for collision resistance
         const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const uniqueId = crypto.randomUUID();
+        const fileName = `${uniqueId}.${fileExt}`;
         const filePath = `support-tickets/${fileName}`;
 
         // Upload to Supabase Storage

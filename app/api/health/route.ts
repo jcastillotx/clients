@@ -10,11 +10,27 @@ export async function GET() {
     const supabase = await createClient();
     
     // Check database connection
-    const { error } = await supabase.from("clients").select("id").limit(1).single();
+    const { data, error } = await supabase.from("clients").select("id").limit(1);
     
-    if (error && error.code !== "PGRST116") {
-      // PGRST116 is "no rows returned" which is fine
-      throw error;
+    // Check if query failed (Supabase returns errors in error field, doesn't throw)
+    if (error) {
+      // PGRST116 = "no rows returned" which is acceptable (table exists but empty)
+      if (error.code !== "PGRST116") {
+        console.error("Health check database error:", error);
+        return NextResponse.json(
+          { 
+            status: "degraded",
+            timestamp: new Date().toISOString(),
+            services: {
+              database: "error",
+              auth: "unknown"
+            },
+            error: error.message,
+            code: error.code
+          },
+          { status: 503 }
+        );
+      }
     }
 
     return NextResponse.json({ 
@@ -26,11 +42,15 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error("Health check failed:", error);
+    console.error("Health check exception:", error);
     return NextResponse.json(
       { 
-        status: "degraded",
+        status: "down",
         timestamp: new Date().toISOString(),
+        services: {
+          database: "down",
+          auth: "unknown"
+        },
         error: error instanceof Error ? error.message : "Unknown error"
       },
       { status: 503 }
@@ -44,9 +64,19 @@ export async function GET() {
 export async function HEAD() {
   try {
     const supabase = await createClient();
-    await supabase.from("clients").select("id").limit(1);
+    
+    // Actually check if the query succeeded
+    const { error } = await supabase.from("clients").select("id").limit(1);
+    
+    // Return 503 if query failed (even if no exception thrown)
+    if (error) {
+      console.error('Health check failed:', error.message);
+      return new Response(null, { status: 503 });
+    }
+    
     return new Response(null, { status: 200 });
   } catch (error) {
+    console.error('Health check exception:', error);
     return new Response(null, { status: 503 });
   }
 }

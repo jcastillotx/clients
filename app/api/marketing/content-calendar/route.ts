@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { createContentSchema } from "@/lib/validations/marketing";
 
 /**
  * GET /api/marketing/content-calendar
@@ -54,6 +56,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    
+    // Validate input
+    const validatedData = createContentSchema.parse(body);
 
     // Get user's client_id
     const { data: userData } = await supabase.from("users").select("client_id").eq("id", user.id).single();
@@ -66,12 +71,12 @@ export async function POST(req: NextRequest) {
       .from("content_calendar_items")
       .insert({
         client_id: userData.client_id,
-        title: body.title,
-        content: body.content,
-        content_type: body.content_type,
-        platform: body.platform,
-        status: body.status || "draft",
-        scheduled_for: body.scheduled_for,
+        title: validatedData.title,
+        content: validatedData.content,
+        content_type: validatedData.content_type,
+        platform: validatedData.platform,
+        status: validatedData.status,
+        scheduled_for: validatedData.scheduled_for || null,
         created_by: user.id,
       })
       .select()
@@ -81,6 +86,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+    }
     console.error("Error creating content:", error);
     return NextResponse.json({ error: "Failed to create content" }, { status: 500 });
   }
