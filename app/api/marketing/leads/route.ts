@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { createLeadSchema } from "@/lib/validations/marketing";
 
 /**
  * GET /api/marketing/leads
@@ -54,6 +56,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    
+    // Validate input
+    const validatedData = createLeadSchema.parse(body);
 
     // Get user's client_id
     const { data: userData } = await supabase.from("users").select("client_id").eq("id", user.id).single();
@@ -66,14 +71,14 @@ export async function POST(req: NextRequest) {
       .from("leads")
       .insert({
         client_id: userData.client_id,
-        name: body.name,
-        email: body.email,
-        phone: body.phone,
-        company: body.company,
-        source: body.source,
-        status: body.status || "new",
+        name: validatedData.name,
+        email: validatedData.email,
+        phone: validatedData.phone || null,
+        company: validatedData.company || null,
+        source: validatedData.source,
+        status: validatedData.status,
         score: 0,
-        metadata: body.metadata,
+        metadata: validatedData.metadata || null,
       })
       .select()
       .single();
@@ -82,6 +87,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+    }
     console.error("Error creating lead:", error);
     return NextResponse.json({ error: "Failed to create lead" }, { status: 500 });
   }

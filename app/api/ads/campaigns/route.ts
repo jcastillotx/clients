@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { createAdCampaignSchema } from "@/lib/validations/ad-campaign";
 
 /**
  * GET /api/ads/campaigns
@@ -53,27 +55,30 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    
+    // Validate input
+    const validatedData = createAdCampaignSchema.parse(body);
 
     // Generate platform-specific campaign ID (or use provided one)
-    const campaignId = body.campaign_id || `camp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const campaignId = validatedData.campaign_id || `camp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
     // Map budget based on budget_type
-    const dailyBudget = body.budget_type === 'daily' ? body.budget : null;
-    const lifetimeBudget = body.budget_type === 'lifetime' ? body.budget : null;
+    const dailyBudget = validatedData.budget_type === 'daily' ? validatedData.budget : null;
+    const lifetimeBudget = validatedData.budget_type === 'lifetime' ? validatedData.budget : null;
 
     const { data, error } = await supabase
       .from("ad_campaigns")
       .insert({
-        ad_account_id: body.ad_account_id,
+        ad_account_id: validatedData.ad_account_id,
         campaign_id: campaignId,
-        name: body.name,
-        objective: body.objective,
-        status: body.status || "draft",
+        name: validatedData.name,
+        objective: validatedData.objective,
+        status: validatedData.status,
         daily_budget: dailyBudget,
         lifetime_budget: lifetimeBudget,
-        start_date: body.start_date,
-        end_date: body.end_date,
-        metadata: body.metadata,
+        start_date: validatedData.start_date || null,
+        end_date: validatedData.end_date || null,
+        metadata: validatedData.metadata || null,
       })
       .select()
       .single();
@@ -82,6 +87,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+    }
     console.error("Error creating ad campaign:", error);
     return NextResponse.json({ error: "Failed to create ad campaign" }, { status: 500 });
   }

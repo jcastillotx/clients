@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 /**
  * GET /api/marketing/campaigns
@@ -54,6 +55,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    
+    // Validate input
+    const { createCampaignSchema } = await import("@/lib/validations/marketing");
+    const validatedData = createCampaignSchema.parse(body);
 
     // Get user's client_id
     const { data: userData } = await supabase.from("users").select("client_id").eq("id", user.id).single();
@@ -66,16 +71,16 @@ export async function POST(req: NextRequest) {
       .from("campaigns")
       .insert({
         client_id: userData.client_id,
-        name: body.name,
-        description: body.description,
-        campaign_type: body.type,
-        status: body.status || "draft",
-        start_date: body.start_date,
-        end_date: body.end_date,
-        budget: body.budget,
-        currency: body.currency || "USD",
+        name: validatedData.name,
+        description: validatedData.description || null,
+        campaign_type: validatedData.type,
+        status: validatedData.status,
+        start_date: validatedData.start_date || null,
+        end_date: validatedData.end_date || null,
+        budget: validatedData.budget || null,
+        currency: validatedData.currency,
         created_by: user.id,
-        metadata: body.metadata,
+        metadata: validatedData.metadata || null,
       })
       .select()
       .single();
@@ -84,6 +89,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+    }
     console.error("Error creating campaign:", error);
     return NextResponse.json({ error: "Failed to create campaign" }, { status: 500 });
   }

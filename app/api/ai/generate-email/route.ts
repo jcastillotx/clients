@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { generateEmailSchema } from "@/lib/validations/ai";
 
 /**
  * POST /api/ai/generate-email
@@ -20,25 +22,30 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { purpose, tone, recipient, subject, keyPoints, customInstructions } = body;
+    
+    // Validate input
+    const validatedData = generateEmailSchema.parse(body);
 
     // For now, generate a basic email structure
     // TODO: Integrate with OpenAI/Anthropic API for real AI generation
     
     const email = generateEmailContent({
-      purpose,
-      tone,
-      recipient,
-      subject,
-      keyPoints,
-      customInstructions,
+      purpose: validatedData.purpose,
+      tone: validatedData.tone,
+      recipient: validatedData.recipient || "",
+      subject: validatedData.subject || "",
+      keyPoints: validatedData.keyPoints,
+      customInstructions: validatedData.customInstructions || "",
     });
 
     return NextResponse.json({ 
       email,
-      subject: subject || generateSubject(purpose, keyPoints),
+      subject: validatedData.subject || generateSubject(validatedData.purpose, validatedData.keyPoints),
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+    }
     console.error("Error generating email:", error);
     return NextResponse.json(
       { error: "Failed to generate email" },

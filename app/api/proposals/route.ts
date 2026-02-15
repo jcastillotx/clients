@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { createProposalSchema, updateProposalSchema } from "@/lib/validations/proposal";
 
 /**
  * GET /api/proposals
@@ -70,20 +72,23 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    
+    // Validate input
+    const validatedData = createProposalSchema.parse(body);
 
     const { data, error } = await supabase
       .from("proposals")
       .insert({
-        client_id: body.clientId,
-        title: body.title,
-        description: body.description || null,
+        client_id: validatedData.clientId,
+        title: validatedData.title,
+        description: validatedData.description || null,
         status: "draft",
-        total_amount: body.totalAmount,
-        currency: body.currency || "USD",
-        valid_until: body.validUntil || null,
-        terms: body.terms || null,
-        line_items: body.lineItems,
-        metadata: body.metadata || {},
+        total_amount: validatedData.totalAmount,
+        currency: validatedData.currency,
+        valid_until: validatedData.validUntil || null,
+        terms: validatedData.terms || null,
+        line_items: validatedData.lineItems,
+        metadata: validatedData.metadata || null,
         created_by: user.id,
       })
       .select()
@@ -93,6 +98,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+    }
     console.error("Error creating proposal:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to create proposal" },
@@ -120,13 +128,19 @@ export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
     const { id, ...updates } = body;
+    
+    // Validate updates
+    const validatedData = updateProposalSchema.parse(updates);
 
-    const { data, error } = await supabase.from("proposals").update(updates).eq("id", id).select().single();
+    const { data, error } = await supabase.from("proposals").update(validatedData).eq("id", id).select().single();
 
     if (error) throw error;
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+    }
     console.error("Error updating proposal:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to update proposal" },
