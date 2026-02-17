@@ -61,7 +61,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
 
         {/* Page Content with consistent spacing */}
-        <div className="relative p-6 md:p-8">{children}</div>
+        <div className="dashboard-page-content relative p-6 md:p-8">{children}</div>
       </main>
     </div>
   );
