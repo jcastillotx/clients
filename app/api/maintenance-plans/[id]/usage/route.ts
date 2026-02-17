@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { maintenancePlans, maintenancePlanUsage } from "@/lib/db/schema/maintenance-plans";
 import { eq, sql } from "drizzle-orm";
 
@@ -134,13 +134,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     );
   } catch (error) {
     console.error("Error logging maintenance plan usage:", error);
+    const status = isDatabaseConfigurationError(error) ? 503 : 500;
+
     return NextResponse.json(
       {
         success: false,
         error: "Failed to log hours",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status },
     );
   }
 }
@@ -217,13 +219,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
   } catch (error) {
     console.error("Error fetching maintenance plan usage:", error);
+    const status = isDatabaseConfigurationError(error) ? 503 : 500;
+
     return NextResponse.json(
       {
         success: false,
         error: "Failed to fetch usage history",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status },
     );
   }
 }
