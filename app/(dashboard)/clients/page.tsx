@@ -18,13 +18,6 @@ interface QueryErrorShape {
   details?: string | null;
 }
 
-function isMissingPrimaryContactRelation(error: QueryErrorShape | null) {
-  if (!error) return false;
-  if (error.code !== "PGRST200") return false;
-  const detailText = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
-  return detailText.includes("clients_primary_contact_id_fkey");
-}
-
 function isMissingLegacyClientColumn(error: QueryErrorShape | null) {
   if (!error) return false;
   const detailText = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
@@ -99,27 +92,13 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   const searchValue = resolvedSearchParams.search?.trim();
 
   const runClientsQuery = async ({
-    includePrimaryContact,
     useLegacySearchColumns,
   }: {
-    includePrimaryContact: boolean;
     useLegacySearchColumns: boolean;
   }) => {
     let query = dbClient
       .from("clients")
-      .select(
-        includePrimaryContact
-          ? `
-            *,
-            primary_contact:users!clients_primary_contact_id_fkey(id, name, email, phone),
-            _count:requests(count)
-          `
-          : `
-            *,
-            _count:requests(count)
-          `,
-        { count: "exact" },
-      )
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
 
     if (excludedClientIds.length > 0) {
@@ -146,16 +125,11 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     return query.range(from, to);
   };
 
-  let result = await runClientsQuery({ includePrimaryContact: true, useLegacySearchColumns: true });
-
-  if (isMissingPrimaryContactRelation(result.error)) {
-    console.warn("Missing clients_primary_contact_id_fkey relation; retrying /clients query without primary contact join");
-    result = await runClientsQuery({ includePrimaryContact: false, useLegacySearchColumns: true });
-  }
+  let result = await runClientsQuery({ useLegacySearchColumns: true });
 
   if (isMissingLegacyClientColumn(result.error)) {
     console.warn("Missing legacy client columns (domain/industry); retrying /clients query with core searchable fields");
-    result = await runClientsQuery({ includePrimaryContact: false, useLegacySearchColumns: false });
+    result = await runClientsQuery({ useLegacySearchColumns: false });
   }
 
   const { data: clients, error, count } = result;
