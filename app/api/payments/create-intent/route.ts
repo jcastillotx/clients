@@ -28,14 +28,7 @@ export async function POST(request: Request) {
         `
         *,
         client:clients(
-          id,
-          company_name,
-          stripe_customer_id,
-          primary_contact:users!clients_primary_contact_id_fkey(
-            id,
-            name,
-            email
-          )
+          *
         )
       `,
       )
@@ -44,6 +37,28 @@ export async function POST(request: Request) {
 
     if (invoiceError || !invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+
+    const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+
+    if (!client) {
+      return NextResponse.json({ error: "Invoice client not found" }, { status: 404 });
+    }
+
+    let primaryContact: { id: string; name: string; email: string } | null = null;
+
+    if (typeof client.primary_contact_id === "string" && client.primary_contact_id.length > 0) {
+      const { data: contact, error: contactError } = await supabase
+        .from("users")
+        .select("id, name, email")
+        .eq("id", client.primary_contact_id)
+        .maybeSingle();
+
+      if (contactError) {
+        console.error("Error fetching client primary contact:", contactError);
+      } else {
+        primaryContact = contact;
+      }
     }
 
     // Check if invoice is already paid
@@ -57,23 +72,23 @@ export async function POST(request: Request) {
     }
 
     // Get or create Stripe customer
-    let customerId = invoice.client.stripe_customer_id;
+    let customerId = client.stripe_customer_id;
 
-    if (!customerId && invoice.client.primary_contact) {
+    if (!customerId && primaryContact?.email) {
       // Create Stripe customer
       const customer = await stripe.customers.create({
-        email: invoice.client.primary_contact.email,
-        name: invoice.client.company_name,
+        email: primaryContact.email,
+        name: client.company_name,
         metadata: {
-          client_id: invoice.client.id,
-          supabase_user_id: invoice.client.primary_contact.id,
+          client_id: client.id,
+          supabase_user_id: primaryContact.id,
         },
       });
 
       customerId = customer.id;
 
       // Update client with Stripe customer ID
-      await supabase.from("clients").update({ stripe_customer_id: customerId }).eq("id", invoice.client.id);
+      await supabase.from("clients").update({ stripe_customer_id: customerId }).eq("id", client.id);
     }
 
     // Create payment intent
