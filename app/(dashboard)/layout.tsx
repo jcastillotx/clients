@@ -39,7 +39,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const isSuperAdmin = Boolean(dbUser?.is_super_admin || user.user_metadata?.is_super_admin === true);
   const isAdmin = isSuperAdmin || roleNames.has("admin") || roleNames.has("super_admin");
-  const isStaff = isAdmin || roleNames.has("staff");
+  const isAccountManager = roleNames.has("account_manager");
+  const isStaff = isAdmin || isAccountManager || roleNames.has("staff");
 
   const userRole = isAdmin ? "admin" : isStaff ? "staff" : "client";
   const { data: userData } = await supabase.from("users").select("name, email, client_id").eq("id", user.id).single();
@@ -47,7 +48,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
       {/* Sidebar Navigation */}
-      <DashboardNav user={user} isStaff={isStaff} isAdmin={isAdmin} />
+      <DashboardNav user={user} isStaff={isStaff} isAdmin={isAdmin} isAccountManager={isAccountManager} />
 
       {/* Main Content */}
       <main className="relative flex-1 overflow-y-auto">

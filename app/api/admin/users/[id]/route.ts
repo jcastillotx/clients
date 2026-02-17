@@ -1,61 +1,93 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { hasPermission } from "@/lib/rbac/permissions";
+import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const canManage = await hasPermission("users.manage");
-    if (!canManage) {
+    const supabase = await createClient();
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
+    const isAdminMetadataRole =
+      currentUser.user_metadata?.is_super_admin === true ||
+      metadataRole === Roles.SUPER_ADMIN ||
+      metadataRole === Roles.ADMIN;
+    const hasManagementMetadataRole = isAdminMetadataRole || metadataRole === Roles.ACCOUNT_MANAGER;
+
+    const accessOptions = { supabase, userId: currentUser.id };
+    const [canManageUsers, canUpdateUsers, canAssignRoles, hasManagementRoleDb] = await Promise.all([
+      hasPermission(Permissions.USERS_MANAGE, accessOptions),
+      hasPermission(Permissions.USERS_UPDATE, accessOptions),
+      hasPermission(Permissions.USERS_ASSIGN_ROLES, accessOptions),
+      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+    ]);
+    const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+
+    if (!(canManageUsers || canUpdateUsers || hasManagementRole)) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
     const body = await request.json();
     const { name, email, phone, password, client_id, is_active, roles } = body;
+    const adminClient = createAdminClient();
 
-    const supabase = await createClient();
-
-    // Update auth user if password changed
-    if (password) {
-      await supabase.auth.admin.updateUserById(id, {
-        password,
+    // Keep auth profile aligned with app profile changes
+    if (password || email || name || phone || client_id !== undefined) {
+      const { error: authError } = await adminClient.auth.admin.updateUserById(id, {
+        ...(password ? { password } : {}),
+        ...(email ? { email } : {}),
         user_metadata: { name, phone, client_id },
       });
+
+      if (authError) throw authError;
     }
 
     // Update user record
-    const { data: user, error } = await supabase
+    const { error } = await adminClient
       .from("users")
       .update({
         name,
         email,
-        phone,
-        client_id,
-        is_active,
-        status: is_active ? "active" : "inactive",
+        phone: phone || null,
+        client_id: client_id || null,
+        is_active: is_active !== false,
+        status: is_active === false ? "inactive" : "active",
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
-      .select()
-      .single();
 
     if (error) throw error;
 
     // Update roles
-    if (roles) {
+    if (Array.isArray(roles) && (canAssignRoles || canManageUsers || isAdminMetadataRole)) {
+      const roleIds = Array.from(new Set(roles.filter((roleId: unknown): roleId is string => typeof roleId === "string")));
+
       // Remove existing roles
-      await supabase.from("user_roles").delete().eq("user_id", id);
+      await adminClient.from("user_roles").delete().eq("user_id", id);
 
       // Add new roles
-      if (roles.length > 0) {
-        await supabase
-          .from("user_roles")
-          .insert(roles.map((role_id: string) => ({ user_id: id, role_id })));
+      if (roleIds.length > 0) {
+        const { error: rolesError } = await adminClient.from("user_roles").insert(
+          roleIds.map((role_id: string) => ({
+            user_id: id,
+            role_id,
+            assigned_by: currentUser.id,
+          })),
+        );
+
+        if (rolesError) throw rolesError;
       }
     }
 
     // Fetch complete user with roles
-    const { data: completeUser } = await supabase
+    const { data: completeUser } = await adminClient
       .from("users")
       .select(`
         *,
@@ -77,18 +109,38 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const canManage = await hasPermission("users.manage");
-    if (!canManage) {
+    const supabase = await createClient();
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
+    const isAdminMetadataRole =
+      currentUser.user_metadata?.is_super_admin === true ||
+      metadataRole === Roles.SUPER_ADMIN ||
+      metadataRole === Roles.ADMIN;
+
+    const accessOptions = { supabase, userId: currentUser.id };
+    const [canManageUsers, canDeleteUsers] = await Promise.all([
+      hasPermission(Permissions.USERS_MANAGE, accessOptions),
+      hasPermission(Permissions.USERS_DELETE, accessOptions),
+    ]);
+
+    if (!(canManageUsers || canDeleteUsers || isAdminMetadataRole)) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
-    const supabase = await createClient();
+    const adminClient = createAdminClient();
 
     // Soft delete user
-    const { error } = await supabase
+    const { error } = await adminClient
       .from("users")
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);

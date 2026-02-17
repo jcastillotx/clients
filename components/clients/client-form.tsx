@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
 
 const clientSchema = z.object({
@@ -90,13 +89,6 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
     setError(null);
 
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) throw new Error("Not authenticated");
-
       const clientData = {
         company_name: data.companyName,
         domain: data.domain || null,
@@ -113,20 +105,32 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
 
       if (isEditing) {
         // Update existing client
-        const { error: updateError } = await supabase.from("clients").update(clientData).eq("id", initialData.id);
+        const response = await fetch(`/api/clients/${initialData.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(clientData),
+        });
 
-        if (updateError) throw updateError;
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({ error: "Failed to update client" }));
+          throw new Error(payload.error || "Failed to update client");
+        }
 
         router.push(`/clients/${initialData.id}`);
       } else {
         // Create new client
-        const { data: client, error: createError } = await supabase
-          .from("clients")
-          .insert(clientData)
-          .select()
-          .single();
+        const response = await fetch("/api/clients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(clientData),
+        });
 
-        if (createError) throw createError;
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({ error: "Failed to create client" }));
+          throw new Error(payload.error || "Failed to create client");
+        }
+
+        const { client } = await response.json();
 
         router.push(`/clients/${client.id}`);
       }

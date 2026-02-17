@@ -59,10 +59,13 @@ interface UserDialogProps {
   user: User | null;
   roles: Role[];
   clients: Client[];
+  canAssignRoles: boolean;
   onSuccess: (user: User) => void;
 }
 
-export function UserDialog({ open, onOpenChange, user, roles, clients, onSuccess }: UserDialogProps) {
+const NO_CLIENT_VALUE = "__no_client__";
+
+export function UserDialog({ open, onOpenChange, user, roles, clients, canAssignRoles, onSuccess }: UserDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -129,7 +132,7 @@ export function UserDialog({ open, onOpenChange, user, roles, clients, onSuccess
         ...formData,
         client_id: formData.client_id || null,
         phone: formData.phone || null,
-        roles: selectedRoles,
+        ...(canAssignRoles ? { roles: selectedRoles } : {}),
       };
 
       const url = user ? `/api/admin/users/${user.id}` : "/api/admin/users";
@@ -231,15 +234,20 @@ export function UserDialog({ open, onOpenChange, user, roles, clients, onSuccess
             <div className="space-y-2">
               <Label htmlFor="client">Client Organization</Label>
               <Select
-                value={formData.client_id}
-                onValueChange={(value) => setFormData({ ...formData, client_id: value })}
+                value={formData.client_id || NO_CLIENT_VALUE}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    client_id: value === NO_CLIENT_VALUE ? "" : value,
+                  })
+                }
                 disabled={isLoading}
               >
                 <SelectTrigger id="client">
                   <SelectValue placeholder="No client (staff member)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No client (staff member)</SelectItem>
+                  <SelectItem value={NO_CLIENT_VALUE}>No client (staff member)</SelectItem>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.company_name}
@@ -250,49 +258,55 @@ export function UserDialog({ open, onOpenChange, user, roles, clients, onSuccess
             </div>
 
             {/* Roles */}
-            <div className="space-y-2">
-              <Label>Roles</Label>
+            {canAssignRoles ? (
               <div className="space-y-2">
-                <Select onValueChange={handleAddRole} disabled={isLoading}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Add role..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles
-                      .filter((role) => !selectedRoles.includes(role.id))
-                      .map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          {role.name}
-                          {role.description && (
-                            <span className="text-xs text-muted-foreground"> - {role.description}</span>
-                          )}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                <Label>Roles</Label>
+                <div className="space-y-2">
+                  <Select onValueChange={handleAddRole} disabled={isLoading}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add role..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles
+                        .filter((role) => !selectedRoles.includes(role.id))
+                        .map((role) => (
+                          <SelectItem key={role.id} value={role.id}>
+                            {role.name}
+                            {role.description && (
+                              <span className="text-xs text-muted-foreground"> - {role.description}</span>
+                            )}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
 
-                {selectedRoles.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRoles.map((roleId) => {
-                      const role = roles.find((r) => r.id === roleId);
-                      if (!role) return null;
-                      return (
-                        <Badge key={roleId} variant="secondary">
-                          {role.name}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveRole(roleId)}
-                            className="ml-1 rounded-full hover:bg-muted"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
+                  {selectedRoles.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedRoles.map((roleId) => {
+                        const role = roles.find((r) => r.id === roleId);
+                        if (!role) return null;
+                        return (
+                          <Badge key={roleId} variant="secondary">
+                            {role.name}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveRole(roleId)}
+                              className="ml-1 rounded-full hover:bg-muted"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+                Role assignment is restricted for your account. New users will be added without role changes.
+              </div>
+            )}
 
             {/* Active Status */}
             <div className="flex items-center justify-between rounded-lg border p-4">
