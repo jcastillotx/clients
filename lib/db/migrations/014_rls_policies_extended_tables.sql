@@ -30,7 +30,7 @@ DO $$ BEGIN
     EXECUTE 'CREATE POLICY "view_brand_sections" ON public.brand_guide_sections FOR SELECT USING (
       EXISTS (
         SELECT 1 FROM public.brand_guides bg
-        WHERE bg.id = brand_guide_sections.guide_id
+        WHERE bg.id = brand_guide_sections.brand_guide_id
         AND (bg.client_id IS NULL OR bg.client_id = public.get_current_user_client_id() OR public.is_admin_or_super_admin())
       )
     )';
@@ -45,7 +45,7 @@ DO $$ BEGIN
     EXECUTE 'CREATE POLICY "view_brand_colors" ON public.brand_colors FOR SELECT USING (
       EXISTS (
         SELECT 1 FROM public.brand_guides bg
-        WHERE bg.id = brand_colors.guide_id
+        WHERE bg.id = brand_colors.brand_guide_id
         AND (bg.client_id IS NULL OR bg.client_id = public.get_current_user_client_id() OR public.is_admin_or_super_admin())
       )
     )';
@@ -60,7 +60,7 @@ DO $$ BEGIN
     EXECUTE 'CREATE POLICY "view_brand_fonts" ON public.brand_fonts FOR SELECT USING (
       EXISTS (
         SELECT 1 FROM public.brand_guides bg
-        WHERE bg.id = brand_fonts.guide_id
+        WHERE bg.id = brand_fonts.brand_guide_id
         AND (bg.client_id IS NULL OR bg.client_id = public.get_current_user_client_id() OR public.is_admin_or_super_admin())
       )
     )';
@@ -75,7 +75,7 @@ DO $$ BEGIN
     EXECUTE 'CREATE POLICY "view_brand_templates" ON public.brand_templates FOR SELECT USING (
       EXISTS (
         SELECT 1 FROM public.brand_guides bg
-        WHERE bg.id = brand_templates.guide_id
+        WHERE bg.id = brand_templates.brand_guide_id
         AND (bg.client_id IS NULL OR bg.client_id = public.get_current_user_client_id() OR public.is_admin_or_super_admin())
       )
     )';
