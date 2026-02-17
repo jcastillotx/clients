@@ -12,6 +12,28 @@ interface SearchParams {
   page?: string;
 }
 
+interface QueryErrorShape {
+  code?: string;
+  message?: string | null;
+  details?: string | null;
+}
+
+function isMissingPrimaryContactRelation(error: QueryErrorShape | null) {
+  if (!error) return false;
+  if (error.code !== "PGRST200") return false;
+  const detailText = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  return detailText.includes("clients_primary_contact_id_fkey");
+}
+
+function isMissingLegacyClientColumn(error: QueryErrorShape | null) {
+  if (!error) return false;
+  const detailText = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  return (
+    (error.code === "42703" || detailText.includes("does not exist")) &&
+    (detailText.includes("domain") || detailText.includes("industry"))
+  );
+}
+
 /**
  * Clients list page (Server Component)
  *
@@ -69,50 +91,74 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
 
-  // Build query with filters
-  let query = dbClient
-    .from("clients")
-    .select(
-      `
-      *,
-      primary_contact:users!clients_primary_contact_id_fkey(id, name, email, phone),
-      _count:requests(count)
-    `,
-      { count: "exact" },
-    )
-    .order("created_at", { ascending: false });
-
-  if (excludedClientIds.length > 0) {
-    const formattedIds = excludedClientIds.map((id) => `"${id}"`).join(",");
-    query = query.not("id", "in", `(${formattedIds})`);
-  }
-
-  if (excludedCompanyNames.length > 0) {
-    const formattedNames = excludedCompanyNames.map((name) => `"${name}"`).join(",");
-    query = query.not("company_name", "in", `(${formattedNames})`);
-  }
-
-  // Apply search filter
-  if (resolvedSearchParams.search) {
-    query = query.or(
-      `company_name.ilike.%${resolvedSearchParams.search}%,domain.ilike.%${resolvedSearchParams.search}%,industry.ilike.%${resolvedSearchParams.search}%`,
-    );
-  }
-
-  // Apply status filter
-  if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
-    query = query.eq("status", resolvedSearchParams.status);
-  }
-
   // Pagination
   const page = parseInt(resolvedSearchParams.page || "1");
   const pageSize = 20;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+  const searchValue = resolvedSearchParams.search?.trim();
 
-  query = query.range(from, to);
+  const runClientsQuery = async ({
+    includePrimaryContact,
+    useLegacySearchColumns,
+  }: {
+    includePrimaryContact: boolean;
+    useLegacySearchColumns: boolean;
+  }) => {
+    let query = dbClient
+      .from("clients")
+      .select(
+        includePrimaryContact
+          ? `
+            *,
+            primary_contact:users!clients_primary_contact_id_fkey(id, name, email, phone),
+            _count:requests(count)
+          `
+          : `
+            *,
+            _count:requests(count)
+          `,
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false });
 
-  const { data: clients, error, count } = await query;
+    if (excludedClientIds.length > 0) {
+      const formattedIds = excludedClientIds.map((id) => `"${id}"`).join(",");
+      query = query.not("id", "in", `(${formattedIds})`);
+    }
+
+    if (excludedCompanyNames.length > 0) {
+      const formattedNames = excludedCompanyNames.map((name) => `"${name}"`).join(",");
+      query = query.not("company_name", "in", `(${formattedNames})`);
+    }
+
+    if (searchValue) {
+      const searchFilter = useLegacySearchColumns
+        ? `company_name.ilike.%${searchValue}%,domain.ilike.%${searchValue}%,industry.ilike.%${searchValue}%`
+        : `company_name.ilike.%${searchValue}%,email.ilike.%${searchValue}%,website.ilike.%${searchValue}%`;
+      query = query.or(searchFilter);
+    }
+
+    if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
+      query = query.eq("status", resolvedSearchParams.status);
+    }
+
+    return query.range(from, to);
+  };
+
+  let result = await runClientsQuery({ includePrimaryContact: true, useLegacySearchColumns: true });
+
+  if (isMissingPrimaryContactRelation(result.error)) {
+    console.warn("Missing clients_primary_contact_id_fkey relation; retrying /clients query without primary contact join");
+    result = await runClientsQuery({ includePrimaryContact: false, useLegacySearchColumns: true });
+  }
+
+  if (isMissingLegacyClientColumn(result.error)) {
+    console.warn("Missing legacy client columns (domain/industry); retrying /clients query with core searchable fields");
+    result = await runClientsQuery({ includePrimaryContact: false, useLegacySearchColumns: false });
+  }
+
+  const { data: clients, error, count } = result;
 
   if (error) {
     console.error("Error fetching clients:", error);

@@ -20,7 +20,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
   const supabase = await createClient();
 
   // Fetch client with all related data
-  const { data: client, error } = await supabase
+  let { data: client, error } = await supabase
     .from("clients")
     .select(
       `
@@ -30,6 +30,15 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
     )
     .eq("id", id)
     .single();
+
+  if (error?.code === "PGRST200") {
+    console.warn(
+      "Missing clients_primary_contact_id_fkey relation; retrying /clients/[id] query without primary contact join",
+    );
+    const fallback = await supabase.from("clients").select("*").eq("id", id).single();
+    client = fallback.data ? { ...fallback.data, primary_contact: null } : fallback.data;
+    error = fallback.error;
+  }
 
   if (error || !client) {
     notFound();
