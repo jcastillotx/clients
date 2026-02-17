@@ -142,7 +142,7 @@ DO $$ BEGIN
     EXECUTE 'CREATE POLICY "view_inconsistencies" ON public.brand_inconsistencies FOR SELECT USING (
       EXISTS (
         SELECT 1 FROM public.brand_audits ba
-        WHERE ba.id = brand_inconsistencies.audit_id
+        WHERE ba.id = brand_inconsistencies.brand_audit_id
         AND (ba.client_id IS NULL OR ba.client_id = public.get_current_user_client_id() OR public.is_admin_or_super_admin())
       )
     )';
