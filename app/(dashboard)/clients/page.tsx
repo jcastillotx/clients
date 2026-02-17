@@ -1,4 +1,4 @@
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { ClientList } from "@/components/clients/client-list";
 
 export const metadata = {
@@ -29,7 +29,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
   if (!user) return null; // Type narrowing only; layout already guards auth
 
-  const metadataRole = String(user.user_metadata?.role ?? "").toLowerCase();
+  const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
   const [userRowRes, userRolesRes] = await Promise.all([
     supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle(),
     supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
@@ -53,7 +53,12 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     roleNames.has("super_admin") ||
     roleNames.has("account_manager");
 
-  const dbClient = isAdminUser ? createAdminClient() : supabase;
+  const adminClient = isAdminUser ? createAdminClientIfAvailable() : null;
+  const dbClient = adminClient ?? supabase;
+
+  if (isAdminUser && !adminClient) {
+    console.warn("Service-role Supabase key missing; falling back to session client for /clients");
+  }
 
   const excludedClientIds = (process.env.PARENT_CLIENT_IDS ?? "")
     .split(",")

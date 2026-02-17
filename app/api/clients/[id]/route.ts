@@ -1,4 +1,4 @@
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
@@ -35,8 +35,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const body = await request.json();
 
-    const adminClient = createAdminClient();
-    const { data: client, error } = await adminClient.from("clients").update(body).eq("id", id).select().single();
+    const adminClient = hasManagementRole ? createAdminClientIfAvailable() : null;
+    const dbClient = adminClient ?? supabase;
+
+    if (hasManagementRole && !adminClient) {
+      console.warn("Service-role Supabase key missing; falling back to session client for PATCH /api/clients/[id]");
+    }
+
+    const { data: client, error } = await dbClient.from("clients").update(body).eq("id", id).select().single();
 
     if (error) throw error;
 
