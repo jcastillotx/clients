@@ -39,7 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_announcements_client_id ON public.announcements(c
 CREATE INDEX IF NOT EXISTS idx_announcements_is_active ON public.announcements(is_active) WHERE is_active = true AND deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_announcements_priority ON public.announcements(priority DESC) WHERE is_active = true AND deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_announcements_created_at ON public.announcements(created_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_announcements_expires_at ON public.announcements(expires_at) WHERE expires_at > NOW() AND deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_announcements_expires_at ON public.announcements(expires_at) WHERE expires_at IS NOT NULL AND deleted_at IS NULL;
 
 -- Enable RLS
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
