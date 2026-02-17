@@ -34,17 +34,11 @@ export async function createClient() {
   );
 }
 
-/**
- * Create a Supabase admin client with service role key.
- * WARNING: This bypasses Row-Level Security (RLS)!
- */
-export function createAdminClient() {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY;
+function getServiceRoleKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY ?? null;
+}
 
-  if (!serviceRoleKey) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY) for admin operations");
-  }
-
+function createServiceRoleClient(serviceRoleKey: string) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     serviceRoleKey,
@@ -58,4 +52,28 @@ export function createAdminClient() {
       },
     }
   );
+}
+
+/**
+ * Create a Supabase admin client with service role key.
+ * WARNING: This bypasses Row-Level Security (RLS)!
+ */
+export function createAdminClient() {
+  const serviceRoleKey = getServiceRoleKey();
+
+  if (!serviceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY) for admin operations");
+  }
+
+  return createServiceRoleClient(serviceRoleKey);
+}
+
+/**
+ * Create an admin client only when a service role key is configured.
+ * Returns null in environments where service-role credentials are unavailable.
+ */
+export function createAdminClientIfAvailable() {
+  const serviceRoleKey = getServiceRoleKey();
+  if (!serviceRoleKey) return null;
+  return createServiceRoleClient(serviceRoleKey);
 }

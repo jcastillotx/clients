@@ -1,4 +1,4 @@
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { ClientForm } from "@/components/clients/client-form";
 import { redirect } from "next/navigation";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
@@ -42,10 +42,19 @@ export default async function NewClientPage() {
     redirect("/clients");
   }
 
-  const dbClient = hasManagementRole ? createAdminClient() : supabase;
+  const adminClient = hasManagementRole ? createAdminClientIfAvailable() : null;
+  const dbClient = adminClient ?? supabase;
+
+  if (hasManagementRole && !adminClient) {
+    console.warn("Service-role Supabase key missing; falling back to session client for /clients/new");
+  }
 
   // Fetch users for primary contact selection
-  const { data: users } = await dbClient.from("users").select("id, name, email").order("name");
+  const { data: users, error: usersError } = await dbClient.from("users").select("id, name, email").order("name");
+
+  if (usersError) {
+    console.error("Error fetching users for client creation:", usersError);
+  }
 
   return (
     <div className="flex flex-col gap-8 p-8 max-w-4xl mx-auto">
@@ -54,7 +63,7 @@ export default async function NewClientPage() {
         <p className="text-muted-foreground">Create a new client account</p>
       </div>
 
-      <ClientForm users={users || []} />
+      <ClientForm users={users ?? []} />
     </div>
   );
 }

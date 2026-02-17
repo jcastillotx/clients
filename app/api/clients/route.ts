@@ -1,4 +1,4 @@
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
@@ -37,8 +37,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Company name is required" }, { status: 400 });
     }
 
-    const adminClient = createAdminClient();
-    const { data: client, error } = await adminClient.from("clients").insert(body).select().single();
+    const adminClient = hasManagementRole ? createAdminClientIfAvailable() : null;
+    const dbClient = adminClient ?? supabase;
+
+    if (hasManagementRole && !adminClient) {
+      console.warn("Service-role Supabase key missing; falling back to session client for POST /api/clients");
+    }
+
+    const { data: client, error } = await dbClient.from("clients").insert(body).select().single();
 
     if (error) throw error;
 
