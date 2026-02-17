@@ -1,6 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { ClientForm } from "@/components/clients/client-form";
 import { redirect } from "next/navigation";
+import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
 export const metadata = {
   title: "New Client | KRE8IV",
@@ -23,8 +24,28 @@ export default async function NewClientPage() {
     redirect("/login");
   }
 
+  const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
+  const hasManagementMetadataRole =
+    user.user_metadata?.is_super_admin === true ||
+    metadataRole === Roles.SUPER_ADMIN ||
+    metadataRole === Roles.ADMIN ||
+    metadataRole === Roles.ACCOUNT_MANAGER;
+
+  const accessOptions = { supabase, userId: user.id };
+  const [canCreateClient, hasManagementRoleDb] = await Promise.all([
+    hasPermission(Permissions.CLIENTS_CREATE, accessOptions),
+    hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+  ]);
+  const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+
+  if (!(canCreateClient || hasManagementRole)) {
+    redirect("/clients");
+  }
+
+  const dbClient = hasManagementRole ? createAdminClient() : supabase;
+
   // Fetch users for primary contact selection
-  const { data: users } = await supabase.from("users").select("id, name, email").order("name");
+  const { data: users } = await dbClient.from("users").select("id, name, email").order("name");
 
   return (
     <div className="flex flex-col gap-8 p-8 max-w-4xl mx-auto">

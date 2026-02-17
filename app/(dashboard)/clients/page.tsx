@@ -48,8 +48,10 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     user.user_metadata?.is_super_admin === true ||
     metadataRole === "admin" ||
     metadataRole === "super_admin" ||
+    metadataRole === "account_manager" ||
     roleNames.has("admin") ||
-    roleNames.has("super_admin");
+    roleNames.has("super_admin") ||
+    roleNames.has("account_manager");
 
   const dbClient = isAdminUser ? createAdminClient() : supabase;
 

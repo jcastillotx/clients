@@ -37,15 +37,26 @@ export async function hasPermission(
  * Check if the current user has a specific role
  */
 export async function hasRole(roleName: string): Promise<boolean> {
-  const supabase = await createClient();
+  return hasRoleInternal(roleName);
+}
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
+async function hasRoleInternal(
+  roleName: string,
+  options?: { supabase?: Awaited<ReturnType<typeof createClient>>; userId?: string },
+): Promise<boolean> {
+  const supabase = options?.supabase ?? (await createClient());
+
+  let userId = options?.userId;
+  if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return false;
+    userId = user.id;
+  }
 
   const { data, error } = await supabase.rpc("user_has_role", {
-    p_user_id: user.id,
+    p_user_id: userId,
     p_role_name: roleName,
   });
 
@@ -55,6 +66,22 @@ export async function hasRole(roleName: string): Promise<boolean> {
   }
 
   return data === true;
+}
+
+/**
+ * Check if the current user has any of the specified roles
+ * @param roleNames - Array of role names to check
+ * @param options - Optional supabase client and userId to avoid redundant auth calls
+ */
+export async function hasAnyRole(
+  roleNames: string[],
+  options?: { supabase?: Awaited<ReturnType<typeof createClient>>; userId?: string },
+): Promise<boolean> {
+  for (const roleName of roleNames) {
+    const hasIt = await hasRoleInternal(roleName, options);
+    if (hasIt) return true;
+  }
+  return false;
 }
 
 /**

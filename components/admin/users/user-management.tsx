@@ -54,9 +54,10 @@ interface UserManagementProps {
   initialUsers: User[];
   roles: Role[];
   clients: Client[];
+  canAssignRoles?: boolean;
 }
 
-export function UserManagement({ initialUsers, roles, clients }: UserManagementProps) {
+export function UserManagement({ initialUsers, roles, clients, canAssignRoles = true }: UserManagementProps) {
   const [users, setUsers] = useState(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -237,6 +238,7 @@ export function UserManagement({ initialUsers, roles, clients }: UserManagementP
         user={editingUser}
         roles={roles}
         clients={clients}
+        canAssignRoles={canAssignRoles}
         onSuccess={handleUserSuccess}
       />
     </div>

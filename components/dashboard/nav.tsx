@@ -54,9 +54,10 @@ interface DashboardNavProps {
   };
   isStaff: boolean;
   isAdmin: boolean;
+  isAccountManager: boolean;
 }
 
-type AccessLevel = "all" | "staff" | "admin";
+type AccessLevel = "all" | "staff" | "admin" | "manager";
 
 interface NavItem {
   name: string;
@@ -71,9 +72,10 @@ interface NavSection {
   items: NavItem[];
 }
 
-function canAccessItem(access: AccessLevel | undefined, isStaff: boolean, isAdmin: boolean) {
+function canAccessItem(access: AccessLevel | undefined, isStaff: boolean, isAdmin: boolean, isAccountManager: boolean) {
   if (!access || access === "all") return true;
   if (access === "staff") return isStaff || isAdmin;
+  if (access === "manager") return isAdmin || isAccountManager;
   return isAdmin;
 }
 
@@ -141,7 +143,7 @@ const navigationSections: NavSection[] = [
     title: "Management",
     items: [
       { name: "Clients", href: "/clients", icon: Briefcase, access: "staff" },
-      { name: "Users", href: "/admin/users", icon: Users, access: "admin" },
+      { name: "Users", href: "/users", icon: Users, access: "manager" },
       { name: "Partners", href: "/partners", icon: LinkIcon, access: "staff" },
       { name: "Referrals", href: "/referrals", icon: Star, access: "staff" },
       { name: "Staff Guides", href: "/staff-guides", icon: GraduationCap, access: "staff" },
@@ -175,7 +177,7 @@ const navigationSections: NavSection[] = [
   },
 ];
 
-export function DashboardNav({ user, isStaff, isAdmin }: DashboardNavProps) {
+export function DashboardNav({ user, isStaff, isAdmin, isAccountManager }: DashboardNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -209,7 +211,9 @@ export function DashboardNav({ user, isStaff, isAdmin }: DashboardNavProps) {
         </Link>
 
         {navigationSections.map((section) => {
-          const visibleItems = section.items.filter((item) => canAccessItem(item.access, isStaff, isAdmin));
+          const visibleItems = section.items.filter((item) =>
+            canAccessItem(item.access, isStaff, isAdmin, isAccountManager),
+          );
           if (visibleItems.length === 0) return null;
 
           return (
