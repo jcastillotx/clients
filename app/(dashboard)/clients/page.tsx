@@ -75,7 +75,6 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     .select(
       `
       *,
-      primary_contact:users!clients_primary_contact_id_fkey(id, name, email, phone),
       _count:requests(count)
     `,
       { count: "exact" },
@@ -119,7 +118,36 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     return <div>Error loading clients</div>;
   }
 
-  const filteredClients = (clients ?? []).filter((client) => {
+  const primaryContactIds = Array.from(
+    new Set(
+      (clients ?? [])
+        .map((client) => client.primary_contact_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  );
+
+  let primaryContactsById = new Map<string, { id: string; name: string; email: string; phone?: string | null }>();
+
+  if (primaryContactIds.length > 0) {
+    const { data: primaryContacts, error: primaryContactsError } = await dbClient
+      .from("users")
+      .select("id, name, email, phone")
+      .in("id", primaryContactIds);
+
+    if (primaryContactsError) {
+      console.error("Error fetching primary contacts:", primaryContactsError);
+    } else {
+      primaryContactsById = new Map((primaryContacts ?? []).map((contact) => [contact.id, contact]));
+    }
+  }
+
+  const clientsWithPrimaryContacts = (clients ?? []).map((client) => ({
+    ...client,
+    primary_contact:
+      typeof client.primary_contact_id === "string" ? primaryContactsById.get(client.primary_contact_id) ?? null : null,
+  }));
+
+  const filteredClients = clientsWithPrimaryContacts.filter((client) => {
     const companyName = String(client.company_name ?? "").trim().toLowerCase();
     return !excludedCompanyNames.includes(companyName);
   });
