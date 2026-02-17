@@ -351,7 +351,7 @@ CREATE INDEX IF NOT EXISTS idx_proposals_client_id ON public.proposals(client_id
 CREATE INDEX IF NOT EXISTS idx_proposals_status ON public.proposals(status) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_proposals_created_by ON public.proposals(created_by);
 CREATE INDEX IF NOT EXISTS idx_proposals_sent_at ON public.proposals(sent_at) WHERE sent_at IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_proposals_valid_until ON public.proposals(valid_until) WHERE valid_until > NOW();
+CREATE INDEX IF NOT EXISTS idx_proposals_valid_until ON public.proposals(valid_until) WHERE valid_until IS NOT NULL;
 
 -- Proposal selections indexes
 CREATE INDEX IF NOT EXISTS idx_proposal_selections_proposal_id ON public.proposal_selections(proposal_id);
