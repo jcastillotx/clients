@@ -66,7 +66,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (error) throw error;
 
     // Update roles
-    if (roles && (canAssignRoles || canManageUsers || isAdminMetadataRole)) {
+    if (Array.isArray(roles) && (canAssignRoles || canManageUsers || isAdminMetadataRole)) {
       const roleIds = Array.from(new Set(roles.filter((roleId: unknown): roleId is string => typeof roleId === "string")));
 
       // Remove existing roles
