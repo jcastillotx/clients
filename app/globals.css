@@ -93,3 +93,22 @@
     @apply focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2;
   }
 }
+
+@layer components {
+  /* Dashboard pages should span full content width instead of Tailwind container/max-w caps. */
+  .dashboard-page-content > .container,
+  .dashboard-page-content > * > .container {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .dashboard-page-content > [class*="max-w-"][class*="mx-auto"],
+  .dashboard-page-content > * > [class*="max-w-"][class*="mx-auto"] {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
