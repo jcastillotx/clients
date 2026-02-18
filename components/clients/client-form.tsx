@@ -15,6 +15,7 @@ import { Loader2 } from "lucide-react";
 
 const clientSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
   domain: z.string().optional(),
   industry: z.string().optional(),
   status: z.enum(["active", "inactive", "pending", "suspended"]).default("active"),
@@ -41,6 +42,7 @@ interface ClientFormProps {
   initialData?: {
     id: string;
     company_name: string;
+    email: string;
     domain?: string;
     industry?: string;
     status: string;
@@ -71,6 +73,7 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
     resolver: zodResolver(clientSchema),
     defaultValues: {
       companyName: initialData?.company_name || "",
+      email: initialData?.email || "",
       domain: initialData?.domain || "",
       industry: initialData?.industry || "",
       status: (initialData?.status as any) || "active",
@@ -94,6 +97,7 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
     try {
       const clientData = {
         company_name: data.companyName,
+        email: data.email,
         domain: data.domain || null,
         industry: data.industry || null,
         status: data.status,
@@ -163,24 +167,32 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="domain">Website Domain</Label>
-              <Input id="domain" placeholder="acme.com" {...register("domain")} />
+              <Label htmlFor="email">
+                Billing/Primary Email <span className="text-destructive">*</span>
+              </Label>
+              <Input id="email" type="email" placeholder="billing@acme.com" {...register("email")} />
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="domain">Website Domain</Label>
+              <Input id="domain" placeholder="acme.com" {...register("domain")} />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
               <Input id="industry" placeholder="Technology, Healthcare, etc." {...register("industry")} />
             </div>
+          </div>
 
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" {...register("phone")} />
             </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select value={status} onValueChange={(value) => setValue("status", value as any)}>
@@ -195,25 +207,22 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="primaryContactId">Primary Contact</Label>
-              <Select
-                value={primaryContactId || undefined}
-                onValueChange={(value) => setValue("primaryContactId", value)}
-              >
-                <SelectTrigger id="primaryContactId">
-                  <SelectValue placeholder="Select a contact" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name} ({user.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="primaryContactId">Primary Contact</Label>
+            <Select value={primaryContactId || undefined} onValueChange={(value) => setValue("primaryContactId", value)}>
+              <SelectTrigger id="primaryContactId">
+                <SelectValue placeholder="Select a contact" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
