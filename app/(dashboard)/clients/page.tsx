@@ -12,6 +12,21 @@ interface SearchParams {
   page?: string;
 }
 
+interface QueryErrorShape {
+  code?: string;
+  message?: string | null;
+  details?: string | null;
+}
+
+function isMissingLegacyClientColumn(error: QueryErrorShape | null) {
+  if (!error) return false;
+  const detailText = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  return (
+    (error.code === "42703" || detailText.includes("does not exist")) &&
+    (detailText.includes("domain") || detailText.includes("industry"))
+  );
+}
+
 /**
  * Clients list page (Server Component)
  *
@@ -108,10 +123,56 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   const pageSize = 20;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+  const searchValue = resolvedSearchParams.search?.trim();
 
-  query = query.range(from, to);
+  const runClientsQuery = async ({
+    useLegacySearchColumns,
+  }: {
+    useLegacySearchColumns: boolean;
+  }) => {
+    let query = dbClient
+      .from("clients")
+      .select(
+        `
+      *,
+      _count:requests(count)
+    `,
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false });
 
-  const { data: clients, error, count } = await query;
+    if (excludedClientIds.length > 0) {
+      const formattedIds = excludedClientIds.map((id) => `"${id}"`).join(",");
+      query = query.not("id", "in", `(${formattedIds})`);
+    }
+
+    if (excludedCompanyNames.length > 0) {
+      const formattedNames = excludedCompanyNames.map((name) => `"${name}"`).join(",");
+      query = query.not("company_name", "in", `(${formattedNames})`);
+    }
+
+    if (searchValue) {
+      const searchFilter = useLegacySearchColumns
+        ? `company_name.ilike.%${searchValue}%,domain.ilike.%${searchValue}%,industry.ilike.%${searchValue}%`
+        : `company_name.ilike.%${searchValue}%,email.ilike.%${searchValue}%,website.ilike.%${searchValue}%`;
+      query = query.or(searchFilter);
+    }
+
+    if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
+      query = query.eq("status", resolvedSearchParams.status);
+    }
+
+    return query.range(from, to);
+  };
+
+  let result = await runClientsQuery({ useLegacySearchColumns: true });
+
+  if (isMissingLegacyClientColumn(result.error)) {
+    console.warn("Missing legacy client columns (domain/industry); retrying /clients query with core searchable fields");
+    result = await runClientsQuery({ useLegacySearchColumns: false });
+  }
+
+  const { data: clients, error, count } = result;
 
   if (error) {
     console.error("Error fetching clients:", error);
