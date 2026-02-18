@@ -20,12 +20,41 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
   const supabase = await createClient();
 
   // Fetch client with all related data
-  const { data: clientRow, error } = await supabase.from("clients").select("*").eq("id", id).single();
-  const client = clientRow ? { ...clientRow, primary_contact: null } : clientRow;
+  const { data: client, error } = await supabase
+    .from("clients")
+    .select(
+      `
+      *
+    `,
+    )
+    .eq("id", id)
+    .single();
 
   if (error || !client) {
     notFound();
   }
+
+  let primaryContact: { id: string; name: string; email: string; phone?: string | null; avatar?: string | null } | null =
+    null;
+
+  if (typeof client.primary_contact_id === "string" && client.primary_contact_id.length > 0) {
+    const { data: contact, error: contactError } = await supabase
+      .from("users")
+      .select("id, name, email, phone, avatar")
+      .eq("id", client.primary_contact_id)
+      .maybeSingle();
+
+    if (contactError) {
+      console.error("Error fetching client primary contact:", contactError);
+    } else {
+      primaryContact = contact;
+    }
+  }
+
+  const clientWithPrimaryContact = {
+    ...client,
+    primary_contact: primaryContact,
+  };
 
   // Fetch related data in parallel
   const [{ data: requests, count: requestCount }, { data: invoices }, { data: staffAssignments }] = await Promise.all([
@@ -84,7 +113,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
     <div className="flex flex-col gap-8 p-8">
       {/* Client details */}
       <ClientDetail
-        client={client}
+        client={clientWithPrimaryContact}
         staffAssignments={
           (staffAssignments || []).map((sa: any) => ({
             ...sa,
