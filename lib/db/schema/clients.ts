@@ -25,7 +25,7 @@ export const clients = pgTable("clients", {
   email: text("email").notNull(),
   phone: text("phone"),
   website: text("website"),
-  primaryContactId: uuid("primary_contact_id").references(() => users.id, { onDelete: "set null" }),
+  primaryContactId: uuid("primary_contact_id"),
   address: text("address"),
   city: text("city"),
   state: text("state"),
