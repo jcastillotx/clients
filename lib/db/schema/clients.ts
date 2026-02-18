@@ -20,9 +20,12 @@ export type ClientStatus = (typeof clientStatusEnum)[number];
 export const clients = pgTable("clients", {
   id: uuid("id").primaryKey().defaultRandom(),
   companyName: text("company_name").notNull(),
+  domain: text("domain"),
+  industry: text("industry"),
   email: text("email").notNull(),
   phone: text("phone"),
   website: text("website"),
+  primaryContactId: uuid("primary_contact_id").references(() => users.id, { onDelete: "set null" }),
   address: text("address"),
   city: text("city"),
   state: text("state"),
