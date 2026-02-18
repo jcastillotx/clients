@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { maintenancePlans } from "@/lib/db/schema/maintenance-plans";
-import { eq, and, or, desc, sql, gte, lte, isNull } from "drizzle-orm";
+import { eq, and, or, desc, sql, gte, isNull } from "drizzle-orm";
 
 /**
  * GET /api/maintenance-plans
@@ -71,13 +71,15 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching maintenance plans:", error);
+    const status = isDatabaseConfigurationError(error) ? 503 : 500;
+
     return NextResponse.json(
       {
         success: false,
         error: "Failed to fetch maintenance plans",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status },
     );
   }
 }
@@ -161,13 +163,15 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error creating maintenance plan:", error);
+    const status = isDatabaseConfigurationError(error) ? 503 : 500;
+
     return NextResponse.json(
       {
         success: false,
         error: "Failed to create maintenance plan",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status },
     );
   }
 }

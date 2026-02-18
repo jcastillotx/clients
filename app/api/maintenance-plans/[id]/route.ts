@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { maintenancePlans, maintenancePlanUsage } from "@/lib/db/schema/maintenance-plans";
 import { eq, sql, desc } from "drizzle-orm";
 
@@ -84,13 +84,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
   } catch (error) {
     console.error("Error fetching maintenance plan:", error);
+    const status = isDatabaseConfigurationError(error) ? 503 : 500;
+
     return NextResponse.json(
       {
         success: false,
         error: "Failed to fetch maintenance plan",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status },
     );
   }
 }
@@ -134,13 +136,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     });
   } catch (error) {
     console.error("Error updating maintenance plan:", error);
+    const status = isDatabaseConfigurationError(error) ? 503 : 500;
+
     return NextResponse.json(
       {
         success: false,
         error: "Failed to update maintenance plan",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status },
     );
   }
 }
@@ -181,13 +185,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     });
   } catch (error) {
     console.error("Error deleting maintenance plan:", error);
+    const status = isDatabaseConfigurationError(error) ? 503 : 500;
+
     return NextResponse.json(
       {
         success: false,
         error: "Failed to delete maintenance plan",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status },
     );
   }
 }

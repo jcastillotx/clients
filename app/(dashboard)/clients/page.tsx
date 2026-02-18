@@ -84,6 +84,40 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
 
+  // Build query with filters
+  let query = dbClient
+    .from("clients")
+    .select(
+      `
+      *,
+      _count:requests(count)
+    `,
+      { count: "exact" },
+    )
+    .order("created_at", { ascending: false });
+
+  if (excludedClientIds.length > 0) {
+    const formattedIds = excludedClientIds.map((id) => `"${id}"`).join(",");
+    query = query.not("id", "in", `(${formattedIds})`);
+  }
+
+  if (excludedCompanyNames.length > 0) {
+    const formattedNames = excludedCompanyNames.map((name) => `"${name}"`).join(",");
+    query = query.not("company_name", "in", `(${formattedNames})`);
+  }
+
+  // Apply search filter
+  if (resolvedSearchParams.search) {
+    query = query.or(
+      `company_name.ilike.%${resolvedSearchParams.search}%,domain.ilike.%${resolvedSearchParams.search}%,industry.ilike.%${resolvedSearchParams.search}%`,
+    );
+  }
+
+  // Apply status filter
+  if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
+    query = query.eq("status", resolvedSearchParams.status);
+  }
+
   // Pagination
   const page = parseInt(resolvedSearchParams.page || "1");
   const pageSize = 20;
@@ -145,7 +179,36 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     return <div>Error loading clients</div>;
   }
 
-  const filteredClients = (clients ?? []).filter((client) => {
+  const primaryContactIds = Array.from(
+    new Set(
+      (clients ?? [])
+        .map((client) => client.primary_contact_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  );
+
+  let primaryContactsById = new Map<string, { id: string; name: string; email: string; phone?: string | null }>();
+
+  if (primaryContactIds.length > 0) {
+    const { data: primaryContacts, error: primaryContactsError } = await dbClient
+      .from("users")
+      .select("id, name, email, phone")
+      .in("id", primaryContactIds);
+
+    if (primaryContactsError) {
+      console.error("Error fetching primary contacts:", primaryContactsError);
+    } else {
+      primaryContactsById = new Map((primaryContacts ?? []).map((contact) => [contact.id, contact]));
+    }
+  }
+
+  const clientsWithPrimaryContacts = (clients ?? []).map((client) => ({
+    ...client,
+    primary_contact:
+      typeof client.primary_contact_id === "string" ? primaryContactsById.get(client.primary_contact_id) ?? null : null,
+  }));
+
+  const filteredClients = clientsWithPrimaryContacts.filter((client) => {
     const companyName = String(client.company_name ?? "").trim().toLowerCase();
     return !excludedCompanyNames.includes(companyName);
   });

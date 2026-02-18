@@ -20,56 +20,78 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
   const supabase = await createClient();
 
   // Fetch invoice with all related data
-  // Try with full FK joins first, fall back if FK constraints don't exist
-  let invoice: any = null;
-
-  const { data, error } = await supabase
+  const { data: invoice, error } = await supabase
     .from("invoices")
     .select(
       `
       *,
-      client:clients(id, company_name, domain, primary_contact:users!clients_primary_contact_id_fkey(id, name, email)),
-      created_by_user:users!invoices_created_by_fkey(id, name, avatar),
+      client:clients(*),
       invoice_items(id, description, quantity, unit_price, amount)
     `,
     )
     .eq("id", id)
     .single();
 
-  if (error?.code === "PGRST200") {
-    // FK relationship not found - fall back to simpler query
-    const fallback = await supabase
-      .from("invoices")
-      .select(
-        `
-        *,
-        client:clients(id, company_name, domain),
-        invoice_items(id, description, quantity, unit_price, amount)
-      `,
-      )
-      .eq("id", id)
-      .single();
-
-    invoice = fallback.data;
-    if (fallback.error || !invoice) {
-      notFound();
-    }
-  } else if (error || !data) {
+  if (error || !invoice) {
     notFound();
-  } else {
-    invoice = data;
   }
+
+  const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+
+  if (!client) {
+    notFound();
+  }
+
+  const userIds = Array.from(
+    new Set(
+      [invoice.created_by, client.primary_contact_id].filter(
+        (id): id is string => typeof id === "string" && id.length > 0,
+      ),
+    ),
+  );
+
+  let usersById = new Map<string, { id: string; name: string; email: string; avatar?: string | null }>();
+
+  if (userIds.length > 0) {
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("id, name, email, avatar")
+      .in("id", userIds);
+
+    if (usersError) {
+      console.error("Error fetching invoice users:", usersError);
+    } else {
+      usersById = new Map((users ?? []).map((user) => [user.id, user]));
+    }
+  }
+
+  const createdByUser =
+    (typeof invoice.created_by === "string" ? usersById.get(invoice.created_by) : null) ?? {
+      id: typeof invoice.created_by === "string" ? invoice.created_by : "unknown",
+      name: "Unknown User",
+      avatar: null,
+    };
+
+  const invoiceWithUsers = {
+    ...invoice,
+    client: {
+      ...client,
+      primary_contact:
+        typeof client.primary_contact_id === "string" ? usersById.get(client.primary_contact_id) ?? null : null,
+    },
+    created_by_user: createdByUser,
+  };
 
   return (
     <div className="flex flex-col gap-8 p-8 max-w-6xl mx-auto">
       {/* Invoice header and details */}
-      <InvoiceDetail invoice={invoice} />
+      <InvoiceDetail invoice={invoiceWithUsers} />
 
       {/* Invoice items table */}
-      <InvoiceItems items={invoice.invoice_items || []} total={invoice.amount} />
+      <InvoiceItems items={invoiceWithUsers.invoice_items || []} total={invoiceWithUsers.amount} />
 
       {/* Invoice actions (send, mark paid, download PDF, etc.) */}
-      <InvoiceActions invoice={invoice} />
+      <InvoiceActions invoice={invoiceWithUsers} />
     </div>
   );
 }

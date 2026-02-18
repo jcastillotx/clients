@@ -28,6 +28,7 @@ export default function MaintenancePlansPage() {
   const router = useRouter();
   const [plans, setPlans] = useState<MaintenancePlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [planTypeFilter, setPlanTypeFilter] = useState<string>("all");
@@ -51,11 +52,17 @@ export default function MaintenancePlansPage() {
       const response = await fetch(`/api/maintenance-plans?${params}`);
       const data = await response.json();
 
-      if (data.success) {
-        setPlans(data.data);
+      if (response.ok && data.success) {
+        setPlans(data.data ?? []);
+        setErrorMessage(null);
+      } else {
+        setPlans([]);
+        setErrorMessage(data?.message || data?.error || "Unable to load maintenance plans.");
       }
     } catch (error) {
       console.error("Error fetching maintenance plans:", error);
+      setPlans([]);
+      setErrorMessage("Unable to load maintenance plans. Check your database configuration.");
     } finally {
       setLoading(false);
     }
@@ -150,6 +157,12 @@ export default function MaintenancePlansPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {errorMessage && (
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Plans Grid */}
       {loading ? (

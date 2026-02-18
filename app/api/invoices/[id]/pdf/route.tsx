@@ -24,14 +24,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         `
         *,
         client:clients(
-          id,
-          company_name,
-          domain,
-          primary_contact:users!clients_primary_contact_id_fkey(
-            id,
-            name,
-            email
-          )
+          *
         ),
         invoice_items(
           id,
@@ -49,8 +42,38 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
+    const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+
+    if (!client) {
+      return NextResponse.json({ error: "Invoice client not found" }, { status: 404 });
+    }
+
+    let primaryContact: { id: string; name: string; email: string } | null = null;
+
+    if (typeof client.primary_contact_id === "string" && client.primary_contact_id.length > 0) {
+      const { data: contact, error: contactError } = await supabase
+        .from("users")
+        .select("id, name, email")
+        .eq("id", client.primary_contact_id)
+        .maybeSingle();
+
+      if (contactError) {
+        console.error("Error fetching client primary contact for PDF:", contactError);
+      } else {
+        primaryContact = contact;
+      }
+    }
+
+    const invoiceWithPrimaryContact = {
+      ...invoice,
+      client: {
+        ...client,
+        primary_contact: primaryContact,
+      },
+    };
+
     // Generate PDF stream
-    const stream = await renderToStream(<InvoicePDF invoice={invoice} />);
+    const stream = await renderToStream(<InvoicePDF invoice={invoiceWithPrimaryContact} />);
 
     // Convert stream to buffer for Next.js response
     const chunks: any[] = [];
@@ -63,7 +86,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="invoice-${invoice.invoice_number}.pdf"`,
+        "Content-Disposition": `attachment; filename="invoice-${invoiceWithPrimaryContact.invoice_number}.pdf"`,
         "Cache-Control": "no-cache",
       },
     });
