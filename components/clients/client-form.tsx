@@ -18,7 +18,10 @@ const clientSchema = z.object({
   domain: z.string().optional(),
   industry: z.string().optional(),
   status: z.enum(["active", "inactive", "pending", "suspended"]).default("active"),
-  primaryContactId: z.string().uuid().optional(),
+  primaryContactId: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().uuid().optional(),
+  ),
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -71,7 +74,7 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
       domain: initialData?.domain || "",
       industry: initialData?.industry || "",
       status: (initialData?.status as any) || "active",
-      primaryContactId: initialData?.primary_contact_id || "",
+      primaryContactId: initialData?.primary_contact_id || undefined,
       phone: initialData?.phone || "",
       address: initialData?.address || "",
       city: initialData?.city || "",
@@ -195,7 +198,10 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="primaryContactId">Primary Contact</Label>
-              <Select value={primaryContactId} onValueChange={(value) => setValue("primaryContactId", value)}>
+              <Select
+                value={primaryContactId || undefined}
+                onValueChange={(value) => setValue("primaryContactId", value)}
+              >
                 <SelectTrigger id="primaryContactId">
                   <SelectValue placeholder="Select a contact" />
                 </SelectTrigger>
