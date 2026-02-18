@@ -98,7 +98,13 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   }) => {
     let query = dbClient
       .from("clients")
-      .select("*", { count: "exact" })
+      .select(
+        `
+      *,
+      _count:requests(count)
+    `,
+        { count: "exact" },
+      )
       .order("created_at", { ascending: false });
 
     if (excludedClientIds.length > 0) {
