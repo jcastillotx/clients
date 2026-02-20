@@ -139,6 +139,7 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
   const [clients, setClients] = useState<Array<{ id: string; company_name: string }>>([]);
   const [requests, setRequests] = useState<Array<{ id: string; title: string }>>([]);
   const supabase = createClient();
+  const NONE_SELECT_VALUE = "__none__";
 
   // Fetch clients for dropdown
   useEffect(() => {
@@ -151,6 +152,8 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
 
   // Fetch requests when client selected
   useEffect(() => {
+    // Ensure request selection doesn't get stuck on a prior client's request
+    setSelectedRequest("");
     if (selectedClient) {
       async function fetchRequests() {
         const { data } = await supabase.from("requests").select("id, title").eq("client_id", selectedClient).order("created_at", { ascending: false });
@@ -328,12 +331,15 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
 
                     <div>
                       <Label htmlFor="client">Client (Optional)</Label>
-                      <Select value={selectedClient} onValueChange={setSelectedClient}>
+                      <Select
+                        value={selectedClient}
+                        onValueChange={(value) => setSelectedClient(value === NONE_SELECT_VALUE ? "" : value)}
+                      >
                         <SelectTrigger id="client" className="mt-2">
                           <SelectValue placeholder="Select client" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value={NONE_SELECT_VALUE}>None</SelectItem>
                           {clients.map((client) => (
                             <SelectItem key={client.id} value={client.id}>
                               {client.company_name}
@@ -346,12 +352,15 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
                     {selectedClient && (
                       <div>
                         <Label htmlFor="request">Request (Optional)</Label>
-                        <Select value={selectedRequest} onValueChange={setSelectedRequest}>
+                        <Select
+                          value={selectedRequest}
+                          onValueChange={(value) => setSelectedRequest(value === NONE_SELECT_VALUE ? "" : value)}
+                        >
                           <SelectTrigger id="request" className="mt-2">
                             <SelectValue placeholder="Select request" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value={NONE_SELECT_VALUE}>None</SelectItem>
                             {requests.map((request) => (
                               <SelectItem key={request.id} value={request.id}>
                                 {request.title}
