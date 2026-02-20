@@ -2,6 +2,7 @@ import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/serve
 import { ClientForm } from "@/components/clients/client-form";
 import { redirect } from "next/navigation";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import { syncMissingAuthUsers } from "@/lib/supabase/user-profile-sync";
 
 export const metadata = {
   title: "New Client | KRE8IV",
@@ -44,6 +45,10 @@ export default async function NewClientPage() {
 
   const adminClient = hasManagementRole ? createAdminClientIfAvailable() : null;
   const dbClient = adminClient ?? supabase;
+
+  if (adminClient) {
+    await syncMissingAuthUsers(adminClient);
+  }
 
   if (hasManagementRole && !adminClient) {
     console.warn("Service-role Supabase key missing; falling back to session client for /clients/new");

@@ -2,6 +2,7 @@ import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 import { redirect } from "next/navigation";
 import { UserManagement } from "@/components/admin/users/user-management";
+import { syncMissingAuthUsers } from "@/lib/supabase/user-profile-sync";
 
 export const metadata = {
   title: "Users | KRE8IV",
@@ -39,6 +40,7 @@ export default async function UsersPage() {
   }
 
   const dbClient = hasManagementAccess ? createAdminClient() : supabase;
+  await syncMissingAuthUsers(dbClient);
 
   const [{ data: users }, { data: roles }, { data: clients }] = await Promise.all([
     dbClient
