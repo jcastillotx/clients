@@ -1,7 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard/nav";
 import { TopBar } from "@/components/layout/top-bar";
+import { ensureAuthUserProfile } from "@/lib/supabase/user-profile-sync";
 
 // All dashboard pages require authentication (cookies), so they cannot be statically generated
 export const dynamic = "force-dynamic";
@@ -21,6 +22,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) {
     redirect("/login");
+  }
+
+  const adminClient = createAdminClientIfAvailable();
+  if (adminClient) {
+    await ensureAuthUserProfile(adminClient, user);
   }
 
   const { data: dbUser } = await supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle();

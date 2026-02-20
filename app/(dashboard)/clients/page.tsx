@@ -1,5 +1,6 @@
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { ClientList } from "@/components/clients/client-list";
+import { syncMissingAuthUsers } from "@/lib/supabase/user-profile-sync";
 
 export const metadata = {
   title: "Clients | KRE8IV",
@@ -70,6 +71,10 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
   const adminClient = isAdminUser ? createAdminClientIfAvailable() : null;
   const dbClient = adminClient ?? supabase;
+
+  if (adminClient) {
+    await syncMissingAuthUsers(adminClient);
+  }
 
   if (isAdminUser && !adminClient) {
     console.warn("Service-role Supabase key missing; falling back to session client for /clients");
