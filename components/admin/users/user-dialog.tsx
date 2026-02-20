@@ -150,6 +150,9 @@ export function UserDialog({ open, onOpenChange, user, roles, clients, canAssign
       }
 
       const { user: savedUser } = await response.json();
+      if (!savedUser || typeof savedUser.id !== "string") {
+        throw new Error("User saved but response payload was invalid");
+      }
       onSuccess(savedUser);
     } catch (error) {
       console.error("Error saving user:", error);

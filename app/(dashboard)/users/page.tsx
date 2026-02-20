@@ -83,8 +83,8 @@ export default async function UsersPage() {
 
   const usersSelectWithRelations = `
     *,
-    client:clients(id, company_name),
-    user_roles(
+    client:clients!users_client_id_fkey(id, company_name),
+    user_roles!user_roles_user_id_fkey(
       role:roles(id, name, description)
     )
   `;

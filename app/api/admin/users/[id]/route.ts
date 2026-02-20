@@ -2,6 +2,28 @@ import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
+async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
+  const fullSelect = `
+    *,
+    client:clients!users_client_id_fkey(id, company_name),
+    user_roles!user_roles_user_id_fkey(role:roles(id, name, description))
+  `;
+
+  const fullResult = await adminClient.from("users").select(fullSelect).eq("id", userId).maybeSingle();
+  if (!fullResult.error) {
+    return fullResult.data;
+  }
+
+  console.warn("Falling back to plain users row after relation query error:", fullResult.error);
+
+  const plainResult = await adminClient.from("users").select("*").eq("id", userId).maybeSingle();
+  if (plainResult.error) {
+    throw plainResult.error;
+  }
+
+  return plainResult.data;
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
@@ -86,16 +108,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     }
 
-    // Fetch complete user with roles
-    const { data: completeUser } = await adminClient
-      .from("users")
-      .select(`
-        *,
-        client:clients(id, company_name),
-        user_roles(role:roles(id, name, description))
-      `)
-      .eq("id", id)
-      .single();
+    const completeUser = await fetchCompleteUserForResponse(adminClient, id);
 
     return NextResponse.json({ user: completeUser });
   } catch (error) {
