@@ -3,27 +3,98 @@ import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
 async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
-  const fullSelect = `
-    *,
-    client:clients!users_client_id_fkey(id, company_name),
-    user_roles!user_roles_user_id_fkey(role:roles(id, name, description))
-  `;
+  type UserRow = {
+    id: string;
+    client_id?: string | null;
+    [key: string]: unknown;
+  };
+  type RoleRow = {
+    id: string;
+    name: string;
+    description: string | null;
+  };
+  type JoinedRoleRow = {
+    role: RoleRow | RoleRow[] | null;
+  };
+  type PlainRoleRow = {
+    role_id: string;
+  };
 
-  const fullResult = await adminClient.from("users").select(fullSelect).eq("id", userId).maybeSingle();
-  if (!fullResult.error) {
-    return fullResult.data;
+  const userResult = await adminClient.from("users").select("*").eq("id", userId).maybeSingle();
+  if (userResult.error) {
+    throw userResult.error;
   }
 
-  // Some environments have ambiguous or stale relationship metadata in PostgREST.
-  // Fall back to a plain row so create/edit flows remain functional.
-  console.warn("Falling back to plain users row after relation query error:", fullResult.error);
-
-  const plainResult = await adminClient.from("users").select("*").eq("id", userId).maybeSingle();
-  if (plainResult.error) {
-    throw plainResult.error;
+  const userRow = (userResult.data as UserRow | null) ?? null;
+  if (!userRow) {
+    return null;
   }
 
-  return plainResult.data;
+  let client: { id: string; company_name: string } | null = null;
+  if (typeof userRow.client_id === "string" && userRow.client_id.length > 0) {
+    const clientResult = await adminClient
+      .from("clients")
+      .select("id, company_name")
+      .eq("id", userRow.client_id)
+      .maybeSingle();
+    if (clientResult.error) {
+      console.warn("Failed to hydrate user client in response", clientResult.error);
+    } else {
+      client = clientResult.data ?? null;
+    }
+  }
+
+  const userRoles: Array<{ role: RoleRow }> = [];
+  const joinedRolesResult = await adminClient
+    .from("user_roles")
+    .select("role:roles!user_roles_role_id_fkey(id, name, description)")
+    .eq("user_id", userId);
+
+  if (!joinedRolesResult.error) {
+    for (const row of (joinedRolesResult.data || []) as JoinedRoleRow[]) {
+      const roleValue = Array.isArray(row.role) ? row.role[0] : row.role;
+      if (roleValue && typeof roleValue.id === "string" && typeof roleValue.name === "string") {
+        userRoles.push({
+          role: {
+            id: roleValue.id,
+            name: roleValue.name,
+            description: roleValue.description ?? null,
+          },
+        });
+      }
+    }
+  } else {
+    console.warn("Failed to join user roles in response; falling back to manual role hydration", joinedRolesResult.error);
+
+    const plainRolesResult = await adminClient.from("user_roles").select("role_id").eq("user_id", userId);
+    if (plainRolesResult.error) {
+      console.warn("Failed to load role IDs in response fallback", plainRolesResult.error);
+    } else {
+      const roleIds = Array.from(
+        new Set(
+          ((plainRolesResult.data || []) as PlainRoleRow[])
+            .map((row) => row.role_id)
+            .filter((roleId): roleId is string => typeof roleId === "string" && roleId.length > 0),
+        ),
+      );
+      if (roleIds.length > 0) {
+        const rolesResult = await adminClient.from("roles").select("id, name, description").in("id", roleIds);
+        if (rolesResult.error) {
+          console.warn("Failed to load roles in response fallback", rolesResult.error);
+        } else {
+          for (const role of (rolesResult.data || []) as RoleRow[]) {
+            userRoles.push({ role });
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    ...userRow,
+    client,
+    user_roles: userRoles,
+  };
 }
 
 export async function POST(request: Request) {
