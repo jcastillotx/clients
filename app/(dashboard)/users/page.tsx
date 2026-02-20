@@ -16,6 +16,30 @@ type UsersQueryStrategy = {
   label: string;
 };
 
+type UserManagementUser = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatar: string | null;
+  client_id: string | null;
+  is_active: boolean;
+  status: string;
+  last_login_at: string | null;
+  created_at: string;
+  client?: {
+    id: string;
+    company_name: string;
+  } | null;
+  user_roles?: Array<{
+    role: {
+      id: string;
+      name: string;
+      description: string | null;
+    };
+  }>;
+};
+
 export default async function UsersPage() {
   const supabase = await createClient();
 
@@ -103,13 +127,12 @@ export default async function UsersPage() {
     },
   ];
 
-  type UsersRows = NonNullable<Awaited<ReturnType<typeof runUsersQuery>>["data"]>;
-  let users: UsersRows = [];
+  let users: UserManagementUser[] = [];
   let usersError: unknown = null;
   for (const strategy of userQueryStrategies) {
     const result = await runUsersQuery(strategy);
     if (!result.error) {
-      users = result.data || [];
+      users = ((result.data || []) as unknown) as UserManagementUser[];
       usersError = null;
       break;
     }
