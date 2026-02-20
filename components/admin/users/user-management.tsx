@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, UserPlus, MoreVertical, Shield, Trash2, Edit } from "lucide-react";
+import { Search, UserPlus, MoreVertical, Shield, Trash2, Edit, KeyRound } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { UserDialog } from "./user-dialog";
 
@@ -105,6 +105,31 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("Failed to delete user");
+    }
+  };
+
+  const handleSendPasswordReset = async (targetUser: User) => {
+    if (!targetUser.email) {
+      alert("This user does not have an email address.");
+      return;
+    }
+
+    if (!confirm(`Send a password reset email to ${targetUser.email}?`)) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${targetUser.id}/reset-password`, {
+        method: "POST",
+      });
+      const payload = await response.json().catch(() => ({} as { error?: string; message?: string }));
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to send password reset email");
+      }
+
+      alert(payload.message || `Password reset email sent to ${targetUser.email}`);
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      alert(error instanceof Error ? error.message : "Failed to send password reset email");
     }
   };
 
@@ -216,6 +241,10 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
                         <DropdownMenuItem onClick={() => handleEditUser(user)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSendPasswordReset(user)}>
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          Send Password Reset
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
