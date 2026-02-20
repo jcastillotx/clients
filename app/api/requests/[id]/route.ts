@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .from("requests")
       .update(updatePayload)
       .eq("id", id)
-      .select("*, client:clients(company_name), assigned_user:users(name, avatar)")
+      .select("*, client:clients(company_name), assigned_user:users!requests_assigned_to_fkey(name, avatar)")
       .single();
 
     if (error) {

@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   // Build query
   let query = supabase
     .from("requests")
-    .select("*, client:clients(company_name), assigned_user:users(name, avatar)")
+    .select("*, client:clients(company_name), assigned_user:users!requests_assigned_to_fkey(name, avatar)")
     .order(sortBy, { ascending: sortOrder === "asc" });
 
   // Apply filters
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabase
       .from("requests")
       .insert(insertPayload)
-      .select("*, client:clients(company_name), assigned_user:users(name, avatar)")
+      .select("*, client:clients(company_name), assigned_user:users!requests_assigned_to_fkey(name, avatar)")
       .single();
 
     if (error) {
