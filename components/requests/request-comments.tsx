@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -30,13 +30,18 @@ interface RequestCommentsProps {
 export function RequestComments({ requestId, initialComments }: RequestCommentsProps) {
   const [newComment, setNewComment] = useState("");
   const queryClient = useQueryClient();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+
+  const normalizeComment = (comment: any): Comment => ({
+    ...comment,
+    user: Array.isArray(comment.user) ? comment.user[0] : comment.user,
+  });
 
   // Use React Query for comments with real-time updates
   const { data: comments = initialComments } = useQuery({
     queryKey: ["request-comments", requestId],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("request_comments")
         .select(
           `
@@ -50,13 +55,14 @@ export function RequestComments({ requestId, initialComments }: RequestCommentsP
         .eq("request_id", requestId)
         .order("created_at", { ascending: true });
 
-      return (data as any) || [];
+      if (error) throw error;
+      return ((data as any[]) || []).map(normalizeComment);
     },
-    initialData: initialComments,
+    initialData: initialComments.map(normalizeComment),
   });
 
   // Subscribe to real-time comment updates
-  useState(() => {
+  useEffect(() => {
     const channel = supabase
       .channel(`request-comments:${requestId}`)
       .on(
@@ -77,7 +83,7 @@ export function RequestComments({ requestId, initialComments }: RequestCommentsP
     return () => {
       supabase.removeChannel(channel);
     };
-  });
+  }, [queryClient, requestId, supabase]);
 
   // Mutation for creating new comments
   const createComment = useMutation({
@@ -105,7 +111,7 @@ export function RequestComments({ requestId, initialComments }: RequestCommentsP
         .single();
 
       if (error) throw error;
-      return data;
+      return normalizeComment(data);
     },
     onSuccess: () => {
       setNewComment("");

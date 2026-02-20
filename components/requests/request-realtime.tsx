@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 interface RequestRealtimeProps {
@@ -12,11 +12,11 @@ interface RequestRealtimeProps {
  * Real-time subscription component for request updates
  *
  * This component doesn't render any UI - it just subscribes to
- * Supabase Realtime changes and invalidates React Query cache.
+ * Supabase Realtime changes and refreshes server-rendered request data.
  */
 export function RequestRealtime({ requestId }: RequestRealtimeProps) {
-  const queryClient = useQueryClient();
-  const supabase = createClient();
+  const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     // Subscribe to changes on this specific request
@@ -31,8 +31,8 @@ export function RequestRealtime({ requestId }: RequestRealtimeProps) {
           filter: `id=eq.${requestId}`,
         },
         () => {
-          // Invalidate request query to trigger refetch
-          queryClient.invalidateQueries({ queryKey: ["request", requestId] });
+          // Refresh server-rendered request detail when row changes
+          router.refresh();
         },
       )
       .subscribe();
@@ -41,7 +41,7 @@ export function RequestRealtime({ requestId }: RequestRealtimeProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [requestId, queryClient, supabase]);
+  }, [requestId, router, supabase]);
 
   return null; // This component doesn't render anything
 }
