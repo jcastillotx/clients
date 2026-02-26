@@ -42,6 +42,7 @@ import {
   EyeOff,
   Cog,
 } from "lucide-react";
+import { ComponentType } from "react";
 
 interface DashboardNavProps {
   user: {
@@ -62,7 +63,7 @@ type AccessLevel = "all" | "staff" | "admin" | "manager";
 interface NavItem {
   name: string;
   href: string;
-  icon: any;
+  icon: ComponentType<{ className?: string }>;
   access?: AccessLevel;
   matchesTab?: string;
 }

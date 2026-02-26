@@ -89,7 +89,12 @@ export default async function ProjectRequestsPage() {
   }
 
   const { data: rows } = await query;
-  const requests = (rows || []) as ProjectRequestRow[];
+  const requests = ((rows || []) as unknown as Array<
+    Omit<ProjectRequestRow, "client"> & { client: ProjectRequestRow["client"] | ProjectRequestRow["client"][] }
+  >).map((row) => ({
+    ...row,
+    client: Array.isArray(row.client) ? row.client[0] || null : row.client,
+  }));
 
   return (
     <div className="container mx-auto space-y-6 py-8">

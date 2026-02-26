@@ -103,7 +103,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     for (const row of assigneesResult.data || []) {
       const taskId = row.task_id as string;
-      const userRow = row.user as { id: string; name: string; avatar?: string | null } | null;
+      const userRelation = row.user as
+        | { id: string; name: string; avatar?: string | null }
+        | Array<{ id: string; name: string; avatar?: string | null }>
+        | null;
+      const userRow = Array.isArray(userRelation) ? userRelation[0] : userRelation;
       if (!userRow) {
         continue;
       }

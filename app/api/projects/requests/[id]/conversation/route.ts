@@ -67,7 +67,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    let { data: conversation, error: conversationError } = await supabase
+    const conversationLookup = await supabase
       .from("conversations")
       .select("id, title, context_type, context_id, client_id, is_closed, last_message_at")
       .eq("client_id", requestRow.client_id)
@@ -75,6 +75,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .eq("context_id", id)
       .limit(1)
       .maybeSingle();
+
+    let conversation = conversationLookup.data;
+    const conversationError = conversationLookup.error;
 
     if (conversationError) {
       return NextResponse.json({ error: conversationError.message }, { status: 500 });

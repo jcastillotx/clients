@@ -11,9 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface ReviewState {
   status?: string;
-  estimateAmount?: number | null;
+  estimateAmount?: number | string | null;
   estimateCurrency?: string | null;
-  estimatedHours?: number | null;
+  estimatedHours?: number | string | null;
   estimatedStartDate?: string | null;
   estimatedEndDate?: string | null;
   responseSummary?: string | null;
