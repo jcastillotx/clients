@@ -32,13 +32,7 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       *,
       client:clients(id, company_name, domain),
       created_by_user:users!requests_created_by_fkey(id, name, avatar),
-      assigned_user:users!requests_assigned_to_fkey(id, name, avatar),
-      request_comments(
-        id,
-        content,
-        created_at,
-        user:users(id, name, avatar)
-      )
+      assigned_user:users!requests_assigned_to_fkey(id, name, avatar)
     `,
     )
     .eq("id", id)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,6 +58,7 @@ const requestStatuses = [
 ] as const;
 
 export function RequestDetail({ request, assignableUsers = [], canManageWorkflow = false }: RequestDetailProps) {
+  const router = useRouter();
   const [currentStatus, setCurrentStatus] = useState(request.status);
   const [assignedToId, setAssignedToId] = useState<string>(request.assigned_user?.id || "unassigned");
   const [isSaving, setIsSaving] = useState(false);
@@ -76,7 +78,13 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
       if (!response.ok) {
         throw new Error(body?.error || "Failed to update request");
       }
-      window.location.reload();
+      if (payload.status !== undefined) {
+        setCurrentStatus(payload.status);
+      }
+      if (payload.assignedTo !== undefined) {
+        setAssignedToId(payload.assignedTo || "unassigned");
+      }
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update request");
     } finally {
