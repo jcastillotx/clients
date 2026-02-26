@@ -4,7 +4,7 @@ import { projects, projectBudgets, projectMilestones, projectDeliverables } from
 import { isNull, desc, sql, eq } from "drizzle-orm";
 import { ProjectCard } from "@/components/projects/project-card";
 import { Button } from "@/components/ui/button";
-import { Plus, LayoutGrid, List } from "lucide-react";
+import { Plus, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -125,14 +125,24 @@ export default function ProjectsPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Projects</h1>
-          <p className="text-muted-foreground mt-1">Manage your projects, milestones, and deliverables</p>
+          <p className="text-muted-foreground mt-1">
+            Manage active projects, milestones, deliverables, and incoming client project requests.
+          </p>
         </div>
-        <Button asChild>
-          <Link href="/projects/new">
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/projects/requests">
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Project Requests
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/projects/new">
+              <Plus className="h-4 w-4 mr-2" />
+              New Project
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Suspense fallback={<ProjectsLoading />}>
