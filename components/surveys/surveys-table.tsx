@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Copy, BarChart, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { MoreHorizontal, Copy, BarChart, Trash2, Loader2 } from "lucide-react";
 
 type Survey = {
   id: string;
@@ -26,7 +25,57 @@ type Survey = {
 };
 
 export function SurveysTable() {
-  const [surveys] = useState<Survey[]>([]);
+  const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSurveys = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/surveys", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to fetch surveys");
+        }
+
+        type ApiSurvey = {
+          id: string;
+          title: string;
+          description: string | null;
+          is_active: boolean;
+          response_count: number;
+          created_at: string;
+          client?: { company_name?: string } | Array<{ company_name?: string }> | null;
+        };
+
+        const rows = (payload?.data || []) as ApiSurvey[];
+        const mapped = rows.map((row) => {
+          const clientRelation = Array.isArray(row.client) ? row.client[0] : row.client;
+          return {
+            id: row.id,
+            title: row.title,
+            description: row.description || "",
+            clientName: clientRelation?.company_name || "All Clients",
+            isActive: row.is_active,
+            responseCount: row.response_count || 0,
+            createdAt: row.created_at,
+          } satisfies Survey;
+        });
+        setSurveys(mapped);
+      } catch (fetchError) {
+        setError(fetchError instanceof Error ? fetchError.message : "Failed to fetch surveys");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchSurveys();
+  }, []);
 
   return (
     <div className="rounded-md border">
@@ -42,7 +91,22 @@ export function SurveysTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {surveys.length === 0 ? (
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading surveys...
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : error ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-destructive">
+                {error}
+              </TableCell>
+            </TableRow>
+          ) : surveys.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="text-center text-muted-foreground">
                 No surveys found. Create your first survey to collect feedback.
@@ -76,32 +140,18 @@ export function SurveysTable() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/surveys/${survey.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/surveys/${survey.id}/results`}>
-                          <BarChart className="mr-2 h-4 w-4" />
-                          View Results
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/surveys/${survey.id}/edit`}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </Link>
+                      <DropdownMenuItem disabled>
+                        <BarChart className="mr-2 h-4 w-4" />
+                        Results (coming soon)
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
+                      <DropdownMenuItem disabled>
                         <Copy className="mr-2 h-4 w-4" />
-                        Duplicate
+                        Duplicate (coming soon)
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem disabled className="text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        Delete (coming soon)
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

@@ -1,15 +1,44 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClipboardList, BarChart, CheckCircle, TrendingUp } from "lucide-react";
 
 export function SurveysStats() {
-  const stats = {
-    totalSurveys: 12,
-    activeSurveys: 5,
-    totalResponses: 387,
-    avgResponseRate: 68.5,
-  };
+  const [surveys, setSurveys] = useState<Array<{ is_active: boolean; response_count: number }>>([]);
+
+  useEffect(() => {
+    const fetchSurveys = async () => {
+      try {
+        const response = await fetch("/api/surveys", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          return;
+        }
+        setSurveys((payload?.data || []) as Array<{ is_active: boolean; response_count: number }>);
+      } catch {
+        // Keep zeroed stats if fetch fails.
+      }
+    };
+
+    void fetchSurveys();
+  }, []);
+
+  const stats = useMemo(() => {
+    const totalSurveys = surveys.length;
+    const activeSurveys = surveys.filter((survey) => survey.is_active).length;
+    const totalResponses = surveys.reduce((sum, survey) => sum + (survey.response_count || 0), 0);
+    const avgResponseRate = totalSurveys > 0 ? Math.round((activeSurveys / totalSurveys) * 1000) / 10 : 0;
+    return {
+      totalSurveys,
+      activeSurveys,
+      totalResponses,
+      avgResponseRate,
+    };
+  }, [surveys]);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
