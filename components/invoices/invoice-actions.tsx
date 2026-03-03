@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, Download, CheckCircle2, XCircle, Loader2, CreditCard } from "lucide-react";
+import { Send, Download, CheckCircle2, XCircle, Loader2, CreditCard, Link as LinkIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { PaymentModal } from "./payment-modal";
@@ -21,6 +21,7 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleStatusUpdate = async (newStatus: string) => {
     setIsUpdating(true);
@@ -60,6 +61,17 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
       document.body.removeChild(a);
     } catch (error) {
       console.error("Failed to download PDF:", error);
+    }
+  };
+
+  const handleCopyPublicPaymentLink = async () => {
+    try {
+      const publicUrl = `${window.location.origin}/pay-invoice?invoice=${encodeURIComponent(invoice.invoice_number)}`;
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy payment link:", error);
     }
   };
 
@@ -106,6 +118,11 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
             <Button variant="outline" onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF
+            </Button>
+
+            <Button variant="outline" onClick={handleCopyPublicPaymentLink}>
+              <LinkIcon className="mr-2 h-4 w-4" />
+              {copied ? "Payment Link Copied" : "Copy Public Payment Link"}
             </Button>
           </div>
 
