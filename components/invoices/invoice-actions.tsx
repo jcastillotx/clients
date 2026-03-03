@@ -27,7 +27,7 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
     setIsUpdating(true);
     try {
       const supabase = createClient();
-      const updateData: any = { status: newStatus };
+      const updateData: { status: string; paid_at?: string } = { status: newStatus };
 
       if (newStatus === "paid") {
         updateData.paid_at = new Date().toISOString();
