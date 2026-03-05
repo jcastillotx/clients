@@ -43,7 +43,11 @@ export default async function SettingsPage({
     .select("role:roles(name)")
     .eq("user_id", user.id);
 
-  const hasAdminRole = (roleData || []).some((row: any) => {
+  type RoleDataRow = {
+    role?: { name?: string } | Array<{ name?: string }>;
+  };
+
+  const hasAdminRole = (roleData || []).some((row: RoleDataRow) => {
     const roleName = row?.role?.name || row?.role?.[0]?.name;
     return roleName === "admin" || roleName === "super_admin";
   });
