@@ -11,11 +11,17 @@ import { Loader2, Upload } from "lucide-react";
 
 interface BrandingSettingsProps {
   clientId: string | null;
+  isPortalBrandingScope?: boolean;
   initialLogoUrl?: string | null;
   initialDomain?: string | null;
 }
 
-export function BrandingSettings({ clientId, initialLogoUrl, initialDomain }: BrandingSettingsProps) {
+export function BrandingSettings({
+  clientId,
+  isPortalBrandingScope = false,
+  initialLogoUrl,
+  initialDomain,
+}: BrandingSettingsProps) {
   const router = useRouter();
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl || "");
   const [domain, setDomain] = useState(initialDomain || "");
@@ -27,7 +33,11 @@ export function BrandingSettings({ clientId, initialLogoUrl, initialDomain }: Br
 
   const handleSave = async () => {
     if (!clientId) {
-      setError("No client is linked to your user. Assign a client first.");
+      setError(
+        isPortalBrandingScope
+          ? "Portal branding target is not configured. Set PARENT_CLIENT_IDS or PARENT_COMPANY_NAMES and retry."
+          : "No client is linked to your user. Assign a client first.",
+      );
       return;
     }
 
@@ -64,7 +74,11 @@ export function BrandingSettings({ clientId, initialLogoUrl, initialDomain }: Br
 
   const handleUploadLogo = async () => {
     if (!clientId) {
-      setError("No client is linked to your user. Assign a client first.");
+      setError(
+        isPortalBrandingScope
+          ? "Portal branding target is not configured. Set PARENT_CLIENT_IDS or PARENT_COMPANY_NAMES and retry."
+          : "No client is linked to your user. Assign a client first.",
+      );
       return;
     }
     if (!selectedFile) {
@@ -109,11 +123,20 @@ export function BrandingSettings({ clientId, initialLogoUrl, initialDomain }: Br
     <Card>
       <CardHeader>
         <CardTitle>Portal Branding</CardTitle>
-        <CardDescription>Set the company logo shown on the Home and Login pages.</CardDescription>
+        <CardDescription>
+          {isPortalBrandingScope
+            ? "Update the default branding for the main portal organization."
+            : "Set the company logo shown on the Home and Login pages."}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
         {success && <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">Branding saved successfully.</div>}
+        {isPortalBrandingScope ? (
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-primary">
+            You are editing the global branding used by the main portal.
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <Label htmlFor="logo-url">Company Logo URL</Label>

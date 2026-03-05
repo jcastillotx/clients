@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ChangeEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,8 +33,10 @@ interface UserSettingsProps {
 export function UserSettings({ user }: UserSettingsProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState(user.avatar || "");
 
   const {
     register,
@@ -61,6 +63,7 @@ export function UserSettings({ user }: UserSettingsProps) {
         data: {
           name: data.name,
           phone: data.phone,
+          avatar: avatarUrl || null,
         },
       });
 
@@ -88,6 +91,39 @@ export function UserSettings({ user }: UserSettingsProps) {
     }
   };
 
+  const handleAvatarUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setError(null);
+    setSuccess(false);
+    setIsUploadingAvatar(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/settings/profile-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const payload: { avatarUrl?: string; error?: string } = await response.json();
+      if (!response.ok || !payload.avatarUrl) {
+        throw new Error(payload.error || "Failed to upload profile image");
+      }
+
+      setAvatarUrl(payload.avatarUrl);
+      setSuccess(true);
+      router.refresh();
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Failed to upload profile image");
+    } finally {
+      setIsUploadingAvatar(false);
+      event.target.value = "";
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -105,16 +141,30 @@ export function UserSettings({ user }: UserSettingsProps) {
           {/* Avatar */}
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={user.avatar} />
+              <AvatarImage src={avatarUrl || undefined} />
               <AvatarFallback>
                 <User className="h-10 w-10" />
               </AvatarFallback>
             </Avatar>
             <div>
-              <Button type="button" variant="outline" size="sm" disabled>
-                Change Avatar
-              </Button>
-              <p className="text-xs text-muted-foreground mt-1">Avatar upload coming soon</p>
+              <Label htmlFor="avatar-upload" className="sr-only">
+                Upload profile image
+              </Label>
+              <Input
+                id="avatar-upload"
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,.gif"
+                className="max-w-xs"
+                onChange={handleAvatarUpload}
+                disabled={isUploadingAvatar}
+              />
+              {isUploadingAvatar ? (
+                <p className="mt-2 inline-flex items-center text-xs text-muted-foreground">
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  Uploading avatar...
+                </p>
+              ) : null}
+              <p className="text-xs text-muted-foreground mt-1">Use JPG, PNG, WEBP, or GIF up to 5MB.</p>
             </div>
           </div>
 
