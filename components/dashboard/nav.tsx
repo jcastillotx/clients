@@ -42,6 +42,7 @@ import {
   EyeOff,
   Cog,
 } from "lucide-react";
+import { ComponentType } from "react";
 
 interface DashboardNavProps {
   user: {
@@ -62,7 +63,7 @@ type AccessLevel = "all" | "staff" | "admin" | "manager";
 interface NavItem {
   name: string;
   href: string;
-  icon: any;
+  icon: ComponentType<{ className?: string }>;
   access?: AccessLevel;
   matchesTab?: string;
 }
@@ -96,6 +97,7 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Time Tracking", href: "/time-tracking", icon: Clock3 },
       { name: "Task Board", href: "/tasks", icon: Columns3 },
+      { name: "Project Requests", href: "/projects/requests", icon: ClipboardCheck },
       { name: "Project Timeline", href: "/projects", icon: CalendarRange },
       { name: "Project Budgets", href: "/projects", icon: Briefcase },
       { name: "Staff Tasks", href: "/tasks", icon: ClipboardCheck, access: "staff" },

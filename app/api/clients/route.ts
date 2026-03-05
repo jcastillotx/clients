@@ -2,6 +2,47 @@ import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/serve
 import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
+export async function GET(request: Request) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const includeInactive = searchParams.get("includeInactive") === "true";
+
+    let query = supabase.from("clients").select("id, company_name, status").is("deleted_at", null).order("company_name");
+    if (!includeInactive) {
+      query = query.eq("status", "active");
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: data ?? [],
+    });
+  } catch (error) {
+    console.error("Error listing clients:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to fetch clients",
+      },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();

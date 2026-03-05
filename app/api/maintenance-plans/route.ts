@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
-import { maintenancePlans } from "@/lib/db/schema/maintenance-plans";
-import { eq, and, or, desc, sql, gte, isNull } from "drizzle-orm";
+import { maintenancePlans, maintenancePlanStatusEnum, type MaintenancePlanStatus } from "@/lib/db/schema/maintenance-plans";
+import { eq, and, desc, sql, isNull, type SQL } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
+
+function isMaintenancePlanStatus(value: string): value is MaintenancePlanStatus {
+  return (maintenancePlanStatusEnum as readonly string[]).includes(value);
+}
 
 /**
  * GET /api/maintenance-plans
@@ -15,24 +20,24 @@ export async function GET(request: NextRequest) {
     const planType = searchParams.get("planType");
     const activeOnly = searchParams.get("activeOnly") === "true";
 
-    const filters = [isNull(maintenancePlans.deletedAt)];
+    const filters: SQL<unknown>[] = [isNull(maintenancePlans.deletedAt)];
     if (clientId) {
       filters.push(eq(maintenancePlans.clientId, clientId));
     }
-    if (status) {
-      filters.push(eq(maintenancePlans.status, status as any));
+    if (status && isMaintenancePlanStatus(status)) {
+      filters.push(eq(maintenancePlans.status, status));
     }
     if (planType) {
       filters.push(eq(maintenancePlans.planType, planType));
     }
     if (activeOnly) {
+      const today = new Date().toISOString().split("T")[0];
       filters.push(
-        and(
-          eq(maintenancePlans.status, "active"),
-          or(sql`${maintenancePlans.endDate} IS NULL`, gte(maintenancePlans.endDate, new Date().toISOString().split("T")[0])),
-        ) as any,
+        sql`(${maintenancePlans.status} = 'active' AND (${maintenancePlans.endDate} IS NULL OR ${maintenancePlans.endDate} >= ${today}))`,
       );
     }
+
+    const whereClause = filters.length > 1 ? and(...filters) : filters[0];
 
     const plans = await db
       .select({
@@ -61,7 +66,7 @@ export async function GET(request: NextRequest) {
       .from(maintenancePlans)
       .leftJoin(sql`clients`, sql`clients.id = ${maintenancePlans.clientId}`)
       .leftJoin(sql`users`, sql`users.id = ${maintenancePlans.createdBy}`)
-      .where(and(...filters) as any)
+      .where(whereClause)
       .orderBy(desc(maintenancePlans.createdAt));
 
     return NextResponse.json({
@@ -90,18 +95,26 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Authentication required",
+        },
+        { status: 401 },
+      );
+    }
+
     const body = await request.json();
 
     // Validate required fields
-    const requiredFields = [
-      "clientId",
-      "name",
-      "startDate",
-      "monthlyRate",
-      "includedHours",
-      "hourlyRateOverage",
-      "createdBy",
-    ];
+    const requiredFields = ["clientId", "name", "startDate", "monthlyRate", "includedHours", "hourlyRateOverage"];
 
     for (const field of requiredFields) {
       if (!body[field]) {
@@ -124,7 +137,7 @@ export async function POST(request: NextRequest) {
       .insert(maintenancePlans)
       .values({
         clientId: body.clientId,
-        createdBy: body.createdBy,
+        createdBy: user.id,
         name: body.name,
         description: body.description,
         planType: body.planType || "standard",

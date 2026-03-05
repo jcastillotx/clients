@@ -12,11 +12,17 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Save, AlertCircle } from "lucide-react";
 
+type ClientOption = {
+  id: string;
+  company_name?: string;
+  companyName?: string;
+};
+
 export default function NewMaintenancePlanPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<ClientOption[]>([]);
   const [formData, setFormData] = useState({
     clientId: "",
     name: "",
@@ -46,12 +52,23 @@ export default function NewMaintenancePlanPage() {
   const fetchClients = async () => {
     try {
       const response = await fetch("/api/clients");
-      const data = await response.json();
-      if (data.success) {
-        setClients(data.data);
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to load clients");
       }
+
+      const list = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : payload?.client
+            ? [payload.client]
+            : [];
+      setClients(list);
+      setError(null);
     } catch (error) {
       console.error("Error fetching clients:", error);
+      setError("Unable to load clients for selection. Please refresh and try again.");
     }
   };
 
@@ -84,9 +101,6 @@ export default function NewMaintenancePlanPage() {
     try {
       setLoading(true);
 
-      // Mock current user ID - in production, get from auth context
-      const currentUserId = "00000000-0000-0000-0000-000000000000";
-
       const response = await fetch("/api/maintenance-plans", {
         method: "POST",
         headers: {
@@ -101,7 +115,6 @@ export default function NewMaintenancePlanPage() {
           overageNotificationThreshold: parseFloat(formData.overageNotificationThreshold),
           autoRenewNotificationDays: parseInt(formData.autoRenewNotificationDays),
           renewalTermMonths: parseInt(formData.renewalTermMonths),
-          createdBy: currentUserId,
         }),
       });
 
@@ -158,9 +171,14 @@ export default function NewMaintenancePlanPage() {
                   <SelectValue placeholder="Select a client..." />
                 </SelectTrigger>
                 <SelectContent>
+                  {clients.length === 0 && (
+                    <SelectItem value="__no_clients_available" disabled>
+                      No clients available
+                    </SelectItem>
+                  )}
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.companyName}
+                      {client.company_name || client.companyName || "Unnamed client"}
                     </SelectItem>
                   ))}
                 </SelectContent>
