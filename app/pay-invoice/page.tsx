@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { PublicInvoicePaymentForm } from "@/components/payments/public-invoice-payment-form";
 
 export const metadata = {
@@ -14,7 +15,9 @@ export default function PayInvoicePage() {
           Enter your invoice details below to pay securely with Stripe.
         </p>
       </div>
-      <PublicInvoicePaymentForm />
+      <Suspense fallback={<div className="mx-auto w-full max-w-2xl py-8 text-center text-sm text-muted-foreground">Loading payment form...</div>}>
+        <PublicInvoicePaymentForm />
+      </Suspense>
     </main>
   );
 }
