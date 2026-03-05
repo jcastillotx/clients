@@ -48,7 +48,8 @@ export default async function SettingsPage({
   };
 
   const hasAdminRole = (roleData || []).some((row: RoleDataRow) => {
-    const roleName = row?.role?.name || row?.role?.[0]?.name;
+    const roleValue = row?.role;
+    const roleName = Array.isArray(roleValue) ? roleValue[0]?.name : roleValue?.name;
     return roleName === "admin" || roleName === "super_admin";
   });
 
