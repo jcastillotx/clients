@@ -11,6 +11,7 @@ export const metadata = {
 };
 
 const allowedTabs = new Set(["profile", "account", "branding", "storage"]);
+const DEFAULT_PARENT_COMPANY_NAMES = ["Kre8ivTech", "Kre8iv Designs"];
 
 /**
  * Settings page (Server Component)
@@ -36,10 +37,6 @@ export default async function SettingsPage({
   const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
   const clientId = userData?.client_id ?? null;
 
-  const { data: brandingConfig } = clientId
-    ? await supabase.from("white_label_configs").select("*").eq("client_id", clientId).maybeSingle()
-    : { data: null };
-
   const userRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const { data: roleData } = await supabase
     .from("user_roles")
@@ -54,6 +51,48 @@ export default async function SettingsPage({
   const canManageBranding = Boolean(
     userData?.is_super_admin || userRole === "admin" || userRole === "super_admin" || hasAdminRole,
   );
+
+  const parentClientIds = (process.env.PARENT_CLIENT_IDS ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const parentCompanyNames = (process.env.PARENT_COMPANY_NAMES ?? DEFAULT_PARENT_COMPANY_NAMES.join(","))
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  let brandingClientId: string | null = clientId;
+  let isPortalBrandingScope = false;
+
+  if (!brandingClientId && canManageBranding) {
+    if (parentClientIds.length > 0) {
+      const { data: parentClientById } = await supabase
+        .from("clients")
+        .select("id")
+        .in("id", parentClientIds)
+        .limit(1)
+        .maybeSingle();
+      brandingClientId = parentClientById?.id ?? null;
+    }
+
+    if (!brandingClientId && parentCompanyNames.length > 0) {
+      const { data: parentClientByName } = await supabase
+        .from("clients")
+        .select("id")
+        .in("company_name", parentCompanyNames)
+        .limit(1)
+        .maybeSingle();
+      brandingClientId = parentClientByName?.id ?? null;
+    }
+
+    if (brandingClientId) {
+      isPortalBrandingScope = true;
+    }
+  }
+
+  const { data: brandingConfig } = brandingClientId
+    ? await supabase.from("white_label_configs").select("*").eq("client_id", brandingClientId).maybeSingle()
+    : { data: null };
 
   const requestedTab = (resolvedSearchParams.tab || "").toLowerCase();
   const tabIsAllowed = allowedTabs.has(requestedTab);
@@ -89,7 +128,8 @@ export default async function SettingsPage({
         {canManageBranding ? (
           <TabsContent value="branding" className="mt-6">
             <BrandingSettings
-              clientId={clientId}
+              clientId={brandingClientId}
+              isPortalBrandingScope={isPortalBrandingScope}
               initialLogoUrl={brandingConfig?.logo_url ?? null}
               initialDomain={brandingConfig?.domain ?? null}
             />
