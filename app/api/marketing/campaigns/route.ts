@@ -19,7 +19,36 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { data, error } = await supabase
+    // Get user's client and role info
+    const { data: userData } = await supabase
+      .from("users")
+      .select("client_id, is_super_admin")
+      .eq("id", user.id)
+      .single();
+
+    const { data: roleRows } = await supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id);
+
+    const roleNames = new Set<string>();
+    for (const row of roleRows || []) {
+      const roleName = String((row as any)?.role?.name || (row as any)?.role?.[0]?.name || "").toLowerCase();
+      if (roleName) roleNames.add(roleName);
+    }
+
+    const isAdmin = Boolean(userData?.is_super_admin) || roleNames.has("admin") || roleNames.has("super_admin");
+    const isAccountManager = roleNames.has("account_manager");
+    const isStaff = isAdmin || isAccountManager || roleNames.has("staff");
+
+    if (!isStaff) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Staff can optionally filter by client_id
+    const clientIdFilter = req.nextUrl.searchParams.get("client_id");
+
+    let query = supabase
       .from("campaigns")
       .select(`
         *,
@@ -27,6 +56,15 @@ export async function GET(req: NextRequest) {
         created_by_user:users!campaigns_created_by_fkey(id, name)
       `)
       .order("created_at", { ascending: false });
+
+    if (clientIdFilter) {
+      query = query.eq("client_id", clientIdFilter);
+    } else if (!isAdmin) {
+      // Non-admin staff see only their client's campaigns
+      query = query.eq("client_id", userData!.client_id!);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
