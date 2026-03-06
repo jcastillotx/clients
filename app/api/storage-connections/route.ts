@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { storageConnections } from "@/lib/db/schema/additional-features";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { users } from "@/lib/db/schema/users";
-import { and } from "drizzle-orm";
 
 function isAdminUser(user: any, dbUser: any) {
   const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
@@ -18,7 +17,11 @@ function isAdminUser(user: any, dbUser: any) {
 
 /**
  * GET /api/storage-connections
- * Retrieve storage connections for a client
+ * Retrieve storage connections for a client.
+ *
+ * Query params:
+ *   clientId  – required
+ *   ownerType – optional: "company" | "client" (omit for all)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -32,6 +35,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const clientId = searchParams.get("clientId");
+    const ownerType = searchParams.get("ownerType");
 
     if (!clientId) {
       return NextResponse.json({ error: "Client ID is required" }, { status: 400 });
@@ -47,7 +51,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const connections = await db.select().from(storageConnections).where(eq(storageConnections.clientId, clientId));
+    const conditions = [eq(storageConnections.clientId, clientId)];
+    if (ownerType === "company" || ownerType === "client") {
+      conditions.push(eq(storageConnections.ownerType, ownerType));
+    }
+
+    const connections = await db
+      .select()
+      .from(storageConnections)
+      .where(and(...conditions));
 
     // Exclude encrypted credentials from response
     const sanitized = connections.map((conn) => ({
@@ -64,7 +76,9 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/storage-connections
- * Create a new storage connection
+ * Create a new storage connection.
+ *
+ * Body: { clientId, provider, ownerType?, connectionName, credentials, syncEnabled?, config }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -77,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientId, provider, connectionName, credentials, syncEnabled, config } = body;
+    const { clientId, provider, ownerType, connectionName, credentials, syncEnabled, config } = body;
 
     if (!clientId || !provider || !connectionName || !credentials) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -89,11 +103,17 @@ export async function POST(request: NextRequest) {
     }
 
     const isAdmin = isAdminUser(user, dbUser);
+
+    // Company connections require admin
+    if (ownerType === "company" && !isAdmin) {
+      return NextResponse.json({ error: "Only admins can manage company storage" }, { status: 403 });
+    }
+
     if (!isAdmin && dbUser.clientId !== clientId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // TODO: Implement encryption for credentials
+    // TODO: Implement proper encryption for credentials
     const credentialsEncrypted = Buffer.from(JSON.stringify(credentials)).toString("base64");
 
     const newConnection = await db
@@ -101,6 +121,7 @@ export async function POST(request: NextRequest) {
       .values({
         clientId,
         provider,
+        ownerType: ownerType || "client",
         connectionName,
         credentialsEncrypted,
         syncEnabled: syncEnabled ?? true,
@@ -153,6 +174,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     const isAdmin = isAdminUser(user, dbUser);
+
+    // Company connections require admin to delete
+    if (connection.ownerType === "company" && !isAdmin) {
+      return NextResponse.json({ error: "Only admins can manage company storage" }, { status: 403 });
+    }
+
     if (!isAdmin && dbUser.clientId !== connection.clientId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

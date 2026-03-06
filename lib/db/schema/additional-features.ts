@@ -89,9 +89,20 @@ export const storageProviderEnum = ["s3", "gcs", "azure", "dropbox", "google-dri
 export type StorageProvider = (typeof storageProviderEnum)[number];
 
 /**
+ * Storage connection owner type enum
+ *
+ * "company" = company-wide connection managed by admins (e.g., primary S3, company Dropbox)
+ * "client"  = per-client connection so staff can access that client's cloud files
+ */
+export const storageOwnerTypeEnum = ["company", "client"] as const;
+export type StorageOwnerType = (typeof storageOwnerTypeEnum)[number];
+
+/**
  * Storage Connections table
  *
- * Manages external storage integrations for clients.
+ * Manages external storage integrations at two levels:
+ * 1. Company-level: Primary AWS S3 + company Dropbox/Google Drive/OneDrive (admin-managed)
+ * 2. Client-level: Each client connects their own Dropbox/Google Drive/OneDrive for staff access
  */
 export const storageConnections = pgTable("storage_connections", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -99,6 +110,7 @@ export const storageConnections = pgTable("storage_connections", {
     .notNull()
     .references(() => clients.id, { onDelete: "cascade" }),
   provider: text("provider", { enum: storageProviderEnum }).notNull(),
+  ownerType: text("owner_type", { enum: storageOwnerTypeEnum }).default("client").notNull(),
   connectionName: text("connection_name").notNull(),
   credentialsEncrypted: text("credentials_encrypted").notNull(), // Encrypted JSON credentials
   syncEnabled: boolean("sync_enabled").default(true).notNull(),
