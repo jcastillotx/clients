@@ -17,6 +17,65 @@ export const billingCycleEnum = ["monthly", "quarterly", "semi_annual", "annual"
 export type BillingCycle = (typeof billingCycleEnum)[number];
 
 /**
+ * Maintenance Plan Templates table
+ *
+ * Admin-created general plan templates that clients can choose from and subscribe to.
+ */
+export const maintenancePlanTemplates = pgTable("maintenance_plan_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  // Plan template details
+  name: text("name").notNull(),
+  description: text("description"),
+  planType: text("plan_type").default("standard").notNull(), // standard, premium, enterprise, custom
+  isActive: boolean("is_active").default(true).notNull(),
+
+  // Billing
+  billingCycle: text("billing_cycle", { enum: billingCycleEnum }).default("monthly").notNull(),
+  monthlyRate: decimal("monthly_rate", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("USD").notNull(),
+
+  // Hours
+  includedHours: decimal("included_hours", { precision: 10, scale: 2 }).notNull(),
+  hourlyRateOverage: decimal("hourly_rate_overage", { precision: 10, scale: 2 }).notNull(),
+
+  // Settings
+  autoRenew: boolean("auto_renew").default(true).notNull(),
+  rolloverEnabled: boolean("rollover_enabled").default(false).notNull(),
+  maxRolloverHours: decimal("max_rollover_hours", { precision: 10, scale: 2 }),
+  overageBillingEnabled: boolean("overage_billing_enabled").default(true).notNull(),
+  overageApprovalRequired: boolean("overage_approval_required").default(false).notNull(),
+  overageNotificationThreshold: decimal("overage_notification_threshold", { precision: 5, scale: 2 })
+    .default("90")
+    .notNull(),
+  renewalTermMonths: integer("renewal_term_months").default(12).notNull(),
+
+  // Services covered
+  servicesIncluded: jsonb("services_included").$type<
+    Array<{
+      category: string;
+      description: string;
+      included: boolean;
+    }>
+  >(),
+
+  // Metadata
+  metadata: jsonb("metadata").$type<{
+    features?: string[];
+    notes?: string;
+  }>(),
+
+  // Created by admin
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
  * Maintenance Plans table
  *
  * Manages recurring maintenance plans with included hours, billing cycles, and service coverage.
@@ -31,6 +90,7 @@ export const maintenancePlans = pgTable("maintenance_plans", {
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),
+  templateId: uuid("template_id").references(() => maintenancePlanTemplates.id),
 
   // Plan details
   name: text("name").notNull(),
@@ -207,6 +267,17 @@ export const maintenancePlanBillingHistory = pgTable("maintenance_plan_billing_h
 });
 
 /**
+ * Maintenance plan template relations
+ */
+export const maintenancePlanTemplatesRelations = relations(maintenancePlanTemplates, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [maintenancePlanTemplates.createdBy],
+    references: [users.id],
+  }),
+  plans: many(maintenancePlans),
+}));
+
+/**
  * Maintenance plan relations
  */
 export const maintenancePlansRelations = relations(maintenancePlans, ({ one, many }) => ({
@@ -217,6 +288,10 @@ export const maintenancePlansRelations = relations(maintenancePlans, ({ one, man
   creator: one(users, {
     fields: [maintenancePlans.createdBy],
     references: [users.id],
+  }),
+  template: one(maintenancePlanTemplates, {
+    fields: [maintenancePlans.templateId],
+    references: [maintenancePlanTemplates.id],
   }),
   usage: many(maintenancePlanUsage),
   billingHistory: many(maintenancePlanBillingHistory),
@@ -258,6 +333,8 @@ export const maintenancePlanBillingHistoryRelations = relations(maintenancePlanB
 /**
  * TypeScript types
  */
+export type MaintenancePlanTemplate = typeof maintenancePlanTemplates.$inferSelect;
+export type NewMaintenancePlanTemplate = typeof maintenancePlanTemplates.$inferInsert;
 export type MaintenancePlan = typeof maintenancePlans.$inferSelect;
 export type NewMaintenancePlan = typeof maintenancePlans.$inferInsert;
 export type MaintenancePlanUsage = typeof maintenancePlanUsage.$inferSelect;
