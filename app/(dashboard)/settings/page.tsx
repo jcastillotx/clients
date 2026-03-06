@@ -143,7 +143,11 @@ export default async function SettingsPage({
 
         {canManageBranding && clientId ? (
           <TabsContent value="storage" className="mt-6">
-            <StorageConnections clientId={clientId} />
+            <StorageConnections
+              clientId={clientId}
+              isAdmin={canManageBranding}
+              companyClientId={brandingClientId}
+            />
           </TabsContent>
         ) : null}
       </Tabs>
