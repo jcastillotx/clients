@@ -156,7 +156,7 @@ const navigationSections: NavSection[] = [
   {
     title: "Storage & Integration",
     items: [
-      { name: "Storage Management", href: "/settings?tab=storage", icon: Database, access: "staff" },
+      { name: "Storage Management", href: "/storage", icon: Database, access: "staff" },
       { name: "All Tickets", href: "/admin/tickets", icon: HelpCircle, access: "admin" },
       { name: "Webhooks", href: "/webhooks", icon: LinkIcon, access: "admin" },
     ],
