@@ -11,8 +11,10 @@ import {
   TrendingUp,
   AlertTriangle,
   Activity,
+  HelpCircle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 
 interface Stats {
   clients: { total: number; active: number };
@@ -20,6 +22,7 @@ interface Stats {
   requests: { total: number; pending: number };
   invoices: { total: number; unpaid: number };
   contracts: { total: number; active: number };
+  tickets: { total: number; open: number };
 }
 
 interface ActivityLog {
@@ -51,14 +54,26 @@ interface SLABreach {
   } | null;
 }
 
+interface RecentTicket {
+  id: string;
+  ticket_number: string;
+  subject: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  client?: { company_name: string } | null;
+  assigned_user?: { name: string; avatar?: string } | null;
+}
+
 interface AdminDashboardProps {
   stats: Stats;
   recentActivity: ActivityLog[];
   topClients: TopClient[];
   slaBreaches: SLABreach[];
+  recentTickets: RecentTicket[];
 }
 
-export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches }: AdminDashboardProps) {
+export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches, recentTickets }: AdminDashboardProps) {
   const statCards = [
     {
       title: "Total Clients",
@@ -99,6 +114,14 @@ export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches 
       color: "text-indigo-600",
       bgColor: "bg-indigo-100",
     },
+    {
+      title: "Support Tickets",
+      value: stats.tickets.total,
+      subtitle: `${stats.tickets.open} open`,
+      icon: HelpCircle,
+      color: "text-orange-600",
+      bgColor: "bg-orange-100",
+    },
   ];
 
   const formatCurrency = (amount: number) => {
@@ -117,7 +140,7 @@ export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches 
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -217,6 +240,54 @@ export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches 
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Support Tickets */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-orange-600" />
+              <CardTitle>Recent Support Tickets</CardTitle>
+            </div>
+            <Link href="/admin/tickets" className="text-sm text-primary hover:underline">
+              View all
+            </Link>
+          </div>
+          <CardDescription>Latest tickets across all clients</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {recentTickets.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No support tickets</p>
+          ) : (
+            <div className="space-y-3">
+              {recentTickets.map((ticket) => (
+                <div key={ticket.id} className="space-y-1 rounded-lg border p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium">{ticket.subject}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {ticket.ticket_number} • {ticket.client?.company_name}
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Badge variant={ticket.priority === "urgent" || ticket.priority === "high" ? "destructive" : "secondary"} className="text-xs">
+                        {ticket.priority}
+                      </Badge>
+                      <Badge variant={ticket.status === "open" ? "default" : "outline"} className="text-xs">
+                        {ticket.status.replace(/_/g, " ")}
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {ticket.assigned_user ? `Assigned to ${ticket.assigned_user.name}` : "Unassigned"} •{" "}
+                    {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <Card>

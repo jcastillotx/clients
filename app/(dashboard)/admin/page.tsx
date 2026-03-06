@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/admin/dashboard/admin-dashboard";
@@ -13,6 +14,9 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
+  // Use admin client to bypass RLS and see all data across clients
+  const adminClient = createAdminClientIfAvailable() ?? supabase;
+
   // Fetch dashboard statistics in parallel
   const [
     { count: totalClients },
@@ -24,43 +28,54 @@ export default async function AdminPage() {
     { count: unpaidInvoices },
     { count: totalContracts },
     { count: activeContracts },
+    { count: totalTickets },
+    { count: openTickets },
     { data: recentActivity },
     { data: topClients },
     { data: slaBreaches },
+    { data: recentTickets },
   ] = await Promise.all([
     // Clients
-    supabase.from("clients").select("*", { count: "exact", head: true }),
-    supabase.from("clients").select("*", { count: "exact", head: true }).eq("is_active", true),
+    adminClient.from("clients").select("*", { count: "exact", head: true }),
+    adminClient.from("clients").select("*", { count: "exact", head: true }).eq("is_active", true),
 
     // Users
-    supabase.from("users").select("*", { count: "exact", head: true }),
+    adminClient.from("users").select("*", { count: "exact", head: true }),
 
     // Requests
-    supabase.from("requests").select("*", { count: "exact", head: true }).is("deleted_at", null),
-    supabase
+    adminClient.from("requests").select("*", { count: "exact", head: true }).is("deleted_at", null),
+    adminClient
       .from("requests")
       .select("*", { count: "exact", head: true })
       .eq("status", "pending")
       .is("deleted_at", null),
 
     // Invoices
-    supabase.from("invoices").select("*", { count: "exact", head: true }).is("deleted_at", null),
-    supabase
+    adminClient.from("invoices").select("*", { count: "exact", head: true }).is("deleted_at", null),
+    adminClient
       .from("invoices")
       .select("*", { count: "exact", head: true })
       .in("status", ["sent", "overdue"])
       .is("deleted_at", null),
 
     // Contracts
-    supabase.from("contracts").select("*", { count: "exact", head: true }).is("deleted_at", null),
-    supabase
+    adminClient.from("contracts").select("*", { count: "exact", head: true }).is("deleted_at", null),
+    adminClient
       .from("contracts")
       .select("*", { count: "exact", head: true })
       .eq("status", "active")
       .is("deleted_at", null),
 
+    // Support Tickets
+    adminClient.from("support_tickets").select("*", { count: "exact", head: true }).is("deleted_at", null),
+    adminClient
+      .from("support_tickets")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["open", "in_progress"])
+      .is("deleted_at", null),
+
     // Recent Activity
-    supabase
+    adminClient
       .from("activity_logs")
       .select(
         `
@@ -72,7 +87,7 @@ export default async function AdminPage() {
       .limit(10),
 
     // Top Clients by Revenue
-    supabase
+    adminClient
       .from("clients")
       .select(
         `
@@ -84,7 +99,7 @@ export default async function AdminPage() {
       .limit(5),
 
     // SLA Breaches
-    supabase
+    adminClient
       .from("requests")
       .select(
         `
@@ -95,6 +110,21 @@ export default async function AdminPage() {
       .eq("sla_breached", true)
       .is("deleted_at", null)
       .order("sla_breach_at", { ascending: false })
+      .limit(5),
+
+    // Recent Support Tickets (across all clients)
+    adminClient
+      .from("support_tickets")
+      .select(
+        `
+        *,
+        client:clients(company_name),
+        creator:users!support_tickets_created_by_fkey(name, avatar),
+        assigned_user:users!support_tickets_assigned_to_fkey(name, avatar)
+      `,
+      )
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
       .limit(5),
   ]);
 
@@ -126,6 +156,10 @@ export default async function AdminPage() {
       total: totalContracts || 0,
       active: activeContracts || 0,
     },
+    tickets: {
+      total: totalTickets || 0,
+      open: openTickets || 0,
+    },
   };
 
   return (
@@ -135,6 +169,7 @@ export default async function AdminPage() {
         recentActivity={recentActivity || []}
         topClients={sortedTopClients || []}
         slaBreaches={slaBreaches || []}
+        recentTickets={recentTickets || []}
       />
     </div>
   );
