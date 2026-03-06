@@ -115,11 +115,12 @@ const navigationSections: NavSection[] = [
   {
     title: "Marketing",
     items: [
-      { name: "Marketing Tools", href: "/marketing/campaigns", icon: Megaphone },
-      { name: "Lead Management", href: "/marketing/leads", icon: Users },
-      { name: "Content Calendar", href: "/marketing/content-calendar", icon: CalendarDays },
-      { name: "Social Media", href: "/social-media", icon: Share2 },
-      { name: "Ad Management", href: "/ads", icon: TrendingUp },
+      { name: "Marketing Overview", href: "/marketing", icon: Megaphone },
+      { name: "Campaigns", href: "/marketing/campaigns", icon: Megaphone, access: "staff" },
+      { name: "Lead Management", href: "/marketing/leads", icon: Users, access: "staff" },
+      { name: "Content Calendar", href: "/marketing/content-calendar", icon: CalendarDays, access: "staff" },
+      { name: "Social Media", href: "/social-media", icon: Share2, access: "staff" },
+      { name: "Ad Management", href: "/ads", icon: TrendingUp, access: "staff" },
       { name: "Brand Monitoring", href: "/brand/monitoring", icon: Globe, access: "staff" },
     ],
   },

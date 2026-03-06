@@ -238,6 +238,21 @@ export const Permissions = {
   SETTINGS_READ: "settings.read",
   SETTINGS_UPDATE: "settings.update",
   SETTINGS_MANAGE: "settings.manage",
+
+  // Marketing
+  MARKETING_CAMPAIGNS_CREATE: "marketing_campaigns.create",
+  MARKETING_CAMPAIGNS_READ: "marketing_campaigns.read",
+  MARKETING_CAMPAIGNS_UPDATE: "marketing_campaigns.update",
+  MARKETING_CAMPAIGNS_DELETE: "marketing_campaigns.delete",
+  MARKETING_LEADS_CREATE: "marketing_leads.create",
+  MARKETING_LEADS_READ: "marketing_leads.read",
+  MARKETING_LEADS_UPDATE: "marketing_leads.update",
+  MARKETING_LEADS_DELETE: "marketing_leads.delete",
+  MARKETING_CONTENT_CREATE: "marketing_content.create",
+  MARKETING_CONTENT_READ: "marketing_content.read",
+  MARKETING_CONTENT_UPDATE: "marketing_content.update",
+  MARKETING_CONTENT_DELETE: "marketing_content.delete",
+  MARKETING_VIEW_CLIENT: "marketing.view_client",
 } as const;
 
 /**
