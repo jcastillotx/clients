@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SupportTicketDetail } from "@/components/support/ticket-detail";
 import { SupportTicketComments } from "@/components/support/ticket-comments";
 import { notFound, redirect } from "next/navigation";
+import { hasAnyRole } from "@/lib/rbac/permissions";
 
 interface PageProps {
   params: Promise<{
@@ -60,12 +61,15 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
   // Fetch staff users for assignment updates
   const { data: staffUsers } = await supabase.from("users").select("id, name, email").eq("role", "staff").order("name");
 
+  // Check if the current user is staff (non-client)
+  const isStaff = await hasAnyRole(["super_admin", "admin", "account_manager", "staff"], { supabase, userId: user.id });
+
   return (
     <div className="container mx-auto py-8 max-w-6xl">
       <SupportTicketDetail ticket={ticket} staffUsers={staffUsers || []} />
 
       <div className="mt-8">
-        <SupportTicketComments ticketId={id} initialComments={comments || []} currentUserId={user.id} />
+        <SupportTicketComments ticketId={id} initialComments={comments || []} currentUserId={user.id} isStaff={isStaff} />
       </div>
     </div>
   );
