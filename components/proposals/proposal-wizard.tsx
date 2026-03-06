@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Plus, Trash2, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { Loader2, Plus, Trash2, ChevronLeft, ChevronRight, FileText, Sparkles } from "lucide-react";
 
 const proposalSchema = z.object({
   clientId: z.string().uuid("Please select a client"),
@@ -57,14 +57,18 @@ interface ProposalWizardProps {
 const steps = [
   { id: 1, name: "Basic Info", description: "Client and proposal details" },
   { id: 2, name: "Line Items", description: "Add services and pricing" },
-  { id: 3, name: "Terms", description: "Terms and conditions" },
-  { id: 4, name: "Review", description: "Review and submit" },
+  { id: 3, name: "AI Generate", description: "Generate detailed proposal" },
+  { id: 4, name: "Terms", description: "Terms and conditions" },
+  { id: 5, name: "Review", description: "Review and submit" },
 ];
 
 export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState<string>("");
+  const [aiContext, setAiContext] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -72,6 +76,7 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ProposalFormInput>({
     resolver: zodResolver(proposalSchema),
@@ -97,6 +102,68 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
     (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
     0,
   );
+
+  const generateProposal = useCallback(async () => {
+    const clientId = watch("clientId");
+    const title = watch("title");
+    const description = watch("description");
+    const currency = watch("currency");
+    const items = watch("lineItems");
+
+    if (!clientId || !title) {
+      setError("Please fill in the client and title before generating.");
+      return;
+    }
+
+    const selectedClient = clients.find((c) => c.id === clientId);
+    if (!selectedClient) {
+      setError("Please select a valid client.");
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/ai/generate-proposal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: selectedClient.company_name,
+          projectTitle: title,
+          projectDescription: description || "",
+          lineItems: items
+            .filter((item) => item.description)
+            .map((item) => ({
+              description: item.description,
+              quantity: Number(item.quantity) || 1,
+              unitPrice: Number(item.unitPrice) || 0,
+              category: item.category || "",
+            })),
+          currency,
+          additionalContext: aiContext || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to generate proposal");
+      }
+
+      const data = await response.json();
+      setGeneratedContent(data.content);
+
+      // Auto-populate the description if empty
+      if (!description) {
+        setValue("description", `AI-generated detailed proposal for ${title}`);
+      }
+    } catch (err) {
+      console.error("Error generating proposal:", err);
+      setError(err instanceof Error ? err.message : "Failed to generate proposal");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [watch, clients, aiContext, setValue]);
 
   const onSubmit = async (data: ProposalFormInput) => {
     setIsSubmitting(true);
@@ -137,7 +204,10 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
           valid_until: data.validUntil || null,
           terms: data.terms || null,
           line_items: lineItemsWithAmounts,
-          metadata: data.metadata || {},
+          metadata: {
+            ...data.metadata,
+            generatedContent: generatedContent || undefined,
+          },
           created_by: user.id,
         })
         .select()
@@ -206,18 +276,24 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="clientId">Client *</Label>
-              <Select {...register("clientId")}>
-                <SelectTrigger id="clientId">
-                  <SelectValue placeholder="Select a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.company_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="clientId"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="clientId">
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.company_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.clientId && <p className="text-sm text-destructive">{errors.clientId.message}</p>}
             </div>
 
@@ -245,17 +321,23 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
 
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Select {...register("currency")} defaultValue="USD">
-                  <SelectTrigger id="currency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                    <SelectItem value="CAD">CAD (C$)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="currency"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id="currency">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="GBP">GBP (£)</SelectItem>
+                        <SelectItem value="CAD">CAD (C$)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
           </CardContent>
@@ -345,8 +427,92 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
         </Card>
       )}
 
-      {/* Step 3: Terms */}
+      {/* Step 3: AI Generate */}
       {currentStep === 3 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-violet-500" />
+              AI Proposal Generator
+            </CardTitle>
+            <CardDescription>
+              Use Claude AI to generate a comprehensive, professionally detailed proposal with full legal sections
+              including Parties & Recitals, Scope of Work, Payment Terms, IP, Confidentiality, Warranties, and more.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="aiContext">Additional Context (optional)</Label>
+              <Textarea
+                id="aiContext"
+                value={aiContext}
+                onChange={(e) => setAiContext(e.target.value)}
+                placeholder="Add any specific details for the AI to include: project requirements, client location, special terms, technology stack, timeline preferences, industry-specific clauses..."
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">
+                The AI will use your client, title, description, and line items from previous steps along with any
+                additional context you provide here.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                onClick={generateProposal}
+                disabled={isGenerating}
+                className="bg-violet-600 hover:bg-violet-700"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating detailed proposal...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    {generatedContent ? "Regenerate Proposal" : "Generate Detailed Proposal"}
+                  </>
+                )}
+              </Button>
+              {generatedContent && (
+                <span className="text-sm text-green-600 font-medium">Proposal generated successfully</span>
+              )}
+            </div>
+
+            {generatedContent && (
+              <div className="space-y-3 mt-4">
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Generated Proposal Preview</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedContent);
+                    }}
+                  >
+                    Copy to Clipboard
+                  </Button>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-6 max-h-[600px] overflow-y-auto">
+                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                    {generatedContent}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This generated content will be saved with your proposal and can be used for the client-facing
+                  document. You can edit it after the proposal is created.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 4: Terms */}
+      {currentStep === 4 && (
         <Card>
           <CardHeader>
             <CardTitle>Terms & Conditions</CardTitle>
@@ -381,8 +547,8 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
         </Card>
       )}
 
-      {/* Step 4: Review */}
-      {currentStep === 4 && (
+      {/* Step 5: Review */}
+      {currentStep === 5 && (
         <Card>
           <CardHeader>
             <CardTitle>Review Proposal</CardTitle>
@@ -436,6 +602,25 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
                 <div className="text-lg font-semibold">Total: ${totalAmount.toFixed(2)}</div>
               </div>
             </div>
+
+            {generatedContent && (
+              <div className="space-y-2">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  AI-Generated Detailed Proposal
+                </h3>
+                <div className="rounded-lg border bg-muted/30 p-4 max-h-[400px] overflow-y-auto">
+                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm">
+                    {generatedContent.substring(0, 1000)}
+                    {generatedContent.length > 1000 && (
+                      <span className="text-muted-foreground">
+                        ... ({Math.ceil(generatedContent.length / 1000)}k characters total)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
