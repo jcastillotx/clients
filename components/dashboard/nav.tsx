@@ -95,7 +95,7 @@ const navigationSections: NavSection[] = [
   {
     title: "Projects & Time",
     items: [
-      { name: "Time Tracking", href: "/time-tracking", icon: Clock3 },
+      { name: "Time Tracking", href: "/time-tracking", icon: Clock3, access: "staff" },
       { name: "Task Board", href: "/tasks", icon: Columns3 },
       { name: "Project Requests", href: "/projects/requests", icon: ClipboardCheck },
       { name: "Project Timeline", href: "/projects", icon: CalendarRange },
