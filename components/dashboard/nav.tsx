@@ -175,6 +175,8 @@ const navigationSections: NavSection[] = [
       { name: "Profile", href: "/settings?tab=profile", icon: Users },
       { name: "Password", href: "/settings?tab=account", icon: Shield },
       { name: "System Settings", href: "/settings", icon: Cog, access: "staff", matchesTab: "profile" },
+      { name: "Maintenance Plans", href: "/admin/maintenance-plans", icon: ShieldCheck, access: "admin" },
+      { name: "Service Templates", href: "/admin/service-templates", icon: Briefcase, access: "admin" },
       { name: "Form Templates", href: "/admin/settings/templates", icon: FileText, access: "admin" },
       { name: "White Label", href: "/settings?tab=branding", icon: Settings, access: "admin" },
     ],

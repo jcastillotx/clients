@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, decimal, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, decimal, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { clients } from "./clients";
 import { users } from "./users";
@@ -6,7 +6,7 @@ import { users } from "./users";
 /**
  * Proposal status enum
  */
-export const proposalStatusEnum = ["draft", "sent", "viewed", "accepted", "rejected", "expired"] as const;
+export const proposalStatusEnum = ["draft", "sent", "viewed", "accepted", "rejected", "expired", "cancelled"] as const;
 export type ProposalStatus = (typeof proposalStatusEnum)[number];
 
 /**
@@ -39,6 +39,35 @@ export interface ProposalSignatureData {
 }
 
 /**
+ * Service Templates table
+ *
+ * Admin-created general service offerings that clients can choose from.
+ * When a client selects a service, it becomes a proposal for review.
+ */
+export const serviceTemplates = pgTable("service_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category"),
+  isActive: boolean("is_active").default(true).notNull(),
+  currency: text("currency", { enum: proposalCurrencyEnum }).default("USD").notNull(),
+  lineItems: jsonb("line_items").$type<ProposalLineItem[]>().notNull(),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  terms: text("terms"),
+  metadata: jsonb("metadata").$type<{
+    features?: string[];
+    deliverables?: string[];
+    estimatedTimeline?: string;
+    notes?: string;
+  }>(),
+  createdBy: uuid("created_by")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
  * Proposals table
  *
  * Stores business proposals sent to clients with e-signature support,
@@ -49,6 +78,7 @@ export const proposals = pgTable("proposals", {
   clientId: uuid("client_id")
     .references(() => clients.id, { onDelete: "cascade" })
     .notNull(),
+  serviceTemplateId: uuid("service_template_id").references(() => serviceTemplates.id),
   title: text("title").notNull(),
   description: text("description"),
   status: text("status", { enum: proposalStatusEnum }).default("draft").notNull(),
@@ -62,14 +92,18 @@ export const proposals = pgTable("proposals", {
   viewedAt: timestamp("viewed_at", { withTimezone: true }),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
   rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
   signatureData: jsonb("signature_data").$type<ProposalSignatureData>(),
   terms: text("terms"),
   lineItems: jsonb("line_items").$type<ProposalLineItem[]>().notNull(),
+  clientFeedback: text("client_feedback"),
   metadata: jsonb("metadata").$type<{
     notes?: string;
     internalNotes?: string;
     tags?: string[];
     attachments?: { name: string; url: string; size: number }[];
+    isCustomRequest?: boolean;
+    customRequestDescription?: string;
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -109,6 +143,17 @@ export const proposalViews = pgTable("proposal_views", {
 });
 
 /**
+ * Service template relations
+ */
+export const serviceTemplatesRelations = relations(serviceTemplates, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [serviceTemplates.createdBy],
+    references: [users.id],
+  }),
+  proposals: many(proposals),
+}));
+
+/**
  * Proposal relations
  */
 export const proposalsRelations = relations(proposals, ({ one, many }) => ({
@@ -119,6 +164,10 @@ export const proposalsRelations = relations(proposals, ({ one, many }) => ({
   creator: one(users, {
     fields: [proposals.createdBy],
     references: [users.id],
+  }),
+  serviceTemplate: one(serviceTemplates, {
+    fields: [proposals.serviceTemplateId],
+    references: [serviceTemplates.id],
   }),
   selections: many(proposalSelections),
   views: many(proposalViews),
@@ -145,6 +194,8 @@ export const proposalViewsRelations = relations(proposalViews, ({ one }) => ({
 /**
  * TypeScript types
  */
+export type ServiceTemplate = typeof serviceTemplates.$inferSelect;
+export type NewServiceTemplate = typeof serviceTemplates.$inferInsert;
 export type Proposal = typeof proposals.$inferSelect;
 export type NewProposal = typeof proposals.$inferInsert;
 export type ProposalSelection = typeof proposalSelections.$inferSelect;
