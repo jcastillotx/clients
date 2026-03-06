@@ -30,11 +30,14 @@ interface SupportTicketCommentsProps {
   ticketId: string;
   initialComments: Comment[];
   currentUserId: string;
+  isStaff?: boolean;
 }
 
-export function SupportTicketComments({ ticketId, initialComments, currentUserId }: SupportTicketCommentsProps) {
+export function SupportTicketComments({ ticketId, initialComments, currentUserId, isStaff = false }: SupportTicketCommentsProps) {
   const router = useRouter();
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [comments, setComments] = useState<Comment[]>(
+    isStaff ? initialComments : initialComments.filter((c) => !c.is_internal)
+  );
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,23 +158,27 @@ export function SupportTicketComments({ ticketId, initialComments, currentUserId
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="internal"
-                  checked={isInternal}
-                  onCheckedChange={(checked) => setIsInternal(checked === true)}
-                  disabled={isSubmitting}
-                />
-                <label
-                  htmlFor="internal"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <LockClosedIcon className="h-4 w-4" />
-                    Internal note (not visible to client)
-                  </div>
-                </label>
-              </div>
+              {isStaff ? (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="internal"
+                    checked={isInternal}
+                    onCheckedChange={(checked) => setIsInternal(checked === true)}
+                    disabled={isSubmitting}
+                  />
+                  <label
+                    htmlFor="internal"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <LockClosedIcon className="h-4 w-4" />
+                      Internal note (not visible to client)
+                    </div>
+                  </label>
+                </div>
+              ) : (
+                <div />
+              )}
 
               <Button type="submit" disabled={isSubmitting || !newComment.trim()}>
                 {isSubmitting ? "Adding..." : "Add Comment"}
