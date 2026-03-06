@@ -141,10 +141,10 @@ export default async function SettingsPage({
           </TabsContent>
         ) : null}
 
-        {canManageBranding && clientId ? (
+        {canManageBranding && (clientId || brandingClientId) ? (
           <TabsContent value="storage" className="mt-6">
             <StorageConnections
-              clientId={clientId}
+              clientId={(clientId || brandingClientId)!}
               isAdmin={canManageBranding}
               companyClientId={brandingClientId}
             />
