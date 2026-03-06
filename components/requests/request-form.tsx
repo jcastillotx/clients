@@ -69,7 +69,6 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
     setError(null);
 
     try {
-      const internalNotes = (document.getElementById("internalNotes") as HTMLTextAreaElement | null)?.value?.trim() || "";
       const notifyAdmins = (document.getElementById("notifyAdmins") as HTMLInputElement | null)?.checked ?? true;
       const notifyAssigned = (document.getElementById("notifyAssigned") as HTMLInputElement | null)?.checked ?? true;
 
@@ -90,7 +89,6 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
           assignedTo: canAssignUsers ? data.assignedTo || undefined : undefined,
           customFields: {
             ...(data.customFields || {}),
-            internalNotes,
             notifyAdmins,
             notifyAssigned,
             attachmentMeta,
@@ -239,11 +237,6 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
             <Label htmlFor="dueDate">Due Date</Label>
             <Input id="dueDate" type="datetime-local" {...register("dueDate")} />
             {errors.dueDate && <p className="text-sm text-destructive">{errors.dueDate.message}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="internalNotes">Internal Notes (staff only)</Label>
-            <Textarea id="internalNotes" placeholder="Internal implementation details, blockers, or instructions..." rows={3} />
           </div>
 
           <div className="space-y-2">
