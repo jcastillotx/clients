@@ -93,13 +93,13 @@ const navigationSections: NavSection[] = [
     ],
   },
   {
-    title: "Projects & Time",
+    title: "Projects",
     items: [
-      { name: "Time Tracking", href: "/time-tracking", icon: Clock3, access: "staff" },
-      { name: "Task Board", href: "/tasks", icon: Columns3 },
       { name: "Project Requests", href: "/projects/requests", icon: ClipboardCheck },
       { name: "Project Timeline", href: "/projects", icon: CalendarRange },
-      { name: "Project Budgets", href: "/projects", icon: Briefcase },
+      { name: "Time Tracking", href: "/time-tracking", icon: Clock3, access: "staff" },
+      { name: "Task Board", href: "/tasks", icon: Columns3, access: "staff" },
+      { name: "Project Budgets", href: "/projects", icon: Briefcase, access: "staff" },
       { name: "Staff Tasks", href: "/tasks", icon: ClipboardCheck, access: "staff" },
     ],
   },
