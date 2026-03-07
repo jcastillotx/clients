@@ -43,8 +43,13 @@ export function RecentActivity({ requests }: RecentActivityProps) {
               >
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium text-sm">{request.title}</h4>
-                  <Badge variant={getStatusVariant(request.status)} className="ml-2 shrink-0">
-                    {request.status.replace("_", " ")}
+                  <Badge variant={getStatusVariant(request.status)} className="ml-2 shrink-0 capitalize">
+                    {request.status.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+                <div className="mb-2 flex items-center gap-2">
+                  <Badge variant="outline" className={getPriorityClassName(request.priority)}>
+                    {request.priority}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -68,4 +73,14 @@ function getStatusVariant(status: string): "default" | "secondary" | "destructiv
     cancelled: "destructive",
   };
   return variants[status] || "default";
+}
+
+function getPriorityClassName(priority: string): string {
+  const variants: Record<string, string> = {
+    low: "border-slate-200 bg-slate-50 text-slate-700",
+    medium: "border-blue-200 bg-blue-50 text-blue-700",
+    high: "border-amber-200 bg-amber-50 text-amber-700",
+    urgent: "border-red-200 bg-red-50 text-red-700",
+  };
+  return variants[priority] || "border-slate-200 bg-slate-50 text-slate-700";
 }

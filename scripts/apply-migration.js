@@ -84,7 +84,9 @@ async function main() {
     '004_create_support_tickets_tables.sql',
     '005_create_application_tables.sql',
     '006_create_announcements_table.sql',
-    '010_feature_flags.sql'
+    '010_feature_flags.sql',
+    '017_support_tickets_admin_rls.sql',
+    '018_create_maintenance_plan_templates.sql'
   ];
 
   console.log('📁 Checking for required migration files:\n');

@@ -134,7 +134,9 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
           }
           clientId={id}
         />
-        <ClientInvoices invoices={invoices || []} clientId={id} />
+        <ClientInvoices
+          invoices={invoices || []}
+        />
       </div>
     </div>
   );

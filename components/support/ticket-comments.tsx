@@ -23,7 +23,7 @@ interface Comment {
     name: string;
     email: string;
     avatar?: string;
-  };
+  } | null;
 }
 
 interface SupportTicketCommentsProps {
@@ -93,6 +93,14 @@ export function SupportTicketComments({ ticketId, initialComments, currentUserId
       .slice(0, 2);
   }
 
+  function getCommentAuthor(comment: Comment) {
+    return {
+      name: comment.user?.name || "Unknown User",
+      email: comment.user?.email || "",
+      avatar: comment.user?.avatar,
+    };
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -105,16 +113,19 @@ export function SupportTicketComments({ ticketId, initialComments, currentUserId
           {comments.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No comments yet. Be the first to comment!</p>
           ) : (
-            comments.map((comment, index) => (
+            comments.map((comment, index) => {
+              const author = getCommentAuthor(comment);
+
+              return (
               <div key={comment.id}>
                 <div className="flex gap-4">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={comment.user.avatar} alt={comment.user.name} />
-                    <AvatarFallback>{getInitials(comment.user.name)}</AvatarFallback>
+                    <AvatarImage src={author.avatar} alt={author.name} />
+                    <AvatarFallback>{getInitials(author.name)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold">{comment.user.name}</span>
+                      <span className="font-semibold">{author.name}</span>
                       {comment.is_internal && (
                         <Badge variant="secondary" className="text-xs">
                           <LockClosedIcon className="h-3 w-3 mr-1" />
@@ -140,7 +151,7 @@ export function SupportTicketComments({ ticketId, initialComments, currentUserId
                 </div>
                 {index < comments.length - 1 && <Separator className="mt-6" />}
               </div>
-            ))
+            )})
           )}
         </div>
 

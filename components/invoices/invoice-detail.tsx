@@ -33,9 +33,10 @@ interface InvoiceDetailProps {
       avatar?: string;
     };
   };
+  canManageInvoices: boolean;
 }
 
-export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
+export function InvoiceDetail({ invoice, canManageInvoices }: InvoiceDetailProps) {
   const isOverdue = invoice.due_date && isPast(new Date(invoice.due_date)) && invoice.status === "sent";
 
   return (
@@ -64,12 +65,14 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-        </div>
+        {canManageInvoices ? (
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <Separator />

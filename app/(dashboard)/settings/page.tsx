@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { UserSettings } from "@/components/settings/user-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
+import { SecuritySettings } from "@/components/settings/security-settings";
 import { BrandingSettings } from "@/components/settings/branding-settings";
 import { StorageConnections } from "@/components/features/storage-connections";
-import { IntegrationSettings } from "@/components/settings/integration-settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const metadata = {
@@ -11,7 +11,7 @@ export const metadata = {
   description: "Manage your account settings",
 };
 
-const allowedTabs = new Set(["profile", "account", "branding", "storage", "integrations"]);
+const allowedTabs = new Set(["profile", "account", "security", "branding", "storage"]);
 const DEFAULT_PARENT_COMPANY_NAMES = ["Kre8ivTech", "Kre8iv Designs"];
 
 /**
@@ -105,8 +105,10 @@ export default async function SettingsPage({
   const canUseRequestedTab =
     requestedTab === "profile" ||
     requestedTab === "account" ||
-    (canManageBranding && (requestedTab === "branding" || requestedTab === "storage" || requestedTab === "integrations"));
+    requestedTab === "security" ||
+    (canManageBranding && (requestedTab === "branding" || requestedTab === "storage"));
   const defaultTab = tabIsAllowed && canUseRequestedTab ? requestedTab : "profile";
+  const settingsScopeClientId = clientId ?? brandingClientId;
 
   return (
     <div className="flex flex-col gap-8 p-8 max-w-4xl mx-auto">
@@ -116,11 +118,11 @@ export default async function SettingsPage({
       </div>
 
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className={`grid w-full ${canManageBranding ? "grid-cols-5" : "grid-cols-2"}`}>
+        <TabsList className={`grid w-full ${canManageBranding ? "grid-cols-5" : "grid-cols-3"}`}>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
           {canManageBranding ? <TabsTrigger value="branding">Branding</TabsTrigger> : null}
-          {canManageBranding ? <TabsTrigger value="integrations">Integrations</TabsTrigger> : null}
           {canManageBranding ? <TabsTrigger value="storage">Storage</TabsTrigger> : null}
         </TabsList>
 
@@ -130,6 +132,10 @@ export default async function SettingsPage({
 
         <TabsContent value="account" className="mt-6">
           <AccountSettings user={user} />
+        </TabsContent>
+
+        <TabsContent value="security" className="mt-6">
+          <SecuritySettings />
         </TabsContent>
 
         {canManageBranding ? (
@@ -143,16 +149,10 @@ export default async function SettingsPage({
           </TabsContent>
         ) : null}
 
-        {canManageBranding && clientId ? (
-          <TabsContent value="integrations" className="mt-6">
-            <IntegrationSettings clientId={clientId} />
-          </TabsContent>
-        ) : null}
-
-        {canManageBranding && clientId ? (
+        {canManageBranding && settingsScopeClientId ? (
           <TabsContent value="storage" className="mt-6">
             <StorageConnections
-              clientId={clientId}
+              clientId={settingsScopeClientId}
               isAdmin={canManageBranding}
               companyClientId={brandingClientId}
             />

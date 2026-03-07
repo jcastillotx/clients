@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
-import { UpcomingTasks } from "@/components/dashboard/upcoming-tasks";
+import { SupportOverview } from "@/components/dashboard/support-overview";
 
 export const metadata = {
   title: "Dashboard | KRE8IV",
@@ -30,7 +30,7 @@ export default async function DashboardPage() {
     { count: openRequests },
     { count: totalInvoices },
     { data: recentRequests },
-    { data: upcomingInvoices },
+    { data: recentTickets },
   ] = await Promise.all([
     supabase.from("requests").select("*", { count: "exact", head: true }),
     supabase.from("requests").select("*", { count: "exact", head: true }).in("status", ["pending", "in_progress"]),
@@ -50,19 +50,20 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false })
       .limit(5),
     supabase
-      .from("invoices")
+      .from("support_tickets")
       .select(
         `
         id,
-        invoice_number,
-        amount,
-        due_date,
+        ticket_number,
+        subject,
         status,
+        priority,
+        created_at,
+        first_response_at,
         client:clients(company_name)
       `,
       )
-      .eq("status", "sent")
-      .order("due_date", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(5),
   ]);
 
@@ -91,11 +92,11 @@ export default async function DashboardPage() {
             })) as any
           }
         />
-        <UpcomingTasks
-          invoices={
-            (upcomingInvoices || []).map((inv: any) => ({
-              ...inv,
-              client: Array.isArray(inv.client) ? inv.client[0] : inv.client,
+        <SupportOverview
+          tickets={
+            (recentTickets || []).map((ticket: any) => ({
+              ...ticket,
+              client: Array.isArray(ticket.client) ? ticket.client[0] : ticket.client,
             })) as any
           }
         />

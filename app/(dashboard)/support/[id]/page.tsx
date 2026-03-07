@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { SupportTicketDetail } from "@/components/support/ticket-detail";
 import { SupportTicketComments } from "@/components/support/ticket-comments";
 import { notFound, redirect } from "next/navigation";
@@ -28,8 +28,12 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
     redirect("/login");
   }
 
+  const isStaff = await hasAnyRole(["super_admin", "admin", "account_manager", "staff"], { supabase, userId: user.id });
+  const adminClient = isStaff ? createAdminClientIfAvailable() : null;
+  const dbClient = adminClient ?? supabase;
+
   // Fetch ticket with relations
-  const { data: ticket, error: ticketError } = await supabase
+  const { data: ticket, error: ticketError } = await dbClient
     .from("support_tickets")
     .select(
       `
@@ -47,7 +51,7 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
   }
 
   // Fetch comments with user info
-  const { data: comments } = await supabase
+  const { data: comments } = await dbClient
     .from("support_ticket_comments")
     .select(
       `
@@ -59,10 +63,11 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
     .order("created_at", { ascending: true });
 
   // Fetch staff users for assignment updates
-  const { data: staffUsers } = await supabase.from("users").select("id, name, email").eq("role", "staff").order("name");
-
-  // Check if the current user is staff (non-client)
-  const isStaff = await hasAnyRole(["super_admin", "admin", "account_manager", "staff"], { supabase, userId: user.id });
+  const { data: staffUsers } = await dbClient
+    .from("users")
+    .select("id, name, email")
+    .in("role", ["staff", "admin"])
+    .order("name");
 
   return (
     <div className="container mx-auto py-8 max-w-6xl">

@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { InvoiceDetail } from "@/components/invoices/invoice-detail";
 import { InvoiceItems } from "@/components/invoices/invoice-items";
 import { InvoiceActions } from "@/components/invoices/invoice-actions";
+import { hasAnyRole } from "@/lib/rbac/permissions";
 
 interface InvoiceDetailPageProps {
   params: Promise<{
@@ -18,6 +19,28 @@ interface InvoiceDetailPageProps {
 export default async function InvoiceDetailPage({ params }: InvoiceDetailPageProps) {
   const { id } = await params;
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const canManageInvoices = user
+    ? await hasAnyRole(["super_admin", "admin", "account_manager"], {
+        supabase,
+        userId: user.id,
+      })
+    : false;
+
+  const isPlainStaff = user
+    ? await hasAnyRole(["staff"], {
+        supabase,
+        userId: user.id,
+      })
+    : false;
+
+  if (isPlainStaff && !canManageInvoices) {
+    redirect("/dashboard");
+  }
 
   // Fetch invoice with all related data
   const { data: invoice, error } = await supabase
@@ -85,13 +108,13 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
   return (
     <div className="flex flex-col gap-8 p-8 max-w-6xl mx-auto">
       {/* Invoice header and details */}
-      <InvoiceDetail invoice={invoiceWithUsers} />
+      <InvoiceDetail invoice={invoiceWithUsers} canManageInvoices={canManageInvoices} />
 
       {/* Invoice items table */}
       <InvoiceItems items={invoiceWithUsers.invoice_items || []} total={invoiceWithUsers.amount} />
 
       {/* Invoice actions (send, mark paid, download PDF, etc.) */}
-      <InvoiceActions invoice={invoiceWithUsers} />
+      <InvoiceActions invoice={invoiceWithUsers} canManageInvoices={canManageInvoices} />
     </div>
   );
 }

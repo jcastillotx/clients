@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow, format } from "date-fns";
 import { updateSupportTicketSchema, type UpdateSupportTicketInput } from "@/lib/validations/support-ticket";
 import { getSlaStatus, formatTimeRemaining, getSlaStatusColor } from "@/lib/utils/sla";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Clock, User, Tag, AlertTriangle } from "lucide-react";
 
@@ -53,6 +54,8 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
     new Date(ticket.created_at),
     ticket.sla_paused_duration_minutes,
   );
+  const isAcknowledged = Boolean(ticket.first_response_at);
+  const headerAccentClassName = getTicketHeaderClassName(slaInfo.status, isAcknowledged);
 
   async function onSubmit(data: UpdateSupportTicketInput) {
     setIsSubmitting(true);
@@ -85,7 +88,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
+      <Card className={cn("border-l-4", headerAccentClassName)}>
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -93,6 +96,9 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
                 <CardTitle className="text-2xl">{ticket.subject}</CardTitle>
                 <Badge variant={getStatusVariant(ticket.status)}>{ticket.status.replace(/_/g, " ")}</Badge>
                 <Badge variant={getPriorityVariant(ticket.priority)}>{ticket.priority}</Badge>
+                <Badge variant={isAcknowledged ? "default" : "secondary"} className={getAcknowledgementBadgeClassName(isAcknowledged, slaInfo.status)}>
+                  {isAcknowledged ? "Acknowledged" : "Awaiting staff acknowledgment"}
+                </Badge>
               </div>
               <CardDescription className="flex items-center gap-4 text-base">
                 <span className="font-mono">{ticket.ticket_number}</span>
@@ -287,7 +293,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
       </Card>
 
       {/* SLA Tracking */}
-      <Card>
+      <Card className={cn("border", getSlaStatusColor(slaInfo.status))}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
@@ -300,13 +306,20 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Overall Status</span>
-              <Badge variant={getSlaVariant(slaInfo.status)}>{slaInfo.status.replace(/_/g, " ").toUpperCase()}</Badge>
+              <Badge variant={getSlaVariant(slaInfo.status)} className={getSlaBadgeClassName(slaInfo.status)}>
+                {slaInfo.status.replace(/_/g, " ").toUpperCase()}
+              </Badge>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {isAcknowledged
+                ? "Staff has acknowledged this ticket. Resolution SLA remains active."
+                : "This ticket has not been acknowledged by staff yet. Response SLA is active."}
             </div>
           </div>
 
           {/* Response SLA */}
           {!ticket.first_response_at && ticket.sla_response_due_at && (
-            <div>
+            <div className={cn("rounded-lg border p-4", getSlaPanelClassName(isAcknowledged ? "on_track" : slaInfo.status))}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Response Time</span>
                 <span className="text-sm text-muted-foreground">
@@ -322,7 +335,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
 
           {/* Resolution SLA */}
           {ticket.status !== "resolved" && ticket.status !== "closed" && ticket.sla_resolution_due_at && (
-            <div>
+            <div className={cn("rounded-lg border p-4", getSlaPanelClassName(slaInfo.status))}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Resolution Time</span>
                 <span className="text-sm text-muted-foreground">
@@ -395,4 +408,72 @@ function getSlaVariant(slaStatus: string): "default" | "secondary" | "destructiv
     paused: "secondary",
   };
   return variants[slaStatus] || "default";
+}
+
+function getTicketHeaderClassName(slaStatus: string, isAcknowledged: boolean): string {
+  if (slaStatus === "breached") {
+    return "border-l-red-600 bg-red-50/70";
+  }
+
+  if (slaStatus === "response_breached") {
+    return "border-l-orange-600 bg-orange-50/70";
+  }
+
+  if (!isAcknowledged) {
+    if (slaStatus === "warning") {
+      return "border-l-amber-500 bg-amber-50/70";
+    }
+
+    return "border-l-yellow-500 bg-yellow-50/60";
+  }
+
+  if (slaStatus === "paused") {
+    return "border-l-slate-400 bg-slate-50/60";
+  }
+
+  if (slaStatus === "warning") {
+    return "border-l-blue-500 bg-blue-50/60";
+  }
+
+  return "border-l-emerald-500 bg-emerald-50/50";
+}
+
+function getAcknowledgementBadgeClassName(isAcknowledged: boolean, slaStatus: string): string {
+  if (isAcknowledged) {
+    return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
+  }
+
+  if (slaStatus === "breached") {
+    return "bg-red-100 text-red-800 hover:bg-red-100";
+  }
+
+  if (slaStatus === "response_breached" || slaStatus === "warning") {
+    return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+  }
+
+  return "bg-yellow-100 text-yellow-900 hover:bg-yellow-100";
+}
+
+function getSlaBadgeClassName(slaStatus: string): string {
+  const classes: Record<string, string> = {
+    on_track: "bg-green-100 text-green-800 hover:bg-green-100",
+    warning: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+    response_breached: "bg-orange-100 text-orange-800 hover:bg-orange-100",
+    breached: "bg-red-100 text-red-800 hover:bg-red-100",
+    paused: "bg-slate-100 text-slate-800 hover:bg-slate-100",
+  };
+
+  return classes[slaStatus] || "";
+}
+
+function getSlaPanelClassName(slaStatus: string): string {
+  const classes: Record<string, string> = {
+    on_track: "border-green-200 bg-green-50/50",
+    warning: "border-yellow-200 bg-yellow-50/60",
+    response_breached: "border-orange-200 bg-orange-50/70",
+    breached: "border-red-200 bg-red-50/70",
+    paused: "border-slate-200 bg-slate-50/70",
+  };
+
+  return classes[slaStatus] || "border-border bg-background";
 }

@@ -23,6 +23,7 @@ import {
   BarChart3,
   Zap,
   HardDrive,
+  Palette,
 } from "lucide-react";
 import {
   PROVIDER_CONFIGS,
@@ -56,6 +57,7 @@ const CATEGORY_CONFIG: Record<IntegrationCategory, { label: string; icon: React.
   analytics: { label: "Analytics", icon: <BarChart3 className="h-4 w-4" />, description: "Analytics & tracking setup" },
   automation: { label: "Automation", icon: <Zap className="h-4 w-4" />, description: "Workflow automation integrations" },
   storage: { label: "Cloud Storage", icon: <HardDrive className="h-4 w-4" />, description: "Cloud storage OAuth credentials" },
+  branding: { label: "Branding & SEO", icon: <Palette className="h-4 w-4" />, description: "Brand, ad, SEO, and creative platform integrations" },
 };
 
 export function IntegrationSettings({ clientId }: IntegrationSettingsProps) {
@@ -86,7 +88,7 @@ export function IntegrationSettings({ clientId }: IntegrationSettingsProps) {
   const getProvidersForCategory = (category: IntegrationCategory) =>
     PROVIDER_CONFIGS.filter((p) => p.category === category);
 
-  const getProviderStatus = (provider: string): "configured" | "partial" | "not_configured" => {
+  const getProviderStatus = (provider: string): "verified" | "saved" | "partial" | "not_configured" => {
     const providerSettings = savedSettings.filter((s) => s.provider === provider && s.isActive);
     const config = PROVIDER_CONFIGS.find((p) => p.provider === provider);
     if (!config) return "not_configured";
@@ -96,7 +98,13 @@ export function IntegrationSettings({ clientId }: IntegrationSettingsProps) {
     );
     if (configuredRequired.length === 0) return "not_configured";
     if (configuredRequired.length < requiredFields.length) return "partial";
-    return "configured";
+
+    const allRequiredVerified = configuredRequired.every((field) => {
+      const matchingSetting = providerSettings.find((s) => s.settingKey === field.key);
+      return Boolean(matchingSetting?.lastVerifiedAt);
+    });
+
+    return allRequiredVerified ? "verified" : "saved";
   };
 
   if (loading) {
@@ -123,7 +131,7 @@ export function IntegrationSettings({ clientId }: IntegrationSettingsProps) {
                 const config = CATEGORY_CONFIG[cat];
                 const providers = getProvidersForCategory(cat);
                 const configuredCount = providers.filter(
-                  (p) => getProviderStatus(p.provider) === "configured",
+                  (p) => getProviderStatus(p.provider) === "verified",
                 ).length;
                 return (
                   <TabsTrigger key={cat} value={cat} className="gap-1.5 text-xs">
@@ -165,8 +173,8 @@ interface ProviderCardProps {
   config: ProviderConfig;
   clientId: string;
   savedSettings: SavedSetting[];
-  status: "configured" | "partial" | "not_configured";
-  onSaved: () => void;
+  status: "verified" | "saved" | "partial" | "not_configured";
+  onSaved: () => void | Promise<void>;
 }
 
 function ProviderCard({ config, clientId, savedSettings, status, onSaved }: ProviderCardProps) {
@@ -175,14 +183,32 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const statusBadge = {
-    configured: { label: "Connected", variant: "default" as const, icon: <CheckCircle2 className="h-3 w-3" /> },
+    verified: {
+      label: "Verified",
+      variant: "default" as const,
+      icon: <CheckCircle2 className="h-3 w-3" />,
+    },
+    saved: { label: "Saved", variant: "secondary" as const, icon: <AlertCircle className="h-3 w-3" /> },
     partial: { label: "Incomplete", variant: "secondary" as const, icon: <AlertCircle className="h-3 w-3" /> },
     not_configured: { label: "Not configured", variant: "outline" as const, icon: null },
   }[status];
+
+  const lastVerifiedAt = savedSettings.reduce<string | null>((latest, setting) => {
+    if (!setting.lastVerifiedAt) {
+      return latest;
+    }
+
+    if (!latest) {
+      return setting.lastVerifiedAt;
+    }
+
+    return new Date(setting.lastVerifiedAt) > new Date(latest) ? setting.lastVerifiedAt : latest;
+  }, null);
 
   const getSavedValueForField = (key: string): string | null => {
     const setting = savedSettings.find((s) => s.settingKey === key);
@@ -214,7 +240,7 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
 
     setSaving(true);
     setError(null);
-    setSuccess(false);
+    setSuccess(null);
 
     try {
       const res = await fetch("/api/settings/integrations", {
@@ -233,11 +259,10 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
         throw new Error(data.error || "Failed to save");
       }
 
-      setSuccess(true);
+      setSuccess("Settings saved. Run verification to confirm the connection.");
       setFieldValues({});
       setVisibleFields(new Set());
-      onSaved();
-      setTimeout(() => setSuccess(false), 3000);
+      await Promise.resolve(onSaved());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save settings");
     } finally {
@@ -250,6 +275,7 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
 
     setDeleting(true);
     setError(null);
+    setSuccess(null);
 
     try {
       const res = await fetch(
@@ -262,11 +288,41 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
       }
 
       setFieldValues({});
-      onSaved();
+      await Promise.resolve(onSaved());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete settings");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setVerifying(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await fetch("/api/settings/integrations/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId,
+          provider: config.provider,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to verify integration");
+      }
+
+      setSuccess(payload.message || "Connection verified successfully.");
+      await Promise.resolve(onSaved());
+    } catch (verifyError) {
+      setError(verifyError instanceof Error ? verifyError.message : "Failed to verify integration");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -305,9 +361,27 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
           )}
           {success && (
             <div className="rounded-md bg-green-50 dark:bg-green-950/30 p-3 text-sm text-green-800 dark:text-green-300">
-              Settings saved and encrypted successfully.
+              {success}
             </div>
           )}
+
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <span>
+              Status: <span className="font-medium text-foreground">{statusBadge.label}</span>
+            </span>
+            <span>
+              Last rotated:{" "}
+              <span className="font-medium text-foreground">
+                {savedSettings[0]?.lastRotatedAt ? new Date(savedSettings[0].lastRotatedAt).toLocaleString() : "Never"}
+              </span>
+            </span>
+            <span>
+              Last verified:{" "}
+              <span className="font-medium text-foreground">
+                {lastVerifiedAt ? new Date(lastVerifiedAt).toLocaleString() : "Not verified"}
+              </span>
+            </span>
+          </div>
 
           {config.fields.map((field) => {
             const savedMasked = getSavedValueForField(field.key);
@@ -363,9 +437,19 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
                 Save
               </Button>
               {status !== "not_configured" && (
+                <Button onClick={handleVerify} disabled={verifying || saving || deleting} variant="outline" size="sm">
+                  {verifying ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                  )}
+                  Verify
+                </Button>
+              )}
+              {status !== "not_configured" && (
                 <Button
                   onClick={handleDelete}
-                  disabled={deleting}
+                  disabled={deleting || verifying}
                   variant="destructive"
                   size="sm"
                 >

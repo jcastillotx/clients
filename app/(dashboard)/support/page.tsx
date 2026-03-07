@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import { hasAnyRole } from "@/lib/rbac/permissions";
 import { SupportTicketList } from "@/components/support/ticket-list";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -32,8 +33,16 @@ export default async function SupportTicketsPage({ searchParams }: { searchParam
     throw new Error("Unauthorized");
   }
 
+  const canViewAllTickets = await hasAnyRole(["super_admin", "admin", "account_manager", "staff"], {
+    supabase,
+    userId: user.id,
+  });
+
+  const adminClient = canViewAllTickets ? createAdminClientIfAvailable() : null;
+  const dbClient = adminClient ?? supabase;
+
   // Server-side data fetching
-  let query = supabase
+  let query = dbClient
     .from("support_tickets")
     .select(
       `

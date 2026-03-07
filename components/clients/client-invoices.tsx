@@ -2,10 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import Link from "next/link";
-import { Receipt, Plus, ArrowRight } from "lucide-react";
+import { Receipt, ArrowRight } from "lucide-react";
 
 interface Invoice {
   id: string;
@@ -18,10 +17,9 @@ interface Invoice {
 
 interface ClientInvoicesProps {
   invoices: Invoice[];
-  clientId: string;
 }
 
-export function ClientInvoices({ invoices, clientId }: ClientInvoicesProps) {
+export function ClientInvoices({ invoices }: ClientInvoicesProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -29,23 +27,11 @@ export function ClientInvoices({ invoices, clientId }: ClientInvoicesProps) {
           <Receipt className="h-5 w-5" />
           Recent Invoices ({invoices.length})
         </CardTitle>
-        <Button size="sm" asChild>
-          <Link href={`/invoices/new?client_id=${clientId}`}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Invoice
-          </Link>
-        </Button>
       </CardHeader>
       <CardContent>
         {invoices.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground mb-4">No invoices yet</p>
-            <Button size="sm" asChild>
-              <Link href={`/invoices/new?client_id=${clientId}`}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create First Invoice
-              </Link>
-            </Button>
+            <p className="text-sm text-muted-foreground">No invoices yet</p>
           </div>
         ) : (
           <div className="space-y-3">

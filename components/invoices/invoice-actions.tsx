@@ -15,9 +15,10 @@ interface InvoiceActionsProps {
     invoice_number: string;
     amount: number;
   };
+  canManageInvoices: boolean;
 }
 
-export function InvoiceActions({ invoice }: InvoiceActionsProps) {
+export function InvoiceActions({ invoice, canManageInvoices }: InvoiceActionsProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -83,7 +84,7 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
-            {invoice.status === "draft" && (
+            {canManageInvoices && invoice.status === "draft" && (
               <Button onClick={() => handleStatusUpdate("sent")} disabled={isUpdating}>
                 {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                 Send Invoice
@@ -97,18 +98,20 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
                   Pay Invoice
                 </Button>
 
-                <Button variant="outline" onClick={() => handleStatusUpdate("paid")} disabled={isUpdating}>
-                  {isUpdating ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                  )}
-                  Mark as Paid
-                </Button>
+                {canManageInvoices && (
+                  <Button variant="outline" onClick={() => handleStatusUpdate("paid")} disabled={isUpdating}>
+                    {isUpdating ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                    )}
+                    Mark as Paid
+                  </Button>
+                )}
               </>
             )}
 
-            {["draft", "sent"].includes(invoice.status) && (
+            {canManageInvoices && ["draft", "sent"].includes(invoice.status) && (
               <Button variant="outline" onClick={() => handleStatusUpdate("cancelled")} disabled={isUpdating}>
                 {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
                 Cancel Invoice

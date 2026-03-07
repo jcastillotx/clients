@@ -20,7 +20,11 @@ export default async function NewSupportTicketPage() {
   }
 
   // Fetch staff users for assignment (optional)
-  const { data: staffUsers } = await supabase.from("users").select("id, name, email").eq("role", "staff").order("name");
+  const { data: staffUsers } = await supabase
+    .from("users")
+    .select("id, name, email")
+    .in("role", ["staff", "admin"])
+    .order("name");
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">

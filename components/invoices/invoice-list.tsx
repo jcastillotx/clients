@@ -39,9 +39,10 @@ interface InvoiceListProps {
     paidRevenue: number;
     pendingRevenue: number;
   };
+  canCreateInvoices: boolean;
 }
 
-export function InvoiceList({ initialData, totalCount, currentPage, pageSize, stats }: InvoiceListProps) {
+export function InvoiceList({ initialData, totalCount, currentPage, pageSize, stats, canCreateInvoices }: InvoiceListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -132,10 +133,12 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => router.push("/invoices/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Invoice
-        </Button>
+        {canCreateInvoices && (
+          <Button onClick={() => router.push("/invoices/new")}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Invoice
+          </Button>
+        )}
       </div>
 
       {/* Invoice Table */}

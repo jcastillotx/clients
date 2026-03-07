@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { InvoiceForm } from "@/components/invoices/invoice-form";
 import { redirect } from "next/navigation";
+import { hasAnyRole } from "@/lib/rbac/permissions";
 
 export const metadata = {
   title: "New Invoice | KRE8IV",
@@ -26,6 +27,15 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
 
   if (!user) {
     redirect("/login");
+  }
+
+  const canCreateInvoices = await hasAnyRole(["super_admin", "admin", "account_manager"], {
+    supabase,
+    userId: user.id,
+  });
+
+  if (!canCreateInvoices) {
+    redirect("/invoices");
   }
 
   // Fetch clients for dropdown

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
-import { encryptedSettings } from "@/lib/db/schema/encrypted-settings";
+import { encryptedSettings, type EncryptedSetting } from "@/lib/db/schema/encrypted-settings";
 import { eq, and } from "drizzle-orm";
 import { encrypt, decrypt, maskSecret } from "@/lib/encryption";
 import { z } from "zod";
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       .where(and(...conditions));
 
     // Return masked values - never expose raw secrets
-    const masked = settings.map((s) => {
+    const masked = settings.map((s: EncryptedSetting) => {
       let maskedValue = "";
       try {
         const decrypted = decrypt(s.encryptedValue);
@@ -149,6 +149,7 @@ export async function POST(request: Request) {
             label: setting.label,
             isActive: true,
             lastRotatedAt: new Date(),
+            lastVerifiedAt: null,
             updatedBy: user.id,
             updatedAt: new Date(),
           })
@@ -166,6 +167,7 @@ export async function POST(request: Request) {
             settingKey: setting.key,
             encryptedValue,
             label: setting.label,
+            lastVerifiedAt: null,
             updatedBy: user.id,
           })
           .returning();

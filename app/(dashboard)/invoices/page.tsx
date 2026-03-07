@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { InvoiceList } from "@/components/invoices/invoice-list";
+import { hasAnyRole } from "@/lib/rbac/permissions";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Invoices | KRE8IV",
@@ -20,6 +22,28 @@ interface SearchParams {
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const canCreateInvoices = user
+    ? await hasAnyRole(["super_admin", "admin", "account_manager"], {
+        supabase,
+        userId: user.id,
+      })
+    : false;
+
+  const isPlainStaff = user
+    ? await hasAnyRole(["staff"], {
+        supabase,
+        userId: user.id,
+      })
+    : false;
+
+  if (isPlainStaff && !canCreateInvoices) {
+    redirect("/dashboard");
+  }
 
   // Authentication is handled by the dashboard layout - no redundant check needed.
   const page = parseInt(resolvedSearchParams.page || "1");
@@ -110,6 +134,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         currentPage={page}
         pageSize={pageSize}
         stats={stats}
+        canCreateInvoices={canCreateInvoices}
       />
     </div>
   );

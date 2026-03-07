@@ -89,7 +89,7 @@ const navigationSections: NavSection[] = [
       { name: "Maintenance Plans", href: "/maintenance-plans", icon: ShieldCheck },
       { name: "File Storage", href: "/documents", icon: FolderOpen },
       { name: "Proposals", href: "/proposals", icon: FileText },
-      { name: "Invoices & Payments", href: "/invoices", icon: Receipt },
+      { name: "Invoices & Payments", href: "/invoices", icon: Receipt, access: "manager" },
     ],
   },
   {
@@ -160,6 +160,7 @@ const navigationSections: NavSection[] = [
     title: "Storage & Integration",
     items: [
       { name: "Storage Management", href: "/storage", icon: Database, access: "staff" },
+      { name: "Integrations", href: "/integrations", icon: LinkIcon, access: "manager" },
       { name: "All Tickets", href: "/admin/tickets", icon: HelpCircle, access: "admin" },
       { name: "Webhooks", href: "/webhooks", icon: LinkIcon, access: "admin" },
     ],

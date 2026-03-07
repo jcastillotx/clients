@@ -14,6 +14,7 @@ export const integrationCategoryEnum = [
   "analytics",
   "automation",
   "storage",
+  "branding",
 ] as const;
 export type IntegrationCategory = (typeof integrationCategoryEnum)[number];
 
@@ -38,6 +39,12 @@ export const integrationProviderEnum = [
   "tiktok",
   "youtube",
   "pinterest",
+  "google_ads",
+  "google_search_console",
+  "google_business_profile",
+  "semrush",
+  "ahrefs",
+  "canva",
   // Analytics
   "google_analytics",
   // Automation
@@ -192,6 +199,79 @@ export const PROVIDER_CONFIGS: ProviderConfig[] = [
       { key: "from_name", label: "From Name", placeholder: "Your Company", required: false, type: "text" },
     ],
     docsUrl: "https://resend.com/docs",
+  },
+  {
+    provider: "google_ads",
+    category: "branding",
+    displayName: "Google Ads",
+    description: "Manage ad accounts, campaigns, and conversion integrations for paid search.",
+    fields: [
+      { key: "client_id", label: "OAuth Client ID", placeholder: "xxxxxxxx.apps.googleusercontent.com", required: true, type: "text" },
+      { key: "client_secret", label: "OAuth Client Secret", placeholder: "GOCSPX-...", required: true, type: "secret" },
+      { key: "refresh_token", label: "Refresh Token", placeholder: "1//0g...", required: true, type: "secret" },
+      { key: "developer_token", label: "Developer Token", placeholder: "...", required: true, type: "secret" },
+      { key: "customer_id", label: "Customer ID", placeholder: "123-456-7890", required: false, type: "text" },
+    ],
+    docsUrl: "https://developers.google.com/google-ads/api/docs/start",
+  },
+  {
+    provider: "google_search_console",
+    category: "branding",
+    displayName: "Google Search Console",
+    description: "Track search performance, indexing, and SEO health for branded properties.",
+    fields: [
+      { key: "client_id", label: "OAuth Client ID", placeholder: "xxxxxxxx.apps.googleusercontent.com", required: true, type: "text" },
+      { key: "client_secret", label: "OAuth Client Secret", placeholder: "GOCSPX-...", required: true, type: "secret" },
+      { key: "refresh_token", label: "Refresh Token", placeholder: "1//0g...", required: true, type: "secret" },
+      { key: "site_url", label: "Site URL", placeholder: "https://example.com/", required: false, type: "text" },
+    ],
+    docsUrl: "https://developers.google.com/webmaster-tools",
+  },
+  {
+    provider: "google_business_profile",
+    category: "branding",
+    displayName: "Google Business Profile",
+    description: "Manage business listings, reviews, and location visibility for brand presence.",
+    fields: [
+      { key: "client_id", label: "OAuth Client ID", placeholder: "xxxxxxxx.apps.googleusercontent.com", required: true, type: "text" },
+      { key: "client_secret", label: "OAuth Client Secret", placeholder: "GOCSPX-...", required: true, type: "secret" },
+      { key: "refresh_token", label: "Refresh Token", placeholder: "1//0g...", required: true, type: "secret" },
+      { key: "location_id", label: "Location ID", placeholder: "locations/123456789", required: false, type: "text" },
+    ],
+    docsUrl: "https://developers.google.com/my-business",
+  },
+  {
+    provider: "semrush",
+    category: "branding",
+    displayName: "Semrush",
+    description: "SEO, competitive research, and brand visibility tooling for campaigns and monitoring.",
+    fields: [
+      { key: "api_key", label: "API Key", placeholder: "...", required: true, type: "secret" },
+      { key: "project_id", label: "Project ID", placeholder: "123456", required: false, type: "text" },
+    ],
+    docsUrl: "https://developer.semrush.com/",
+  },
+  {
+    provider: "ahrefs",
+    category: "branding",
+    displayName: "Ahrefs",
+    description: "Backlink, keyword, and site audit data for SEO and brand monitoring workflows.",
+    fields: [
+      { key: "api_key", label: "API Key", placeholder: "...", required: true, type: "secret" },
+      { key: "workspace_id", label: "Workspace ID", placeholder: "...", required: false, type: "text" },
+    ],
+    docsUrl: "https://docs.ahrefs.com/docs/api",
+  },
+  {
+    provider: "canva",
+    category: "branding",
+    displayName: "Canva",
+    description: "Connect Canva brand kits and design workflows for branded creative production.",
+    fields: [
+      { key: "client_id", label: "Client ID", placeholder: "...", required: true, type: "text" },
+      { key: "client_secret", label: "Client Secret", placeholder: "...", required: true, type: "secret" },
+    ],
+    docsUrl: "https://www.canva.dev/docs/connect/",
   },
   // Social OAuth
   {
