@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { UserSettings } from "@/components/settings/user-settings";
 import { AccountSettings } from "@/components/settings/account-settings";
 import { BrandingSettings } from "@/components/settings/branding-settings";
+import { StorageConnections } from "@/components/features/storage-connections";
+import { IntegrationSettings } from "@/components/settings/integration-settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const metadata = {
@@ -9,7 +11,7 @@ export const metadata = {
   description: "Manage your account settings",
 };
 
-const allowedTabs = new Set(["profile", "account", "branding"]);
+const allowedTabs = new Set(["profile", "account", "branding", "storage", "integrations"]);
 const DEFAULT_PARENT_COMPANY_NAMES = ["Kre8ivTech", "Kre8iv Designs"];
 
 /**
@@ -103,7 +105,7 @@ export default async function SettingsPage({
   const canUseRequestedTab =
     requestedTab === "profile" ||
     requestedTab === "account" ||
-    (canManageBranding && requestedTab === "branding");
+    (canManageBranding && (requestedTab === "branding" || requestedTab === "storage" || requestedTab === "integrations"));
   const defaultTab = tabIsAllowed && canUseRequestedTab ? requestedTab : "profile";
 
   return (
@@ -114,10 +116,12 @@ export default async function SettingsPage({
       </div>
 
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className={`grid w-full ${canManageBranding ? "grid-cols-3" : "grid-cols-2"}`}>
+        <TabsList className={`grid w-full ${canManageBranding ? "grid-cols-5" : "grid-cols-2"}`}>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
           {canManageBranding ? <TabsTrigger value="branding">Branding</TabsTrigger> : null}
+          {canManageBranding ? <TabsTrigger value="integrations">Integrations</TabsTrigger> : null}
+          {canManageBranding ? <TabsTrigger value="storage">Storage</TabsTrigger> : null}
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
@@ -135,6 +139,22 @@ export default async function SettingsPage({
               isPortalBrandingScope={isPortalBrandingScope}
               initialLogoUrl={brandingConfig?.logo_url ?? null}
               initialDomain={brandingConfig?.domain ?? null}
+            />
+          </TabsContent>
+        ) : null}
+
+        {canManageBranding && clientId ? (
+          <TabsContent value="integrations" className="mt-6">
+            <IntegrationSettings clientId={clientId} />
+          </TabsContent>
+        ) : null}
+
+        {canManageBranding && clientId ? (
+          <TabsContent value="storage" className="mt-6">
+            <StorageConnections
+              clientId={clientId}
+              isAdmin={canManageBranding}
+              companyClientId={brandingClientId}
             />
           </TabsContent>
         ) : null}
