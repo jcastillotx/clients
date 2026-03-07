@@ -1,12 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/admin/dashboard/admin-dashboard";
 
 export default async function AdminPage() {
-  const supabase = await createClient();
-
   // Authentication is handled by the dashboard layout and middleware admin guard.
   // Check admin access
   const isAdmin = await hasPermission("admin.access");
@@ -15,7 +12,11 @@ export default async function AdminPage() {
   }
 
   // Use admin client to bypass RLS and see all data across clients
-  const adminClient = createAdminClientIfAvailable() ?? supabase;
+  const adminClient = createAdminClientIfAvailable();
+
+  if (!adminClient) {
+    throw new Error("Missing Supabase service role credentials for admin dashboard queries");
+  }
 
   // Fetch dashboard statistics in parallel
   const [

@@ -87,17 +87,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Get user's client_id
-  const clientId = user.user_metadata?.client_id;
-  if (!clientId) {
-    return NextResponse.json({ error: "User not associated with a client" }, { status: 400 });
-  }
-
   // Parse and validate request body
   const body = await req.json();
 
   try {
     const validatedData = createSupportTicketSchema.parse(body);
+
+    const { data: dbUser, error: dbUserError } = await supabase
+      .from("users")
+      .select("id, client_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (dbUserError) {
+      console.error("Error loading user profile for support ticket creation:", dbUserError);
+      return NextResponse.json({ error: "Failed to load user profile" }, { status: 500 });
+    }
+
+    const clientId = dbUser?.client_id;
+    if (!clientId) {
+      return NextResponse.json({ error: "User not associated with a client" }, { status: 400 });
+    }
 
     // Generate ticket number
     const ticketNumber = await generateTicketNumber();

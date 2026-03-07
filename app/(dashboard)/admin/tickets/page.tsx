@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { redirect } from "next/navigation";
@@ -20,8 +19,6 @@ interface SearchParams {
  */
 export default async function AdminTicketsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const resolvedSearchParams = await searchParams;
-  const supabase = await createClient();
-
   // Check admin access
   const isAdmin = await hasPermission("admin.access");
   if (!isAdmin) {
@@ -29,7 +26,11 @@ export default async function AdminTicketsPage({ searchParams }: { searchParams:
   }
 
   // Use admin client to bypass RLS and see all tickets across clients
-  const adminClient = createAdminClientIfAvailable() ?? supabase;
+  const adminClient = createAdminClientIfAvailable();
+
+  if (!adminClient) {
+    throw new Error("Missing Supabase service role credentials for admin ticket queries");
+  }
 
   // Server-side data fetching across all clients
   let query = adminClient

@@ -129,6 +129,7 @@ export function SupportTicketList({ initialData }: { initialData: SupportTicket[
             <TableRow>
               <TableHead>Ticket #</TableHead>
               <TableHead>Subject</TableHead>
+              <TableHead>Acknowledged</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>SLA Status</TableHead>
@@ -139,12 +140,13 @@ export function SupportTicketList({ initialData }: { initialData: SupportTicket[
           <TableBody>
             {initialData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   No tickets found
                 </TableCell>
               </TableRow>
             ) : (
               initialData.map((ticket) => {
+                const isAcknowledged = Boolean(ticket.first_response_at);
                 const slaInfo = getSlaStatus(
                   ticket.first_response_at ? new Date(ticket.first_response_at) : null,
                   ticket.sla_response_due_at ? new Date(ticket.sla_response_due_at) : null,
@@ -156,15 +158,25 @@ export function SupportTicketList({ initialData }: { initialData: SupportTicket[
                   new Date(ticket.created_at),
                   ticket.sla_paused_duration_minutes,
                 );
+                const responseDueAt = ticket.sla_response_due_at ? new Date(ticket.sla_response_due_at) : null;
+                const resolutionDueAt = ticket.sla_resolution_due_at ? new Date(ticket.sla_resolution_due_at) : null;
+                const primaryDueLabel = isAcknowledged
+                  ? formatTimeRemaining(resolutionDueAt)
+                  : formatTimeRemaining(responseDueAt);
 
                 return (
                   <TableRow
                     key={ticket.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className={`cursor-pointer border-l-4 transition-colors hover:bg-muted/50 ${getTicketRowClassName(slaInfo.status, isAcknowledged)}`}
                     onClick={() => router.push(`/support/${ticket.id}`)}
                   >
                     <TableCell className="font-mono text-sm">{ticket.ticket_number}</TableCell>
                     <TableCell className="font-medium max-w-xs truncate">{ticket.subject}</TableCell>
+                    <TableCell>
+                      <Badge variant={isAcknowledged ? "default" : "secondary"} className={getAcknowledgementBadgeClassName(isAcknowledged, slaInfo.status)}>
+                        {isAcknowledged ? "Acknowledged" : "Awaiting staff"}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(ticket.status)}>{ticket.status.replace(/_/g, " ")}</Badge>
                     </TableCell>
@@ -172,7 +184,20 @@ export function SupportTicketList({ initialData }: { initialData: SupportTicket[
                       <Badge variant={getPriorityVariant(ticket.priority)}>{ticket.priority}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getSlaVariant(slaInfo.status)}>{slaInfo.status.replace(/_/g, " ")}</Badge>
+                      <div className="space-y-1">
+                        <Badge variant={getSlaVariant(slaInfo.status)} className={getSlaStatusBadgeClassName(slaInfo.status)}>
+                          {slaInfo.status.replace(/_/g, " ")}
+                        </Badge>
+                        <div className="text-xs text-muted-foreground">
+                          {primaryDueLabel
+                            ? isAcknowledged
+                              ? `Resolution due in ${primaryDueLabel}`
+                              : `Response due in ${primaryDueLabel}`
+                            : isAcknowledged
+                              ? "Staff has responded"
+                              : "Awaiting response"}
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>{ticket.assigned_user?.name || "Unassigned"}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -220,4 +245,60 @@ function getSlaVariant(slaStatus: string): "default" | "secondary" | "destructiv
     paused: "secondary",
   };
   return variants[slaStatus] || "default";
+}
+
+function getTicketRowClassName(slaStatus: string, isAcknowledged: boolean): string {
+  if (slaStatus === "breached") {
+    return "border-l-red-600 bg-red-50/80";
+  }
+
+  if (slaStatus === "response_breached") {
+    return "border-l-orange-600 bg-orange-50/80";
+  }
+
+  if (!isAcknowledged) {
+    if (slaStatus === "warning") {
+      return "border-l-amber-500 bg-amber-50/80";
+    }
+
+    return "border-l-yellow-500 bg-yellow-50/70";
+  }
+
+  if (slaStatus === "paused") {
+    return "border-l-slate-400 bg-slate-50/70";
+  }
+
+  if (slaStatus === "warning") {
+    return "border-l-blue-500 bg-blue-50/70";
+  }
+
+  return "border-l-emerald-500 bg-emerald-50/60";
+}
+
+function getAcknowledgementBadgeClassName(isAcknowledged: boolean, slaStatus: string): string {
+  if (isAcknowledged) {
+    return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
+  }
+
+  if (slaStatus === "breached") {
+    return "bg-red-100 text-red-800 hover:bg-red-100";
+  }
+
+  if (slaStatus === "response_breached" || slaStatus === "warning") {
+    return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+  }
+
+  return "bg-yellow-100 text-yellow-900 hover:bg-yellow-100";
+}
+
+function getSlaStatusBadgeClassName(slaStatus: string): string {
+  const classes: Record<string, string> = {
+    on_track: "bg-green-100 text-green-800 hover:bg-green-100",
+    warning: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+    response_breached: "bg-orange-100 text-orange-800 hover:bg-orange-100",
+    breached: "bg-red-100 text-red-800 hover:bg-red-100",
+    paused: "bg-slate-100 text-slate-800 hover:bg-slate-100",
+  };
+
+  return classes[slaStatus] || "";
 }
