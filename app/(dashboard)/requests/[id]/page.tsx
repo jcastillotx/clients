@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { RequestDetail } from "@/components/requests/request-detail";
 import { RequestComments } from "@/components/requests/request-comments";
@@ -24,39 +25,6 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Fetch request with all related data
-  const { data: request, error } = await supabase
-    .from("requests")
-    .select(
-      `
-      *,
-      client:clients(id, company_name, domain),
-      created_by_user:users!requests_created_by_fkey(id, name, avatar),
-      assigned_user:users!requests_assigned_to_fkey(id, name, avatar)
-    `,
-    )
-    .eq("id", id)
-    .single();
-
-  if (error || !request) {
-    notFound();
-  }
-
-  // Fetch initial comments separately for better data structure
-  const { data: comments } = await supabase
-    .from("request_comments")
-    .select(
-      `
-      id,
-      content,
-      created_at,
-      updated_at,
-      user:users(id, name, avatar)
-    `,
-    )
-    .eq("request_id", id)
-    .order("created_at", { ascending: true });
-
   const { data: dbUser } = user
     ? await supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle()
     : { data: null };
@@ -81,8 +49,44 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
     });
   }
 
+  const adminClient = canManageWorkflow ? createAdminClientIfAvailable() : null;
+  const dbClient = adminClient ?? supabase;
+
+  // Fetch request with all related data
+  const { data: request, error } = await dbClient
+    .from("requests")
+    .select(
+      `
+      *,
+      client:clients(id, company_name, domain),
+      created_by_user:users!requests_created_by_fkey(id, name, avatar),
+      assigned_user:users!requests_assigned_to_fkey(id, name, avatar)
+    `,
+    )
+    .eq("id", id)
+    .single();
+
+  if (error || !request) {
+    notFound();
+  }
+
+  // Fetch initial comments separately for better data structure
+  const { data: comments } = await dbClient
+    .from("request_comments")
+    .select(
+      `
+      id,
+      content,
+      created_at,
+      updated_at,
+      user:users(id, name, avatar)
+    `,
+    )
+    .eq("request_id", id)
+    .order("created_at", { ascending: true });
+
   const { data: assignableUsers } = canManageWorkflow
-    ? await supabase.from("users").select("id, name, email").is("deleted_at", null).order("name")
+    ? await dbClient.from("users").select("id, name, email").is("deleted_at", null).order("name")
     : { data: [] };
 
   return (
