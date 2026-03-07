@@ -157,11 +157,21 @@ const navigationSections: NavSection[] = [
     ],
   },
   {
-    title: "Storage & Integration",
+    title: "Branding",
+    items: [
+      { name: "Portal Branding", href: "/branding", icon: Settings, access: "admin" },
+    ],
+  },
+  {
+    title: "Storage",
     items: [
       { name: "Storage Management", href: "/storage", icon: Database, access: "staff" },
+    ],
+  },
+  {
+    title: "Integrations",
+    items: [
       { name: "Integrations", href: "/integrations", icon: LinkIcon, access: "manager" },
-      { name: "All Tickets", href: "/admin/tickets", icon: HelpCircle, access: "admin" },
       { name: "Webhooks", href: "/webhooks", icon: LinkIcon, access: "admin" },
     ],
   },
@@ -181,7 +191,6 @@ const navigationSections: NavSection[] = [
       { name: "Maintenance Plans", href: "/admin/maintenance-plans", icon: ShieldCheck, access: "admin" },
       { name: "Service Templates", href: "/admin/service-templates", icon: Briefcase, access: "admin" },
       { name: "Form Templates", href: "/admin/settings/templates", icon: FileText, access: "admin" },
-      { name: "White Label", href: "/settings?tab=branding", icon: Settings, access: "admin" },
     ],
   },
 ];

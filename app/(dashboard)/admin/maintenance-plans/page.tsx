@@ -65,6 +65,7 @@ export default function AdminMaintenancePlansPage() {
   const [templates, setTemplates] = useState<PlanTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dialogError, setDialogError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -96,6 +97,7 @@ export default function AdminMaintenancePlansPage() {
   const openCreateDialog = () => {
     setEditingId(null);
     setFormData(emptyForm);
+    setDialogError(null);
     setDialogOpen(true);
   };
 
@@ -119,39 +121,59 @@ export default function AdminMaintenancePlansPage() {
       renewalTermMonths: template.renewalTermMonths.toString(),
       isActive: template.isActive,
     });
+    setDialogError(null);
     setDialogOpen(true);
   };
 
   const handleSubmit = async () => {
+    const monthlyRate = Number(formData.monthlyRate);
+    const includedHours = Number(formData.includedHours);
+    const hourlyRateOverage = Number(formData.hourlyRateOverage);
+    const maxRolloverHours = formData.maxRolloverHours === "" ? null : Number(formData.maxRolloverHours);
+    const overageNotificationThreshold = Number(formData.overageNotificationThreshold);
+    const renewalTermMonths = Number(formData.renewalTermMonths);
+
     if (!formData.name.trim()) {
-      setError("Please enter a plan name");
+      setDialogError("Please enter a plan name");
       return;
     }
-    if (!formData.monthlyRate || parseFloat(formData.monthlyRate) <= 0) {
-      setError("Please enter a valid monthly rate");
+    if (!Number.isFinite(monthlyRate) || monthlyRate <= 0) {
+      setDialogError("Please enter a valid monthly rate");
       return;
     }
-    if (!formData.includedHours || parseFloat(formData.includedHours) <= 0) {
-      setError("Please enter valid included hours");
+    if (!Number.isFinite(includedHours) || includedHours <= 0) {
+      setDialogError("Please enter valid included hours");
       return;
     }
-    if (!formData.hourlyRateOverage || parseFloat(formData.hourlyRateOverage) <= 0) {
-      setError("Please enter a valid overage rate");
+    if (!Number.isFinite(hourlyRateOverage) || hourlyRateOverage <= 0) {
+      setDialogError("Please enter a valid overage rate");
+      return;
+    }
+    if (maxRolloverHours !== null && (!Number.isFinite(maxRolloverHours) || maxRolloverHours < 0)) {
+      setDialogError("Please enter a valid max rollover hours value");
+      return;
+    }
+    if (!Number.isFinite(overageNotificationThreshold) || overageNotificationThreshold < 0) {
+      setDialogError("Please enter a valid overage notification threshold");
+      return;
+    }
+    if (!Number.isInteger(renewalTermMonths) || renewalTermMonths <= 0) {
+      setDialogError("Please enter a valid renewal term in months");
       return;
     }
 
     try {
       setSaving(true);
-      setError(null);
+      setDialogError(null);
 
       const payload = {
         ...formData,
-        monthlyRate: parseFloat(formData.monthlyRate),
-        includedHours: parseFloat(formData.includedHours),
-        hourlyRateOverage: parseFloat(formData.hourlyRateOverage),
-        maxRolloverHours: formData.maxRolloverHours ? parseFloat(formData.maxRolloverHours) : null,
-        overageNotificationThreshold: parseFloat(formData.overageNotificationThreshold),
-        renewalTermMonths: parseInt(formData.renewalTermMonths),
+        monthlyRate,
+        includedHours,
+        hourlyRateOverage,
+        maxRolloverHours,
+        overageNotificationThreshold,
+        renewalTermMonths,
       };
 
       const url = editingId
@@ -166,15 +188,25 @@ export default function AdminMaintenancePlansPage() {
 
       const data = await response.json();
 
-      if (!data.success) {
+      if (!response.ok || !data.success) {
         throw new Error(data.error || "Failed to save template");
       }
 
       setDialogOpen(false);
+      setDialogError(null);
+      setFormData(emptyForm);
       fetchTemplates();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setDialogError(err instanceof Error ? err.message : "An error occurred");
     } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setDialogError(null);
       setSaving(false);
     }
   };
@@ -311,7 +343,7 @@ export default function AdminMaintenancePlansPage() {
       )}
 
       {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit Template" : "Create Maintenance Plan Template"}</DialogTitle>
@@ -321,6 +353,13 @@ export default function AdminMaintenancePlansPage() {
                 : "Create a new maintenance plan template that clients can subscribe to."}
             </DialogDescription>
           </DialogHeader>
+
+          {dialogError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{dialogError}</AlertDescription>
+            </Alert>
+          )}
 
           <div className="space-y-6 py-4">
             {/* Basic Info */}
@@ -493,7 +532,7 @@ export default function AdminMaintenancePlansPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
+            <Button variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={saving}>
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={saving}>

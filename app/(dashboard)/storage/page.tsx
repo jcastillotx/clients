@@ -72,6 +72,29 @@ export default async function StoragePage() {
         .maybeSingle();
       companyClientId = parentByName?.id ?? null;
     }
+
+    if (!companyClientId && isAdmin) {
+      const { data: whiteLabelClient } = await supabase
+        .from("white_label_configs")
+        .select("client_id, updated_at")
+        .not("client_id", "is", null)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      companyClientId = whiteLabelClient?.client_id ?? null;
+    }
+
+    if (!companyClientId && isAdmin) {
+      const { data: anyClient } = await supabase
+        .from("clients")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      companyClientId = anyClient?.id ?? null;
+    }
   }
 
   const resolvedClientId = clientId || companyClientId;
