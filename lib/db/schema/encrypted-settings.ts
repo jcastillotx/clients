@@ -78,13 +78,13 @@ export const encryptedSettings = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [
-    uniqueIndex("encrypted_settings_client_provider_key").on(
+  (table) => ({
+    clientProviderKeyIdx: uniqueIndex("encrypted_settings_client_provider_key").on(
       table.clientId,
       table.provider,
       table.settingKey,
     ),
-  ],
+  }),
 );
 
 /**
