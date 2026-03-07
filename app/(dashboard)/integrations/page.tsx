@@ -82,6 +82,29 @@ export default async function IntegrationsPage() {
         .maybeSingle();
       brandingClientId = parentClientByName?.id ?? null;
     }
+
+    if (!brandingClientId && canManageIntegrations) {
+      const { data: whiteLabelClient } = await supabase
+        .from("white_label_configs")
+        .select("client_id, updated_at")
+        .not("client_id", "is", null)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      brandingClientId = whiteLabelClient?.client_id ?? null;
+    }
+
+    if (!brandingClientId && canManageIntegrations) {
+      const { data: anyClient } = await supabase
+        .from("clients")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      brandingClientId = anyClient?.id ?? null;
+    }
   }
 
   const settingsScopeClientId = clientId ?? brandingClientId;
