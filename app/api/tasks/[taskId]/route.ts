@@ -230,7 +230,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await db.delete(staffTasks).where(eq(staffTasks.id, taskId));
+    const deleted = await db
+      .delete(staffTasks)
+      .where(eq(staffTasks.id, taskId))
+      .returning({ id: staffTasks.id });
+
+    if (deleted.length === 0) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

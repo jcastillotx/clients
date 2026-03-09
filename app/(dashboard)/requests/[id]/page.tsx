@@ -4,11 +4,20 @@ import { notFound } from "next/navigation";
 import { RequestDetail } from "@/components/requests/request-detail";
 import { RequestComments } from "@/components/requests/request-comments";
 import { RequestRealtime } from "@/components/requests/request-realtime";
+import { isAdminUser } from "@/lib/rbac/check";
 
 interface RequestDetailPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+function normalizeRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return value ?? null;
 }
 
 /**
@@ -25,30 +34,24 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: dbUser } = user
-    ? await supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle()
-    : { data: null };
+  // Parallel fetch: user profile + role assignments
+  const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
+    user
+      ? supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    user
+      ? supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id)
+      : Promise.resolve({ data: null }),
+  ]);
 
-  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
-  let canManageWorkflow = Boolean(
-    dbUser?.is_super_admin ||
-      user?.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      metadataRole === "staff",
-  );
+  // Staff can manage workflow in addition to admin/super_admin
+  const canManageWorkflow = isAdminUser(user, dbUser, roleRows, ["staff"]);
 
-  if (!canManageWorkflow && user) {
-    const { data: roleRows } = await supabase
-      .from("user_roles")
-      .select("role:roles(name)")
-      .eq("user_id", user.id);
-    canManageWorkflow = (roleRows || []).some((row: any) => {
-      const roleName = String(row?.role?.name || row?.role?.[0]?.name || "").toLowerCase();
-      return roleName === "admin" || roleName === "super_admin" || roleName === "staff";
-    });
-  }
-
+  // Admin client bypasses RLS so admins can:
+  //   - read requests across all clients (not just their own client_id)
+  //   - read all comments on those requests
+  //   - list all users for the assignee picker
+  // Regular users fall back to the session-scoped client which enforces RLS.
   const adminClient = canManageWorkflow ? createAdminClientIfAvailable() : null;
   const dbClient = adminClient ?? supabase;
 
@@ -70,24 +73,34 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
     notFound();
   }
 
-  // Fetch initial comments separately for better data structure
-  const { data: comments } = await dbClient
-    .from("request_comments")
-    .select(
-      `
-      id,
-      content,
-      created_at,
-      updated_at,
-      user:users(id, name, avatar)
-    `,
-    )
-    .eq("request_id", id)
-    .order("created_at", { ascending: true });
+  const normalizedRequest = {
+    ...request,
+    client: normalizeRelation((request as any).client),
+    created_by_user: normalizeRelation((request as any).created_by_user),
+    assigned_user: normalizeRelation((request as any).assigned_user),
+  };
 
-  const { data: assignableUsers } = canManageWorkflow
-    ? await dbClient.from("users").select("id, name, email").is("deleted_at", null).order("name")
-    : { data: [] };
+  // Parallel fetch: comments + assignable users
+  const [{ data: comments }, { data: assignableUsers }] = await Promise.all([
+    // Admin client used so admins can see comments across all client requests
+    dbClient
+      .from("request_comments")
+      .select(
+        `
+        id,
+        content,
+        created_at,
+        updated_at,
+        user:users(id, name, avatar)
+      `,
+      )
+      .eq("request_id", id)
+      .order("created_at", { ascending: true }),
+    // Admin client used so admins can see all users across clients for assignment
+    canManageWorkflow
+      ? dbClient.from("users").select("id, name, email").is("deleted_at", null).order("name")
+      : Promise.resolve({ data: [] }),
+  ]);
 
   return (
     <div className="flex flex-col gap-8 p-8">
@@ -95,7 +108,7 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       <RequestRealtime requestId={id} />
 
       {/* Request details */}
-      <RequestDetail request={request} assignableUsers={assignableUsers || []} canManageWorkflow={canManageWorkflow} />
+      <RequestDetail request={normalizedRequest as any} assignableUsers={assignableUsers || []} canManageWorkflow={canManageWorkflow} />
 
       {/* Comments section with real-time updates */}
       <RequestComments

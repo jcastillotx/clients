@@ -41,6 +41,11 @@ export function MeetingDetail({ meeting, users }: MeetingDetailProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Supabase may return nested relations as a single object or a single-element
+  // array depending on the query. Normalize both shapes here.
+  const client = Array.isArray(meeting.client) ? (meeting.client[0] ?? null) : (meeting.client ?? null);
+  const creator = Array.isArray(meeting.creator) ? (meeting.creator[0] ?? null) : (meeting.creator ?? null);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
@@ -119,15 +124,17 @@ export function MeetingDetail({ meeting, users }: MeetingDetailProps) {
             <Badge variant="outline">{getMeetingTypeLabel(meeting.meeting_type)}</Badge>
           </div>
           <div className="flex items-center gap-4 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              <Link href={`/clients/${meeting.client.id}`} className="hover:underline">
-                {meeting.client.company_name}
-              </Link>
-            </div>
+            {client && (
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                <Link href={`/clients/${client.id}`} className="hover:underline">
+                  {client.company_name}
+                </Link>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span>{meeting.creator.name}</span>
+              <span>{creator?.name || "Unknown"}</span>
             </div>
           </div>
         </div>

@@ -252,7 +252,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
                     <User className="h-4 w-4" />
                     Created By
                   </div>
-                  <p className="font-medium">{ticket.creator?.name}</p>
+                  <p className="font-medium">{ticket.creator?.name || "Unknown"}</p>
                 </div>
               </div>
 

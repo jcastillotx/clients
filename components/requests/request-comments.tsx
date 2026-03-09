@@ -98,7 +98,7 @@ export function RequestComments({ requestId, initialComments }: RequestCommentsP
         .insert({
           request_id: requestId,
           user_id: user.id,
-          content,
+          content: content.trim(),
         })
         .select(
           `
@@ -110,7 +110,13 @@ export function RequestComments({ requestId, initialComments }: RequestCommentsP
         )
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // FK violation means the parent request no longer exists
+        if (error.code === "23503") throw new Error("Request not found");
+        // RLS rejection — user lost access to this request
+        if (error.code === "42501") throw new Error("Access denied");
+        throw new Error("Failed to post comment");
+      }
       return normalizeComment(data);
     },
     onSuccess: () => {
@@ -145,7 +151,7 @@ export function RequestComments({ requestId, initialComments }: RequestCommentsP
                     {comment.user.name
                       .split(" ")
                       .map((n: string) => n[0])
-                      .join("")}
+                      .join("") || "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-1">

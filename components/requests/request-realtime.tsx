@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,6 +17,18 @@ interface RequestRealtimeProps {
 export function RequestRealtime({ requestId }: RequestRealtimeProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce router.refresh() to avoid redundant SSR revalidations when
+  // multiple rapid database changes arrive in quick succession.
+  const debouncedRefresh = useCallback(() => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+    refreshTimeoutRef.current = setTimeout(() => {
+      router.refresh();
+    }, 300);
+  }, [router]);
 
   useEffect(() => {
     // Subscribe to changes on this specific request
@@ -31,17 +43,19 @@ export function RequestRealtime({ requestId }: RequestRealtimeProps) {
           filter: `id=eq.${requestId}`,
         },
         () => {
-          // Refresh server-rendered request detail when row changes
-          router.refresh();
+          debouncedRefresh();
         },
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
+    // Cleanup subscription and any pending debounce on unmount
     return () => {
       supabase.removeChannel(channel);
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
     };
-  }, [requestId, router, supabase]);
+  }, [requestId, debouncedRefresh, supabase]);
 
   return null; // This component doesn't render anything
 }

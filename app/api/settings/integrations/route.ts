@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { encryptedSettings, type EncryptedSetting } from "@/lib/db/schema/encrypted-settings";
 import { eq, and } from "drizzle-orm";
 import { encrypt, decrypt, maskSecret } from "@/lib/encryption";
+import { isUserAdmin } from "@/lib/rbac/check";
 import { z } from "zod";
 
 const querySchema = z.object({
@@ -25,6 +26,10 @@ export async function GET(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!(await isUserAdmin(user.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -112,6 +117,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (!(await isUserAdmin(user.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
     const parsed = upsertSchema.safeParse(body);
 
@@ -195,6 +204,10 @@ export async function DELETE(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!(await isUserAdmin(user.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);

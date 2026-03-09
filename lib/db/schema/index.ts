@@ -22,6 +22,7 @@ export * from "./staff-tasks";
 export * from "./proposals";
 export * from "./activity-logs";
 export * from "./encrypted-settings";
+export * from "./calendar-integrations";
 
 // Explicitly export from users to avoid conflicts with rbac
 export { users, usersRelations, userStatusEnum } from "./users";

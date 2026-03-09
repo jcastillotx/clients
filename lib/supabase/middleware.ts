@@ -68,8 +68,12 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith("/admin")) {
+  // Protect admin-only routes (admin panel + integrations)
+  const isAdminOnlyRoute =
+    request.nextUrl.pathname.startsWith("/admin") ||
+    request.nextUrl.pathname.startsWith("/integrations");
+
+  if (isAdminOnlyRoute) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/";

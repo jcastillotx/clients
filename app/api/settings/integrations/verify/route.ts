@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { encryptedSettings, type IntegrationProvider } from "@/lib/db/schema/encrypted-settings";
 import { decrypt } from "@/lib/encryption";
 import { createClient } from "@/lib/supabase/server";
+import { isUserAdmin } from "@/lib/rbac/check";
 
 const verifySchema = z.object({
   clientId: z.string().uuid(),
@@ -27,6 +28,10 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!(await isUserAdmin(user.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();

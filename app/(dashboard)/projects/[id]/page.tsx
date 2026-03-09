@@ -92,8 +92,8 @@ async function ProjectDetails({ id }: { id: string }) {
   const budgetPercentage = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
   const isOverBudget = budgetPercentage > 100;
 
-  const totalBudget = project.budgets.reduce((sum, b) => sum + parseFloat(b.allocatedAmount), 0);
-  const totalSpent = project.costEntries.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+  const totalBudget = project.budgets.reduce((sum, b) => sum + parseFloat(b.allocatedAmount ?? "0"), 0);
+  const totalSpent = project.costEntries.reduce((sum, e) => sum + parseFloat(e.amount ?? "0"), 0);
 
   const completedMilestones = project.milestones.filter((m) => m.completedAt !== null).length;
   const completedDeliverables = project.deliverables.filter((d) => d.status === "completed").length;

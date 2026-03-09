@@ -100,12 +100,33 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
     };
   });
 
-  // Fetch staff users for assignment updates
-  const { data: staffUsers } = await dbClient
-    .from("users")
-    .select("id, name, email")
-    .in("role", ["staff", "admin"])
-    .order("name");
+  // Fetch staff users for assignment updates via the user_roles junction table.
+  // The `users` table has no direct `role` column; roles live in `user_roles`.
+  const { data: roleRows } = await dbClient
+    .from("user_roles")
+    .select("user_id, role:roles(name)");
+
+  const staffRoles = new Set(["staff", "admin", "super_admin", "account_manager"]);
+  const staffUserIds = (roleRows || [])
+    .filter((r) => {
+      const roleValue = r.role;
+      const roleName = String(
+        (Array.isArray(roleValue) ? roleValue[0]?.name : (roleValue as { name?: string } | null)?.name) ?? "",
+      ).toLowerCase();
+      return staffRoles.has(roleName);
+    })
+    .map((r) => r.user_id)
+    .filter(Boolean);
+
+  const { data: staffUsers } =
+    staffUserIds.length > 0
+      ? await dbClient
+          .from("users")
+          .select("id, name, email")
+          .in("id", staffUserIds)
+          .is("deleted_at", null)
+          .order("name")
+      : { data: [] };
 
   return (
     <div className="container mx-auto py-8 max-w-6xl">

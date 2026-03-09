@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,12 +27,12 @@ interface RequestDetailProps {
       id: string;
       company_name: string;
       domain?: string;
-    };
+    } | null;
     created_by_user: {
       id: string;
       name: string;
       avatar?: string;
-    };
+    } | null;
     assigned_user?: {
       id: string;
       name: string;
@@ -59,11 +60,24 @@ const requestStatuses = [
 
 export function RequestDetail({ request, assignableUsers = [], canManageWorkflow = false }: RequestDetailProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [currentStatus, setCurrentStatus] = useState(request.status);
   const [assignedToId, setAssignedToId] = useState<string>(request.assigned_user?.id || "unassigned");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestType = String(request.custom_fields?.type || "support");
+  const createdByName = request.created_by_user?.name || "Unknown user";
+  const createdByInitials =
+    createdByName
+      .split(" ")
+      .map((n) => n[0])
+      .join("") || "?";
+  const assignedUserName = request.assigned_user?.name || "Unassigned";
+  const assignedUserInitials =
+    assignedUserName
+      .split(" ")
+      .map((n) => n[0])
+      .join("") || "?";
 
   const updateRequest = async (payload: Record<string, any>) => {
     setIsSaving(true);
@@ -71,6 +85,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
     try {
       const response = await fetch(`/api/requests/${request.id}`, {
         method: "PATCH",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -84,6 +99,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
       if (payload.assignedTo !== undefined) {
         setAssignedToId(payload.assignedTo || "unassigned");
       }
+      toast({ title: "Saved", description: "Request updated successfully." });
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update request");
@@ -108,7 +124,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Building2 className="h-4 w-4" />
-              <span>{request.client.company_name}</span>
+              <span>{request.client?.company_name || "Unknown client"}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
@@ -126,7 +142,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
         <div className="flex flex-col items-end gap-2">
           {error ? <p className="text-xs text-destructive">{error}</p> : null}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => window.history.back()}>
+            <Button variant="outline" onClick={() => router.back()}>
               Back
             </Button>
             {canManageWorkflow ? (
@@ -165,17 +181,14 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={request.created_by_user.avatar} />
+                    <AvatarImage src={request.created_by_user?.avatar} />
                     <AvatarFallback>
-                      {request.created_by_user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                      {createdByInitials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <p className="text-sm">
-                      <span className="font-medium">{request.created_by_user.name}</span> created this request
+                      <span className="font-medium">{createdByName}</span> created this request
                     </p>
                     <p className="text-xs text-muted-foreground">{format(new Date(request.created_at), "PPpp")}</p>
                   </div>
@@ -239,7 +252,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
                 <p className="text-sm font-medium mb-2">Client</p>
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{request.client.company_name}</span>
+                  <span className="text-sm">{request.client?.company_name || "Unknown client"}</span>
                 </div>
               </div>
 
@@ -277,14 +290,9 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={request.assigned_user.avatar} />
-                      <AvatarFallback>
-                        {request.assigned_user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
+                      <AvatarFallback>{assignedUserInitials}</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{request.assigned_user.name}</span>
+                    <span className="text-sm">{assignedUserName}</span>
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Unassigned</p>

@@ -41,6 +41,7 @@ import {
   Shield,
   EyeOff,
   Cog,
+  CalendarCheck,
 } from "lucide-react";
 import { ComponentType } from "react";
 
@@ -171,7 +172,7 @@ const navigationSections: NavSection[] = [
   {
     title: "Integrations",
     items: [
-      { name: "Integrations", href: "/integrations", icon: LinkIcon, access: "manager" },
+      { name: "Integrations", href: "/integrations", icon: LinkIcon, access: "admin" },
       { name: "Webhooks", href: "/webhooks", icon: LinkIcon, access: "admin" },
     ],
   },
@@ -191,6 +192,7 @@ const navigationSections: NavSection[] = [
       { name: "Maintenance Plans", href: "/admin/maintenance-plans", icon: ShieldCheck, access: "admin" },
       { name: "Service Templates", href: "/admin/service-templates", icon: Briefcase, access: "admin" },
       { name: "Form Templates", href: "/admin/settings/templates", icon: FileText, access: "admin" },
+      { name: "Calendar", href: "/settings/calendar", icon: CalendarCheck, access: "staff" },
     ],
   },
 ];
