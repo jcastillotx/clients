@@ -27,9 +27,10 @@ interface StaffUser {
 interface TicketDetailProps {
   ticket: any;
   staffUsers: StaffUser[];
+  isStaff: boolean;
 }
 
-export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
+export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetailProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,7 +108,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              {!isEditing && (
+              {isStaff && !isEditing && (
                 <Button variant="outline" onClick={() => setIsEditing(true)}>
                   Edit
                 </Button>
@@ -128,7 +129,7 @@ export function SupportTicketDetail({ ticket, staffUsers }: TicketDetailProps) {
           <Separator />
 
           {/* Edit Form or Details View */}
-          {isEditing ? (
+          {isStaff && isEditing ? (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

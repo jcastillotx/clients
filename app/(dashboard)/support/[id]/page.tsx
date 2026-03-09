@@ -100,37 +100,52 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
     };
   });
 
-  // Fetch staff users for assignment updates via the user_roles junction table.
-  // The `users` table has no direct `role` column; roles live in `user_roles`.
-  const { data: roleRows } = await dbClient
-    .from("user_roles")
-    .select("user_id, role:roles(name)");
+  // Only fetch assignable staff for staff/admin users — clients must not see this list.
+  let staffUsers: { id: string; name: string; email: string }[] = [];
 
-  const staffRoles = new Set(["staff", "admin", "super_admin", "account_manager"]);
-  const staffUserIds = (roleRows || [])
-    .filter((r) => {
-      const roleValue = r.role;
-      const roleName = String(
-        (Array.isArray(roleValue) ? roleValue[0]?.name : (roleValue as { name?: string } | null)?.name) ?? "",
-      ).toLowerCase();
-      return staffRoles.has(roleName);
-    })
-    .map((r) => r.user_id)
-    .filter(Boolean);
+  if (isStaff) {
+    // Fetch via user_roles junction table (users table has no direct role column).
+    const adminFetchClient = createAdminClientIfAvailable() ?? supabase;
+    const { data: roleRows } = await adminFetchClient
+      .from("user_roles")
+      .select("user_id, role:roles(name)");
 
-  const { data: staffUsers } =
-    staffUserIds.length > 0
-      ? await dbClient
-          .from("users")
-          .select("id, name, email")
-          .in("id", staffUserIds)
-          .is("deleted_at", null)
-          .order("name")
-      : { data: [] };
+    const staffRoles = new Set(["staff", "admin", "super_admin", "account_manager"]);
+    const staffUserIdsFromRoles = (roleRows || [])
+      .filter((r) => {
+        const roleValue = r.role;
+        const roleName = String(
+          (Array.isArray(roleValue) ? roleValue[0]?.name : (roleValue as { name?: string } | null)?.name) ?? "",
+        ).toLowerCase();
+        return staffRoles.has(roleName);
+      })
+      .map((r) => r.user_id as string)
+      .filter(Boolean);
+
+    // Also include users with is_super_admin = true who may not have a role row
+    const { data: superAdminUsers } = await adminFetchClient
+      .from("users")
+      .select("id")
+      .eq("is_super_admin", true)
+      .is("deleted_at", null);
+
+    const superAdminIds = (superAdminUsers || []).map((u: { id: string }) => u.id);
+    const allStaffIds = [...new Set([...staffUserIdsFromRoles, ...superAdminIds])];
+
+    if (allStaffIds.length > 0) {
+      const { data } = await adminFetchClient
+        .from("users")
+        .select("id, name, email")
+        .in("id", allStaffIds)
+        .is("deleted_at", null)
+        .order("name");
+      staffUsers = data || [];
+    }
+  }
 
   return (
     <div className="container mx-auto py-8 max-w-6xl">
-      <SupportTicketDetail ticket={ticket} staffUsers={staffUsers || []} />
+      <SupportTicketDetail ticket={ticket} staffUsers={staffUsers} isStaff={isStaff} />
 
       <div className="mt-8">
         <SupportTicketComments
