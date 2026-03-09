@@ -60,7 +60,7 @@ export default async function NewProjectRequestPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Request a New Project</h1>
           <p className="mt-1 text-muted-foreground">
-            Share your executive summary, files, and due dates. We will review and send an estimate.
+            Share the executive summary, client scope, files, and due dates. Staff can submit for any client, and clients can submit requests for their own organization.
           </p>
         </div>
         <Button variant="outline" asChild>

@@ -41,6 +41,21 @@ export const createProjectRequestSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const createPublicProjectRequestSchema = createProjectRequestSchema.extend({
+  companyName: z.string().min(2, "Company name must be at least 2 characters").max(255, "Company name is too long"),
+  contactName: z.string().min(2, "Contact name must be at least 2 characters").max(255, "Contact name is too long"),
+  contactEmail: z.string().email("A valid contact email is required"),
+  contactPhone: z.string().max(50, "Phone number is too long").optional().nullable(),
+  website: z.string().max(255, "Website is too long").optional().nullable(),
+  industry: z.string().max(255, "Industry is too long").optional().nullable(),
+  address: z.string().max(500, "Address is too long").optional().nullable(),
+  city: z.string().max(255, "City is too long").optional().nullable(),
+  state: z.string().max(255, "State is too long").optional().nullable(),
+  zipCode: z.string().max(50, "ZIP/Postal code is too long").optional().nullable(),
+  country: z.string().max(255, "Country is too long").optional().nullable(),
+  businessOverview: z.string().max(4000, "Business overview is too long").optional().nullable(),
+});
+
 export const updateProjectRequestSchema = z.object({
   title: z.string().min(3).max(200).optional(),
   description: z.string().max(10000).optional().nullable(),
@@ -75,5 +90,6 @@ export const projectRequestFeedbackSchema = z.object({
 });
 
 export type CreateProjectRequestInput = z.infer<typeof createProjectRequestSchema>;
+export type CreatePublicProjectRequestInput = z.infer<typeof createPublicProjectRequestSchema>;
 export type UpdateProjectRequestInput = z.infer<typeof updateProjectRequestSchema>;
 export type ProjectRequestFeedbackInput = z.infer<typeof projectRequestFeedbackSchema>;

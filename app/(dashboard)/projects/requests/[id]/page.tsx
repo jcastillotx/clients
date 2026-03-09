@@ -27,6 +27,21 @@ interface RequestRow {
     budgetRange?: string | null;
     requestedStartDate?: string | null;
     requestedLaunchDate?: string | null;
+    source?: string | null;
+    publicIntake?: {
+      companyName?: string | null;
+      contactName?: string | null;
+      contactEmail?: string | null;
+      contactPhone?: string | null;
+      website?: string | null;
+      industry?: string | null;
+      address?: string | null;
+      city?: string | null;
+      state?: string | null;
+      zipCode?: string | null;
+      country?: string | null;
+      businessOverview?: string | null;
+    } | null;
     review?: {
       status?: string;
       estimateAmount?: number | string | null;
@@ -144,6 +159,7 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
 
   const request = requestRow as RequestRow;
   const review = request.custom_fields?.review;
+  const publicIntake = request.custom_fields?.publicIntake;
 
   const [attachmentsResult, tasksCountResult, meetingsCountResult, feedbackCountResult] = await Promise.all([
     supabase
@@ -297,6 +313,57 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
               </div>
             </CardContent>
           </Card>
+
+          {publicIntake ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Organization Intake</CardTitle>
+                <CardDescription>Business information submitted from the public project request form.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-md border p-3">
+                    <p className="text-sm font-medium">Primary Contact</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.contactName || "Not provided"}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-sm font-medium">Contact Email</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.contactEmail || "Not provided"}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-sm font-medium">Phone</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.contactPhone || "Not provided"}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-sm font-medium">Website</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.website || "Not provided"}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-sm font-medium">Industry</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.industry || "Not provided"}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-sm font-medium">Submitted Via</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{request.custom_fields?.source || "Public intake"}</p>
+                  </div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-sm font-medium">Business Overview</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                    {publicIntake.businessOverview || "No overview provided."}
+                  </p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-sm font-medium">Address</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                    {[publicIntake.address, publicIntake.city, publicIntake.state, publicIntake.zipCode, publicIntake.country]
+                      .filter(Boolean)
+                      .join(", ") || "Not provided"}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader>

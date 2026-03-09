@@ -1,5 +1,7 @@
 import { headers } from "next/headers";
+import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
+import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import { getPortalBranding } from "@/lib/branding/get-branding";
 
@@ -27,6 +29,15 @@ export default async function HomePage() {
         </div>
         <div className="mx-auto w-full max-w-md relative">
           <LoginForm logoUrl={branding.logoUrl} />
+          <div className="mt-6 rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur">
+            <p className="text-sm font-medium">New organization?</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Submit your business information and project goals so our team can review your request.
+            </p>
+            <Button asChild className="mt-4 w-full" variant="outline">
+              <Link href="/request-project">Request a Project</Link>
+            </Button>
+          </div>
         </div>
       </div>
 

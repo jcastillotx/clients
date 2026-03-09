@@ -66,7 +66,9 @@ export default async function SupportTicketDetailPage({ params }: PageProps) {
   }
 
   // Fetch comments with user info
-  const { data: comments } = await dbClient
+  const commentsClient = createAdminClientIfAvailable() ?? dbClient;
+
+  const { data: comments } = await commentsClient
     .from("support_ticket_comments")
     .select(
       `

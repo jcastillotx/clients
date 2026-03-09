@@ -23,7 +23,39 @@ interface Comment {
     name: string;
     email: string;
     avatar?: string;
-  } | null;
+  };
+}
+
+type CommentPayload = Omit<Comment, "user"> & {
+  user:
+    | Comment["user"]
+    | {
+        id?: string;
+        name?: string;
+        email?: string;
+        avatar?: string | null;
+      }
+    | Array<{
+        id?: string;
+        name?: string;
+        email?: string;
+        avatar?: string | null;
+      }>
+    | null;
+};
+
+function normalizeComment(comment: CommentPayload): Comment {
+  const rawUser = Array.isArray(comment.user) ? comment.user[0] : comment.user;
+
+  return {
+    ...comment,
+    user: {
+      id: rawUser?.id || "unknown-user",
+      name: rawUser?.name || "Unknown User",
+      email: rawUser?.email || "",
+      avatar: rawUser?.avatar ?? undefined,
+    },
+  };
 }
 
 interface SupportTicketCommentsProps {
@@ -36,7 +68,7 @@ interface SupportTicketCommentsProps {
 export function SupportTicketComments({ ticketId, initialComments, currentUserId, isStaff = false }: SupportTicketCommentsProps) {
   const router = useRouter();
   const [comments, setComments] = useState<Comment[]>(
-    isStaff ? initialComments : initialComments.filter((c) => !c.is_internal)
+    (isStaff ? initialComments : initialComments.filter((c) => !c.is_internal)).map((comment) => normalizeComment(comment))
   );
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
@@ -71,7 +103,7 @@ export function SupportTicketComments({ ticketId, initialComments, currentUserId
 
       const result = await response.json();
 
-      setComments([...comments, result]);
+      setComments([...comments, normalizeComment(result)]);
       setNewComment("");
       setIsInternal(false);
       toast.success("Comment added successfully");
@@ -95,9 +127,9 @@ export function SupportTicketComments({ ticketId, initialComments, currentUserId
 
   function getCommentAuthor(comment: Comment) {
     return {
-      name: comment.user?.name || "Unknown User",
-      email: comment.user?.email || "",
-      avatar: comment.user?.avatar,
+      name: comment.user.name,
+      email: comment.user.email,
+      avatar: comment.user.avatar,
     };
   }
 
