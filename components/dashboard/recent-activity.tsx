@@ -14,25 +14,31 @@ interface Request {
   created_at: string;
   client: {
     company_name: string;
-  };
+  } | null;
 }
 
 interface RecentActivityProps {
   requests: Request[];
+  title?: string;
+  emptyMessage?: string;
 }
 
-export function RecentActivity({ requests }: RecentActivityProps) {
+export function RecentActivity({
+  requests,
+  title = "Recent Requests",
+  emptyMessage = "No recent requests",
+}: RecentActivityProps) {
   return (
     <Card className="bg-gradient-to-br from-card to-secondary/20">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Recent Requests
+          {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {requests.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">No recent requests</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>
         ) : (
           <div className="space-y-4">
             {requests.map((request) => (
@@ -53,7 +59,7 @@ export function RecentActivity({ requests }: RecentActivityProps) {
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{request.client.company_name}</span>
+                  <span>{request.client?.company_name || "Unassigned client"}</span>
                   <span>{formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}</span>
                 </div>
               </Link>

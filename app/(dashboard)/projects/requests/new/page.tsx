@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProjectRequestForm } from "@/components/projects/project-request-form";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
@@ -14,6 +15,10 @@ export default async function NewProjectRequestPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
 
   const [{ data: dbUser }, { data: roleRows }] = user
     ? await Promise.all([

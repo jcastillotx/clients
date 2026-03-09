@@ -78,13 +78,21 @@ export default async function ProjectRequestsPage() {
       roleNames.includes("super_admin"),
   );
 
+  const isStaff = Boolean(
+    isAdmin ||
+      metadataRole === "staff" ||
+      metadataRole === "account_manager" ||
+      roleNames.includes("staff") ||
+      roleNames.includes("account_manager"),
+  );
+
   let query = supabase
     .from("requests")
     .select("id, title, description, status, priority, created_at, due_date, custom_fields, client:clients(id, company_name)")
     .contains("custom_fields", { type: "project" })
     .order("created_at", { ascending: false });
 
-  if (!isAdmin && dbUser?.client_id) {
+  if (!isStaff && dbUser?.client_id) {
     query = query.eq("client_id", dbUser.client_id);
   }
 

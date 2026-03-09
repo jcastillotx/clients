@@ -72,6 +72,17 @@ interface RequestRow {
   } | null;
 }
 
+interface AttachmentRow {
+  id: string;
+  name: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  mime_type: string | null;
+  storage_url: string | null;
+  storage_path: string | null;
+  created_at: string;
+}
+
 const statusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
   if (status === "approved" || status === "completed") {
     return "outline";
@@ -153,7 +164,7 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
     notFound();
   }
 
-  if (!isAdmin && dbUser?.client_id && dbUser.client_id !== requestRow.client_id) {
+  if (!canReview && dbUser?.client_id && dbUser.client_id !== requestRow.client_id) {
     notFound();
   }
 
@@ -173,7 +184,7 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
     supabase.from("request_comments").select("id", { count: "exact", head: true }).eq("request_id", id),
   ]);
 
-  const attachments = attachmentsResult.data || [];
+  const attachments = (attachmentsResult.data || []) as AttachmentRow[];
   const tasksCount = tasksCountResult.count || 0;
   const meetingsCount = meetingsCountResult.count || 0;
   const feedbackCount = feedbackCountResult.count || 0;

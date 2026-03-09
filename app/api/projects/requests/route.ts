@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
       .contains("custom_fields", { type: "project" })
       .order("created_at", { ascending: false });
 
-    if (!access.isAdmin && access.clientId) {
+    if (!access.isStaff && access.clientId) {
       query = query.eq("client_id", access.clientId);
     }
 

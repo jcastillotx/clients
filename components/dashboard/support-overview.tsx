@@ -16,25 +16,31 @@ interface Ticket {
   first_response_at?: string | null;
   client: {
     company_name: string;
-  };
+  } | null;
 }
 
 interface SupportOverviewProps {
   tickets: Ticket[];
+  title?: string;
+  emptyMessage?: string;
 }
 
-export function SupportOverview({ tickets }: SupportOverviewProps) {
+export function SupportOverview({
+  tickets,
+  title = "Recent Tickets",
+  emptyMessage = "No recent tickets",
+}: SupportOverviewProps) {
   return (
     <Card className="bg-gradient-to-br from-card to-secondary/20">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <LifeBuoy className="h-5 w-5" />
-          Recent Tickets
+          {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {tickets.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">No recent tickets</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>
         ) : (
           <div className="space-y-4">
             {tickets.map((ticket) => {
@@ -63,7 +69,7 @@ export function SupportOverview({ tickets }: SupportOverviewProps) {
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{ticket.client.company_name}</span>
+                    <span>{ticket.client?.company_name || "Unassigned client"}</span>
                     <span>{formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}</span>
                   </div>
                 </Link>
