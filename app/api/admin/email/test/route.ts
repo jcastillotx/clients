@@ -161,7 +161,8 @@ async function sendViaMailgun(cfg: Record<string, string>, to: string) {
 
 async function sendViaSmtp(cfg: Record<string, string>, to: string) {
   // Dynamically import nodemailer — only used server-side for SMTP
-  let nodemailer: typeof import("nodemailer");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let nodemailer: any;
   try {
     nodemailer = await import("nodemailer");
   } catch {
