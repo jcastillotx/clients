@@ -18,10 +18,17 @@ function asRecord(value: unknown): Record<string, unknown> {
 // AWS Signature V4 helpers — no SDK required
 // ---------------------------------------------------------------------------
 
+function toArrayBuffer(input: ArrayBuffer | Uint8Array): ArrayBuffer {
+  if (input instanceof Uint8Array) {
+    return input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength) as ArrayBuffer;
+  }
+  return input as ArrayBuffer;
+}
+
 async function hmacSha256(key: ArrayBuffer | Uint8Array, data: string): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
-    key instanceof Uint8Array ? key.buffer.slice(key.byteOffset, key.byteOffset + key.byteLength) : key,
+    toArrayBuffer(key),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -32,11 +39,9 @@ async function hmacSha256(key: ArrayBuffer | Uint8Array, data: string): Promise<
 async function sha256Hex(data: ArrayBuffer | Uint8Array | string): Promise<string> {
   const buf =
     typeof data === "string"
-      ? new TextEncoder().encode(data).buffer
-      : data instanceof Uint8Array
-        ? data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
-        : data;
-  const hash = await crypto.subtle.digest("SHA-256", buf as ArrayBuffer);
+      ? toArrayBuffer(new TextEncoder().encode(data))
+      : toArrayBuffer(data);
+  const hash = await crypto.subtle.digest("SHA-256", buf);
   return Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
