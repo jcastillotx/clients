@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Cloud, Plus, Trash2, RefreshCw, HardDrive, FolderOpen, Building2, Users } from "lucide-react";
+import { Cloud, Plus, Trash2, RefreshCw, HardDrive, FolderOpen, Building2, Users, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 type Provider = "s3" | "dropbox" | "google-drive" | "onedrive" | "gcs" | "azure";
@@ -365,6 +365,42 @@ function validateCredentials(provider: Provider, formData: typeof DEFAULT_FORM):
   return null;
 }
 
+type ConnectionStatus = "healthy" | "warning" | "broken";
+
+function getConnectionStatus(connection: StorageConnection): ConnectionStatus {
+  if (!connection.syncEnabled) return "broken";
+  if (!connection.lastSyncAt) return "warning"; // never synced
+  const hoursSinceSync = (Date.now() - new Date(connection.lastSyncAt).getTime()) / 36e5;
+  if (hoursSinceSync > 24) return "warning";
+  return "healthy";
+}
+
+const STATUS_META: Record<ConnectionStatus, {
+  label: string;
+  icon: React.ReactNode;
+  borderClass: string;
+  badgeClass: string;
+}> = {
+  healthy: {
+    label: "Healthy",
+    icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
+    borderClass: "border-l-4 border-l-green-500",
+    badgeClass: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  },
+  warning: {
+    label: "Issues",
+    icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
+    borderClass: "border-l-4 border-l-yellow-500",
+    badgeClass: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  },
+  broken: {
+    label: "Broken",
+    icon: <XCircle className="h-4 w-4 text-red-500" />,
+    borderClass: "border-l-4 border-l-red-500",
+    badgeClass: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  },
+};
+
 function ConnectionCard({
   connection,
   onDelete,
@@ -373,9 +409,11 @@ function ConnectionCard({
   onDelete: (id: string) => void;
 }) {
   const meta = PROVIDER_META[connection.provider] || PROVIDER_META.s3;
+  const status = getConnectionStatus(connection);
+  const statusMeta = STATUS_META[status];
 
   return (
-    <Card>
+    <Card className={statusMeta.borderClass}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -389,8 +427,11 @@ function ConnectionCard({
           </div>
           <div className="flex items-center gap-2">
             <Badge className={meta.color}>{meta.label}</Badge>
-            <Badge variant={connection.syncEnabled ? "default" : "secondary"}>
-              {connection.syncEnabled ? "Active" : "Inactive"}
+            <Badge className={statusMeta.badgeClass}>
+              <span className="flex items-center gap-1">
+                {statusMeta.icon}
+                {statusMeta.label}
+              </span>
             </Badge>
           </div>
         </div>
@@ -411,11 +452,23 @@ function ConnectionCard({
               <span className="font-medium">{connection.config.region}</span>
             </div>
           )}
-          {connection.lastSyncAt && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Last Sync:</span>
-              <span className="font-medium">{new Date(connection.lastSyncAt).toLocaleString()}</span>
-            </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Last Sync:</span>
+            <span className="font-medium">
+              {connection.lastSyncAt
+                ? new Date(connection.lastSyncAt).toLocaleString()
+                : "Never"}
+            </span>
+          </div>
+          {status === "warning" && connection.lastSyncAt && (
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+              Last sync was over 24 hours ago. Check your connection settings.
+            </p>
+          )}
+          {status === "broken" && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              Sync is disabled. Enable sync to restore this connection.
+            </p>
           )}
         </div>
         <div className="flex gap-2 mt-4">
