@@ -369,7 +369,7 @@ type ConnectionStatus = "healthy" | "warning" | "broken";
 
 function getConnectionStatus(connection: StorageConnection): ConnectionStatus {
   if (!connection.syncEnabled) return "broken";
-  if (!connection.lastSyncAt) return "warning"; // never synced
+  if (!connection.lastSyncAt) return "healthy"; // never synced yet — connection is new
   const hoursSinceSync = (Date.now() - new Date(connection.lastSyncAt).getTime()) / 36e5;
   if (hoursSinceSync > 24) return "warning";
   return "healthy";
@@ -460,7 +460,7 @@ function ConnectionCard({
                 : "Never"}
             </span>
           </div>
-          {status === "warning" && connection.lastSyncAt && (
+          {status === "warning" && (
             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
               Last sync was over 24 hours ago. Check your connection settings.
             </p>
