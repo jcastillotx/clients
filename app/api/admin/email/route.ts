@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClientIfAvailable } from "@/lib/supabase/admin";
+import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
 import { encrypt, decrypt, maskSecret } from "@/lib/encryption";
 

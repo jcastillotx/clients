@@ -42,7 +42,6 @@ import {
   EyeOff,
   Cog,
   CalendarCheck,
-  Mail,
 } from "lucide-react";
 import { ComponentType } from "react";
 
