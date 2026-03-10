@@ -44,8 +44,10 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       : Promise.resolve({ data: null }),
   ]);
 
-  // Staff can manage workflow in addition to admin/super_admin
+  // Staff can manage workflow (update status, assign) but NOT delete
   const canManageWorkflow = isAdminUser(user, dbUser, roleRows, ["staff"]);
+  // Only true admins / super-admins can delete
+  const canDelete = isAdminUser(user, dbUser, roleRows);
 
   // Admin client bypasses RLS so admins can:
   //   - read requests across all clients (not just their own client_id)
@@ -108,7 +110,7 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       <RequestRealtime requestId={id} />
 
       {/* Request details */}
-      <RequestDetail request={normalizedRequest as any} assignableUsers={assignableUsers || []} canManageWorkflow={canManageWorkflow} />
+      <RequestDetail request={normalizedRequest as any} assignableUsers={assignableUsers || []} canManageWorkflow={canManageWorkflow} canDelete={canDelete} />
 
       {/* Comments section with real-time updates */}
       <RequestComments

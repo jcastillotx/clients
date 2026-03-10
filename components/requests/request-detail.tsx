@@ -46,6 +46,7 @@ interface RequestDetailProps {
     email?: string | null;
   }>;
   canManageWorkflow?: boolean;
+  canDelete?: boolean;
 }
 
 const requestStatuses = [
@@ -59,7 +60,7 @@ const requestStatuses = [
   "cancelled",
 ] as const;
 
-export function RequestDetail({ request, assignableUsers = [], canManageWorkflow = false }: RequestDetailProps) {
+export function RequestDetail({ request, assignableUsers = [], canManageWorkflow = false, canDelete = false }: RequestDetailProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [currentStatus, setCurrentStatus] = useState(request.status);
@@ -168,9 +169,11 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
                 <Button disabled={isSaving} onClick={() => updateRequest({ status: currentStatus })}>
                   Update Status
                 </Button>
-                <Button variant="destructive" size="icon" disabled={isDeleting} onClick={() => setConfirmOpen(true)} title="Delete request">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canDelete && (
+                  <Button variant="destructive" size="icon" disabled={isDeleting} onClick={() => setConfirmOpen(true)} title="Delete request">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </>
             )}
           </div>

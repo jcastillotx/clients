@@ -151,7 +151,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
   ]);
 
-  if (!isAdminUser(user, dbUser, roleRows)) {
+  // Also check JWT metadata as a practical fallback when DB admin flags aren't populated
+  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
+  const isAdminByMetadata =
+    user.user_metadata?.is_super_admin === true ||
+    metadataRole === "admin" ||
+    metadataRole === "super_admin";
+
+  if (!isAdminUser(user, dbUser, roleRows) && !isAdminByMetadata) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
