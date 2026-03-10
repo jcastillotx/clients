@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, isPast } from "date-fns";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Search, DollarSign, TrendingUp, Clock, Plus, AlertCircle } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Clock, Plus, AlertCircle, FileText } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Invoice {
   id: string;
@@ -78,7 +79,7 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
@@ -89,7 +90,7 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Paid Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.paidRevenue.toLocaleString()}</div>
@@ -100,7 +101,7 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Revenue</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.pendingRevenue.toLocaleString()}</div>
@@ -112,13 +113,15 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
       {/* Filters */}
       <div className="flex gap-4">
         <div className="relative flex-1 max-w-sm">
+          <label htmlFor="invoice-search" className="sr-only">Search invoices</label>
           <Input
+            id="invoice-search"
             placeholder="Search invoices..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
           />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-[180px]">
@@ -157,8 +160,16 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
           <TableBody>
             {initialData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No invoices found
+                <TableCell colSpan={6} className="p-0">
+                  <EmptyState
+                    icon={FileText}
+                    title="No invoices found"
+                    description={search || status !== "all" ? "Try adjusting your search or filters." : "You don't have any invoices yet."}
+                    action={canCreateInvoices && !search && status === "all" ? {
+                      label: "Create Invoice",
+                      onClick: () => router.push("/invoices/new"),
+                    } : undefined}
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -167,8 +178,17 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
                 return (
                   <TableRow
                     key={invoice.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 focus-within:bg-muted/50"
                     onClick={() => router.push(`/invoices/${invoice.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        router.push(`/invoices/${invoice.id}`);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="link"
+                    aria-label={`Invoice ${invoice.invoice_number} for ${invoice.client.company_name}`}
                   >
                     <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
                     <TableCell>{invoice.client.company_name}</TableCell>
@@ -177,7 +197,7 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(invoice.status)}>
-                        {isOverdue && <AlertCircle className="h-3 w-3 mr-1" />}
+                        {isOverdue && <AlertCircle className="h-3 w-3 mr-1" aria-hidden="true" />}
                         {isOverdue ? "Overdue" : invoice.status}
                       </Badge>
                     </TableCell>

@@ -8,6 +8,8 @@ import {
   projectCostEntries,
 } from "@/lib/db/schema/projects";
 import { eq, and, isNull } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
+import { isAdminUser } from "@/lib/rbac/check";
 
 /**
  * GET /api/projects/[id]
@@ -16,6 +18,11 @@ import { eq, and, isNull } from "drizzle-orm";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
 
     // Fetch project
     const [project] = await db
@@ -83,6 +90,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
+      supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
+      supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    ]);
+    if (!isAdminUser(user, dbUser, roleRows)) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
 
     // Check if project exists
@@ -137,6 +157,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
+      supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
+      supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    ]);
+    if (!isAdminUser(user, dbUser, roleRows)) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
 
     // Check if project exists
     const [existingProject] = await db

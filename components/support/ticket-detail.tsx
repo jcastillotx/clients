@@ -17,6 +17,7 @@ import { getSlaStatus, formatTimeRemaining, getSlaStatusColor } from "@/lib/util
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Clock, User, Tag, AlertTriangle, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface StaffUser {
   id: string;
@@ -35,6 +36,7 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const form = useForm<UpdateSupportTicketInput>({
     resolver: zodResolver(updateSupportTicketSchema),
@@ -59,8 +61,7 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
   const isAcknowledged = Boolean(ticket.first_response_at);
   const headerAccentClassName = getTicketHeaderClassName(slaInfo.status, isAcknowledged);
 
-  async function handleDelete() {
-    if (!confirm("Delete this support ticket? This cannot be undone.")) return;
+  async function doDelete() {
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/support/${ticket.id}`, { method: "DELETE" });
@@ -75,6 +76,10 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
     } finally {
       setIsDeleting(false);
     }
+  }
+
+  function handleDelete() {
+    setConfirmOpen(true);
   }
 
   async function onSubmit(data: UpdateSupportTicketInput) {
@@ -397,6 +402,15 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete support ticket?"
+        description="This will permanently delete the ticket and all comments. This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={doDelete}
+        loading={isDeleting}
+      />
     </div>
   );
 }

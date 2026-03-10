@@ -51,7 +51,30 @@ export function TopBar({ userRole, userName, userEmail, clientId }: TopBarProps)
 function ClientNewsTicker({ clientId }: { clientId?: string }) {
   const [newsItems, setNewsItems] = useState<Array<{ id: string; title: string; content: string; created_at: string }>>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [paddingSize, setPaddingSize] = useState<PaddingSize>("standard");
+  const { theme, setTheme } = useTheme();
   const supabase = createClient();
+
+  useEffect(() => {
+    const saved = (typeof window !== "undefined" ? localStorage.getItem("x-padding-size") : null) as PaddingSize | null;
+    if (saved && PADDING_SIZES.includes(saved)) {
+      setPaddingSize(saved);
+      document.documentElement.style.setProperty("--content-pad", PADDING_VALUES[saved]);
+    }
+  }, []);
+
+  function cyclePadding() {
+    const currentIdx = PADDING_SIZES.indexOf(paddingSize);
+    const next = PADDING_SIZES[(currentIdx + 1) % PADDING_SIZES.length];
+    setPaddingSize(next);
+    document.documentElement.style.setProperty("--content-pad", PADDING_VALUES[next]);
+    localStorage.setItem("x-padding-size", next);
+    document.cookie = `x-padding-size=${next}; path=/; max-age=31536000; SameSite=Lax`;
+  }
+
+  function toggleTheme() {
+    setTheme(theme === "dark" ? "light" : "dark");
+  }
 
   useEffect(() => {
     async function fetchNews() {
@@ -103,7 +126,7 @@ function ClientNewsTicker({ clientId }: { clientId?: string }) {
 
   return (
     <div className="sticky top-0 z-50 border-b bg-gradient-to-r from-primary/10 via-background to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center px-4 md:px-6">
+      <div className="flex h-14 items-center px-4 md:px-6 gap-3">
         <div className="flex items-center gap-3 flex-1 overflow-hidden">
           <Megaphone className="h-5 w-5 text-primary flex-shrink-0 animate-pulse" />
           <div className="flex-1 overflow-hidden">
@@ -124,11 +147,34 @@ function ClientNewsTicker({ clientId }: { clientId?: string }) {
                     index === currentIndex ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
                   }`}
                   aria-label={`Go to news item ${index + 1}`}
+                  aria-pressed={index === currentIndex}
                 />
               ))}
             </div>
           )}
         </div>
+        {/* Theme Toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleTheme}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          className="h-8 w-8 p-0 flex-shrink-0"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+        </Button>
+        {/* Padding Toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={cyclePadding}
+          title={`Content padding: ${paddingSize} (click to cycle)`}
+          aria-label={`Content density: ${paddingSize}. Click to cycle.`}
+          className="h-8 w-8 p-0 flex-shrink-0"
+        >
+          <LayoutTemplate className="h-4 w-4" aria-hidden="true" />
+        </Button>
       </div>
     </div>
   );
@@ -332,8 +378,8 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
         <div className="flex items-center gap-4">
           {/* System Status */}
           <div className="hidden sm:flex items-center gap-2 text-sm">
-            <Activity className="h-4 w-4 text-muted-foreground" />
-            <StatusIcon className={`h-4 w-4 ${statusConfig[systemStatus].color}`} />
+            <Activity className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <StatusIcon className={`h-4 w-4 ${statusConfig[systemStatus].color}`} aria-hidden="true" />
             <span className="text-muted-foreground">{statusConfig[systemStatus].label}</span>
           </div>
 
@@ -343,9 +389,10 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
             size="sm"
             onClick={toggleTheme}
             title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             className="h-8 w-8 p-0"
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
           </Button>
 
           {/* Padding Toggle */}
@@ -354,9 +401,10 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
             size="sm"
             onClick={cyclePadding}
             title={`Content padding: ${paddingSize} (click to cycle)`}
+            aria-label={`Content density: ${paddingSize}. Click to cycle.`}
             className="h-8 w-8 p-0"
           >
-            <LayoutTemplate className="h-4 w-4" />
+            <LayoutTemplate className="h-4 w-4" aria-hidden="true" />
           </Button>
 
           {/* Timer */}
@@ -365,7 +413,7 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
               <Dialog open={isTimerDialogOpen} onOpenChange={setIsTimerDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
-                    <Play className="h-4 w-4" />
+                    <Play className="h-4 w-4" aria-hidden="true" />
                     <span className="hidden sm:inline">Start Timer</span>
                   </Button>
                 </DialogTrigger>
@@ -430,7 +478,7 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
 
                     <div className="flex gap-2 pt-2">
                       <Button onClick={startTimer} className="flex-1">
-                        <Play className="mr-2 h-4 w-4" />
+                        <Play className="mr-2 h-4 w-4" aria-hidden="true" />
                         Start Timer
                       </Button>
                       <Button variant="outline" onClick={() => setIsTimerDialogOpen(false)}>
@@ -443,7 +491,7 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
             ) : (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1.5">
-                  <Clock className="h-4 w-4 text-primary animate-pulse" />
+                  <Clock className="h-4 w-4 text-primary animate-pulse" aria-hidden="true" />
                   <span className="font-mono text-sm font-semibold tabular-nums">{formatTime(elapsedTime)}</span>
                 </div>
                 {/* <Button variant="ghost" size="sm" onClick={pauseTimer}>
@@ -452,7 +500,7 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
                 <Dialog open={isStopDialogOpen} onOpenChange={setIsStopDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="destructive" size="sm">
-                      <Square className="h-4 w-4 mr-1.5" />
+                      <Square className="h-4 w-4 mr-1.5" aria-hidden="true" />
                       Stop
                     </Button>
                   </DialogTrigger>
@@ -472,7 +520,7 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
 
                       <div className="flex gap-2">
                         <Button onClick={stopTimer} className="flex-1">
-                          <Clock className="mr-2 h-4 w-4" />
+                          <Clock className="mr-2 h-4 w-4" aria-hidden="true" />
                           Save Time Entry
                         </Button>
                         <Button variant="outline" onClick={() => setIsStopDialogOpen(false)}>

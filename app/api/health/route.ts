@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 /**
  * Health check endpoint
@@ -16,7 +17,7 @@ export async function GET() {
     if (error) {
       // PGRST116 = "no rows returned" which is acceptable (table exists but empty)
       if (error.code !== "PGRST116") {
-        console.error("Health check database error:", error);
+        logger.error("Health check database error", error, { code: error.code });
         return NextResponse.json(
           { 
             status: "degraded",
@@ -42,7 +43,7 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error("Health check exception:", error);
+    logger.error("Health check exception", error);
     return NextResponse.json(
       { 
         status: "down",
@@ -51,7 +52,7 @@ export async function GET() {
           database: "down",
           auth: "unknown"
         },
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: "Health check failed"
       },
       { status: 503 }
     );
@@ -70,13 +71,13 @@ export async function HEAD() {
     
     // Return 503 if query failed (even if no exception thrown)
     if (error) {
-      console.error('Health check failed:', error.message);
+      logger.warn("Health check HEAD failed", { code: error.code });
       return new Response(null, { status: 503 });
     }
-    
+
     return new Response(null, { status: 200 });
   } catch (error) {
-    console.error('Health check exception:', error);
+    logger.error("Health check HEAD exception", error);
     return new Response(null, { status: 503 });
   }
 }

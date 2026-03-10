@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { adMetrics, ads } from "@/lib/db/schema/social-media";
 import { eq } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/ads/metrics/sync
@@ -10,6 +11,12 @@ import { eq } from "drizzle-orm";
  */
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { adId, date, metrics } = body;
 
@@ -74,6 +81,12 @@ export async function POST(request: Request) {
  */
 export async function GET(request: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("clientId");
 

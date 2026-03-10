@@ -188,7 +188,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     console.error("Error updating user:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to update user",
+        error: "An unexpected error occurred. Please try again.",
       },
       { status: 500 },
     );
@@ -264,7 +264,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     console.error("Error deleting user:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to delete user",
+        error: "An unexpected error occurred. Please try again.",
       },
       { status: 500 },
     );

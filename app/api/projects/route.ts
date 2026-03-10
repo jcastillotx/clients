@@ -4,6 +4,8 @@ import { projects, projectBudgets, projectMilestones, projectDeliverables } from
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createProjectSchema } from "@/lib/validations/project";
+import { createClient } from "@/lib/supabase/server";
+import { isAdminUser } from "@/lib/rbac/check";
 
 /**
  * GET /api/projects
@@ -11,6 +13,12 @@ import { createProjectSchema } from "@/lib/validations/project";
  */
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const clientId = searchParams.get("clientId");
     const status = searchParams.get("status");
@@ -41,10 +49,15 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      conditions.push(eq(projects.status, status as any));
+      const validStatuses = ["planning", "active", "on_hold", "completed", "cancelled"] as const;
+      type ProjectStatus = (typeof validStatuses)[number];
+      if (validStatuses.includes(status as ProjectStatus)) {
+        conditions.push(eq(projects.status, status as ProjectStatus));
+      }
     }
 
     if (conditions.length > 0) {
+      // Drizzle builder type narrowing
       query = query.where(and(...conditions)) as any;
     }
 
@@ -72,6 +85,19 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
+      supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
+      supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    ]);
+    if (!isAdminUser(user, dbUser, roleRows)) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
 
     const {

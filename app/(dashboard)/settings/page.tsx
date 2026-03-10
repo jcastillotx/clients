@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { UserSettings } from "@/components/settings/user-settings";
-import { AccountSettings } from "@/components/settings/account-settings";
 import { SecuritySettings } from "@/components/settings/security-settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -9,7 +8,7 @@ export const metadata = {
   description: "Manage your account settings",
 };
 
-const allowedTabs = new Set(["profile", "account", "security"]);
+const allowedTabs = new Set(["profile", "security"]);
 
 /**
  * Settings page (Server Component)
@@ -34,12 +33,7 @@ export default async function SettingsPage({
   // Fetch full user data
   const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
   const requestedTab = (resolvedSearchParams.tab || "").toLowerCase();
-  const tabIsAllowed = allowedTabs.has(requestedTab);
-  const canUseRequestedTab =
-    requestedTab === "profile" ||
-    requestedTab === "account" ||
-    requestedTab === "security";
-  const defaultTab = tabIsAllowed && canUseRequestedTab ? requestedTab : "profile";
+  const defaultTab = allowedTabs.has(requestedTab) ? requestedTab : "profile";
 
   return (
     <div className="flex flex-col gap-8 p-8 max-w-4xl mx-auto">
@@ -49,9 +43,8 @@ export default async function SettingsPage({
       </div>
 
       <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
 
@@ -59,12 +52,8 @@ export default async function SettingsPage({
           <UserSettings user={userData || user.user_metadata} />
         </TabsContent>
 
-        <TabsContent value="account" className="mt-6">
-          <AccountSettings user={user} />
-        </TabsContent>
-
         <TabsContent value="security" className="mt-6">
-          <SecuritySettings />
+          <SecuritySettings user={{ id: user.id, email: user.email }} />
         </TabsContent>
       </Tabs>
     </div>

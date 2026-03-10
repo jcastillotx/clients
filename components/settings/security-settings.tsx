@@ -1,13 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Shield, Smartphone, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, Shield, Smartphone, Trash2 } from "lucide-react";
+
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(8, "Password must be at least 8 characters"),
+    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+type PasswordFormInput = z.infer<typeof passwordSchema>;
 
 type MfaFactor = {
   id: string;
@@ -24,8 +41,50 @@ type EnrolledFactor = MfaFactor & {
   };
 };
 
-export function SecuritySettings() {
+interface SecuritySettingsProps {
+  user?: {
+    id: string;
+    email?: string;
+  };
+}
+
+export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const supabase = useMemo(() => createClient(), []);
+  const searchParams = useSearchParams();
+  const mfaRequired = searchParams.get("mfa_required") === "1";
+
+  // Password change state
+  const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [isSubmittingPw, setIsSubmittingPw] = useState(false);
+
+  const {
+    register: registerPw,
+    handleSubmit: handlePwSubmit,
+    formState: { errors: pwErrors },
+    reset: resetPw,
+  } = useForm<PasswordFormInput>({ resolver: zodResolver(passwordSchema) });
+
+  const onPasswordSubmit = async (data: PasswordFormInput) => {
+    setIsSubmittingPw(true);
+    setPwError(null);
+    setPwSuccess(false);
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email ?? "",
+        password: data.currentPassword,
+      });
+      if (signInError) throw new Error("Current password is incorrect");
+      const { error: updateError } = await supabase.auth.updateUser({ password: data.newPassword });
+      if (updateError) throw updateError;
+      setPwSuccess(true);
+      resetPw();
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setIsSubmittingPw(false);
+    }
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -160,6 +219,53 @@ export function SecuritySettings() {
 
   return (
     <div className="space-y-6">
+      {/* MFA required banner — shown when middleware redirected an admin here */}
+      {mfaRequired && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">Multi-factor authentication required</p>
+            <p className="mt-0.5 text-amber-800 dark:text-amber-300">
+              Admin accounts must have two-factor authentication enabled. Set up an authenticator app below to continue.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Change Password</CardTitle>
+          <CardDescription>Update your password to keep your account secure</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePwSubmit(onPasswordSubmit)} className="space-y-4">
+            {pwError && <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">{pwError}</div>}
+            {pwSuccess && <div className="rounded-md bg-green-50 p-4 text-sm text-green-800">Password updated successfully!</div>}
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input id="currentPassword" type="password" {...registerPw("currentPassword")} />
+              {pwErrors.currentPassword && <p className="text-sm text-destructive">{pwErrors.currentPassword.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input id="newPassword" type="password" {...registerPw("newPassword")} />
+              {pwErrors.newPassword && <p className="text-sm text-destructive">{pwErrors.newPassword.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input id="confirmPassword" type="password" {...registerPw("confirmPassword")} />
+              {pwErrors.confirmPassword && <p className="text-sm text-destructive">{pwErrors.confirmPassword.message}</p>}
+            </div>
+            <Button type="submit" disabled={isSubmittingPw}>
+              {isSubmittingPw && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Update Password
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Two-Factor Authentication */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

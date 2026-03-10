@@ -68,7 +68,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching top clients:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch top clients" },
+      { error: "An unexpected error occurred. Please try again." },
       { status: 500 },
     );
   }

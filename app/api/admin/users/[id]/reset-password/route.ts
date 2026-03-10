@@ -2,6 +2,7 @@ import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
+import { logger, auditLog } from "@/lib/logger";
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -56,16 +57,16 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     if (resetError) throw resetError;
 
+    auditLog("admin.password_reset_sent", currentUser.id, { targetUserId: id });
+
     return NextResponse.json({
       success: true,
       message: "Password reset email sent",
     });
   } catch (error) {
-    console.error("Error sending password reset email:", error);
+    logger.error("Error sending password reset email", error, { targetUserId: id });
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to send password reset email",
-      },
+      { error: "An unexpected error occurred. Please try again." },
       { status: 500 },
     );
   }

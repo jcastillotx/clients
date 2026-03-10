@@ -26,6 +26,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${redirectBase}?error=microsoft_oauth_denied`);
   }
 
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_REGEX.test(userId)) {
+    return NextResponse.json({ error: "Invalid state parameter" }, { status: 400 });
+  }
+
   const clientId = process.env.MICROSOFT_CALENDAR_CLIENT_ID;
   const clientSecret = process.env.MICROSOFT_CALENDAR_CLIENT_SECRET;
   if (!clientId || !clientSecret) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { dataPrivacyRequests } from "@/lib/db/schema/additional-features";
 import { eq, desc, and } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/privacy-requests
@@ -9,6 +10,12 @@ import { eq, desc, and } from "drizzle-orm";
  */
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const clientId = searchParams.get("clientId");
     const userId = searchParams.get("userId");
@@ -44,6 +51,12 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { clientId, userId, requestType, notes } = body;
 
@@ -75,6 +88,12 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, status, dataExportUrl, notes } = body;
 

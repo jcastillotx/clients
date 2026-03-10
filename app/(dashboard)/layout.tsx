@@ -95,6 +95,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <>
       <style dangerouslySetInnerHTML={{ __html: cssVars }} />
       <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md focus:ring-2 focus:ring-primary"
+        >
+          Skip to main content
+        </a>
         {/* Sidebar Navigation */}
         <DashboardNav
           user={user}
@@ -108,7 +114,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
 
         {/* Main Content */}
-        <main className="relative flex-1 overflow-y-auto">
+        <main id="main-content" className="relative flex-1 overflow-y-auto">
           {/* Top Bar - Different for clients vs staff/admin */}
           <TopBar
             userRole={userRole}

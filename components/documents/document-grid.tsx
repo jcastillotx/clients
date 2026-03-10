@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FileText, Image, FileArchive, File, Download, MoreVertical, Trash2, Share2, Eye } from "lucide-react";
 import { formatFileSize } from "@/lib/storage/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -52,7 +54,23 @@ function getFileIcon(mimeType: string) {
 }
 
 export function DocumentGrid({ documents, onDelete, onDownload, isLoading }: DocumentGridProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const handleDeleteClick = (documentId: string) => {
+    setPendingDeleteId(documentId);
+    setConfirmOpen(true);
+  };
+
+  const doDelete = () => {
+    if (pendingDeleteId) {
+      onDelete(pendingDeleteId);
+      setPendingDeleteId(null);
+    }
+  };
+
   return (
+    <>
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {documents.map((doc) => (
         <Card key={doc.id} className="overflow-hidden">
@@ -81,11 +99,7 @@ export function DocumentGrid({ documents, onDelete, onDownload, isLoading }: Doc
                     Share
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete this document?")) {
-                        onDelete(doc.id);
-                      }
-                    }}
+                    onClick={() => handleDeleteClick(doc.id)}
                     className="text-destructive"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -135,5 +149,14 @@ export function DocumentGrid({ documents, onDelete, onDownload, isLoading }: Doc
         </Card>
       ))}
     </div>
+    <ConfirmDialog
+      open={confirmOpen}
+      onOpenChange={setConfirmOpen}
+      title="Delete document?"
+      description="This will permanently delete the document. This action cannot be undone."
+      confirmLabel="Delete"
+      onConfirm={doDelete}
+    />
+    </>
   );
 }

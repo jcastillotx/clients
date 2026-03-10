@@ -14,6 +14,7 @@ import {
 import { Search, UserPlus, MoreVertical, Shield, Trash2, Edit, KeyRound } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { UserDialog } from "./user-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Role {
   id: string;
@@ -62,6 +63,10 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState(false);
+  const [pendingDeleteUserId, setPendingDeleteUserId] = useState<string | null>(null);
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState(false);
+  const [pendingResetUser, setPendingResetUser] = useState<User | null>(null);
 
   // Filter users
   const filteredUsers = users.filter(
@@ -91,33 +96,42 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
     setEditingUser(null);
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+  const handleDeleteUser = (userId: string) => {
+    setPendingDeleteUserId(userId);
+    setDeleteUserConfirm(true);
+  };
 
+  const doDeleteUser = async () => {
+    if (!pendingDeleteUserId) return;
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetch(`/api/admin/users/${pendingDeleteUserId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) throw new Error("Failed to delete user");
 
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      setUsers((prev) => prev.filter((u) => u.id !== pendingDeleteUserId));
     } catch (error) {
       console.error("Error deleting user:", error);
       alert("Failed to delete user");
+    } finally {
+      setPendingDeleteUserId(null);
     }
   };
 
-  const handleSendPasswordReset = async (targetUser: User) => {
+  const handleSendPasswordReset = (targetUser: User) => {
     if (!targetUser.email) {
       alert("This user does not have an email address.");
       return;
     }
+    setPendingResetUser(targetUser);
+    setResetPasswordConfirm(true);
+  };
 
-    if (!confirm(`Send a password reset email to ${targetUser.email}?`)) return;
-
+  const doSendPasswordReset = async () => {
+    if (!pendingResetUser) return;
     try {
-      const response = await fetch(`/api/admin/users/${targetUser.id}/reset-password`, {
+      const response = await fetch(`/api/admin/users/${pendingResetUser.id}/reset-password`, {
         method: "POST",
       });
       const payload = await response.json().catch(() => ({} as { error?: string; message?: string }));
@@ -126,10 +140,12 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
         throw new Error(payload.error || "Failed to send password reset email");
       }
 
-      alert(payload.message || `Password reset email sent to ${targetUser.email}`);
+      alert(payload.message || `Password reset email sent to ${pendingResetUser.email}`);
     } catch (error) {
       console.error("Error sending password reset email:", error);
       alert(error instanceof Error ? error.message : "Failed to send password reset email");
+    } finally {
+      setPendingResetUser(null);
     }
   };
 
@@ -273,6 +289,24 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
         clients={clients}
         canAssignRoles={canAssignRoles}
         onSuccess={handleUserSuccess}
+      />
+
+      <ConfirmDialog
+        open={deleteUserConfirm}
+        onOpenChange={setDeleteUserConfirm}
+        title="Delete user?"
+        description="This will permanently delete the user account. This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={doDeleteUser}
+      />
+
+      <ConfirmDialog
+        open={resetPasswordConfirm}
+        onOpenChange={setResetPasswordConfirm}
+        title="Send password reset?"
+        description={`Send a password reset email to ${pendingResetUser?.email ?? "this user"}?`}
+        confirmLabel="Send"
+        onConfirm={doSendPasswordReset}
       />
     </div>
   );

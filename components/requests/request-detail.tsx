@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { Calendar, Clock, User, Building2, AlertCircle, CheckCircle2, XCircle, Pause, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface RequestDetailProps {
   request: {
@@ -65,6 +66,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
   const [assignedToId, setAssignedToId] = useState<string>(request.assigned_user?.id || "unassigned");
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestType = String(request.custom_fields?.type || "support");
   const createdByName = request.created_by_user?.name || "Unknown user";
@@ -80,8 +82,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
       .map((n) => n[0])
       .join("") || "?";
 
-  const deleteRequest = async () => {
-    if (!confirm("Delete this service request? This cannot be undone.")) return;
+  const doDeleteRequest = async () => {
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/requests/${request.id}`, { method: "DELETE", credentials: "same-origin" });
@@ -167,7 +168,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
                 <Button disabled={isSaving} onClick={() => updateRequest({ status: currentStatus })}>
                   Update Status
                 </Button>
-                <Button variant="destructive" size="icon" disabled={isDeleting} onClick={deleteRequest} title="Delete request">
+                <Button variant="destructive" size="icon" disabled={isDeleting} onClick={() => setConfirmOpen(true)} title="Delete request">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </>
@@ -331,6 +332,15 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
           </Card>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete service request?"
+        description="This will permanently delete the request and all associated comments. This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={doDeleteRequest}
+        loading={isDeleting}
+      />
     </div>
   );
 }

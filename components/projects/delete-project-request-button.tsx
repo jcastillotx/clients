@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Trash2 } from "lucide-react";
 
 export function DeleteProjectRequestButton({ requestId }: { requestId: string }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const handleDelete = async () => {
-    if (!confirm("Delete this project request? This cannot be undone.")) return;
+  const doDelete = async () => {
     setDeleting(true);
     try {
       const res = await fetch(`/api/projects/requests/${requestId}`, { method: "DELETE" });
@@ -25,10 +26,23 @@ export function DeleteProjectRequestButton({ requestId }: { requestId: string })
     }
   };
 
+  const handleDelete = () => setConfirmOpen(true);
+
   return (
-    <Button variant="destructive" size="sm" disabled={deleting} onClick={handleDelete}>
-      <Trash2 className="h-4 w-4 mr-2" />
-      {deleting ? "Deleting..." : "Delete"}
-    </Button>
+    <>
+      <Button variant="destructive" size="sm" disabled={deleting} onClick={handleDelete}>
+        <Trash2 className="h-4 w-4 mr-2" />
+        {deleting ? "Deleting..." : "Delete"}
+      </Button>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete project request?"
+        description="This will permanently delete the project request. This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={doDelete}
+        loading={deleting}
+      />
+    </>
   );
 }

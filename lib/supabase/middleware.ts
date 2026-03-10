@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseCookieOptions } from "@/lib/supabase/cookie-options";
+import { limiters, getClientIp } from "@/lib/rate-limit";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -38,6 +39,31 @@ export async function updateSession(request: NextRequest) {
       },
     }
   );
+
+  // Rate limit auth-related paths (SOC2 CC6.1 — brute-force protection)
+  const isAuthPath =
+    request.nextUrl.pathname.startsWith("/api/auth") ||
+    request.nextUrl.pathname.startsWith("/login") ||
+    request.nextUrl.pathname.startsWith("/register") ||
+    request.nextUrl.pathname.startsWith("/forgot-password") ||
+    request.nextUrl.pathname.startsWith("/reset-password") ||
+    request.nextUrl.pathname.startsWith("/auth/confirm");
+
+  if (isAuthPath) {
+    const ip = getClientIp(request);
+    const result = limiters.auth(ip);
+    if (!result.success) {
+      return new NextResponse("Too Many Requests", {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((result.resetAt - Date.now()) / 1000)),
+          "X-RateLimit-Limit": "10",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(result.resetAt),
+        },
+      });
+    }
+  }
 
   // If a Supabase email auth token is present, route to /auth/confirm first
   // so the token can be exchanged/verified before we check the session.
@@ -101,6 +127,29 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
+    }
+
+    // MFA enforcement for admin routes (SOC2 CC6.1, CC6.3)
+    // Admins must complete MFA to access sensitive routes.
+    // Skip this check when the admin is already on the settings/security page
+    // to avoid a redirect loop.
+    const isOnSecuritySettings =
+      request.nextUrl.pathname.startsWith("/settings") &&
+      (request.nextUrl.searchParams.get("tab") === "security" ||
+        request.nextUrl.pathname === "/settings");
+
+    if (!isOnSecuritySettings) {
+      try {
+        const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aalData && aalData.currentLevel !== "aal2") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/settings";
+          url.search = "tab=security&mfa_required=1";
+          return NextResponse.redirect(url);
+        }
+      } catch {
+        // If AAL check fails (e.g. during initial setup), allow through
+      }
     }
   }
 

@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Trash2, User } from "lucide-react";
+import { toast } from "sonner";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -35,8 +36,6 @@ export function UserSettings({ user }: UserSettingsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState(user.avatar || "");
 
   const {
@@ -53,8 +52,6 @@ export function UserSettings({ user }: UserSettingsProps) {
 
   const onSubmit = async (data: ProfileFormInput) => {
     setIsSubmitting(true);
-    setError(null);
-    setSuccess(false);
 
     try {
       const supabase = createClient();
@@ -83,10 +80,10 @@ export function UserSettings({ user }: UserSettingsProps) {
         if (dbError) throw dbError;
       }
 
-      setSuccess(true);
+      toast.success("Profile updated successfully!");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update profile");
+      toast.error(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
       setIsSubmitting(false);
     }
@@ -96,8 +93,6 @@ export function UserSettings({ user }: UserSettingsProps) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setError(null);
-    setSuccess(false);
     setIsUploadingAvatar(true);
 
     try {
@@ -114,10 +109,10 @@ export function UserSettings({ user }: UserSettingsProps) {
       }
 
       setAvatarUrl(payload.avatarUrl);
-      setSuccess(true);
+      toast.success("Profile image updated!");
       router.refresh();
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Failed to upload profile image");
+      toast.error(uploadError instanceof Error ? uploadError.message : "Failed to upload profile image");
     } finally {
       setIsUploadingAvatar(false);
       event.target.value = "";
@@ -125,18 +120,16 @@ export function UserSettings({ user }: UserSettingsProps) {
   };
 
   const handleAvatarDelete = async () => {
-    setError(null);
-    setSuccess(false);
     setIsDeletingAvatar(true);
     try {
       const res = await fetch("/api/settings/profile-image", { method: "DELETE" });
       const payload: { error?: string } = await res.json();
       if (!res.ok) throw new Error(payload.error || "Failed to delete profile image");
       setAvatarUrl("");
-      setSuccess(true);
+      toast.success("Profile image removed.");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete profile image");
+      toast.error(err instanceof Error ? err.message : "Failed to delete profile image");
     } finally {
       setIsDeletingAvatar(false);
     }
@@ -150,12 +143,6 @@ export function UserSettings({ user }: UserSettingsProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {error && <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">{error}</div>}
-
-          {success && (
-            <div className="rounded-md bg-green-50 p-4 text-sm text-green-800">Profile updated successfully!</div>
-          )}
-
           {/* Avatar */}
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20">

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, Calendar, Filter, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface TimeEntryListProps {
   refreshTrigger?: number;
@@ -21,6 +22,8 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEntries();
@@ -44,13 +47,15 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
     }
   };
 
-  const deleteEntry = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this entry?")) {
-      return;
-    }
+  const handleDeleteEntry = (id: string) => {
+    setPendingDeleteId(id);
+    setConfirmOpen(true);
+  };
 
+  const doDeleteEntry = async () => {
+    if (!pendingDeleteId) return;
     try {
-      const response = await fetch(`/api/time-tracking?id=${id}`, {
+      const response = await fetch(`/api/time-tracking?id=${pendingDeleteId}`, {
         method: "DELETE",
       });
 
@@ -63,6 +68,8 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
       fetchEntries();
     } catch (error: any) {
       toast.error(error.message || "Failed to delete entry");
+    } finally {
+      setPendingDeleteId(null);
     }
   };
 
@@ -198,7 +205,7 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => deleteEntry(entry.id)}>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteEntry(entry.id)}>
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </>
@@ -212,6 +219,14 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
           </Table>
         </div>
       </CardContent>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete time entry?"
+        description="This will permanently delete this time entry."
+        confirmLabel="Delete"
+        onConfirm={doDeleteEntry}
+      />
     </Card>
   );
 }
