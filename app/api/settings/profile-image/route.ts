@@ -39,8 +39,8 @@ async function hmacSha256(key: ArrayBuffer | Uint8Array, data: string): Promise<
 }
 
 async function sha256Hex(data: string | Uint8Array): Promise<string> {
-  const input = typeof data === "string" ? new TextEncoder().encode(data) : data;
-  return toHex(await crypto.subtle.digest("SHA-256", input));
+  const raw = typeof data === "string" ? new TextEncoder().encode(data) : data;
+  return toHex(await crypto.subtle.digest("SHA-256", toArrayBuffer(raw)));
 }
 
 async function sha256HexBuffer(buf: ArrayBuffer): Promise<string> {
