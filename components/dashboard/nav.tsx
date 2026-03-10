@@ -60,6 +60,7 @@ interface DashboardNavProps {
   isAccountManager: boolean;
   logoUrl?: string | null;
   brandText?: string;
+  siteTitle?: string;
   sidebarWidth?: "narrow" | "standard" | "wide";
 }
 
@@ -215,6 +216,7 @@ export function DashboardNav({
   isAccountManager,
   logoUrl,
   brandText,
+  siteTitle = "Client Portal",
   sidebarWidth = "standard",
 }: DashboardNavProps) {
   const pathname = usePathname();
@@ -234,17 +236,21 @@ export function DashboardNav({
       className={`relative flex h-screen shrink-0 flex-col border-r border-border/70 backdrop-blur ${widthClass}`}
       style={{ backgroundColor: "var(--sidebar-bg)", color: "var(--sidebar-text)" }}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-primary/15 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-white/5 to-transparent" />
       {/* Logo */}
-      <div className="relative flex h-20 items-center border-b border-border/60 px-6">
+      <div className="relative flex h-20 items-center px-6" style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
         {logoUrl ? (
           <img
             src={logoUrl}
             alt="Company logo"
-            className="h-11 w-11 rounded-xl border border-primary/20 bg-primary/10 object-contain p-1"
+            className="h-11 w-11 rounded-xl object-contain p-1"
+            style={{ border: "1px solid rgba(255,255,255,0.2)", backgroundColor: "rgba(255,255,255,0.1)" }}
           />
         ) : (
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-lg font-bold text-primary">
+          <div
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold"
+            style={{ border: "1px solid rgba(255,255,255,0.2)", backgroundColor: "rgba(255,255,255,0.15)", color: "var(--sidebar-text)" }}
+          >
             {brandText ? brandText.slice(0, 1).toUpperCase() : "K"}
           </div>
         )}
@@ -252,7 +258,7 @@ export function DashboardNav({
           <h1 className="text-lg font-bold font-heading leading-none" style={{ color: "var(--sidebar-text)" }}>
             {brandText || "KRE8IV"}
           </h1>
-          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">Client Portal</p>
+          <p className="mt-1 text-xs uppercase tracking-[0.18em]" style={{ color: "var(--sidebar-text)", opacity: 0.55 }}>{siteTitle}</p>
         </div>
       </div>
 
@@ -260,11 +266,15 @@ export function DashboardNav({
       <nav className="relative flex-1 space-y-6 overflow-y-auto px-4 py-5">
         <Link href="/dashboard">
           <Button
-            variant={pathname === "/dashboard" ? "secondary" : "ghost"}
+            variant="ghost"
             className={cn(
               "h-11 w-full justify-center rounded-xl px-3.5 text-[0.95rem] md:justify-start",
-              pathname === "/dashboard" && "bg-primary/12 text-primary shadow-sm",
+              "hover:bg-white/10 hover:text-[var(--sidebar-text)]",
+              pathname === "/dashboard"
+                ? "bg-white/15 font-semibold"
+                : "font-normal opacity-90",
             )}
+            style={{ color: "var(--sidebar-text)" }}
           >
             <LayoutDashboard className="h-4 w-4 md:mr-3" />
             <span className="hidden md:inline">Dashboard</span>
@@ -279,44 +289,50 @@ export function DashboardNav({
 
           return (
             <div key={section.title}>
-            <p className="mb-2 hidden px-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground/90 md:block">
-              {section.title}
-            </p>
-            <div className="space-y-1.5">
-              {visibleItems.map((item) => {
-                const [itemPathname, itemSearch] = item.href.split("?");
-                const itemTab = item.matchesTab ?? new URLSearchParams(itemSearch).get("tab");
-                const currentTab = searchParams.get("tab");
-                const isTabMatch = itemTab ? currentTab === itemTab : true;
-                const isActive = (pathname === itemPathname && isTabMatch) || pathname.startsWith(`${itemPathname}/`);
-                return (
-                  <Link key={item.name} href={item.href}>
-                    <Button
-                      variant={isActive ? "secondary" : "ghost"}
-                      className={cn(
-                        "h-10 w-full justify-center rounded-xl px-3 text-[0.93rem] md:justify-start",
-                        isActive && "bg-primary/12 text-primary shadow-sm",
-                      )}
-                    >
-                      <item.icon className="h-4 w-4 md:mr-3" />
-                      <span className="hidden md:inline">{item.name}</span>
-                    </Button>
-                  </Link>
-                );
-              })}
+              <p
+                className="mb-2 hidden px-2 text-xs font-semibold uppercase tracking-[0.14em] md:block"
+                style={{ color: "var(--sidebar-text)", opacity: 0.5 }}
+              >
+                {section.title}
+              </p>
+              <div className="space-y-1.5">
+                {visibleItems.map((item) => {
+                  const [itemPathname, itemSearch] = item.href.split("?");
+                  const itemTab = item.matchesTab ?? new URLSearchParams(itemSearch).get("tab");
+                  const currentTab = searchParams.get("tab");
+                  const isTabMatch = itemTab ? currentTab === itemTab : true;
+                  const isActive = (pathname === itemPathname && isTabMatch) || pathname.startsWith(`${itemPathname}/`);
+                  return (
+                    <Link key={item.name} href={item.href}>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "h-10 w-full justify-center rounded-xl px-3 text-[0.93rem] md:justify-start",
+                          "hover:bg-white/10 hover:text-[var(--sidebar-text)]",
+                          isActive
+                            ? "bg-white/15 font-semibold"
+                            : "font-normal opacity-85",
+                        )}
+                        style={{ color: "var(--sidebar-text)" }}
+                      >
+                        <item.icon className="h-4 w-4 md:mr-3 shrink-0" />
+                        <span className="hidden md:inline">{item.name}</span>
+                      </Button>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
           );
         })}
-
       </nav>
 
       {/* User section */}
-      <div className="relative border-t border-border/60 p-3 md:p-4">
-        <div className="mb-3 hidden items-center gap-3 rounded-xl border border-border/70 bg-background/75 p-2.5 md:flex">
+      <div className="relative border-t p-3 md:p-4" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
+        <div className="mb-3 hidden items-center gap-3 rounded-xl border p-2.5 md:flex" style={{ borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(255,255,255,0.08)" }}>
           <Avatar>
             <AvatarImage src={user.user_metadata?.avatar} />
-            <AvatarFallback>
+            <AvatarFallback style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--sidebar-text)" }}>
               {user.user_metadata?.name
                 ?.split(" ")
                 .map((n) => n[0])
@@ -324,11 +340,17 @@ export function DashboardNav({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
-            <p className="truncate text-sm font-medium">{user.user_metadata?.name || "User"}</p>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            <p className="truncate text-sm font-medium" style={{ color: "var(--sidebar-text)" }}>{user.user_metadata?.name || "User"}</p>
+            <p className="truncate text-xs" style={{ color: "var(--sidebar-text)", opacity: 0.6 }}>{user.email}</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={handleLogout}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full rounded-xl hover:bg-white/10"
+          style={{ color: "var(--sidebar-text)", borderColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.15)" }}
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4 md:mr-2" />
           <span className="hidden md:inline">Logout</span>
         </Button>

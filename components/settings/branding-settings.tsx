@@ -20,12 +20,13 @@ interface BrandingSettingsProps {
 }
 
 const DEFAULT_SETTINGS: BrandingSettingsType = {
-  sidebarBgColor: "#FFFFFF",
-  sidebarBgColorDark: "#1E1B4B",
-  sidebarTextColor: "#1E1B4B",
+  sidebarBgColor: "#1E1B4B",
+  sidebarBgColorDark: "#0F0C2B",
+  sidebarTextColor: "#E8E5FF",
   sidebarTextColorDark: "#E8E5FF",
   sidebarWidth: "standard",
   brandText: "",
+  siteTitle: "Client Portal",
   loginImageUrl: null,
   fontSize: "md",
   primaryColor: "#7C3AED",
@@ -116,6 +117,7 @@ export function BrandingSettings({
   const [sidebarTextColorDark, setSidebarTextColorDark] = useState(merged.sidebarTextColorDark);
   const [sidebarWidth, setSidebarWidth] = useState<SidebarWidth>(merged.sidebarWidth);
   const [brandText, setBrandText] = useState(merged.brandText);
+  const [siteTitle, setSiteTitle] = useState(merged.siteTitle);
   const [loginImageUrl, setLoginImageUrl] = useState(merged.loginImageUrl || "");
   const [fontSize, setFontSize] = useState<FontSize>(merged.fontSize);
   const [primaryColorDark, setPrimaryColorDark] = useState(merged.primaryColorDark);
@@ -134,6 +136,7 @@ export function BrandingSettings({
     sidebarTextColorDark,
     sidebarWidth,
     brandText,
+    siteTitle,
     loginImageUrl: loginImageUrl || null,
     fontSize,
     primaryColor,
@@ -260,13 +263,24 @@ export function BrandingSettings({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="brand-text">Brand Text (shown when no logo)</Label>
+            <Label htmlFor="brand-text">Brand Name (shown in sidebar when no logo)</Label>
             <Input
               id="brand-text"
               placeholder="e.g. ACME Corp"
               value={brandText}
               onChange={(e) => setBrandText(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="site-title">Site Title (portal subtitle in sidebar)</Label>
+            <Input
+              id="site-title"
+              placeholder="e.g. Client Portal"
+              value={siteTitle}
+              onChange={(e) => setSiteTitle(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Shown below the brand name in the sidebar. Also used as the browser tab title.</p>
           </div>
 
           <div className="space-y-2">

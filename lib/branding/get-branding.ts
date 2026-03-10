@@ -10,6 +10,7 @@ export interface BrandingSettings {
   sidebarTextColorDark: string;
   sidebarWidth: "narrow" | "standard" | "wide";
   brandText: string;
+  siteTitle: string;
   loginImageUrl: string | null;
   fontSize: "sm" | "md" | "lg";
   primaryColor: string;
@@ -25,12 +26,13 @@ export interface PortalBranding {
 }
 
 const DEFAULT_SETTINGS: BrandingSettings = {
-  sidebarBgColor: "#FFFFFF",
-  sidebarBgColorDark: "#1E1B4B",
-  sidebarTextColor: "#1E1B4B",
+  sidebarBgColor: "#1E1B4B",
+  sidebarBgColorDark: "#0F0C2B",
+  sidebarTextColor: "#E8E5FF",
   sidebarTextColorDark: "#E8E5FF",
   sidebarWidth: "standard",
   brandText: "",
+  siteTitle: "Client Portal",
   loginImageUrl: null,
   fontSize: "md",
   primaryColor: "#7C3AED",
@@ -49,6 +51,7 @@ function parseSettings(customCss: string | null): BrandingSettings {
       sidebarTextColorDark: parsed.sidebarTextColorDark ?? DEFAULT_SETTINGS.sidebarTextColorDark,
       sidebarWidth: parsed.sidebarWidth ?? DEFAULT_SETTINGS.sidebarWidth,
       brandText: parsed.brandText ?? DEFAULT_SETTINGS.brandText,
+      siteTitle: parsed.siteTitle ?? DEFAULT_SETTINGS.siteTitle,
       loginImageUrl: parsed.loginImageUrl ?? DEFAULT_SETTINGS.loginImageUrl,
       fontSize: parsed.fontSize ?? DEFAULT_SETTINGS.fontSize,
       primaryColor: parsed.primaryColor ?? DEFAULT_SETTINGS.primaryColor,

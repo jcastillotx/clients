@@ -70,11 +70,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const validatedData = updateSupportTicketSchema.parse(body);
 
-    // Prepare update data
+    // Prepare update data (map camelCase validatedData keys to snake_case DB columns)
     const updateData: any = {
-      ...validatedData,
       updated_at: new Date().toISOString(),
     };
+    if (validatedData.status !== undefined) updateData.status = validatedData.status;
+    if (validatedData.priority !== undefined) updateData.priority = validatedData.priority;
+    if (validatedData.subject !== undefined) updateData.subject = validatedData.subject;
+    if (validatedData.description !== undefined) updateData.description = validatedData.description;
+    if (validatedData.category !== undefined) updateData.category = validatedData.category;
+    if (validatedData.estimatedHours !== undefined) updateData.estimated_hours = validatedData.estimatedHours;
+    if (validatedData.actualHours !== undefined) updateData.actual_hours = validatedData.actualHours;
+    if (validatedData.metadata !== undefined) updateData.metadata = validatedData.metadata;
+    // assignedTo: null means unassign, undefined means no change
+    if ("assignedTo" in validatedData) {
+      updateData.assigned_to = validatedData.assignedTo ?? null;
+    }
 
     // Handle status changes
     if (validatedData.status) {

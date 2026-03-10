@@ -189,7 +189,10 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Assigned To</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                        <Select
+                          onValueChange={(v) => field.onChange(v === "unassigned" ? null : v)}
+                          defaultValue={field.value || "unassigned"}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select staff member" />

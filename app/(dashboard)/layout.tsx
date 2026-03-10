@@ -103,6 +103,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           isAccountManager={isAccountManager}
           logoUrl={branding.logoUrl}
           brandText={branding.settings.brandText}
+          siteTitle={branding.settings.siteTitle}
           sidebarWidth={branding.settings.sidebarWidth}
         />
 

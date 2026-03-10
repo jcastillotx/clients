@@ -139,7 +139,22 @@ export async function GET(request: NextRequest) {
     3000, // 50 minutes, matching cache header
   );
 
-  return NextResponse.redirect(presignedUrl, {
-    headers: { "Cache-Control": "public, max-age=3000" },
+  // Proxy the image server-side to avoid CORS issues with S3 redirects
+  const s3Res = await fetch(presignedUrl);
+  if (!s3Res.ok) {
+    return NextResponse.json(
+      { error: `S3 fetch failed: ${s3Res.status}` },
+      { status: 502 },
+    );
+  }
+
+  const contentType = s3Res.headers.get("content-type") ?? "image/png";
+  const buffer = await s3Res.arrayBuffer();
+
+  return new NextResponse(buffer, {
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=3000",
+    },
   });
 }
