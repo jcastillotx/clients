@@ -165,13 +165,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ error: "Failed to delete request" }, { status: 500 });
   }
 
-  await supabase.from("activity_logs").insert({
+  void supabase.from("activity_logs").insert({
     user_id: user.id,
     action: "request.deleted",
     resource_type: "request",
     resource_id: id,
     metadata: { ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null },
-  }).catch(() => {});
+  });
 
   return NextResponse.json({ success: true });
 }
