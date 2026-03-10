@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
 import { Loader2, Upload } from "lucide-react";
 
 interface BrandingSettingsProps {
@@ -33,11 +32,7 @@ export function BrandingSettings({
 
   const handleSave = async () => {
     if (!clientId) {
-      setError(
-        isPortalBrandingScope
-          ? "Portal branding target is not configured. Set PARENT_CLIENT_IDS or PARENT_COMPANY_NAMES and retry."
-          : "No client is linked to your user. Assign a client first.",
-      );
+      setError("No branding target found. Contact support.");
       return;
     }
 
@@ -46,22 +41,13 @@ export function BrandingSettings({
     setSuccess(false);
 
     try {
-      const supabase = createClient();
-      const payload = {
-        client_id: clientId,
-        logo_url: logoUrl || null,
-        domain: domain || null,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error: upsertError } = await supabase
-        .from("white_label_configs")
-        .upsert(payload, { onConflict: "client_id" });
-
-      if (upsertError) {
-        throw upsertError;
-      }
+      const res = await fetch("/api/branding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, logoUrl: logoUrl || null, domain: domain || null }),
+      });
+      const payload: { error?: string } = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Failed to save branding");
 
       setSuccess(true);
       router.refresh();
@@ -73,14 +59,6 @@ export function BrandingSettings({
   };
 
   const handleUploadLogo = async () => {
-    if (!clientId) {
-      setError(
-        isPortalBrandingScope
-          ? "Portal branding target is not configured. Set PARENT_CLIENT_IDS or PARENT_COMPANY_NAMES and retry."
-          : "No client is linked to your user. Assign a client first.",
-      );
-      return;
-    }
     if (!selectedFile) {
       setError("Select a logo file first.");
       return;
@@ -91,25 +69,14 @@ export function BrandingSettings({
     setSuccess(false);
 
     try {
-      const ext = selectedFile.name.split(".").pop() || "png";
-      const path = `branding-logos/${clientId}/${Date.now()}.${ext}`;
-      const supabase = createClient();
+      const formData = new FormData();
+      formData.append("file", selectedFile);
 
-      const { data, error: uploadError } = await supabase.storage.from("avatars").upload(path, selectedFile, {
-        upsert: true,
-      });
-      if (uploadError || !data?.path) {
-        throw new Error(uploadError?.message || "Failed to upload logo");
-      }
+      const res = await fetch("/api/branding/logo", { method: "POST", body: formData });
+      const payload: { logoUrl?: string; error?: string } = await res.json();
+      if (!res.ok || !payload.logoUrl) throw new Error(payload.error || "Failed to upload logo");
 
-      const { data: publicData } = supabase.storage.from("avatars").getPublicUrl(data.path);
-      const publicUrl = publicData?.publicUrl;
-
-      if (!publicUrl) {
-        throw new Error("Failed to resolve uploaded logo URL");
-      }
-
-      setLogoUrl(publicUrl);
+      setLogoUrl(payload.logoUrl);
       setSelectedFile(null);
       setSuccess(true);
     } catch (err) {

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { BrandingSettings } from "@/components/settings/branding-settings";
 
 export const metadata = {
@@ -63,9 +63,12 @@ export default async function BrandingPage() {
   let brandingClientId: string | null = clientId;
   let isPortalBrandingScope = false;
 
+  // Admin users have no client_id — use admin client to bypass RLS for client lookups
+  const lookupClient = createAdminClientIfAvailable() ?? supabase;
+
   if (!brandingClientId) {
     if (parentClientIds.length > 0) {
-      const { data: parentClientById } = await supabase
+      const { data: parentClientById } = await lookupClient
         .from("clients")
         .select("id")
         .in("id", parentClientIds)
@@ -75,7 +78,7 @@ export default async function BrandingPage() {
     }
 
     if (!brandingClientId && parentCompanyNames.length > 0) {
-      const { data: parentClientByName } = await supabase
+      const { data: parentClientByName } = await lookupClient
         .from("clients")
         .select("id")
         .in("company_name", parentCompanyNames)
@@ -85,7 +88,7 @@ export default async function BrandingPage() {
     }
 
     if (!brandingClientId) {
-      const { data: whiteLabelClient } = await supabase
+      const { data: whiteLabelClient } = await lookupClient
         .from("white_label_configs")
         .select("client_id, updated_at")
         .not("client_id", "is", null)
@@ -95,13 +98,23 @@ export default async function BrandingPage() {
       brandingClientId = whiteLabelClient?.client_id ?? null;
     }
 
+    // Last resort: pick the first client in the DB (admin context only)
+    if (!brandingClientId) {
+      const { data: firstClient } = await lookupClient
+        .from("clients")
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+      brandingClientId = firstClient?.id ?? null;
+    }
+
     if (brandingClientId) {
       isPortalBrandingScope = true;
     }
   }
 
   const { data: brandingConfig } = brandingClientId
-    ? await supabase.from("white_label_configs").select("*").eq("client_id", brandingClientId).maybeSingle()
+    ? await lookupClient.from("white_label_configs").select("*").eq("client_id", brandingClientId).maybeSingle()
     : { data: null };
 
   return (

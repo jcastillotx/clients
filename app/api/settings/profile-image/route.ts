@@ -229,3 +229,128 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// S3 DELETE helper
+// ---------------------------------------------------------------------------
+
+async function deleteS3Object(
+  bucket: string,
+  region: string,
+  accessKeyId: string,
+  secretAccessKey: string,
+  objectKey: string,
+): Promise<void> {
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const datetimeStr = now.toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+  const host = `${bucket}.s3.${region}.amazonaws.com`;
+  const credentialScope = `${dateStr}/${region}/s3/aws4_request`;
+  const encodedKey = objectKey.split("/").map(encodeURIComponent).join("/");
+  const url = `https://${host}/${encodedKey}`;
+  const payloadHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"; // SHA-256 of empty string
+
+  const canonicalRequest = [
+    "DELETE",
+    `/${encodedKey}`,
+    "",
+    `host:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${datetimeStr}\n`,
+    "host;x-amz-content-sha256;x-amz-date",
+    payloadHash,
+  ].join("\n");
+
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    datetimeStr,
+    credentialScope,
+    await sha256Hex(canonicalRequest),
+  ].join("\n");
+
+  const signingKey = await (async () => {
+    const kDate = await hmacSha256(new TextEncoder().encode(`AWS4${secretAccessKey}`), dateStr);
+    const kRegion = await hmacSha256(kDate, region);
+    const kService = await hmacSha256(kRegion, "s3");
+    return hmacSha256(kService, "aws4_request");
+  })();
+
+  const signature = toHex(await hmacSha256(signingKey, stringToSign));
+
+  await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=${signature}`,
+      "x-amz-date": datetimeStr,
+      "x-amz-content-sha256": payloadHash,
+    } as Record<string, string>,
+  });
+  // S3 DELETE returns 204 on success, 404 if not found — both are acceptable
+}
+
+// ---------------------------------------------------------------------------
+// DELETE /api/settings/profile-image
+// Removes the avatar from S3, the users table, and auth metadata.
+// ---------------------------------------------------------------------------
+
+export async function DELETE() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Extract S3 key from stored avatar URL: /api/avatar?key=avatars%2F...
+    const currentAvatar = (user.user_metadata?.avatar as string | undefined) ?? "";
+    const keyParam = currentAvatar.startsWith("/api/avatar?key=")
+      ? decodeURIComponent(currentAvatar.replace("/api/avatar?key=", ""))
+      : null;
+
+    // Delete from S3 if there's a stored object
+    if (keyParam && keyParam.startsWith(`avatars/${user.id}/`)) {
+      const s3 = await getS3Credentials(user.id);
+      if (s3) {
+        const { accessKeyId, secretAccessKey, bucket, region } = s3;
+        await deleteS3Object(bucket, region, accessKeyId, secretAccessKey, keyParam).catch((err) => {
+          console.warn("S3 delete failed (non-fatal):", err);
+        });
+      }
+    }
+
+    // Clear avatar in users table
+    const adminClient = createAdminClientIfAvailable();
+    const dbClient = adminClient ?? supabase;
+    const { error: dbError } = await dbClient
+      .from("users")
+      .update({ avatar: null, updated_at: new Date().toISOString() })
+      .eq("id", user.id);
+    if (dbError) {
+      console.warn("Avatar DB clear failed (non-fatal):", dbError.message);
+    }
+
+    // Clear avatar in auth metadata
+    const { avatar: _removed, ...metaWithoutAvatar } = asRecord(user.user_metadata);
+    if (adminClient) {
+      const { error } = await adminClient.auth.admin.updateUserById(user.id, {
+        user_metadata: metaWithoutAvatar,
+      });
+      if (error) {
+        const { error: fallbackError } = await supabase.auth.updateUser({ data: metaWithoutAvatar });
+        if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+      }
+    } else {
+      const { error } = await supabase.auth.updateUser({ data: metaWithoutAvatar });
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting profile image:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete profile image" },
+      { status: 500 },
+    );
+  }
+}

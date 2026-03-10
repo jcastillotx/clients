@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, User } from "lucide-react";
+import { Loader2, Trash2, User } from "lucide-react";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -34,6 +34,7 @@ export function UserSettings({ user }: UserSettingsProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState(user.avatar || "");
@@ -123,6 +124,24 @@ export function UserSettings({ user }: UserSettingsProps) {
     }
   };
 
+  const handleAvatarDelete = async () => {
+    setError(null);
+    setSuccess(false);
+    setIsDeletingAvatar(true);
+    try {
+      const res = await fetch("/api/settings/profile-image", { method: "DELETE" });
+      const payload: { error?: string } = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Failed to delete profile image");
+      setAvatarUrl("");
+      setSuccess(true);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete profile image");
+    } finally {
+      setIsDeletingAvatar(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -157,12 +176,29 @@ export function UserSettings({ user }: UserSettingsProps) {
                 onChange={handleAvatarUpload}
                 disabled={isUploadingAvatar}
               />
-              {isUploadingAvatar ? (
+              {isUploadingAvatar && (
                 <p className="mt-2 inline-flex items-center text-xs text-muted-foreground">
                   <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                   Uploading avatar...
                 </p>
-              ) : null}
+              )}
+              {avatarUrl && !isUploadingAvatar && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 text-destructive hover:text-destructive"
+                  onClick={handleAvatarDelete}
+                  disabled={isDeletingAvatar}
+                >
+                  {isDeletingAvatar ? (
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-3 w-3" />
+                  )}
+                  Remove photo
+                </Button>
+              )}
               <p className="text-xs text-muted-foreground mt-1">Use JPG, PNG, WEBP, or GIF up to 5MB.</p>
             </div>
           </div>
