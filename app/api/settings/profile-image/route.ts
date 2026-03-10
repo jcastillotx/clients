@@ -47,12 +47,7 @@ async function sha256HexBuffer(buf: ArrayBuffer): Promise<string> {
   return toHex(await crypto.subtle.digest("SHA-256", buf));
 }
 
-interface S3PutHeaders {
-  Authorization: string;
-  "x-amz-date": string;
-  "x-amz-content-sha256": string;
-  "Content-Type": string;
-}
+type S3PutHeaders = Record<string, string>;
 
 async function buildS3PutHeaders(
   bucket: string,
