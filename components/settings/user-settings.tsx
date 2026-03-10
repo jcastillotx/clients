@@ -101,39 +101,53 @@ export function UserSettings({ user }: UserSettingsProps) {
 
     try {
       // Step 1: Get presigned PUT URL from server
-      const presignRes = await fetch("/api/settings/profile-image/presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
-      });
-      const presignPayload: { presignedUrl?: string; key?: string; error?: string } =
-        await presignRes.json();
-      if (!presignRes.ok || !presignPayload.presignedUrl || !presignPayload.key) {
-        throw new Error(presignPayload.error || "Failed to get upload URL");
+      let presignPayload: { presignedUrl?: string; key?: string; error?: string } = {};
+      try {
+        const presignRes = await fetch("/api/settings/profile-image/presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
+        });
+        presignPayload = await presignRes.json();
+        if (!presignRes.ok || !presignPayload.presignedUrl || !presignPayload.key) {
+          throw new Error(presignPayload.error || "Failed to get upload URL");
+        }
+      } catch (err) {
+        throw new Error(`Step 1 (get upload URL): ${err instanceof Error ? err.message : String(err)}`);
       }
 
       // Step 2: Upload file directly to S3 (bypasses Vercel size limits)
-      const s3Res = await fetch(presignPayload.presignedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!s3Res.ok) {
-        throw new Error("Failed to upload to S3");
+      try {
+        const s3Res = await fetch(presignPayload.presignedUrl!, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!s3Res.ok) {
+          const errText = await s3Res.text().catch(() => s3Res.status.toString());
+          throw new Error(`S3 returned ${s3Res.status}: ${errText}`);
+        }
+      } catch (err) {
+        throw new Error(`Step 2 (upload to S3): ${err instanceof Error ? err.message : String(err)}`);
       }
 
       // Step 3: Save the S3 key to the database
-      const saveRes = await fetch("/api/settings/profile-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: presignPayload.key }),
-      });
-      const savePayload: { avatarUrl?: string; error?: string } = await saveRes.json();
-      if (!saveRes.ok || !savePayload.avatarUrl) {
-        throw new Error(savePayload.error || "Failed to save profile image");
+      let savePayload: { avatarUrl?: string; error?: string } = {};
+      try {
+        const saveRes = await fetch("/api/settings/profile-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: presignPayload.key }),
+        });
+        savePayload = await saveRes.json();
+        if (!saveRes.ok || !savePayload.avatarUrl) {
+          throw new Error(savePayload.error || "Failed to save profile image");
+        }
+      } catch (err) {
+        throw new Error(`Step 3 (save to DB): ${err instanceof Error ? err.message : String(err)}`);
       }
 
-      setAvatarUrl(savePayload.avatarUrl);
+      setAvatarUrl(savePayload.avatarUrl!);
       setSuccess(true);
       router.refresh();
     } catch (uploadError) {
