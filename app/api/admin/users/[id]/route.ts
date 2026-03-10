@@ -225,6 +225,29 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
     const adminClient = createAdminClient();
 
+    // Prevent deleting admin or super_admin users
+    const { data: targetUser } = await adminClient
+      .from("users")
+      .select("is_super_admin")
+      .eq("id", id)
+      .maybeSingle();
+
+    const { data: targetRoles } = await adminClient
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", id);
+
+    const targetIsAdmin = Boolean(targetUser?.is_super_admin) ||
+      (targetRoles || []).some((row: { role?: { name?: string } | Array<{ name?: string }> | null }) => {
+        const rv = row?.role;
+        const name = String(Array.isArray(rv) ? rv[0]?.name : (rv as { name?: string } | null)?.name ?? "").toLowerCase();
+        return name === "admin" || name === "super_admin";
+      });
+
+    if (targetIsAdmin) {
+      return NextResponse.json({ error: "Cannot delete admin or super admin users" }, { status: 403 });
+    }
+
     // Soft delete user
     const { error } = await adminClient
       .from("users")

@@ -305,3 +305,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: "Failed to update project request" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { isAdmin } = await resolveAccess(supabase, user);
+  if (!isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { error } = await supabase
+    .from("requests")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[DELETE /api/projects/requests/:id]", error);
+    return NextResponse.json({ error: "Failed to delete project request" }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

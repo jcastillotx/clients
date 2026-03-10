@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateSupportTicketSchema } from "@/lib/validations/support-ticket";
+import { isAdminUser } from "@/lib/rbac/check";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -165,6 +166,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
+    supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
+    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+  ]);
+
+  if (!isAdminUser(user, dbUser, roleRows)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   // Soft delete (set deleted_at timestamp)

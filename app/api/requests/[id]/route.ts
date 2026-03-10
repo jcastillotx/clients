@@ -136,3 +136,42 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
+    supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle(),
+    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+  ]);
+
+  if (!isAdminUser(user, dbUser, roleRows)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { error } = await supabase
+    .from("requests")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[DELETE /api/requests/:id]", error);
+    return NextResponse.json({ error: "Failed to delete request" }, { status: 500 });
+  }
+
+  await supabase.from("activity_logs").insert({
+    user_id: user.id,
+    action: "request.deleted",
+    resource_type: "request",
+    resource_id: id,
+    metadata: { ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null },
+  }).catch(() => {});
+
+  return NextResponse.json({ success: true });
+}

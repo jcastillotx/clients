@@ -12,6 +12,7 @@ import { ProjectRequestCalendar } from "@/components/projects/project-request-ca
 import { ProjectRequestMessaging } from "@/components/projects/project-request-messaging";
 import { ProjectRequestFeedback } from "@/components/projects/project-request-feedback";
 import { ProjectRequestReviewPanel } from "@/components/projects/project-request-review-panel";
+import { DeleteProjectRequestButton } from "@/components/projects/delete-project-request-button";
 
 interface RequestRow {
   id: string;
@@ -214,9 +215,12 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
             {formatDate(request.created_at)}
           </p>
         </div>
-        <Button asChild>
-          <Link href="/projects/requests/new">New Request</Link>
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin && <DeleteProjectRequestButton requestId={id} />}
+          <Button asChild>
+            <Link href="/projects/requests/new">New Request</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

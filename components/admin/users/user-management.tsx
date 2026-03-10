@@ -246,10 +246,14 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
                           <KeyRound className="mr-2 h-4 w-4" />
                           Send Password Reset
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        {!user.user_roles?.some(({ role }) =>
+                          role.name === "admin" || role.name === "super_admin"
+                        ) && (
+                          <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} className="text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

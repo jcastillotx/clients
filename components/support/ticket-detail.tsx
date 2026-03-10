@@ -16,7 +16,7 @@ import { updateSupportTicketSchema, type UpdateSupportTicketInput } from "@/lib/
 import { getSlaStatus, formatTimeRemaining, getSlaStatusColor } from "@/lib/utils/sla";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Clock, User, Tag, AlertTriangle } from "lucide-react";
+import { Clock, User, Tag, AlertTriangle, Trash2 } from "lucide-react";
 
 interface StaffUser {
   id: string;
@@ -34,6 +34,7 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm<UpdateSupportTicketInput>({
     resolver: zodResolver(updateSupportTicketSchema),
@@ -57,6 +58,24 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
   );
   const isAcknowledged = Boolean(ticket.first_response_at);
   const headerAccentClassName = getTicketHeaderClassName(slaInfo.status, isAcknowledged);
+
+  async function handleDelete() {
+    if (!confirm("Delete this support ticket? This cannot be undone.")) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/support/${ticket.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body?.error || "Failed to delete ticket");
+      }
+      toast.success("Ticket deleted");
+      router.push("/support");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete ticket");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   async function onSubmit(data: UpdateSupportTicketInput) {
     setIsSubmitting(true);
@@ -109,13 +128,14 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
             </div>
             <div className="flex gap-2">
               {isStaff && !isEditing && (
-                <Button variant="outline" onClick={() => setIsEditing(true)}>
-                  Edit
-                </Button>
+                <>
+                  <Button variant="outline" onClick={() => setIsEditing(true)}>Edit</Button>
+                  <Button variant="destructive" size="icon" disabled={isDeleting} onClick={handleDelete} title="Delete ticket">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
               )}
-              <Button variant="outline" onClick={() => router.back()}>
-                Back
-              </Button>
+              <Button variant="outline" onClick={() => router.back()}>Back</Button>
             </div>
           </div>
         </CardHeader>

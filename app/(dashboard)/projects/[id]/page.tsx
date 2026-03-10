@@ -17,9 +17,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MilestoneList } from "@/components/projects/milestone-list";
 import { DeliverableList } from "@/components/projects/deliverable-list";
 import { formatCurrency } from "@/lib/utils";
-import { Calendar, DollarSign, Users, TrendingUp, Edit, MoreVertical, Clock, Target } from "lucide-react";
+import { Calendar, DollarSign, Users, TrendingUp, Edit, Clock, Target } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { createClient } from "@/lib/supabase/server";
+import { isAdminUser } from "@/lib/rbac/check";
+import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 
 async function getProject(id: string) {
   const [project] = await db
@@ -87,6 +90,16 @@ async function ProjectDetails({ id }: { id: string }) {
     notFound();
   }
 
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const [{ data: dbUser }, { data: roleRows }] = user
+    ? await Promise.all([
+        supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
+        supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+      ])
+    : [{ data: null }, { data: [] }];
+  const isAdmin = user ? isAdminUser(user, dbUser, roleRows) : false;
+
   const budgetAmount = parseFloat(project.budgetAmount || "0");
   const spentAmount = parseFloat(project.spentAmount || "0");
   const budgetPercentage = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
@@ -114,9 +127,7 @@ async function ProjectDetails({ id }: { id: string }) {
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
-          <Button variant="outline" size="sm">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
+          {isAdmin && <DeleteProjectButton projectId={project.id} />}
         </div>
       </div>
 

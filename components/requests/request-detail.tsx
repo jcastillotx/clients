@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
-import { Calendar, Clock, User, Building2, AlertCircle, CheckCircle2, XCircle, Pause } from "lucide-react";
+import { Calendar, Clock, User, Building2, AlertCircle, CheckCircle2, XCircle, Pause, Trash2 } from "lucide-react";
 
 interface RequestDetailProps {
   request: {
@@ -64,6 +64,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
   const [currentStatus, setCurrentStatus] = useState(request.status);
   const [assignedToId, setAssignedToId] = useState<string>(request.assigned_user?.id || "unassigned");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestType = String(request.custom_fields?.type || "support");
   const createdByName = request.created_by_user?.name || "Unknown user";
@@ -78,6 +79,24 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
       .split(" ")
       .map((n) => n[0])
       .join("") || "?";
+
+  const deleteRequest = async () => {
+    if (!confirm("Delete this service request? This cannot be undone.")) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/requests/${request.id}`, { method: "DELETE", credentials: "same-origin" });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body?.error || "Failed to delete request");
+      }
+      toast({ title: "Deleted", description: "Service request deleted." });
+      router.push("/requests");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete request");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const updateRequest = async (payload: Record<string, any>) => {
     setIsSaving(true);
@@ -142,14 +161,17 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
         <div className="flex flex-col items-end gap-2">
           {error ? <p className="text-xs text-destructive">{error}</p> : null}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => router.back()}>
-              Back
-            </Button>
-            {canManageWorkflow ? (
-              <Button disabled={isSaving} onClick={() => updateRequest({ status: currentStatus })}>
-                Update Status
-              </Button>
-            ) : null}
+            <Button variant="outline" onClick={() => router.back()}>Back</Button>
+            {canManageWorkflow && (
+              <>
+                <Button disabled={isSaving} onClick={() => updateRequest({ status: currentStatus })}>
+                  Update Status
+                </Button>
+                <Button variant="destructive" size="icon" disabled={isDeleting} onClick={deleteRequest} title="Delete request">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
