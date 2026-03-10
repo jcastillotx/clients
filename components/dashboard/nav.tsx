@@ -58,6 +58,9 @@ interface DashboardNavProps {
   isStaff: boolean;
   isAdmin: boolean;
   isAccountManager: boolean;
+  logoUrl?: string | null;
+  brandText?: string;
+  sidebarWidth?: "narrow" | "standard" | "wide";
 }
 
 type AccessLevel = "all" | "staff" | "admin" | "manager";
@@ -199,7 +202,21 @@ const navigationSections: NavSection[] = [
   },
 ];
 
-export function DashboardNav({ user, isStaff, isAdmin, isAccountManager }: DashboardNavProps) {
+const sidebarWidthClass: Record<string, string> = {
+  narrow: "w-16 md:w-56",
+  standard: "w-20 md:w-72",
+  wide: "w-20 md:w-80",
+};
+
+export function DashboardNav({
+  user,
+  isStaff,
+  isAdmin,
+  isAccountManager,
+  logoUrl,
+  brandText,
+  sidebarWidth = "standard",
+}: DashboardNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -210,16 +227,31 @@ export function DashboardNav({ user, isStaff, isAdmin, isAccountManager }: Dashb
     router.push("/login");
   };
 
+  const widthClass = sidebarWidthClass[sidebarWidth] ?? sidebarWidthClass.standard;
+
   return (
-    <aside className="relative flex h-screen w-20 shrink-0 flex-col border-r border-border/70 bg-card/75 backdrop-blur md:w-72">
+    <aside
+      className={`relative flex h-screen shrink-0 flex-col border-r border-border/70 backdrop-blur ${widthClass}`}
+      style={{ backgroundColor: "var(--sidebar-bg)", color: "var(--sidebar-text)" }}
+    >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-primary/15 to-transparent" />
       {/* Logo */}
       <div className="relative flex h-20 items-center border-b border-border/60 px-6">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-lg font-bold text-primary">
-          K
-        </div>
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt="Company logo"
+            className="h-11 w-11 rounded-xl border border-primary/20 bg-primary/10 object-contain p-1"
+          />
+        ) : (
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-lg font-bold text-primary">
+            {brandText ? brandText.slice(0, 1).toUpperCase() : "K"}
+          </div>
+        )}
         <div className="ml-3 hidden md:block">
-          <h1 className="text-lg font-bold font-heading leading-none">KRE8IV</h1>
+          <h1 className="text-lg font-bold font-heading leading-none" style={{ color: "var(--sidebar-text)" }}>
+            {brandText || "KRE8IV"}
+          </h1>
           <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">Client Portal</p>
         </div>
       </div>

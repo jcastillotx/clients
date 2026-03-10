@@ -3,21 +3,102 @@ import { db } from "@/lib/db";
 import { whiteLabelConfigs } from "@/lib/db/schema/additional-features";
 import { clients } from "@/lib/db/schema/clients";
 
+export interface BrandingSettings {
+  sidebarBgColor: string;
+  sidebarBgColorDark: string;
+  sidebarTextColor: string;
+  sidebarTextColorDark: string;
+  sidebarWidth: "narrow" | "standard" | "wide";
+  brandText: string;
+  loginImageUrl: string | null;
+  fontSize: "sm" | "md" | "lg";
+  primaryColor: string;
+  primaryColorDark: string;
+  paddingSize: "compact" | "standard" | "spacious";
+}
+
 export interface PortalBranding {
   logoUrl: string | null;
+  primaryColor: string;
+  secondaryColor: string;
+  settings: BrandingSettings;
 }
+
+const DEFAULT_SETTINGS: BrandingSettings = {
+  sidebarBgColor: "#FFFFFF",
+  sidebarBgColorDark: "#1E1B4B",
+  sidebarTextColor: "#1E1B4B",
+  sidebarTextColorDark: "#E8E5FF",
+  sidebarWidth: "standard",
+  brandText: "",
+  loginImageUrl: null,
+  fontSize: "md",
+  primaryColor: "#7C3AED",
+  primaryColorDark: "#A78BFA",
+  paddingSize: "standard",
+};
+
+function parseSettings(customCss: string | null): BrandingSettings {
+  if (!customCss) return { ...DEFAULT_SETTINGS };
+  try {
+    const parsed = JSON.parse(customCss) as Partial<BrandingSettings>;
+    return {
+      sidebarBgColor: parsed.sidebarBgColor ?? DEFAULT_SETTINGS.sidebarBgColor,
+      sidebarBgColorDark: parsed.sidebarBgColorDark ?? DEFAULT_SETTINGS.sidebarBgColorDark,
+      sidebarTextColor: parsed.sidebarTextColor ?? DEFAULT_SETTINGS.sidebarTextColor,
+      sidebarTextColorDark: parsed.sidebarTextColorDark ?? DEFAULT_SETTINGS.sidebarTextColorDark,
+      sidebarWidth: parsed.sidebarWidth ?? DEFAULT_SETTINGS.sidebarWidth,
+      brandText: parsed.brandText ?? DEFAULT_SETTINGS.brandText,
+      loginImageUrl: parsed.loginImageUrl ?? DEFAULT_SETTINGS.loginImageUrl,
+      fontSize: parsed.fontSize ?? DEFAULT_SETTINGS.fontSize,
+      primaryColor: parsed.primaryColor ?? DEFAULT_SETTINGS.primaryColor,
+      primaryColorDark: parsed.primaryColorDark ?? DEFAULT_SETTINGS.primaryColorDark,
+      paddingSize: parsed.paddingSize ?? DEFAULT_SETTINGS.paddingSize,
+    };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+function buildBranding(row: {
+  logoUrl: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  customCss: string | null;
+}): PortalBranding {
+  return {
+    logoUrl: row.logoUrl,
+    primaryColor: row.primaryColor ?? "#7C3AED",
+    secondaryColor: row.secondaryColor ?? "#ffffff",
+    settings: parseSettings(row.customCss),
+  };
+}
+
+const FULL_SELECT = {
+  logoUrl: whiteLabelConfigs.logoUrl,
+  primaryColor: whiteLabelConfigs.primaryColor,
+  secondaryColor: whiteLabelConfigs.secondaryColor,
+  customCss: whiteLabelConfigs.customCss,
+} as const;
+
+const DEFAULT_BRANDING: PortalBranding = {
+  logoUrl: null,
+  primaryColor: "#7C3AED",
+  secondaryColor: "#ffffff",
+  settings: { ...DEFAULT_SETTINGS },
+};
 
 export async function getPortalBranding(hostname?: string): Promise<PortalBranding> {
   try {
     if (hostname) {
       const byDomain = await db
-        .select({ logoUrl: whiteLabelConfigs.logoUrl })
+        .select(FULL_SELECT)
         .from(whiteLabelConfigs)
         .where(and(eq(whiteLabelConfigs.domain, hostname), eq(whiteLabelConfigs.isActive, true)))
         .limit(1);
 
       if (byDomain[0]) {
-        return { logoUrl: byDomain[0].logoUrl };
+        return buildBranding(byDomain[0]);
       }
     }
 
@@ -28,14 +109,14 @@ export async function getPortalBranding(hostname?: string): Promise<PortalBrandi
 
     if (parentClientIds.length > 0) {
       const byParentClient = await db
-        .select({ logoUrl: whiteLabelConfigs.logoUrl })
+        .select(FULL_SELECT)
         .from(whiteLabelConfigs)
         .where(and(eq(whiteLabelConfigs.isActive, true), inArray(whiteLabelConfigs.clientId, parentClientIds)))
         .orderBy(desc(whiteLabelConfigs.updatedAt))
         .limit(1);
 
       if (byParentClient[0]) {
-        return { logoUrl: byParentClient[0].logoUrl };
+        return buildBranding(byParentClient[0]);
       }
     }
 
@@ -54,27 +135,31 @@ export async function getPortalBranding(hostname?: string): Promise<PortalBrandi
 
       if (parentClientIdsByName.length > 0) {
         const byParentName = await db
-          .select({ logoUrl: whiteLabelConfigs.logoUrl })
+          .select(FULL_SELECT)
           .from(whiteLabelConfigs)
           .where(and(eq(whiteLabelConfigs.isActive, true), inArray(whiteLabelConfigs.clientId, parentClientIdsByName)))
           .orderBy(desc(whiteLabelConfigs.updatedAt))
           .limit(1);
 
         if (byParentName[0]) {
-          return { logoUrl: byParentName[0].logoUrl };
+          return buildBranding(byParentName[0]);
         }
       }
     }
 
     const fallback = await db
-      .select({ logoUrl: whiteLabelConfigs.logoUrl })
+      .select(FULL_SELECT)
       .from(whiteLabelConfigs)
       .where(eq(whiteLabelConfigs.isActive, true))
       .orderBy(desc(whiteLabelConfigs.updatedAt))
       .limit(1);
 
-    return { logoUrl: fallback[0]?.logoUrl ?? null };
+    if (fallback[0]) {
+      return buildBranding(fallback[0]);
+    }
+
+    return { ...DEFAULT_BRANDING, settings: { ...DEFAULT_SETTINGS } };
   } catch {
-    return { logoUrl: null };
+    return { ...DEFAULT_BRANDING, settings: { ...DEFAULT_SETTINGS } };
   }
 }

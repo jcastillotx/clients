@@ -1,15 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Pause, Square, Clock, Activity, CheckCircle2, AlertCircle, Megaphone } from "lucide-react";
+import { Play, Square, Clock, Activity, CheckCircle2, AlertCircle, Megaphone, Sun, Moon, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+
+const PADDING_SIZES = ["compact", "standard", "spacious"] as const;
+type PaddingSize = (typeof PADDING_SIZES)[number];
+
+const PADDING_VALUES: Record<PaddingSize, string> = {
+  compact: "1rem",
+  standard: "1.5rem",
+  spacious: "2.5rem",
+};
 
 interface TopBarProps {
   userRole: "admin" | "staff" | "client";
@@ -138,8 +148,33 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
   const [selectedRequest, setSelectedRequest] = useState<string>("");
   const [clients, setClients] = useState<Array<{ id: string; company_name: string }>>([]);
   const [requests, setRequests] = useState<Array<{ id: string; title: string }>>([]);
+  const [paddingSize, setPaddingSize] = useState<PaddingSize>("standard");
+  const { theme, setTheme } = useTheme();
   const supabase = createClient();
   const NONE_SELECT_VALUE = "__none__";
+
+  // Restore saved padding preference on mount
+  useEffect(() => {
+    const saved = (typeof window !== "undefined" ? localStorage.getItem("x-padding-size") : null) as PaddingSize | null;
+    if (saved && PADDING_SIZES.includes(saved)) {
+      setPaddingSize(saved);
+      document.documentElement.style.setProperty("--content-pad", PADDING_VALUES[saved]);
+    }
+  }, []);
+
+  function cyclePadding() {
+    const currentIdx = PADDING_SIZES.indexOf(paddingSize);
+    const next = PADDING_SIZES[(currentIdx + 1) % PADDING_SIZES.length];
+    setPaddingSize(next);
+    document.documentElement.style.setProperty("--content-pad", PADDING_VALUES[next]);
+    localStorage.setItem("x-padding-size", next);
+    // Persist to cookie so server-side rendering picks it up on next load
+    document.cookie = `x-padding-size=${next}; path=/; max-age=31536000; SameSite=Lax`;
+  }
+
+  function toggleTheme() {
+    setTheme(theme === "dark" ? "light" : "dark");
+  }
 
   // Fetch clients for dropdown
   useEffect(() => {
@@ -293,7 +328,7 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
           </div>
         </div>
 
-        {/* Right: System Status + Timer */}
+        {/* Right: System Status + Toggles + Timer */}
         <div className="flex items-center gap-4">
           {/* System Status */}
           <div className="hidden sm:flex items-center gap-2 text-sm">
@@ -301,6 +336,28 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
             <StatusIcon className={`h-4 w-4 ${statusConfig[systemStatus].color}`} />
             <span className="text-muted-foreground">{statusConfig[systemStatus].label}</span>
           </div>
+
+          {/* Theme Toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="h-8 w-8 p-0"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
+          {/* Padding Toggle */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={cyclePadding}
+            title={`Content padding: ${paddingSize} (click to cycle)`}
+            className="h-8 w-8 p-0"
+          >
+            <LayoutTemplate className="h-4 w-4" />
+          </Button>
 
           {/* Timer */}
           <div className="flex items-center gap-2">

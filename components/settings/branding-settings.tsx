@@ -7,12 +7,88 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Upload } from "lucide-react";
+import type { BrandingSettings as BrandingSettingsType } from "@/lib/branding/get-branding";
 
 interface BrandingSettingsProps {
   clientId: string | null;
   isPortalBrandingScope?: boolean;
   initialLogoUrl?: string | null;
   initialDomain?: string | null;
+  initialPrimaryColor?: string | null;
+  initialSecondaryColor?: string | null;
+  initialSettings?: Partial<BrandingSettingsType>;
+}
+
+const DEFAULT_SETTINGS: BrandingSettingsType = {
+  sidebarBgColor: "#FFFFFF",
+  sidebarBgColorDark: "#1E1B4B",
+  sidebarTextColor: "#1E1B4B",
+  sidebarTextColorDark: "#E8E5FF",
+  sidebarWidth: "standard",
+  brandText: "",
+  loginImageUrl: null,
+  fontSize: "md",
+  primaryColor: "#7C3AED",
+  primaryColorDark: "#A78BFA",
+  paddingSize: "standard",
+};
+
+type SidebarWidth = "narrow" | "standard" | "wide";
+type FontSize = "sm" | "md" | "lg";
+type PaddingSize = "compact" | "standard" | "spacious";
+
+function RadioGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex gap-2 flex-wrap">
+        {options.map((opt) => (
+          <Button
+            key={opt.value}
+            type="button"
+            variant={value === opt.value ? "default" : "outline"}
+            size="sm"
+            onClick={() => onChange(opt.value)}
+          >
+            {opt.label}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ColorField({ label, id, value, onChange }: { label: string; id: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="space-y-1">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-3">
+        <input
+          type="color"
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-10 w-20 cursor-pointer rounded border p-1"
+        />
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-32 font-mono text-sm"
+          maxLength={7}
+        />
+      </div>
+    </div>
+  );
 }
 
 export function BrandingSettings({
@@ -20,15 +96,50 @@ export function BrandingSettings({
   isPortalBrandingScope = false,
   initialLogoUrl,
   initialDomain,
+  initialPrimaryColor,
+  initialSecondaryColor,
+  initialSettings,
 }: BrandingSettingsProps) {
   const router = useRouter();
+
+  const merged: BrandingSettingsType = { ...DEFAULT_SETTINGS, ...initialSettings };
+
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl || "");
   const [domain, setDomain] = useState(initialDomain || "");
+  const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor || merged.primaryColor);
+  const [secondaryColor, setSecondaryColor] = useState(initialSecondaryColor || "#ffffff");
+
+  // Extended settings state
+  const [sidebarBgColor, setSidebarBgColor] = useState(merged.sidebarBgColor);
+  const [sidebarBgColorDark, setSidebarBgColorDark] = useState(merged.sidebarBgColorDark);
+  const [sidebarTextColor, setSidebarTextColor] = useState(merged.sidebarTextColor);
+  const [sidebarTextColorDark, setSidebarTextColorDark] = useState(merged.sidebarTextColorDark);
+  const [sidebarWidth, setSidebarWidth] = useState<SidebarWidth>(merged.sidebarWidth);
+  const [brandText, setBrandText] = useState(merged.brandText);
+  const [loginImageUrl, setLoginImageUrl] = useState(merged.loginImageUrl || "");
+  const [fontSize, setFontSize] = useState<FontSize>(merged.fontSize);
+  const [primaryColorDark, setPrimaryColorDark] = useState(merged.primaryColorDark);
+  const [paddingSize, setPaddingSize] = useState<PaddingSize>(merged.paddingSize);
+
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const buildSettings = (): BrandingSettingsType => ({
+    sidebarBgColor,
+    sidebarBgColorDark,
+    sidebarTextColor,
+    sidebarTextColorDark,
+    sidebarWidth,
+    brandText,
+    loginImageUrl: loginImageUrl || null,
+    fontSize,
+    primaryColor,
+    primaryColorDark,
+    paddingSize,
+  });
 
   const handleSave = async () => {
     if (!clientId) {
@@ -44,7 +155,14 @@ export function BrandingSettings({
       const res = await fetch("/api/branding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, logoUrl: logoUrl || null, domain: domain || null }),
+        body: JSON.stringify({
+          clientId,
+          logoUrl: logoUrl || null,
+          domain: domain || null,
+          primaryColor: primaryColor || null,
+          secondaryColor: secondaryColor || null,
+          settings: buildSettings(),
+        }),
       });
       const payload: { error?: string } = await res.json();
       if (!res.ok) throw new Error(payload.error || "Failed to save branding");
@@ -78,7 +196,6 @@ export function BrandingSettings({
 
       setLogoUrl(payload.logoUrl);
       setSelectedFile(null);
-      setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload logo");
     } finally {
@@ -87,79 +204,186 @@ export function BrandingSettings({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Portal Branding</CardTitle>
-        <CardDescription>
-          {isPortalBrandingScope
-            ? "Update the default branding for the main portal organization."
-            : "Set the company logo shown on the Home and Login pages."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
-        {success && <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">Branding saved successfully.</div>}
-        {isPortalBrandingScope ? (
-          <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-primary">
-            You are editing the global branding used by the main portal.
+    <div className="space-y-6">
+      {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+      {success && <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">Branding saved successfully.</div>}
+
+      {isPortalBrandingScope && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-primary">
+          You are editing the global branding used by the main portal.
+        </div>
+      )}
+
+      {/* Section: Logo */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Logo &amp; Brand Identity</CardTitle>
+          <CardDescription>Upload your company logo or set a brand text fallback.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="logo-file">Upload Logo</Label>
+            <Input
+              id="logo-file"
+              type="file"
+              accept=".png,.jpg,.jpeg,.svg,.webp"
+              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+            />
+            <div className="flex items-center gap-3">
+              <Button type="button" variant="outline" onClick={handleUploadLogo} disabled={isUploading || !selectedFile}>
+                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                Upload Logo
+              </Button>
+              {selectedFile && <p className="text-xs text-muted-foreground">{selectedFile.name}</p>}
+            </div>
           </div>
-        ) : null}
 
-        <div className="space-y-2">
-          <Label htmlFor="logo-url">Company Logo URL</Label>
-          <Input
-            id="logo-url"
-            placeholder="https://your-cdn.com/company-logo.png"
-            value={logoUrl}
-            onChange={(e) => setLogoUrl(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">Use a square PNG/SVG (recommended: 256x256).</p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="logo-file">Upload Logo</Label>
-          <Input
-            id="logo-file"
-            type="file"
-            accept=".png,.jpg,.jpeg,.svg,.webp"
-            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-          />
-          <div className="flex items-center gap-3">
-            <Button type="button" variant="outline" onClick={handleUploadLogo} disabled={isUploading || !selectedFile}>
-              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-              Upload Logo
-            </Button>
-            {selectedFile ? <p className="text-xs text-muted-foreground">{selectedFile.name}</p> : null}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="branding-domain">Domain (optional)</Label>
-          <Input
-            id="branding-domain"
-            placeholder="clients.yourcompany.com"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">If set, branding is tied to this exact host.</p>
-        </div>
-
-        {logoUrl ? (
-          <div className="rounded-lg border border-border/70 bg-muted/30 p-4">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Preview</p>
-            <img
-              src={logoUrl}
-              alt="Company logo preview"
-              className="h-16 w-16 rounded-xl border border-border/60 bg-background object-contain p-1"
+          <div className="space-y-2">
+            <Label htmlFor="logo-url">Logo URL (direct link)</Label>
+            <Input
+              id="logo-url"
+              placeholder="https://your-cdn.com/logo.png"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
             />
           </div>
-        ) : null}
 
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save Branding
-        </Button>
-      </CardContent>
-    </Card>
+          {logoUrl && (
+            <div className="rounded-lg border border-border/70 bg-muted/30 p-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Logo Preview</p>
+              <img
+                src={logoUrl}
+                alt="Logo preview"
+                className="h-16 w-16 rounded-xl border border-border/60 bg-background object-contain p-1"
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="brand-text">Brand Text (shown when no logo)</Label>
+            <Input
+              id="brand-text"
+              placeholder="e.g. ACME Corp"
+              value={brandText}
+              onChange={(e) => setBrandText(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="branding-domain">Custom Domain (optional)</Label>
+            <Input
+              id="branding-domain"
+              placeholder="clients.yourcompany.com"
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">If set, branding is tied to this exact host.</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section: Colors */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Brand Colors</CardTitle>
+          <CardDescription>Set your primary brand color for light and dark mode.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <ColorField label="Primary Color (light)" id="primary-color" value={primaryColor} onChange={setPrimaryColor} />
+          <ColorField label="Primary Color (dark mode)" id="primary-color-dark" value={primaryColorDark} onChange={setPrimaryColorDark} />
+        </CardContent>
+      </Card>
+
+      {/* Section: Sidebar */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Sidebar</CardTitle>
+          <CardDescription>Customize sidebar background, text colors, and width.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <ColorField label="Sidebar Background (light)" id="sidebar-bg" value={sidebarBgColor} onChange={setSidebarBgColor} />
+            <ColorField label="Sidebar Background (dark)" id="sidebar-bg-dark" value={sidebarBgColorDark} onChange={setSidebarBgColorDark} />
+            <ColorField label="Sidebar Text (light)" id="sidebar-text" value={sidebarTextColor} onChange={setSidebarTextColor} />
+            <ColorField label="Sidebar Text (dark)" id="sidebar-text-dark" value={sidebarTextColorDark} onChange={setSidebarTextColorDark} />
+          </div>
+          <RadioGroup<SidebarWidth>
+            label="Sidebar Width"
+            value={sidebarWidth}
+            onChange={setSidebarWidth}
+            options={[
+              { value: "narrow", label: "Narrow" },
+              { value: "standard", label: "Standard" },
+              { value: "wide", label: "Wide" },
+            ]}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Section: Typography & Spacing */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Typography &amp; Spacing</CardTitle>
+          <CardDescription>Adjust font size and content padding defaults.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <RadioGroup<FontSize>
+            label="Font Size"
+            value={fontSize}
+            onChange={setFontSize}
+            options={[
+              { value: "sm", label: "Small" },
+              { value: "md", label: "Medium" },
+              { value: "lg", label: "Large" },
+            ]}
+          />
+          <RadioGroup<PaddingSize>
+            label="Content Padding"
+            value={paddingSize}
+            onChange={setPaddingSize}
+            options={[
+              { value: "compact", label: "Compact" },
+              { value: "standard", label: "Standard" },
+              { value: "spacious", label: "Spacious" },
+            ]}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Section: Login Page */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Login Page</CardTitle>
+          <CardDescription>Set a custom image for the login/signup page.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="login-image-url">Login Page Image URL</Label>
+            <Input
+              id="login-image-url"
+              placeholder="https://your-cdn.com/hero.jpg"
+              value={loginImageUrl}
+              onChange={(e) => setLoginImageUrl(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Recommended: 1200x800px or larger.</p>
+          </div>
+          {loginImageUrl && (
+            <div className="rounded-lg border border-border/70 bg-muted/30 p-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Login Image Preview</p>
+              <img
+                src={loginImageUrl}
+                alt="Login image preview"
+                className="max-h-40 rounded-lg border border-border/60 object-cover"
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Button onClick={handleSave} disabled={isSaving} size="lg">
+        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save Branding
+      </Button>
+    </div>
   );
 }

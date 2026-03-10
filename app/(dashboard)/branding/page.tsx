@@ -1,5 +1,6 @@
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { BrandingSettings } from "@/components/settings/branding-settings";
+import type { BrandingSettings as BrandingSettingsType } from "@/lib/branding/get-branding";
 
 export const metadata = {
   title: "Branding | KRE8IV",
@@ -117,6 +118,16 @@ export default async function BrandingPage() {
     ? await lookupClient.from("white_label_configs").select("*").eq("client_id", brandingClientId).maybeSingle()
     : { data: null };
 
+  // Parse extended settings from custom_css column
+  let initialSettings: Partial<BrandingSettingsType> = {};
+  if (brandingConfig?.custom_css) {
+    try {
+      initialSettings = JSON.parse(brandingConfig.custom_css) as Partial<BrandingSettingsType>;
+    } catch {
+      // ignore parse errors
+    }
+  }
+
   return (
     <div className="flex flex-col gap-8 p-8 max-w-5xl mx-auto">
       <div>
@@ -129,6 +140,9 @@ export default async function BrandingPage() {
         isPortalBrandingScope={isPortalBrandingScope}
         initialLogoUrl={brandingConfig?.logo_url ?? null}
         initialDomain={brandingConfig?.domain ?? null}
+        initialPrimaryColor={brandingConfig?.primary_color ?? null}
+        initialSecondaryColor={brandingConfig?.secondary_color ?? null}
+        initialSettings={initialSettings}
       />
     </div>
   );

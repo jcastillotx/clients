@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `S3 upload failed (${s3Res.status}): ${errText}` }, { status: 500 });
     }
 
-    const logoUrl = `/api/avatar?key=${encodeURIComponent(key)}`;
+    const logoUrl = `/api/branding/image?key=${encodeURIComponent(key)}`;
     return NextResponse.json({ success: true, logoUrl });
   } catch (error) {
     return NextResponse.json(
