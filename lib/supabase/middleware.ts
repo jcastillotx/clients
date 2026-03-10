@@ -133,18 +133,15 @@ export async function updateSession(request: NextRequest) {
     // Admins must complete MFA to access sensitive routes.
     // Skip this check when the admin is already on the settings/security page
     // to avoid a redirect loop.
-    const isOnSecuritySettings =
-      request.nextUrl.pathname.startsWith("/settings") &&
-      (request.nextUrl.searchParams.get("tab") === "security" ||
-        request.nextUrl.pathname === "/settings");
+    const isOnSecuritySettings = request.nextUrl.pathname.startsWith("/settings/security");
 
     if (!isOnSecuritySettings) {
       try {
         const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalData && aalData.currentLevel !== "aal2") {
           const url = request.nextUrl.clone();
-          url.pathname = "/settings";
-          url.search = "tab=security&mfa_required=1";
+          url.pathname = "/settings/security";
+          url.search = "mfa_required=1";
           return NextResponse.redirect(url);
         }
       } catch {

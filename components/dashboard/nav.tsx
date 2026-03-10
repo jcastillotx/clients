@@ -42,7 +42,6 @@ import {
   FolderOpen,
   Shield,
   EyeOff,
-  Cog,
   CalendarCheck,
   Menu,
   X,
@@ -194,9 +193,8 @@ const navigationSections: NavSection[] = [
   {
     title: "Settings",
     items: [
-      { name: "Profile", href: "/settings?tab=profile", icon: Users },
-      { name: "Password", href: "/settings?tab=security", icon: Shield },
-      { name: "System Settings", href: "/settings", icon: Cog, access: "staff", matchesTab: "profile" },
+      { name: "Profile", href: "/settings/profile", icon: Users },
+      { name: "Security", href: "/settings/security", icon: Shield },
       { name: "Maintenance Plans", href: "/admin/maintenance-plans", icon: ShieldCheck, access: "admin" },
       { name: "Service Templates", href: "/admin/service-templates", icon: Briefcase, access: "admin" },
       { name: "Form Templates", href: "/admin/settings/templates", icon: FileText, access: "admin" },

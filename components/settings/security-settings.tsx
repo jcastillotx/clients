@@ -52,6 +52,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
   const mfaRequired = searchParams.get("mfa_required") === "1";
+  // Also support legacy ?tab=security&mfa_required=1 redirects
 
   // Password change state
   const [pwSuccess, setPwSuccess] = useState(false);
