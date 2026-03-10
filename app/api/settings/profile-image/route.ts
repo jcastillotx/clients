@@ -189,24 +189,32 @@ export async function POST(req: NextRequest) {
     const avatarUrl = `/api/avatar?key=${encodeURIComponent(key)}`;
 
     const adminClient = createAdminClientIfAvailable();
-    const dbClient = adminClient ?? supabase;
 
+    // Update users table — use admin client to bypass RLS (admins have no client_id in JWT)
+    // Non-fatal: auth metadata update below is the authoritative source
+    const dbClient = adminClient ?? supabase;
     const { error: userUpdateError } = await dbClient
       .from("users")
       .update({ avatar: avatarUrl, updated_at: new Date().toISOString() })
       .eq("id", user.id);
 
     if (userUpdateError) {
-      return NextResponse.json({ error: userUpdateError.message }, { status: 500 });
+      console.warn("Avatar DB update failed (non-fatal):", userUpdateError.message);
     }
 
+    // Update auth user metadata — this always works regardless of RLS
     const mergedMetadata = { ...asRecord(user.user_metadata), avatar: avatarUrl };
 
     if (adminClient) {
       const { error } = await adminClient.auth.admin.updateUserById(user.id, {
         user_metadata: mergedMetadata,
       });
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        console.warn("Auth metadata update via admin failed:", error.message);
+        // Fall back to user-scoped update
+        const { error: fallbackError } = await supabase.auth.updateUser({ data: mergedMetadata });
+        if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+      }
     } else {
       const { error } = await supabase.auth.updateUser({ data: mergedMetadata });
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });

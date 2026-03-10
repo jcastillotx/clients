@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -201,6 +202,13 @@ const navigationSections: NavSection[] = [
 export function DashboardNav({ user, isStaff, isAdmin, isAccountManager }: DashboardNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <aside className="relative flex h-screen w-20 shrink-0 flex-col border-r border-border/70 bg-card/75 backdrop-blur md:w-72">
@@ -288,7 +296,7 @@ export function DashboardNav({ user, isStaff, isAdmin, isAccountManager }: Dashb
             <p className="truncate text-xs text-muted-foreground">{user.email}</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="w-full rounded-xl">
+        <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={handleLogout}>
           <LogOut className="h-4 w-4 md:mr-2" />
           <span className="hidden md:inline">Logout</span>
         </Button>

@@ -39,7 +39,7 @@ async function hmacSha256(
 async function sha256Hex(data: string): Promise<string> {
   const hash = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(data),
+    toArrayBuffer(new TextEncoder().encode(data)),
   );
   return toHex(hash);
 }
