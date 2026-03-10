@@ -208,8 +208,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to upload image to S3" }, { status: 500 });
     }
 
-    // Public URL (assumes bucket has public-read or a CDN in front)
-    const avatarUrl = s3Url;
+    // Use our proxy route so the S3 bucket doesn't need public-read access.
+    // /api/avatar generates a fresh presigned URL on each request.
+    const avatarUrl = `/api/avatar?key=${encodeURIComponent(s3Key)}`;
 
     // -----------------------------------------------------------------------
     // Save URL to users table and auth metadata
