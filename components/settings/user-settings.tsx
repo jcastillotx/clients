@@ -100,20 +100,40 @@ export function UserSettings({ user }: UserSettingsProps) {
     setIsUploadingAvatar(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/settings/profile-image", {
+      // Step 1: Get presigned PUT URL from server
+      const presignRes = await fetch("/api/settings/profile-image/presign", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
       });
-
-      const payload: { avatarUrl?: string; error?: string } = await response.json();
-      if (!response.ok || !payload.avatarUrl) {
-        throw new Error(payload.error || "Failed to upload profile image");
+      const presignPayload: { presignedUrl?: string; key?: string; error?: string } =
+        await presignRes.json();
+      if (!presignRes.ok || !presignPayload.presignedUrl || !presignPayload.key) {
+        throw new Error(presignPayload.error || "Failed to get upload URL");
       }
 
-      setAvatarUrl(payload.avatarUrl);
+      // Step 2: Upload file directly to S3 (bypasses Vercel size limits)
+      const s3Res = await fetch(presignPayload.presignedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!s3Res.ok) {
+        throw new Error("Failed to upload to S3");
+      }
+
+      // Step 3: Save the S3 key to the database
+      const saveRes = await fetch("/api/settings/profile-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: presignPayload.key }),
+      });
+      const savePayload: { avatarUrl?: string; error?: string } = await saveRes.json();
+      if (!saveRes.ok || !savePayload.avatarUrl) {
+        throw new Error(savePayload.error || "Failed to save profile image");
+      }
+
+      setAvatarUrl(savePayload.avatarUrl);
       setSuccess(true);
       router.refresh();
     } catch (uploadError) {
