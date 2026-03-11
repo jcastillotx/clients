@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from("requests")
     .select("*, client:clients(company_name), assigned_user:users!requests_assigned_to_fkey(name, avatar)")
+    .is("deleted_at", null)
     .order(sortBy, { ascending: sortOrder === "asc" });
 
   if (search) {

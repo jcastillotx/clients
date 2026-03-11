@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
       assigned_user:users!support_tickets_assigned_to_fkey(name, avatar)
     `,
     )
+    .is("deleted_at", null)
     .order(sortBy, { ascending: sortOrder === "asc" });
 
   // Apply filters
