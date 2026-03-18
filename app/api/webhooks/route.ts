@@ -1,8 +1,75 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { webhookEndpoints, webhookDeliveries } from "@/lib/db/schema/additional-features";
-import { eq, desc } from "drizzle-orm";
 import crypto from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { and, desc, eq } from "drizzle-orm";
+import { z } from "zod";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import { db } from "@/lib/db";
+import { webhookEndpoints } from "@/lib/db/schema/additional-features";
+import { createClient } from "@/lib/supabase/server";
+
+const querySchema = z.object({
+  clientId: z.string().uuid(),
+});
+
+const webhookEventSchema = z.enum([
+  "client.created",
+  "client.updated",
+  "invoice.created",
+  "invoice.paid",
+  "project.completed",
+  "ticket.created",
+  "ticket.resolved",
+  "user.created",
+]);
+
+const createSchema = z.object({
+  clientId: z.string().uuid(),
+  url: z.string().url(),
+  events: z.array(webhookEventSchema).min(1),
+  isActive: z.boolean().optional(),
+  retryConfig: z
+    .object({
+      maxAttempts: z.number().optional(),
+      backoffMultiplier: z.number().optional(),
+      initialDelay: z.number().optional(),
+    })
+    .optional(),
+});
+
+const updateSchema = z.object({
+  id: z.string().uuid(),
+  url: z.string().url().optional(),
+  events: z.array(webhookEventSchema).optional(),
+  isActive: z.boolean().optional(),
+  retryConfig: z
+    .object({
+      maxAttempts: z.number().optional(),
+      backoffMultiplier: z.number().optional(),
+      initialDelay: z.number().optional(),
+    })
+    .optional(),
+});
+
+const deleteSchema = z.object({
+  id: z.string().uuid(),
+});
+
+async function requireUserAccess() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  const access = await resolveRouteAccess(supabase, user);
+  return { user, access };
+}
 
 /**
  * GET /api/webhooks
@@ -10,11 +77,25 @@ import crypto from "crypto";
  */
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const clientId = searchParams.get("clientId");
+    const auth = await requireUserAccess();
+    if ("error" in auth) {
+      return auth.error;
+    }
 
-    if (!clientId) {
-      return NextResponse.json({ error: "Client ID is required" }, { status: 400 });
+    const searchParams = request.nextUrl.searchParams;
+    const parsed = querySchema.safeParse({
+      clientId: searchParams.get("clientId"),
+    });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Client ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const { clientId } = parsed.data;
+    if (!canAccessClient(auth.access, clientId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const endpoints = await db
@@ -23,8 +104,7 @@ export async function GET(request: NextRequest) {
       .where(eq(webhookEndpoints.clientId, clientId))
       .orderBy(desc(webhookEndpoints.createdAt));
 
-    // Exclude secret from response
-    const sanitized = endpoints.map((endpoint) => ({
+    const sanitized = endpoints.map((endpoint: (typeof endpoints)[number]) => ({
       ...endpoint,
       secret: undefined,
     }));
@@ -32,7 +112,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(sanitized);
   } catch (error) {
     console.error("Error fetching webhooks:", error);
-    return NextResponse.json({ error: "Failed to fetch webhooks" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch webhooks" },
+      { status: 500 },
+    );
   }
 }
 
@@ -42,14 +125,25 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { clientId, url, events, isActive, retryConfig, createdBy } = body;
-
-    if (!clientId || !url || !events || events.length === 0) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const auth = await requireUserAccess();
+    if ("error" in auth) {
+      return auth.error;
     }
 
-    // Generate a secure secret for HMAC signature
+    const body = await request.json();
+    const parsed = createSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
+    }
+
+    const { clientId, url, events, isActive, retryConfig } = parsed.data;
+    if (!canAccessClient(auth.access, clientId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const secret = crypto.randomBytes(32).toString("hex");
 
     const newEndpoint = await db
@@ -65,20 +159,23 @@ export async function POST(request: NextRequest) {
           backoffMultiplier: 2,
           initialDelay: 5,
         },
-        createdBy: createdBy || null,
+        createdBy: auth.user.id,
       })
       .returning();
 
     return NextResponse.json(
       {
         ...newEndpoint[0],
-        secret: undefined, // Don't return the secret
+        secret: undefined,
       },
       { status: 201 },
     );
   } catch (error) {
     console.error("Error creating webhook:", error);
-    return NextResponse.json({ error: "Failed to create webhook" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create webhook" },
+      { status: 500 },
+    );
   }
 }
 
@@ -88,11 +185,33 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { id, url, events, isActive, retryConfig } = body;
+    const auth = await requireUserAccess();
+    if ("error" in auth) {
+      return auth.error;
+    }
 
-    if (!id) {
-      return NextResponse.json({ error: "Webhook ID is required" }, { status: 400 });
+    const body = await request.json();
+    const parsed = updateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Webhook ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const { id, url, events, isActive, retryConfig } = parsed.data;
+    const [existing] = await db
+      .select()
+      .from(webhookEndpoints)
+      .where(eq(webhookEndpoints.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json({ error: "Webhook not found" }, { status: 404 });
+    }
+
+    if (!canAccessClient(auth.access, existing.clientId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const updated = await db
@@ -104,7 +223,12 @@ export async function PATCH(request: NextRequest) {
         retryConfig,
         updatedAt: new Date(),
       })
-      .where(eq(webhookEndpoints.id, id))
+      .where(
+        and(
+          eq(webhookEndpoints.id, id),
+          eq(webhookEndpoints.clientId, existing.clientId),
+        ),
+      )
       .returning();
 
     return NextResponse.json({
@@ -113,7 +237,10 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error updating webhook:", error);
-    return NextResponse.json({ error: "Failed to update webhook" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update webhook" },
+      { status: 500 },
+    );
   }
 }
 
@@ -123,18 +250,49 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return NextResponse.json({ error: "Webhook ID is required" }, { status: 400 });
+    const auth = await requireUserAccess();
+    if ("error" in auth) {
+      return auth.error;
     }
 
-    await db.delete(webhookEndpoints).where(eq(webhookEndpoints.id, id));
+    const searchParams = request.nextUrl.searchParams;
+    const parsed = deleteSchema.safeParse({ id: searchParams.get("id") });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Webhook ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const { id } = parsed.data;
+    const [existing] = await db
+      .select()
+      .from(webhookEndpoints)
+      .where(eq(webhookEndpoints.id, id))
+      .limit(1);
+    if (!existing) {
+      return NextResponse.json({ error: "Webhook not found" }, { status: 404 });
+    }
+
+    if (!canAccessClient(auth.access, existing.clientId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await db
+      .delete(webhookEndpoints)
+      .where(
+        and(
+          eq(webhookEndpoints.id, id),
+          eq(webhookEndpoints.clientId, existing.clientId),
+        ),
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting webhook:", error);
-    return NextResponse.json({ error: "Failed to delete webhook" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete webhook" },
+      { status: 500 },
+    );
   }
 }

@@ -1,15 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
+import { and, eq } from "drizzle-orm";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { db } from "@/lib/db";
-import { projectMilestones, projectDeliverables } from "@/lib/db/schema/projects";
-import { eq, desc } from "drizzle-orm";
+import {
+  projectDeliverables,
+  projectMilestones,
+  projects,
+} from "@/lib/db/schema/projects";
+import { createClient } from "@/lib/supabase/server";
+
+async function requireProjectAccess(projectId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      ),
+    };
+  }
+
+  const access = await resolveRouteAccess(supabase, user);
+  const [project] = await db
+    .select({ clientId: projects.clientId })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  if (!project) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Project not found" },
+        { status: 404 },
+      ),
+    };
+  }
+
+  if (!canAccessClient(access, project.clientId)) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return { user, access };
+}
 
 /**
  * GET /api/projects/[id]/milestones
  * Get all milestones for a project
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireProjectAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
 
     const milestones = await db
       .select()
@@ -19,7 +76,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Fetch deliverables for each milestone
     const milestonesWithDeliverables = await Promise.all(
-      milestones.map(async (milestone) => {
+      milestones.map(async (milestone: (typeof milestones)[number]) => {
         const deliverables = await db
           .select()
           .from(projectDeliverables)
@@ -53,9 +110,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * POST /api/projects/[id]/milestones
  * Create a new milestone
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireProjectAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const body = await request.json();
 
     const { title, description, dueDate, sortOrder } = body;
@@ -101,9 +166,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
  * PATCH /api/projects/[id]/milestones
  * Update a milestone
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireProjectAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const body = await request.json();
     const { milestoneId, ...updates } = body;
 
@@ -122,10 +195,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .set({
         ...updates,
         dueDate: updates.dueDate ? new Date(updates.dueDate) : undefined,
-        completedAt: updates.completedAt ? new Date(updates.completedAt) : undefined,
+        completedAt: updates.completedAt
+          ? new Date(updates.completedAt)
+          : undefined,
         updatedAt: new Date(),
       })
-      .where(eq(projectMilestones.id, milestoneId))
+      .where(
+        and(
+          eq(projectMilestones.id, milestoneId),
+          eq(projectMilestones.projectId, id),
+        ),
+      )
       .returning();
 
     return NextResponse.json({
@@ -148,9 +228,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
  * DELETE /api/projects/[id]/milestones
  * Delete a milestone
  */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireProjectAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const milestoneId = searchParams.get("milestoneId");
 
@@ -164,7 +252,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       );
     }
 
-    await db.delete(projectMilestones).where(eq(projectMilestones.id, milestoneId));
+    await db
+      .delete(projectMilestones)
+      .where(
+        and(
+          eq(projectMilestones.id, milestoneId),
+          eq(projectMilestones.projectId, id),
+        ),
+      );
 
     return NextResponse.json({
       success: true,

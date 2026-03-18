@@ -1,15 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
-import { maintenancePlans, maintenancePlanUsage } from "@/lib/db/schema/maintenance-plans";
+import {
+  maintenancePlans,
+  maintenancePlanUsage,
+} from "@/lib/db/schema/maintenance-plans";
 import { eq, sql, desc } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+
+async function requirePlanAccess(planId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      ),
+    };
+  }
+
+  const access = await resolveRouteAccess(supabase, user);
+  const [plan] = await db
+    .select({ clientId: maintenancePlans.clientId })
+    .from(maintenancePlans)
+    .where(eq(maintenancePlans.id, planId))
+    .limit(1);
+
+  if (!plan) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Maintenance plan not found" },
+        { status: 404 },
+      ),
+    };
+  }
+
+  if (!canAccessClient(access, plan.clientId)) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return { user, access };
+}
 
 /**
  * GET /api/maintenance-plans/[id]
  * Get a specific maintenance plan with usage details
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requirePlanAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
 
     // Get plan details with aggregated usage
     const [plan] = await db
@@ -70,7 +126,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       })
       .from(maintenancePlanUsage)
       .leftJoin(sql`users`, sql`users.id = ${maintenancePlanUsage.loggedBy}`)
-      .leftJoin(sql`users as approver`, sql`approver.id = ${maintenancePlanUsage.approvedBy}`)
+      .leftJoin(
+        sql`users as approver`,
+        sql`approver.id = ${maintenancePlanUsage.approvedBy}`,
+      )
       .where(eq(maintenancePlanUsage.planId, id))
       .orderBy(desc(maintenancePlanUsage.loggedAt))
       .limit(50);
@@ -101,13 +160,25 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * PATCH /api/maintenance-plans/[id]
  * Update a maintenance plan
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requirePlanAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const body = await request.json();
 
     // Check if plan exists
-    const [existingPlan] = await db.select().from(maintenancePlans).where(eq(maintenancePlans.id, id)).limit(1);
+    const [existingPlan] = await db
+      .select()
+      .from(maintenancePlans)
+      .where(eq(maintenancePlans.id, id))
+      .limit(1);
 
     if (!existingPlan) {
       return NextResponse.json(
@@ -153,12 +224,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
  * DELETE /api/maintenance-plans/[id]
  * Soft delete a maintenance plan
  */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requirePlanAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
 
     // Check if plan exists
-    const [existingPlan] = await db.select().from(maintenancePlans).where(eq(maintenancePlans.id, id)).limit(1);
+    const [existingPlan] = await db
+      .select()
+      .from(maintenancePlans)
+      .where(eq(maintenancePlans.id, id))
+      .limit(1);
 
     if (!existingPlan) {
       return NextResponse.json(

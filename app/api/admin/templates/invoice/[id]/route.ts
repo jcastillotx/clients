@@ -1,14 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { hasPermission } from "@/lib/rbac/permissions";
 import { extractVariables } from "@/lib/templates/template-engine";
+import { requirePermission } from "@/lib/auth/route-guards";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
-    const canView = await hasPermission("settings.manage");
-    if (!canView) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    const guard = await requirePermission("settings.manage");
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const supabase = await createClient();
@@ -23,29 +26,39 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (error) throw error;
 
     if (!template) {
-      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Template not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ template });
   } catch (error) {
     console.error("Error fetching invoice template:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch template" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to fetch template",
+      },
       { status: 500 },
     );
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
-    const canManage = await hasPermission("settings.manage");
-    if (!canManage) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    const guard = await requirePermission("settings.manage");
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const body = await request.json();
-    const { name, description, htmlContent, cssContent, isDefault, isActive } = body;
+    const { name, description, htmlContent, cssContent, isDefault, isActive } =
+      body;
 
     const supabase = await createClient();
 
@@ -59,9 +72,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     // Extract available variables from the template
-    const availableVariables = htmlContent ? extractVariables(htmlContent) : undefined;
+    const availableVariables = htmlContent
+      ? extractVariables(htmlContent)
+      : undefined;
 
-    const updateData: any = {
+    const updateData: {
+      updated_at: string;
+      [key: string]: unknown;
+    } = {
       updated_at: new Date().toISOString(),
     };
 
@@ -86,25 +104,34 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (error) throw error;
 
     if (!template) {
-      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Template not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ template });
   } catch (error) {
     console.error("Error updating invoice template:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update template" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to update template",
+      },
       { status: 500 },
     );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
-    const canManage = await hasPermission("settings.manage");
-    if (!canManage) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    const guard = await requirePermission("settings.manage");
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const supabase = await createClient();
@@ -122,7 +149,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   } catch (error) {
     console.error("Error deleting invoice template:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete template" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to delete template",
+      },
       { status: 500 },
     );
   }

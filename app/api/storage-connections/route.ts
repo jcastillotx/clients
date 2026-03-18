@@ -4,14 +4,20 @@ import { storageConnections } from "@/lib/db/schema/additional-features";
 import { eq, and } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { users } from "@/lib/db/schema/users";
+import { encrypt } from "@/lib/encryption";
 
-function isAdminUser(user: any, dbUser: any) {
-  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
+function isAdminUser(
+  user: { user_metadata?: Record<string, unknown> },
+  dbUser: { isSuperAdmin?: boolean | null },
+) {
+  const metadataRole = String(
+    user?.user_metadata?.role || user?.user_metadata?.app_role || "",
+  ).toLowerCase();
   return Boolean(
     dbUser?.isSuperAdmin ||
-      user?.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin",
+    user?.user_metadata?.is_super_admin === true ||
+    metadataRole === "admin" ||
+    metadataRole === "super_admin",
   );
 }
 
@@ -38,10 +44,17 @@ export async function GET(request: NextRequest) {
     const ownerType = searchParams.get("ownerType");
 
     if (!clientId) {
-      return NextResponse.json({ error: "Client ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Client ID is required" },
+        { status: 400 },
+      );
     }
 
-    const [dbUser] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    const [dbUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
     if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -62,7 +75,7 @@ export async function GET(request: NextRequest) {
       .where(and(...conditions));
 
     // Exclude encrypted credentials from response
-    const sanitized = connections.map((conn) => ({
+    const sanitized = connections.map((conn: (typeof connections)[number]) => ({
       ...conn,
       credentialsEncrypted: undefined,
     }));
@@ -70,7 +83,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(sanitized);
   } catch (error) {
     console.error("Error fetching storage connections:", error);
-    return NextResponse.json({ error: "Failed to fetch storage connections" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch storage connections" },
+      { status: 500 },
+    );
   }
 }
 
@@ -91,13 +107,28 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientId, provider, ownerType, connectionName, credentials, syncEnabled, config } = body;
+    const {
+      clientId,
+      provider,
+      ownerType,
+      connectionName,
+      credentials,
+      syncEnabled,
+      config,
+    } = body;
 
     if (!clientId || !provider || !connectionName || !credentials) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
-    const [dbUser] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    const [dbUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
     if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -106,15 +137,17 @@ export async function POST(request: NextRequest) {
 
     // Company connections require admin
     if (ownerType === "company" && !isAdmin) {
-      return NextResponse.json({ error: "Only admins can manage company storage" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Only admins can manage company storage" },
+        { status: 403 },
+      );
     }
 
     if (!isAdmin && dbUser.clientId !== clientId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // TODO: Implement proper encryption for credentials
-    const credentialsEncrypted = Buffer.from(JSON.stringify(credentials)).toString("base64");
+    const credentialsEncrypted = encrypt(JSON.stringify(credentials));
 
     const newConnection = await db
       .insert(storageConnections)
@@ -138,7 +171,10 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error creating storage connection:", error);
-    return NextResponse.json({ error: "Failed to create storage connection" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create storage connection" },
+      { status: 500 },
+    );
   }
 }
 
@@ -160,35 +196,62 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "Connection ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Connection ID is required" },
+        { status: 400 },
+      );
     }
 
-    const [dbUser] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    const [dbUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
     if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const [connection] = await db.select().from(storageConnections).where(eq(storageConnections.id, id)).limit(1);
+    const [connection] = await db
+      .select()
+      .from(storageConnections)
+      .where(eq(storageConnections.id, id))
+      .limit(1);
     if (!connection) {
-      return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Connection not found" },
+        { status: 404 },
+      );
     }
 
     const isAdmin = isAdminUser(user, dbUser);
 
     // Company connections require admin to delete
     if (connection.ownerType === "company" && !isAdmin) {
-      return NextResponse.json({ error: "Only admins can manage company storage" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Only admins can manage company storage" },
+        { status: 403 },
+      );
     }
 
     if (!isAdmin && dbUser.clientId !== connection.clientId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await db.delete(storageConnections).where(and(eq(storageConnections.id, id), eq(storageConnections.clientId, connection.clientId)));
+    await db
+      .delete(storageConnections)
+      .where(
+        and(
+          eq(storageConnections.id, id),
+          eq(storageConnections.clientId, connection.clientId),
+        ),
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting storage connection:", error);
-    return NextResponse.json({ error: "Failed to delete storage connection" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete storage connection" },
+      { status: 500 },
+    );
   }
 }

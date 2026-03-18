@@ -1,12 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { createProposalAccessToken } from "@/lib/proposals/public-access";
 
 /**
  * POST /api/proposals/[id]/send
  *
  * Send proposal to client via email and update status
  */
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   const supabase = await createClient();
 
@@ -19,7 +23,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   try {
-
     // Fetch proposal with client details
     const { data: proposal, error: fetchError } = await supabase
       .from("proposals")
@@ -35,11 +38,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (fetchError) throw fetchError;
     if (!proposal) {
-      return NextResponse.json({ error: "Proposal not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Proposal not found" },
+        { status: 404 },
+      );
     }
 
     if (proposal.status !== "draft") {
-      return NextResponse.json({ error: "Only draft proposals can be sent" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Only draft proposals can be sent" },
+        { status: 400 },
+      );
     }
 
     // Update proposal status
@@ -55,19 +64,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (updateError) throw updateError;
 
+    const appUrl = (
+      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    ).replace(/\/+$/, "");
+    const accessToken = createProposalAccessToken(id);
+    const proposalUrl = accessToken
+      ? `${appUrl}/proposals/${id}/preview?token=${encodeURIComponent(accessToken)}`
+      : `${appUrl}/proposals/${id}/preview`;
+
     // TODO: Send email to client with proposal link
-    // const proposalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/proposals/${id}/preview`;
     // await sendProposalEmail(proposal.client.email, proposalUrl, proposal);
 
     return NextResponse.json({
       success: true,
       proposal: updatedProposal,
+      proposalUrl,
       message: "Proposal sent successfully",
     });
   } catch (error) {
     console.error("Error sending proposal:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to send proposal" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to send proposal",
+      },
       { status: 500 },
     );
   }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createSignedToken, getSigningSecret } from "@/lib/auth/signed-token";
 
 const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/calendar.readonly",
@@ -20,18 +21,34 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
   if (!clientId) {
     return NextResponse.json(
-      { error: "Google Calendar integration is not configured on this server." },
+      {
+        error: "Google Calendar integration is not configured on this server.",
+      },
       { status: 501 },
     );
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const redirectUri = `${appUrl}/api/calendar/callback/google`;
+  const stateSecret = getSigningSecret("CALENDAR_OAUTH_STATE_SECRET");
+  if (!stateSecret) {
+    return NextResponse.json(
+      { error: "Calendar OAuth state secret is not configured." },
+      { status: 501 },
+    );
+  }
+
+  const state = createSignedToken(
+    { userId: user.id, provider: "google" },
+    stateSecret,
+    10 * 60,
+  );
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -40,9 +57,10 @@ export async function GET() {
     scope: GOOGLE_SCOPES,
     access_type: "offline",
     prompt: "consent",
-    // Embed user ID so the callback can associate the token
-    state: user.id,
+    state,
   });
 
-  return NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+  return NextResponse.redirect(
+    `https://accounts.google.com/o/oauth2/v2/auth?${params}`,
+  );
 }

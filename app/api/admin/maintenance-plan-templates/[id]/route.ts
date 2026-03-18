@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { maintenancePlanTemplates } from "@/lib/db/schema/maintenance-plans";
 import { eq } from "drizzle-orm";
+import { requireAdminUser } from "@/lib/auth/route-guards";
 
 /**
  * GET /api/admin/maintenance-plan-templates/[id]
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireAdminUser();
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const [template] = await db
       .select()
       .from(maintenancePlanTemplates)
@@ -16,7 +25,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .limit(1);
 
     if (!template) {
-      return NextResponse.json({ success: false, error: "Template not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Template not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ success: true, data: template });
@@ -24,7 +36,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     console.error("Error fetching template:", error);
     const status = isDatabaseConfigurationError(error) ? 503 : 500;
     return NextResponse.json(
-      { success: false, error: "Failed to fetch template", message: error instanceof Error ? error.message : "Unknown error" },
+      {
+        success: false,
+        error: "Failed to fetch template",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
       { status },
     );
   }
@@ -33,9 +49,17 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 /**
  * PATCH /api/admin/maintenance-plan-templates/[id]
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireAdminUser();
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const body = await request.json();
 
     const [existing] = await db
@@ -45,7 +69,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .limit(1);
 
     if (!existing) {
-      return NextResponse.json({ success: false, error: "Template not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Template not found" },
+        { status: 404 },
+      );
     }
 
     const [updated] = await db
@@ -54,12 +81,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .where(eq(maintenancePlanTemplates.id, id))
       .returning();
 
-    return NextResponse.json({ success: true, data: updated, message: "Template updated successfully" });
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      message: "Template updated successfully",
+    });
   } catch (error) {
     console.error("Error updating template:", error);
     const status = isDatabaseConfigurationError(error) ? 503 : 500;
     return NextResponse.json(
-      { success: false, error: "Failed to update template", message: error instanceof Error ? error.message : "Unknown error" },
+      {
+        success: false,
+        error: "Failed to update template",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
       { status },
     );
   }
@@ -68,9 +103,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 /**
  * DELETE /api/admin/maintenance-plan-templates/[id]
  */
-export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireAdminUser();
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const [existing] = await db
       .select()
       .from(maintenancePlanTemplates)
@@ -78,17 +121,29 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
       .limit(1);
 
     if (!existing) {
-      return NextResponse.json({ success: false, error: "Template not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Template not found" },
+        { status: 404 },
+      );
     }
 
-    await db.delete(maintenancePlanTemplates).where(eq(maintenancePlanTemplates.id, id));
+    await db
+      .delete(maintenancePlanTemplates)
+      .where(eq(maintenancePlanTemplates.id, id));
 
-    return NextResponse.json({ success: true, message: "Template deleted successfully" });
+    return NextResponse.json({
+      success: true,
+      message: "Template deleted successfully",
+    });
   } catch (error) {
     console.error("Error deleting template:", error);
     const status = isDatabaseConfigurationError(error) ? 503 : 500;
     return NextResponse.json(
-      { success: false, error: "Failed to delete template", message: error instanceof Error ? error.message : "Unknown error" },
+      {
+        success: false,
+        error: "Failed to delete template",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
       { status },
     );
   }

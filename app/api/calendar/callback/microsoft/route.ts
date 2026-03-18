@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { calendarConnections } from "@/lib/db/schema/calendar-integrations";
 import { encrypt } from "@/lib/encryption";
 import { eq, and } from "drizzle-orm";
+import { getSigningSecret, verifySignedToken } from "@/lib/auth/signed-token";
 
 /**
  * GET /api/calendar/callback/microsoft
@@ -19,16 +20,30 @@ export async function GET(req: NextRequest) {
   const redirectBase = `${appUrl}/settings/calendar`;
 
   const code = req.nextUrl.searchParams.get("code");
-  const userId = req.nextUrl.searchParams.get("state");
+  const stateToken = req.nextUrl.searchParams.get("state");
   const error = req.nextUrl.searchParams.get("error");
 
-  if (error || !code || !userId) {
-    return NextResponse.redirect(`${redirectBase}?error=microsoft_oauth_denied`);
+  if (error || !code || !stateToken) {
+    return NextResponse.redirect(
+      `${redirectBase}?error=microsoft_oauth_denied`,
+    );
   }
 
-  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!UUID_REGEX.test(userId)) {
-    return NextResponse.json({ error: "Invalid state parameter" }, { status: 400 });
+  const stateSecret = getSigningSecret("CALENDAR_OAUTH_STATE_SECRET");
+  if (!stateSecret) {
+    return NextResponse.redirect(`${redirectBase}?error=not_configured`);
+  }
+
+  const statePayload = verifySignedToken(stateToken, stateSecret);
+  const userId =
+    typeof statePayload?.userId === "string" ? statePayload.userId : null;
+  const provider =
+    typeof statePayload?.provider === "string" ? statePayload.provider : null;
+
+  const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!userId || !UUID_REGEX.test(userId) || provider !== "microsoft") {
+    return NextResponse.redirect(`${redirectBase}?error=invalid_state`);
   }
 
   const clientId = process.env.MICROSOFT_CALENDAR_CLIENT_ID;
@@ -41,23 +56,31 @@ export async function GET(req: NextRequest) {
 
   try {
     // Exchange code for tokens
-    const tokenRes = await fetch("https://login.microsoftonline.com/common/oauth2/v2.0/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: redirectUri,
-        grant_type: "authorization_code",
-        scope: "Calendars.Read offline_access User.Read",
-      }),
-    });
+    const tokenRes = await fetch(
+      "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: "authorization_code",
+          scope: "Calendars.Read offline_access User.Read",
+        }),
+      },
+    );
 
     const tokens = await tokenRes.json();
     if (!tokens.access_token) {
-      console.error("[calendar/callback/microsoft] Token exchange failed:", tokens);
-      return NextResponse.redirect(`${redirectBase}?error=token_exchange_failed`);
+      console.error(
+        "[calendar/callback/microsoft] Token exchange failed:",
+        tokens,
+      );
+      return NextResponse.redirect(
+        `${redirectBase}?error=token_exchange_failed`,
+      );
     }
 
     // Fetch the user's primary calendar name via Microsoft Graph
@@ -75,7 +98,12 @@ export async function GET(req: NextRequest) {
     const existing = await db
       .select({ id: calendarConnections.id })
       .from(calendarConnections)
-      .where(and(eq(calendarConnections.userId, userId), eq(calendarConnections.provider, "microsoft")))
+      .where(
+        and(
+          eq(calendarConnections.userId, userId),
+          eq(calendarConnections.provider, "microsoft"),
+        ),
+      )
       .limit(1);
 
     if (existing.length > 0) {
@@ -83,7 +111,9 @@ export async function GET(req: NextRequest) {
         .update(calendarConnections)
         .set({
           encryptedAccessToken: encrypt(tokens.access_token),
-          encryptedRefreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : undefined,
+          encryptedRefreshToken: tokens.refresh_token
+            ? encrypt(tokens.refresh_token)
+            : undefined,
           tokenExpiry,
           calendarName,
           isActive: true,
@@ -97,7 +127,9 @@ export async function GET(req: NextRequest) {
         calendarId: "primary",
         calendarName,
         encryptedAccessToken: encrypt(tokens.access_token),
-        encryptedRefreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
+        encryptedRefreshToken: tokens.refresh_token
+          ? encrypt(tokens.refresh_token)
+          : null,
         tokenExpiry,
         isActive: true,
       });

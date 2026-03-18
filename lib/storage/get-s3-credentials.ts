@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { storageConnections } from "@/lib/db/schema/additional-features";
 import { eq, and } from "drizzle-orm";
+import { decrypt } from "@/lib/encryption";
 
 export interface S3Credentials {
   accessKeyId: string;
@@ -9,9 +10,16 @@ export interface S3Credentials {
   region: string;
 }
 
-function extractCreds(conn: typeof storageConnections.$inferSelect): S3Credentials | null {
+function extractCreds(
+  conn: typeof storageConnections.$inferSelect,
+): S3Credentials | null {
   try {
-    const raw = Buffer.from(conn.credentialsEncrypted, "base64").toString("utf-8");
+    let raw: string;
+    try {
+      raw = decrypt(conn.credentialsEncrypted);
+    } catch {
+      raw = Buffer.from(conn.credentialsEncrypted, "base64").toString("utf-8");
+    }
     const creds = JSON.parse(raw) as Record<string, string>;
     const accessKeyId = creds.accessKeyId;
     const secretAccessKey = creds.secretAccessKey;
@@ -32,7 +40,11 @@ function extractCreds(conn: typeof storageConnections.$inferSelect): S3Credentia
  * admin users without a clientId still get credentials.
  * Falls back to env vars if no DB connection is found.
  */
-export async function getS3Credentials(_userId?: string): Promise<S3Credentials | null> {
+export async function getS3Credentials(
+  _userId?: string,
+): Promise<S3Credentials | null> {
+  void _userId;
+
   // Find any active company-level S3 connection across all clients
   const connections = await db
     .select()

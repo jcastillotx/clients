@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { calendarConnections } from "@/lib/db/schema/calendar-integrations";
 import { encrypt } from "@/lib/encryption";
 import { eq, and } from "drizzle-orm";
+import { getSigningSecret, verifySignedToken } from "@/lib/auth/signed-token";
 
 /**
  * GET /api/calendar/callback/google
@@ -19,16 +20,28 @@ export async function GET(req: NextRequest) {
   const redirectBase = `${appUrl}/settings/calendar`;
 
   const code = req.nextUrl.searchParams.get("code");
-  const userId = req.nextUrl.searchParams.get("state");
+  const stateToken = req.nextUrl.searchParams.get("state");
   const error = req.nextUrl.searchParams.get("error");
 
-  if (error || !code || !userId) {
+  if (error || !code || !stateToken) {
     return NextResponse.redirect(`${redirectBase}?error=google_oauth_denied`);
   }
 
-  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!UUID_REGEX.test(userId)) {
-    return NextResponse.json({ error: "Invalid state parameter" }, { status: 400 });
+  const stateSecret = getSigningSecret("CALENDAR_OAUTH_STATE_SECRET");
+  if (!stateSecret) {
+    return NextResponse.redirect(`${redirectBase}?error=not_configured`);
+  }
+
+  const statePayload = verifySignedToken(stateToken, stateSecret);
+  const userId =
+    typeof statePayload?.userId === "string" ? statePayload.userId : null;
+  const provider =
+    typeof statePayload?.provider === "string" ? statePayload.provider : null;
+
+  const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!userId || !UUID_REGEX.test(userId) || provider !== "google") {
+    return NextResponse.redirect(`${redirectBase}?error=invalid_state`);
   }
 
   const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
@@ -55,14 +68,22 @@ export async function GET(req: NextRequest) {
 
     const tokens = await tokenRes.json();
     if (!tokens.access_token) {
-      console.error("[calendar/callback/google] Token exchange failed:", tokens);
-      return NextResponse.redirect(`${redirectBase}?error=token_exchange_failed`);
+      console.error(
+        "[calendar/callback/google] Token exchange failed:",
+        tokens,
+      );
+      return NextResponse.redirect(
+        `${redirectBase}?error=token_exchange_failed`,
+      );
     }
 
     // Fetch the user's primary calendar name
-    const calRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary", {
-      headers: { Authorization: `Bearer ${tokens.access_token}` },
-    });
+    const calRes = await fetch(
+      "https://www.googleapis.com/calendar/v3/calendars/primary",
+      {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      },
+    );
     const calData = await calRes.json();
     const calendarName = calData.summary ?? "Google Calendar";
 
@@ -74,7 +95,12 @@ export async function GET(req: NextRequest) {
     const existing = await db
       .select({ id: calendarConnections.id })
       .from(calendarConnections)
-      .where(and(eq(calendarConnections.userId, userId), eq(calendarConnections.provider, "google")))
+      .where(
+        and(
+          eq(calendarConnections.userId, userId),
+          eq(calendarConnections.provider, "google"),
+        ),
+      )
       .limit(1);
 
     if (existing.length > 0) {
@@ -82,7 +108,9 @@ export async function GET(req: NextRequest) {
         .update(calendarConnections)
         .set({
           encryptedAccessToken: encrypt(tokens.access_token),
-          encryptedRefreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : undefined,
+          encryptedRefreshToken: tokens.refresh_token
+            ? encrypt(tokens.refresh_token)
+            : undefined,
           tokenExpiry,
           calendarName,
           isActive: true,
@@ -96,7 +124,9 @@ export async function GET(req: NextRequest) {
         calendarId: "primary",
         calendarName,
         encryptedAccessToken: encrypt(tokens.access_token),
-        encryptedRefreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
+        encryptedRefreshToken: tokens.refresh_token
+          ? encrypt(tokens.refresh_token)
+          : null,
         tokenExpiry,
         isActive: true,
       });

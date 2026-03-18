@@ -1,13 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { hasPermission } from "@/lib/rbac/permissions";
 import { extractVariables } from "@/lib/templates/template-engine";
+import { requirePermission } from "@/lib/auth/route-guards";
 
 export async function GET() {
   try {
-    const canView = await hasPermission("settings.manage");
-    if (!canView) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    const guard = await requirePermission("settings.manage");
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const supabase = await createClient();
@@ -24,7 +24,10 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching invoice templates:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch templates" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to fetch templates",
+      },
       { status: 500 },
     );
   }
@@ -32,13 +35,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const canManage = await hasPermission("settings.manage");
-    if (!canManage) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    const guard = await requirePermission("settings.manage");
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const body = await request.json();
-    const { name, description, htmlContent, cssContent, isDefault, isActive } = body;
+    const { name, description, htmlContent, cssContent, isDefault, isActive } =
+      body;
 
     // Extract available variables from the template
     const availableVariables = extractVariables(htmlContent);
@@ -47,7 +51,10 @@ export async function POST(request: Request) {
 
     // If setting as default, unset other defaults first
     if (isDefault) {
-      await supabase.from("invoice_templates").update({ is_default: false }).eq("is_default", true);
+      await supabase
+        .from("invoice_templates")
+        .update({ is_default: false })
+        .eq("is_default", true);
     }
 
     const { data: template, error } = await supabase
@@ -70,7 +77,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error creating invoice template:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create template" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to create template",
+      },
       { status: 500 },
     );
   }

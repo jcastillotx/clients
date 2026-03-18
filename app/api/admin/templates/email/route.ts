@@ -1,13 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { hasPermission } from "@/lib/rbac/permissions";
 import { extractVariables } from "@/lib/templates/template-engine";
+import { requirePermission } from "@/lib/auth/route-guards";
 
 export async function GET(request: Request) {
   try {
-    const canView = await hasPermission("settings.manage");
-    if (!canView) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    const guard = await requirePermission("settings.manage");
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const { searchParams } = new URL(request.url);
@@ -33,7 +33,10 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Error fetching email templates:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch templates" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to fetch templates",
+      },
       { status: 500 },
     );
   }
@@ -41,13 +44,22 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const canManage = await hasPermission("settings.manage");
-    if (!canManage) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    const guard = await requirePermission("settings.manage");
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const body = await request.json();
-    const { name, description, type, subject, htmlContent, textContent, isDefault, isActive } = body;
+    const {
+      name,
+      description,
+      type,
+      subject,
+      htmlContent,
+      textContent,
+      isDefault,
+      isActive,
+    } = body;
 
     // Extract available variables from the template
     const availableVariables = extractVariables(htmlContent);
@@ -56,7 +68,11 @@ export async function POST(request: Request) {
 
     // If setting as default for this type, unset other defaults
     if (isDefault) {
-      await supabase.from("email_templates").update({ is_default: false }).eq("type", type).eq("is_default", true);
+      await supabase
+        .from("email_templates")
+        .update({ is_default: false })
+        .eq("type", type)
+        .eq("is_default", true);
     }
 
     const { data: template, error } = await supabase
@@ -81,7 +97,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error creating email template:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create template" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to create template",
+      },
       { status: 500 },
     );
   }

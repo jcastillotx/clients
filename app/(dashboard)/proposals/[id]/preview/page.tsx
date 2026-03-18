@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProposalPreview } from "@/components/proposals/proposal-preview";
 import { notFound } from "next/navigation";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import { verifyProposalAccessToken } from "@/lib/proposals/public-access";
 
 export const metadata = {
   title: "Proposal Preview | KRE8IV",
@@ -22,10 +24,15 @@ interface PageProps {
  * This page is publicly accessible via a secure token.
  * Tracks views and allows client to accept/reject.
  */
-export default async function ProposalPreviewPage({ params, searchParams }: PageProps) {
+export default async function ProposalPreviewPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
+  const accessToken = resolvedSearchParams.token;
+  const hasValidPublicToken = verifyProposalAccessToken(id, accessToken);
 
   // Fetch proposal with relations (no RLS check for public preview)
   const { data: proposal, error } = await supabase
@@ -45,8 +52,20 @@ export default async function ProposalPreviewPage({ params, searchParams }: Page
     notFound();
   }
 
-  // Verify token if required (implement token validation logic)
-  // For now, we'll allow direct access but log the view
+  if (!hasValidPublicToken) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      notFound();
+    }
+
+    const access = await resolveRouteAccess(supabase, user);
+    if (!canAccessClient(access, proposal.client_id)) {
+      notFound();
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">

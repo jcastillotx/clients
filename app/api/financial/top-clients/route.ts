@@ -1,9 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasPermission } from "@/lib/rbac/permissions";
+import { requireAuthenticatedUser } from "@/lib/auth/route-guards";
 
 export async function GET() {
   try {
+    const auth = await requireAuthenticatedUser();
+    if ("error" in auth) {
+      return auth.error;
+    }
+
     const canView = await hasPermission("reports.financial");
     if (!canView) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
@@ -37,27 +43,36 @@ export async function GET() {
       }
     >();
 
-    invoices?.forEach((invoice: any) => {
-      const clientId = invoice.client_id;
-      const clientName = Array.isArray(invoice.clients) ? invoice.clients[0]?.company_name : invoice.clients?.company_name || "Unknown";
+    invoices?.forEach(
+      (invoice: {
+        client_id: string;
+        amount: number;
+        status: string;
+        clients?: { company_name?: string } | Array<{ company_name?: string }>;
+      }) => {
+        const clientId = invoice.client_id;
+        const clientName = Array.isArray(invoice.clients)
+          ? (invoice.clients[0]?.company_name ?? "Unknown")
+          : invoice.clients?.company_name || "Unknown";
 
-      if (!clientMap.has(clientId)) {
-        clientMap.set(clientId, {
-          id: clientId,
-          company_name: clientName,
-          total_revenue: 0,
-          invoice_count: 0,
-          paid_count: 0,
-        });
-      }
+        if (!clientMap.has(clientId)) {
+          clientMap.set(clientId, {
+            id: clientId,
+            company_name: clientName,
+            total_revenue: 0,
+            invoice_count: 0,
+            paid_count: 0,
+          });
+        }
 
-      const client = clientMap.get(clientId)!;
-      client.total_revenue += invoice.amount;
-      client.invoice_count++;
-      if (invoice.status === "paid") {
-        client.paid_count++;
-      }
-    });
+        const client = clientMap.get(clientId)!;
+        client.total_revenue += invoice.amount;
+        client.invoice_count++;
+        if (invoice.status === "paid") {
+          client.paid_count++;
+        }
+      },
+    );
 
     // Convert to array and sort by revenue
     const clients = Array.from(clientMap.values())

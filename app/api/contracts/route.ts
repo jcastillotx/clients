@@ -1,14 +1,45 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasPermission } from "@/lib/rbac/permissions";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import { z } from "zod";
+
+const querySchema = z.object({
+  clientId: z.string().uuid().optional(),
+  status: z.string().optional(),
+});
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const clientId = searchParams.get("clientId");
-    const status = searchParams.get("status");
-
     const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const access = await resolveRouteAccess(supabase, user);
+    const { searchParams } = new URL(request.url);
+    const parsed = querySchema.safeParse({
+      clientId: searchParams.get("clientId") || undefined,
+      status: searchParams.get("status") || undefined,
+    });
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters" },
+        { status: 400 },
+      );
+    }
+
+    const { clientId, status } = parsed.data;
+
+    if (clientId && !canAccessClient(access, clientId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     // Build query
     let query = supabase
@@ -26,6 +57,8 @@ export async function GET(request: Request) {
     // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
+    } else if (!access.isAdmin && access.clientId) {
+      query = query.eq("client_id", access.clientId);
     }
 
     // Filter by status if provided
@@ -42,7 +75,8 @@ export async function GET(request: Request) {
     console.error("Error fetching contracts:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to fetch contracts",
+        error:
+          error instanceof Error ? error.message : "Failed to fetch contracts",
       },
       { status: 500 },
     );
@@ -51,6 +85,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const access = await resolveRouteAccess(supabase, user);
+
     const canCreate = await hasPermission("contracts.create");
     if (!canCreate) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
@@ -74,10 +120,21 @@ export async function POST(request: Request) {
       customFields,
     } = body;
 
-    const supabase = await createClient();
+    if (!clientId) {
+      return NextResponse.json(
+        { error: "Client ID is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!canAccessClient(access, clientId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     // Generate contract number
-    const { data: contractNumber } = await supabase.rpc("generate_contract_number");
+    const { data: contractNumber } = await supabase.rpc(
+      "generate_contract_number",
+    );
 
     const { data: contract, error } = await supabase
       .from("contracts")
@@ -108,7 +165,8 @@ export async function POST(request: Request) {
     console.error("Error creating contract:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to create contract",
+        error:
+          error instanceof Error ? error.message : "Failed to create contract",
       },
       { status: 500 },
     );

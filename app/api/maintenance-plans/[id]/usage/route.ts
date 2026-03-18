@@ -1,19 +1,83 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
-import { maintenancePlans, maintenancePlanUsage } from "@/lib/db/schema/maintenance-plans";
+import {
+  maintenancePlans,
+  maintenancePlanUsage,
+} from "@/lib/db/schema/maintenance-plans";
 import { eq, sql } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+
+type DbTransaction = Parameters<typeof db.transaction>[0] extends (
+  tx: infer T,
+) => Promise<unknown>
+  ? T
+  : never;
+
+async function requirePlanAccess(planId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      ),
+    };
+  }
+
+  const access = await resolveRouteAccess(supabase, user);
+  const [plan] = await db
+    .select()
+    .from(maintenancePlans)
+    .where(eq(maintenancePlans.id, planId))
+    .limit(1);
+
+  if (!plan) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Maintenance plan not found" },
+        { status: 404 },
+      ),
+    };
+  }
+
+  if (!canAccessClient(access, plan.clientId)) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return { user, access, plan };
+}
 
 /**
  * POST /api/maintenance-plans/[id]/usage
  * Log hours against a maintenance plan
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id: planId } = await params;
   try {
+    const guard = await requirePlanAccess(planId);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
+    const { user } = guard;
     const body = await request.json();
 
     // Validate required fields
-    const requiredFields = ["hoursUsed", "description", "loggedBy"];
+    const requiredFields = ["hoursUsed", "description"];
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
@@ -26,18 +90,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    // Get current plan details
-    const [plan] = await db.select().from(maintenancePlans).where(eq(maintenancePlans.id, planId)).limit(1);
-
-    if (!plan) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Maintenance plan not found",
-        },
-        { status: 404 },
-      );
-    }
+    const { plan } = guard;
 
     // Check if plan is active
     if (plan.status !== "active") {
@@ -70,15 +123,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const utilizationPercent = (newUsedHours / totalAvailable) * 100;
     const shouldNotify =
       utilizationPercent >= parseFloat(plan.overageNotificationThreshold) &&
-      (currentUsedHours / totalAvailable) * 100 < parseFloat(plan.overageNotificationThreshold);
+      (currentUsedHours / totalAvailable) * 100 <
+        parseFloat(plan.overageNotificationThreshold);
 
     // Use transaction to update both plan and create usage log
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: DbTransaction) => {
       // Create usage log
       await tx.insert(maintenancePlanUsage).values({
         planId,
         supportTicketId: body.supportTicketId,
-        loggedBy: body.loggedBy,
+        loggedBy: user.id,
         hoursUsed: body.hoursUsed,
         description: body.description,
         taskCategory: body.taskCategory,
@@ -88,7 +142,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         billedAmount: body.billedAmount,
         invoiceId: body.invoiceId,
         loggedAt: new Date(),
-        workPerformedAt: body.workPerformedAt ? new Date(body.workPerformedAt) : null,
+        workPerformedAt: body.workPerformedAt
+          ? new Date(body.workPerformedAt)
+          : null,
         requiresApproval,
         approvalStatus,
         metadata: body.metadata || {},
@@ -108,7 +164,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Send notification if threshold exceeded (would be done via queue in production)
     if (shouldNotify) {
-      console.log(`NOTIFICATION: Plan ${planId} has exceeded ${plan.overageNotificationThreshold}% usage threshold`);
+      console.log(
+        `NOTIFICATION: Plan ${planId} has exceeded ${plan.overageNotificationThreshold}% usage threshold`,
+      );
       // TODO: Send email notification
     }
 
@@ -151,9 +209,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
  * GET /api/maintenance-plans/[id]/usage
  * Get usage history for a maintenance plan
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id: planId } = await params;
   try {
+    const guard = await requirePlanAccess(planId);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");
@@ -180,8 +246,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       })
       .from(maintenancePlanUsage)
       .leftJoin(sql`users`, sql`users.id = ${maintenancePlanUsage.loggedBy}`)
-      .leftJoin(sql`users as approver`, sql`approver.id = ${maintenancePlanUsage.approvedBy}`)
-      .leftJoin(sql`support_tickets`, sql`support_tickets.id = ${maintenancePlanUsage.supportTicketId}`)
+      .leftJoin(
+        sql`users as approver`,
+        sql`approver.id = ${maintenancePlanUsage.approvedBy}`,
+      )
+      .leftJoin(
+        sql`support_tickets`,
+        sql`support_tickets.id = ${maintenancePlanUsage.supportTicketId}`,
+      )
       .where(eq(maintenancePlanUsage.planId, planId))
       .orderBy(sql`${maintenancePlanUsage.loggedAt} DESC`)
       .limit(limit)

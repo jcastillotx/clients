@@ -1,10 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasPermission } from "@/lib/rbac/permissions";
-import { subDays } from "date-fns";
+import { requireAuthenticatedUser } from "@/lib/auth/route-guards";
 
 export async function GET() {
   try {
+    const auth = await requireAuthenticatedUser();
+    if ("error" in auth) {
+      return auth.error;
+    }
+
     const canView = await hasPermission("reports.financial");
     if (!canView) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
@@ -12,11 +17,6 @@ export async function GET() {
 
     const supabase = await createClient();
     const today = new Date();
-
-    // Calculate date ranges
-    const days30Ago = subDays(today, 30);
-    const days60Ago = subDays(today, 60);
-    const days90Ago = subDays(today, 90);
 
     // Fetch all unpaid invoices
     const { data: invoices } = await supabase
@@ -34,7 +34,9 @@ export async function GET() {
 
     invoices?.forEach((invoice) => {
       const createdDate = new Date(invoice.created_at);
-      const daysOld = Math.floor((today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+      const daysOld = Math.floor(
+        (today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
       if (daysOld <= 30) {
         aging.current.count++;
@@ -55,7 +57,10 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching accounts receivable:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch aging data" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to fetch aging data",
+      },
       { status: 500 },
     );
   }

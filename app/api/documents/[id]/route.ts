@@ -1,11 +1,58 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { deleteFile, StorageBuckets } from "@/lib/storage/upload";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function ensureDocumentAccess(id: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  const access = await resolveRouteAccess(supabase, user);
+  const { data: document, error } = await supabase
+    .from("documents")
+    .select("id, client_id, storage_path")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .single();
+
+  if (error || !document) {
+    return {
+      error: NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      ),
+    };
+  }
+
+  if (!canAccessClient(access, document.client_id)) {
+    return {
+      error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    };
+  }
+
+  return { supabase, document };
+}
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
-    const supabase = await createClient();
+    const guard = await ensureDocumentAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
+    const { supabase } = guard;
 
     const { data: document, error } = await supabase
       .from("documents")
@@ -24,7 +71,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (error) throw error;
 
     if (!document) {
-      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ document });
@@ -32,22 +82,37 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     console.error("Error fetching document:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to fetch document",
+        error:
+          error instanceof Error ? error.message : "Failed to fetch document",
       },
       { status: 500 },
     );
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await ensureDocumentAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const body = await request.json();
     const { name, description, tags, isPublic } = body;
 
-    const supabase = await createClient();
+    const { supabase } = guard;
 
-    const updateData: any = {
+    const updateData: {
+      updated_at: string;
+      name?: unknown;
+      description?: unknown;
+      tags?: unknown;
+      is_public?: unknown;
+    } = {
       updated_at: new Date().toISOString(),
     };
 
@@ -67,7 +132,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (error) throw error;
 
     if (!document) {
-      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ document });
@@ -75,29 +143,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     console.error("Error updating document:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to update document",
+        error:
+          error instanceof Error ? error.message : "Failed to update document",
       },
       { status: 500 },
     );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
-    const supabase = await createClient();
-
-    // Get document to find storage path
-    const { data: document } = await supabase
-      .from("documents")
-      .select("storage_path")
-      .eq("id", id)
-      .is("deleted_at", null)
-      .single();
-
-    if (!document) {
-      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    const guard = await ensureDocumentAccess(id);
+    if ("error" in guard) {
+      return guard.error;
     }
+
+    const { supabase } = guard;
 
     // Soft delete document record
     const { error: dbError } = await supabase
@@ -115,7 +180,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     console.error("Error deleting document:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to delete document",
+        error:
+          error instanceof Error ? error.message : "Failed to delete document",
       },
       { status: 500 },
     );

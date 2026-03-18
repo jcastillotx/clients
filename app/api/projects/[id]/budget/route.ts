@@ -1,15 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { projectBudgets, projectCostEntries } from "@/lib/db/schema/projects";
+import {
+  projectBudgets,
+  projectCostEntries,
+  projects,
+} from "@/lib/db/schema/projects";
 import { eq, sql } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+
+async function requireProjectAccess(projectId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      ),
+    };
+  }
+
+  const access = await resolveRouteAccess(supabase, user);
+  const [project] = await db
+    .select({ clientId: projects.clientId })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  if (!project) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Project not found" },
+        { status: 404 },
+      ),
+    };
+  }
+
+  if (!canAccessClient(access, project.clientId)) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 },
+      ),
+    };
+  }
+
+  return { user, access };
+}
 
 /**
  * GET /api/projects/[id]/budget
  * Get budget summary and cost entries for a project
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireProjectAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
 
     // Fetch budgets with spent amounts
     const budgets = await db
@@ -19,7 +76,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         entriesCount: sql<number>`COUNT(${projectCostEntries.id})`,
       })
       .from(projectBudgets)
-      .leftJoin(projectCostEntries, eq(projectBudgets.id, projectCostEntries.budgetId))
+      .leftJoin(
+        projectCostEntries,
+        eq(projectBudgets.id, projectCostEntries.budgetId),
+      )
       .where(eq(projectBudgets.projectId, id))
       .groupBy(projectBudgets.id);
 
@@ -31,8 +91,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .orderBy(projectCostEntries.entryDate);
 
     // Calculate totals
-    const totalAllocated = budgets.reduce((sum, b) => sum + parseFloat(b.budget.allocatedAmount), 0);
-    const totalSpent = costEntries.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const totalAllocated = budgets.reduce(
+      (sum: number, b: (typeof budgets)[number]) =>
+        sum + parseFloat(b.budget.allocatedAmount),
+      0,
+    );
+    const totalSpent = costEntries.reduce(
+      (sum: number, e: (typeof costEntries)[number]) =>
+        sum + parseFloat(e.amount),
+      0,
+    );
 
     return NextResponse.json({
       success: true,
@@ -43,7 +111,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           totalAllocated,
           totalSpent,
           remaining: totalAllocated - totalSpent,
-          percentageUsed: totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0,
+          percentageUsed:
+            totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0,
         },
       },
     });
@@ -63,9 +132,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * POST /api/projects/[id]/budget
  * Create a new budget category or cost entry
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireProjectAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const body = await request.json();
     const { type } = body;
 
@@ -100,7 +177,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
     } else if (type === "cost_entry") {
       // Create cost entry
-      const { budgetId, userId, description, amount, entryDate, metadata } = body;
+      const { budgetId, userId, description, amount, entryDate, metadata } =
+        body;
 
       if (!description || !amount || !entryDate) {
         return NextResponse.json(
@@ -165,9 +243,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
  * PATCH /api/projects/[id]/budget
  * Update budget or approve cost entry
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
+    const guard = await requireProjectAccess(id);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const body = await request.json();
     const { type, itemId, ...updates } = body;
 
