@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import { dispatchNotification } from "@/lib/notifications/service";
 import { verifyProposalAccessToken } from "@/lib/proposals/public-access";
 import { z } from "zod";
 
@@ -146,6 +147,25 @@ export async function POST(
       .single();
 
     if (updateError) throw updateError;
+
+    const {
+      data: { user: actorUser },
+    } = await supabase.auth.getUser();
+
+    await dispatchNotification({
+      eventType:
+        action === "accept" ? "proposal_accepted" : "proposal_rejected",
+      clientId: proposal.client_id,
+      subjectType: "proposal",
+      subjectId: proposal.id,
+      actorUserId: actorUser?.id,
+      recipientUserIds: proposal.created_by ? [proposal.created_by] : undefined,
+      extraEmails: signerEmail ? [signerEmail] : [],
+      data: {
+        proposalTitle: proposal.title,
+        signerName,
+      },
+    });
 
     // TODO: Send notification email to creator
     // if (action === "accept") {

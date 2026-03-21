@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { dispatchNotification } from "@/lib/notifications/service";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { createPublicProjectRequestSchema } from "@/lib/validations/project-request";
 
@@ -14,7 +15,9 @@ const normalizeDate = (value?: string | null) => {
   return parsed.toISOString();
 };
 
-async function resolveIntakeOwnerId(adminClient: ReturnType<typeof createAdminClientIfAvailable>) {
+async function resolveIntakeOwnerId(
+  adminClient: ReturnType<typeof createAdminClientIfAvailable>,
+) {
   if (!adminClient) {
     return null;
   }
@@ -46,10 +49,21 @@ async function resolveIntakeOwnerId(adminClient: ReturnType<typeof createAdminCl
     .from("user_roles")
     .select("user_id, role:roles(name)");
 
-  const intakeRoleUser = (roleRows || []).find((row: any) => {
-    const roleName = String(row?.role?.name || row?.role?.[0]?.name || "").toLowerCase();
-    return roleName === "super_admin" || roleName === "admin" || roleName === "account_manager";
-  });
+  const intakeRoleUser = (roleRows || []).find(
+    (row: {
+      user_id?: string;
+      role?: { name?: string } | Array<{ name?: string }>;
+    }) => {
+      const roleName = Array.isArray(row.role)
+        ? String(row.role[0]?.name || "").toLowerCase()
+        : String(row.role?.name || "").toLowerCase();
+      return (
+        roleName === "super_admin" ||
+        roleName === "admin" ||
+        roleName === "account_manager"
+      );
+    },
+  );
 
   return intakeRoleUser?.user_id || null;
 }
@@ -58,12 +72,18 @@ export async function POST(request: NextRequest) {
   try {
     const adminClient = createAdminClientIfAvailable();
     if (!adminClient) {
-      return NextResponse.json({ error: "Public intake is not configured" }, { status: 503 });
+      return NextResponse.json(
+        { error: "Public intake is not configured" },
+        { status: 503 },
+      );
     }
 
     const intakeOwnerId = await resolveIntakeOwnerId(adminClient);
     if (!intakeOwnerId) {
-      return NextResponse.json({ error: "No intake owner is configured for project requests" }, { status: 500 });
+      return NextResponse.json(
+        { error: "No intake owner is configured for project requests" },
+        { status: 500 },
+      );
     }
 
     const body = await request.json();
@@ -89,7 +109,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (clientError || !client) {
-      return NextResponse.json({ error: clientError?.message || "Failed to create organization intake" }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: clientError?.message || "Failed to create organization intake",
+        },
+        { status: 500 },
+      );
     }
 
     const customFields = {
@@ -135,7 +160,9 @@ export async function POST(request: NextRequest) {
         description: validated.description || null,
         priority: validated.priority,
         status: "pending",
-        due_date: normalizeDate(validated.dueDate) ?? normalizeDate(validated.requestedLaunchDate),
+        due_date:
+          normalizeDate(validated.dueDate) ??
+          normalizeDate(validated.requestedLaunchDate),
         created_by: intakeOwnerId,
         assigned_to: intakeOwnerId,
         custom_fields: customFields,
@@ -144,8 +171,24 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (requestError || !projectRequest) {
-      return NextResponse.json({ error: requestError?.message || "Failed to create project request" }, { status: 500 });
+      return NextResponse.json(
+        { error: requestError?.message || "Failed to create project request" },
+        { status: 500 },
+      );
     }
+
+    await dispatchNotification({
+      eventType: "project_request_created",
+      clientId: projectRequest.client_id,
+      subjectType: "request",
+      subjectId: projectRequest.id,
+      recipientUserIds: [intakeOwnerId],
+      extraEmails: [validated.contactEmail],
+      data: {
+        requestTitle: validated.title,
+        companyName: validated.companyName,
+      },
+    });
 
     return NextResponse.json(
       {
@@ -158,10 +201,16 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: "Validation error", details: error.issues },
+        { status: 400 },
+      );
     }
 
     console.error("Error creating public project request:", error);
-    return NextResponse.json({ error: "Failed to create project request" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create project request" },
+      { status: 500 },
+    );
   }
 }

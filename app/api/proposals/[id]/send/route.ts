@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { createProposalAccessToken } from "@/lib/proposals/public-access";
+import { dispatchNotification } from "@/lib/notifications/service";
 
 /**
  * POST /api/proposals/[id]/send
@@ -74,6 +75,19 @@ export async function POST(
 
     // TODO: Send email to client with proposal link
     // await sendProposalEmail(proposal.client.email, proposalUrl, proposal);
+
+    await dispatchNotification({
+      eventType: "proposal_sent",
+      clientId: proposal.client_id,
+      subjectType: "proposal",
+      subjectId: id,
+      actorUserId: user.id,
+      extraEmails: proposal.client?.email ? [proposal.client.email] : [],
+      data: {
+        proposalTitle: proposal.title,
+        proposalUrl,
+      },
+    });
 
     return NextResponse.json({
       success: true,

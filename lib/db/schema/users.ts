@@ -1,4 +1,11 @@
-import { pgTable, uuid, text, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  boolean,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { clients } from "./clients";
 import { requests } from "./requests";
@@ -31,9 +38,17 @@ export const users = pgTable("users", {
     twoFactorEnabled?: boolean;
     ipWhitelist?: string[];
     sessionTimeout?: number;
+    notifications?: {
+      emailEnabled?: boolean;
+      inAppEnabled?: boolean;
+    };
   }>(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -45,8 +60,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.clientId],
     references: [clients.id],
   }),
-  createdRequests: many(requests as any),
-  assignedRequests: many(requests as any),
+  createdRequests: many(requests),
+  assignedRequests: many(requests),
   userRoles: many(userRoles),
 }));
 
@@ -63,7 +78,9 @@ export const roles = pgTable("roles", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
   description: text("description"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export type Role = typeof roles.$inferSelect;
@@ -76,7 +93,9 @@ export const permissions = pgTable("permissions", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
   description: text("description"),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export type Permission = typeof permissions.$inferSelect;

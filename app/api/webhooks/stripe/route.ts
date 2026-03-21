@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { inngest } from "@/lib/inngest/client";
+import { dispatchNotification } from "@/lib/notifications/service";
 import { createClient } from "@/lib/supabase/server";
 import { processStripeWebhookRequest } from "@/lib/webhooks/stripe-webhook-request";
 
@@ -106,6 +107,25 @@ export async function POST(req: Request) {
                 name: "invoice/payment.received",
                 data: { invoiceId },
               });
+
+              const { data: invoice } = await supabase
+                .from("invoices")
+                .select("id, invoice_number, client_id")
+                .eq("id", invoiceId)
+                .maybeSingle();
+
+              if (invoice) {
+                await dispatchNotification({
+                  eventType: "invoice_paid",
+                  clientId: invoice.client_id,
+                  subjectType: "invoice",
+                  subjectId: invoice.id,
+                  data: {
+                    invoiceNumber: invoice.invoice_number,
+                    amount: `${(paymentIntent.amount / 100).toFixed(2)} ${paymentIntent.currency.toUpperCase()}`,
+                  },
+                });
+              }
             }
             break;
           }
@@ -134,6 +154,24 @@ export async function POST(req: Request) {
                   error: paymentIntent.last_payment_error?.message,
                 },
               });
+
+              const { data: invoice } = await supabase
+                .from("invoices")
+                .select("id, invoice_number, client_id")
+                .eq("id", invoiceId)
+                .maybeSingle();
+
+              if (invoice) {
+                await dispatchNotification({
+                  eventType: "invoice_payment_failed",
+                  clientId: invoice.client_id,
+                  subjectType: "invoice",
+                  subjectId: invoice.id,
+                  data: {
+                    invoiceNumber: invoice.invoice_number,
+                  },
+                });
+              }
             }
             break;
           }
@@ -145,7 +183,7 @@ export async function POST(req: Request) {
             if (paymentIntentId) {
               const { data: invoice } = await supabase
                 .from("invoices")
-                .select("id")
+                .select("id, invoice_number, client_id")
                 .eq("stripe_payment_intent_id", paymentIntentId)
                 .single();
 
@@ -170,6 +208,17 @@ export async function POST(req: Request) {
                     amount_refunded: charge.amount_refunded,
                   },
                 });
+
+                await dispatchNotification({
+                  eventType: "invoice_refunded",
+                  clientId: invoice.client_id,
+                  subjectType: "invoice",
+                  subjectId: invoice.id,
+                  data: {
+                    invoiceNumber: invoice.invoice_number,
+                    amount: `${(charge.amount_refunded / 100).toFixed(2)} ${charge.currency.toUpperCase()}`,
+                  },
+                });
               }
             }
             break;
@@ -192,6 +241,17 @@ export async function POST(req: Request) {
                   subscription_id: subscription.id,
                   status: subscription.status,
                   current_period_end: subscription.current_period_end,
+                },
+              });
+
+              await dispatchNotification({
+                eventType: "subscription_updated",
+                clientId,
+                subjectType: "client",
+                subjectId: clientId,
+                data: {
+                  subscriptionId: subscription.id,
+                  status: subscription.status,
                 },
               });
             }
