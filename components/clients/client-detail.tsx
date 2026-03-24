@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,14 +8,18 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import Link from "next/link";
-import { Building2, Globe, Mail, Phone, Calendar, Users, FileText, DollarSign, Edit } from "lucide-react";
+import Image from "next/image";
+import { Building2, Globe, Mail, Phone, Calendar, Users, FileText, DollarSign, Edit, Send, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ClientDetailProps {
+  canResendLogin?: boolean;
   client: {
     id: string;
     company_name: string;
     domain?: string;
     industry?: string;
+    logo_url?: string | null;
     status: string;
     created_at: string;
     primary_contact?: {
@@ -43,14 +48,48 @@ interface ClientDetailProps {
   };
 }
 
-export function ClientDetail({ client, staffAssignments, stats }: ClientDetailProps) {
+export function ClientDetail({ client, staffAssignments, stats, canResendLogin = false }: ClientDetailProps) {
+  const [isSendingLogin, setIsSendingLogin] = useState(false);
+
+  const handleResendLogin = async () => {
+    if (!client.primary_contact?.email) return;
+    setIsSendingLogin(true);
+    try {
+      const res = await fetch(`/api/clients/${client.id}/resend-login`, { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; sentTo?: string; message?: string };
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send email");
+      }
+      toast.success("Login email sent", {
+        description: data.sentTo ? `Check ${data.sentTo} for a link to set a password and sign in.` : undefined,
+      });
+    } catch (e) {
+      toast.error("Could not send login email", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      });
+    } finally {
+      setIsSendingLogin(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <Building2 className="h-8 w-8 text-primary" />
+            {client.logo_url ? (
+              <Image
+                src={client.logo_url}
+                alt={`${client.company_name} logo`}
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-md object-contain border bg-background p-1"
+                unoptimized
+              />
+            ) : (
+              <Building2 className="h-8 w-8 text-primary" />
+            )}
             <div>
               <h1 className="text-3xl font-bold tracking-tight">{client.company_name}</h1>
               {client.industry && <p className="text-muted-foreground">{client.industry}</p>}
@@ -161,6 +200,31 @@ export function ClientDetail({ client, staffAssignments, stats }: ClientDetailPr
                       {client.primary_contact.email}
                     </a>
                   </div>
+                  {canResendLogin ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={isSendingLogin}
+                      onClick={() => void handleResendLogin()}
+                    >
+                      {isSendingLogin ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                          Sending…
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-4 w-4" aria-hidden />
+                          Resend login email
+                        </>
+                      )}
+                    </Button>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    Sends a secure link to set or reset their password (same as Forgot password).
+                  </p>
                   {client.primary_contact.phone && (
                     <div className="flex items-center gap-2 text-sm">
                       <Phone className="h-4 w-4 text-muted-foreground" />

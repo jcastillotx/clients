@@ -13,12 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
+const CLIENT_STATUS_VALUES = ["active", "inactive", "pending", "suspended"] as const;
+
 const clientSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   domain: z.string().optional(),
   industry: z.string().optional(),
-  status: z.enum(["active", "inactive", "pending", "suspended"]).default("active"),
+  logoUrl: z.string().url("Please enter a valid logo URL").optional().or(z.literal("")),
+  status: z.enum(CLIENT_STATUS_VALUES).default("active"),
   primaryContactId: z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
     z.string().uuid().optional(),
@@ -45,6 +48,7 @@ interface ClientFormProps {
     email: string;
     domain?: string;
     industry?: string;
+    logo_url?: string;
     status: string;
     primary_contact_id?: string;
     phone?: string;
@@ -76,7 +80,10 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
       email: initialData?.email || "",
       domain: initialData?.domain || "",
       industry: initialData?.industry || "",
-      status: (initialData?.status as any) || "active",
+      logoUrl: initialData?.logo_url || "",
+      status: (CLIENT_STATUS_VALUES.includes((initialData?.status ?? "") as (typeof CLIENT_STATUS_VALUES)[number])
+        ? (initialData?.status as (typeof CLIENT_STATUS_VALUES)[number])
+        : "active"),
       primaryContactId: initialData?.primary_contact_id || undefined,
       phone: initialData?.phone || "",
       address: initialData?.address || "",
@@ -100,6 +107,7 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
         email: data.email,
         domain: data.domain || null,
         industry: data.industry || null,
+        logo_url: data.logoUrl || null,
         status: data.status,
         primary_contact_id: data.primaryContactId || null,
         phone: data.phone || null,
@@ -187,6 +195,16 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="logoUrl">Logo URL</Label>
+            <Input
+              id="logoUrl"
+              placeholder="https://cdn.example.com/logo.png"
+              {...register("logoUrl")}
+            />
+            {errors.logoUrl && <p className="text-sm text-destructive">{errors.logoUrl.message}</p>}
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
@@ -195,7 +213,10 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={(value) => setValue("status", value as any)}>
+              <Select
+                value={status}
+                onValueChange={(value) => setValue("status", value as (typeof CLIENT_STATUS_VALUES)[number])}
+              >
                 <SelectTrigger id="status">
                   <SelectValue />
                 </SelectTrigger>

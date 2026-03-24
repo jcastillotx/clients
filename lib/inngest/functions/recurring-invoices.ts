@@ -1,7 +1,7 @@
 import { inngest } from "../client";
-import { createClient } from "@/lib/supabase/server";
-import { sendEmail } from "@/lib/email/client";
-import { renderEmailTemplate } from "@/lib/email/templates";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import { sendInvoiceEmailWithPdf } from "@/lib/email/send-invoice-email";
+import { resolveInvoiceRecipientEmail } from "@/lib/email/invoice-email-context";
 
 // Generate recurring invoices daily
 export const generateRecurringInvoices = inngest.createFunction(
@@ -115,42 +115,50 @@ export const generateRecurringInvoices = inngest.createFunction(
       }
     }
 
-    // Step 3: Send notifications
-    for (const invoice of generatedInvoices) {
-      await step.run(`send-notification-${invoice.id}`, async () => {
-        // Fetch client info
-        const { data: client } = await supabase
-          .from("clients")
-          .select("company_name, email, contact_name")
-          .eq("id", invoice.client_id)
-          .single();
+    // Step 3: Email PDF + pay link (same template as manual send)
+    const admin = createAdminClientIfAvailable();
+    if (admin) {
+      for (const invoice of generatedInvoices) {
+        await step.run(`send-notification-${invoice.id}`, async () => {
+          const { data: client } = await admin
+            .from("clients")
+            .select("company_name, email, contact_name, primary_contact_id")
+            .eq("id", invoice.client_id)
+            .maybeSingle();
 
-        if (!client?.email) return;
+          if (!client) return;
 
-        const templateData = {
-          invoice: {
-            invoice_number: invoice.invoice_number,
-            amount: invoice.amount,
-            currency: invoice.currency,
-            due_date: invoice.due_date,
-          },
-          client: {
-            company_name: client.company_name,
-            contact_name: client.contact_name,
-          },
-          invoice_url: `${process.env.NEXT_PUBLIC_APP_URL}/invoices/${invoice.id}`,
-        };
+          let primaryContact: { id: string; name: string | null; email: string | null } | null = null;
+          if (typeof client.primary_contact_id === "string" && client.primary_contact_id.length > 0) {
+            const { data: contact } = await admin
+              .from("users")
+              .select("id, name, email")
+              .eq("id", client.primary_contact_id)
+              .maybeSingle();
+            primaryContact = contact;
+          }
 
-        const rendered = await renderEmailTemplate("invoice_generated", templateData);
-        if (!rendered) return;
+          const to = resolveInvoiceRecipientEmail(client, primaryContact);
+          if (!to) return;
 
-        await sendEmail({
-          to: client.email,
-          subject: rendered.subject,
-          html: rendered.html,
-          text: rendered.plainText,
+          const sent = await sendInvoiceEmailWithPdf(admin, {
+            invoiceId: invoice.id,
+            to,
+            templateType: "invoice_sent",
+          });
+
+          if (sent.success) {
+            await admin
+              .from("invoices")
+              .update({ status: "sent", updated_at: new Date().toISOString() })
+              .eq("id", invoice.id);
+          } else {
+            console.error(`Recurring invoice email failed for ${invoice.id}:`, sent.error);
+          }
         });
-      });
+      }
+    } else {
+      console.error("generateRecurringInvoices: SUPABASE_SERVICE_KEY missing; skipping invoice emails.");
     }
 
     return {

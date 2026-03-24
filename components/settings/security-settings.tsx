@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,8 +51,10 @@ interface SecuritySettingsProps {
 
 export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const mfaRequired = searchParams.get("mfa_required") === "1";
+  const redirectAfterMfa = searchParams.get("next") || "/dashboard";
   // Also support legacy ?tab=security&mfa_required=1 redirects
 
   // Password change state
@@ -62,6 +65,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const {
     register: registerPw,
     handleSubmit: handlePwSubmit,
+    setValue: setPwValue,
     formState: { errors: pwErrors },
     reset: resetPw,
   } = useForm<PasswordFormInput>({ resolver: zodResolver(passwordSchema) });
@@ -131,6 +135,12 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   useEffect(() => {
     void loadMfaState();
   }, [loadMfaState]);
+
+  useEffect(() => {
+    if (mfaRequired && aal === "aal2") {
+      router.replace(redirectAfterMfa.startsWith("/") ? redirectAfterMfa : "/dashboard");
+    }
+  }, [aal, mfaRequired, redirectAfterMfa, router]);
 
   const handleEnroll = async () => {
     setIsEnrolling(true);
@@ -250,7 +260,14 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
-              <Input id="newPassword" type="password" {...registerPw("newPassword")} />
+              <PasswordInput
+                id="newPassword"
+                {...registerPw("newPassword")}
+                onGeneratePassword={(pw) => {
+                  setPwValue("newPassword", pw, { shouldValidate: true, shouldDirty: true });
+                  setPwValue("confirmPassword", pw, { shouldValidate: true, shouldDirty: true });
+                }}
+              />
               {pwErrors.newPassword && <p className="text-sm text-destructive">{pwErrors.newPassword.message}</p>}
             </div>
             <div className="space-y-2">

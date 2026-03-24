@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { inngest } from "@/lib/inngest/client";
 import { dispatchNotification } from "@/lib/notifications/service";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { processStripeWebhookRequest } from "@/lib/webhooks/stripe-webhook-request";
 
 function getStripeConfig() {
@@ -23,7 +23,7 @@ function getStripeConfig() {
 }
 
 async function hasProcessedEvent(eventId: string) {
-  const supabase = await createClient();
+  const supabase = createAdminClientIfAvailable() ?? (await createClient());
   const { data } = await supabase
     .from("activity_logs")
     .select("id")
@@ -40,7 +40,7 @@ async function logActivity(args: {
   description: string;
   properties: Record<string, unknown>;
 }) {
-  const supabase = await createClient();
+  const supabase = createAdminClientIfAvailable() ?? (await createClient());
   await supabase.from("activity_logs").insert({
     subject_type: args.subjectType,
     subject_id: args.subjectId,
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         config.stripe.webhooks.constructEvent(rawBody, rawSignature, secret),
       hasProcessedEvent,
       onEvent: async (event) => {
-        const supabase = await createClient();
+        const supabase = createAdminClientIfAvailable() ?? (await createClient());
 
         switch (event.type) {
           case "payment_intent.succeeded": {

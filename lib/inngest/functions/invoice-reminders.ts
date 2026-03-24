@@ -1,7 +1,7 @@
 import { inngest } from "../client";
-import { createClient } from "@/lib/supabase/server";
-import { sendEmail } from "@/lib/email/client";
-import { renderEmailTemplate, type InvoiceReminderData } from "@/lib/email/templates";
+import { createAdminClientIfAvailable } from "@/lib/supabase/server";
+import { sendInvoiceEmailWithPdf } from "@/lib/email/send-invoice-email";
+import { resolveInvoiceRecipientEmail } from "@/lib/email/invoice-email-context";
 
 // Send invoice reminders daily at 9am PST
 export const sendInvoiceReminders = inngest.createFunction(
@@ -11,19 +11,23 @@ export const sendInvoiceReminders = inngest.createFunction(
   },
   { cron: "TZ=America/Los_Angeles 0 9 * * *" }, // Daily at 9am PST
   async ({ step }) => {
-    const supabase = await createClient();
+    const admin = createAdminClientIfAvailable();
+    if (!admin) {
+      console.error("sendInvoiceReminders: SUPABASE_SERVICE_KEY not configured; skipping.");
+      return { skipped: true, reason: "no_admin_client" };
+    }
 
     // Step 1: Find invoices due in 7 days
     const dueSoonInvoices = await step.run("find-due-soon-invoices", async () => {
       const targetDate = new Date();
       targetDate.setDate(targetDate.getDate() + 7);
 
-      const { data } = await supabase
+      const { data } = await admin
         .from("invoices")
         .select(
           `
           *,
-          client:clients(id, company_name, email, contact_name)
+          client:clients(id, company_name, email, contact_name, primary_contact_id)
         `,
         )
         .eq("status", "sent")
@@ -36,46 +40,49 @@ export const sendInvoiceReminders = inngest.createFunction(
     // Step 2: Send reminders for invoices due soon
     for (const invoice of dueSoonInvoices) {
       await step.run(`send-due-soon-reminder-${invoice.id}`, async () => {
-        if (!invoice.client?.email) return;
+        const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+        if (!client) return;
 
-        const templateData: InvoiceReminderData = {
-          invoice: {
-            invoice_number: invoice.invoice_number,
-            amount: invoice.amount,
-            currency: invoice.currency,
-            due_date: invoice.due_date,
+        let primaryContact: { id: string; name: string | null; email: string | null } | null = null;
+        if (typeof client.primary_contact_id === "string" && client.primary_contact_id.length > 0) {
+          const { data: contact } = await admin
+            .from("users")
+            .select("id, name, email")
+            .eq("id", client.primary_contact_id)
+            .maybeSingle();
+          primaryContact = contact;
+        }
+
+        const to = resolveInvoiceRecipientEmail(client, primaryContact);
+        if (!to) return;
+
+        const sent = await sendInvoiceEmailWithPdf(admin, {
+          invoiceId: invoice.id,
+          to,
+          templateType: "invoice_reminder",
+          extraTemplateData: {
+            days_until_due: "7",
+            overdue_status: "until due",
           },
-          client: {
-            company_name: invoice.client.company_name,
-            contact_name: invoice.client.contact_name,
-          },
-          days_until_due: 7,
-          payment_url: `${process.env.NEXT_PUBLIC_APP_URL}/invoices/${invoice.id}/pay`,
-        };
-
-        const rendered = await renderEmailTemplate("invoice_reminder", templateData);
-        if (!rendered) return;
-
-        await sendEmail({
-          to: invoice.client.email,
-          subject: rendered.subject,
-          html: rendered.html,
-          text: rendered.plainText,
         });
 
-        // Mark as reminded
-        await supabase.from("invoices").update({ reminded_due_7_at: new Date().toISOString() }).eq("id", invoice.id);
+        if (!sent.success) {
+          console.error(`Due-soon reminder failed for ${invoice.id}:`, sent.error);
+          return;
+        }
+
+        await admin.from("invoices").update({ reminded_due_7_at: new Date().toISOString() }).eq("id", invoice.id);
       });
     }
 
     // Step 3: Find overdue invoices
     const overdueInvoices = await step.run("find-overdue-invoices", async () => {
-      const { data } = await supabase
+      const { data } = await admin
         .from("invoices")
         .select(
           `
           *,
-          client:clients(id, company_name, email, contact_name)
+          client:clients(id, company_name, email, contact_name, primary_contact_id)
         `,
         )
         .eq("status", "sent")
@@ -88,39 +95,44 @@ export const sendInvoiceReminders = inngest.createFunction(
     // Step 4: Send overdue reminders
     for (const invoice of overdueInvoices) {
       await step.run(`send-overdue-reminder-${invoice.id}`, async () => {
-        if (!invoice.client?.email) return;
+        const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+        if (!client) return;
 
-        const daysOverdue = Math.floor(
-          (new Date().getTime() - new Date(invoice.due_date).getTime()) / (1000 * 60 * 60 * 24),
+        let primaryContact: { id: string; name: string | null; email: string | null } | null = null;
+        if (typeof client.primary_contact_id === "string" && client.primary_contact_id.length > 0) {
+          const { data: contact } = await admin
+            .from("users")
+            .select("id, name, email")
+            .eq("id", client.primary_contact_id)
+            .maybeSingle();
+          primaryContact = contact;
+        }
+
+        const to = resolveInvoiceRecipientEmail(client, primaryContact);
+        if (!to) return;
+
+        const daysOverdue = Math.max(
+          1,
+          Math.floor(
+            (new Date().getTime() - new Date(invoice.due_date as string).getTime()) / (1000 * 60 * 60 * 24),
+          ),
         );
 
-        const templateData: InvoiceReminderData = {
-          invoice: {
-            invoice_number: invoice.invoice_number,
-            amount: invoice.amount,
-            currency: invoice.currency,
-            due_date: invoice.due_date,
+        const sent = await sendInvoiceEmailWithPdf(admin, {
+          invoiceId: invoice.id,
+          to,
+          templateType: "invoice_overdue",
+          extraTemplateData: {
+            days_overdue: String(daysOverdue),
           },
-          client: {
-            company_name: invoice.client.company_name,
-            contact_name: invoice.client.contact_name,
-          },
-          days_until_due: -daysOverdue,
-          payment_url: `${process.env.NEXT_PUBLIC_APP_URL}/invoices/${invoice.id}/pay`,
-        };
-
-        const rendered = await renderEmailTemplate("invoice_overdue", templateData);
-        if (!rendered) return;
-
-        await sendEmail({
-          to: invoice.client.email,
-          subject: rendered.subject,
-          html: rendered.html,
-          text: rendered.plainText,
         });
 
-        // Mark as reminded and update status
-        await supabase
+        if (!sent.success) {
+          console.error(`Overdue reminder failed for ${invoice.id}:`, sent.error);
+          return;
+        }
+
+        await admin
           .from("invoices")
           .update({
             reminded_overdue_at: new Date().toISOString(),

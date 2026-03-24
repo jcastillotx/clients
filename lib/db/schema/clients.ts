@@ -22,6 +22,7 @@ export const clients = pgTable("clients", {
   companyName: text("company_name").notNull(),
   domain: text("domain"),
   industry: text("industry"),
+  logoUrl: text("logo_url"),
   email: text("email").notNull(),
   phone: text("phone"),
   website: text("website"),

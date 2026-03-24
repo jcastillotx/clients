@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { renderTemplate } from "@/lib/templates/template-engine";
+import { renderTemplate, type TemplateContext } from "@/lib/templates/template-engine";
 
 // Fetch and render email template
 export async function renderEmailTemplate(
   type: string,
-  data: Record<string, any>,
+  data: TemplateContext,
 ): Promise<{ subject: string; html: string; plainText: string } | null> {
   const supabase = await createClient();
 
@@ -12,11 +12,11 @@ export async function renderEmailTemplate(
   const { data: template, error } = await supabase
     .from("email_templates")
     .select("*")
-    .eq("email_type", type)
+    .eq("type", type)
     .eq("is_active", true)
     .order("is_default", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error || !template) {
     console.error(`Email template not found for type: ${type}`, error);
@@ -26,7 +26,7 @@ export async function renderEmailTemplate(
   // Render subject, HTML, and plain text
   const subject = renderTemplate(template.subject || "", data);
   const html = renderTemplate(template.html_content, data);
-  const plainText = template.plain_text_content ? renderTemplate(template.plain_text_content, data) : stripHtml(html);
+  const plainText = template.text_content ? renderTemplate(template.text_content, data) : stripHtml(html);
 
   return { subject, html, plainText };
 }

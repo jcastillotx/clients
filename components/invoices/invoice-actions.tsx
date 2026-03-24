@@ -7,6 +7,7 @@ import { Send, Download, CheckCircle2, XCircle, Loader2, CreditCard, Link as Lin
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { PaymentModal } from "./payment-modal";
+import { toast } from "sonner";
 
 interface InvoiceActionsProps {
   invoice: {
@@ -23,6 +24,30 @@ export function InvoiceActions({ invoice, canManageInvoices }: InvoiceActionsPro
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const handleSendInvoice = async () => {
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/invoices/${invoice.id}/send`, { method: "POST" });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string; sentTo?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to send invoice");
+      }
+
+      toast.success("Invoice sent", {
+        description: payload.sentTo ? `Email delivered to ${payload.sentTo}` : undefined,
+      });
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to send invoice:", error);
+      toast.error("Could not send invoice", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleStatusUpdate = async (newStatus: string) => {
     setIsUpdating(true);
@@ -85,7 +110,7 @@ export function InvoiceActions({ invoice, canManageInvoices }: InvoiceActionsPro
         <CardContent>
           <div className="flex flex-wrap gap-3">
             {canManageInvoices && invoice.status === "draft" && (
-              <Button onClick={() => handleStatusUpdate("sent")} disabled={isUpdating}>
+              <Button onClick={handleSendInvoice} disabled={isUpdating}>
                 {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                 Send Invoice
               </Button>

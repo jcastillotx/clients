@@ -160,19 +160,7 @@ async function sendViaMailgun(cfg: Record<string, string>, to: string) {
 }
 
 async function sendViaSmtp(cfg: Record<string, string>, to: string) {
-  // Dynamically import nodemailer — only used server-side for SMTP.
-  // The module name is cast to `any` to prevent TypeScript from statically
-  // resolving the specifier when the package is not yet installed.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let nodemailer: any;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    nodemailer = await import("nodemailer" as any);
-  } catch {
-    throw new Error(
-      "nodemailer is not installed. Run: pnpm add nodemailer @types/nodemailer",
-    );
-  }
+  const nodemailer = await import("nodemailer");
 
   const host = cfg["smtp_host"];
   const port = parseInt(cfg["smtp_port"] ?? "587", 10);

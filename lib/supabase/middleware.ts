@@ -141,7 +141,8 @@ export async function updateSession(request: NextRequest) {
         if (aalData && aalData.currentLevel !== "aal2") {
           const url = request.nextUrl.clone();
           url.pathname = "/settings/security";
-          url.search = "mfa_required=1";
+          url.searchParams.set("mfa_required", "1");
+          url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
           return NextResponse.redirect(url);
         }
       } catch {

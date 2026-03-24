@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
@@ -32,6 +33,7 @@ export function ResetPasswordForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<ResetPasswordFormInput>({
     resolver: zodResolver(resetPasswordSchema),
@@ -72,7 +74,15 @@ export function ResetPasswordForm() {
 
           <div className="space-y-2">
             <Label htmlFor="password">New Password</Label>
-            <Input id="password" type="password" placeholder="••••••••" {...register("password")} />
+            <PasswordInput
+              id="password"
+              placeholder="••••••••"
+              {...register("password")}
+              onGeneratePassword={(pw) => {
+                setValue("password", pw, { shouldValidate: true, shouldDirty: true });
+                setValue("confirmPassword", pw, { shouldValidate: true, shouldDirty: true });
+              }}
+            />
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
 

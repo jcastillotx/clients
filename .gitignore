@@ -92,3 +92,4 @@ logs/
 # Backup files
 *.bak
 id-mappings.json
+.aider*

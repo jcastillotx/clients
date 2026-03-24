@@ -8,6 +8,7 @@ import { z } from "zod";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
@@ -37,6 +38,7 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<RegisterFormInput>({
     resolver: zodResolver(registerSchema),
@@ -119,7 +121,15 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="••••••••" {...register("password")} />
+            <PasswordInput
+              id="password"
+              placeholder="••••••••"
+              {...register("password")}
+              onGeneratePassword={(pw) => {
+                setValue("password", pw, { shouldValidate: true, shouldDirty: true });
+                setValue("confirmPassword", pw, { shouldValidate: true, shouldDirty: true });
+              }}
+            />
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
 

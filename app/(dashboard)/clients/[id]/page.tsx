@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 import { ClientDetail } from "@/components/clients/client-detail";
 import { ClientRequests } from "@/components/clients/client-requests";
 import { ClientInvoices } from "@/components/clients/client-invoices";
@@ -32,6 +33,28 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
 
   if (error || !client) {
     notFound();
+  }
+
+  const {
+    data: { user: currentUser },
+  } = await supabase.auth.getUser();
+
+  let canResendLogin = false;
+  if (currentUser) {
+    const accessOptions = { supabase, userId: currentUser.id };
+    const metadataRole = String(
+      currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "",
+    ).toLowerCase();
+    const hasManagementMetadataRole =
+      currentUser.user_metadata?.is_super_admin === true ||
+      metadataRole === Roles.SUPER_ADMIN ||
+      metadataRole === Roles.ADMIN ||
+      metadataRole === Roles.ACCOUNT_MANAGER;
+    const [canUpdateClients, hasManagementRoleDb] = await Promise.all([
+      hasPermission(Permissions.CLIENTS_UPDATE, accessOptions),
+      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+    ]);
+    canResendLogin = canUpdateClients || hasManagementRoleDb || hasManagementMetadataRole;
   }
 
   let primaryContact: { id: string; name: string; email: string; phone?: string | null; avatar?: string | null } | null =
@@ -113,6 +136,7 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
     <div className="flex flex-col gap-8 p-8">
       {/* Client details */}
       <ClientDetail
+        canResendLogin={canResendLogin}
         client={clientWithPrimaryContact}
         staffAssignments={
           (staffAssignments || []).map((sa: any) => ({
