@@ -46,10 +46,25 @@ export interface AnalyticsReportEvent {
   };
 }
 
+export interface ClientCreatedEvent {
+  name: "client.created";
+  data: {
+    clientId: string;
+    companyName: string;
+  };
+}
+
+export interface ClientBackfillEvent {
+  name: "client.backfill";
+  data: Record<string, never>;
+}
+
 // Type union for all events
 export type Events =
   | InvoiceReminderEvent
   | RecurringInvoiceEvent
   | SLACheckEvent
   | BrandMonitoringEvent
-  | AnalyticsReportEvent;
+  | AnalyticsReportEvent
+  | ClientCreatedEvent
+  | ClientBackfillEvent;

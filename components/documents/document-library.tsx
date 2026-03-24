@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Search, Grid, List } from "lucide-react";
 import { DocumentGrid } from "./document-grid";
 import { DocumentListView } from "./document-list-view";
@@ -13,6 +13,15 @@ import { UploadDialog } from "./upload-dialog";
 interface Client {
   id: string;
   company_name: string;
+}
+
+interface Folder {
+  id: string;
+  name: string;
+  description: string | null;
+  client_id: string;
+  type: string | null;
+  created_at: string;
 }
 
 interface Document {
@@ -24,6 +33,7 @@ interface Document {
   storage_path: string;
   storage_url: string | null;
   client_id: string;
+  folder_id: string | null;
   version: number;
   is_latest_version: boolean;
   tags: string[] | null;
@@ -41,6 +51,7 @@ interface Document {
 
 interface DocumentLibraryProps {
   initialDocuments: Document[];
+  initialFolders: Folder[];
   clients: Client[];
   canUpload: boolean;
   initialClientId?: string;
@@ -49,19 +60,21 @@ interface DocumentLibraryProps {
 
 export function DocumentLibrary({
   initialDocuments,
+  initialFolders,
   clients,
   canUpload,
   initialClientId,
-  initialRequestId,
 }: DocumentLibraryProps) {
   const [documents, setDocuments] = useState(initialDocuments);
+  const [folders] = useState(initialFolders);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClient, setSelectedClient] = useState(initialClientId || "all");
+  const [selectedFolder, setSelectedFolder] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Filter documents based on search and client
+  // Filter documents based on search, client, and folder
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch =
       doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,8 +82,13 @@ export function DocumentLibrary({
       doc.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesClient = selectedClient === "all" || doc.client_id === selectedClient;
+    const matchesFolder = selectedFolder === "all" || doc.folder_id === selectedFolder;
 
-    return matchesSearch && matchesClient;
+    return matchesSearch && matchesClient && matchesFolder;
+  });
+
+  const filteredFolders = folders.filter((folder) => {
+    return selectedClient === "all" || folder.client_id === selectedClient;
   });
 
   const handleUploadSuccess = (newDocument: Document) => {
@@ -143,7 +161,10 @@ export function DocumentLibrary({
             className="pl-9"
           />
         </div>
-        <Select value={selectedClient} onValueChange={setSelectedClient}>
+        <Select value={selectedClient} onValueChange={(val) => {
+          setSelectedClient(val);
+          setSelectedFolder("all"); // Reset folder when client changes
+        }}>
           <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="All clients" />
           </SelectTrigger>
@@ -152,6 +173,19 @@ export function DocumentLibrary({
             {clients.map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 {client.company_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedFolder} onValueChange={setSelectedFolder}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="All folders" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All folders</SelectItem>
+            {filteredFolders.map((folder) => (
+              <SelectItem key={folder.id} value={folder.id}>
+                {folder.name}
               </SelectItem>
             ))}
           </SelectContent>

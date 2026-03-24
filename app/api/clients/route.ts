@@ -1,6 +1,7 @@
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import { inngest } from "@/lib/inngest/client";
 
 export async function GET(request: Request) {
   try {
@@ -92,6 +93,14 @@ export async function POST(request: Request) {
     const { data: client, error } = await dbClient.from("clients").insert(body).select().single();
 
     if (error) throw error;
+
+    await inngest.send({
+      name: "client.created",
+      data: {
+        clientId: client.id,
+        companyName: client.company_name,
+      },
+    });
 
     return NextResponse.json({ client }, { status: 201 });
   } catch (error) {

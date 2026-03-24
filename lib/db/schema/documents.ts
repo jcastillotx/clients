@@ -1,5 +1,15 @@
 import { pgTable, uuid, text, timestamp, boolean, integer, jsonb } from "drizzle-orm/pg-core";
 
+export const folders = pgTable("folders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"),
+  clientId: uuid("client_id").notNull(),
+  type: text("type"), // e.g., 'brand_management', 'general'
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
 export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().defaultRandom(),
 
@@ -17,6 +27,7 @@ export const documents = pgTable("documents", {
   // Relationships
   clientId: uuid("client_id").notNull(),
   requestId: uuid("request_id"), // Optional - link to service request
+  folderId: uuid("folder_id"), // Optional - link to folder
   uploadedBy: uuid("uploaded_by").notNull(), // User who uploaded
 
   // Versioning
@@ -114,6 +125,9 @@ export const documentShares = pgTable("document_shares", {
 
 export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
+
+export type Folder = typeof folders.$inferSelect;
+export type NewFolder = typeof folders.$inferInsert;
 
 export type Contract = typeof contracts.$inferSelect;
 export type NewContract = typeof contracts.$inferInsert;

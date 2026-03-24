@@ -51,6 +51,13 @@ export default async function DocumentsPage({
 
   const { data: documents } = await query;
 
+  // Fetch folders
+  let foldersQuery = supabase.from("folders").select("*").order("name");
+  if (resolvedSearchParams.clientId) {
+    foldersQuery = foldersQuery.eq("client_id", resolvedSearchParams.clientId);
+  }
+  const { data: folders } = await foldersQuery;
+
   // Fetch clients for filter dropdown
   const { data: clients } = await supabase.from("clients").select("id, company_name").order("company_name");
 
@@ -60,6 +67,7 @@ export default async function DocumentsPage({
     <div className="container mx-auto py-6">
       <DocumentLibrary
         initialDocuments={documents || []}
+        initialFolders={folders || []}
         clients={clients || []}
         canUpload={canUpload}
         initialClientId={resolvedSearchParams.clientId}
