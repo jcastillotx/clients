@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import { hasPermission } from "@/lib/rbac/permissions";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import { hasPermission, Roles } from "@/lib/rbac/permissions";
 import { redirect } from "next/navigation";
 import { DocumentLibrary } from "@/components/documents/document-library";
 
@@ -20,6 +20,17 @@ export default async function DocumentsPage({
     redirect("/login");
   }
 
+  // Check management role for admin access
+  const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
+  const hasManagementRole =
+    user.user_metadata?.is_super_admin === true ||
+    metadataRole === Roles.SUPER_ADMIN ||
+    metadataRole === Roles.ADMIN ||
+    metadataRole === Roles.ACCOUNT_MANAGER;
+
+  const adminClient = hasManagementRole ? createAdminClientIfAvailable() : null;
+  const dbClient = adminClient ?? supabase;
+
   // Check permission (fallback to true if RBAC not set up)
   const canView = await hasPermission("documents.read").catch(() => true);
   if (!canView) {
@@ -27,7 +38,7 @@ export default async function DocumentsPage({
   }
 
   // Fetch initial documents
-  let query = supabase
+  let query = dbClient
     .from("documents")
     .select(
       `
@@ -52,14 +63,14 @@ export default async function DocumentsPage({
   const { data: documents } = await query;
 
   // Fetch folders
-  let foldersQuery = supabase.from("folders").select("*").order("name");
+  let foldersQuery = dbClient.from("folders").select("*").order("name");
   if (resolvedSearchParams.clientId) {
     foldersQuery = foldersQuery.eq("client_id", resolvedSearchParams.clientId);
   }
   const { data: folders } = await foldersQuery;
 
   // Fetch clients for filter dropdown
-  const { data: clients } = await supabase.from("clients").select("id, company_name").order("company_name");
+  const { data: clients } = await dbClient.from("clients").select("id, company_name").order("company_name");
 
   const canUpload = await hasPermission("documents.create");
 

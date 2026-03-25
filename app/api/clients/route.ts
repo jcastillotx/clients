@@ -1,7 +1,9 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 import { inngest } from "@/lib/inngest/client";
+import { db } from "@/lib/db";
+import { clients } from "@/lib/db/schema";
 
 export async function GET(request: Request) {
   try {
@@ -75,34 +77,47 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    if (!body?.company_name) {
+    // Sanitize and map
+    const insertData: any = {
+      companyName: body.company_name,
+      email: body.email,
+      domain: body.domain || null,
+      industry: body.industry || null,
+      logoUrl: body.logo_url || null,
+      status: body.status || "active",
+      primaryContactId: body.primary_contact_id || null,
+      phone: body.phone || null,
+      address: body.address || null,
+      city: body.city || null,
+      state: body.state || null,
+      zipCode: body.zip_code || null,
+      country: body.country || "US",
+      website: body.website || null,
+    };
+
+    if (!insertData.companyName) {
       return NextResponse.json({ error: "Company name is required" }, { status: 400 });
     }
 
-    if (!body?.email) {
+    if (!insertData.email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    const adminClient = hasManagementRole ? createAdminClientIfAvailable() : null;
-    const dbClient = adminClient ?? supabase;
+    const [newClient] = await db.insert(clients).values(insertData).returning();
 
-    if (hasManagementRole && !adminClient) {
-      console.warn("Service-role Supabase key missing; falling back to session client for POST /api/clients");
+    if (!newClient) {
+      throw new Error("Failed to create client record");
     }
-
-    const { data: client, error } = await dbClient.from("clients").insert(body).select().single();
-
-    if (error) throw error;
 
     await inngest.send({
       name: "client.created",
       data: {
-        clientId: client.id,
-        companyName: client.company_name,
+        clientId: newClient.id,
+        companyName: newClient.companyName,
       },
     });
 
-    return NextResponse.json({ client }, { status: 201 });
+    return NextResponse.json({ client: newClient }, { status: 201 });
   } catch (error) {
     console.error("Error creating client:", error);
     return NextResponse.json(

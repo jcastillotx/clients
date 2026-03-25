@@ -1,6 +1,9 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import { db } from "@/lib/db";
+import { clients } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,18 +38,41 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const body = await request.json();
 
-    const adminClient = hasManagementRole ? createAdminClientIfAvailable() : null;
-    const dbClient = adminClient ?? supabase;
+    // Sanitize and map snake_case to camelCase for Drizzle if necessary, 
+    // but Drizzle with pg-core usually maps them automatically if defined.
+    // However, the form sends snake_case keys. We need to map them to the 
+    // Drizzle schema property names.
 
-    if (hasManagementRole && !adminClient) {
-      console.warn("Service-role Supabase key missing; falling back to session client for PATCH /api/clients/[id]");
+    const updateData: any = {};
+    if (body.company_name !== undefined) updateData.companyName = body.company_name;
+    if (body.email !== undefined) updateData.email = body.email;
+    if (body.domain !== undefined) updateData.domain = body.domain;
+    if (body.industry !== undefined) updateData.industry = body.industry;
+    if (body.logo_url !== undefined) updateData.logoUrl = body.logo_url;
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.primary_contact_id !== undefined) updateData.primaryContactId = body.primary_contact_id;
+    if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.address !== undefined) updateData.address = body.address;
+    if (body.city !== undefined) updateData.city = body.city;
+    if (body.state !== undefined) updateData.state = body.state;
+    if (body.zip_code !== undefined) updateData.zipCode = body.zip_code;
+    if (body.country !== undefined) updateData.country = body.country;
+    if (body.website !== undefined) updateData.website = body.website;
+
+    // Add updatedAt
+    updateData.updatedAt = new Date();
+
+    const [updatedClient] = await db
+      .update(clients)
+      .set(updateData)
+      .where(eq(clients.id, id))
+      .returning();
+
+    if (!updatedClient) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
-    const { data: client, error } = await dbClient.from("clients").update(body).eq("id", id).select().single();
-
-    if (error) throw error;
-
-    return NextResponse.json({ client });
+    return NextResponse.json({ client: updatedClient });
   } catch (error) {
     console.error("Error updating client:", error);
     return NextResponse.json(
