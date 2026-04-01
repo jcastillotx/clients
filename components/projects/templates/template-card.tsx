@@ -82,9 +82,9 @@ export function TemplateCard({ template, onApply, onPreview, showApply = false }
           <div className="flex items-center gap-3">
             <div
               className="p-2 rounded-lg"
-              style={{ backgroundColor: `${template.color || "#3b82f6"}20` }}
+              style={{ backgroundColor: `${template.color || "#3b82f6"}20`, color: template.color || "#3b82f6" }}
             >
-              <IconComponent className="h-5 w-5" style={{ color: template.color || "#3b82f6" }} />
+              <IconComponent className="h-5 w-5" />
             </div>
             <div>
               <CardTitle className="text-base">{template.name}</CardTitle>
