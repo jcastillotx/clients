@@ -4,7 +4,7 @@ import { projects, projectBudgets, projectMilestones, projectDeliverables } from
 import { isNull, desc, sql, eq } from "drizzle-orm";
 import { ProjectCard } from "@/components/projects/project-card";
 import { Button } from "@/components/ui/button";
-import { Plus, ClipboardList } from "lucide-react";
+import { Plus, ClipboardList, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -130,6 +130,12 @@ export default function ProjectsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/projects/templates">
+              <ListChecks className="h-4 w-4 mr-2" />
+              Task Templates
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link href="/projects/requests">
               <ClipboardList className="h-4 w-4 mr-2" />
