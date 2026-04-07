@@ -19,6 +19,7 @@ export * from "./ai-features";
 export * from "./feature-flags";
 export * from "./partners-kb";
 export * from "./staff-tasks";
+export * from "./project-templates";
 export * from "./proposals";
 export * from "./activity-logs";
 export * from "./encrypted-settings";

@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUser } from "@/lib/rbac/check";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { ApplyTemplateButton } from "@/components/projects/apply-template-button";
 
 async function getProject(id: string) {
   const [project] = await db
@@ -123,6 +124,7 @@ async function ProjectDetails({ id }: { id: string }) {
           <p className="text-muted-foreground">{project.description}</p>
         </div>
         <div className="flex gap-2">
+          <ApplyTemplateButton projectId={project.id} projectName={project.name} />
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4 mr-2" />
             Edit
