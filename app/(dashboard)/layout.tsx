@@ -5,6 +5,7 @@ import { DashboardNav } from "@/components/dashboard/nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { ensureAuthUserProfile } from "@/lib/supabase/user-profile-sync";
 import { getPortalBranding } from "@/lib/branding/get-branding";
+import { Kre8ivHelpBubble } from "@/components/ai/kre8iv-help-bubble";
 
 // All dashboard pages require authentication (cookies), so they cannot be statically generated
 export const dynamic = "force-dynamic";
@@ -129,6 +130,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </main>
       </div>
+
+      <Kre8ivHelpBubble />
     </>
   );
 }
