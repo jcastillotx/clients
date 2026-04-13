@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email/client";
+import { renderEmailTemplateAsAdmin } from "@/lib/email/templates";
 import {
   conversationParticipants,
   conversations,
@@ -23,7 +24,10 @@ type Recipient = {
 async function resolveRecipients(
   payload: NotificationPayload,
 ): Promise<Recipient[]> {
-  if (payload.recipientUserIds && payload.recipientUserIds.length > 0) {
+  if (payload.recipientUserIds !== undefined) {
+    if (payload.recipientUserIds.length === 0) {
+      return [];
+    }
     const rows = await db
       .select({
         id: users.id,
@@ -197,11 +201,24 @@ export async function dispatchNotification(
   }
 
   if (recipientEmails.size > 0) {
-    await sendEmail({
-      to: Array.from(recipientEmails),
-      subject,
-      html,
-      text: message,
+    const fromDb = await renderEmailTemplateAsAdmin(payload.eventType, {
+      app_name: process.env.NEXT_PUBLIC_APP_NAME || "Kre8iv Clients",
+      ...(payload.data && typeof payload.data === "object" ? payload.data : {}),
     });
+    if (fromDb) {
+      await sendEmail({
+        to: Array.from(recipientEmails),
+        subject: fromDb.subject,
+        html: fromDb.html,
+        text: fromDb.plainText,
+      });
+    } else {
+      await sendEmail({
+        to: Array.from(recipientEmails),
+        subject,
+        html,
+        text: message,
+      });
+    }
   }
 }

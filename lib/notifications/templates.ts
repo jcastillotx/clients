@@ -49,6 +49,20 @@ export function buildNotificationTemplate(
       return { subject, message, html: htmlWrap(subject, message) };
     }
 
+    case "service_request_created": {
+      const title = String(data.requestTitle || data.request_title || requestTitle);
+      const subject = `New service request: ${title}`;
+      const message = `A new service request was created: ${title}.`;
+      return { subject, message, html: htmlWrap(subject, message) };
+    }
+
+    case "staff_task_created": {
+      const taskTitle = String(data.taskTitle || data.task_title || "Task");
+      const subject = `New task: ${taskTitle}`;
+      const message = `A new task was created: ${taskTitle}.`;
+      return { subject, message, html: htmlWrap(subject, message) };
+    }
+
     case "invoice_paid": {
       const subject = `Invoice Paid: ${invoiceNumber}`;
       const message = amount

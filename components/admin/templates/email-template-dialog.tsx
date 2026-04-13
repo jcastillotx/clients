@@ -36,6 +36,16 @@ const EMAIL_TYPES = [
   { value: "payment_received", label: "Payment Received" },
   { value: "payment_failed", label: "Payment Failed" },
   { value: "invoice_overdue", label: "Invoice Overdue" },
+  { value: "auth_signup", label: "Auth — Signup / verify email" },
+  { value: "auth_recovery", label: "Auth — Password reset" },
+  { value: "auth_magiclink", label: "Auth — Magic link" },
+  { value: "auth_invite", label: "Auth — Invite" },
+  { value: "auth_email_change", label: "Auth — Email change (single)" },
+  { value: "auth_email_change_current", label: "Auth — Email change (current inbox)" },
+  { value: "auth_email_change_new", label: "Auth — Email change (new inbox)" },
+  { value: "auth_generic", label: "Auth — Generic fallback" },
+  { value: "service_request_created", label: "Notification — New service request" },
+  { value: "staff_task_created", label: "Notification — New task" },
 ];
 
 export function EmailTemplateDialog({ open, onOpenChange, template, onSave }: EmailTemplateDialogProps) {

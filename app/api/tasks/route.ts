@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
+import { dispatchNotification } from "@/lib/notifications/service";
 import { db } from "@/lib/db";
 import { staffTasks, staffTaskAssignees, staffTaskLabelRelations } from "@/lib/db/schema/staff-tasks";
 import { eq } from "drizzle-orm";
@@ -98,6 +100,35 @@ export async function POST(request: NextRequest) {
         checklists: true,
       },
     });
+
+    const { data: profile } = await supabase
+      .from("users")
+      .select("client_id, name, email")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile?.client_id && completeTask) {
+      try {
+        const base = getAuthBaseUrl();
+        const assigneeIds = (assignees as string[] | undefined)?.filter(Boolean) ?? [];
+        await dispatchNotification({
+          eventType: "staff_task_created",
+          clientId: profile.client_id,
+          subjectType: "task",
+          subjectId: completeTask.id,
+          actorUserId: user.id,
+          recipientUserIds: assigneeIds.length > 0 ? assigneeIds : undefined,
+          data: {
+            task_title: completeTask.title,
+            task_priority: completeTask.priority,
+            task_url: `${base}/tasks/${boardId}`,
+            created_by_name: profile.name || profile.email || "",
+          },
+        });
+      } catch (notifyErr) {
+        console.error("[POST /api/tasks] notification dispatch:", notifyErr);
+      }
+    }
 
     return NextResponse.json({ task: completeTask }, { status: 201 });
   } catch (error) {

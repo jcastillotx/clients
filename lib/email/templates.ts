@@ -1,19 +1,21 @@
-import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { renderTemplate, type TemplateContext } from "@/lib/templates/template-engine";
 
-// Fetch and render email template
-export async function renderEmailTemplate(
+/**
+ * Fetch and render an email template using a specific Supabase client (e.g. user session or service role).
+ */
+export async function renderEmailTemplateWithClient(
+  supabase: SupabaseClient,
   type: string,
   data: TemplateContext,
 ): Promise<{ subject: string; html: string; plainText: string } | null> {
-  const supabase = await createClient();
-
-  // Fetch template from database
   const { data: template, error } = await supabase
     .from("email_templates")
     .select("*")
     .eq("type", type)
     .eq("is_active", true)
+    .is("deleted_at", null)
     .order("is_default", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -23,12 +25,36 @@ export async function renderEmailTemplate(
     return null;
   }
 
-  // Render subject, HTML, and plain text
   const subject = renderTemplate(template.subject || "", data);
   const html = renderTemplate(template.html_content, data);
   const plainText = template.text_content ? renderTemplate(template.text_content, data) : stripHtml(html);
 
   return { subject, html, plainText };
+}
+
+// Fetch and render email template (RLS: admin template reads require admin role)
+export async function renderEmailTemplate(
+  type: string,
+  data: TemplateContext,
+): Promise<{ subject: string; html: string; plainText: string } | null> {
+  const supabase = await createClient();
+  return renderEmailTemplateWithClient(supabase, type, data);
+}
+
+/**
+ * Load templates using the service role so API routes and hooks can render portal-managed templates
+ * without an admin user session (RLS on `email_templates` is admin-only).
+ */
+export async function renderEmailTemplateAsAdmin(
+  type: string,
+  data: TemplateContext,
+): Promise<{ subject: string; html: string; plainText: string } | null> {
+  const admin = createAdminClientIfAvailable();
+  if (!admin) {
+    console.warn("renderEmailTemplateAsAdmin: service role key not configured; skipping template:", type);
+    return null;
+  }
+  return renderEmailTemplateWithClient(admin, type, data);
 }
 
 // Simple HTML stripper for plain text fallback

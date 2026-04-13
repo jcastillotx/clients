@@ -33,6 +33,18 @@ describe("buildNotificationTemplate", () => {
     expect(t.html).toContain("New Landing Page");
   });
 
+  it("builds service_request_created notification", () => {
+    const t = buildNotificationTemplate("service_request_created", { request_title: "Fix DNS" });
+    expect(t.subject).toContain("Fix DNS");
+    expect(t.message).toContain("Fix DNS");
+  });
+
+  it("builds staff_task_created notification", () => {
+    const t = buildNotificationTemplate("staff_task_created", { task_title: "Deploy" });
+    expect(t.subject).toContain("Deploy");
+    expect(t.message).toContain("Deploy");
+  });
+
   it("builds invoice paid notification with amount", () => {
     const template = buildNotificationTemplate("invoice_paid", {
       invoiceNumber: "INV-1001",

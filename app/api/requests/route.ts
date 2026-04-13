@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
 import { createRequestSchema } from "@/lib/validations/request";
+import { dispatchNotification } from "@/lib/notifications/service";
 import { isAdminUser } from "@/lib/rbac/check";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -85,7 +87,11 @@ export async function POST(req: NextRequest) {
     const validatedData = createRequestSchema.parse(body);
 
     const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-      supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
+      supabase
+        .from("users")
+        .select("id, client_id, is_super_admin, name, email")
+        .eq("id", user.id)
+        .maybeSingle(),
       supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
     ]);
 
@@ -133,6 +139,37 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error("[POST /api/requests] DB error:", error);
       return NextResponse.json({ error: "Failed to create request" }, { status: 500 });
+    }
+
+    try {
+      const base = getAuthBaseUrl();
+      const row = data as {
+        id: string;
+        title: string;
+        priority: string;
+        client?: { company_name?: string } | { company_name?: string }[];
+      };
+      const companyName = Array.isArray(row.client)
+        ? row.client[0]?.company_name
+        : row.client?.company_name;
+
+      await dispatchNotification({
+        eventType: "service_request_created",
+        clientId: effectiveClientId,
+        subjectType: "request",
+        subjectId: row.id,
+        actorUserId: user.id,
+        recipientUserIds: validatedData.assignedTo ? [validatedData.assignedTo] : undefined,
+        data: {
+          request_title: row.title,
+          request_priority: row.priority,
+          request_url: `${base}/requests/${row.id}`,
+          company_name: companyName ?? "",
+          created_by_name: dbUser?.name || dbUser?.email || user.email || "",
+        },
+      });
+    } catch (notifyErr) {
+      console.error("[POST /api/requests] notification dispatch:", notifyErr);
     }
 
     return NextResponse.json(data, { status: 201 });

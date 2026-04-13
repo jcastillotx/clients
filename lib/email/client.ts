@@ -18,9 +18,24 @@ export const resend = new Proxy({} as Resend, {
   },
 });
 
-// Email sender configuration
-export const EMAIL_FROM = process.env.EMAIL_FROM || "noreply@yourdomain.com";
-export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@yourdomain.com";
+// Email sender configuration (Resend: prefer RESEND_FROM_EMAIL + RESEND_FROM_NAME)
+function resolveFromAddress(): string {
+  const email =
+    process.env.EMAIL_FROM?.trim() ||
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    "noreply@yourdomain.com";
+  const name = process.env.RESEND_FROM_NAME?.trim() || process.env.EMAIL_FROM_NAME?.trim();
+  if (name) {
+    return `${name} <${email}>`;
+  }
+  return email;
+}
+
+export const EMAIL_FROM = resolveFromAddress();
+export const EMAIL_REPLY_TO =
+  process.env.EMAIL_REPLY_TO?.trim() ||
+  process.env.RESEND_REPLY_TO?.trim() ||
+  "support@yourdomain.com";
 
 // Common email types
 export interface EmailOptions {
