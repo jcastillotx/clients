@@ -99,6 +99,9 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/admin") ||
     request.nextUrl.pathname.startsWith("/integrations");
 
+  /** MFA (AAL2) is required only for /admin/* — not /integrations — so admins can reach OAuth flows before enrolling MFA. */
+  const adminRouteRequiresMfa = request.nextUrl.pathname.startsWith("/admin");
+
   if (isAdminOnlyRoute) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -129,13 +132,11 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // MFA enforcement for admin routes (SOC2 CC6.1, CC6.3)
-    // Admins must complete MFA to access sensitive routes.
-    // Skip this check when the admin is already on the settings/security page
-    // to avoid a redirect loop.
+    // MFA enforcement for /admin panel routes (SOC2 CC6.1, CC6.3)
+    // Skip when already on settings/security to avoid a redirect loop.
     const isOnSecuritySettings = request.nextUrl.pathname.startsWith("/settings/security");
 
-    if (!isOnSecuritySettings) {
+    if (adminRouteRequiresMfa && !isOnSecuritySettings) {
       try {
         const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalData && aalData.currentLevel !== "aal2") {
