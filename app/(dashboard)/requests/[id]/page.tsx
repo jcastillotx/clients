@@ -75,6 +75,10 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
     notFound();
   }
 
+  if (request.deleted_at) {
+    notFound();
+  }
+
   const normalizedRequest = {
     ...request,
     client: normalizeRelation((request as any).client),

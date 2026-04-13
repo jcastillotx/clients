@@ -65,6 +65,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
       assigned_user:users!requests_assigned_to_fkey(name, avatar)
     `,
     )
+    .is("deleted_at", null)
     .order(resolvedSearchParams.sortBy || "created_at", {
       ascending: resolvedSearchParams.sortOrder === "asc",
     });
