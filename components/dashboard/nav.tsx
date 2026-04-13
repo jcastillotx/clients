@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ import {
   CalendarCheck,
   Menu,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { ComponentType } from "react";
 
@@ -210,6 +211,21 @@ const sidebarWidthClass: Record<string, string> = {
   wide: "w-20 md:w-80",
 };
 
+const ADMIN_NAV_SECTIONS_KEY = "kre8iv-admin-nav-sections";
+
+function isNavItemActive(
+  pathname: string,
+  searchParams: { get: (name: string) => string | null },
+  item: NavItem,
+): boolean {
+  const [itemPathname, itemSearch] = item.href.split("?");
+  const itemTab =
+    item.matchesTab ?? (itemSearch ? new URLSearchParams(itemSearch).get("tab") : null);
+  const currentTab = searchParams.get("tab");
+  const isTabMatch = itemTab ? currentTab === itemTab : true;
+  return (pathname === itemPathname && isTabMatch) || pathname.startsWith(`${itemPathname}/`);
+}
+
 export function DashboardNav({
   user,
   isStaff,
@@ -224,6 +240,42 @@ export function DashboardNav({
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  /** Admin-only: collapsed state per section (persisted). `undefined` = expanded (default). */
+  const [adminSectionOpen, setAdminSectionOpen] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!isAdmin || typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(ADMIN_NAV_SECTIONS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, boolean>;
+        if (parsed && typeof parsed === "object") {
+          setAdminSectionOpen(parsed);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [isAdmin]);
+
+  const toggleAdminSection = useCallback((title: string) => {
+    setAdminSectionOpen((prev) => {
+      const wasOpen = prev[title] !== false;
+      const next = { ...prev, [title]: !wasOpen };
+      try {
+        localStorage.setItem(ADMIN_NAV_SECTIONS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  const isAdminSectionExpanded = useCallback(
+    (title: string) => adminSectionOpen[title] !== false,
+    [adminSectionOpen],
+  );
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -326,21 +378,43 @@ export function DashboardNav({
             );
             if (visibleItems.length === 0) return null;
 
+            const sectionExpanded = !isAdmin || isAdminSectionExpanded(section.title);
+
             return (
               <div key={section.title}>
-                <p
-                  className="mb-2 hidden px-2 text-xs font-semibold uppercase tracking-[0.14em] md:block"
-                  style={{ color: "var(--sidebar-text)", opacity: 0.7 }}
-                >
-                  {section.title}
-                </p>
-                <div className="space-y-1.5">
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleAdminSection(section.title)}
+                    className="mb-2 flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1 text-left transition hover:bg-white/10 md:px-2"
+                    style={{ color: "var(--sidebar-text)" }}
+                    aria-expanded={sectionExpanded}
+                  >
+                    <span
+                      className="text-xs font-semibold uppercase tracking-[0.14em]"
+                      style={{ opacity: 0.85 }}
+                    >
+                      {section.title}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 opacity-80 transition-transform duration-200",
+                        sectionExpanded ? "rotate-0" : "-rotate-90",
+                      )}
+                      aria-hidden="true"
+                    />
+                  </button>
+                ) : (
+                  <p
+                    className="mb-2 hidden px-2 text-xs font-semibold uppercase tracking-[0.14em] md:block"
+                    style={{ color: "var(--sidebar-text)", opacity: 0.7 }}
+                  >
+                    {section.title}
+                  </p>
+                )}
+                <div className={cn("space-y-1.5", isAdmin && !sectionExpanded && "hidden")}>
                   {visibleItems.map((item) => {
-                    const [itemPathname, itemSearch] = item.href.split("?");
-                    const itemTab = item.matchesTab ?? new URLSearchParams(itemSearch).get("tab");
-                    const currentTab = searchParams.get("tab");
-                    const isTabMatch = itemTab ? currentTab === itemTab : true;
-                    const isActive = (pathname === itemPathname && isTabMatch) || pathname.startsWith(`${itemPathname}/`);
+                    const isActive = isNavItemActive(pathname, searchParams, item);
                     return (
                       <Link key={item.name} href={item.href}>
                         <Button
