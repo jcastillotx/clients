@@ -187,6 +187,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, results });
   } catch (error) {
     console.error("Error saving integration settings:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("ENCRYPTION_KEY")) {
+      return NextResponse.json(
+        {
+          error:
+            "Server encryption is not configured. Add ENCRYPTION_KEY to the environment (see .env.local.example).",
+        },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ error: "Failed to save settings" }, { status: 500 });
   }
 }
