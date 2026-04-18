@@ -1,27 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Send, Eye, EyeOff, CheckCircle2, Info } from "lucide-react";
+import { Loader2, Save, Send, Eye, EyeOff, CheckCircle2, Info, Link2, Link2Off, AlertTriangle } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Provider definitions
 // ---------------------------------------------------------------------------
 
 type Provider = "resend" | "sendgrid" | "mailgun" | "gmail" | "office365" | "smtp";
+type OAuthKind = "google" | "microsoft";
 
 interface ProviderMeta {
   label: string;
   description: string;
   docsUrl: string;
   badge?: string;
+  oauth?: {
+    kind: OAuthKind;
+    buttonLabel: string;
+    connectPath: string;
+  };
 }
 
 const PROVIDERS: Record<Provider, ProviderMeta> = {
@@ -42,14 +48,24 @@ const PROVIDERS: Record<Provider, ProviderMeta> = {
     docsUrl: "https://documentation.mailgun.com/en/latest/quickstart-sending.html",
   },
   gmail: {
-    label: "Gmail (SMTP)",
-    description: "Send via your Google Workspace or personal Gmail account using an App Password.",
+    label: "Gmail / Google Workspace",
+    description: "Send via a Google Workspace or Gmail mailbox. Connect with one click, or fall back to SMTP + App Password.",
     docsUrl: "https://support.google.com/accounts/answer/185833",
+    oauth: {
+      kind: "google",
+      buttonLabel: "Connect with Google",
+      connectPath: "/api/admin/email/connect/google",
+    },
   },
   office365: {
-    label: "Office 365 / Outlook (SMTP)",
-    description: "Send via Microsoft 365 or Outlook using SMTP AUTH.",
+    label: "Microsoft 365 / Outlook",
+    description: "Send via a Microsoft 365 or Outlook mailbox. Connect with one click, or fall back to SMTP AUTH.",
     docsUrl: "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",
+    oauth: {
+      kind: "microsoft",
+      buttonLabel: "Connect with Microsoft",
+      connectPath: "/api/admin/email/connect/microsoft",
+    },
   },
   smtp: {
     label: "Custom SMTP",
@@ -82,6 +98,12 @@ interface FormState {
   smtp_encryption: "none" | "starttls" | "ssl";
 }
 
+interface OAuthState {
+  provider: OAuthKind | null;
+  accountEmail: string;
+  tokenExpiry: string;
+}
+
 const DEFAULT_FORM: FormState = {
   provider: "resend",
   from_email: "",
@@ -95,38 +117,65 @@ const DEFAULT_FORM: FormState = {
   smtp_encryption: "starttls",
 };
 
+const DEFAULT_OAUTH: OAuthState = { provider: null, accountEmail: "", tokenExpiry: "" };
+
 export function EmailSettings() {
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [oauth, setOauth] = useState<OAuthState>(DEFAULT_OAUTH);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+  const [showManualFallback, setShowManualFallback] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [testing, setTesting] = useState(false);
 
-  // Load current settings
+  // Callback banners
+  const connectedParam = searchParams.get("connected");
+  const errorParam = searchParams.get("error");
+
+  async function loadSettings() {
+    const res = await fetch("/api/admin/email", { credentials: "same-origin" });
+    const data: Record<string, string> = await res.json();
+    setForm((prev) => ({
+      ...prev,
+      provider: (data.provider as Provider) ?? "resend",
+      from_email: data.from_email ?? "",
+      from_name: data.from_name ?? "",
+      api_key: data.api_key ?? "",
+      mailgun_domain: data.mailgun_domain ?? "",
+      smtp_host: data.smtp_host ?? "",
+      smtp_port: data.smtp_port ?? "587",
+      smtp_user: data.smtp_user ?? "",
+      smtp_password: data.smtp_password ?? "",
+      smtp_encryption: (data.smtp_encryption as FormState["smtp_encryption"]) ?? "starttls",
+    }));
+    setOauth({
+      provider: (data.oauth_provider as OAuthKind) || null,
+      accountEmail: data.oauth_account_email ?? "",
+      tokenExpiry: data.oauth_token_expiry ?? "",
+    });
+  }
+
   useEffect(() => {
-    fetch("/api/admin/email", { credentials: "same-origin" })
-      .then((r) => r.json())
-      .then((data: Record<string, string>) => {
-        setForm((prev) => ({
-          ...prev,
-          provider: (data.provider as Provider) ?? "resend",
-          from_email: data.from_email ?? "",
-          from_name: data.from_name ?? "",
-          api_key: data.api_key ?? "",
-          mailgun_domain: data.mailgun_domain ?? "",
-          smtp_host: data.smtp_host ?? "",
-          smtp_port: data.smtp_port ?? "587",
-          smtp_user: data.smtp_user ?? "",
-          smtp_password: data.smtp_password ?? "",
-          smtp_encryption: (data.smtp_encryption as FormState["smtp_encryption"]) ?? "starttls",
-        }));
-      })
+    loadSettings()
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Clear callback params from URL after showing them once
+  useEffect(() => {
+    if (connectedParam || errorParam) {
+      const timer = setTimeout(() => {
+        router.replace("/admin/email", { scroll: false });
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [connectedParam, errorParam, router]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -134,6 +183,7 @@ export function EmailSettings() {
 
   function handleProviderChange(p: Provider) {
     const preset = SMTP_PRESETS[p];
+    setShowManualFallback(false);
     setForm((prev) => ({
       ...prev,
       provider: p,
@@ -183,10 +233,32 @@ export function EmailSettings() {
     }
   }
 
+  async function handleDisconnect() {
+    setDisconnecting(true);
+    try {
+      const res = await fetch("/api/admin/email/disconnect", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      if (res.ok) {
+        toast({ title: "Disconnected" });
+        setOauth(DEFAULT_OAUTH);
+        await loadSettings();
+      } else {
+        toast({ title: "Failed to disconnect", variant: "destructive" });
+      }
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
+  const meta = PROVIDERS[form.provider];
   const isSmtp = ["gmail", "office365", "smtp"].includes(form.provider);
   const isApiKey = ["resend", "sendgrid"].includes(form.provider);
   const isMailgun = form.provider === "mailgun";
-  const meta = PROVIDERS[form.provider];
+  const oauthMeta = meta.oauth;
+  const isConnectedViaOAuth =
+    oauthMeta != null && oauth.provider === oauthMeta.kind && oauth.accountEmail !== "";
 
   if (loading) {
     return (
@@ -199,6 +271,23 @@ export function EmailSettings() {
 
   return (
     <div className="space-y-6">
+      {/* OAuth callback banners */}
+      {connectedParam && (
+        <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p>
+            Connected to{" "}
+            <strong>{connectedParam === "google" ? "Google" : "Microsoft"}</strong>
+            {oauth.accountEmail ? ` as ${oauth.accountEmail}` : ""}.
+          </p>
+        </div>
+      )}
+      {errorParam && (
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p>Connection failed: {errorParam.replace(/_/g, " ")}</p>
+        </div>
+      )}
 
       {/* Provider selection */}
       <div className="space-y-2">
@@ -215,6 +304,11 @@ export function EmailSettings() {
                   {p.badge && (
                     <Badge variant="secondary" className="text-[10px] ml-1">
                       {p.badge}
+                    </Badge>
+                  )}
+                  {p.oauth && (
+                    <Badge variant="outline" className="text-[10px] ml-1">
+                      Connect
                     </Badge>
                   )}
                 </span>
@@ -260,6 +354,66 @@ export function EmailSettings() {
           />
         </div>
       </div>
+
+      {/* OAuth connection block — Gmail / Office 365 */}
+      {oauthMeta && (
+        <div className="space-y-3 rounded-lg border bg-card p-4">
+          {isConnectedViaOAuth ? (
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <p className="text-sm font-medium">Connected</p>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {oauthMeta.kind === "google" ? "Google" : "Microsoft"}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{oauth.accountEmail}</p>
+                <p className="text-xs text-muted-foreground">
+                  Tokens are stored encrypted. Emails will be sent from this mailbox.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleDisconnect()}
+                disabled={disconnecting}
+                className="gap-2"
+              >
+                {disconnecting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Link2Off className="h-4 w-4" />
+                )}
+                Disconnect
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">One-click connection</p>
+                <p className="text-xs text-muted-foreground">
+                  Grant send-email access to the connected account. No passwords
+                  required — we store refresh tokens encrypted.
+                </p>
+              </div>
+              <Button asChild className="gap-2">
+                <a href={oauthMeta.connectPath}>
+                  <Link2 className="h-4 w-4" />
+                  {oauthMeta.buttonLabel}
+                </a>
+              </Button>
+              <button
+                type="button"
+                className="block text-xs text-muted-foreground underline-offset-2 hover:underline"
+                onClick={() => setShowManualFallback((v) => !v)}
+              >
+                {showManualFallback ? "Hide" : "Use"} manual SMTP setup instead
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* API key providers: Resend, SendGrid */}
       {isApiKey && (
@@ -323,8 +477,10 @@ export function EmailSettings() {
         </div>
       )}
 
-      {/* SMTP providers: Gmail, Office 365, custom SMTP */}
-      {isSmtp && (
+      {/* SMTP providers: Gmail, Office 365, custom SMTP.
+          For Gmail/Office 365 the manual form is hidden by default
+          (OAuth is the primary path); reveal via the fallback toggle. */}
+      {isSmtp && (oauthMeta == null || showManualFallback) && (
         <div className="space-y-4">
           {form.provider === "gmail" && (
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400">

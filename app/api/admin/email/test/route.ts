@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
-import { decrypt } from "@/lib/encryption";
+import { decrypt, encrypt } from "@/lib/encryption";
 import { z } from "zod";
 
 const testSchema = z.object({
@@ -65,7 +65,11 @@ export async function POST(req: NextRequest) {
       case "gmail":
       case "office365":
       case "smtp":
-        await sendViaSmtp(cfg, parsed.data.to);
+        if (cfg["oauth_provider"] && cfg["oauth_access_token"]) {
+          await sendViaOAuth(adminClient, cfg, parsed.data.to);
+        } else {
+          await sendViaSmtp(cfg, parsed.data.to);
+        }
         break;
       default:
         return NextResponse.json({ error: `Unknown provider: ${provider}` }, { status: 400 });
@@ -185,6 +189,189 @@ async function sendViaSmtp(cfg: Record<string, string>, to: string) {
     subject: "Test email from KRE8IV",
     html: testEmailHtml(),
   });
+}
+
+// ---------------------------------------------------------------------------
+// OAuth senders (Gmail API / Microsoft Graph)
+// ---------------------------------------------------------------------------
+
+type AdminClient = NonNullable<ReturnType<typeof createAdminClientIfAvailable>>;
+
+async function sendViaOAuth(
+  adminClient: AdminClient,
+  cfg: Record<string, string>,
+  to: string,
+) {
+  const oauthProvider = cfg["oauth_provider"];
+  const accessToken = await ensureFreshAccessToken(adminClient, cfg);
+
+  if (oauthProvider === "google") {
+    const rawMessage = buildRfc822Message(cfg, to);
+    const encoded = Buffer.from(rawMessage)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+
+    const res = await fetch(
+      "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ raw: encoded }),
+      },
+    );
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(
+        (data as { error?: { message?: string } }).error?.message ??
+          `Gmail API error ${res.status}`,
+      );
+    }
+    return;
+  }
+
+  if (oauthProvider === "microsoft") {
+    const res = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: {
+          subject: "Test email from KRE8IV",
+          body: { contentType: "HTML", content: testEmailHtml() },
+          toRecipients: [{ emailAddress: { address: to } }],
+          from: cfg["oauth_account_email"]
+            ? { emailAddress: { address: cfg["oauth_account_email"] } }
+            : undefined,
+        },
+        saveToSentItems: false,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(
+        (data as { error?: { message?: string } }).error?.message ??
+          `Microsoft Graph error ${res.status}`,
+      );
+    }
+    return;
+  }
+
+  throw new Error(`Unsupported OAuth provider: ${oauthProvider}`);
+}
+
+async function ensureFreshAccessToken(
+  adminClient: AdminClient,
+  cfg: Record<string, string>,
+): Promise<string> {
+  const accessToken = cfg["oauth_access_token"];
+  if (!accessToken) throw new Error("No OAuth access token available.");
+
+  const expiryIso = cfg["oauth_token_expiry"];
+  const expiresAt = expiryIso ? new Date(expiryIso).getTime() : 0;
+  // 60s safety margin
+  if (expiresAt && expiresAt - 60_000 > Date.now()) return accessToken;
+
+  const refreshToken = cfg["oauth_refresh_token"];
+  if (!refreshToken) return accessToken; // stale token, but nothing to refresh
+
+  const oauthProvider = cfg["oauth_provider"];
+  let refreshed: { access_token?: string; expires_in?: number } | null = null;
+
+  if (oauthProvider === "google") {
+    const clientId = process.env.GOOGLE_EMAIL_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+    const clientSecret =
+      process.env.GOOGLE_EMAIL_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+    if (!clientId || !clientSecret) return accessToken;
+
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }),
+    });
+    refreshed = await res.json().catch(() => null);
+  } else if (oauthProvider === "microsoft") {
+    const clientId =
+      process.env.MICROSOFT_EMAIL_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID;
+    const clientSecret =
+      process.env.MICROSOFT_EMAIL_CLIENT_SECRET ||
+      process.env.MICROSOFT_CLIENT_SECRET;
+    if (!clientId || !clientSecret) return accessToken;
+
+    const res = await fetch(
+      "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: "refresh_token",
+          refresh_token: refreshToken,
+        }),
+      },
+    );
+    refreshed = await res.json().catch(() => null);
+  }
+
+  if (!refreshed?.access_token) return accessToken;
+
+  const newExpiryIso = refreshed.expires_in
+    ? new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+    : "";
+
+  await adminClient.from("system_settings").upsert(
+    [
+      {
+        category: "email",
+        key: "oauth_access_token",
+        value: encrypt(refreshed.access_token),
+        is_encrypted: true,
+        updated_at: new Date().toISOString(),
+      },
+      ...(newExpiryIso
+        ? [
+            {
+              category: "email",
+              key: "oauth_token_expiry",
+              value: newExpiryIso,
+              is_encrypted: false,
+              updated_at: new Date().toISOString(),
+            },
+          ]
+        : []),
+    ],
+    { onConflict: "category,key" },
+  );
+
+  return refreshed.access_token;
+}
+
+function buildRfc822Message(cfg: Record<string, string>, to: string): string {
+  const from =
+    cfg["oauth_account_email"] || cfg["from_email"] || "noreply@example.com";
+  const fromName = cfg["from_name"] || "KRE8IV";
+  const html = testEmailHtml();
+  return [
+    `From: "${fromName}" <${from}>`,
+    `To: ${to}`,
+    `Subject: Test email from KRE8IV`,
+    `MIME-Version: 1.0`,
+    `Content-Type: text/html; charset=UTF-8`,
+    ``,
+    html,
+  ].join("\r\n");
 }
 
 // ---------------------------------------------------------------------------
