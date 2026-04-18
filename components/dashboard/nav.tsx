@@ -98,7 +98,9 @@ const navigationSections: NavSection[] = [
       { name: "Maintenance Plans", href: "/maintenance-plans", icon: ShieldCheck },
       { name: "File Storage", href: "/documents", icon: FolderOpen },
       { name: "Proposals", href: "/proposals", icon: FileText },
-      { name: "Invoices & Payments", href: "/invoices", icon: Receipt, access: "manager" },
+      // Invoices: clients see their own (RLS); staff without billing roles are
+      // redirected to /dashboard by the page itself, so don't list it for them.
+      { name: "Invoices & Payments", href: "/invoices", icon: Receipt },
     ],
   },
   {
@@ -109,9 +111,9 @@ const navigationSections: NavSection[] = [
       { name: "Project Messages", href: "/projects/messages", icon: MessageSquareText },
       { name: "Project Feedback", href: "/projects/feedback", icon: MessageCircleMore },
       { name: "Time Tracking", href: "/time-tracking", icon: Clock3, access: "staff" },
-      { name: "Task Board", href: "/tasks", icon: Columns3, access: "staff" },
-      { name: "Project Budgets", href: "/projects", icon: Briefcase, access: "staff" },
-      { name: "Staff Tasks", href: "/tasks", icon: ClipboardCheck, access: "staff" },
+      { name: "Task Boards", href: "/tasks", icon: Columns3, access: "staff" },
+      { name: "Project Budgets", href: "/projects?view=budgets", icon: Briefcase, access: "staff" },
+      { name: "My Tasks", href: "/tasks?assignee=me", icon: ClipboardCheck, access: "staff" },
     ],
   },
   {
@@ -119,7 +121,7 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Messages", href: "/messages", icon: MessageSquareText },
       { name: "Meetings", href: "/meetings", icon: CalendarDays, access: "staff" },
-      { name: "Meeting Notes", href: "/meetings", icon: NotebookText, access: "staff" },
+      { name: "Meeting Notes", href: "/meetings?tab=notes", icon: NotebookText, access: "staff" },
       { name: "Email Assistant", href: "/ai/email-assistant", icon: Mail, access: "staff" },
     ],
   },
@@ -150,7 +152,7 @@ const navigationSections: NavSection[] = [
       { name: "Reports Dashboard", href: "/reports", icon: BarChart3, access: "staff" },
       { name: "Team Workload", href: "/time-tracking/reports", icon: Users, access: "staff" },
       { name: "Client Reports", href: "/reports/custom", icon: FileText, access: "staff" },
-      { name: "Activity Log", href: "/reports", icon: Clock3, access: "staff" },
+      { name: "Activity Log", href: "/admin/activity-log", icon: Clock3, access: "admin" },
     ],
   },
   {
@@ -213,17 +215,57 @@ const sidebarWidthClass: Record<string, string> = {
 
 const ADMIN_NAV_SECTIONS_KEY = "kre8iv-admin-nav-sections";
 
-function isNavItemActive(
+/**
+ * Score a single nav item against the current URL.
+ *
+ * Returns -1 when the item does not match. Higher scores win when several
+ * items share the same pathname (e.g. /projects vs /projects?view=budgets).
+ *   * pathname must match exactly OR be a parent of the current path
+ *   * every query-string param in the item href must equal the current URL
+ *   * each matched param adds 1 to the score; the bare item scores 0
+ */
+function scoreNavItem(
   pathname: string,
   searchParams: { get: (name: string) => string | null },
   item: NavItem,
-): boolean {
+): number {
   const [itemPathname, itemSearch] = item.href.split("?");
-  const itemTab =
-    item.matchesTab ?? (itemSearch ? new URLSearchParams(itemSearch).get("tab") : null);
-  const currentTab = searchParams.get("tab");
-  const isTabMatch = itemTab ? currentTab === itemTab : true;
-  return (pathname === itemPathname && isTabMatch) || pathname.startsWith(`${itemPathname}/`);
+  const pathMatches =
+    pathname === itemPathname || pathname.startsWith(`${itemPathname}/`);
+  if (!pathMatches) return -1;
+
+  const params = itemSearch ? new URLSearchParams(itemSearch) : new URLSearchParams();
+  let score = 0;
+  for (const [key, value] of params) {
+    if (searchParams.get(key) !== value) return -1;
+    score += 1;
+  }
+
+  // Backwards-compat: explicit matchesTab still wins.
+  if (item.matchesTab) {
+    if (searchParams.get("tab") !== item.matchesTab) return -1;
+    score += 1;
+  }
+
+  return score;
+}
+
+/** Pick the item in a section that best matches the current URL (or null). */
+function findActiveItem(
+  pathname: string,
+  searchParams: { get: (name: string) => string | null },
+  items: NavItem[],
+): NavItem | null {
+  let best: NavItem | null = null;
+  let bestScore = -1;
+  for (const item of items) {
+    const score = scoreNavItem(pathname, searchParams, item);
+    if (score > bestScore) {
+      best = item;
+      bestScore = score;
+    }
+  }
+  return best;
 }
 
 export function DashboardNav({
@@ -413,28 +455,31 @@ export function DashboardNav({
                   </p>
                 )}
                 <div className={cn("space-y-1.5", isAdmin && !sectionExpanded && "hidden")}>
-                  {visibleItems.map((item) => {
-                    const isActive = isNavItemActive(pathname, searchParams, item);
-                    return (
-                      <Link key={item.name} href={item.href}>
-                        <Button
-                          variant="ghost"
-                          aria-current={isActive ? "page" : undefined}
-                          className={cn(
-                            "h-10 w-full justify-center rounded-xl px-3 text-[0.93rem] md:justify-start",
-                            "hover:bg-white/10 hover:text-[var(--sidebar-text)]",
-                            isActive
-                              ? "bg-white/15 font-semibold"
-                              : "font-normal opacity-85",
-                          )}
-                          style={{ color: "var(--sidebar-text)" }}
-                        >
-                          <item.icon className="h-4 w-4 md:mr-3 shrink-0" aria-hidden="true" />
-                          <span className="hidden md:inline">{item.name}</span>
-                        </Button>
-                      </Link>
-                    );
-                  })}
+                  {(() => {
+                    const activeItem = findActiveItem(pathname, searchParams, visibleItems);
+                    return visibleItems.map((item) => {
+                      const isActive = item === activeItem;
+                      return (
+                        <Link key={item.name} href={item.href}>
+                          <Button
+                            variant="ghost"
+                            aria-current={isActive ? "page" : undefined}
+                            className={cn(
+                              "h-10 w-full justify-center rounded-xl px-3 text-[0.93rem] md:justify-start",
+                              "hover:bg-white/10 hover:text-[var(--sidebar-text)]",
+                              isActive
+                                ? "bg-white/15 font-semibold"
+                                : "font-normal opacity-85",
+                            )}
+                            style={{ color: "var(--sidebar-text)" }}
+                          >
+                            <item.icon className="h-4 w-4 md:mr-3 shrink-0" aria-hidden="true" />
+                            <span className="hidden md:inline">{item.name}</span>
+                          </Button>
+                        </Link>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             );

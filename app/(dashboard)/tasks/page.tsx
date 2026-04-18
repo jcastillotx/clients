@@ -1,8 +1,19 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Plus, Layout, Archive } from "lucide-react";
+import { Plus, Layout, Archive, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { db } from "@/lib/db";
+import {
+  staffTasks,
+  staffTaskAssignees,
+  staffTaskBoards,
+  staffTaskColumns,
+} from "@/lib/db/schema/staff-tasks";
+import { and, asc, eq, isNull, ne } from "drizzle-orm";
+import { createClient } from "@/lib/supabase/server";
+import { format, isPast } from "date-fns";
 
 async function getBoards() {
   // This would normally fetch from API
@@ -10,7 +21,49 @@ async function getBoards() {
   return [];
 }
 
-export default async function TasksPage() {
+async function getMyTasks(userId: string) {
+  return db
+    .select({
+      id: staffTasks.id,
+      title: staffTasks.title,
+      priority: staffTasks.priority,
+      dueDate: staffTasks.dueDate,
+      progress: staffTasks.progress,
+      completedAt: staffTasks.completedAt,
+      boardId: staffTasks.boardId,
+      boardName: staffTaskBoards.name,
+      columnName: staffTaskColumns.name,
+      isDoneColumn: staffTaskColumns.isDoneColumn,
+    })
+    .from(staffTasks)
+    .innerJoin(staffTaskAssignees, eq(staffTaskAssignees.taskId, staffTasks.id))
+    .innerJoin(staffTaskBoards, eq(staffTaskBoards.id, staffTasks.boardId))
+    .innerJoin(staffTaskColumns, eq(staffTaskColumns.id, staffTasks.columnId))
+    .where(
+      and(
+        eq(staffTaskAssignees.userId, userId),
+        isNull(staffTasks.completedAt),
+        ne(staffTaskBoards.isArchived, true),
+      ),
+    )
+    .orderBy(asc(staffTasks.dueDate));
+}
+
+const PRIORITY_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  low: "outline",
+  normal: "secondary",
+  high: "default",
+  urgent: "destructive",
+};
+
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ assignee?: string }>;
+}) {
+  const { assignee } = await searchParams;
+  if (assignee === "me") return <MyTasksView />;
+
   const boards = await getBoards();
 
   return (
@@ -117,6 +170,96 @@ function BoardsLoadingSkeleton() {
           </CardContent>
         </Card>
       ))}
+    </div>
+  );
+}
+
+async function MyTasksView() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8">
+        <p className="text-muted-foreground">Sign in to see your tasks.</p>
+      </div>
+    );
+  }
+
+  const tasks = await getMyTasks(user.id);
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Tasks</h1>
+          <p className="text-muted-foreground">
+            Open tasks assigned to you, across every board.
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/tasks">
+            <Layout className="mr-2 h-4 w-4" />
+            All boards
+          </Link>
+        </Button>
+      </div>
+
+      {tasks.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <CalendarClock className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold">You're all clear</h3>
+            <p className="text-center text-sm text-muted-foreground">
+              No open tasks are assigned to you right now.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                  <th className="px-4 py-3 font-medium">Task</th>
+                  <th className="px-4 py-3 font-medium">Board</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Priority</th>
+                  <th className="px-4 py-3 font-medium">Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tasks.map((t) => {
+                  const overdue = t.dueDate && isPast(new Date(t.dueDate));
+                  return (
+                    <tr key={t.id} className="border-b last:border-0 hover:bg-muted/40">
+                      <td className="px-4 py-3 font-medium">
+                        <Link href={`/tasks/${t.boardId}`} className="hover:underline">
+                          {t.title}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{t.boardName}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{t.columnName}</td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant={PRIORITY_VARIANT[t.priority] ?? "secondary"}
+                          className="capitalize"
+                        >
+                          {t.priority}
+                        </Badge>
+                      </td>
+                      <td
+                        className={`px-4 py-3 tabular-nums ${overdue ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        {t.dueDate ? format(new Date(t.dueDate), "MMM d, yyyy") : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
