@@ -18,9 +18,20 @@ const EMAIL_KEYS = [
   "smtp_user",
   "smtp_password",
   "smtp_encryption", // none | starttls | ssl
+  // OAuth (Gmail / Office 365) — written by /api/admin/email/callback/{provider}
+  "oauth_provider",         // google | microsoft
+  "oauth_account_email",    // connected mailbox
+  "oauth_access_token",     // encrypted
+  "oauth_refresh_token",    // encrypted
+  "oauth_token_expiry",     // ISO timestamp
 ] as const;
 
-const SECRET_KEYS = new Set(["api_key", "smtp_password"]);
+const SECRET_KEYS = new Set([
+  "api_key",
+  "smtp_password",
+  "oauth_access_token",
+  "oauth_refresh_token",
+]);
 
 type EmailKey = (typeof EMAIL_KEYS)[number];
 
