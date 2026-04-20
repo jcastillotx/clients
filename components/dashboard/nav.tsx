@@ -110,8 +110,6 @@ const navigationSections: NavSection[] = [
       { name: "Project Feedback", href: "/projects/feedback", icon: MessageCircleMore },
       { name: "Time Tracking", href: "/time-tracking", icon: Clock3, access: "staff" },
       { name: "Task Board", href: "/tasks", icon: Columns3, access: "staff" },
-      { name: "Project Budgets", href: "/projects", icon: Briefcase, access: "staff" },
-      { name: "Staff Tasks", href: "/tasks", icon: ClipboardCheck, access: "staff" },
     ],
   },
   {
@@ -119,7 +117,6 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Messages", href: "/messages", icon: MessageSquareText },
       { name: "Meetings", href: "/meetings", icon: CalendarDays, access: "staff" },
-      { name: "Meeting Notes", href: "/meetings", icon: NotebookText, access: "staff" },
       { name: "Email Assistant", href: "/ai/email-assistant", icon: Mail, access: "staff" },
     ],
   },
@@ -150,7 +147,6 @@ const navigationSections: NavSection[] = [
       { name: "Reports Dashboard", href: "/reports", icon: BarChart3, access: "staff" },
       { name: "Team Workload", href: "/time-tracking/reports", icon: Users, access: "staff" },
       { name: "Client Reports", href: "/reports/custom", icon: FileText, access: "staff" },
-      { name: "Activity Log", href: "/reports", icon: Clock3, access: "staff" },
     ],
   },
   {
@@ -189,6 +185,17 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Security Overview", href: "/security-overview", icon: Shield, access: "staff" },
       { name: "Privacy Requests", href: "/privacy-requests", icon: EyeOff, access: "staff" },
+    ],
+  },
+  {
+    title: "Admin",
+    items: [
+      { name: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, access: "admin" },
+      { name: "Financial Dashboard", href: "/admin/financial", icon: TrendingUp, access: "admin" },
+      { name: "Feature Management", href: "/admin/features", icon: Sparkles, access: "admin" },
+      { name: "Roles & Permissions", href: "/admin/roles", icon: ShieldCheck, access: "admin" },
+      { name: "All Support Tickets", href: "/admin/tickets", icon: ClipboardCheck, access: "admin" },
+      { name: "Template Settings", href: "/admin/settings/templates", icon: NotebookText, access: "admin" },
     ],
   },
   {
