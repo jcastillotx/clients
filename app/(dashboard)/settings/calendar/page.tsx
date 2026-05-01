@@ -243,7 +243,7 @@ export default async function CalendarSettingsPage({
                   </div>
                   <div>
                     <p className="font-medium text-foreground">Calendar not configured error</p>
-                    <p className="mt-0.5">The Google or Microsoft OAuth app credentials haven&apos;t been set up on this server. Contact your administrator to configure <code className="text-xs">GOOGLE_CALENDAR_CLIENT_ID</code> / <code className="text-xs">MICROSOFT_CALENDAR_CLIENT_ID</code> environment variables.</p>
+                    <p className="mt-0.5">The server is missing calendar OAuth environment variables, or the OAuth state secret. An administrator should set <code className="text-xs">GOOGLE_CALENDAR_CLIENT_ID</code>, <code className="text-xs">GOOGLE_CALENDAR_CLIENT_SECRET</code>, <code className="text-xs">MICROSOFT_CALENDAR_CLIENT_ID</code>, <code className="text-xs">MICROSOFT_CALENDAR_CLIENT_SECRET</code>, and <code className="text-xs">CALENDAR_OAUTH_STATE_SECRET</code> (or rely on <code className="text-xs">ENCRYPTION_KEY</code> for state signing). See <code className="text-xs">.env.local.example</code>.</p>
                   </div>
                 </div>
               </AccordionContent>

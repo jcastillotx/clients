@@ -31,7 +31,9 @@ export async function GET(req: NextRequest) {
 
   const stateSecret = getSigningSecret("CALENDAR_OAUTH_STATE_SECRET");
   if (!stateSecret) {
-    return NextResponse.redirect(`${redirectBase}?error=not_configured`);
+    return NextResponse.redirect(
+      `${redirectBase}?error=oauth_state_not_configured`,
+    );
   }
 
   const statePayload = verifySignedToken(stateToken, stateSecret);
@@ -49,7 +51,9 @@ export async function GET(req: NextRequest) {
   const clientId = process.env.MICROSOFT_CALENDAR_CLIENT_ID;
   const clientSecret = process.env.MICROSOFT_CALENDAR_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    return NextResponse.redirect(`${redirectBase}?error=not_configured`);
+    return NextResponse.redirect(
+      `${redirectBase}?error=microsoft_not_configured`,
+    );
   }
 
   const redirectUri = `${appUrl}/api/calendar/callback/microsoft`;

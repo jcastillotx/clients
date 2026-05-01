@@ -3,8 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
   CheckCircle2,
@@ -139,11 +138,20 @@ export function CalendarConnections({
       });
     }
     if (oauthError) {
+      const appOrigin =
+        typeof window !== "undefined" ? window.location.origin : "";
       const messages: Record<string, string> = {
         google_oauth_denied: "Google OAuth was denied or cancelled.",
         microsoft_oauth_denied: "Microsoft OAuth was denied or cancelled.",
         token_exchange_failed: "Token exchange failed. Please try again.",
-        not_configured: "This calendar provider is not configured on this server.",
+        not_configured:
+          "Calendar OAuth is not fully configured on the server (client IDs/secrets or state secret).",
+        google_not_configured: `Set GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET. In Google Cloud, add redirect URI ${appOrigin || "(your app)"}/api/calendar/callback/google. Set CALENDAR_OAUTH_STATE_SECRET or ENCRYPTION_KEY.`,
+        microsoft_not_configured: `Set MICROSOFT_CALENDAR_CLIENT_ID and MICROSOFT_CALENDAR_CLIENT_SECRET. In Azure, add redirect URI ${appOrigin || "(your app)"}/api/calendar/callback/microsoft. Set CALENDAR_OAUTH_STATE_SECRET or ENCRYPTION_KEY.`,
+        oauth_state_not_configured:
+          "OAuth state signing is not configured. Set CALENDAR_OAUTH_STATE_SECRET (32+ random characters) or reuse ENCRYPTION_KEY.",
+        invalid_state:
+          "This connection attempt expired or was invalid. Click Connect again.",
         unexpected: "An unexpected error occurred. Please try again.",
       };
       toast({
