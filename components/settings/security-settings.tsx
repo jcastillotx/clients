@@ -14,6 +14,35 @@ import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { AlertTriangle, Loader2, Shield, Smartphone, Trash2 } from "lucide-react";
 
+/** Human label for `next` when middleware sends admins here for MFA (AAL2). */
+function friendlyMfaRedirectTarget(nextRaw: string): string | null {
+  const trimmed = nextRaw.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return null;
+  const path = (trimmed.split("?")[0] ?? trimmed).replace(/\/$/, "") || "/";
+  const known: Record<string, string> = {
+    "/admin/maintenance-plans": "Maintenance plan templates",
+    "/admin/service-templates": "Service templates",
+    "/admin/template-forms": "Form templates",
+    "/admin/email": "Email provider",
+  };
+  if (known[path]) return known[path];
+  if (path.startsWith("/admin/")) {
+    const slug = path.slice("/admin/".length);
+    if (!slug) return "Admin";
+    return slug
+      .split("/")
+      .map((seg) =>
+        seg
+          .split("-")
+          .filter(Boolean)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" "),
+      )
+      .join(" › ");
+  }
+  return null;
+}
+
 const passwordSchema = z
   .object({
     currentPassword: z.string().min(8, "Password must be at least 8 characters"),
@@ -55,6 +84,10 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const searchParams = useSearchParams();
   const mfaRequired = searchParams.get("mfa_required") === "1";
   const redirectAfterMfa = searchParams.get("next") || "/dashboard";
+  const friendlyMfaTarget = useMemo(
+    () => friendlyMfaRedirectTarget(redirectAfterMfa),
+    [redirectAfterMfa],
+  );
   // Also support legacy ?tab=security&mfa_required=1 redirects
 
   // Password change state
@@ -237,7 +270,15 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
           <div>
             <p className="font-semibold">Multi-factor authentication required</p>
             <p className="mt-0.5 text-amber-800 dark:text-amber-300">
-              Admin accounts must have two-factor authentication enabled. Set up an authenticator app below to continue.
+              Admin-only URLs (including from Settings) require an authenticator step before they load.{" "}
+              {friendlyMfaTarget ? (
+                <>
+                  You were opening <strong>{friendlyMfaTarget}</strong>. Set up an authenticator app below; once
+                  this session reaches AAL2, you will be sent there automatically.
+                </>
+              ) : (
+                <>Set up an authenticator app below to continue.</>
+              )}
             </p>
           </div>
         </div>

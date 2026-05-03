@@ -196,7 +196,12 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Profile", href: "/settings/profile", icon: Users },
       { name: "Security", href: "/settings/security", icon: Shield },
-      { name: "Maintenance Plans", href: "/admin/maintenance-plans", icon: ShieldCheck, access: "admin" },
+      {
+        name: "Maintenance templates",
+        href: "/admin/maintenance-plans",
+        icon: ShieldCheck,
+        access: "admin",
+      },
       { name: "Service Templates", href: "/admin/service-templates", icon: Briefcase, access: "admin" },
       { name: "Form Templates", href: "/admin/template-forms", icon: FileText, access: "admin" },
       { name: "Email Provider", href: "/admin/email", icon: Mail, access: "admin" },
