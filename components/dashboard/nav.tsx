@@ -198,7 +198,7 @@ const navigationSections: NavSection[] = [
       { name: "Security", href: "/settings/security", icon: Shield },
       {
         name: "Maintenance templates",
-        href: "/admin/maintenance-plans",
+        href: "/settings/maintenance-templates",
         icon: ShieldCheck,
         access: "admin",
       },
