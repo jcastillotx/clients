@@ -5,9 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
+const ALLOWED_SORT_COLUMNS = new Set([
+  "created_at",
+  "updated_at",
+  "title",
+  "status",
+  "priority",
+  "due_date",
+]);
+
 interface SearchParams {
   search?: string;
   status?: string;
+  priority?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
@@ -56,6 +66,11 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
 
   // Authentication is handled by the dashboard layout - no redundant check needed.
   // Server-side data fetching (no loading state needed!)
+  const sortColumn =
+    resolvedSearchParams.sortBy && ALLOWED_SORT_COLUMNS.has(resolvedSearchParams.sortBy)
+      ? resolvedSearchParams.sortBy
+      : "created_at";
+
   let query = dbClient
     .from("requests")
     .select(
@@ -66,7 +81,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
     `,
     )
     .is("deleted_at", null)
-    .order(resolvedSearchParams.sortBy || "created_at", {
+    .order(sortColumn, {
       ascending: resolvedSearchParams.sortOrder === "asc",
     });
 
@@ -84,6 +99,10 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
   // Apply status filter
   if (resolvedSearchParams.status) {
     query = query.eq("status", resolvedSearchParams.status);
+  }
+
+  if (resolvedSearchParams.priority && ["low", "medium", "high"].includes(resolvedSearchParams.priority)) {
+    query = query.eq("priority", resolvedSearchParams.priority);
   }
 
   const { data: requests, error } = await query;
@@ -124,7 +143,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
       </div>
 
       {/* Client Component for interactivity */}
-      <RequestList initialData={requests || []} />
+      <RequestList initialData={requests || []} canBulkDelete={isAdmin} />
     </div>
   );
 }

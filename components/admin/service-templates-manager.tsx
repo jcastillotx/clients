@@ -74,10 +74,14 @@ export function ServiceTemplatesManager() {
       const response = await fetch("/api/admin/service-templates");
       const data = await response.json();
       if (response.ok && data.success) {
-        setTemplates(data.data ?? []);
+        setTemplates(Array.isArray(data.data) ? data.data : []);
         setError(null);
       } else {
-        setError(data?.error || "Failed to load templates");
+        const detail =
+          typeof data?.message === "string" && data.message.trim()
+            ? `${data.error ?? "Error"}: ${data.message}`
+            : (data?.error ?? "Failed to load templates");
+        setError(detail);
       }
     } catch {
       setError("Unable to load service templates.");

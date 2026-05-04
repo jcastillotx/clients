@@ -33,6 +33,13 @@ export const updateRequestSchema = createRequestSchema.partial().extend({
 
 export type UpdateRequestInput = z.infer<typeof updateRequestSchema>;
 
+export const bulkRequestsSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(100),
+  action: z.enum(["close", "delete"]),
+});
+
+export type BulkRequestsInput = z.infer<typeof bulkRequestsSchema>;
+
 /**
  * Request comment validation schema
  */

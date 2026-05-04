@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TemplateCard } from "@/components/projects/templates/template-card";
 import { TemplatePreviewDialog } from "@/components/projects/templates/template-preview-dialog";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 interface Template {
@@ -33,6 +34,7 @@ interface Template {
 export default function ProjectTemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   useEffect(() => {
@@ -41,13 +43,21 @@ export default function ProjectTemplatesPage() {
 
   const fetchTemplates = async () => {
     try {
+      setFetchError(null);
       const res = await fetch("/api/projects/templates");
       const json = await res.json();
       if (json.success) {
-        setTemplates(json.data);
+        setTemplates(Array.isArray(json.data) ? json.data : []);
+      } else {
+        const detail =
+          typeof json.message === "string" && json.message.trim()
+            ? `${json.error ?? "Error"}: ${json.message}`
+            : (json.error ?? "Failed to load templates");
+        setFetchError(detail);
       }
     } catch (error) {
       console.error("Error fetching templates:", error);
+      setFetchError("Failed to fetch templates");
     } finally {
       setLoading(false);
     }
@@ -73,6 +83,13 @@ export default function ProjectTemplatesPage() {
           with phases, tasks, and checklists.
         </p>
       </div>
+
+      {fetchError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{fetchError}</AlertDescription>
+        </Alert>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

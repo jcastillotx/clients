@@ -70,9 +70,13 @@ export function ApplyTemplateDialog({
       const res = await fetch("/api/projects/templates");
       const json = await res.json();
       if (json.success) {
-        setTemplates(json.data);
+        setTemplates(Array.isArray(json.data) ? json.data : []);
       } else {
-        setError(json.error || "Failed to fetch templates");
+        const detail =
+          typeof json.message === "string" && json.message.trim()
+            ? `${json.error ?? "Error"}: ${json.message}`
+            : (json.error ?? "Failed to fetch templates");
+        setError(detail);
       }
     } catch {
       setError("Failed to fetch templates");

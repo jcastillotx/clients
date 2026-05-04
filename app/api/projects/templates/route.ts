@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { projectTaskTemplates } from "@/lib/db/schema/project-templates";
 import { eq, isNull, desc, and } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
@@ -21,18 +21,22 @@ export async function GET(request: NextRequest) {
 
     const category = request.nextUrl.searchParams.get("category");
 
-    // Fetch custom templates from DB
-    const conditions = [isNull(projectTaskTemplates.deletedAt), eq(projectTaskTemplates.isActive, true)];
+    let dbTemplates: (typeof projectTaskTemplates.$inferSelect)[] = [];
+    try {
+      const conditions = [isNull(projectTaskTemplates.deletedAt), eq(projectTaskTemplates.isActive, true)];
 
-    if (category) {
-      conditions.push(eq(projectTaskTemplates.category, category as any));
+      if (category) {
+        conditions.push(eq(projectTaskTemplates.category, category as (typeof projectTaskTemplates.category.enumValues)[number]));
+      }
+
+      dbTemplates = await db
+        .select()
+        .from(projectTaskTemplates)
+        .where(and(...conditions))
+        .orderBy(desc(projectTaskTemplates.createdAt));
+    } catch (dbError) {
+      console.error("Error fetching custom project templates from DB (built-in templates still available):", dbError);
     }
-
-    const dbTemplates = await db
-      .select()
-      .from(projectTaskTemplates)
-      .where(and(...conditions))
-      .orderBy(desc(projectTaskTemplates.createdAt));
 
     // Merge with built-in templates (that aren't already in DB)
     const dbNames = new Set(dbTemplates.map((t) => t.name));
@@ -55,7 +59,15 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching project templates:", error);
-    return NextResponse.json({ success: false, error: "Failed to fetch templates" }, { status: 500 });
+    const status = isDatabaseConfigurationError(error) ? 503 : 500;
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch templates",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status },
+    );
   }
 }
 
