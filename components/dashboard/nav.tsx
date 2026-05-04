@@ -202,7 +202,7 @@ const navigationSections: NavSection[] = [
         icon: ShieldCheck,
         access: "admin",
       },
-      { name: "Service Templates", href: "/admin/service-templates", icon: Briefcase, access: "admin" },
+      { name: "Service Templates", href: "/settings/service-templates", icon: Briefcase, access: "admin" },
       { name: "Form Templates", href: "/admin/template-forms", icon: FileText, access: "admin" },
       { name: "Email Provider", href: "/admin/email", icon: Mail, access: "admin" },
       { name: "Calendar", href: "/settings/calendar", icon: CalendarCheck, access: "staff" },

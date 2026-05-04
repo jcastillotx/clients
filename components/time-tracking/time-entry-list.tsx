@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Calendar, Filter, Download } from "lucide-react";
+import { Pencil, Trash2, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -16,8 +16,23 @@ interface TimeEntryListProps {
   refreshTrigger?: number;
 }
 
+/** Shape returned by GET /api/time-tracking (subset used by this list). */
+interface TimeEntryRow {
+  id: string;
+  startedAt?: string | null;
+  description?: string | null;
+  durationMinutes?: number | null;
+  hourlyRate?: string | null;
+  totalAmount?: string | null;
+  isBillable?: boolean;
+  status?: string;
+  lockedAt?: string | null;
+  client?: { name?: string | null };
+  request?: { title?: string | null };
+}
+
 export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<TimeEntryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -27,6 +42,8 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
 
   useEffect(() => {
     fetchEntries();
+    // Only refetch when refreshTrigger changes; date/status filters use Apply.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
   }, [refreshTrigger]);
 
   const fetchEntries = async () => {
@@ -39,8 +56,13 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
 
       const response = await fetch(`/api/time-tracking?${params}`);
       const data = await response.json();
-      setEntries(data);
-    } catch (error) {
+      if (!response.ok) {
+        toast.error(typeof data?.error === "string" ? data.error : "Failed to fetch time entries");
+        setEntries([]);
+        return;
+      }
+      setEntries(Array.isArray(data) ? data : []);
+    } catch {
       toast.error("Failed to fetch time entries");
     } finally {
       setLoading(false);
@@ -66,8 +88,9 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
 
       toast.success("Entry deleted");
       fetchEntries();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete entry");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to delete entry";
+      toast.error(message);
     } finally {
       setPendingDeleteId(null);
     }
@@ -91,12 +114,14 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
   };
 
   const getTotalHours = (): string => {
-    const totalMinutes = entries.reduce((sum, entry) => sum + (entry.durationMinutes || 0), 0);
+    const list = Array.isArray(entries) ? entries : [];
+    const totalMinutes = list.reduce((sum, entry) => sum + (entry.durationMinutes || 0), 0);
     return formatDuration(totalMinutes);
   };
 
   const getTotalAmount = (): string => {
-    const total = entries.reduce((sum, entry) => sum + parseFloat(entry.totalAmount || "0"), 0);
+    const list = Array.isArray(entries) ? entries : [];
+    const total = list.reduce((sum, entry) => sum + parseFloat(entry.totalAmount || "0"), 0);
     return `$${total.toFixed(2)}`;
   };
 
@@ -187,13 +212,13 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
                         {entry.request?.title && <div className="text-muted-foreground">{entry.request.title}</div>}
                       </div>
                     </TableCell>
-                    <TableCell>{formatDuration(entry.durationMinutes)}</TableCell>
+                    <TableCell>{formatDuration(entry.durationMinutes ?? null)}</TableCell>
                     <TableCell>{entry.hourlyRate ? `$${parseFloat(entry.hourlyRate).toFixed(2)}` : "-"}</TableCell>
                     <TableCell>{entry.totalAmount ? `$${parseFloat(entry.totalAmount).toFixed(2)}` : "-"}</TableCell>
                     <TableCell>
                       {entry.isBillable ? <Badge variant="default">Yes</Badge> : <Badge variant="secondary">No</Badge>}
                     </TableCell>
-                    <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                    <TableCell>{getStatusBadge(entry.status ?? "pending")}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         {!entry.lockedAt && (

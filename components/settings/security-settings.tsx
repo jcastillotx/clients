@@ -21,6 +21,7 @@ function friendlyMfaRedirectTarget(nextRaw: string): string | null {
   const path = (trimmed.split("?")[0] ?? trimmed).replace(/\/$/, "") || "/";
   const known: Record<string, string> = {
     "/settings/maintenance-templates": "Maintenance plan templates",
+    "/settings/service-templates": "Service templates",
     "/admin/maintenance-plans": "Maintenance plan templates",
     "/admin/service-templates": "Service templates",
     "/admin/template-forms": "Form templates",
