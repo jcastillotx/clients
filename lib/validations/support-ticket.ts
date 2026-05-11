@@ -1,5 +1,47 @@
 import { z } from "zod";
 
+const websiteSupportPlatformSchema = z.enum([
+  "WordPress",
+  "Elementor",
+  "Divi",
+  "WooCommerce",
+  "Custom Theme",
+  "Custom Plugin",
+  "Form Plugin",
+  "Unknown",
+]);
+
+const websiteSupportAffectedAreaSchema = z.enum([
+  "forms",
+  "checkout",
+  "login",
+  "users",
+  "payments",
+  "seo",
+  "security",
+  "database",
+  "dns",
+  "smtp",
+  "woocommerce",
+]);
+
+const websiteSupportIntakeSchema = z.object({
+  isWebsiteSupport: z.boolean(),
+  clientName: z.string().nullable().optional(),
+  websiteUrl: z.string().nullable().optional(),
+  stagingUrl: z.string().nullable().optional(),
+  affectedPageUrl: z.string().nullable().optional(),
+  requestedChange: z.string().nullable().optional(),
+  problemDescription: z.string().nullable().optional(),
+  deviceAffected: z.string().nullable().optional(),
+  browserAffected: z.string().nullable().optional(),
+  urgency: z.string().nullable().optional(),
+  businessImpact: z.string().nullable().optional(),
+  platformBuilder: websiteSupportPlatformSchema.nullable().optional(),
+  affectedAreas: z.array(websiteSupportAffectedAreaSchema).optional(),
+  areasNotToChange: z.string().nullable().optional(),
+});
+
 /**
  * Validation schema for creating a support ticket
  */
@@ -12,7 +54,14 @@ export const createSupportTicketSchema = z.object({
   metadata: z
     .object({
       tags: z.array(z.string()).optional(),
-      customFields: z.record(z.any()).optional(),
+      customFields: z
+        .record(z.any())
+        .and(
+          z.object({
+            websiteSupport: websiteSupportIntakeSchema.optional(),
+          }),
+        )
+        .optional(),
       attachments: z
         .array(
           z.object({

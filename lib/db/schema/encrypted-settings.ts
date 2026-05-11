@@ -31,6 +31,8 @@ export const integrationProviderEnum = [
   "stripe",
   // Email
   "resend",
+  "google_workspace",
+  "office365",
   // Social OAuth
   "facebook",
   "instagram",
@@ -199,6 +201,34 @@ export const PROVIDER_CONFIGS: ProviderConfig[] = [
       { key: "from_name", label: "From Name", placeholder: "Your Company", required: false, type: "text" },
     ],
     docsUrl: "https://resend.com/docs",
+  },
+  {
+    provider: "google_workspace",
+    category: "email",
+    displayName: "Google Workspace",
+    description: "Google Workspace email sending for invoices, notifications, and system alerts.",
+    fields: [
+      { key: "from_email", label: "From Email", placeholder: "noreply@yourdomain.com", required: true, type: "text" },
+      { key: "smtp_user", label: "Mailbox Email", placeholder: "user@yourdomain.com", required: true, type: "text" },
+      { key: "smtp_password", label: "App Password", placeholder: "Google app password", required: true, type: "secret" },
+      { key: "smtp_host", label: "SMTP Host", placeholder: "smtp.gmail.com", required: false, type: "text" },
+      { key: "smtp_port", label: "SMTP Port", placeholder: "587", required: false, type: "text" },
+    ],
+    docsUrl: "https://support.google.com/a/answer/176600",
+  },
+  {
+    provider: "office365",
+    category: "email",
+    displayName: "Office 365",
+    description: "Office 365 email sending through Microsoft 365 and Exchange Online.",
+    fields: [
+      { key: "from_email", label: "From Email", placeholder: "noreply@yourdomain.com", required: true, type: "text" },
+      { key: "smtp_user", label: "Mailbox Email", placeholder: "user@yourdomain.com", required: true, type: "text" },
+      { key: "smtp_password", label: "Mailbox Password", placeholder: "Office 365 mailbox password", required: true, type: "secret" },
+      { key: "smtp_host", label: "SMTP Host", placeholder: "smtp.office365.com", required: false, type: "text" },
+      { key: "smtp_port", label: "SMTP Port", placeholder: "587", required: false, type: "text" },
+    ],
+    docsUrl: "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",
   },
   {
     provider: "google_ads",

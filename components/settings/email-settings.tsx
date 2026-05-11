@@ -48,8 +48,8 @@ const PROVIDERS: Record<Provider, ProviderMeta> = {
     docsUrl: "https://documentation.mailgun.com/en/latest/quickstart-sending.html",
   },
   gmail: {
-    label: "Gmail / Google Workspace",
-    description: "Send via a Google Workspace or Gmail mailbox. Connect with one click, or fall back to SMTP + App Password.",
+    label: "Google Workspace",
+    description: "Send via a Google Workspace mailbox. Connect with one click, or fall back to SMTP + App Password.",
     docsUrl: "https://support.google.com/accounts/answer/185833",
     oauth: {
       kind: "google",
@@ -58,8 +58,8 @@ const PROVIDERS: Record<Provider, ProviderMeta> = {
     },
   },
   office365: {
-    label: "Microsoft 365 / Outlook",
-    description: "Send via a Microsoft 365 or Outlook mailbox. Connect with one click, or fall back to SMTP AUTH.",
+    label: "Office 365",
+    description: "Send via an Office 365 mailbox. Connect with one click, or fall back to SMTP AUTH.",
     docsUrl: "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",
     oauth: {
       kind: "microsoft",

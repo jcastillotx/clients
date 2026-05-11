@@ -60,12 +60,12 @@ export default async function AdminEmailPage() {
               <span>API key from app.mailgun.com → API Security. Use your verified sending domain.</span>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-2 items-start">
-              <span className="font-medium text-foreground">Gmail SMTP</span>
-              <span>Enable 2FA on your Google account, then generate an App Password (Google Account → Security → App passwords). Use port 587 with STARTTLS.</span>
+              <span className="font-medium text-foreground">Google Workspace</span>
+              <span>Connect with Google OAuth, or enable 2FA and generate an App Password for SMTP fallback. Use smtp.gmail.com, port 587, STARTTLS.</span>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-2 items-start">
               <span className="font-medium text-foreground">Office 365</span>
-              <span>Enable SMTP AUTH for the mailbox in Exchange admin centre. Use smtp.office365.com, port 587, STARTTLS.</span>
+              <span>Connect with Microsoft OAuth, or enable SMTP AUTH for the mailbox in Exchange admin centre. Use smtp.office365.com, port 587, STARTTLS.</span>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-2 items-start">
               <span className="font-medium text-foreground">Custom SMTP</span>

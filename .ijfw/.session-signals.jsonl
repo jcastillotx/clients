@@ -1,0 +1,27 @@
+{"ts":"2026-05-11T17:40:43Z","error":"1:# Task Group: clients integrations API-key save failures, validation, and production-safe error reporting","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:40:43Z","error":"app/api/payments/create-intent/route.ts:45:      return NextResponse.json({ error: \"Invoice client not found\" }, { status: 404 });","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:40:51Z","error":"      toast.error(err instanceof Error ? err.message : \"Failed to delete ticket\");","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:40:51Z","error":"        const { data, error } = await supabase.storage.from(\"attachments\").upload(filePath, file, {","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:40:58Z","error":"    return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:43:14Z","error":"1:# Task Group: clients integrations API-key save failures, validation, and production-safe error reporting","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:43:14Z","error":"lib/email/client.ts:56:// Send email with error handling.","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:43:23Z","error":"  | { success: false; error: string } {","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:43:32Z","error":"    throw new Error((data as { message?: string }).message ?? `Resend API error ${res.status}`);","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:43:32Z","error":"      return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:43:40Z","error":"  if (!user) return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:43:55Z","error":"      return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:44:04Z","error":"      setError(err instanceof Error ? err.message : \"Failed to save settings\");","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:44:09Z","error":"      error: \"Unsupported integration provider.\",","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:44:13Z","error":"108:          console.error(\"Upload error:\", error);","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:45:27Z","error":"Error: Failed to load url @/lib/db/schema/encrypted-settings (resolved id: @/lib/db/schema/encrypted-settings) in /Users/jlaptop/Apps/clients/lib/settings/integration-validation.ts. Does the file exis","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:45:40Z","error":"33:12  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:45:46Z","error":"⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯","fail":"Error: Build failed with 2 errors:","platform":"codex"}
+{"ts":"2026-05-11T17:46:09Z","error":"components/support/ticket-detail.tsx(76,7): error TS2322: Type 'string' is not assignable to type '\"open\" | \"in_progress\" | \"waiting_on_client\" | \"waiting_on_vendor\" | \"resolved\" | \"closed\" | undefine","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:46:13Z","error":"components/support/ticket-detail.tsx(76,7): error TS2322: Type 'string' is not assignable to type '\"open\" | \"in_progress\" | \"waiting_on_client\" | \"waiting_on_vendor\" | \"resolved\" | \"closed\" | undefine","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:46:19Z","error":"    30\t- when the user did not ask for a redesign, keep the patch scoped to the failing save/verify path and error surfacing rather than broad settings refactors [Task 2]","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:46:29Z","error":"    37\t      error: \"Unsupported integration provider.\",","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:46:41Z","error":"     const { data, error } = await supabase","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:47:41Z","error":"   115\t        const { error } = await supabase.storage.from(\"attachments\").upload(filePath, file, {","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:47:41Z","error":"     1\t# Task Group: clients integrations API-key save failures, validation, and production-safe error reporting","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:47:41Z","error":"   108\t      toast.error(err instanceof Error ? err.message : \"Failed to delete ticket\");","fail":null,"platform":"codex"}
+{"ts":"2026-05-11T17:47:50Z","error":"    22\t    return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}

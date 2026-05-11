@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Clock, User, Tag, AlertTriangle, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import type { WebsiteSupportTriage } from "@/lib/support/website-ticket-triage";
+import type { TicketPriority, TicketStatus } from "@/lib/db/schema/support-tickets";
 
 interface StaffUser {
   id: string;
@@ -25,8 +27,38 @@ interface StaffUser {
   email: string;
 }
 
+interface SupportTicketDetailData {
+  id: string;
+  ticket_number: string;
+  subject: string;
+  description: string;
+  category: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  assigned_to: string | null;
+  assigned_user?: { name?: string | null } | null;
+  creator?: { name?: string | null } | null;
+  first_response_at: string | null;
+  resolved_at: string | null;
+  closed_at: string | null;
+  created_at: string;
+  sla_response_due_at: string | null;
+  sla_resolution_due_at: string | null;
+  sla_response_breached: boolean;
+  sla_resolution_breached: boolean;
+  sla_paused: boolean;
+  sla_paused_duration_minutes: number;
+  escalation_level: number;
+  last_escalated_at: string | null;
+  metadata?: {
+    customFields?: {
+      websiteSupportTriage?: WebsiteSupportTriage;
+    } & Record<string, unknown>;
+  } | null;
+}
+
 interface TicketDetailProps {
-  ticket: any;
+  ticket: SupportTicketDetailData;
   staffUsers: StaffUser[];
   isStaff: boolean;
 }
@@ -37,6 +69,7 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const websiteTriage = ticket.metadata?.customFields?.websiteSupportTriage;
 
   const form = useForm<UpdateSupportTicketInput>({
     resolver: zodResolver(updateSupportTicketSchema),
@@ -321,6 +354,74 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
         </CardContent>
       </Card>
 
+      {websiteTriage && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <CardTitle>Website Support Triage</CardTitle>
+                <CardDescription>AI agent handoff for WordPress support review and Codex routing</CardDescription>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={websiteTriage.riskLevel === "High Risk" ? "destructive" : "secondary"}>
+                  {websiteTriage.riskLevel}
+                </Badge>
+                <Badge variant="outline">{websiteTriage.recommendedRouting}</Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <TriageField label="Production URL" value={websiteTriage.website.productionUrl} />
+              <TriageField label="Staging URL" value={websiteTriage.website.stagingUrl} />
+              <TriageField label="Affected Page" value={websiteTriage.website.affectedPageUrl} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Problem Statement</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{websiteTriage.problemStatement}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Requested Change</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{websiteTriage.requestedChange}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Risk Reason</h3>
+                <p className="text-sm text-muted-foreground">{websiteTriage.riskReason}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Routing Reason</h3>
+                <p className="text-sm text-muted-foreground">{websiteTriage.routingReason}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <TriageList title="Acceptance Criteria" items={websiteTriage.acceptanceCriteria} />
+              <TriageList title="Do Not Change" items={websiteTriage.doNotChange} />
+              <TriageList title="Testing Instructions" items={websiteTriage.testingInstructions} />
+            </div>
+
+            {websiteTriage.codexReadyPrompt ? (
+              <div>
+                <h3 className="font-semibold mb-2">Codex Ready Prompt</h3>
+                <pre className="max-h-[520px] overflow-auto rounded-md border bg-muted p-4 text-xs leading-relaxed whitespace-pre-wrap">
+                  {websiteTriage.codexReadyPrompt}
+                </pre>
+              </div>
+            ) : (
+              <div className="rounded-md border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
+                High-risk ticket: Codex may analyze and recommend, but should not execute production-impacting changes.
+                Human developer review, backup, staging validation, and production approval are required.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* SLA Tracking */}
       <Card className={cn("border", getSlaStatusColor(slaInfo.status))}>
         <CardHeader>
@@ -411,6 +512,31 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
         onConfirm={doDelete}
         loading={isDeleting}
       />
+    </div>
+  );
+}
+
+function TriageField({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div>
+      <div className="text-sm text-muted-foreground mb-1">{label}</div>
+      <p className="font-medium break-words">{value || "Not provided"}</p>
+    </div>
+  );
+}
+
+function TriageList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <h3 className="font-semibold mb-2">{title}</h3>
+      <ul className="space-y-2 text-sm text-muted-foreground">
+        {items.map((item, index) => (
+          <li key={`${title}-${index}`} className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

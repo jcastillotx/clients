@@ -18,6 +18,19 @@ describe("integration validation", () => {
     });
   });
 
+  it("accepts Google Workspace and Office 365 as email providers", () => {
+    expect(validateIntegrationProviderCategory("google_workspace", "email")).toEqual({
+      success: true,
+      provider: "google_workspace",
+      category: "email",
+    });
+    expect(validateIntegrationProviderCategory("office365", "email")).toEqual({
+      success: true,
+      provider: "office365",
+      category: "email",
+    });
+  });
+
   it("rejects unknown providers", () => {
     expect(validateIntegrationProviderCategory("unknown", "ai")).toEqual({
       success: false,

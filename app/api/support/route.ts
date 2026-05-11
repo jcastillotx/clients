@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createSupportTicketSchema } from "@/lib/validations/support-ticket";
+import { buildWebsiteSupportTriage } from "@/lib/support/website-ticket-triage";
 import { calculateSlaDueDates } from "@/lib/utils/sla";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -116,6 +117,22 @@ export async function POST(req: NextRequest) {
     // Calculate SLA due dates based on priority
     const now = new Date();
     const slaDates = calculateSlaDueDates(validatedData.priority, now);
+    const websiteSupport = validatedData.metadata?.customFields?.websiteSupport;
+    const websiteSupportTriage = websiteSupport?.isWebsiteSupport
+      ? buildWebsiteSupportTriage({
+          subject: validatedData.subject,
+          description: validatedData.description,
+          priority: validatedData.priority,
+          intake: websiteSupport,
+        })
+      : null;
+    const metadata = {
+      ...(validatedData.metadata || {}),
+      customFields: {
+        ...(validatedData.metadata?.customFields || {}),
+        ...(websiteSupportTriage ? { websiteSupportTriage } : {}),
+      },
+    };
 
     // Create ticket
     const { data, error } = await supabase
@@ -130,7 +147,7 @@ export async function POST(req: NextRequest) {
         category: validatedData.category,
         priority: validatedData.priority,
         status: "open",
-        metadata: validatedData.metadata,
+        metadata,
         sla_response_due_at: slaDates.slaResponseDueAt.toISOString(),
         sla_resolution_due_at: slaDates.slaResolutionDueAt.toISOString(),
       })
