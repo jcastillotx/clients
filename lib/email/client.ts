@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { loadEmailConfig, sendViaConfiguredProvider } from "./providers";
 
 let _resend: Resend | null = null;
 
@@ -52,9 +53,18 @@ export interface EmailOptions {
   }>;
 }
 
-// Send email with error handling
+// Send email with error handling.
+// Uses the admin-configured provider from system_settings when available;
+// falls back to the env-var Resend instance otherwise.
 export async function sendEmail(options: EmailOptions) {
   try {
+    const cfg = await loadEmailConfig();
+    if (cfg) {
+      await sendViaConfiguredProvider(options, cfg);
+      return { success: true };
+    }
+
+    // Fallback: env-var Resend (original behaviour when no DB config is set)
     const result = await resend.emails.send({
       from: EMAIL_FROM,
       to: Array.isArray(options.to) ? options.to : [options.to],
