@@ -49,6 +49,19 @@ interface SavedSetting {
   updatedAt: string;
 }
 
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json().catch(() => null)) as { error?: unknown } | null;
+    if (typeof payload?.error === "string" && payload.error.trim().length > 0) {
+      return payload.error;
+    }
+  }
+
+  return `${fallback} (${response.status})`;
+}
+
 const CATEGORY_CONFIG: Record<IntegrationCategory, { label: string; icon: React.ReactNode; description: string }> = {
   ai: { label: "AI Providers", icon: <Bot className="h-4 w-4" />, description: "Configure AI model API keys" },
   payments: { label: "Payments", icon: <CreditCard className="h-4 w-4" />, description: "Payment processing credentials" },
@@ -255,8 +268,7 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to save");
+        throw new Error(await readApiError(res, "Failed to save settings"));
       }
 
       setSuccess("Settings saved. Run verification to confirm the connection.");
@@ -284,7 +296,7 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
       );
 
       if (!res.ok) {
-        throw new Error("Failed to delete");
+        throw new Error(await readApiError(res, "Failed to delete settings"));
       }
 
       setFieldValues({});
@@ -314,7 +326,11 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(payload.error || "Failed to verify integration");
+        throw new Error(
+          typeof payload.error === "string"
+            ? payload.error
+            : await readApiError(response, "Failed to verify integration"),
+        );
       }
 
       setSuccess(payload.message || "Connection verified successfully.");

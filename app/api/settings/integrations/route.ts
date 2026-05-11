@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
+import { and, eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { encryptedSettings, type EncryptedSetting } from "@/lib/db/schema/encrypted-settings";
-import { eq, and } from "drizzle-orm";
 import { encrypt, decrypt, maskSecret } from "@/lib/encryption";
 import { isUserAdmin } from "@/lib/rbac/check";
+import { getPublicIntegrationError } from "@/lib/settings/integration-errors";
+import {
+  isIntegrationCategory,
+  isIntegrationProvider,
+  validateIntegrationProviderCategory,
+} from "@/lib/settings/integration-validation";
 import { z } from "zod";
 
 const querySchema = z.object({
@@ -47,10 +53,16 @@ export async function GET(request: Request) {
 
     const conditions = [eq(encryptedSettings.clientId, clientId)];
     if (provider) {
-      conditions.push(eq(encryptedSettings.provider, provider as any));
+      if (!isIntegrationProvider(provider)) {
+        return NextResponse.json({ error: "Unsupported integration provider." }, { status: 400 });
+      }
+      conditions.push(eq(encryptedSettings.provider, provider));
     }
     if (category) {
-      conditions.push(eq(encryptedSettings.category, category as any));
+      if (!isIntegrationCategory(category)) {
+        return NextResponse.json({ error: "Unsupported integration category." }, { status: 400 });
+      }
+      conditions.push(eq(encryptedSettings.category, category));
     }
 
     const settings = await db
@@ -128,7 +140,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request body", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { clientId, provider, category, settings: settingsToSave } = parsed.data;
+    const {
+      clientId,
+      provider: requestedProvider,
+      category: requestedCategory,
+      settings: settingsToSave,
+    } = parsed.data;
+    const providerValidation = validateIntegrationProviderCategory(requestedProvider, requestedCategory);
+
+    if (!providerValidation.success) {
+      return NextResponse.json({ error: providerValidation.error }, { status: 400 });
+    }
+
+    const { provider, category } = providerValidation;
 
     const results = [];
 
@@ -142,7 +166,7 @@ export async function POST(request: Request) {
         .where(
           and(
             eq(encryptedSettings.clientId, clientId),
-            eq(encryptedSettings.provider, provider as any),
+            eq(encryptedSettings.provider, provider),
             eq(encryptedSettings.settingKey, setting.key),
           ),
         )
@@ -154,7 +178,7 @@ export async function POST(request: Request) {
           .update(encryptedSettings)
           .set({
             encryptedValue,
-            category: category as any,
+            category,
             label: setting.label,
             isActive: true,
             lastRotatedAt: new Date(),
@@ -171,8 +195,8 @@ export async function POST(request: Request) {
           .insert(encryptedSettings)
           .values({
             clientId,
-            provider: provider as any,
-            category: category as any,
+            provider,
+            category,
             settingKey: setting.key,
             encryptedValue,
             label: setting.label,
@@ -187,17 +211,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, results });
   } catch (error) {
     console.error("Error saving integration settings:", error);
-    const message = error instanceof Error ? error.message : String(error);
-    if (message.includes("ENCRYPTION_KEY")) {
-      return NextResponse.json(
-        {
-          error:
-            "Server encryption is not configured. Add ENCRYPTION_KEY to the environment (see .env.local.example).",
-        },
-        { status: 503 },
-      );
-    }
-    return NextResponse.json({ error: "Failed to save settings" }, { status: 500 });
+    const publicError = getPublicIntegrationError(error);
+    return NextResponse.json({ error: publicError.error }, { status: publicError.status });
   }
 }
 
@@ -229,13 +244,17 @@ export async function DELETE(request: Request) {
       // Delete a single setting
       await db.delete(encryptedSettings).where(eq(encryptedSettings.id, settingId));
     } else if (clientId && provider) {
+      if (!isIntegrationProvider(provider)) {
+        return NextResponse.json({ error: "Unsupported integration provider." }, { status: 400 });
+      }
+
       // Delete all settings for a provider
       await db
         .delete(encryptedSettings)
         .where(
           and(
             eq(encryptedSettings.clientId, clientId),
-            eq(encryptedSettings.provider, provider as any),
+            eq(encryptedSettings.provider, provider),
           ),
         );
     } else {

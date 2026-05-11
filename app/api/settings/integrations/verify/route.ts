@@ -3,10 +3,12 @@ import Stripe from "stripe";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { encryptedSettings, type IntegrationProvider } from "@/lib/db/schema/encrypted-settings";
+import { encryptedSettings } from "@/lib/db/schema/encrypted-settings";
 import { decrypt } from "@/lib/encryption";
 import { createClient } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
+import { getPublicIntegrationError } from "@/lib/settings/integration-errors";
+import { validateIntegrationProviderCategory } from "@/lib/settings/integration-validation";
 
 const verifySchema = z.object({
   clientId: z.string().uuid(),
@@ -41,7 +43,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request body", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { clientId, provider } = parsed.data;
+    const { clientId, provider: requestedProvider } = parsed.data;
+    const providerValidation = validateIntegrationProviderCategory(requestedProvider);
+
+    if (!providerValidation.success) {
+      return NextResponse.json({ error: providerValidation.error }, { status: 400 });
+    }
+
+    const { provider } = providerValidation;
     const credentials: SavedCredential[] = await db
       .select({
         id: encryptedSettings.id,
@@ -52,7 +61,7 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(encryptedSettings.clientId, clientId),
-          eq(encryptedSettings.provider, provider as IntegrationProvider),
+          eq(encryptedSettings.provider, provider),
           eq(encryptedSettings.isActive, true),
         ),
       );
@@ -78,7 +87,7 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(encryptedSettings.clientId, clientId),
-          eq(encryptedSettings.provider, provider as IntegrationProvider),
+          eq(encryptedSettings.provider, provider),
           eq(encryptedSettings.isActive, true),
         ),
       );
@@ -91,10 +100,8 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error verifying integration settings:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to verify integration" },
-      { status: 500 },
-    );
+    const publicError = getPublicIntegrationError(error, "Failed to verify integration settings.");
+    return NextResponse.json({ error: publicError.error }, { status: publicError.status });
   }
 }
 
@@ -138,7 +145,7 @@ async function verifyStripe(credentials: Record<string, string>) {
   }
 
   const stripe = new Stripe(secretKey, {
-    apiVersion: "2024-12-18.acacia" as any,
+    apiVersion: "2023-10-16",
     typescript: true,
   });
 
