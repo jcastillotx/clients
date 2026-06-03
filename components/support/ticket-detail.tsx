@@ -104,6 +104,7 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
       }
       toast.success("Ticket deleted");
       router.push("/support");
+      router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete ticket");
     } finally {

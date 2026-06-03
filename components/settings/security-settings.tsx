@@ -11,39 +11,9 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { friendlyMfaRedirectTarget, getSafeMfaRedirectPath } from "@/lib/auth/mfa-redirect";
 import { createClient } from "@/lib/supabase/client";
 import { AlertTriangle, Loader2, Shield, Smartphone, Trash2 } from "lucide-react";
-
-/** Human label for `next` when middleware sends admins here for MFA (AAL2). */
-function friendlyMfaRedirectTarget(nextRaw: string): string | null {
-  const trimmed = nextRaw.trim();
-  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return null;
-  const path = (trimmed.split("?")[0] ?? trimmed).replace(/\/$/, "") || "/";
-  const known: Record<string, string> = {
-    "/settings/maintenance-templates": "Maintenance plan templates",
-    "/settings/service-templates": "Service templates",
-    "/admin/maintenance-plans": "Maintenance plan templates",
-    "/admin/service-templates": "Service templates",
-    "/admin/template-forms": "Form templates",
-    "/admin/email": "Email provider",
-  };
-  if (known[path]) return known[path];
-  if (path.startsWith("/admin/")) {
-    const slug = path.slice("/admin/".length);
-    if (!slug) return "Admin";
-    return slug
-      .split("/")
-      .map((seg) =>
-        seg
-          .split("-")
-          .filter(Boolean)
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(" "),
-      )
-      .join(" › ");
-  }
-  return null;
-}
 
 const passwordSchema = z
   .object({
@@ -85,7 +55,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mfaRequired = searchParams.get("mfa_required") === "1";
-  const redirectAfterMfa = searchParams.get("next") || "/dashboard";
+  const redirectAfterMfa = getSafeMfaRedirectPath(searchParams.get("next"));
   const friendlyMfaTarget = useMemo(
     () => friendlyMfaRedirectTarget(redirectAfterMfa),
     [redirectAfterMfa],
@@ -128,13 +98,20 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerifyingExistingFactor, setIsVerifyingExistingFactor] = useState(false);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [factors, setFactors] = useState<MfaFactor[]>([]);
   const [aal, setAal] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
+  const [existingFactorCode, setExistingFactorCode] = useState("");
   const [pendingFactor, setPendingFactor] = useState<EnrolledFactor | null>(null);
+  const verifiedTotpFactors = useMemo(
+    () => factors.filter((factor) => factor.factor_type === "totp" && factor.status === "verified"),
+    [factors],
+  );
+  const challengeFactor = verifiedTotpFactors[0] ?? null;
 
   const loadMfaState = useCallback(async () => {
     setIsLoading(true);
@@ -173,7 +150,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
 
   useEffect(() => {
     if (mfaRequired && aal === "aal2") {
-      router.replace(redirectAfterMfa.startsWith("/") ? redirectAfterMfa : "/dashboard");
+      router.replace(redirectAfterMfa);
     }
   }, [aal, mfaRequired, redirectAfterMfa, router]);
 
@@ -241,6 +218,52 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
     }
   };
 
+  const handleVerifyExistingFactor = async () => {
+    if (!challengeFactor?.id || !existingFactorCode.trim()) {
+      setError("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+
+    setIsVerifyingExistingFactor(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: challengeFactor.id,
+      });
+
+      if (challengeError) {
+        throw challengeError;
+      }
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: challengeFactor.id,
+        challengeId: challengeData.id,
+        code: existingFactorCode.trim(),
+      });
+
+      if (verifyError) {
+        throw verifyError;
+      }
+
+      setExistingFactorCode("");
+
+      if (mfaRequired) {
+        setSuccess("Authenticator verified. Redirecting...");
+        router.replace(redirectAfterMfa);
+        return;
+      }
+
+      setSuccess("Authenticator verified.");
+      await loadMfaState();
+    } catch (verifyError) {
+      setError(verifyError instanceof Error ? verifyError.message : "Failed to verify authenticator code");
+    } finally {
+      setIsVerifyingExistingFactor(false);
+    }
+  };
+
   const handleRemove = async (factorId: string) => {
     setIsRemoving(factorId);
     setError(null);
@@ -279,12 +302,43 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
                   this session reaches AAL2, you will be sent there automatically.
                 </>
               ) : (
-                <>Set up an authenticator app below to continue.</>
+                <>Use or set up an authenticator app below to continue.</>
               )}
             </p>
           </div>
         </div>
       )}
+
+      {mfaRequired && aal !== "aal2" && challengeFactor && !pendingFactor ? (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader>
+            <CardTitle>Verify to continue</CardTitle>
+            <CardDescription>
+              Enter your authenticator code to open {friendlyMfaTarget ?? "the requested admin page"}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="max-w-sm space-y-2">
+              <Label htmlFor="existing-totp-code">Authenticator code</Label>
+              <Input
+                id="existing-totp-code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                value={existingFactorCode}
+                onChange={(event) => setExistingFactorCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+              />
+            </div>
+            <Button
+              onClick={() => void handleVerifyExistingFactor()}
+              disabled={isVerifyingExistingFactor || existingFactorCode.length !== 6}
+            >
+              {isVerifyingExistingFactor ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Verify & Continue
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Change Password */}
       <Card>

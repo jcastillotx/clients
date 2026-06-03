@@ -52,6 +52,7 @@ export default async function SupportTicketsPage({ searchParams }: { searchParam
       assigned_user:users!support_tickets_assigned_to_fkey(name, avatar)
     `,
     )
+    .is("deleted_at", null)
     .order(resolvedSearchParams.sortBy || "created_at", {
       ascending: resolvedSearchParams.sortOrder === "asc",
     });

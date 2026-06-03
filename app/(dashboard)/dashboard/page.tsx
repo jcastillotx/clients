@@ -128,6 +128,7 @@ export default async function DashboardPage() {
         client:clients(company_name)
       `,
       )
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(12),
     isStaff
