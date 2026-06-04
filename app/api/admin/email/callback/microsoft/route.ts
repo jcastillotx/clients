@@ -22,12 +22,24 @@ export async function GET(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const back = (status: string) =>
     NextResponse.redirect(`${appUrl}${REDIRECT_BASE}?${status}`);
+  const microsoftErrorBack = () => {
+    const params = new URLSearchParams({
+      error: req.nextUrl.searchParams.get("error") || "microsoft_oauth_denied",
+    });
+    const description = req.nextUrl.searchParams.get("error_description");
+    if (description) {
+      params.set("error_description", description);
+    }
+
+    return back(params.toString());
+  };
 
   const code = req.nextUrl.searchParams.get("code");
   const stateToken = req.nextUrl.searchParams.get("state");
   const errorParam = req.nextUrl.searchParams.get("error");
 
-  if (errorParam || !code || !stateToken) return back("error=microsoft_oauth_denied");
+  if (errorParam) return microsoftErrorBack();
+  if (!code || !stateToken) return back("error=microsoft_oauth_missing_code");
 
   const stateSecret = getSigningSecret("EMAIL_OAUTH_STATE_SECRET");
   if (!stateSecret) return back("error=not_configured");

@@ -5,6 +5,7 @@
 
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { decrypt, encrypt } from "@/lib/encryption";
+import { getMicrosoftEmailTokenUrl } from "@/lib/auth/microsoft-email-oauth";
 import type { EmailOptions } from "./client";
 
 // ---------------------------------------------------------------------------
@@ -381,7 +382,7 @@ async function getMicrosoftAccessToken(cfg: EmailConfig): Promise<string> {
     throw new Error("Microsoft email OAuth client credentials are not configured.");
   }
 
-  const token = await refreshOAuthToken("https://login.microsoftonline.com/common/oauth2/v2.0/token", {
+  const token = await refreshOAuthToken(getMicrosoftEmailTokenUrl(), {
     client_id: clientId,
     client_secret: clientSecret,
     refresh_token: cfg.oauth_refresh_token,

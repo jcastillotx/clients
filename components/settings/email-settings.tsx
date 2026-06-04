@@ -137,6 +137,7 @@ export function EmailSettings() {
   // Callback banners
   const connectedParam = searchParams.get("connected");
   const errorParam = searchParams.get("error");
+  const errorDescriptionParam = searchParams.get("error_description");
 
   async function loadSettings() {
     const res = await fetch("/api/admin/email", { credentials: "same-origin" });
@@ -285,7 +286,10 @@ export function EmailSettings() {
       {errorParam && (
         <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <p>Connection failed: {errorParam.replace(/_/g, " ")}</p>
+          <p>
+            Connection failed: {errorParam.replace(/_/g, " ")}
+            {errorDescriptionParam ? ` — ${errorDescriptionParam}` : ""}
+          </p>
         </div>
       )}
 
