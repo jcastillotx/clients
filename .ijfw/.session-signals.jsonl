@@ -64,3 +64,4 @@
 {"ts":"2026-06-04T01:35:01Z","error":"  31d     https://clients-9242fnps4-kre8ivdesigns.vercel.app     ● Error     Production      7s           info-80795716     ","fail":null,"platform":"codex"}
 {"ts":"2026-06-04T03:28:33Z","error":"  if (!user) return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
 {"ts":"2026-06-04T04:42:01Z","error":"  if (!user) return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T04:43:09Z","error":"+      error: req.nextUrl.searchParams.get(\"error\") || \"microsoft_oauth_denied\",","fail":null,"platform":"codex"}
