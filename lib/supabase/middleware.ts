@@ -1,7 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { adminRouteRequiresMfa } from "@/lib/auth/mfa-routes";
 import { getSupabaseCookieOptions } from "@/lib/supabase/cookie-options";
 import { limiters, getClientIp } from "@/lib/rate-limit";
+
+type RoleMembershipRow = {
+  role?: { name?: string | null } | Array<{ name?: string | null }> | null;
+};
+
+function normalizeMiddlewareRoleName(row: RoleMembershipRow): string {
+  const role = row.role;
+  const roleName = Array.isArray(role) ? role[0]?.name : role?.name;
+
+  return String(roleName || "").toLowerCase();
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -99,8 +111,8 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/admin") ||
     request.nextUrl.pathname.startsWith("/integrations");
 
-  /** MFA (AAL2) is required only for /admin/* — not /integrations — so admins can reach OAuth flows before enrolling MFA. */
-  const adminRouteRequiresMfa = request.nextUrl.pathname.startsWith("/admin");
+  /** MFA (AAL2) is required for sensitive /admin/* pages, with explicit route exceptions. */
+  const requiresMfa = adminRouteRequiresMfa(request.nextUrl.pathname);
 
   if (isAdminOnlyRoute) {
     if (!user) {
@@ -120,8 +132,8 @@ export async function updateSession(request: NextRequest) {
         .select("role:roles(name)")
         .eq("user_id", user.id);
 
-      isAdmin = (roleRows || []).some((row: any) => {
-        const roleName = String(row?.role?.name || row?.role?.[0]?.name || "").toLowerCase();
+      isAdmin = ((roleRows || []) as RoleMembershipRow[]).some((row) => {
+        const roleName = normalizeMiddlewareRoleName(row);
         return roleName === "admin" || roleName === "super_admin";
       });
     }
@@ -136,7 +148,7 @@ export async function updateSession(request: NextRequest) {
     // Skip when already on settings/security to avoid a redirect loop.
     const isOnSecuritySettings = request.nextUrl.pathname.startsWith("/settings/security");
 
-    if (adminRouteRequiresMfa && !isOnSecuritySettings) {
+    if (requiresMfa && !isOnSecuritySettings) {
       try {
         const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalData && aalData.currentLevel !== "aal2") {
