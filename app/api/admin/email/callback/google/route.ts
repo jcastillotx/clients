@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
 
     for (const { key, value, encrypted } of writes) {
       if (value === "") continue;
-      await adminClient.from("system_settings").upsert(
+      const { error } = await adminClient.from("system_settings").upsert(
         {
           category: "email",
           key,
@@ -113,6 +113,11 @@ export async function GET(req: NextRequest) {
         },
         { onConflict: "category,key" },
       );
+
+      if (error) {
+        console.error(`[admin/email/callback/google] Failed to save setting ${key}:`, error);
+        return back("error=setting_save_failed");
+      }
     }
 
     return back("connected=google");

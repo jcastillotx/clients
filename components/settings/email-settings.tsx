@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,8 +139,15 @@ export function EmailSettings() {
   const errorParam = searchParams.get("error");
   const errorDescriptionParam = searchParams.get("error_description");
 
-  async function loadSettings() {
+  const loadSettings = useCallback(async () => {
     const res = await fetch("/api/admin/email", { credentials: "same-origin" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(
+        typeof data.error === "string" ? data.error : "Failed to load email settings",
+      );
+    }
+
     const data: Record<string, string> = await res.json();
     setForm((prev) => ({
       ...prev,
@@ -160,13 +167,19 @@ export function EmailSettings() {
       accountEmail: data.oauth_account_email ?? "",
       tokenExpiry: data.oauth_token_expiry ?? "",
     });
-  }
+  }, []);
 
   useEffect(() => {
     loadSettings()
-      .catch(() => {})
+      .catch((error) => {
+        toast({
+          title: "Failed to load email settings",
+          description: error instanceof Error ? error.message : "Unknown error",
+          variant: "destructive",
+        });
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [loadSettings, toast]);
 
   // Clear callback params from URL after showing them once
   useEffect(() => {
@@ -205,8 +218,14 @@ export function EmailSettings() {
       });
       if (res.ok) {
         toast({ title: "Email settings saved" });
+        await loadSettings();
       } else {
-        toast({ title: "Failed to save", variant: "destructive" });
+        const data = await res.json().catch(() => ({}));
+        toast({
+          title: "Failed to save",
+          description: typeof data.error === "string" ? data.error : "Unknown error",
+          variant: "destructive",
+        });
       }
     } finally {
       setSaving(false);

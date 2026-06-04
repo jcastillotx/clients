@@ -33,8 +33,6 @@ const SECRET_KEYS = new Set([
   "oauth_refresh_token",
 ]);
 
-type EmailKey = (typeof EMAIL_KEYS)[number];
-
 interface SettingRow {
   key: string;
   value: string;
@@ -54,10 +52,15 @@ export async function GET() {
   const adminClient = createAdminClientIfAvailable();
   if (!adminClient) return NextResponse.json({ error: "Admin client not configured" }, { status: 503 });
 
-  const { data: rows } = await adminClient
+  const { data: rows, error: selectError } = await adminClient
     .from("system_settings")
     .select("key, value, is_encrypted")
     .eq("category", "email");
+
+  if (selectError) {
+    console.error("[admin/email] Failed to load settings:", selectError);
+    return NextResponse.json({ error: "Failed to load email settings" }, { status: 500 });
+  }
 
   const settings: Record<string, string> = {};
   for (const row of (rows ?? []) as SettingRow[]) {
@@ -97,7 +100,7 @@ export async function PUT(req: NextRequest) {
     const isSecret = SECRET_KEYS.has(key);
     const stored = isSecret ? encrypt(val) : val;
 
-    await adminClient.from("system_settings").upsert(
+    const { error } = await adminClient.from("system_settings").upsert(
       {
         category: "email",
         key,
@@ -108,6 +111,14 @@ export async function PUT(req: NextRequest) {
       },
       { onConflict: "category,key" },
     );
+
+    if (error) {
+      console.error(`[admin/email] Failed to save setting ${key}:`, error);
+      return NextResponse.json(
+        { error: `Failed to save ${key.replace(/_/g, " ")}` },
+        { status: 500 },
+      );
+    }
   }
 
   return NextResponse.json({ success: true });

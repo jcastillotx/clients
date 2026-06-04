@@ -26,11 +26,16 @@ export async function POST() {
   if (!adminClient)
     return NextResponse.json({ error: "Admin client not configured" }, { status: 503 });
 
-  await adminClient
+  const { error } = await adminClient
     .from("system_settings")
     .delete()
     .eq("category", "email")
     .in("key", OAUTH_KEYS);
+
+  if (error) {
+    console.error("[admin/email/disconnect] Failed to disconnect OAuth provider:", error);
+    return NextResponse.json({ error: "Failed to disconnect provider" }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }
