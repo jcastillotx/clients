@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
+import { getMicrosoftEmailAuthorizeUrl } from "@/lib/auth/microsoft-email-oauth";
 import { createSignedToken, getSigningSecret } from "@/lib/auth/signed-token";
 
 const MICROSOFT_SCOPES = [
@@ -62,7 +63,5 @@ export async function GET() {
     state,
   });
 
-  return NextResponse.redirect(
-    `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}`,
-  );
+  return NextResponse.redirect(`${getMicrosoftEmailAuthorizeUrl()}?${params}`);
 }

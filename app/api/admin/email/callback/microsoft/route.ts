@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
 import { encrypt } from "@/lib/encryption";
+import { getMicrosoftEmailTokenUrl } from "@/lib/auth/microsoft-email-oauth";
 import { getSigningSecret, verifySignedToken } from "@/lib/auth/signed-token";
 
 const REDIRECT_BASE = "/admin/email";
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const tokenRes = await fetch(
-      "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      getMicrosoftEmailTokenUrl(),
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },

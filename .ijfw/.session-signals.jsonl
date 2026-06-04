@@ -49,3 +49,18 @@
 {"ts":"2026-06-03T22:27:20Z","error":"rg: .pnpmfile.cjs: No such file or directory (os error 2)","fail":null,"platform":"codex"}
 {"ts":"2026-06-03T22:28:00Z","error":"29:84  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities","fail":null,"platform":"codex"}
 {"ts":"2026-06-03T22:28:37Z","error":"+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T00:40:48Z","error":"124:45  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:20:47Z","error":"    console.error(\"[admin/email/callback/google] Unexpected error:\", err);","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:20:47Z","error":"  if (!user) return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:20:47Z","error":"  if (!user) return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:20:57Z","error":"    throw new Error((data as { message?: string }).message ?? `Resend API error ${res.status}`);","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:20:57Z","error":"// Send email with error handling.","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:23:55Z","error":"# Error Tracking (optional but recommended)","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:24:05Z","error":"Error: No existing credentials found. Please run `vercel login` or pass \"--token\"","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:26:00Z","error":"    throw new Error((data as { message?: string }).message ?? `Resend API error ${res.status}`);","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:27:51Z","error":"+    throw new Error(readProviderError(data) ?? `Gmail API error ${res.status}`);","fail":"+    throw new Error(readProviderError(data) ?? `OAuth token refresh failed with status ${res.status}`);","platform":"codex"}
+{"ts":"2026-06-04T01:30:18Z","error":"Error: No existing credentials found. Please run `vercel login` or pass \"--token\"","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:33:46Z","error":"Error: Your codebase isn’t linked to a project on Vercel. Run `vercel link` to begin.","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T01:35:01Z","error":"  31d     https://clients-9242fnps4-kre8ivdesigns.vercel.app     ● Error     Production      7s           info-80795716     ","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T03:28:33Z","error":"  if (!user) return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
+{"ts":"2026-06-04T04:42:01Z","error":"  if (!user) return NextResponse.json({ error: \"Unauthorized\" }, { status: 401 });","fail":null,"platform":"codex"}
