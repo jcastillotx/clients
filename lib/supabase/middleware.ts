@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { adminRouteRequiresMfa } from "@/lib/auth/mfa-routes";
+import { shouldRouteToAuthConfirm } from "@/lib/supabase/auth-token-redirect";
 import { getSupabaseCookieOptions } from "@/lib/supabase/cookie-options";
 import { limiters, getClientIp } from "@/lib/rate-limit";
 
@@ -79,10 +80,7 @@ export async function updateSession(request: NextRequest) {
 
   // If a Supabase email auth token is present, route to /auth/confirm first
   // so the token can be exchanged/verified before we check the session.
-  const code = request.nextUrl.searchParams.get("code");
-  const tokenHash = request.nextUrl.searchParams.get("token_hash");
-  const hasAuthTokenParam = Boolean(code || tokenHash);
-  if (hasAuthTokenParam && !request.nextUrl.pathname.startsWith("/auth/confirm") && !request.nextUrl.pathname.startsWith("/auth/callback")) {
+  if (shouldRouteToAuthConfirm(request.nextUrl.pathname, request.nextUrl.searchParams)) {
     const confirmUrl = request.nextUrl.clone();
     confirmUrl.pathname = "/auth/confirm";
     if (!confirmUrl.searchParams.has("next") && request.nextUrl.searchParams.get("type") === "recovery") {
