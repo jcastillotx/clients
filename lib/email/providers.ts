@@ -4,7 +4,7 @@
  */
 
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
-import { decrypt } from "@/lib/encryption";
+import { decrypt, encrypt } from "@/lib/encryption";
 import type { EmailOptions } from "./client";
 
 // ---------------------------------------------------------------------------
@@ -22,6 +22,11 @@ export interface EmailConfig {
   smtp_user?: string;
   smtp_password?: string;
   mailgun_domain?: string;
+  oauth_provider?: string;
+  oauth_account_email?: string;
+  oauth_access_token?: string;
+  oauth_refresh_token?: string;
+  oauth_token_expiry?: string;
   [key: string]: string | undefined;
 }
 
@@ -114,7 +119,19 @@ export async function sendViaConfiguredProvider(
       await sendViaMailgun(cfg, options);
       break;
     case "gmail":
+      if (cfg.oauth_provider === "google" && cfg.oauth_access_token) {
+        await sendViaGmailApi(cfg, options);
+        break;
+      }
+      await sendViaSMTP(cfg, options);
+      break;
     case "office365":
+      if (cfg.oauth_provider === "microsoft" && cfg.oauth_access_token) {
+        await sendViaMicrosoftGraph(cfg, options);
+        break;
+      }
+      await sendViaSMTP(cfg, options);
+      break;
     case "smtp":
       await sendViaSMTP(cfg, options);
       break;
@@ -251,6 +268,46 @@ export async function sendViaSMTP(cfg: EmailConfig, options: EmailOptions): Prom
   });
 }
 
+export async function sendViaGmailApi(cfg: EmailConfig, options: EmailOptions): Promise<void> {
+  const accessToken = await getGoogleAccessToken(cfg);
+  const raw = buildRawMimeMessage(cfg, options);
+
+  const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ raw }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(readProviderError(data) ?? `Gmail API error ${res.status}`);
+  }
+}
+
+export async function sendViaMicrosoftGraph(cfg: EmailConfig, options: EmailOptions): Promise<void> {
+  const accessToken = await getMicrosoftAccessToken(cfg);
+
+  const res = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: buildGraphMessage(options),
+      saveToSentItems: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(readProviderError(data) ?? `Microsoft Graph error ${res.status}`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -259,4 +316,252 @@ export function buildFrom(cfg: EmailConfig): string {
   const email = cfg.from_email ?? "noreply@example.com";
   const name = cfg.from_name ?? "KRE8IV";
   return `"${name}" <${email}>`;
+}
+
+function isAccessTokenFresh(expiresAt: string | undefined): boolean {
+  if (!expiresAt) {
+    return false;
+  }
+
+  const expiryMs = Date.parse(expiresAt);
+  if (!Number.isFinite(expiryMs)) {
+    return false;
+  }
+
+  return expiryMs > Date.now() + 60_000;
+}
+
+async function getGoogleAccessToken(cfg: EmailConfig): Promise<string> {
+  if (cfg.oauth_access_token && isAccessTokenFresh(cfg.oauth_token_expiry)) {
+    return cfg.oauth_access_token;
+  }
+
+  if (!cfg.oauth_refresh_token) {
+    if (cfg.oauth_access_token) {
+      return cfg.oauth_access_token;
+    }
+
+    throw new Error("Google OAuth access token is not configured.");
+  }
+
+  const clientId = process.env.GOOGLE_EMAIL_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_EMAIL_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Google email OAuth client credentials are not configured.");
+  }
+
+  const token = await refreshOAuthToken("https://oauth2.googleapis.com/token", {
+    client_id: clientId,
+    client_secret: clientSecret,
+    refresh_token: cfg.oauth_refresh_token,
+    grant_type: "refresh_token",
+  });
+
+  await persistRefreshedOAuthToken(token);
+
+  return token.accessToken;
+}
+
+async function getMicrosoftAccessToken(cfg: EmailConfig): Promise<string> {
+  if (cfg.oauth_access_token && isAccessTokenFresh(cfg.oauth_token_expiry)) {
+    return cfg.oauth_access_token;
+  }
+
+  if (!cfg.oauth_refresh_token) {
+    if (cfg.oauth_access_token) {
+      return cfg.oauth_access_token;
+    }
+
+    throw new Error("Microsoft OAuth access token is not configured.");
+  }
+
+  const clientId = process.env.MICROSOFT_EMAIL_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID;
+  const clientSecret = process.env.MICROSOFT_EMAIL_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error("Microsoft email OAuth client credentials are not configured.");
+  }
+
+  const token = await refreshOAuthToken("https://login.microsoftonline.com/common/oauth2/v2.0/token", {
+    client_id: clientId,
+    client_secret: clientSecret,
+    refresh_token: cfg.oauth_refresh_token,
+    grant_type: "refresh_token",
+    scope: "openid email profile offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/User.Read",
+  });
+
+  await persistRefreshedOAuthToken(token);
+
+  return token.accessToken;
+}
+
+interface RefreshedOAuthToken {
+  accessToken: string;
+  expiresAt: string;
+}
+
+async function refreshOAuthToken(
+  endpoint: string,
+  params: Record<string, string>,
+): Promise<RefreshedOAuthToken> {
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(params),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !isObjectRecord(data) || typeof data.access_token !== "string") {
+    throw new Error(readProviderError(data) ?? `OAuth token refresh failed with status ${res.status}`);
+  }
+
+  const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 3600;
+
+  return {
+    accessToken: data.access_token,
+    expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+  };
+}
+
+async function persistRefreshedOAuthToken(token: RefreshedOAuthToken): Promise<void> {
+  const adminClient = createAdminClientIfAvailable();
+  if (!adminClient) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const writes = [
+    { key: "oauth_access_token", value: encrypt(token.accessToken), encrypted: true },
+    { key: "oauth_token_expiry", value: token.expiresAt, encrypted: false },
+  ];
+
+  for (const { key, value, encrypted } of writes) {
+    await adminClient.from("system_settings").upsert(
+      {
+        category: "email",
+        key,
+        value,
+        is_encrypted: encrypted,
+        updated_at: now,
+      },
+      { onConflict: "category,key" },
+    );
+  }
+}
+
+function buildRawMimeMessage(cfg: EmailConfig, options: EmailOptions): string {
+  const lines = [
+    `From: ${buildFrom(cfg)}`,
+    `To: ${formatAddressList(options.to)}`,
+  ];
+
+  if (options.cc?.length) {
+    lines.push(`Cc: ${formatAddressList(options.cc)}`);
+  }
+
+  if (options.bcc?.length) {
+    lines.push(`Bcc: ${formatAddressList(options.bcc)}`);
+  }
+
+  if (options.replyTo) {
+    lines.push(`Reply-To: ${options.replyTo}`);
+  }
+
+  lines.push(`Subject: ${encodeMimeHeader(options.subject)}`, "MIME-Version: 1.0");
+
+  const attachments = options.attachments ?? [];
+  if (attachments.length === 0) {
+    const contentType = options.html ? "text/html" : "text/plain";
+    lines.push(`Content-Type: ${contentType}; charset="UTF-8"`, "", options.html ?? options.text ?? "");
+
+    return base64UrlEncode(lines.join("\r\n"));
+  }
+
+  const boundary = `kre8iv-${crypto.randomUUID()}`;
+  lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`, "");
+  lines.push(`--${boundary}`);
+  lines.push(`Content-Type: ${options.html ? "text/html" : "text/plain"}; charset="UTF-8"`, "");
+  lines.push(options.html ?? options.text ?? "");
+
+  for (const attachment of attachments) {
+    lines.push(`--${boundary}`);
+    lines.push("Content-Type: application/octet-stream");
+    lines.push("Content-Transfer-Encoding: base64");
+    lines.push(`Content-Disposition: attachment; filename="${escapeHeaderValue(attachment.filename)}"`, "");
+    lines.push(toBase64(attachment.content));
+  }
+
+  lines.push(`--${boundary}--`);
+
+  return base64UrlEncode(lines.join("\r\n"));
+}
+
+function buildGraphMessage(options: EmailOptions) {
+  return {
+    subject: options.subject,
+    body: {
+      contentType: options.html ? "HTML" : "Text",
+      content: options.html ?? options.text ?? "",
+    },
+    toRecipients: buildGraphRecipients(options.to),
+    ccRecipients: options.cc ? buildGraphRecipients(options.cc) : undefined,
+    bccRecipients: options.bcc ? buildGraphRecipients(options.bcc) : undefined,
+    replyTo: options.replyTo ? buildGraphRecipients(options.replyTo) : undefined,
+    attachments: options.attachments?.map((attachment) => ({
+      "@odata.type": "#microsoft.graph.fileAttachment",
+      name: attachment.filename,
+      contentBytes: toBase64(attachment.content),
+    })),
+  };
+}
+
+function buildGraphRecipients(recipients: string | string[]) {
+  return (Array.isArray(recipients) ? recipients : [recipients]).map((address) => ({
+    emailAddress: { address },
+  }));
+}
+
+function formatAddressList(recipients: string | string[]): string {
+  return (Array.isArray(recipients) ? recipients : [recipients]).join(", ");
+}
+
+function encodeMimeHeader(value: string): string {
+  return /[^\x20-\x7E]/.test(value) ? `=?UTF-8?B?${toBase64(value)}?=` : value;
+}
+
+function escapeHeaderValue(value: string): string {
+  return value.replace(/"/g, '\\"');
+}
+
+function toBase64(value: Buffer | string): string {
+  return Buffer.from(value).toString("base64");
+}
+
+function base64UrlEncode(value: string): string {
+  return toBase64(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "");
+}
+
+function readProviderError(data: unknown): string | null {
+  if (!isObjectRecord(data)) {
+    return null;
+  }
+
+  const message = data.message;
+  if (typeof message === "string") {
+    return message;
+  }
+
+  const error = data.error;
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (isObjectRecord(error) && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return null;
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
 }
