@@ -1,12 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { messages, conversations, messageAttachments, conversationParticipants, users } from "@/lib/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * GET /api/messages?conversationId={id}
- * Get messages for a specific conversation
  */
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +23,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const { searchParams } = new URL(request.url);
@@ -26,10 +32,13 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get("offset") || "0");
 
     if (!conversationId) {
-      return NextResponse.json({ error: "conversationId is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "conversationId is required",
+      });
     }
 
-    // Verify user is a participant in this conversation
     const [participant] = await db
       .select()
       .from(conversationParticipants)
@@ -39,10 +48,9 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (!participant) {
-      return NextResponse.json({ error: "Access denied to this conversation" }, { status: 403 });
+      return apiForbidden(request, "Access denied to this conversation");
     }
 
-    // Get messages with sender info and attachments
     const conversationMessages = await db
       .select({
         id: messages.id,
@@ -95,16 +103,17 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    return NextResponse.json({ messages: conversationMessages });
+    return apiSuccess(request, conversationMessages, {
+      extra: { messages: conversationMessages },
+    });
   } catch (error) {
     console.error("Error fetching messages:", error);
-    return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch messages");
   }
 }
 
 /**
  * POST /api/messages
- * Send a new message
  */
 export async function POST(request: NextRequest) {
   try {
@@ -115,17 +124,20 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
     const { conversationId, messageBody, type = "text", attachments = [] } = body;
 
     if (!conversationId || (!messageBody && attachments.length === 0)) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required fields",
+      });
     }
 
-    // Verify user is a participant
     const [participant] = await db
       .select()
       .from(conversationParticipants)
@@ -135,10 +147,9 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!participant) {
-      return NextResponse.json({ error: "Access denied to this conversation" }, { status: 403 });
+      return apiForbidden(request, "Access denied to this conversation");
     }
 
-    // Create message
     const [message] = await db
       .insert(messages)
       .values({
@@ -149,7 +160,6 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Add attachments if provided
     if (attachments.length > 0) {
       await db.insert(messageAttachments).values(
         attachments.map(
@@ -165,12 +175,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update conversation last_message_at
     await db.update(conversations).set({ lastMessageAt: new Date() }).where(eq(conversations.id, conversationId));
 
-    return NextResponse.json({ message }, { status: 201 });
+    return apiSuccess(request, message, { status: 201, extra: { message } });
   } catch (error) {
     console.error("Error sending message:", error);
-    return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
+    return apiInternalError(request, "Failed to send message");
   }
 }

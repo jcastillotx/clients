@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { Calendar, Clock, User, Building2, AlertCircle, CheckCircle2, XCircle, Pause, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { fetchApi } from "@/lib/api/client";
 
 interface RequestDetailProps {
   request: {
@@ -86,11 +87,10 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
   const doDeleteRequest = async () => {
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/requests/${request.id}`, { method: "DELETE", credentials: "same-origin" });
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body?.error || "Failed to delete request");
-      }
+      await fetchApi(`/api/requests/${request.id}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      }, { fallbackMessage: "Failed to delete request" });
       toast({ title: "Deleted", description: "Service request deleted." });
       router.push("/requests");
     } catch (err) {
@@ -104,16 +104,12 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
     setIsSaving(true);
     setError(null);
     try {
-      const response = await fetch(`/api/requests/${request.id}`, {
+      await fetchApi(`/api/requests/${request.id}`, {
         method: "PATCH",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body?.error || "Failed to update request");
-      }
+      }, { fallbackMessage: "Failed to update request" });
       if (payload.status !== undefined) {
         setCurrentStatus(payload.status);
       }

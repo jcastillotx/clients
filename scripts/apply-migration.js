@@ -78,15 +78,20 @@ async function main() {
   const migrationFiles = [
     '000_create_core_tables.sql',
     '001_create_rbac_tables.sql',
-    '001.5_add_rbac_policies.sql',
+    '001b_add_rbac_policies.sql',
     '002_create_template_tables.sql',
     '003_create_document_tables.sql',
     '004_create_support_tickets_tables.sql',
     '005_create_application_tables.sql',
     '006_create_announcements_table.sql',
     '010_feature_flags.sql',
+    '013_add_client_logo_url.sql',
+    '015_add_client_domain_and_contact_fields.sql',
+    '016_create_encrypted_settings.sql',
     '017_support_tickets_admin_rls.sql',
-    '018_create_maintenance_plan_templates.sql'
+    '018_create_maintenance_plan_templates.sql',
+    '020_create_system_settings.sql',
+    '022_create_service_templates.sql'
   ];
 
   console.log('📁 Checking for required migration files:\n');

@@ -1,23 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+} from "@/lib/api/response";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { requireAuthenticatedUser } from "@/lib/auth/route-guards";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const auth = await requireAuthenticatedUser();
+    const auth = await requireAuthenticatedUser(request);
     if ("error" in auth) {
       return auth.error;
     }
 
     const canView = await hasPermission("reports.financial");
     if (!canView) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const supabase = await createClient();
 
-    // Fetch recent invoices
     const { data: invoices } = await supabase
       .from("invoices")
       .select(
@@ -36,7 +39,6 @@ export async function GET() {
       .order("created_at", { ascending: false })
       .limit(10);
 
-    // Transform data
     const transactions = invoices?.map(
       (invoice: {
         id: string;
@@ -58,12 +60,10 @@ export async function GET() {
       }),
     );
 
-    return NextResponse.json({ transactions: transactions || [] });
+    const list = transactions || [];
+    return apiSuccess(request, list, { extra: { transactions: list } });
   } catch (error) {
     console.error("Error fetching recent transactions:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred. Please try again." },
-      { status: 500 },
-    );
+    return apiInternalError(request, "An unexpected error occurred. Please try again.");
   }
 }

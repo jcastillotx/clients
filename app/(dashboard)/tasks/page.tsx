@@ -1,13 +1,48 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { Plus, Layout, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/lib/db";
+import { staffTaskBoards, staffTasks } from "@/lib/db/schema/staff-tasks";
 
 async function getBoards() {
-  // This would normally fetch from API
-  // For now, returning empty array for SSR
-  return [];
+  const boards = await db.query.staffTaskBoards.findMany({
+    where: eq(staffTaskBoards.isArchived, false),
+    orderBy: [desc(staffTaskBoards.isDefault), desc(staffTaskBoards.sortOrder)],
+    with: {
+      columns: true,
+    },
+  });
+
+  if (boards.length === 0) {
+    return [];
+  }
+
+  const boardIds = boards.map((board) => board.id);
+  const taskCounts = await db
+    .select({
+      boardId: staffTasks.boardId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(staffTasks)
+    .where(inArray(staffTasks.boardId, boardIds))
+    .groupBy(staffTasks.boardId);
+
+  const countByBoard = new Map(taskCounts.map((row) => [row.boardId, row.count]));
+
+  return boards.map((board) => ({
+    id: board.id,
+    name: board.name,
+    description: board.description,
+    color: board.color,
+    isDefault: board.isDefault,
+    _count: {
+      columns: board.columns?.length ?? 0,
+      tasks: countByBoard.get(board.id) ?? 0,
+    },
+  }));
 }
 
 export default async function TasksPage() {
@@ -35,7 +70,18 @@ export default async function TasksPage() {
   );
 }
 
-function BoardsList({ boards }: { boards: any[] }) {
+function BoardsList({
+  boards,
+}: {
+  boards: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    color: string | null;
+    isDefault: boolean;
+    _count: { columns: number; tasks: number };
+  }>;
+}) {
   if (boards.length === 0) {
     return (
       <Card>
@@ -63,7 +109,7 @@ function BoardsList({ boards }: { boards: any[] }) {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full" style={{ backgroundColor: board.color }} />
+                <div className="h-3 w-3 rounded-full" style={{ backgroundColor: board.color ?? "#3b82f6" }} />
                 <CardTitle className="text-xl">{board.name}</CardTitle>
               </div>
               {board.isDefault && (
@@ -76,10 +122,10 @@ function BoardsList({ boards }: { boards: any[] }) {
             <div className="mb-4 flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Layout className="h-4 w-4" />
-                <span>{board._count?.columns || 0} columns</span>
+                <span>{board._count.columns} columns</span>
               </div>
               <div className="flex items-center gap-1">
-                <span>{board._count?.tasks || 0} tasks</span>
+                <span>{board._count.tasks} tasks</span>
               </div>
             </div>
             <div className="flex gap-2">

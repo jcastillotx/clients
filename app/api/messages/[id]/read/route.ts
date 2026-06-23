@@ -1,8 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { messageReads, messages, conversationParticipants } from "@/lib/db/schema/messages";
 import { eq, and } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * POST /api/messages/[id]/read
@@ -17,19 +24,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const { id: messageId } = await params;
 
-    // Get the message to verify conversation access
     const [message] = await db.select().from(messages).where(eq(messages.id, messageId)).limit(1);
 
     if (!message) {
-      return NextResponse.json({ error: "Message not found" }, { status: 404 });
+      return apiNotFound(request, "Message not found");
     }
 
-    // Verify user is a participant in the conversation
     const [participant] = await db
       .select()
       .from(conversationParticipants)
@@ -42,10 +47,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .limit(1);
 
     if (!participant) {
-      return NextResponse.json({ error: "Access denied to this conversation" }, { status: 403 });
+      return apiForbidden(request, "Access denied to this conversation");
     }
 
-    // Check if already marked as read
     const [existingRead] = await db
       .select()
       .from(messageReads)
@@ -53,10 +57,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .limit(1);
 
     if (existingRead) {
-      return NextResponse.json({ message: "Already marked as read" });
+      return apiSuccess(request, existingRead, {
+        extra: { message: "Already marked as read" },
+      });
     }
 
-    // Mark as read
     const [read] = await db
       .insert(messageReads)
       .values({
@@ -66,10 +71,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })
       .returning();
 
-    return NextResponse.json({ read });
+    return apiSuccess(request, read, { extra: { read } });
   } catch (error) {
     console.error("Error marking message as read:", error);
-    return NextResponse.json({ error: "Failed to mark message as read" }, { status: 500 });
+    return apiInternalError(request, "Failed to mark message as read");
   }
 }
 
@@ -86,16 +91,18 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const { id: messageId } = await params;
 
     await db.delete(messageReads).where(and(eq(messageReads.messageId, messageId), eq(messageReads.userId, user.id)));
 
-    return NextResponse.json({ message: "Read status removed" });
+    return apiSuccess(request, { removed: true }, {
+      extra: { message: "Read status removed" },
+    });
   } catch (error) {
     console.error("Error removing read status:", error);
-    return NextResponse.json({ error: "Failed to remove read status" }, { status: 500 });
+    return apiInternalError(request, "Failed to remove read status");
   }
 }

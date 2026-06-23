@@ -1,4 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { db } from "@/lib/db";
 import { whiteLabelConfigs } from "@/lib/db/schema/additional-features";
 import { eq } from "drizzle-orm";
@@ -22,10 +31,6 @@ const upsertSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-/**
- * GET /api/white-label
- * Retrieve white label configuration for a client
- */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -35,25 +40,24 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
-
-    const searchParams = request.nextUrl.searchParams;
     const parsed = querySchema.safeParse({
-      clientId: searchParams.get("clientId"),
+      clientId: request.nextUrl.searchParams.get("clientId"),
     });
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Client ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID is required",
+      });
     }
 
     const { clientId } = parsed.data;
     if (!canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const config = await db
@@ -63,26 +67,16 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (config.length === 0) {
-      return NextResponse.json(
-        { error: "White label config not found" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "White label config not found");
     }
 
-    return NextResponse.json(config[0]);
+    return apiSuccess(request, config[0]);
   } catch (error) {
     console.error("Error fetching white label config:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch white label config" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to fetch white label config");
   }
 }
 
-/**
- * POST /api/white-label
- * Create or update white label configuration
- */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -92,18 +86,14 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
-
     const body = await request.json();
     const parsed = upsertSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Client ID is required" },
-        { status: 400 },
-      );
+      return apiValidationError(request, parsed.error);
     }
 
     const {
@@ -119,10 +109,9 @@ export async function POST(request: NextRequest) {
     } = parsed.data;
 
     if (!canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
-    // Check if config already exists
     const existing = await db
       .select()
       .from(whiteLabelConfigs)
@@ -132,7 +121,6 @@ export async function POST(request: NextRequest) {
     let config;
 
     if (existing.length > 0) {
-      // Update existing config
       config = await db
         .update(whiteLabelConfigs)
         .set({
@@ -149,7 +137,6 @@ export async function POST(request: NextRequest) {
         .where(eq(whiteLabelConfigs.clientId, clientId))
         .returning();
     } else {
-      // Create new config
       config = await db
         .insert(whiteLabelConfigs)
         .values({
@@ -166,20 +153,13 @@ export async function POST(request: NextRequest) {
         .returning();
     }
 
-    return NextResponse.json(config[0]);
+    return apiSuccess(request, config[0]);
   } catch (error) {
     console.error("Error saving white label config:", error);
-    return NextResponse.json(
-      { error: "Failed to save white label config" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to save white label config");
   }
 }
 
-/**
- * DELETE /api/white-label
- * Delete white label configuration
- */
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -189,37 +169,33 @@ export async function DELETE(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
-
-    const searchParams = request.nextUrl.searchParams;
     const parsed = querySchema.safeParse({
-      clientId: searchParams.get("clientId"),
+      clientId: request.nextUrl.searchParams.get("clientId"),
     });
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Client ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID is required",
+      });
     }
 
     const { clientId } = parsed.data;
     if (!canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     await db
       .delete(whiteLabelConfigs)
       .where(eq(whiteLabelConfigs.clientId, clientId));
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting white label config:", error);
-    return NextResponse.json(
-      { error: "Failed to delete white label config" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to delete white label config");
   }
 }

@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Trash2, User } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
@@ -99,13 +100,14 @@ export function UserSettings({ user }: UserSettingsProps) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/settings/profile-image", {
-        method: "POST",
-        body: formData,
-      });
-      const payload: { avatarUrl?: string; error?: string } = await res.json();
-      if (!res.ok || !payload.avatarUrl) {
-        throw new Error(payload.error || "Failed to upload profile image");
+      const payload = await fetchApi<{ avatarUrl: string }>(
+        "/api/settings/profile-image",
+        { method: "POST", body: formData },
+        { fallbackMessage: "Failed to upload profile image" },
+      );
+
+      if (!payload.avatarUrl) {
+        throw new Error("Failed to upload profile image");
       }
 
       setAvatarUrl(payload.avatarUrl);
@@ -122,9 +124,9 @@ export function UserSettings({ user }: UserSettingsProps) {
   const handleAvatarDelete = async () => {
     setIsDeletingAvatar(true);
     try {
-      const res = await fetch("/api/settings/profile-image", { method: "DELETE" });
-      const payload: { error?: string } = await res.json();
-      if (!res.ok) throw new Error(payload.error || "Failed to delete profile image");
+      await fetchApi("/api/settings/profile-image", { method: "DELETE" }, {
+        fallbackMessage: "Failed to delete profile image",
+      });
       setAvatarUrl("");
       toast.success("Profile image removed.");
       router.refresh();

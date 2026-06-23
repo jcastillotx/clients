@@ -21,6 +21,9 @@ const priorityWeight: Record<string, number> = {
   low: 1,
 };
 
+const OPEN_REQUEST_STATUSES = ["pending", "in_progress"] as const;
+const OPEN_TICKET_STATUSES = ["open", "in_progress", "waiting_on_client", "waiting_on_vendor"] as const;
+
 function normalizeClient<T extends { client?: unknown }>(row: T) {
   return {
     ...row,
@@ -94,8 +97,12 @@ export default async function DashboardPage() {
     { data: campaigns },
     { data: invoiceRows },
   ] = await Promise.all([
-    dbClient.from("requests").select("*", { count: "exact", head: true }),
-    dbClient.from("requests").select("*", { count: "exact", head: true }).in("status", ["pending", "in_progress"]),
+    dbClient.from("requests").select("*", { count: "exact", head: true }).is("deleted_at", null),
+    dbClient
+      .from("requests")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["pending", "in_progress"])
+      .is("deleted_at", null),
     dbClient.from("invoices").select("*", { count: "exact", head: true }),
     dbClient
       .from("requests")
@@ -110,6 +117,8 @@ export default async function DashboardPage() {
         client:clients(company_name)
       `,
       )
+      .is("deleted_at", null)
+      .in("status", [...OPEN_REQUEST_STATUSES])
       .order("created_at", { ascending: false })
       .limit(12),
     dbClient
@@ -129,6 +138,7 @@ export default async function DashboardPage() {
       `,
       )
       .is("deleted_at", null)
+      .in("status", [...OPEN_TICKET_STATUSES])
       .order("created_at", { ascending: false })
       .limit(12),
     isStaff

@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { fetchApi } from "@/lib/api/client";
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -36,30 +37,28 @@ export default function NewProjectPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const project = await fetchApi<{ id: string }>(
+        "/api/projects",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : null,
+            budgetAmount: formData.budgetAmount ? parseFloat(formData.budgetAmount) : null,
+            budgets: budgets.filter((b) => b.category && b.allocatedAmount),
+            milestones: milestones.filter((m) => m.title),
+          }),
         },
-        body: JSON.stringify({
-          ...formData,
-          estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : null,
-          budgetAmount: formData.budgetAmount ? parseFloat(formData.budgetAmount) : null,
-          budgets: budgets.filter((b) => b.category && b.allocatedAmount),
-          milestones: milestones.filter((m) => m.title),
-        }),
-      });
+        { fallbackMessage: "Failed to create project" },
+      );
 
-      if (response.ok) {
-        const { data } = await response.json();
-        router.push(`/projects/${data.id}`);
-      } else {
-        const error = await response.json();
-        alert(error.error || "Failed to create project");
-      }
+      router.push(`/projects/${project.id}`);
     } catch (error) {
       console.error("Error creating project:", error);
-      alert("Failed to create project");
+      alert(error instanceof Error ? error.message : "Failed to create project");
     } finally {
       setLoading(false);
     }

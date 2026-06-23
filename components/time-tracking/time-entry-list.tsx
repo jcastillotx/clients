@@ -11,6 +11,7 @@ import { Pencil, Trash2, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { fetchApi } from "@/lib/api/client";
 
 interface TimeEntryListProps {
   refreshTrigger?: number;
@@ -54,16 +55,14 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
       if (endDate) params.append("endDate", endDate);
       if (statusFilter) params.append("status", statusFilter);
 
-      const response = await fetch(`/api/time-tracking?${params}`);
-      const data = await response.json();
-      if (!response.ok) {
-        toast.error(typeof data?.error === "string" ? data.error : "Failed to fetch time entries");
-        setEntries([]);
-        return;
-      }
-      setEntries(Array.isArray(data) ? data : []);
-    } catch {
-      toast.error("Failed to fetch time entries");
+      const rows = await fetchApi<TimeEntryRow[]>(
+        `/api/time-tracking?${params}`,
+        undefined,
+        { fallbackMessage: "Failed to fetch time entries" },
+      );
+      setEntries(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to fetch time entries");
     } finally {
       setLoading(false);
     }
@@ -77,14 +76,9 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
   const doDeleteEntry = async () => {
     if (!pendingDeleteId) return;
     try {
-      const response = await fetch(`/api/time-tracking?id=${pendingDeleteId}`, {
+      await fetchApi(`/api/time-tracking?id=${pendingDeleteId}`, {
         method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error);
-      }
+      }, { fallbackMessage: "Failed to delete entry" });
 
       toast.success("Entry deleted");
       fetchEntries();

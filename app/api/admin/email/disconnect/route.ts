@@ -1,6 +1,12 @@
-import { NextResponse } from "next/server";
 import { createClient, createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 const OAUTH_KEYS = [
   "oauth_provider",
@@ -12,19 +18,22 @@ const OAUTH_KEYS = [
 
 /**
  * POST /api/admin/email/disconnect
- * Clears any stored OAuth tokens for the email provider so the admin can
- * reconnect or switch to manual/API-key credentials.
+ * Clears any stored OAuth tokens for the email provider.
  */
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await isUserAdmin(user.id)))
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user) return apiUnauthorized(request);
+  if (!(await isUserAdmin(user.id))) return apiForbidden(request);
 
   const adminClient = createAdminClientIfAvailable();
-  if (!adminClient)
-    return NextResponse.json({ error: "Admin client not configured" }, { status: 503 });
+  if (!adminClient) {
+    return apiError(request, {
+      status: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "Admin client not configured",
+    });
+  }
 
   const { error } = await adminClient
     .from("system_settings")
@@ -34,8 +43,8 @@ export async function POST() {
 
   if (error) {
     console.error("[admin/email/disconnect] Failed to disconnect OAuth provider:", error);
-    return NextResponse.json({ error: "Failed to disconnect provider" }, { status: 500 });
+    return apiInternalError(request, "Failed to disconnect provider");
   }
 
-  return NextResponse.json({ success: true });
+  return apiSuccess(request, { disconnected: true }, { extra: { success: true } });
 }

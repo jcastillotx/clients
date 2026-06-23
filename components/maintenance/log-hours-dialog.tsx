@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { fetchApi } from "@/lib/api/client";
 
 interface LogHoursDialogProps {
   open: boolean;
@@ -68,24 +69,20 @@ export function LogHoursDialog({
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/maintenance-plans/${planId}/usage`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      await fetchApi(
+        `/api/maintenance-plans/${planId}/usage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            hoursUsed: parseFloat(formData.hoursUsed),
+            loggedBy: currentUserId,
+            workPerformedAt: formData.workPerformedAt || new Date().toISOString(),
+          }),
         },
-        body: JSON.stringify({
-          ...formData,
-          hoursUsed: parseFloat(formData.hoursUsed),
-          loggedBy: currentUserId,
-          workPerformedAt: formData.workPerformedAt || new Date().toISOString(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Failed to log hours");
-      }
+        { fallbackMessage: "Failed to log hours" },
+      );
 
       // Reset form
       setFormData({

@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { createSupportTicketSchema } from "@/lib/validations/support-ticket";
 import { buildWebsiteSupportTriage } from "@/lib/support/website-ticket-triage";
 import { calculateSlaDueDates } from "@/lib/utils/sla";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 
 /**
@@ -13,16 +20,14 @@ import { z } from "zod";
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Get search params
   const searchParams = req.nextUrl.searchParams;
   const search = searchParams.get("search");
   const status = searchParams.get("status");
@@ -31,7 +36,6 @@ export async function GET(req: NextRequest) {
   const sortBy = searchParams.get("sortBy") || "created_at";
   const sortOrder = searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
 
-  // Build query
   let query = supabase
     .from("support_tickets")
     .select(
@@ -45,7 +49,6 @@ export async function GET(req: NextRequest) {
     .is("deleted_at", null)
     .order(sortBy, { ascending: sortOrder === "asc" });
 
-  // Apply filters
   if (search) {
     query = query.or(`subject.ilike.%${search}%,ticket_number.ilike.%${search}%`);
   }
@@ -66,10 +69,12 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error("Error fetching tickets:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiInternalError(req, error.message);
   }
 
-  return NextResponse.json(data);
+  const rows = data ?? [];
+
+  return apiSuccess(req, rows, { extra: { tickets: rows } });
 }
 
 /**
@@ -80,16 +85,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Parse and validate request body
   const body = await req.json();
 
   try {
@@ -103,18 +106,19 @@ export async function POST(req: NextRequest) {
 
     if (dbUserError) {
       console.error("Error loading user profile for support ticket creation:", dbUserError);
-      return NextResponse.json({ error: "Failed to load user profile" }, { status: 500 });
+      return apiInternalError(req, "Failed to load user profile");
     }
 
     const clientId = dbUser?.client_id;
     if (!clientId) {
-      return NextResponse.json({ error: "User not associated with a client" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "User not associated with a client",
+      });
     }
 
-    // Generate ticket number
     const ticketNumber = await generateTicketNumber();
-
-    // Calculate SLA due dates based on priority
     const now = new Date();
     const slaDates = calculateSlaDueDates(validatedData.priority, now);
     const websiteSupport = validatedData.metadata?.customFields?.websiteSupport;
@@ -134,7 +138,6 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    // Create ticket
     const { data, error } = await supabase
       .from("support_tickets")
       .insert({
@@ -163,27 +166,23 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error("Error creating ticket:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(req, error.message);
     }
 
-    return NextResponse.json(data, { status: 201 });
+    return apiSuccess(req, data, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
 
     console.error("Unexpected error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(req, "Internal server error");
   }
 }
 
-/**
- * Generate a unique ticket number
- */
 async function generateTicketNumber(): Promise<string> {
   const prefix = "TKT-";
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  // Use crypto.randomUUID() for better uniqueness guarantee
   const uniquePart = crypto.randomUUID().substring(0, 8).toUpperCase();
 
   return `${prefix}${date}-${uniquePart}`;

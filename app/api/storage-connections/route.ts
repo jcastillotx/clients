@@ -1,4 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { db } from "@/lib/db";
 import { storageConnections } from "@/lib/db/schema/additional-features";
 import { eq, and } from "drizzle-orm";
@@ -21,14 +29,6 @@ function isAdminUser(
   );
 }
 
-/**
- * GET /api/storage-connections
- * Retrieve storage connections for a client.
- *
- * Query params:
- *   clientId  – required
- *   ownerType – optional: "company" | "client" (omit for all)
- */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -44,10 +44,11 @@ export async function GET(request: NextRequest) {
     const ownerType = searchParams.get("ownerType");
 
     if (!clientId) {
-      return NextResponse.json(
-        { error: "Client ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID is required",
+      });
     }
 
     const [dbUser] = await db
@@ -56,12 +57,12 @@ export async function GET(request: NextRequest) {
       .where(eq(users.id, user.id))
       .limit(1);
     if (!dbUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return apiNotFound(request, "User not found");
     }
 
     const isAdmin = isAdminUser(user, dbUser);
     if (!isAdmin && dbUser.clientId !== clientId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const conditions = [eq(storageConnections.clientId, clientId)];
@@ -74,28 +75,18 @@ export async function GET(request: NextRequest) {
       .from(storageConnections)
       .where(and(...conditions));
 
-    // Exclude encrypted credentials from response
     const sanitized = connections.map((conn: (typeof connections)[number]) => ({
       ...conn,
       credentialsEncrypted: undefined,
     }));
 
-    return NextResponse.json(sanitized);
+    return apiSuccess(request, sanitized);
   } catch (error) {
     console.error("Error fetching storage connections:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch storage connections" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to fetch storage connections");
   }
 }
 
-/**
- * POST /api/storage-connections
- * Create a new storage connection.
- *
- * Body: { clientId, provider, ownerType?, connectionName, credentials, syncEnabled?, config }
- */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -103,7 +94,7 @@ export async function POST(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
@@ -118,10 +109,11 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!clientId || !provider || !connectionName || !credentials) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required fields",
+      });
     }
 
     const [dbUser] = await db
@@ -130,21 +122,17 @@ export async function POST(request: NextRequest) {
       .where(eq(users.id, user.id))
       .limit(1);
     if (!dbUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return apiNotFound(request, "User not found");
     }
 
     const isAdmin = isAdminUser(user, dbUser);
 
-    // Company connections require admin
     if (ownerType === "company" && !isAdmin) {
-      return NextResponse.json(
-        { error: "Only admins can manage company storage" },
-        { status: 403 },
-      );
+      return apiForbidden(request, "Only admins can manage company storage");
     }
 
     if (!isAdmin && dbUser.clientId !== clientId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const credentialsEncrypted = encrypt(JSON.stringify(credentials));
@@ -162,7 +150,8 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(
+    return apiSuccess(
+      request,
       {
         ...newConnection[0],
         credentialsEncrypted: undefined,
@@ -171,17 +160,10 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error creating storage connection:", error);
-    return NextResponse.json(
-      { error: "Failed to create storage connection" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to create storage connection");
   }
 }
 
-/**
- * DELETE /api/storage-connections
- * Delete a storage connection
- */
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -189,17 +171,17 @@ export async function DELETE(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get("id");
+    const id = request.nextUrl.searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Connection ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Connection ID is required",
+      });
     }
 
     const [dbUser] = await db
@@ -208,7 +190,7 @@ export async function DELETE(request: NextRequest) {
       .where(eq(users.id, user.id))
       .limit(1);
     if (!dbUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return apiNotFound(request, "User not found");
     }
 
     const [connection] = await db
@@ -217,24 +199,17 @@ export async function DELETE(request: NextRequest) {
       .where(eq(storageConnections.id, id))
       .limit(1);
     if (!connection) {
-      return NextResponse.json(
-        { error: "Connection not found" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Connection not found");
     }
 
     const isAdmin = isAdminUser(user, dbUser);
 
-    // Company connections require admin to delete
     if (connection.ownerType === "company" && !isAdmin) {
-      return NextResponse.json(
-        { error: "Only admins can manage company storage" },
-        { status: 403 },
-      );
+      return apiForbidden(request, "Only admins can manage company storage");
     }
 
     if (!isAdmin && dbUser.clientId !== connection.clientId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     await db
@@ -246,12 +221,9 @@ export async function DELETE(request: NextRequest) {
         ),
       );
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting storage connection:", error);
-    return NextResponse.json(
-      { error: "Failed to delete storage connection" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to delete storage connection");
   }
 }

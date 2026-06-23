@@ -9,6 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  isTurnstileWidgetEnabled,
+  TurnstileWidget,
+} from "@/components/shared/turnstile-widget";
+import { fetchApi } from "@/lib/api/client";
 
 export function PublicProjectRequestForm() {
   const [companyName, setCompanyName] = useState("");
@@ -33,7 +38,10 @@ export function PublicProjectRequestForm() {
   const [budgetRange, setBudgetRange] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [submittedReference, setSubmittedReference] = useState<string | null>(null);
+
+  const turnstileRequired = isTurnstileWidgetEnabled();
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -41,40 +49,40 @@ export function PublicProjectRequestForm() {
     setError(null);
 
     try {
-      const response = await fetch("/api/public/project-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          companyName,
-          contactName,
-          contactEmail,
-          contactPhone: contactPhone || null,
-          website: website || null,
-          industry: industry || null,
-          address: address || null,
-          city: city || null,
-          state: state || null,
-          zipCode: zipCode || null,
-          country: country || null,
-          businessOverview: businessOverview || null,
-          title,
-          executiveSummary,
-          description: description || null,
-          desiredOutcome: desiredOutcome || null,
-          priority,
-          requestedStartDate: requestedStartDate || null,
-          requestedLaunchDate: requestedLaunchDate || null,
-          dueDate: requestedLaunchDate || null,
-          budgetRange: budgetRange || null,
-        }),
-      });
+      const data = await fetchApi<{ requestId?: string }>(
+        "/api/public/project-requests",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyName,
+            contactName,
+            contactEmail,
+            contactPhone: contactPhone || null,
+            website: website || null,
+            industry: industry || null,
+            address: address || null,
+            city: city || null,
+            state: state || null,
+            zipCode: zipCode || null,
+            country: country || null,
+            businessOverview: businessOverview || null,
+            title,
+            executiveSummary,
+            description: description || null,
+            desiredOutcome: desiredOutcome || null,
+            priority,
+            requestedStartDate: requestedStartDate || null,
+            requestedLaunchDate: requestedLaunchDate || null,
+            dueDate: requestedLaunchDate || null,
+            budgetRange: budgetRange || null,
+            turnstileToken: turnstileToken || null,
+          }),
+        },
+        { fallbackMessage: "Failed to submit project request" },
+      );
 
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to submit project request");
-      }
-
-      setSubmittedReference(payload?.data?.requestId || "submitted");
+      setSubmittedReference(data?.requestId || "submitted");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Failed to submit project request");
     } finally {
@@ -263,8 +271,24 @@ export function PublicProjectRequestForm() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-3">
-        <Button type="submit" disabled={isSubmitting || !companyName || !contactName || !contactEmail || !title || !executiveSummary}>
+      <div className="flex flex-col items-end gap-3">
+        <TurnstileWidget
+          onVerify={setTurnstileToken}
+          onExpire={() => setTurnstileToken(null)}
+          onError={() => setTurnstileToken(null)}
+        />
+        <Button
+          type="submit"
+          disabled={
+            isSubmitting ||
+            !companyName ||
+            !contactName ||
+            !contactEmail ||
+            !title ||
+            !executiveSummary ||
+            (turnstileRequired && !turnstileToken)
+          }
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

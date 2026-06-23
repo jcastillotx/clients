@@ -1,7 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { verifyProposalAccessToken } from "@/lib/proposals/public-access";
+import {
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { z } from "zod";
 
 const trackViewSchema = z.object({
@@ -46,10 +52,7 @@ export async function POST(
     const body = await req.json().catch(() => ({}));
     const parsedBody = trackViewSchema.safeParse(body);
     if (!parsedBody.success) {
-      return NextResponse.json(
-        { success: false, error: "Invalid payload" },
-        { status: 400 },
-      );
+      return apiValidationError(req, parsedBody.error);
     }
 
     const ipAddress =
@@ -57,7 +60,6 @@ export async function POST(
       req.headers.get("x-real-ip") ||
       "unknown";
 
-    // Fetch proposal
     const { data: proposal, error: fetchError } = await supabase
       .from("proposals")
       .select("*")
@@ -66,10 +68,7 @@ export async function POST(
 
     if (fetchError) throw fetchError;
     if (!proposal) {
-      return NextResponse.json(
-        { error: "Proposal not found" },
-        { status: 404 },
-      );
+      return apiNotFound(req, "Proposal not found");
     }
 
     const allowed = await canAccessProposal(
@@ -79,13 +78,9 @@ export async function POST(
       parsedBody.data.token,
     );
     if (!allowed) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
+      return apiUnauthorized(req);
     }
 
-    // Record the view
     const { error: viewError } = await supabase.from("proposal_views").insert({
       proposal_id: id,
       viewed_by_ip: ipAddress,
@@ -94,10 +89,8 @@ export async function POST(
 
     if (viewError) {
       console.error("Error recording view:", viewError);
-      // Don't fail the request if view tracking fails
     }
 
-    // Update proposal status to "viewed" if it's currently "sent"
     if (proposal.status === "sent") {
       const { error: updateError } = await supabase
         .from("proposals")
@@ -112,10 +105,9 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(req, { tracked: true });
   } catch (error) {
     console.error("Error tracking view:", error);
-    // Return success even if tracking fails to not disrupt the user experience
-    return NextResponse.json({ success: true });
+    return apiSuccess(req, { tracked: false });
   }
 }

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 const CLIENT_STATUS_VALUES = ["active", "inactive", "pending", "suspended"] as const;
 
@@ -119,33 +120,19 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
       };
 
       if (isEditing) {
-        // Update existing client
-        const response = await fetch(`/api/clients/${initialData.id}`, {
+        await fetchApi(`/api/clients/${initialData.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(clientData),
-        });
-
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({ error: "Failed to update client" }));
-          throw new Error(payload.error || "Failed to update client");
-        }
+        }, { fallbackMessage: "Failed to update client" });
 
         router.push(`/clients/${initialData.id}`);
       } else {
-        // Create new client
-        const response = await fetch("/api/clients", {
+        const client = await fetchApi<{ id: string }>("/api/clients", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(clientData),
-        });
-
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({ error: "Failed to create client" }));
-          throw new Error(payload.error || "Failed to create client");
-        }
-
-        const { client } = await response.json();
+        }, { fallbackMessage: "Failed to create client" });
 
         router.push(`/clients/${client.id}`);
       }

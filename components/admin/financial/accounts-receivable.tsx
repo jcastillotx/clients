@@ -28,7 +28,7 @@ export function AccountsReceivable() {
       const response = await fetch("/api/financial/accounts-receivable");
       if (response.ok) {
         const data = await response.json();
-        setAging(data.aging);
+        setAging(data.aging ?? data.data ?? data);
       }
     } catch (error) {
       console.error("Error fetching aging data:", error);

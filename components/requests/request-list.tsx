@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 import { useDebounce } from "@/hooks/use-debounce";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ApiClientError, fetchApi } from "@/lib/api/client";
 
 interface Request {
   id: string;
@@ -145,22 +146,23 @@ export function RequestList({
     setBulkError(null);
     if (selectedIds.length === 0) return;
 
-    const res = await fetch("/api/requests/bulk", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selectedIds, action }),
-    });
+    try {
+      await fetchApi(
+        "/api/requests/bulk",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: selectedIds, action }),
+        },
+        { fallbackMessage: "Something went wrong" },
+      );
 
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-
-    if (!res.ok) {
-      setBulkError(json.error || "Something went wrong");
-      return;
+      setSelected(new Set());
+      setDeleteOpen(false);
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setBulkError(err instanceof ApiClientError ? err.message : "Something went wrong");
     }
-
-    setSelected(new Set());
-    setDeleteOpen(false);
-    startTransition(() => router.refresh());
   };
 
   const SortButton = ({ column, label }: { column: SortColumn; label: string }) => {

@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
@@ -7,6 +6,11 @@ import {
   conversations,
 } from "@/lib/db/schema/messages";
 import { users } from "@/lib/db/schema/users";
+import {
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { createClient } from "@/lib/supabase/server";
 
 const SYSTEM_CONVERSATION_TITLE = "System Notifications";
@@ -25,11 +29,11 @@ async function getCurrentUser() {
   return user;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const [dbUser] = await db
@@ -39,7 +43,8 @@ export async function GET() {
       .limit(1);
 
     if (!dbUser?.clientId) {
-      return NextResponse.json({ notifications: [], unreadCount: 0 });
+      const empty = { notifications: [], unreadCount: 0 };
+      return apiSuccess(request, empty, { extra: empty });
     }
 
     const [conversation] = await db
@@ -55,7 +60,8 @@ export async function GET() {
       .limit(1);
 
     if (!conversation) {
-      return NextResponse.json({ notifications: [], unreadCount: 0 });
+      const empty = { notifications: [], unreadCount: 0 };
+      return apiSuccess(request, empty, { extra: empty });
     }
 
     const notifications = await db
@@ -81,26 +87,24 @@ export async function GET() {
       .limit(50);
 
     const unreadCount = notifications.reduce(
-      (count: number, notification: (typeof notifications)[number]) =>
-        count + (notification.isRead ? 0 : 1),
+      (count, notification) => count + (notification.isRead ? 0 : 1),
       0,
     );
 
-    return NextResponse.json({ notifications, unreadCount });
+    const payload = { notifications, unreadCount };
+
+    return apiSuccess(request, payload, { extra: payload });
   } catch (error) {
     console.error("Error fetching notifications:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch notifications" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to fetch notifications");
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const [dbUser] = await db
@@ -110,7 +114,7 @@ export async function POST() {
       .limit(1);
 
     if (!dbUser?.clientId) {
-      return NextResponse.json({ success: true, marked: 0 });
+      return apiSuccess(request, { marked: 0 }, { extra: { marked: 0 } });
     }
 
     const [conversation] = await db
@@ -126,7 +130,7 @@ export async function POST() {
       .limit(1);
 
     if (!conversation) {
-      return NextResponse.json({ success: true, marked: 0 });
+      return apiSuccess(request, { marked: 0 }, { extra: { marked: 0 } });
     }
 
     const unread = await db
@@ -148,23 +152,22 @@ export async function POST() {
       );
 
     if (unread.length === 0) {
-      return NextResponse.json({ success: true, marked: 0 });
+      return apiSuccess(request, { marked: 0 }, { extra: { marked: 0 } });
     }
 
     await db.insert(messageReads).values(
-      unread.map((row: (typeof unread)[number]) => ({
+      unread.map((row) => ({
         messageId: row.id,
         userId: user.id,
         readAt: new Date(),
       })),
     );
 
-    return NextResponse.json({ success: true, marked: unread.length });
+    const payload = { marked: unread.length };
+
+    return apiSuccess(request, payload, { extra: payload });
   } catch (error) {
     console.error("Error marking notifications as read:", error);
-    return NextResponse.json(
-      { error: "Failed to mark notifications as read" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to mark notifications as read");
   }
 }

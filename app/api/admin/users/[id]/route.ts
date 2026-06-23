@@ -1,5 +1,10 @@
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
 async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
@@ -106,7 +111,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     } = await supabase.auth.getUser();
 
     if (!currentUser) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
@@ -126,7 +131,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
 
     if (!(canManageUsers || canUpdateUsers || hasManagementRole)) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const body = await request.json();
@@ -183,19 +188,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const completeUser = await fetchCompleteUserForResponse(adminClient, id);
 
-    return NextResponse.json({ user: completeUser });
+    return apiSuccess(request, completeUser, { extra: { user: completeUser } });
   } catch (error) {
     console.error("Error updating user:", error);
-    return NextResponse.json(
-      {
-        error: "An unexpected error occurred. Please try again.",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "An unexpected error occurred. Please try again.");
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -204,7 +204,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     } = await supabase.auth.getUser();
 
     if (!currentUser) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
@@ -220,7 +220,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     ]);
 
     if (!(canManageUsers || canDeleteUsers || isAdminMetadataRole)) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const adminClient = createAdminClient();
@@ -245,7 +245,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
       });
 
     if (targetIsAdmin) {
-      return NextResponse.json({ error: "Cannot delete admin or super admin users" }, { status: 403 });
+      return apiForbidden(request, "Cannot delete admin or super admin users");
     }
 
     // Soft delete user
@@ -259,14 +259,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     // Optionally delete from Supabase Auth
     // await supabase.auth.admin.deleteUser(params.id);
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting user:", error);
-    return NextResponse.json(
-      {
-        error: "An unexpected error occurred. Please try again.",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "An unexpected error occurred. Please try again.");
   }
 }

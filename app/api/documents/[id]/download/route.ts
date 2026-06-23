@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { getSignedUrl, StorageBuckets } from "@/lib/storage/upload";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -7,16 +13,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   try {
     const supabase = await createClient();
 
-    // Get authenticated user
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    // Get document
     const { data: document, error } = await supabase
       .from("documents")
       .select("storage_path, file_name, client_id")
@@ -25,10 +29,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       .single();
 
     if (error || !document) {
-      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+      return apiNotFound(request, "Document not found");
     }
 
-    // Verify access (RLS handles this, but double-check for signed URLs)
     const { data: access } = await supabase.from("users").select("client_id").eq("id", user.id).single();
 
     const hasAccess =
@@ -51,17 +54,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       ).data;
 
     if (!hasAccess) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      return apiForbidden(request, "Access denied");
     }
 
-    // Get signed URL for download (valid for 1 hour)
     const { url, error: urlError } = await getSignedUrl(StorageBuckets.DOCUMENTS, document.storage_path, 3600);
 
     if (urlError || !url) {
-      return NextResponse.json({ error: "Failed to generate download URL" }, { status: 500 });
+      return apiInternalError(request, "Failed to generate download URL");
     }
 
-    // Track download
     await supabase
       .from("document_shares")
       .update({
@@ -71,17 +72,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       .eq("document_id", id)
       .eq("shared_with_user_id", user.id);
 
-    return NextResponse.json({
+    const payload = {
       url,
       fileName: document.file_name,
-    });
+    };
+
+    return apiSuccess(request, payload, { extra: payload });
   } catch (error) {
     console.error("Error generating download URL:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to generate download URL",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to generate download URL",
     );
   }
 }

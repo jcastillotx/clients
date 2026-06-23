@@ -1,35 +1,37 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+} from "@/lib/api/response";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { requireAuthenticatedUser } from "@/lib/auth/route-guards";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const auth = await requireAuthenticatedUser();
+    const auth = await requireAuthenticatedUser(request);
     if ("error" in auth) {
       return auth.error;
     }
 
     const canView = await hasPermission("reports.financial");
     if (!canView) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const supabase = await createClient();
     const today = new Date();
 
-    // Fetch all unpaid invoices
     const { data: invoices } = await supabase
       .from("invoices")
       .select("id, amount, created_at, due_date")
       .eq("status", "sent");
 
-    // Categorize by age
     const aging = {
-      current: { count: 0, amount: 0 }, // 0-30 days
-      days30: { count: 0, amount: 0 }, // 31-60 days
-      days60: { count: 0, amount: 0 }, // 61-90 days
-      days90: { count: 0, amount: 0 }, // 90+ days
+      current: { count: 0, amount: 0 },
+      days30: { count: 0, amount: 0 },
+      days60: { count: 0, amount: 0 },
+      days90: { count: 0, amount: 0 },
     };
 
     invoices?.forEach((invoice) => {
@@ -53,15 +55,12 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json({ aging });
+    return apiSuccess(request, aging, { extra: { aging } });
   } catch (error) {
     console.error("Error fetching accounts receivable:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to fetch aging data",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch aging data",
     );
   }
 }

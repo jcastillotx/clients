@@ -96,7 +96,7 @@ export function PaymentModal({ invoice, open, onOpenChange }: PaymentModalProps)
         }
 
         const data = await response.json();
-        setClientSecret(data.clientSecret);
+        setClientSecret(data.clientSecret ?? data.data?.clientSecret ?? null);
       } catch (error) {
         console.error("Error creating payment intent:", error);
       } finally {

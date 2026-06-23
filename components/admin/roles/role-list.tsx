@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Plus, Users, Shield, Edit, Trash2 } from "lucide-react";
 import { RoleDialog } from "./role-dialog";
+import { ApiClientError, fetchApi } from "@/lib/api/client";
 
 interface Role {
   id: string;
@@ -56,23 +57,17 @@ export function RoleList({ initialRoles, permissions }: RoleListProps) {
     if (!confirm("Are you sure you want to delete this role?")) return;
 
     try {
-      const response = await fetch(`/api/rbac/roles/${roleId}`, {
-        method: "DELETE",
+      await fetchApi(`/api/rbac/roles/${roleId}`, { method: "DELETE" }, {
+        fallbackMessage: "Failed to delete role",
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-
-        if (response.status === 403) {
-          throw new Error("You do not have permission to manage roles.");
-        }
-
-        throw new Error(data.error || "Failed to delete role");
-      }
 
       setRoles(roles.filter((r) => r.id !== roleId));
     } catch (error) {
       console.error("Error deleting role:", error);
+      if (error instanceof ApiClientError && error.status === 403) {
+        alert("You do not have permission to manage roles.");
+        return;
+      }
       alert(error instanceof Error ? error.message : "Failed to delete role");
     }
   };

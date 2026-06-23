@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api/response";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { isUserAdmin } from "@/lib/rbac/check";
 import { createClient } from "@/lib/supabase/server";
@@ -17,9 +18,13 @@ type GuardFailure = {
   error: NextResponse;
 };
 
-export async function requireAuthenticatedUser(): Promise<
-  GuardSuccess | GuardFailure
-> {
+function guardRequest(request?: Request): Request {
+  return request ?? new Request("http://localhost/api/internal");
+}
+
+export async function requireAuthenticatedUser(
+  request?: Request,
+): Promise<GuardSuccess | GuardFailure> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,15 +33,21 @@ export async function requireAuthenticatedUser(): Promise<
 
   if (error || !user) {
     return {
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      error: apiError(guardRequest(request), {
+        status: 401,
+        code: "UNAUTHORIZED",
+        message: "Unauthorized",
+      }),
     };
   }
 
   return { supabase, user };
 }
 
-export async function requireAdminUser(): Promise<GuardSuccess | GuardFailure> {
-  const auth = await requireAuthenticatedUser();
+export async function requireAdminUser(
+  request?: Request,
+): Promise<GuardSuccess | GuardFailure> {
+  const auth = await requireAuthenticatedUser(request);
   if ("error" in auth) {
     return auth;
   }
@@ -44,7 +55,11 @@ export async function requireAdminUser(): Promise<GuardSuccess | GuardFailure> {
   const admin = await isUserAdmin(auth.user.id);
   if (!admin) {
     return {
-      error: NextResponse.json({ error: "Permission denied" }, { status: 403 }),
+      error: apiError(guardRequest(request), {
+        status: 403,
+        code: "FORBIDDEN",
+        message: "Permission denied",
+      }),
     };
   }
 
@@ -53,8 +68,9 @@ export async function requireAdminUser(): Promise<GuardSuccess | GuardFailure> {
 
 export async function requirePermission(
   permission: string,
+  request?: Request,
 ): Promise<GuardSuccess | GuardFailure> {
-  const auth = await requireAuthenticatedUser();
+  const auth = await requireAuthenticatedUser(request);
   if ("error" in auth) {
     return auth;
   }
@@ -66,7 +82,11 @@ export async function requirePermission(
 
   if (!allowed) {
     return {
-      error: NextResponse.json({ error: "Permission denied" }, { status: 403 }),
+      error: apiError(guardRequest(request), {
+        status: 403,
+        code: "FORBIDDEN",
+        message: "Permission denied",
+      }),
     };
   }
 

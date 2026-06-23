@@ -1,4 +1,13 @@
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
+
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
@@ -55,7 +64,7 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
@@ -65,15 +74,16 @@ export async function GET(request: Request) {
     });
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Client ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID is required",
+      });
     }
 
     const { clientId } = parsed.data;
     if (!canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const accounts = await db
@@ -94,13 +104,10 @@ export async function GET(request: Request) {
       }),
     );
 
-    return NextResponse.json(sanitizedAccounts);
+    return apiSuccess(request, sanitizedAccounts);
   } catch (error) {
     console.error("Error fetching social accounts:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch social accounts" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to fetch social accounts");
   }
 }
 
@@ -117,7 +124,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
@@ -125,10 +132,7 @@ export async function POST(request: Request) {
     const parsed = createSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
+      return apiValidationError(request, parsed.error);
     }
 
     const {
@@ -143,7 +147,7 @@ export async function POST(request: Request) {
     } = parsed.data;
 
     if (!canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const accessTokenEncrypted = encrypt(accessToken);
@@ -165,7 +169,8 @@ export async function POST(request: Request) {
       .values(newAccountRow)
       .returning();
 
-    return NextResponse.json(
+    return apiSuccess(
+      request,
       {
         ...newAccount,
         accessTokenEncrypted: undefined,
@@ -175,10 +180,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Error creating social account:", error);
-    return NextResponse.json(
-      { error: "Failed to create social account" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to create social account");
   }
 }
 
@@ -195,7 +197,7 @@ export async function PATCH(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
@@ -207,10 +209,11 @@ export async function PATCH(request: Request) {
     });
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Account ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Account ID is required",
+      });
     }
 
     const { id: accountId, isActive, metadata } = parsed.data;
@@ -222,11 +225,11 @@ export async function PATCH(request: Request) {
       .limit(1);
 
     if (!existingAccount) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      return apiNotFound(request, "Account not found");
     }
 
     if (!canAccessClient(access, existingAccount.clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const [updatedAccount] = await db
@@ -239,17 +242,14 @@ export async function PATCH(request: Request) {
       .where(eq(socialAccounts.id, accountId))
       .returning();
 
-    return NextResponse.json({
+    return apiSuccess(request, {
       ...updatedAccount,
       accessTokenEncrypted: undefined,
       refreshTokenEncrypted: undefined,
     });
   } catch (error) {
     console.error("Error updating social account:", error);
-    return NextResponse.json(
-      { error: "Failed to update social account" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to update social account");
   }
 }
 
@@ -266,7 +266,7 @@ export async function DELETE(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
@@ -274,10 +274,11 @@ export async function DELETE(request: Request) {
     const parsed = deleteSchema.safeParse({ id: searchParams.get("id") });
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Account ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Account ID is required",
+      });
     }
 
     const { id: accountId } = parsed.data;
@@ -289,11 +290,11 @@ export async function DELETE(request: Request) {
       .limit(1);
 
     if (!existingAccount) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      return apiNotFound(request, "Account not found");
     }
 
     if (!canAccessClient(access, existingAccount.clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     await db
@@ -304,12 +305,9 @@ export async function DELETE(request: Request) {
       })
       .where(eq(socialAccounts.id, accountId));
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting social account:", error);
-    return NextResponse.json(
-      { error: "Failed to delete social account" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to delete social account");
   }
 }

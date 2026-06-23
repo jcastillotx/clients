@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Upload } from "lucide-react";
 import type { BrandingSettings as BrandingSettingsType } from "@/lib/branding/get-branding";
+import { fetchApi } from "@/lib/api/client";
 
 interface BrandingSettingsProps {
   clientId: string | null;
@@ -155,20 +156,22 @@ export function BrandingSettings({
     setSuccess(false);
 
     try {
-      const res = await fetch("/api/branding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId,
-          logoUrl: logoUrl || null,
-          domain: domain || null,
-          primaryColor: primaryColor || null,
-          secondaryColor: secondaryColor || null,
-          settings: buildSettings(),
-        }),
-      });
-      const payload: { error?: string } = await res.json();
-      if (!res.ok) throw new Error(payload.error || "Failed to save branding");
+      await fetchApi(
+        "/api/branding",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId,
+            logoUrl: logoUrl || null,
+            domain: domain || null,
+            primaryColor: primaryColor || null,
+            secondaryColor: secondaryColor || null,
+            settings: buildSettings(),
+          }),
+        },
+        { fallbackMessage: "Failed to save branding" },
+      );
 
       setSuccess(true);
       router.refresh();
@@ -193,9 +196,15 @@ export function BrandingSettings({
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const res = await fetch("/api/branding/logo", { method: "POST", body: formData });
-      const payload: { logoUrl?: string; error?: string } = await res.json();
-      if (!res.ok || !payload.logoUrl) throw new Error(payload.error || "Failed to upload logo");
+      const payload = await fetchApi<{ logoUrl: string }>(
+        "/api/branding/logo",
+        { method: "POST", body: formData },
+        { fallbackMessage: "Failed to upload logo" },
+      );
+
+      if (!payload.logoUrl) {
+        throw new Error("Failed to upload logo");
+      }
 
       setLogoUrl(payload.logoUrl);
       setSelectedFile(null);

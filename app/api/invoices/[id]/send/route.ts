@@ -1,16 +1,21 @@
-import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendInvoiceEmailWithPdf } from "@/lib/email/send-invoice-email";
+import { resolveInvoiceRecipientEmail } from "@/lib/email/invoice-email-context";
 import {
-  resolveInvoiceRecipientEmail,
-} from "@/lib/email/invoice-email-context";
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { hasPermission, Permissions } from "@/lib/rbac/permissions";
 
 /**
  * POST /api/invoices/[id]/send
  * Sends the invoice email (PDF attachment + pay link) and sets status to "sent".
  */
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const supabase = await createClient();
@@ -20,7 +25,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const canSend =
@@ -28,7 +33,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       (await hasPermission(Permissions.INVOICES_UPDATE, { supabase, userId: user.id }));
 
     if (!canSend) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const { data: invoice, error: invError } = await supabase
@@ -51,19 +56,24 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       .maybeSingle();
 
     if (invError || !invoice) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      return apiNotFound(request, "Invoice not found");
     }
 
     if (!["draft", "sent"].includes(invoice.status)) {
-      return NextResponse.json(
-        { error: "This invoice cannot be emailed in its current status." },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "This invoice cannot be emailed in its current status.",
+      });
     }
 
     const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
     if (!client) {
-      return NextResponse.json({ error: "Client not found for invoice" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client not found for invoice",
+      });
     }
 
     let primaryContact: { id: string; name: string | null; email: string | null } | null = null;
@@ -78,10 +88,11 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     const recipient = resolveInvoiceRecipientEmail(client, primaryContact);
     if (!recipient) {
-      return NextResponse.json(
-        { error: "No billing email on file. Add a primary contact email or client email." },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "No billing email on file. Add a primary contact email or client email.",
+      });
     }
 
     const emailed = await sendInvoiceEmailWithPdf(supabase, {
@@ -91,10 +102,11 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     });
 
     if (!emailed.success) {
-      return NextResponse.json(
-        { error: emailed.error ?? "Failed to send invoice email" },
-        { status: 502 },
-      );
+      return apiError(request, {
+        status: 502,
+        code: "INTERNAL_ERROR",
+        message: emailed.error ?? "Failed to send invoice email",
+      });
     }
 
     const { error: updateError } = await supabase
@@ -107,18 +119,18 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     if (updateError) {
       console.error("Invoice sent email ok but status update failed:", updateError);
-      return NextResponse.json(
-        { error: "Email sent but failed to update invoice status. Please refresh." },
-        { status: 500 },
+      return apiInternalError(
+        request,
+        "Email sent but failed to update invoice status. Please refresh.",
       );
     }
 
-    return NextResponse.json({ success: true, sentTo: recipient });
+    return apiSuccess(request, { sentTo: recipient }, { extra: { sentTo: recipient } });
   } catch (error) {
     console.error("POST /api/invoices/[id]/send:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to send invoice" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to send invoice",
     );
   }
 }

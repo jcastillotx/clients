@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { fetchApi } from "@/lib/api/client";
 
 interface TaskAssignee {
   id: string;
@@ -51,15 +52,12 @@ export function ProjectRequestTasks({ requestId }: ProjectRequestTasksProps) {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/projects/requests/${requestId}/tasks`, {
-        method: "GET",
-        cache: "no-store",
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to fetch tasks");
-      }
-      setTasks(payload.data || []);
+      const data = await fetchApi<ProjectRequestTask[]>(
+        `/api/projects/requests/${requestId}/tasks`,
+        { method: "GET", cache: "no-store" },
+        { fallbackMessage: "Failed to fetch tasks" },
+      );
+      setTasks(Array.isArray(data) ? data : []);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to fetch tasks");
     } finally {

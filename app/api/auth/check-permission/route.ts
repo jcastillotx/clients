@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 export async function POST(request: Request) {
   try {
@@ -10,13 +15,17 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ hasPermission: false }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const { permission } = await request.json();
 
     if (!permission) {
-      return NextResponse.json({ error: "Permission name required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Permission name required",
+      });
     }
 
     const { data, error } = await supabase.rpc("user_has_permission", {
@@ -26,12 +35,13 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Error checking permission:", error);
-      return NextResponse.json({ hasPermission: false }, { status: 500 });
+      return apiSuccess(request, { hasPermission: false });
     }
 
-    return NextResponse.json({ hasPermission: data === true });
+    const hasPermission = data === true;
+    return apiSuccess(request, { hasPermission }, { extra: { hasPermission } });
   } catch (error) {
     console.error("Error in check-permission route:", error);
-    return NextResponse.json({ hasPermission: false }, { status: 500 });
+    return apiInternalError(request, "Failed to check permission");
   }
 }

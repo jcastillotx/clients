@@ -19,6 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, AlertCircle, DollarSign, Clock, ShieldCheck } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface PlanTemplate {
   id: string;
@@ -79,18 +80,11 @@ export function MaintenancePlanTemplatesManager() {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/maintenance-plan-templates");
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setTemplates(Array.isArray(data.data) ? data.data : []);
-        setError(null);
-      } else {
-        const detail =
-          typeof data?.message === "string" && data.message.trim()
-            ? `${data.error ?? "Error"}: ${data.message}`
-            : (data?.error ?? "Failed to load templates");
-        setError(detail);
-      }
+      const data = await fetchApi<PlanTemplate[]>("/api/admin/maintenance-plan-templates", undefined, {
+        fallbackMessage: "Failed to load templates",
+      });
+      setTemplates(Array.isArray(data) ? data : []);
+      setError(null);
     } catch {
       setError("Unable to load maintenance plan templates.");
     } finally {
@@ -184,17 +178,15 @@ export function MaintenancePlanTemplatesManager() {
         ? `/api/admin/maintenance-plan-templates/${editingId}`
         : "/api/admin/maintenance-plan-templates";
 
-      const response = await fetch(url, {
-        method: editingId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Failed to save template");
-      }
+      await fetchApi(
+        url,
+        {
+          method: editingId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+        { fallbackMessage: "Failed to save template" },
+      );
 
       setDialogOpen(false);
       setDialogError(null);
@@ -217,11 +209,9 @@ export function MaintenancePlanTemplatesManager() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/admin/maintenance-plan-templates/${id}`, { method: "DELETE" });
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || "Failed to delete template");
-      }
+      await fetchApi(`/api/admin/maintenance-plan-templates/${id}`, { method: "DELETE" }, {
+        fallbackMessage: "Failed to delete template",
+      });
       setDeleteConfirmId(null);
       fetchTemplates();
     } catch (err) {

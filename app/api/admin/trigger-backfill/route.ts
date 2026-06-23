@@ -1,21 +1,25 @@
 import { inngest } from "@/lib/inngest/client";
 import { createClient } from "@/lib/supabase/server";
 import { Roles } from "@/lib/rbac/permissions";
-import { NextResponse } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    // Only super_admin or admin can trigger backfill
     const role = user.user_metadata?.role || user.user_metadata?.app_role;
     if (role !== Roles.SUPER_ADMIN && role !== Roles.ADMIN && !user.user_metadata?.is_super_admin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     await inngest.send({
@@ -23,9 +27,13 @@ export async function POST() {
       data: {},
     });
 
-    return NextResponse.json({ success: true, message: "Backfill triggered" });
+    return apiSuccess(
+      request,
+      { triggered: true },
+      { extra: { success: true, message: "Backfill triggered" } },
+    );
   } catch (error) {
     console.error("Error triggering backfill:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(request, "Internal server error");
   }
 }

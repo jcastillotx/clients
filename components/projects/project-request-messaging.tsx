@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChatPane } from "@/components/messages/chat-pane";
+import { fetchApi } from "@/lib/api/client";
 
 interface ProjectRequestMessagingProps {
   requestId: string;
@@ -33,16 +34,12 @@ export function ProjectRequestMessaging({ requestId }: ProjectRequestMessagingPr
       }
       setCurrentUserId(user.id);
 
-      const response = await fetch(`/api/projects/requests/${requestId}/conversation`, {
-        method: "GET",
-        cache: "no-store",
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to open project conversation");
-      }
-
-      setConversationId(payload?.data?.id || null);
+      const conversation = await fetchApi<{ id: string }>(
+        `/api/projects/requests/${requestId}/conversation`,
+        { method: "GET", cache: "no-store" },
+        { fallbackMessage: "Failed to open project conversation" },
+      );
+      setConversationId(conversation?.id || null);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to open messaging");
     } finally {

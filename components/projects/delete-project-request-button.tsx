@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { fetchApi } from "@/lib/api/client";
 import { Trash2 } from "lucide-react";
 
 export function DeleteProjectRequestButton({ requestId }: { requestId: string }) {
@@ -14,11 +15,9 @@ export function DeleteProjectRequestButton({ requestId }: { requestId: string })
   const doDelete = async () => {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/projects/requests/${requestId}`, { method: "DELETE" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error((body as { error?: string }).error || "Failed to delete project request");
-      }
+      await fetchApi(`/api/projects/requests/${requestId}`, { method: "DELETE" }, {
+        fallbackMessage: "Failed to delete project request",
+      });
       router.push("/projects/requests");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to delete project request");

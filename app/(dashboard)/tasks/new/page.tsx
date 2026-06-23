@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchApi } from "@/lib/api/client";
 
 const BOARD_COLORS = [
   "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
@@ -36,19 +37,16 @@ export default function NewBoardPage() {
       setSubmitting(true);
       setError(null);
 
-      const response = await fetch("/api/tasks/boards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description: description.trim(), color, isDefault }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to create board");
-      }
-
-      const data = await response.json();
-      router.push(`/tasks/${data.board.id}`);
+      const board = await fetchApi<{ id: string }>(
+        "/api/tasks/boards",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim(), description: description.trim(), color, isDefault }),
+        },
+        { fallbackMessage: "Failed to create board" },
+      );
+      router.push(`/tasks/${board.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

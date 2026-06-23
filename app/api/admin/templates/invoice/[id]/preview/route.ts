@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { compileTemplate } from "@/lib/templates/template-engine";
 import { requirePermission } from "@/lib/auth/route-guards";
+import { apiInternalError, apiNotFound } from "@/lib/api/response";
 
 type PreviewContext = {
   invoice_number: string;
@@ -51,13 +52,13 @@ function injectCss(renderedHtml: string, cssContent: string | null): string {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
 
   try {
-    const guard = await requirePermission("settings.manage");
+    const guard = await requirePermission("settings.manage", request);
     if ("error" in guard) {
       return guard.error;
     }
@@ -71,10 +72,7 @@ export async function GET(
       .single();
 
     if (error || !template) {
-      return NextResponse.json(
-        { error: "Template not found" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Template not found");
     }
 
     const renderedBody = compileTemplate(
@@ -92,12 +90,9 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error previewing invoice template:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to preview template",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to preview template",
     );
   }
 }

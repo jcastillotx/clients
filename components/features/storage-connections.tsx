@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Cloud, Plus, Trash2, RefreshCw, HardDrive, FolderOpen, Building2, Users, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { fetchApi } from "@/lib/api/client";
 
 type Provider = "s3" | "dropbox" | "google-drive" | "onedrive" | "gcs" | "azure";
 type OwnerType = "company" | "client";
@@ -511,29 +512,28 @@ function AddConnectionDialog({
 
     setSaving(true);
     try {
-      const response = await fetch("/api/storage-connections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId,
-          provider: formData.provider,
-          ownerType,
-          connectionName: formData.connectionName,
-          credentials: buildCredentials(formData.provider, formData),
-          config: {
-            bucket: formData.bucket || undefined,
-            region: formData.region || undefined,
-            path: formData.path || undefined,
-            autoSync: formData.autoSync,
-            syncInterval: formData.syncInterval,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to create connection");
-      }
+      await fetchApi(
+        "/api/storage-connections",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId,
+            provider: formData.provider,
+            ownerType,
+            connectionName: formData.connectionName,
+            credentials: buildCredentials(formData.provider, formData),
+            config: {
+              bucket: formData.bucket || undefined,
+              region: formData.region || undefined,
+              path: formData.path || undefined,
+              autoSync: formData.autoSync,
+              syncInterval: formData.syncInterval,
+            },
+          }),
+        },
+        { fallbackMessage: "Failed to create connection" },
+      );
 
       toast.success("Storage connection created");
       setOpen(false);
@@ -652,7 +652,13 @@ export function StorageConnections({ clientId, isAdmin, companyClientId }: Stora
       fetches.push(fetch(`/api/storage-connections?clientId=${clientId}&ownerType=client`));
 
       const responses = await Promise.all(fetches);
-      const results = await Promise.all(responses.map((r) => (r.ok ? r.json() : [])));
+      const results = await Promise.all(
+        responses.map(async (r) => {
+          if (!r.ok) return [];
+          const body = await r.json();
+          return body.data ?? body;
+        }),
+      );
 
       if (isAdmin && resolvedCompanyClientId) {
         setCompanyConnections(results[0] || []);

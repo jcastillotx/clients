@@ -1,4 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
+
 import { createClient } from "@/lib/supabase/server";
 
 async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
@@ -36,7 +44,7 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
  *
  * AJAX feed for meetings/calendar entries linked to the project request.
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -46,7 +54,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveAccess(supabase, user);
@@ -59,11 +67,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (requestError || !requestRow) {
-      return NextResponse.json({ error: "Project request not found" }, { status: 404 });
+      return apiNotFound(request, "Project request not found");
     }
 
     if (!access.isAdmin && access.clientId !== requestRow.client_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const { data, error } = await supabase
@@ -73,12 +81,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .order("scheduled_at", { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(request, error.message);
     }
 
-    return NextResponse.json({ data: data || [] });
+    return apiSuccess(request, data || []);
   } catch (error) {
     console.error("Error fetching project request calendar:", error);
-    return NextResponse.json({ error: "Failed to fetch calendar data" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch calendar data");
   }
 }

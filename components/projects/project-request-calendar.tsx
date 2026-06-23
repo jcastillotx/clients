@@ -5,6 +5,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MeetingCalendar } from "@/components/meetings/meeting-calendar";
+import { fetchApi } from "@/lib/api/client";
 
 interface CalendarMeeting {
   id: string;
@@ -33,15 +34,12 @@ export function ProjectRequestCalendar({ requestId }: ProjectRequestCalendarProp
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/projects/requests/${requestId}/calendar`, {
-        method: "GET",
-        cache: "no-store",
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to fetch calendar");
-      }
-      setMeetings(payload.data || []);
+      const data = await fetchApi<CalendarMeeting[]>(
+        `/api/projects/requests/${requestId}/calendar`,
+        { method: "GET", cache: "no-store" },
+        { fallbackMessage: "Failed to fetch calendar" },
+      );
+      setMeetings(Array.isArray(data) ? data : []);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to fetch calendar");
     } finally {

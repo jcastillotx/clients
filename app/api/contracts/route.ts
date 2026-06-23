@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { z } from "zod";
@@ -18,7 +25,7 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
@@ -29,19 +36,15 @@ export async function GET(request: Request) {
     });
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid query parameters" },
-        { status: 400 },
-      );
+      return apiValidationError(request, parsed.error);
     }
 
     const { clientId, status } = parsed.data;
 
     if (clientId && !canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
-    // Build query
     let query = supabase
       .from("contracts")
       .select(
@@ -54,14 +57,12 @@ export async function GET(request: Request) {
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
-    // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
     } else if (!access.isAdmin && access.clientId) {
       query = query.eq("client_id", access.clientId);
     }
 
-    // Filter by status if provided
     if (status) {
       query = query.eq("status", status);
     }
@@ -70,15 +71,13 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ contracts: contracts || [] });
+    const list = contracts || [];
+    return apiSuccess(request, list, { extra: { contracts: list } });
   } catch (error) {
     console.error("Error fetching contracts:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to fetch contracts",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch contracts",
     );
   }
 }
@@ -92,14 +91,14 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
 
     const canCreate = await hasPermission("contracts.create");
     if (!canCreate) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request, "Permission denied");
     }
 
     const body = await request.json();
@@ -121,17 +120,17 @@ export async function POST(request: Request) {
     } = body;
 
     if (!clientId) {
-      return NextResponse.json(
-        { error: "Client ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID is required",
+      });
     }
 
     if (!canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
-    // Generate contract number
     const { data: contractNumber } = await supabase.rpc(
       "generate_contract_number",
     );
@@ -160,15 +159,12 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ contract }, { status: 201 });
+    return apiSuccess(request, contract, { status: 201, extra: { contract } });
   } catch (error) {
     console.error("Error creating contract:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to create contract",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to create contract",
     );
   }
 }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface AccountHealthData {
   id: string;
@@ -45,13 +46,11 @@ export function AccountHealthDashboard({ clientId }: AccountHealthDashboardProps
   const fetchAccountHealth = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/account-health?clientId=${clientId}`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch account health");
-      }
-
-      const data = await response.json();
+      const data = await fetchApi<AccountHealthData>(
+        `/api/account-health?clientId=${clientId}`,
+        undefined,
+        { fallbackMessage: "Failed to fetch account health" },
+      );
       setHealth(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

@@ -1,9 +1,14 @@
+import {
+  buildPaginationMeta,
+  parsePaginationSearchParams,
+} from "@/lib/api/pagination";
+import { apiError, apiSuccess } from "@/lib/api/response";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
 import { createRequestSchema } from "@/lib/validations/request";
 import { dispatchNotification } from "@/lib/notifications/service";
 import { isAdminUser } from "@/lib/rbac/check";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 
 const ALLOWED_SORT_COLUMNS = new Set([
@@ -28,7 +33,11 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(req, {
+      status: 401,
+      code: "UNAUTHORIZED",
+      message: "Unauthorized",
+    });
   }
 
   const searchParams = req.nextUrl.searchParams;
@@ -36,16 +45,28 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
   const sortBy = searchParams.get("sortBy") || "created_at";
   const sortOrder = searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
+  const pagination = parsePaginationSearchParams(searchParams);
 
   if (!ALLOWED_SORT_COLUMNS.has(sortBy)) {
-    return NextResponse.json({ error: "Invalid sort column" }, { status: 400 });
+    return apiError(req, {
+      status: 400,
+      code: "VALIDATION_ERROR",
+      message: "Invalid sort column",
+    });
   }
 
   let query = supabase
     .from("requests")
-    .select("*, client:clients(company_name), assigned_user:users!requests_assigned_to_fkey(name, avatar)")
+    .select(
+      "*, client:clients(company_name), assigned_user:users!requests_assigned_to_fkey(name, avatar)",
+      { count: "exact" },
+    )
     .is("deleted_at", null)
-    .order(sortBy, { ascending: sortOrder === "asc" });
+    .order(sortBy, { ascending: sortOrder === "asc" })
+    .range(
+      pagination.offset,
+      pagination.offset + pagination.limit - 1,
+    );
 
   if (search) {
     query = query.textSearch("title", search);
@@ -55,14 +76,22 @@ export async function GET(req: NextRequest) {
     query = query.eq("status", status);
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
     console.error("[GET /api/requests] DB error:", error);
-    return NextResponse.json({ error: "Failed to fetch requests" }, { status: 500 });
+    return apiError(req, {
+      status: 500,
+      code: "INTERNAL_ERROR",
+      message: "Failed to fetch requests",
+    });
   }
 
-  return NextResponse.json(data);
+  const rows = data ?? [];
+
+  return apiSuccess(req, rows, {
+    pagination: buildPaginationMeta(pagination, count, rows.length),
+  });
 }
 
 /**
@@ -78,7 +107,11 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(req, {
+      status: 401,
+      code: "UNAUTHORIZED",
+      message: "Unauthorized",
+    });
   }
 
   const body = await req.json();
@@ -96,18 +129,30 @@ export async function POST(req: NextRequest) {
     ]);
 
     if (!dbUser) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+      return apiError(req, {
+        status: 404,
+        code: "NOT_FOUND",
+        message: "User profile not found",
+      });
     }
 
     const isAdmin = isAdminUser(user, dbUser, roleRows);
 
     const effectiveClientId = isAdmin ? validatedData.clientId : dbUser.client_id;
     if (!effectiveClientId) {
-      return NextResponse.json({ error: "No client is assigned to this user" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "No client is assigned to this user",
+      });
     }
 
     if (!isAdmin && validatedData.clientId !== dbUser.client_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiError(req, {
+        status: 403,
+        code: "FORBIDDEN",
+        message: "Forbidden",
+      });
     }
 
     const customFields = {
@@ -138,7 +183,11 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error("[POST /api/requests] DB error:", error);
-      return NextResponse.json({ error: "Failed to create request" }, { status: 500 });
+      return apiError(req, {
+        status: 500,
+        code: "INTERNAL_ERROR",
+        message: "Failed to create request",
+      });
     }
 
     try {
@@ -172,13 +221,22 @@ export async function POST(req: NextRequest) {
       console.error("[POST /api/requests] notification dispatch:", notifyErr);
     }
 
-    return NextResponse.json(data, { status: 201 });
+    return apiSuccess(req, data, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "VALIDATION_ERROR",
+        message: "Validation error",
+        details: error.errors,
+      });
     }
 
     console.error("[POST /api/requests] Unexpected error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiError(req, {
+      status: 500,
+      code: "INTERNAL_ERROR",
+      message: "Internal server error",
+    });
   }
 }

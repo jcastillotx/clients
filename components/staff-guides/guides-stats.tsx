@@ -1,16 +1,54 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Eye, Lock, Folder } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
+
+type Guide = {
+  isPublished: boolean;
+  isInternal: boolean;
+  viewCount: number;
+};
+
+type Category = {
+  id: string;
+};
 
 export function StaffGuidesStats() {
-  const stats = {
-    totalGuides: 18,
-    published: 15,
-    internal: 12,
-    categories: 4,
-    totalViews: 856,
-  };
+  const [stats, setStats] = useState({
+    totalGuides: 0,
+    published: 0,
+    internal: 0,
+    categories: 0,
+    totalViews: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const [guides, categories] = await Promise.all([
+          fetchApi<Guide[]>("/api/staff-guides", undefined, { fallbackMessage: "Failed to load guides" }),
+          fetchApi<Category[]>("/api/staff-guides/categories", undefined, { fallbackMessage: "Failed to load categories" }),
+        ]);
+
+        setStats({
+          totalGuides: guides.length,
+          published: guides.filter((g) => g.isPublished).length,
+          internal: guides.filter((g) => g.isInternal).length,
+          categories: categories.length,
+          totalViews: guides.reduce((sum, g) => sum + (g.viewCount ?? 0), 0),
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return <div className="text-sm text-muted-foreground">Loading stats...</div>;
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

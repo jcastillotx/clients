@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { fetchApi } from "@/lib/api/client";
 
 interface TimeEntryFormProps {
   onEntryCreated?: () => void;
@@ -51,25 +52,24 @@ export function TimeEntryForm({ onEntryCreated }: TimeEntryFormProps) {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/time-tracking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description: formData.description,
-          clientId: formData.clientId || null,
-          requestId: formData.requestId || null,
-          startedAt: formData.startedAt,
-          endedAt: formData.endedAt,
-          durationMinutes: duration,
-          isBillable: formData.isBillable,
-          hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : null,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create entry");
-      }
+      await fetchApi(
+        "/api/time-tracking",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            description: formData.description,
+            clientId: formData.clientId || null,
+            requestId: formData.requestId || null,
+            startedAt: formData.startedAt,
+            endedAt: formData.endedAt,
+            durationMinutes: duration,
+            isBillable: formData.isBillable,
+            hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : null,
+          }),
+        },
+        { fallbackMessage: "Failed to create entry" },
+      );
 
       toast.success("Time entry created successfully");
 

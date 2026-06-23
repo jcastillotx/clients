@@ -1,19 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { db } from "@/lib/db";
 import { dataPrivacyRequests } from "@/lib/db/schema/additional-features";
 import { eq, desc, and } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * GET /api/privacy-requests
- * Retrieve data privacy requests for a client
- */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -21,7 +23,11 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId");
 
     if (!clientId && !userId) {
-      return NextResponse.json({ error: "Client ID or User ID is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID or User ID is required",
+      });
     }
 
     const conditions = [];
@@ -32,36 +38,36 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(dataPrivacyRequests.userId, userId));
     }
 
-    const requests = await db
+    const rows = await db
       .select()
       .from(dataPrivacyRequests)
       .where(conditions.length > 0 ? (conditions.length > 1 ? and(...conditions) : conditions[0]) : undefined)
       .orderBy(desc(dataPrivacyRequests.requestedAt));
 
-    return NextResponse.json(requests);
+    return apiSuccess(request, rows);
   } catch (error) {
     console.error("Error fetching privacy requests:", error);
-    return NextResponse.json({ error: "Failed to fetch privacy requests" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch privacy requests");
   }
 }
 
-/**
- * POST /api/privacy-requests
- * Create a new data privacy request
- */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
     const { clientId, userId, requestType, notes } = body;
 
     if (!clientId || !requestType) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required fields",
+      });
     }
 
     const newRequest = await db
@@ -75,30 +81,30 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(newRequest[0], { status: 201 });
+    return apiSuccess(request, newRequest[0], { status: 201 });
   } catch (error) {
     console.error("Error creating privacy request:", error);
-    return NextResponse.json({ error: "Failed to create privacy request" }, { status: 500 });
+    return apiInternalError(request, "Failed to create privacy request");
   }
 }
 
-/**
- * PATCH /api/privacy-requests
- * Update a privacy request status
- */
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
     const { id, status, dataExportUrl, notes } = body;
 
     if (!id || !status) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required fields",
+      });
     }
 
     const updated = await db
@@ -113,9 +119,9 @@ export async function PATCH(request: NextRequest) {
       .where(eq(dataPrivacyRequests.id, id))
       .returning();
 
-    return NextResponse.json(updated[0]);
+    return apiSuccess(request, updated[0]);
   } catch (error) {
     console.error("Error updating privacy request:", error);
-    return NextResponse.json({ error: "Failed to update privacy request" }, { status: 500 });
+    return apiInternalError(request, "Failed to update privacy request");
   }
 }

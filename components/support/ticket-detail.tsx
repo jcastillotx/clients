@@ -15,6 +15,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { updateSupportTicketSchema, type UpdateSupportTicketInput } from "@/lib/validations/support-ticket";
 import { getSlaStatus, formatTimeRemaining, getSlaStatusColor } from "@/lib/utils/sla";
 import { cn } from "@/lib/utils";
+import { fetchApi } from "@/lib/api/client";
 import { toast } from "sonner";
 import { Clock, User, Tag, AlertTriangle, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -97,11 +98,9 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
   async function doDelete() {
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/support/${ticket.id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body?.error || "Failed to delete ticket");
-      }
+      await fetchApi(`/api/support/${ticket.id}`, { method: "DELETE" }, {
+        fallbackMessage: "Failed to delete ticket",
+      });
       toast.success("Ticket deleted");
       router.push("/support");
       router.refresh();
@@ -120,18 +119,17 @@ export function SupportTicketDetail({ ticket, staffUsers, isStaff }: TicketDetai
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/support/${ticket.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      await fetchApi(
+        `/api/support/${ticket.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
         },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update ticket");
-      }
+        { fallbackMessage: "Failed to update ticket" },
+      );
 
       toast.success("Ticket updated successfully");
       setIsEditing(false);

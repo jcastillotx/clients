@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchApi } from "@/lib/api/client";
 
 interface ReviewState {
   status?: string;
@@ -59,28 +60,27 @@ export function ProjectRequestReviewPanel({ requestId, currentStatus, review, ca
       setError(null);
       setSuccess(null);
 
-      const response = await fetch(`/api/projects/requests/${requestId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status,
-          review: {
-            status: reviewStatus,
-            estimateAmount: estimateAmount ? Number(estimateAmount) : null,
-            estimateCurrency,
-            estimatedHours: estimatedHours ? Number(estimatedHours) : null,
-            estimatedStartDate: estimatedStartDate || null,
-            estimatedEndDate: estimatedEndDate || null,
-            responseSummary: responseSummary || null,
-            reviewNotes: reviewNotes || null,
-          },
-        }),
-      });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to save review");
-      }
+      await fetchApi(
+        `/api/projects/requests/${requestId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status,
+            review: {
+              status: reviewStatus,
+              estimateAmount: estimateAmount ? Number(estimateAmount) : null,
+              estimateCurrency,
+              estimatedHours: estimatedHours ? Number(estimatedHours) : null,
+              estimatedStartDate: estimatedStartDate || null,
+              estimatedEndDate: estimatedEndDate || null,
+              responseSummary: responseSummary || null,
+              reviewNotes: reviewNotes || null,
+            },
+          }),
+        },
+        { fallbackMessage: "Failed to save review" },
+      );
       setSuccess("Review and estimate saved");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Failed to save review");
@@ -95,17 +95,17 @@ export function ProjectRequestReviewPanel({ requestId, currentStatus, review, ca
       setError(null);
       setSuccess(null);
 
-      const response = await fetch(`/api/projects/requests/${requestId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientDecision: decision,
-        }),
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to submit decision");
-      }
+      await fetchApi(
+        `/api/projects/requests/${requestId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientDecision: decision,
+          }),
+        },
+        { fallbackMessage: "Failed to submit decision" },
+      );
       setSuccess("Decision submitted");
     } catch (decisionError) {
       setError(decisionError instanceof Error ? decisionError.message : "Failed to submit decision");

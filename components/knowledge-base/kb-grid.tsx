@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Eye, ThumbsUp } from "lucide-react";
 import Link from "next/link";
+import { fetchApi } from "@/lib/api/client";
 
 type Article = {
   id: string;
   title: string;
-  excerpt: string;
+  excerpt: string | null;
   categoryName: string;
   viewCount: number;
   helpfulCount: number;
@@ -17,7 +19,33 @@ type Article = {
 };
 
 export function KnowledgeBaseGrid() {
-  const [articles] = useState<Article[]>([]);
+  const searchParams = useSearchParams();
+  const categoryId = searchParams.get("category");
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadArticles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const url = categoryId
+        ? `/api/knowledge-base/articles?categoryId=${encodeURIComponent(categoryId)}`
+        : "/api/knowledge-base/articles";
+      const data = await fetchApi<Article[]>(url, undefined, { fallbackMessage: "Failed to load articles" });
+      setArticles(data);
+    } catch {
+      setArticles([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [categoryId]);
+
+  useEffect(() => {
+    void loadArticles();
+  }, [loadArticles]);
+
+  if (loading) {
+    return <div className="text-sm text-muted-foreground">Loading articles...</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -40,7 +68,7 @@ export function KnowledgeBaseGrid() {
                     {!article.isPublished && <Badge variant="secondary">Draft</Badge>}
                   </div>
                   <CardTitle className="text-lg">{article.title}</CardTitle>
-                  <CardDescription className="line-clamp-2">{article.excerpt}</CardDescription>
+                  <CardDescription className="line-clamp-2">{article.excerpt ?? "No excerpt"}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">

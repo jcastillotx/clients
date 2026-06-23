@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { db } from "@/lib/db";
@@ -8,8 +8,16 @@ import {
   projects,
 } from "@/lib/db/schema/projects";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
-async function requireProjectAccess(projectId: string) {
+async function requireProjectAccess(request: Request, projectId: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -17,12 +25,7 @@ async function requireProjectAccess(projectId: string) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      ),
-    };
+    return { error: apiUnauthorized(request) };
   }
 
   const access = await resolveRouteAccess(supabase, user);
@@ -33,37 +36,23 @@ async function requireProjectAccess(projectId: string) {
     .limit(1);
 
   if (!project) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Project not found" },
-        { status: 404 },
-      ),
-    };
+    return { error: apiNotFound(request, "Project not found") };
   }
 
   if (!canAccessClient(access, project.clientId)) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Forbidden" },
-        { status: 403 },
-      ),
-    };
+    return { error: apiForbidden(request) };
   }
 
   return { user, access };
 }
 
-/**
- * GET /api/projects/[id]/milestones
- * Get all milestones for a project
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   try {
-    const guard = await requireProjectAccess(id);
+    const guard = await requireProjectAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -74,7 +63,6 @@ export async function GET(
       .where(eq(projectMilestones.projectId, id))
       .orderBy(projectMilestones.sortOrder);
 
-    // Fetch deliverables for each milestone
     const milestonesWithDeliverables = await Promise.all(
       milestones.map(async (milestone: (typeof milestones)[number]) => {
         const deliverables = await db
@@ -90,49 +78,33 @@ export async function GET(
       }),
     );
 
-    return NextResponse.json({
-      success: true,
-      data: milestonesWithDeliverables,
-    });
+    return apiSuccess(request, milestonesWithDeliverables);
   } catch (error) {
     console.error("Error fetching milestones:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch milestones",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to fetch milestones");
   }
 }
 
-/**
- * POST /api/projects/[id]/milestones
- * Create a new milestone
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   try {
-    const guard = await requireProjectAccess(id);
+    const guard = await requireProjectAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
 
     const body = await request.json();
-
     const { title, description, dueDate, sortOrder } = body;
 
     if (!title) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Title is required",
-        },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Title is required",
+      });
     }
 
     const [milestone] = await db
@@ -146,33 +118,20 @@ export async function POST(
       })
       .returning();
 
-    return NextResponse.json({
-      success: true,
-      data: milestone,
-    });
+    return apiSuccess(request, milestone);
   } catch (error) {
     console.error("Error creating milestone:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to create milestone",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to create milestone");
   }
 }
 
-/**
- * PATCH /api/projects/[id]/milestones
- * Update a milestone
- */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   try {
-    const guard = await requireProjectAccess(id);
+    const guard = await requireProjectAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -181,13 +140,11 @@ export async function PATCH(
     const { milestoneId, ...updates } = body;
 
     if (!milestoneId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Milestone ID is required",
-        },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Milestone ID is required",
+      });
     }
 
     const [milestone] = await db
@@ -208,33 +165,20 @@ export async function PATCH(
       )
       .returning();
 
-    return NextResponse.json({
-      success: true,
-      data: milestone,
-    });
+    return apiSuccess(request, milestone);
   } catch (error) {
     console.error("Error updating milestone:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update milestone",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to update milestone");
   }
 }
 
-/**
- * DELETE /api/projects/[id]/milestones
- * Delete a milestone
- */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   try {
-    const guard = await requireProjectAccess(id);
+    const guard = await requireProjectAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -243,13 +187,11 @@ export async function DELETE(
     const milestoneId = searchParams.get("milestoneId");
 
     if (!milestoneId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Milestone ID is required",
-        },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Milestone ID is required",
+      });
     }
 
     await db
@@ -261,18 +203,13 @@ export async function DELETE(
         ),
       );
 
-    return NextResponse.json({
-      success: true,
-      message: "Milestone deleted successfully",
-    });
+    return apiSuccess(
+      request,
+      { deleted: true },
+      { extra: { success: true, message: "Milestone deleted successfully" } },
+    );
   } catch (error) {
     console.error("Error deleting milestone:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to delete milestone",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to delete milestone");
   }
 }

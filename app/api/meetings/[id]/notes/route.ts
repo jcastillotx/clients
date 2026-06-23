@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { createMeetingNoteSchema } from "@/lib/validations/meeting";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { z } from "zod";
 
 interface RouteParams {
@@ -11,20 +18,17 @@ interface RouteParams {
 
 /**
  * GET /api/meetings/[id]/notes
- *
- * Fetch all notes for a meeting
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   const { data: notes, error } = await supabase
@@ -35,31 +39,28 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
   if (error) {
     console.error("Error fetching meeting notes:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiInternalError(req, error.message);
   }
 
-  return NextResponse.json(notes);
+  const list = notes ?? [];
+  return apiSuccess(req, list, { extra: { notes: list } });
 }
 
 /**
  * POST /api/meetings/[id]/notes
- *
- * Create a new meeting note
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Parse and validate request body
   const body = await req.json();
 
   try {
@@ -68,7 +69,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       meetingId: id,
     });
 
-    // Create note
     const { data: note, error: createError } = await supabase
       .from("meeting_notes")
       .insert({
@@ -83,39 +83,35 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     if (createError) {
       console.error("Error creating meeting note:", createError);
-      return NextResponse.json({ error: createError.message }, { status: 500 });
+      return apiInternalError(req, createError.message);
     }
 
-    return NextResponse.json(note, { status: 201 });
+    return apiSuccess(req, note, { status: 201, extra: { note } });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
 
     console.error("Unexpected error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(req, "Internal server error");
   }
 }
 
 /**
  * PUT /api/meetings/[id]/notes
- *
- * Bulk update meeting notes (save all at once)
  */
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Parse request body
   const body = await req.json();
 
   try {
@@ -129,13 +125,15 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     };
 
     if (!Array.isArray(notes)) {
-      return NextResponse.json({ error: "Notes must be an array" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Notes must be an array",
+      });
     }
 
-    // Delete existing notes
     await supabase.from("meeting_notes").delete().eq("meeting_id", id);
 
-    // Insert new notes
     if (notes.length > 0) {
       const notesToInsert = notes.map((note, index) => ({
         meeting_id: id,
@@ -152,15 +150,15 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
       if (insertError) {
         console.error("Error inserting meeting notes:", insertError);
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
+        return apiInternalError(req, insertError.message);
       }
 
-      return NextResponse.json(insertedNotes);
+      return apiSuccess(req, insertedNotes ?? [], { extra: { notes: insertedNotes ?? [] } });
     }
 
-    return NextResponse.json([]);
+    return apiSuccess(req, [], { extra: { notes: [] } });
   } catch (error) {
     console.error("Unexpected error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(req, "Internal server error");
   }
 }

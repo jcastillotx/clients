@@ -1,32 +1,42 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { maintenancePlans, maintenancePlanTemplates } from "@/lib/db/schema/maintenance-plans";
 import { eq } from "drizzle-orm";
-import { createClient } from "@/lib/supabase/server";
+import { requireAuthenticatedUser } from "@/lib/auth/route-guards";
+import {
+  apiError,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+} from "@/lib/api/response";
 
 /**
  * POST /api/maintenance-plans/subscribe
- * Client subscribes to a maintenance plan template
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
+    const guard = await requireAuthenticatedUser(request);
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const body = await request.json();
 
     if (!body.templateId) {
-      return NextResponse.json({ success: false, error: "Missing required field: templateId" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required field: templateId",
+      });
     }
     if (!body.clientId) {
-      return NextResponse.json({ success: false, error: "Missing required field: clientId" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required field: clientId",
+      });
     }
 
-    // Fetch the template
     const [template] = await db
       .select()
       .from(maintenancePlanTemplates)
@@ -34,14 +44,17 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!template) {
-      return NextResponse.json({ success: false, error: "Plan template not found" }, { status: 404 });
+      return apiNotFound(request, "Plan template not found");
     }
 
     if (!template.isActive) {
-      return NextResponse.json({ success: false, error: "This plan is no longer available" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "This plan is no longer available",
+      });
     }
 
-    // Calculate next billing date
     const startDate = new Date();
     const nextBillingDate = new Date(startDate);
     switch (template.billingCycle) {
@@ -59,12 +72,11 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    // Create the maintenance plan from the template
     const [plan] = await db
       .insert(maintenancePlans)
       .values({
         clientId: body.clientId,
-        createdBy: user.id,
+        createdBy: guard.user.id,
         templateId: template.id,
         name: template.name,
         description: template.description,
@@ -90,16 +102,22 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(
-      { success: true, data: plan, message: "Successfully subscribed to maintenance plan" },
-      { status: 201 },
-    );
+    return apiSuccess(request, plan, {
+      status: 201,
+      extra: { message: "Successfully subscribed to maintenance plan" },
+    });
   } catch (error) {
     console.error("Error subscribing to maintenance plan:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-    return NextResponse.json(
-      { success: false, error: "Failed to subscribe to plan", message: error instanceof Error ? error.message : "Unknown error" },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to subscribe to plan",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to subscribe to plan",
     );
   }
 }

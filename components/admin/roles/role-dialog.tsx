@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { ApiClientError, fetchApi } from "@/lib/api/client";
 
 const roleSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -91,7 +92,7 @@ export function RoleDialog({ role, permissions, open, onOpenChange, onRoleCreate
       const url = role ? `/api/rbac/roles/${role.id}` : "/api/rbac/roles";
       const method = role ? "PATCH" : "POST";
 
-      const response = await fetch(url, {
+      const savedRole = await fetchApi(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -99,26 +100,18 @@ export function RoleDialog({ role, permissions, open, onOpenChange, onRoleCreate
           description: data.description,
           permissionIds: Array.from(selectedPermissions),
         }),
-      });
-
-      if (!response.ok) {
-        const responseData = await response.json();
-
-        if (response.status === 403) {
-          throw new Error("You do not have permission to manage roles.");
-        }
-
-        throw new Error(responseData.error || "Failed to save role");
-      }
-
-      const responseData = await response.json();
+      }, { fallbackMessage: "Failed to save role" });
 
       if (role) {
-        onRoleUpdated(responseData.role);
+        onRoleUpdated(savedRole);
       } else {
-        onRoleCreated(responseData.role);
+        onRoleCreated(savedRole);
       }
     } catch (err) {
+      if (err instanceof ApiClientError && err.status === 403) {
+        setError("You do not have permission to manage roles.");
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to save role");
     } finally {
       setIsSubmitting(false);

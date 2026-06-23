@@ -1,12 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { db } from "@/lib/db";
-import { staffTaskBoards, staffTaskColumns, NewStaffTaskBoard, NewStaffTaskColumn } from "@/lib/db/schema/staff-tasks";
-import { eq, and, desc } from "drizzle-orm";
+import { staffTaskBoards, staffTaskColumns, NewStaffTaskColumn } from "@/lib/db/schema/staff-tasks";
+import { eq, desc } from "drizzle-orm";
 
 /**
  * GET /api/tasks/boards
- * Get all boards for the current user
  */
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +22,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const boards = await db.query.staffTaskBoards.findMany({
@@ -38,16 +43,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ boards });
+    return apiSuccess(request, boards, { extra: { boards } });
   } catch (error) {
     console.error("Error fetching boards:", error);
-    return NextResponse.json({ error: "Failed to fetch boards" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch boards");
   }
 }
 
 /**
  * POST /api/tasks/boards
- * Create a new board with default columns
  */
 export async function POST(request: NextRequest) {
   try {
@@ -58,22 +62,24 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
     const { name, description, color, teamId, isDefault } = body;
 
     if (!name) {
-      return NextResponse.json({ error: "Board name is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Board name is required",
+      });
     }
 
-    // If setting as default, unset other default boards
     if (isDefault) {
       await db.update(staffTaskBoards).set({ isDefault: false }).where(eq(staffTaskBoards.isDefault, true));
     }
 
-    // Create the board
     const [board] = await db
       .insert(staffTaskBoards)
       .values({
@@ -86,7 +92,6 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Create default columns
     const defaultColumns: NewStaffTaskColumn[] = [
       {
         boardId: board.id,
@@ -121,20 +126,19 @@ export async function POST(request: NextRequest) {
 
     const columns = await db.insert(staffTaskColumns).values(defaultColumns).returning();
 
-    // Update column order
     await db
       .update(staffTaskBoards)
       .set({ columnOrder: columns.map((c) => c.id) })
       .where(eq(staffTaskBoards.id, board.id));
 
-    return NextResponse.json(
-      {
-        board: { ...board, columns },
-      },
-      { status: 201 },
-    );
+    const payload = { ...board, columns };
+
+    return apiSuccess(request, payload, {
+      status: 201,
+      extra: { board: payload },
+    });
   } catch (error) {
     console.error("Error creating board:", error);
-    return NextResponse.json({ error: "Failed to create board" }, { status: 500 });
+    return apiInternalError(request, "Failed to create board");
   }
 }

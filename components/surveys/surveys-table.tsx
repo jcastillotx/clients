@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Copy, BarChart, Trash2, Loader2 } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 type Survey = {
   id: string;
@@ -34,26 +35,20 @@ export function SurveysTable() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("/api/surveys", {
-          method: "GET",
-          cache: "no-store",
+        const rows = await fetchApi<
+          Array<{
+            id: string;
+            title: string;
+            description: string | null;
+            is_active: boolean;
+            response_count: number;
+            created_at: string;
+            client?: { company_name?: string } | Array<{ company_name?: string }> | null;
+          }>
+        >("/api/surveys", { method: "GET", cache: "no-store" }, {
+          fallbackMessage: "Failed to fetch surveys",
         });
-        const payload = await response.json();
-        if (!response.ok) {
-          throw new Error(payload?.error || "Failed to fetch surveys");
-        }
 
-        type ApiSurvey = {
-          id: string;
-          title: string;
-          description: string | null;
-          is_active: boolean;
-          response_count: number;
-          created_at: string;
-          client?: { company_name?: string } | Array<{ company_name?: string }> | null;
-        };
-
-        const rows = (payload?.data || []) as ApiSurvey[];
         const mapped = rows.map((row) => {
           const clientRelation = Array.isArray(row.client) ? row.client[0] : row.client;
           return {

@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -9,6 +8,14 @@ import { createClient } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
 import { getPublicIntegrationError } from "@/lib/settings/integration-errors";
 import { validateIntegrationProviderCategory } from "@/lib/settings/integration-validation";
+import {
+  apiError,
+  apiForbidden,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 
 const verifySchema = z.object({
   clientId: z.string().uuid(),
@@ -29,25 +36,29 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     if (!(await isUserAdmin(user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const body = await request.json();
     const parsed = verifySchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid request body", details: parsed.error.flatten() }, { status: 400 });
+      return apiValidationError(request, parsed.error);
     }
 
     const { clientId, provider: requestedProvider } = parsed.data;
     const providerValidation = validateIntegrationProviderCategory(requestedProvider);
 
     if (!providerValidation.success) {
-      return NextResponse.json({ error: providerValidation.error }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: providerValidation.error,
+      });
     }
 
     const { provider } = providerValidation;
@@ -67,7 +78,7 @@ export async function POST(request: Request) {
       );
 
     if (credentials.length === 0) {
-      return NextResponse.json({ error: "No saved credentials found for this provider" }, { status: 404 });
+      return apiNotFound(request, "No saved credentials found for this provider");
     }
 
     const decryptedCredentials = Object.fromEntries(
@@ -92,16 +103,20 @@ export async function POST(request: Request) {
         ),
       );
 
-    return NextResponse.json({
-      success: true,
-      provider,
-      verifiedAt: verifiedAt.toISOString(),
-      message: getSuccessMessage(provider),
-    });
+    const message = getSuccessMessage(provider);
+    return apiSuccess(
+      request,
+      { provider, verifiedAt: verifiedAt.toISOString(), message },
+      { extra: { success: true, provider, verifiedAt: verifiedAt.toISOString(), message } },
+    );
   } catch (error) {
     console.error("Error verifying integration settings:", error);
     const publicError = getPublicIntegrationError(error, "Failed to verify integration settings.");
-    return NextResponse.json({ error: publicError.error }, { status: publicError.status });
+    return apiError(request, {
+      status: publicError.status,
+      code: publicError.status >= 500 ? "INTERNAL_ERROR" : "BAD_REQUEST",
+      message: publicError.error,
+    });
   }
 }
 

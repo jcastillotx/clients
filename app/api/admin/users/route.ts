@@ -1,5 +1,11 @@
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 
 async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
@@ -107,7 +113,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!currentUser) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
@@ -127,14 +133,18 @@ export async function POST(request: Request) {
     const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
 
     if (!(canManageUsers || canCreateUsers || hasManagementRole)) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const body = await request.json();
     const { name, email, phone, password, client_id, is_active, roles } = body;
 
     if (!name || !email || !password) {
-      return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Name, email, and password are required",
+      });
     }
 
     const adminClient = createAdminClient();
@@ -201,7 +211,10 @@ export async function POST(request: Request) {
 
     const completeUser = await fetchCompleteUserForResponse(adminClient, userRecord.id);
 
-    return NextResponse.json({ user: completeUser }, { status: 201 });
+    return apiSuccess(request, completeUser, {
+      status: 201,
+      extra: { user: completeUser },
+    });
   } catch (error) {
     console.error("Error creating user:", error);
 
@@ -211,11 +224,9 @@ export async function POST(request: Request) {
       await adminClient.auth.admin.deleteUser(createdAuthUserId).catch(() => undefined);
     }
 
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to create user",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to create user",
     );
   }
 }

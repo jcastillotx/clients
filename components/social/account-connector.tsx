@@ -11,10 +11,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Facebook, Instagram, Twitter, Linkedin, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { isSocialOAuthEnabledOnClient } from "@/lib/features/incomplete-features";
 
 interface AccountConnectorProps {
   clientId: string;
@@ -33,18 +34,21 @@ export function AccountConnector({ clientId, onAccountConnected }: AccountConnec
   const [loading, setLoading] = useState(false);
   const [platform, setPlatform] = useState("");
   const { toast } = useToast();
+  const oauthEnabled = isSocialOAuthEnabledOnClient();
 
   const handleConnect = async (selectedPlatform: string) => {
+    if (!oauthEnabled) {
+      toast({
+        title: "Coming soon",
+        description:
+          "Social account OAuth is not enabled yet. Set NEXT_PUBLIC_FEATURE_SOCIAL_OAUTH=true after platform credentials are configured.",
+      });
+      return;
+    }
+
     setLoading(true);
 
-    // TODO: Implement OAuth flow for each platform
-    // For now, this is a placeholder that simulates the connection
     try {
-      // In production, this would:
-      // 1. Open OAuth popup for the platform
-      // 2. Handle callback with access token
-      // 3. Call API to store encrypted tokens
-
       toast({
         title: "OAuth Flow Required",
         description: `Please implement OAuth flow for ${selectedPlatform}. This would open a popup for user authorization.`,
@@ -92,7 +96,7 @@ export function AccountConnector({ clientId, onAccountConnected }: AccountConnec
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button disabled={!oauthEnabled}>
           <Plus className="mr-2 h-4 w-4" />
           Connect Account
         </Button>
@@ -102,6 +106,15 @@ export function AccountConnector({ clientId, onAccountConnected }: AccountConnec
           <DialogTitle>Connect Social Media Account</DialogTitle>
           <DialogDescription>Choose a platform to connect your social media account</DialogDescription>
         </DialogHeader>
+        {!oauthEnabled ? (
+          <Alert>
+            <AlertDescription>
+              Social OAuth integration is not enabled. Configure platform credentials and set{" "}
+              <code className="text-xs">NEXT_PUBLIC_FEATURE_SOCIAL_OAUTH=true</code> to enable
+              account connections.
+            </AlertDescription>
+          </Alert>
+        ) : (
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Platform</Label>
@@ -134,6 +147,7 @@ export function AccountConnector({ clientId, onAccountConnected }: AccountConnec
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );

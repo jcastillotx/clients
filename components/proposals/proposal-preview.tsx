@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProposalSignature } from "./proposal-signature";
 import { CheckCircle, XCircle, FileText, Clock } from "lucide-react";
 import { format } from "date-fns";
+import { fetchApi } from "@/lib/api/client";
 
 interface ProposalPreviewProps {
   proposal: any;
@@ -28,7 +29,7 @@ export function ProposalPreview({ proposal, token }: ProposalPreviewProps) {
 
   const trackView = async () => {
     try {
-      await fetch(`/api/proposals/${proposal.id}/track-view`, {
+      await fetchApi(`/api/proposals/${proposal.id}/track-view`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
@@ -46,13 +47,15 @@ export function ProposalPreview({ proposal, token }: ProposalPreviewProps) {
     if (!confirm("Are you sure you want to reject this proposal?")) return;
 
     try {
-      const response = await fetch(`/api/proposals/${proposal.id}/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reject", token }),
-      });
-
-      if (!response.ok) throw new Error("Failed to reject proposal");
+      await fetchApi(
+        `/api/proposals/${proposal.id}/sign`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "reject", token }),
+        },
+        { fallbackMessage: "Failed to reject proposal" },
+      );
 
       window.location.reload();
     } catch (error) {

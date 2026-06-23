@@ -1,12 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { db } from "@/lib/db";
 import { staffTaskBoards } from "@/lib/db/schema/staff-tasks";
 import { eq } from "drizzle-orm";
 
 /**
  * GET /api/tasks/boards/[boardId]
- * Get a specific board with all related data
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params;
@@ -18,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const board = await db.query.staffTaskBoards.findFirst({
@@ -28,7 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           orderBy: (columns, { asc }) => [asc(columns.position)],
           with: {
             tasks: {
-              orderBy: (tasks: any, { asc }: any) => [asc(tasks.position)],
+              orderBy: (tasks, { asc }) => [asc(tasks.position)],
               with: {
                 assignees: {
                   with: {
@@ -48,7 +53,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   },
                 },
                 checklists: {
-                  orderBy: (checklists: any, { asc }: any) => [asc(checklists.position)],
+                  orderBy: (checklists, { asc }) => [asc(checklists.position)],
                 },
               },
             },
@@ -67,19 +72,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
 
     if (!board) {
-      return NextResponse.json({ error: "Board not found" }, { status: 404 });
+      return apiNotFound(request, "Board not found");
     }
 
-    return NextResponse.json({ board });
+    return apiSuccess(request, board, { extra: { board } });
   } catch (error) {
     console.error("Error fetching board:", error);
-    return NextResponse.json({ error: "Failed to fetch board" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch board");
   }
 }
 
 /**
  * PATCH /api/tasks/boards/[boardId]
- * Update a board
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params;
@@ -91,13 +95,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
     const { name, description, color, isDefault, isArchived } = body;
 
-    // If setting as default, unset other default boards
     if (isDefault) {
       await db.update(staffTaskBoards).set({ isDefault: false }).where(eq(staffTaskBoards.isDefault, true));
     }
@@ -116,19 +119,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .returning();
 
     if (!board) {
-      return NextResponse.json({ error: "Board not found" }, { status: 404 });
+      return apiNotFound(request, "Board not found");
     }
 
-    return NextResponse.json({ board });
+    return apiSuccess(request, board, { extra: { board } });
   } catch (error) {
     console.error("Error updating board:", error);
-    return NextResponse.json({ error: "Failed to update board" }, { status: 500 });
+    return apiInternalError(request, "Failed to update board");
   }
 }
 
 /**
  * DELETE /api/tasks/boards/[boardId]
- * Delete a board (soft delete by archiving)
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params;
@@ -140,7 +142,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const [board] = await db
@@ -153,12 +155,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       .returning();
 
     if (!board) {
-      return NextResponse.json({ error: "Board not found" }, { status: 404 });
+      return apiNotFound(request, "Board not found");
     }
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true });
   } catch (error) {
     console.error("Error deleting board:", error);
-    return NextResponse.json({ error: "Failed to delete board" }, { status: 500 });
+    return apiInternalError(request, "Failed to delete board");
   }
 }

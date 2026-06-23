@@ -1,4 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { createClient } from "@/lib/supabase/server";
 import { getS3Credentials } from "@/lib/storage/get-s3-credentials";
 
@@ -114,29 +119,34 @@ async function buildPresignedPutUrl(
 // Returns: { presignedUrl, key }
 // ---------------------------------------------------------------------------
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(request);
   }
 
-  const { contentType, fileSize } = await req.json();
+  const { contentType, fileSize } = await request.json();
 
   const extension = ALLOWED_TYPES[contentType as string];
   if (!extension) {
-    return NextResponse.json({ error: "Only JPG, PNG, WEBP, and GIF are allowed" }, { status: 400 });
+    return apiError(request, {
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Only JPG, PNG, WEBP, and GIF are allowed",
+    });
   }
   if (typeof fileSize !== "number" || fileSize > MAX_BYTES) {
-    return NextResponse.json({ error: "File must be 5MB or less" }, { status: 400 });
+    return apiError(request, { status: 400, code: "BAD_REQUEST", message: "File must be 5MB or less" });
   }
 
   const s3 = await getS3Credentials(user.id);
   if (!s3) {
-    return NextResponse.json(
-      { error: "No S3 storage connection configured. Add a company S3 connection in Storage settings." },
-      { status: 503 },
-    );
+    return apiError(request, {
+      status: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "No S3 storage connection configured. Add a company S3 connection in Storage settings.",
+    });
   }
   const { accessKeyId, secretAccessKey, bucket, region } = s3;
 
@@ -145,5 +155,5 @@ export async function POST(req: NextRequest) {
     bucket, region, accessKeyId, secretAccessKey, key, contentType, 300,
   );
 
-  return NextResponse.json({ presignedUrl, key });
+  return apiSuccess(request, { presignedUrl, key }, { extra: { presignedUrl, key } });
 }

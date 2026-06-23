@@ -31,6 +31,14 @@ describe("integration validation", () => {
     });
   });
 
+  it("accepts Google Stitch as an AI provider", () => {
+    expect(validateIntegrationProviderCategory("google_stitch", "ai")).toEqual({
+      success: true,
+      provider: "google_stitch",
+      category: "ai",
+    });
+  });
+
   it("rejects unknown providers", () => {
     expect(validateIntegrationProviderCategory("unknown", "ai")).toEqual({
       success: false,

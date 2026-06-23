@@ -1,33 +1,43 @@
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { db } from "@/lib/db";
-import { adMetrics, ads } from "@/lib/db/schema/social-media";
+import { adMetrics } from "@/lib/db/schema/social-media";
+import type { AdMetricsInput } from "@/lib/api/route-types";
 import { eq } from "drizzle-orm";
+import { isAdsPlatformSyncEnabled } from "@/lib/features/incomplete-features";
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * POST /api/ads/metrics/sync
- * Sync ad metrics from advertising platforms (Facebook Ads, Google Ads, etc.)
- * This endpoint would be called by a background job or webhook
- */
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+      adId?: string;
+      date?: string;
+      metrics?: AdMetricsInput;
+    };
+
     const { adId, date, metrics } = body;
 
     if (!adId || !date || !metrics) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required fields",
+      });
     }
 
-    // Check if metrics already exist for this ad and date
     const existingMetrics = await db.select().from(adMetrics).where(eq(adMetrics.adId, adId)).limit(1);
 
-    const metricData: any = {
+    const metricData = {
       adId,
       metricDate: new Date(date).toISOString().split("T")[0],
       impressions: String(metrics.impressions || 0),
@@ -52,7 +62,6 @@ export async function POST(request: Request) {
     };
 
     if (existingMetrics.length > 0) {
-      // Update existing metrics
       const [updatedMetrics] = await db
         .update(adMetrics)
         .set({
@@ -62,52 +71,54 @@ export async function POST(request: Request) {
         .where(eq(adMetrics.id, existingMetrics[0].id))
         .returning();
 
-      return NextResponse.json(updatedMetrics);
-    } else {
-      // Insert new metrics
-      const [newMetrics] = await db.insert(adMetrics).values(metricData).returning();
-
-      return NextResponse.json(newMetrics, { status: 201 });
+      return apiSuccess(request, updatedMetrics);
     }
+
+    const [newMetrics] = await db.insert(adMetrics).values(metricData).returning();
+    return apiSuccess(request, newMetrics, { status: 201 });
   } catch (error) {
     console.error("Error syncing ad metrics:", error);
-    return NextResponse.json({ error: "Failed to sync ad metrics" }, { status: 500 });
+    return apiInternalError(request, "Failed to sync ad metrics");
   }
 }
 
-/**
- * GET /api/ads/metrics/sync
- * Trigger a full metrics sync for all active campaigns
- */
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("clientId");
 
     if (!clientId) {
-      return NextResponse.json({ error: "Client ID is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID is required",
+      });
     }
 
-    // TODO: Implement full sync logic
-    // 1. Fetch all active ad accounts for client
-    // 2. For each account, fetch campaigns, ad sets, ads
-    // 3. Call platform APIs (Facebook Ads API, Google Ads API) to get latest metrics
-    // 4. Store/update metrics in database
-    // 5. Return sync summary
+    if (!isAdsPlatformSyncEnabled()) {
+      return apiError(request, {
+        status: 501,
+        code: "FEATURE_NOT_ENABLED",
+        message: "Ad platform metrics sync is not enabled",
+        details: {
+          hint: "Set FEATURE_ADS_PLATFORM_SYNC=true after configuring Facebook/Google Ads credentials.",
+        },
+      });
+    }
 
-    return NextResponse.json({
-      message: "Metrics sync initiated",
-      clientId,
-      status: "processing",
-    });
+    return apiSuccess(
+      request,
+      { clientId, status: "processing" },
+      { extra: { message: "Metrics sync initiated", clientId, status: "processing" } },
+    );
   } catch (error) {
     console.error("Error initiating metrics sync:", error);
-    return NextResponse.json({ error: "Failed to initiate metrics sync" }, { status: 500 });
+    return apiInternalError(request, "Failed to initiate metrics sync");
   }
 }

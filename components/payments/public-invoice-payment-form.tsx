@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  isTurnstileWidgetEnabled,
+  TurnstileWidget,
+} from "@/components/shared/turnstile-widget";
+import { ApiClientError, fetchApi } from "@/lib/api/client";
 
 type FormState = {
   invoiceNumber: string;
@@ -37,6 +42,9 @@ export function PublicInvoicePaymentForm() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  const turnstileRequired = isTurnstileWidgetEnabled();
 
   const status = searchParams.get("status");
   const invoiceFromQuery = searchParams.get("invoice");
@@ -72,38 +80,48 @@ export function PublicInvoicePaymentForm() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/public/invoices/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const payload = await fetchApi<{ checkoutUrl?: string; data?: { checkoutUrl?: string } }>(
+        "/api/public/invoices/create-checkout-session",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            invoiceNumber: formState.invoiceNumber,
+            paymentAmount: formState.paymentAmount,
+            email: formState.email,
+            businessName: formState.businessName,
+            contactName: formState.contactName,
+            phone: formState.phone || null,
+            businessInfo: formState.businessInfo || null,
+            turnstileToken: turnstileToken || null,
+          }),
         },
-        body: JSON.stringify({
-          invoiceNumber: formState.invoiceNumber,
-          paymentAmount: formState.paymentAmount,
-          email: formState.email,
-          businessName: formState.businessName,
-          contactName: formState.contactName,
-          phone: formState.phone || null,
-          businessInfo: formState.businessInfo || null,
-        }),
-      });
+        { fallbackMessage: "Unable to start payment.", raw: true },
+      );
 
-      const payload = await response.json();
-      if (!response.ok) {
-        const mismatchAmount =
-          typeof payload?.invoiceAmount === "number"
-            ? ` Invoice total is $${Number(payload.invoiceAmount).toFixed(2)}.`
-            : "";
-        throw new Error((payload?.error || "Unable to start payment.") + mismatchAmount);
-      }
-
-      if (!payload?.checkoutUrl) {
+      const checkoutUrl = payload.checkoutUrl ?? payload.data?.checkoutUrl;
+      if (!checkoutUrl) {
         throw new Error("Checkout session response is missing redirect URL.");
       }
 
-      window.location.assign(payload.checkoutUrl as string);
+      window.location.assign(checkoutUrl);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to process payment.");
+      if (submitError instanceof ApiClientError) {
+        const errorPayload = submitError.payload as {
+          error?: { details?: { invoiceAmount?: number } };
+          invoiceAmount?: number;
+        };
+        const details = errorPayload?.error?.details;
+        const mismatchAmount =
+          typeof details?.invoiceAmount === "number"
+            ? ` Invoice total is $${Number(details.invoiceAmount).toFixed(2)}.`
+            : typeof errorPayload?.invoiceAmount === "number"
+              ? ` Invoice total is $${Number(errorPayload.invoiceAmount).toFixed(2)}.`
+              : "";
+        setError(submitError.message + mismatchAmount);
+      } else {
+        setError(submitError instanceof Error ? submitError.message : "Unable to process payment.");
+      }
       setIsSubmitting(false);
       return;
     }
@@ -224,8 +242,16 @@ export function PublicInvoicePaymentForm() {
               />
             </div>
 
-            <div className="flex items-center justify-end">
-              <Button type="submit" disabled={isSubmitting}>
+            <div className="flex flex-col items-end gap-3">
+              <TurnstileWidget
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+              />
+              <Button
+                type="submit"
+                disabled={isSubmitting || (turnstileRequired && !turnstileToken)}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

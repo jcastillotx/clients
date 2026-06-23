@@ -1,16 +1,54 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Eye, ThumbsUp, Folder } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
+
+type Article = {
+  isPublished: boolean;
+  viewCount: number;
+  helpfulCount: number;
+};
+
+type Category = {
+  id: string;
+};
 
 export function KnowledgeBaseStats() {
-  const stats = {
-    totalArticles: 24,
-    published: 20,
-    categories: 6,
-    totalViews: 1847,
-    helpfulCount: 542,
-  };
+  const [stats, setStats] = useState({
+    totalArticles: 0,
+    published: 0,
+    categories: 0,
+    totalViews: 0,
+    helpfulCount: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const [articles, categories] = await Promise.all([
+          fetchApi<Article[]>("/api/knowledge-base/articles", undefined, { fallbackMessage: "Failed to load articles" }),
+          fetchApi<Category[]>("/api/knowledge-base/categories", undefined, { fallbackMessage: "Failed to load categories" }),
+        ]);
+
+        setStats({
+          totalArticles: articles.length,
+          published: articles.filter((a) => a.isPublished).length,
+          categories: categories.length,
+          totalViews: articles.reduce((sum, a) => sum + (a.viewCount ?? 0), 0),
+          helpfulCount: articles.reduce((sum, a) => sum + (a.helpfulCount ?? 0), 0),
+        });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return <div className="text-sm text-muted-foreground">Loading stats...</div>;
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

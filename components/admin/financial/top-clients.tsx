@@ -27,7 +27,7 @@ export function TopClients() {
       const response = await fetch("/api/financial/top-clients");
       if (response.ok) {
         const data = await response.json();
-        setClients(data.clients);
+        setClients(data.clients ?? data.data ?? []);
       }
     } catch (error) {
       console.error("Error fetching top clients:", error);

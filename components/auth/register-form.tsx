@@ -10,7 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { Loader2 } from "lucide-react";
@@ -20,7 +27,9 @@ const registerSchema = z
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -80,12 +89,14 @@ export function RegisterForm() {
         <CardHeader>
           <CardTitle>Check your email</CardTitle>
           <CardDescription>
-            We've sent you a confirmation link. Please check your email to verify your account.
+            We've sent you a confirmation link. Please check your email to
+            verify your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md bg-green-50 p-4 text-sm text-green-800">
-            Account created successfully! Please check your email to confirm your account.
+            Account created successfully! Please check your email to confirm
+            your account.
           </div>
         </CardContent>
         <CardFooter>
@@ -101,22 +112,42 @@ export function RegisterForm() {
     <Card>
       <CardHeader>
         <CardTitle>Create Account</CardTitle>
-        <CardDescription>Enter your details to create a new account</CardDescription>
+        <CardDescription>
+          Enter your details to create a new account
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {error && <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">{error}</div>}
+          {error && (
+            <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
-            <Input id="name" type="text" placeholder="John Doe" {...register("name")} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+            <Input
+              id="name"
+              type="text"
+              placeholder="John Doe"
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="you@example.com" {...register("email")} />
-            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              {...register("email")}
+            />
+            {errors.email && (
+              <p className="text-sm text-destructive">{errors.email.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -126,17 +157,37 @@ export function RegisterForm() {
               placeholder="••••••••"
               {...register("password")}
               onGeneratePassword={(pw) => {
-                setValue("password", pw, { shouldValidate: true, shouldDirty: true });
-                setValue("confirmPassword", pw, { shouldValidate: true, shouldDirty: true });
+                setValue("password", pw, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+                setValue("confirmPassword", pw, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
               }}
             />
-            {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="text-sm text-destructive">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input id="confirmPassword" type="password" placeholder="••••••••" {...register("confirmPassword")} />
-            {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
+            <Input
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive">
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>

@@ -107,7 +107,10 @@ export async function getFeaturesForUser(userId: string, clientId?: string): Pro
 /**
  * Get feature configuration for a client
  */
-export async function getFeatureConfig(featureName: string, clientId: string): Promise<Record<string, any> | null> {
+export async function getFeatureConfig(
+  featureName: string,
+  clientId: string,
+): Promise<Record<string, unknown> | null> {
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -127,7 +130,7 @@ export async function enableFeatureForClient(
   featureName: string,
   clientId: string,
   enabledBy: string,
-  config?: Record<string, any>,
+  config?: Record<string, unknown>,
 ): Promise<void> {
   const supabase = await createClient();
 

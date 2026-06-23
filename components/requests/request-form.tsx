@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface RequestFormProps {
   clients: Array<{
@@ -81,27 +82,25 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
             }))
           : [];
 
-      const response = await fetch("/api/requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          assignedTo: canAssignUsers ? data.assignedTo || undefined : undefined,
-          customFields: {
-            ...(data.customFields || {}),
-            notifyAdmins,
-            notifyAssigned,
-            attachmentMeta,
-          },
-        }),
-      });
+      const request = await fetchApi<{ id: string }>(
+        "/api/requests",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            assignedTo: canAssignUsers ? data.assignedTo || undefined : undefined,
+            customFields: {
+              ...(data.customFields || {}),
+              notifyAdmins,
+              notifyAssigned,
+              attachmentMeta,
+            },
+          }),
+        },
+        { fallbackMessage: "Failed to create request" },
+      );
 
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to create request");
-      }
-
-      const request = payload;
       router.push(`/requests/${request.id}`);
       router.refresh();
     } catch (err) {

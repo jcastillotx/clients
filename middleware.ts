@@ -1,8 +1,23 @@
-import { type NextRequest } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  REQUEST_ID_HEADER,
+  resolveRequestId,
+  withRequestIdHeader,
+} from "@/lib/api/request-context";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  const requestId = resolveRequestId(request);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(REQUEST_ID_HEADER, requestId);
+
+  const forwardedRequest = new NextRequest(request, {
+    headers: requestHeaders,
+  });
+
+  const response = await updateSession(forwardedRequest);
+  withRequestIdHeader(response.headers, requestId);
+  return response;
 }
 
 export const config = {

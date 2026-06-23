@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createProposalAccessToken } from "@/lib/proposals/public-access";
 import { dispatchNotification } from "@/lib/notifications/service";
+import {
+  apiError,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * POST /api/proposals/[id]/send
@@ -20,11 +27,10 @@ export async function POST(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   try {
-    // Fetch proposal with client details
     const { data: proposal, error: fetchError } = await supabase
       .from("proposals")
       .select(
@@ -39,20 +45,17 @@ export async function POST(
 
     if (fetchError) throw fetchError;
     if (!proposal) {
-      return NextResponse.json(
-        { error: "Proposal not found" },
-        { status: 404 },
-      );
+      return apiNotFound(req, "Proposal not found");
     }
 
     if (proposal.status !== "draft") {
-      return NextResponse.json(
-        { error: "Only draft proposals can be sent" },
-        { status: 400 },
-      );
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Only draft proposals can be sent",
+      });
     }
 
-    // Update proposal status
     const { data: updatedProposal, error: updateError } = await supabase
       .from("proposals")
       .update({
@@ -73,9 +76,6 @@ export async function POST(
       ? `${appUrl}/proposals/${id}/preview?token=${encodeURIComponent(accessToken)}`
       : `${appUrl}/proposals/${id}/preview`;
 
-    // TODO: Send email to client with proposal link
-    // await sendProposalEmail(proposal.client.email, proposalUrl, proposal);
-
     await dispatchNotification({
       eventType: "proposal_sent",
       clientId: proposal.client_id,
@@ -89,20 +89,18 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({
-      success: true,
+    const payload = {
       proposal: updatedProposal,
       proposalUrl,
       message: "Proposal sent successfully",
-    });
+    };
+
+    return apiSuccess(req, updatedProposal, { extra: payload });
   } catch (error) {
     console.error("Error sending proposal:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to send proposal",
-      },
-      { status: 500 },
+    return apiInternalError(
+      req,
+      error instanceof Error ? error.message : "Failed to send proposal",
     );
   }
 }

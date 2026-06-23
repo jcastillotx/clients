@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import SignatureCanvas from "react-signature-canvas";
 import { Loader2, CheckCircle } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface ProposalSignatureProps {
   proposalId: string;
@@ -50,22 +51,21 @@ export function ProposalSignature({ proposalId, token }: ProposalSignatureProps)
     try {
       const signatureData = signatureRef.current?.toDataURL();
 
-      const response = await fetch(`/api/proposals/${proposalId}/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "accept",
-          signatureData,
-          signerName,
-          signerEmail,
-          token,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to submit signature");
-      }
+      await fetchApi(
+        `/api/proposals/${proposalId}/sign`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "accept",
+            signatureData,
+            signerName,
+            signerEmail,
+            token,
+          }),
+        },
+        { fallbackMessage: "Failed to submit signature" },
+      );
 
       window.location.reload();
     } catch (err) {

@@ -1,8 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { maintenancePlans, maintenancePlanStatusEnum, type MaintenancePlanStatus } from "@/lib/db/schema/maintenance-plans";
 import { eq, and, desc, sql, isNull, type SQL } from "drizzle-orm";
-import { createClient } from "@/lib/supabase/server";
+import { requireAuthenticatedUser } from "@/lib/auth/route-guards";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+} from "@/lib/api/response";
 
 function isMaintenancePlanStatus(value: string): value is MaintenancePlanStatus {
   return (maintenancePlanStatusEnum as readonly string[]).includes(value);
@@ -10,7 +15,6 @@ function isMaintenancePlanStatus(value: string): value is MaintenancePlanStatus 
 
 /**
  * GET /api/maintenance-plans
- * List maintenance plans with filters
  */
 export async function GET(request: NextRequest) {
   try {
@@ -69,75 +73,55 @@ export async function GET(request: NextRequest) {
       .where(whereClause)
       .orderBy(desc(maintenancePlans.createdAt));
 
-    return NextResponse.json({
-      success: true,
-      data: plans,
-      count: plans.length,
-    });
+    return apiSuccess(request, plans, { extra: { count: plans.length } });
   } catch (error) {
     console.error("Error fetching maintenance plans:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch maintenance plans",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to fetch maintenance plans",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch maintenance plans",
     );
   }
 }
 
 /**
  * POST /api/maintenance-plans
- * Create a new maintenance plan
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Authentication required",
-        },
-        { status: 401 },
-      );
+    const guard = await requireAuthenticatedUser(request);
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const body = await request.json();
 
-    // Validate required fields
     const requiredFields = ["clientId", "name", "startDate", "monthlyRate", "includedHours", "hourlyRateOverage"];
 
     for (const field of requiredFields) {
       if (!body[field]) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Missing required field: ${field}`,
-          },
-          { status: 400 },
-        );
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: `Missing required field: ${field}`,
+        });
       }
     }
 
-    // Calculate next billing date based on billing cycle
     const startDate = new Date(body.startDate);
     const nextBillingDate = calculateNextBillingDate(startDate, body.billingCycle || "monthly");
 
-    // Create maintenance plan
     const [plan] = await db
       .insert(maintenancePlans)
       .values({
         clientId: body.clientId,
-        createdBy: user.id,
+        createdBy: guard.user.id,
         name: body.name,
         description: body.description,
         planType: body.planType || "standard",
@@ -166,32 +150,26 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: plan,
-        message: "Maintenance plan created successfully",
-      },
-      { status: 201 },
-    );
+    return apiSuccess(request, plan, {
+      status: 201,
+      extra: { message: "Maintenance plan created successfully" },
+    });
   } catch (error) {
     console.error("Error creating maintenance plan:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to create maintenance plan",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to create maintenance plan",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to create maintenance plan",
     );
   }
 }
 
-/**
- * Calculate next billing date based on billing cycle
- */
 function calculateNextBillingDate(startDate: Date, billingCycle: string): Date {
   const nextDate = new Date(startDate);
 

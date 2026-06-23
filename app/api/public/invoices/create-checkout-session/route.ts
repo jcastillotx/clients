@@ -1,8 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
+import { rateLimitExceededResponse } from "@/lib/api/rate-limit-response";
+import {
+  apiError,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiValidationError,
+} from "@/lib/api/response";
+import { getClientIp, limiters, rateLimitLimits } from "@/lib/rate-limit";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
 import { createPublicInvoiceCheckoutSchema } from "@/lib/validations/public-invoice-payment";
+import { assertTurnstileToken } from "@/lib/turnstile/verify";
 
 const toCents = (value: number) => Math.round(value * 100);
 
@@ -28,16 +38,38 @@ const resolveOrigin = (request: NextRequest) => {
  */
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitResult = await limiters.publicPayment(getClientIp(request));
+    if (!rateLimitResult.success) {
+      return rateLimitExceededResponse(
+        request,
+        rateLimitResult,
+        rateLimitLimits.publicPayment,
+      );
+    }
+
     const adminClient = createAdminClientIfAvailable();
     if (!adminClient) {
-      return NextResponse.json(
-        { error: "Payment service is unavailable. Missing server configuration." },
-        { status: 500 },
+      return apiInternalError(
+        request,
+        "Payment service is unavailable. Missing server configuration.",
       );
     }
 
     const body = await request.json();
     const payload = createPublicInvoiceCheckoutSchema.parse(body);
+
+    const captcha = await assertTurnstileToken(
+      payload.turnstileToken,
+      getClientIp(request),
+    );
+    if (!captcha.ok) {
+      return apiError(request, {
+        status: captcha.status,
+        code: "BAD_REQUEST",
+        message: captcha.error,
+      });
+    }
+
     const normalizedInvoiceNumber = payload.invoiceNumber.trim();
 
     const { data: invoice, error: invoiceError } = await adminClient
@@ -58,35 +90,44 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invoiceError || !invoice) {
-      return NextResponse.json({ error: "Invoice not found. Please verify the invoice number." }, { status: 404 });
+      return apiNotFound(request, "Invoice not found. Please verify the invoice number.");
     }
 
     if (invoice.status === "paid") {
-      return NextResponse.json({ error: "This invoice is already paid." }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "This invoice is already paid.",
+      });
     }
 
     if (invoice.status === "cancelled") {
-      return NextResponse.json({ error: "This invoice has been cancelled and cannot be paid." }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "This invoice has been cancelled and cannot be paid.",
+      });
     }
 
     const invoiceAmount = Number(invoice.amount);
     if (!Number.isFinite(invoiceAmount) || invoiceAmount <= 0) {
-      return NextResponse.json({ error: "Invoice amount is invalid. Please contact support." }, { status: 500 });
+      return apiInternalError(
+        request,
+        "Invoice amount is invalid. Please contact support.",
+      );
     }
 
     const requestedAmountCents = toCents(payload.paymentAmount);
     const invoiceAmountCents = toCents(invoiceAmount);
     if (requestedAmountCents !== invoiceAmountCents) {
-      return NextResponse.json(
-        {
-          error: "Payment amount must match the full invoice total.",
-          invoiceAmount,
-        },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Payment amount must match the full invoice total.",
+        details: { invoiceAmount },
+      });
     }
 
-    // Move draft invoices to sent before payment collection.
     if (invoice.status === "draft") {
       await adminClient.from("invoices").update({ status: "sent" }).eq("id", invoice.id);
     }
@@ -145,24 +186,24 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session.url) {
-      return NextResponse.json({ error: "Unable to initialize checkout session." }, { status: 500 });
+      return apiInternalError(request, "Unable to initialize checkout session.");
     }
 
-    return NextResponse.json({
+    const checkout = {
       checkoutUrl: session.url,
       sessionId: session.id,
-    });
+    };
+
+    return apiSuccess(request, checkout, { extra: checkout });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
 
     console.error("Error creating public invoice checkout session:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to create checkout session",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to create checkout session",
     );
   }
 }

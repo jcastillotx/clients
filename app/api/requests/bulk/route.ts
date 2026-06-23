@@ -1,20 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUser } from "@/lib/rbac/check";
 import { bulkRequestsSchema } from "@/lib/validations/request";
 import { z } from "zod";
 
-function getClientIp(req: NextRequest): string | null {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+function getClientIp(request: NextRequest): string | null {
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
 }
 
-/**
- * POST /api/requests/bulk
- *
- * Bulk close (mark completed) or soft-delete requests.
- * Delete requires admin; close follows same tenant rules as PATCH /api/requests/:id.
- */
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
   const {
@@ -22,14 +26,14 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(request);
   }
 
   let body: unknown;
   try {
-    body = await req.json();
+    body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Invalid JSON" });
   }
 
   try {
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
     ]);
 
     if (!dbUser) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+      return apiNotFound(request, "User profile not found");
     }
 
     const isAdmin = isAdminUser(user, dbUser, roleRows);
@@ -60,25 +64,22 @@ export async function POST(req: NextRequest) {
 
     if (fetchError) {
       console.error("[POST /api/requests/bulk] fetch:", fetchError);
-      return NextResponse.json({ error: "Failed to verify requests" }, { status: 500 });
+      return apiInternalError(request, "Failed to verify requests");
     }
 
     if (!rows || rows.length !== validated.ids.length) {
-      return NextResponse.json(
-        { error: "One or more requests were not found or are unavailable" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "One or more requests were not found or are unavailable");
     }
 
     for (const row of rows) {
       const sameClient = dbUser.client_id && row.client_id === dbUser.client_id;
       if (!isAdmin && !sameClient) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return apiForbidden(request);
       }
     }
 
     if (validated.action === "delete" && !canDelete) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const now = new Date().toISOString();
@@ -91,8 +92,11 @@ export async function POST(req: NextRequest) {
 
       if (error) {
         console.error("[POST /api/requests/bulk] delete:", error);
-        return NextResponse.json({ error: "Failed to delete requests" }, { status: 500 });
+        return apiInternalError(request, "Failed to delete requests");
       }
+
+      revalidatePath("/dashboard");
+      revalidatePath("/requests");
 
       await supabase.from("activity_logs").insert({
         user_id: user.id,
@@ -102,11 +106,11 @@ export async function POST(req: NextRequest) {
         metadata: {
           ids: validated.ids,
           count: validated.ids.length,
-          ip: getClientIp(req),
+          ip: getClientIp(request),
         },
       });
 
-      return NextResponse.json({ success: true, affected: validated.ids.length });
+      return apiSuccess(request, { affected: validated.ids.length }, { extra: { success: true, affected: validated.ids.length } });
     }
 
     const { error } = await supabase
@@ -116,7 +120,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error("[POST /api/requests/bulk] close:", error);
-      return NextResponse.json({ error: "Failed to update requests" }, { status: 500 });
+      return apiInternalError(request, "Failed to update requests");
     }
 
     await supabase.from("activity_logs").insert({
@@ -128,16 +132,16 @@ export async function POST(req: NextRequest) {
         ids: validated.ids,
         count: validated.ids.length,
         new_status: "completed",
-        ip: getClientIp(req),
+        ip: getClientIp(request),
       },
     });
 
-    return NextResponse.json({ success: true, affected: validated.ids.length });
+    return apiSuccess(request, { affected: validated.ids.length }, { extra: { success: true, affected: validated.ids.length } });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
     console.error("[POST /api/requests/bulk]", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(request, "Internal server error");
   }
 }

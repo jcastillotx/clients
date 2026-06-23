@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import {
   projectBudgets,
@@ -8,8 +8,16 @@ import {
 import { eq, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
-async function requireProjectAccess(projectId: string) {
+async function requireProjectAccess(request: Request, projectId: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -17,12 +25,7 @@ async function requireProjectAccess(projectId: string) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      ),
-    };
+    return { error: apiUnauthorized(request) };
   }
 
   const access = await resolveRouteAccess(supabase, user);
@@ -33,42 +36,27 @@ async function requireProjectAccess(projectId: string) {
     .limit(1);
 
   if (!project) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Project not found" },
-        { status: 404 },
-      ),
-    };
+    return { error: apiNotFound(request, "Project not found") };
   }
 
   if (!canAccessClient(access, project.clientId)) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Forbidden" },
-        { status: 403 },
-      ),
-    };
+    return { error: apiForbidden(request) };
   }
 
   return { user, access };
 }
 
-/**
- * GET /api/projects/[id]/budget
- * Get budget summary and cost entries for a project
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   try {
-    const guard = await requireProjectAccess(id);
+    const guard = await requireProjectAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
 
-    // Fetch budgets with spent amounts
     const budgets = await db
       .select({
         budget: projectBudgets,
@@ -83,14 +71,12 @@ export async function GET(
       .where(eq(projectBudgets.projectId, id))
       .groupBy(projectBudgets.id);
 
-    // Fetch all cost entries
     const costEntries = await db
       .select()
       .from(projectCostEntries)
       .where(eq(projectCostEntries.projectId, id))
       .orderBy(projectCostEntries.entryDate);
 
-    // Calculate totals
     const totalAllocated = budgets.reduce(
       (sum: number, b: (typeof budgets)[number]) =>
         sum + parseFloat(b.budget.allocatedAmount),
@@ -102,43 +88,30 @@ export async function GET(
       0,
     );
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        budgets,
-        costEntries,
-        summary: {
-          totalAllocated,
-          totalSpent,
-          remaining: totalAllocated - totalSpent,
-          percentageUsed:
-            totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0,
-        },
+    return apiSuccess(request, {
+      budgets,
+      costEntries,
+      summary: {
+        totalAllocated,
+        totalSpent,
+        remaining: totalAllocated - totalSpent,
+        percentageUsed:
+          totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0,
       },
     });
   } catch (error) {
     console.error("Error fetching budget data:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch budget data",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to fetch budget data");
   }
 }
 
-/**
- * POST /api/projects/[id]/budget
- * Create a new budget category or cost entry
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   try {
-    const guard = await requireProjectAccess(id);
+    const guard = await requireProjectAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -147,17 +120,14 @@ export async function POST(
     const { type } = body;
 
     if (type === "budget") {
-      // Create budget category
       const { category, allocatedAmount, currency, notes } = body;
 
       if (!category || !allocatedAmount) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Category and allocated amount are required",
-          },
-          { status: 400 },
-        );
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Category and allocated amount are required",
+        });
       }
 
       const [budget] = await db
@@ -171,23 +141,19 @@ export async function POST(
         })
         .returning();
 
-      return NextResponse.json({
-        success: true,
-        data: budget,
-      });
-    } else if (type === "cost_entry") {
-      // Create cost entry
+      return apiSuccess(request, budget);
+    }
+
+    if (type === "cost_entry") {
       const { budgetId, userId, description, amount, entryDate, metadata } =
         body;
 
       if (!description || !amount || !entryDate) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Description, amount, and entry date are required",
-          },
-          { status: 400 },
-        );
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Description, amount, and entry date are required",
+        });
       }
 
       const [costEntry] = await db
@@ -203,7 +169,6 @@ export async function POST(
         })
         .returning();
 
-      // Update budget spent amount if budgetId provided
       if (budgetId) {
         await db
           .update(projectBudgets)
@@ -214,42 +179,27 @@ export async function POST(
           .where(eq(projectBudgets.id, budgetId));
       }
 
-      return NextResponse.json({
-        success: true,
-        data: costEntry,
-      });
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid type. Must be 'budget' or 'cost_entry'",
-        },
-        { status: 400 },
-      );
+      return apiSuccess(request, costEntry);
     }
+
+    return apiError(request, {
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Invalid type. Must be 'budget' or 'cost_entry'",
+    });
   } catch (error) {
     console.error("Error creating budget data:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to create budget data",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to create budget data");
   }
 }
 
-/**
- * PATCH /api/projects/[id]/budget
- * Update budget or approve cost entry
- */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   try {
-    const guard = await requireProjectAccess(id);
+    const guard = await requireProjectAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -258,13 +208,11 @@ export async function PATCH(
     const { type, itemId, ...updates } = body;
 
     if (!itemId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Item ID is required",
-        },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Item ID is required",
+      });
     }
 
     if (type === "budget") {
@@ -277,11 +225,10 @@ export async function PATCH(
         .where(eq(projectBudgets.id, itemId))
         .returning();
 
-      return NextResponse.json({
-        success: true,
-        data: budget,
-      });
-    } else if (type === "cost_entry") {
+      return apiSuccess(request, budget);
+    }
+
+    if (type === "cost_entry") {
       const [costEntry] = await db
         .update(projectCostEntries)
         .set({
@@ -292,27 +239,16 @@ export async function PATCH(
         .where(eq(projectCostEntries.id, itemId))
         .returning();
 
-      return NextResponse.json({
-        success: true,
-        data: costEntry,
-      });
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid type. Must be 'budget' or 'cost_entry'",
-        },
-        { status: 400 },
-      );
+      return apiSuccess(request, costEntry);
     }
+
+    return apiError(request, {
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Invalid type. Must be 'budget' or 'cost_entry'",
+    });
   } catch (error) {
     console.error("Error updating budget data:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update budget data",
-      },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to update budget data");
   }
 }

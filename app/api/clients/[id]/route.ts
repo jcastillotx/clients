@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 import { db } from "@/lib/db";
 import { clients } from "@/lib/db/schema";
@@ -15,7 +21,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
@@ -33,17 +39,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
 
     if (!(canUpdateClients || hasManagementRole)) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const body = await request.json();
 
-    // Sanitize and map snake_case to camelCase for Drizzle if necessary, 
-    // but Drizzle with pg-core usually maps them automatically if defined.
-    // However, the form sends snake_case keys. We need to map them to the 
-    // Drizzle schema property names.
-
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (body.company_name !== undefined) updateData.companyName = body.company_name;
     if (body.email !== undefined) updateData.email = body.email;
     if (body.domain !== undefined) updateData.domain = body.domain;
@@ -59,7 +60,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (body.country !== undefined) updateData.country = body.country;
     if (body.website !== undefined) updateData.website = body.website;
 
-    // Add updatedAt
     updateData.updatedAt = new Date();
 
     const [updatedClient] = await db
@@ -69,17 +69,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .returning();
 
     if (!updatedClient) {
-      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+      return apiNotFound(request, "Client not found");
     }
 
-    return NextResponse.json({ client: updatedClient });
+    return apiSuccess(request, updatedClient, { extra: { client: updatedClient } });
   } catch (error) {
     console.error("Error updating client:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to update client",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to update client",
     );
   }
 }

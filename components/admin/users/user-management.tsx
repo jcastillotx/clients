@@ -15,6 +15,7 @@ import { Search, UserPlus, MoreVertical, Shield, Trash2, Edit, KeyRound } from "
 import { formatDistanceToNow } from "date-fns";
 import { UserDialog } from "./user-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { fetchApi } from "@/lib/api/client";
 
 interface Role {
   id: string;
@@ -104,11 +105,9 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
   const doDeleteUser = async () => {
     if (!pendingDeleteUserId) return;
     try {
-      const response = await fetch(`/api/admin/users/${pendingDeleteUserId}`, {
-        method: "DELETE",
+      await fetchApi(`/api/admin/users/${pendingDeleteUserId}`, { method: "DELETE" }, {
+        fallbackMessage: "Failed to delete user",
       });
-
-      if (!response.ok) throw new Error("Failed to delete user");
 
       setUsers((prev) => prev.filter((u) => u.id !== pendingDeleteUserId));
     } catch (error) {
@@ -131,14 +130,11 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
   const doSendPasswordReset = async () => {
     if (!pendingResetUser) return;
     try {
-      const response = await fetch(`/api/admin/users/${pendingResetUser.id}/reset-password`, {
-        method: "POST",
-      });
-      const payload = await response.json().catch(() => ({} as { error?: string; message?: string }));
-
-      if (!response.ok) {
-        throw new Error(payload.error || "Failed to send password reset email");
-      }
+      const payload = await fetchApi<{ message?: string }>(
+        `/api/admin/users/${pendingResetUser.id}/reset-password`,
+        { method: "POST" },
+        { fallbackMessage: "Failed to send password reset email", raw: true },
+      );
 
       alert(payload.message || `Password reset email sent to ${pendingResetUser.email}`);
     } catch (error) {

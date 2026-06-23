@@ -1,8 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { dispatchNotification } from "@/lib/notifications/service";
 import { verifyProposalAccessToken } from "@/lib/proposals/public-access";
+import {
+  apiError,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { z } from "zod";
 
 const signSchema = z.object({
@@ -51,16 +59,11 @@ export async function POST(
     const body = await req.json();
     const parsed = signSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid request payload" },
-        { status: 400 },
-      );
+      return apiValidationError(req, parsed.error);
     }
 
-    const { action, signatureData, signerName, signerEmail, token } =
-      parsed.data;
+    const { action, signatureData, signerName, signerEmail, token } = parsed.data;
 
-    // Fetch proposal
     const { data: proposal, error: fetchError } = await supabase
       .from("proposals")
       .select("*")
@@ -69,10 +72,7 @@ export async function POST(
 
     if (fetchError) throw fetchError;
     if (!proposal) {
-      return NextResponse.json(
-        { error: "Proposal not found" },
-        { status: 404 },
-      );
+      return apiNotFound(req, "Proposal not found");
     }
 
     const allowed = await canAccessProposal(
@@ -82,23 +82,23 @@ export async function POST(
       token,
     );
     if (!allowed) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(req);
     }
 
-    // Check if proposal can be signed
     if (!["sent", "viewed"].includes(proposal.status)) {
-      return NextResponse.json(
-        { error: "This proposal cannot be signed" },
-        { status: 400 },
-      );
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "This proposal cannot be signed",
+      });
     }
 
-    // Check if expired
     if (proposal.valid_until && new Date(proposal.valid_until) < new Date()) {
-      return NextResponse.json(
-        { error: "This proposal has expired" },
-        { status: 400 },
-      );
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "This proposal has expired",
+      });
     }
 
     const now = new Date().toISOString();
@@ -112,10 +112,11 @@ export async function POST(
 
     if (action === "accept") {
       if (!signatureData || !signerName || !signerEmail) {
-        return NextResponse.json(
-          { error: "Signature data, name, and email are required" },
-          { status: 400 },
-        );
+        return apiError(req, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Signature data, name, and email are required",
+        });
       }
 
       updates = {
@@ -135,10 +136,13 @@ export async function POST(
         rejected_at: now,
       };
     } else {
-      return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Invalid action",
+      });
     }
 
-    // Update proposal
     const { data: updatedProposal, error: updateError } = await supabase
       .from("proposals")
       .update(updates)
@@ -167,27 +171,19 @@ export async function POST(
       },
     });
 
-    // TODO: Send notification email to creator
-    // if (action === "accept") {
-    //   await sendProposalAcceptedEmail(proposal.creator.email, proposal);
-    // }
+    const message =
+      action === "accept"
+        ? "Proposal accepted successfully"
+        : "Proposal rejected";
 
-    return NextResponse.json({
-      success: true,
-      proposal: updatedProposal,
-      message:
-        action === "accept"
-          ? "Proposal accepted successfully"
-          : "Proposal rejected",
+    return apiSuccess(req, updatedProposal, {
+      extra: { proposal: updatedProposal, message },
     });
   } catch (error) {
     console.error("Error signing proposal:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to sign proposal",
-      },
-      { status: 500 },
+    return apiInternalError(
+      req,
+      error instanceof Error ? error.message : "Failed to sign proposal",
     );
   }
 }

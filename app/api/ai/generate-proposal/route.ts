@@ -1,4 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
+
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -26,7 +34,7 @@ const generateProposalSchema = z.object({
  *
  * Generate a detailed professional proposal using Claude AI
  */
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
   const {
@@ -34,19 +42,20 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(request);
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "AI features are not configured. Please set ANTHROPIC_API_KEY." },
-      { status: 503 },
-    );
+    return apiError(request, {
+      status: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "AI features are not configured. Please set ANTHROPIC_API_KEY.",
+    });
   }
 
   try {
-    const body = await req.json();
+    const body = await request.json();
     const validatedData = generateProposalSchema.parse(body);
 
     const lineItemsSummary = validatedData.lineItems?.length
@@ -141,28 +150,31 @@ Return ONLY the proposal content in markdown format. Do not include any preamble
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error("Anthropic API error:", response.status, errorData);
-      return NextResponse.json(
-        { error: `AI generation failed: ${response.statusText}` },
-        { status: 502 },
-      );
+      return apiError(request, {
+        status: 502,
+        code: "INTERNAL_ERROR",
+        message: `AI generation failed: ${response.statusText}`,
+      });
     }
 
     const result = await response.json();
     const generatedContent = result.content?.[0]?.text || "";
 
-    return NextResponse.json({
+    const payload = {
       content: generatedContent,
       model: "claude-sonnet-4-20250514",
       usage: result.usage,
-    });
+    };
+
+    return apiSuccess(request, payload, { extra: payload });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
     console.error("Error generating proposal:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to generate proposal" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to generate proposal",
     );
   }
 }

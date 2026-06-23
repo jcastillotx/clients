@@ -30,6 +30,7 @@ import {
   type IntegrationCategory,
   type ProviderConfig,
 } from "@/lib/db/schema/encrypted-settings";
+import { fetchApi } from "@/lib/api/client";
 
 interface IntegrationSettingsProps {
   clientId: string;
@@ -47,19 +48,6 @@ interface SavedSetting {
   lastVerifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-async function readApiError(response: Response, fallback: string): Promise<string> {
-  const contentType = response.headers.get("content-type") ?? "";
-
-  if (contentType.includes("application/json")) {
-    const payload = (await response.json().catch(() => null)) as { error?: unknown } | null;
-    if (typeof payload?.error === "string" && payload.error.trim().length > 0) {
-      return payload.error;
-    }
-  }
-
-  return `${fallback} (${response.status})`;
 }
 
 const CATEGORY_CONFIG: Record<IntegrationCategory, { label: string; icon: React.ReactNode; description: string }> = {
@@ -80,11 +68,12 @@ export function IntegrationSettings({ clientId }: IntegrationSettingsProps) {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const res = await fetch(`/api/settings/integrations?clientId=${clientId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setSavedSettings(data);
-      }
+      const body = await fetchApi<SavedSetting[]>(
+        `/api/settings/integrations?clientId=${clientId}`,
+        undefined,
+        { fallbackMessage: "Failed to fetch settings" },
+      );
+      setSavedSettings(Array.isArray(body) ? body : []);
     } catch (err) {
       console.error("Failed to fetch settings:", err);
     } finally {
@@ -256,20 +245,20 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
     setSuccess(null);
 
     try {
-      const res = await fetch("/api/settings/integrations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId,
-          provider: config.provider,
-          category: config.category,
-          settings: settingsToSave,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error(await readApiError(res, "Failed to save settings"));
-      }
+      await fetchApi(
+        "/api/settings/integrations",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId,
+            provider: config.provider,
+            category: config.category,
+            settings: settingsToSave,
+          }),
+        },
+        { fallbackMessage: "Failed to save settings" },
+      );
 
       setSuccess("Settings saved. Run verification to confirm the connection.");
       setFieldValues({});
@@ -290,14 +279,11 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
     setSuccess(null);
 
     try {
-      const res = await fetch(
+      await fetchApi(
         `/api/settings/integrations?clientId=${clientId}&provider=${config.provider}`,
         { method: "DELETE" },
+        { fallbackMessage: "Failed to delete settings" },
       );
-
-      if (!res.ok) {
-        throw new Error(await readApiError(res, "Failed to delete settings"));
-      }
 
       setFieldValues({});
       await Promise.resolve(onSaved());
@@ -314,26 +300,23 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
     setSuccess(null);
 
     try {
-      const response = await fetch("/api/settings/integrations/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId,
-          provider: config.provider,
-        }),
-      });
+      const payload = await fetchApi<Record<string, unknown>>(
+        "/api/settings/integrations/verify",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId,
+            provider: config.provider,
+          }),
+        },
+        { raw: true, fallbackMessage: "Failed to verify integration" },
+      );
 
-      const payload = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          typeof payload.error === "string"
-            ? payload.error
-            : await readApiError(response, "Failed to verify integration"),
-        );
-      }
-
-      setSuccess(payload.message || "Connection verified successfully.");
+      setSuccess(
+        (typeof payload.message === "string" && payload.message) ||
+          "Connection verified successfully.",
+      );
       await Promise.resolve(onSaved());
     } catch (verifyError) {
       setError(verifyError instanceof Error ? verifyError.message : "Failed to verify integration");

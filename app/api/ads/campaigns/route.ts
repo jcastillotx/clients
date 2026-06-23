@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { createAdCampaignSchema } from "@/lib/validations/ad-campaign";
 
-/**
- * GET /api/ads/campaigns
- * 
- * Fetch all ad campaigns
- */
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   const {
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(request);
   }
 
   try {
@@ -30,19 +31,14 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json(data);
+    return apiSuccess(request, data ?? []);
   } catch (error) {
     console.error("Error fetching ad campaigns:", error);
-    return NextResponse.json({ error: "Failed to fetch ad campaigns" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch ad campaigns");
   }
 }
 
-/**
- * POST /api/ads/campaigns
- * 
- * Create a new ad campaign
- */
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
   const {
@@ -50,21 +46,17 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(request);
   }
 
   try {
-    const body = await req.json();
-    
-    // Validate input
+    const body = await request.json();
     const validatedData = createAdCampaignSchema.parse(body);
 
-    // Generate platform-specific campaign ID (or use provided one)
     const campaignId = validatedData.campaign_id || `camp_${crypto.randomUUID()}`;
 
-    // Map budget based on budget_type
-    const dailyBudget = validatedData.budget_type === 'daily' ? validatedData.budget : null;
-    const lifetimeBudget = validatedData.budget_type === 'lifetime' ? validatedData.budget : null;
+    const dailyBudget = validatedData.budget_type === "daily" ? validatedData.budget : null;
+    const lifetimeBudget = validatedData.budget_type === "lifetime" ? validatedData.budget : null;
 
     const { data, error } = await supabase
       .from("ad_campaigns")
@@ -85,12 +77,12 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json(data, { status: 201 });
+    return apiSuccess(request, data, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
     console.error("Error creating ad campaign:", error);
-    return NextResponse.json({ error: "Failed to create ad campaign" }, { status: 500 });
+    return apiInternalError(request, "Failed to create ad campaign");
   }
 }

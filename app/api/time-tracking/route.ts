@@ -1,20 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { timeEntries, timeEntryLocks } from "@/lib/db/schema/time-tracking";
-import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { timeEntries, timeEntryLocks, type TimeEntryStatus } from "@/lib/db/schema/time-tracking";
+import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
-/**
- * GET /api/time-tracking
- * Fetch time entries with optional filters
- */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
     const userId = user.id;
 
@@ -25,7 +28,6 @@ export async function GET(request: NextRequest) {
     const clientId = searchParams.get("clientId");
     const requestId = searchParams.get("requestId");
 
-    // Build query conditions
     const conditions = [eq(timeEntries.userId, userId)];
 
     if (startDate) {
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
       conditions.push(lte(timeEntries.startedAt, new Date(endDate)));
     }
     if (status) {
-      conditions.push(eq(timeEntries.status, status as any));
+      conditions.push(eq(timeEntries.status, status as TimeEntryStatus));
     }
     if (clientId) {
       conditions.push(eq(timeEntries.clientId, clientId));
@@ -54,24 +56,20 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(entries);
+    return apiSuccess(request, entries, { extra: { entries } });
   } catch (error) {
     console.error("Error fetching time entries:", error);
-    return NextResponse.json({ error: "Failed to fetch time entries" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch time entries");
   }
 }
 
-/**
- * POST /api/time-tracking
- * Create a new time entry (manual entry)
- */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
     const userId = user.id;
 
@@ -89,16 +87,18 @@ export async function POST(request: NextRequest) {
       hourlyRate,
     } = body;
 
-    // Validate that the period is not locked
     if (startedAt) {
       const startDate = new Date(startedAt);
       const isLocked = await checkPeriodLock(userId, startDate);
       if (isLocked) {
-        return NextResponse.json({ error: "Cannot create entry in a locked period" }, { status: 400 });
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Cannot create entry in a locked period",
+        });
       }
     }
 
-    // Calculate total amount if hourly rate and duration are provided
     let totalAmount = null;
     if (hourlyRate && durationMinutes) {
       totalAmount = (parseFloat(hourlyRate) * durationMinutes) / 60;
@@ -123,24 +123,20 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(entry, { status: 201 });
+    return apiSuccess(request, entry, { status: 201, extra: { entry } });
   } catch (error) {
     console.error("Error creating time entry:", error);
-    return NextResponse.json({ error: "Failed to create time entry" }, { status: 500 });
+    return apiInternalError(request, "Failed to create time entry");
   }
 }
 
-/**
- * PATCH /api/time-tracking
- * Update an existing time entry
- */
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
     const userId = user.id;
 
@@ -148,10 +144,13 @@ export async function PATCH(request: NextRequest) {
     const { id, ...updates } = body;
 
     if (!id) {
-      return NextResponse.json({ error: "Entry ID is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Entry ID is required",
+      });
     }
 
-    // Fetch the existing entry
     const [existingEntry] = await db
       .select()
       .from(timeEntries)
@@ -159,23 +158,28 @@ export async function PATCH(request: NextRequest) {
       .limit(1);
 
     if (!existingEntry) {
-      return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+      return apiNotFound(request, "Entry not found");
     }
 
-    // Check if entry is locked
     if (existingEntry.lockedAt) {
-      return NextResponse.json({ error: "Cannot update a locked entry" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Cannot update a locked entry",
+      });
     }
 
-    // Check if period is locked
     if (existingEntry.startedAt) {
       const isLocked = await checkPeriodLock(userId, existingEntry.startedAt);
       if (isLocked) {
-        return NextResponse.json({ error: "Cannot update entry in a locked period" }, { status: 400 });
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Cannot update entry in a locked period",
+        });
       }
     }
 
-    // Recalculate total amount if necessary
     if (updates.hourlyRate || updates.durationMinutes) {
       const rate = updates.hourlyRate ?? existingEntry.hourlyRate;
       const duration = updates.durationMinutes ?? existingEntry.durationMinutes;
@@ -190,24 +194,20 @@ export async function PATCH(request: NextRequest) {
       .where(eq(timeEntries.id, id))
       .returning();
 
-    return NextResponse.json(updatedEntry);
+    return apiSuccess(request, updatedEntry, { extra: { entry: updatedEntry } });
   } catch (error) {
     console.error("Error updating time entry:", error);
-    return NextResponse.json({ error: "Failed to update time entry" }, { status: 500 });
+    return apiInternalError(request, "Failed to update time entry");
   }
 }
 
-/**
- * DELETE /api/time-tracking
- * Delete a time entry
- */
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
     const userId = user.id;
 
@@ -215,10 +215,13 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "Entry ID is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Entry ID is required",
+      });
     }
 
-    // Fetch the existing entry
     const [existingEntry] = await db
       .select()
       .from(timeEntries)
@@ -226,34 +229,37 @@ export async function DELETE(request: NextRequest) {
       .limit(1);
 
     if (!existingEntry) {
-      return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+      return apiNotFound(request, "Entry not found");
     }
 
-    // Check if entry is locked
     if (existingEntry.lockedAt) {
-      return NextResponse.json({ error: "Cannot delete a locked entry" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Cannot delete a locked entry",
+      });
     }
 
-    // Check if period is locked
     if (existingEntry.startedAt) {
       const isLocked = await checkPeriodLock(userId, existingEntry.startedAt);
       if (isLocked) {
-        return NextResponse.json({ error: "Cannot delete entry in a locked period" }, { status: 400 });
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Cannot delete entry in a locked period",
+        });
       }
     }
 
     await db.delete(timeEntries).where(eq(timeEntries.id, id));
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting time entry:", error);
-    return NextResponse.json({ error: "Failed to delete time entry" }, { status: 500 });
+    return apiInternalError(request, "Failed to delete time entry");
   }
 }
 
-/**
- * Helper function to check if a period is locked
- */
 async function checkPeriodLock(userId: string, date: Date): Promise<boolean> {
   const locks = await db
     .select()

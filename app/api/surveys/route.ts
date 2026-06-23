@@ -1,7 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createSurveySchema } from "@/lib/validations/survey";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 
 type UserAccess = {
   clientId: string | null;
@@ -38,12 +46,7 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
   } satisfies UserAccess;
 }
 
-/**
- * GET /api/surveys
- *
- * List surveys scoped by user access.
- */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     const {
@@ -52,7 +55,7 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveAccess(supabase, user);
@@ -68,21 +71,17 @@ export async function GET() {
 
     const { data, error } = await query;
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(request, error.message);
     }
 
-    return NextResponse.json({ data: data || [] });
+    const rows = data || [];
+    return apiSuccess(request, rows);
   } catch (error) {
     console.error("Error fetching surveys:", error);
-    return NextResponse.json({ error: "Failed to fetch surveys" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch surveys");
   }
 }
 
-/**
- * POST /api/surveys
- *
- * Create a survey and its questions.
- */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -92,7 +91,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
@@ -101,11 +100,15 @@ export async function POST(request: NextRequest) {
 
     const effectiveClientId = access.isAdmin ? validated.clientId || null : access.clientId;
     if (!access.isAdmin && !effectiveClientId) {
-      return NextResponse.json({ error: "No client is assigned to this user" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "No client is assigned to this user",
+      });
     }
 
     if (!access.isAdmin && validated.clientId && validated.clientId !== access.clientId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const { data: survey, error: surveyError } = await supabase
@@ -122,7 +125,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (surveyError || !survey) {
-      return NextResponse.json({ error: surveyError?.message || "Failed to create survey" }, { status: 500 });
+      return apiInternalError(request, surveyError?.message || "Failed to create survey");
     }
 
     const questionRows = validated.questions.map((question, index) => ({
@@ -136,15 +139,15 @@ export async function POST(request: NextRequest) {
 
     const { error: questionsError } = await supabase.from("survey_questions").insert(questionRows);
     if (questionsError) {
-      return NextResponse.json({ error: questionsError.message }, { status: 500 });
+      return apiInternalError(request, questionsError.message);
     }
 
-    return NextResponse.json({ data: survey }, { status: 201 });
+    return apiSuccess(request, survey, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
     console.error("Error creating survey:", error);
-    return NextResponse.json({ error: "Failed to create survey" }, { status: 500 });
+    return apiInternalError(request, "Failed to create survey");
   }
 }

@@ -1,31 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { maintenancePlanTemplates } from "@/lib/db/schema/maintenance-plans";
-import { desc, eq } from "drizzle-orm";
-import { createClient } from "@/lib/supabase/server";
+import { desc } from "drizzle-orm";
+import { requireAdminUser } from "@/lib/auth/route-guards";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+} from "@/lib/api/response";
 
 /**
  * GET /api/admin/maintenance-plan-templates
  * List all maintenance plan templates (admin)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const guard = await requireAdminUser(request);
+    if ("error" in guard) {
+      return guard.error;
+    }
+
     const templates = await db
       .select()
       .from(maintenancePlanTemplates)
       .orderBy(desc(maintenancePlanTemplates.createdAt));
 
-    return NextResponse.json({
-      success: true,
-      data: templates,
-      count: templates.length,
+    return apiSuccess(request, templates, {
+      extra: { count: templates.length },
     });
   } catch (error) {
     console.error("Error fetching maintenance plan templates:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch templates", message: error instanceof Error ? error.message : "Unknown error" },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to fetch templates",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch templates",
     );
   }
 }
@@ -36,11 +50,9 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
+    const guard = await requireAdminUser(request);
+    if ("error" in guard) {
+      return guard.error;
     }
 
     const body = await request.json();
@@ -48,7 +60,11 @@ export async function POST(request: NextRequest) {
     const requiredFields = ["name", "monthlyRate", "includedHours", "hourlyRateOverage"];
     for (const field of requiredFields) {
       if (!body[field] && body[field] !== 0) {
-        return NextResponse.json({ success: false, error: `Missing required field: ${field}` }, { status: 400 });
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: `Missing required field: ${field}`,
+        });
       }
     }
 
@@ -73,17 +89,26 @@ export async function POST(request: NextRequest) {
         renewalTermMonths: body.renewalTermMonths || 12,
         servicesIncluded: body.servicesIncluded || [],
         metadata: body.metadata || {},
-        createdBy: user.id,
+        createdBy: guard.user.id,
       })
       .returning();
 
-    return NextResponse.json({ success: true, data: template, message: "Template created successfully" }, { status: 201 });
+    return apiSuccess(request, template, {
+      status: 201,
+      extra: { message: "Template created successfully" },
+    });
   } catch (error) {
     console.error("Error creating maintenance plan template:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-    return NextResponse.json(
-      { success: false, error: "Failed to create template", message: error instanceof Error ? error.message : "Unknown error" },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to create template",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to create template",
     );
   }
 }

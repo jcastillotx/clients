@@ -1,4 +1,12 @@
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { and, desc, eq, gte, isNull, lte } from "drizzle-orm";
 import { z } from "zod";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
@@ -41,7 +49,7 @@ const deleteSchema = z.object({
   id: z.string().uuid(),
 });
 
-async function requireUserAccess() {
+async function requireUserAccess(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -49,17 +57,15 @@ async function requireUserAccess() {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return {
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
+    return { error: apiUnauthorized(request) };
   }
 
   const access = await resolveRouteAccess(supabase, user);
   return { user, access };
 }
 
-async function requireAccountAccess(accountId: string) {
-  const auth = await requireUserAccess();
+async function requireAccountAccess(request: Request, accountId: string) {
+  const auth = await requireUserAccess(request);
   if ("error" in auth) {
     return auth;
   }
@@ -70,27 +76,19 @@ async function requireAccountAccess(accountId: string) {
     .where(eq(socialAccounts.id, accountId))
     .limit(1);
   if (!account) {
-    return {
-      error: NextResponse.json({ error: "Account not found" }, { status: 404 }),
-    };
+    return { error: apiNotFound(request, "Account not found") };
   }
 
   if (!canAccessClient(auth.access, account.clientId)) {
-    return {
-      error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
-    };
+    return { error: apiForbidden(request) };
   }
 
   return { ...auth, account };
 }
 
-/**
- * GET /api/social/posts
- * List social media posts with filtering
- */
 export async function GET(request: Request) {
   try {
-    const auth = await requireUserAccess();
+    const auth = await requireUserAccess(request);
     if ("error" in auth) {
       return auth.error;
     }
@@ -105,20 +103,21 @@ export async function GET(request: Request) {
     });
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid query parameters" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Invalid query parameters",
+      });
     }
 
     const { accountId, clientId, status, startDate, endDate } = parsed.data;
 
     if (clientId && !canAccessClient(auth.access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     if (accountId) {
-      const accountGuard = await requireAccountAccess(accountId);
+      const accountGuard = await requireAccountAccess(request, accountId);
       if ("error" in accountGuard) {
         return accountGuard.error;
       }
@@ -160,23 +159,16 @@ export async function GET(request: Request) {
     query = query.where(and(...conditions));
     const posts = await query.orderBy(desc(socialPosts.scheduledFor));
 
-    return NextResponse.json(posts);
+    return apiSuccess(request, posts);
   } catch (error) {
     console.error("Error fetching social posts:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch social posts" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to fetch social posts");
   }
 }
 
-/**
- * POST /api/social/posts
- * Create or schedule a new social media post
- */
 export async function POST(request: Request) {
   try {
-    const auth = await requireUserAccess();
+    const auth = await requireUserAccess(request);
     if ("error" in auth) {
       return auth.error;
     }
@@ -184,16 +176,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
+      return apiValidationError(request, parsed.error);
     }
 
     const { accountId, content, scheduledFor, metadata, publishNow } =
       parsed.data;
 
-    const accountGuard = await requireAccountAccess(accountId);
+    const accountGuard = await requireAccountAccess(request, accountId);
     if ("error" in accountGuard) {
       return accountGuard.error;
     }
@@ -218,23 +207,16 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    return NextResponse.json(newPost, { status: 201 });
+    return apiSuccess(request, newPost, { status: 201 });
   } catch (error) {
     console.error("Error creating social post:", error);
-    return NextResponse.json(
-      { error: "Failed to create social post" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to create social post");
   }
 }
 
-/**
- * PATCH /api/social/posts/:id
- * Update a social media post
- */
 export async function PATCH(request: Request) {
   try {
-    const auth = await requireUserAccess();
+    const auth = await requireUserAccess(request);
     if ("error" in auth) {
       return auth.error;
     }
@@ -247,10 +229,11 @@ export async function PATCH(request: Request) {
     });
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Post ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Post ID is required",
+      });
     }
 
     const {
@@ -274,11 +257,11 @@ export async function PATCH(request: Request) {
       .limit(1);
 
     if (!postRow?.postId || !postRow.clientId) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+      return apiNotFound(request, "Post not found");
     }
 
     if (!canAccessClient(auth.access, postRow.clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const [updatedPost] = await db
@@ -295,23 +278,16 @@ export async function PATCH(request: Request) {
       .where(eq(socialPosts.id, id))
       .returning();
 
-    return NextResponse.json(updatedPost);
+    return apiSuccess(request, updatedPost);
   } catch (error) {
     console.error("Error updating social post:", error);
-    return NextResponse.json(
-      { error: "Failed to update social post" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to update social post");
   }
 }
 
-/**
- * DELETE /api/social/posts/:id
- * Soft delete a social post
- */
 export async function DELETE(request: Request) {
   try {
-    const auth = await requireUserAccess();
+    const auth = await requireUserAccess(request);
     if ("error" in auth) {
       return auth.error;
     }
@@ -320,10 +296,11 @@ export async function DELETE(request: Request) {
     const parsed = deleteSchema.safeParse({ id: searchParams.get("id") });
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Post ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Post ID is required",
+      });
     }
 
     const { id } = parsed.data;
@@ -339,11 +316,11 @@ export async function DELETE(request: Request) {
       .limit(1);
 
     if (!postRow?.postId || !postRow.clientId) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+      return apiNotFound(request, "Post not found");
     }
 
     if (!canAccessClient(auth.access, postRow.clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     await db
@@ -354,12 +331,9 @@ export async function DELETE(request: Request) {
       })
       .where(eq(socialPosts.id, id));
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting social post:", error);
-    return NextResponse.json(
-      { error: "Failed to delete social post" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to delete social post");
   }
 }

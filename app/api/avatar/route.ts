@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { getS3Credentials } from "@/lib/storage/get-s3-credentials";
+import { createClient } from "@/lib/supabase/server";
 
 // ---------------------------------------------------------------------------
 // AWS Signature V4 presigned GET URL generator
@@ -107,7 +111,7 @@ async function buildPresignedGetUrl(
 
 // ---------------------------------------------------------------------------
 // Route: GET /api/avatar?key=avatars/userid/filename.jpg
-// Returns a redirect to a presigned S3 GET URL (valid 1 hour).
+// Streams the private S3 object through a same-origin endpoint.
 // Requires the caller to be authenticated.
 // ---------------------------------------------------------------------------
 
@@ -118,17 +122,21 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(request);
   }
 
   const key = request.nextUrl.searchParams.get("key");
   if (!key) {
-    return NextResponse.json({ error: "Missing key" }, { status: 400 });
+    return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Missing key" });
   }
 
   const s3 = await getS3Credentials(user.id);
   if (!s3) {
-    return NextResponse.json({ error: "S3 not configured" }, { status: 503 });
+    return apiError(request, {
+      status: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "S3 not configured",
+    });
   }
   const { accessKeyId, secretAccessKey, bucket, region } = s3;
 
@@ -141,8 +149,23 @@ export async function GET(request: NextRequest) {
     3600, // 1 hour
   );
 
-  // Redirect browser to presigned URL; cache the redirect for 50 minutes
-  return NextResponse.redirect(presignedUrl, {
-    headers: { "Cache-Control": "private, max-age=3000" },
+  const s3Res = await fetch(presignedUrl);
+  if (!s3Res.ok) {
+    return apiError(request, {
+      status: 502,
+      code: "INTERNAL_ERROR",
+      message: `S3 fetch failed: ${s3Res.status}`,
+    });
+  }
+
+  const contentType = s3Res.headers.get("content-type") ?? "image/png";
+  const buffer = await s3Res.arrayBuffer();
+
+  return new NextResponse(buffer, {
+    headers: {
+      "Cache-Control": "private, max-age=3000",
+      "Content-Type": contentType,
+      "Cross-Origin-Resource-Policy": "same-origin",
+    },
   });
 }

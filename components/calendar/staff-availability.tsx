@@ -64,8 +64,8 @@ export function StaffAvailability({ userIds, start, end }: StaffAvailabilityProp
         credentials: "same-origin",
       });
       if (res.ok) {
-        const data = await res.json();
-        setAvailability(data.availability ?? []);
+        const body = await res.json();
+        setAvailability(body.data ?? body.availability ?? []);
       }
     } catch {
       // Silently fail — availability is a nice-to-have

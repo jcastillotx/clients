@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, X, User, Video, MapPin } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface MeetingFormProps {
   clients: Array<{
@@ -93,23 +94,18 @@ export function MeetingForm({ clients, users, preselectedClientId, preselectedRe
     setError(null);
 
     try {
-      const response = await fetch("/api/meetings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const meeting = await fetchApi<{ id: string }>(
+        "/api/meetings",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            attendees: attendees.length > 0 ? attendees : undefined,
+          }),
         },
-        body: JSON.stringify({
-          ...data,
-          attendees: attendees.length > 0 ? attendees : undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create meeting");
-      }
-
-      const meeting = await response.json();
+        { fallbackMessage: "Failed to create meeting" },
+      );
       router.push(`/meetings/${meeting.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create meeting");

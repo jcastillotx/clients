@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { createProposalSchema, updateProposalSchema } from "@/lib/validations/proposal";
+import { NextRequest } from "next/server";
+import { z } from "zod";
 
 /**
  * GET /api/proposals
@@ -16,7 +23,7 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   const searchParams = req.nextUrl.searchParams;
@@ -48,10 +55,12 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error("Error fetching proposals:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiInternalError(req, error.message);
   }
 
-  return NextResponse.json(data);
+  const rows = data ?? [];
+
+  return apiSuccess(req, rows, { extra: { proposals: rows } });
 }
 
 /**
@@ -67,13 +76,11 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   try {
     const body = await req.json();
-    
-    // Validate input
     const validatedData = createProposalSchema.parse(body);
 
     const { data, error } = await supabase
@@ -94,17 +101,19 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-    return NextResponse.json(data, { status: 201 });
+    return apiSuccess(req, data, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
     console.error("Error creating proposal:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create proposal" },
-      { status: 500 },
+    return apiInternalError(
+      req,
+      error instanceof Error ? error.message : "Failed to create proposal",
     );
   }
 }
@@ -122,29 +131,34 @@ export async function PATCH(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   try {
     const body = await req.json();
     const { id, ...updates } = body;
-    
-    // Validate updates
     const validatedData = updateProposalSchema.parse(updates);
 
-    const { data, error } = await supabase.from("proposals").update(validatedData).eq("id", id).select().single();
+    const { data, error } = await supabase
+      .from("proposals")
+      .update(validatedData)
+      .eq("id", id)
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-    return NextResponse.json(data);
+    return apiSuccess(req, data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
     console.error("Error updating proposal:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update proposal" },
-      { status: 500 },
+    return apiInternalError(
+      req,
+      error instanceof Error ? error.message : "Failed to update proposal",
     );
   }
 }
@@ -162,27 +176,32 @@ export async function DELETE(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   try {
-    const searchParams = req.nextUrl.searchParams;
-    const id = searchParams.get("id");
+    const id = req.nextUrl.searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "Proposal ID is required" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Proposal ID is required",
+      });
     }
 
     const { error } = await supabase.from("proposals").delete().eq("id", id);
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(req, { deleted: true });
   } catch (error) {
     console.error("Error deleting proposal:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete proposal" },
-      { status: 500 },
+    return apiInternalError(
+      req,
+      error instanceof Error ? error.message : "Failed to delete proposal",
     );
   }
 }

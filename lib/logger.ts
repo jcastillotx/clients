@@ -35,7 +35,7 @@ function formatError(err: unknown): LogPayload["error"] | undefined {
   return { name: "UnknownError", message: String(err) };
 }
 
-function write(payload: LogPayload) {
+function write(payload: LogPayload, rawError?: unknown) {
   if (IS_PROD) {
     // JSON lines — one object per line for log aggregators
     process.stdout.write(JSON.stringify(payload) + "\n");
@@ -50,13 +50,17 @@ function write(payload: LogPayload) {
     else console.log(...parts);
   }
 
-  // Forward errors to Sentry if available
+  // Forward errors to Sentry when configured
   if (payload.level === "error" && process.env.SENTRY_DSN) {
     try {
-      // Dynamic import to avoid bundling Sentry when not configured
-      // @ts-ignore — Sentry may not be installed; silently skip if absent
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sentry = require("@sentry/nextjs") as typeof import("@sentry/nextjs");
-      if (payload.error) {
+      if (rawError instanceof Error) {
+        Sentry.captureException(rawError, {
+          extra: payload.context,
+          tags: { source: "logger" },
+        });
+      } else if (payload.error) {
         Sentry.captureMessage(payload.message, {
           level: "error",
           extra: { ...payload.context, rawError: payload.error },
@@ -98,7 +102,7 @@ export const logger = {
   },
 
   error(message: string, err?: unknown, context?: Record<string, unknown>) {
-    write(createEntry("error", message, context, err));
+    write(createEntry("error", message, context, err), err);
   },
 };
 

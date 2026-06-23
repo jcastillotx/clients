@@ -33,6 +33,7 @@ import {
   Ban,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { fetchApi } from "@/lib/api/client";
 
 interface ServiceTemplate {
   id: string;
@@ -41,6 +42,7 @@ interface ServiceTemplate {
   category: string | null;
   currency: string;
   totalAmount: string;
+  isActive: boolean;
   lineItems: Array<{ description: string; quantity: number; unitPrice: number; amount: number }>;
   metadata: { features?: string[]; deliverables?: string[]; estimatedTimeline?: string } | null;
 }
@@ -107,30 +109,37 @@ export default function ProposalsPage() {
     try {
       setLoading(true);
 
-      const [proposalsRes, templatesRes, clientsRes] = await Promise.all([
-        fetch("/api/proposals"),
-        fetch("/api/admin/service-templates"),
-        fetch("/api/clients"),
+      const [proposalsData, templatesData, clientsData] = await Promise.all([
+        fetchApi<Proposal[] | { data: Proposal[]; proposals?: Proposal[] }>("/api/proposals", undefined, {
+          raw: true,
+          fallbackMessage: "Failed to load proposals",
+        }),
+        fetchApi<{ data: ServiceTemplate[] }>("/api/admin/service-templates", undefined, {
+          raw: true,
+          fallbackMessage: "Failed to load service templates",
+        }),
+        fetchApi<Array<{ id: string }> | { data: Array<{ id: string }> }>("/api/clients", undefined, {
+          raw: true,
+          fallbackMessage: "Failed to load clients",
+        }),
       ]);
 
-      const proposalsData = await proposalsRes.json();
-      if (Array.isArray(proposalsData)) {
-        setProposals(proposalsData);
-      }
+      const proposalList = Array.isArray(proposalsData)
+        ? proposalsData
+        : Array.isArray(proposalsData.data)
+          ? proposalsData.data
+          : Array.isArray(proposalsData.proposals)
+            ? proposalsData.proposals
+            : [];
+      setProposals(proposalList);
 
-      const templatesData = await templatesRes.json();
-      if (templatesRes.ok && templatesData.success) {
-        setAvailableServices((templatesData.data ?? []).filter((t: any) => t.isActive));
-      }
+      setAvailableServices((templatesData.data ?? []).filter((t) => t.isActive));
 
-      const clientsData = await clientsRes.json();
       const clients = Array.isArray(clientsData)
         ? clientsData
-        : Array.isArray(clientsData?.data)
+        : Array.isArray(clientsData.data)
           ? clientsData.data
-          : clientsData?.client
-            ? [clientsData.client]
-            : [];
+          : [];
       if (clients.length > 0) {
         setClientId(clients[0].id);
       }
@@ -147,13 +156,15 @@ export default function ProposalsPage() {
     if (!requestTemplate || !clientId) return;
     try {
       setRequesting(true);
-      const response = await fetch("/api/proposals/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, serviceTemplateId: requestTemplate.id }),
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error);
+      await fetchApi(
+        "/api/proposals/request",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clientId, serviceTemplateId: requestTemplate.id }),
+        },
+        { fallbackMessage: "Failed to request service" },
+      );
       setRequestTemplate(null);
       fetchData();
     } catch (err) {
@@ -170,13 +181,15 @@ export default function ProposalsPage() {
     }
     try {
       setRequesting(true);
-      const response = await fetch("/api/proposals/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, title: customTitle, description: customDescription }),
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error);
+      await fetchApi(
+        "/api/proposals/request",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clientId, title: customTitle, description: customDescription }),
+        },
+        { fallbackMessage: "Failed to submit request" },
+      );
       setCustomDialogOpen(false);
       setCustomTitle("");
       setCustomDescription("");
@@ -192,13 +205,15 @@ export default function ProposalsPage() {
     if (!feedbackProposalId || !feedbackText.trim()) return;
     try {
       setSendingFeedback(true);
-      const response = await fetch(`/api/proposals/${feedbackProposalId}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback: feedbackText }),
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error);
+      await fetchApi(
+        `/api/proposals/${feedbackProposalId}/feedback`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ feedback: feedbackText }),
+        },
+        { fallbackMessage: "Failed to send feedback" },
+      );
       setFeedbackProposalId(null);
       setFeedbackText("");
       fetchData();
@@ -212,9 +227,9 @@ export default function ProposalsPage() {
   const handleCancel = async () => {
     if (!cancelProposalId) return;
     try {
-      const response = await fetch(`/api/proposals/${cancelProposalId}/cancel`, { method: "POST" });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error);
+      await fetchApi(`/api/proposals/${cancelProposalId}/cancel`, { method: "POST" }, {
+        fallbackMessage: "Failed to cancel proposal",
+      });
       setCancelProposalId(null);
       fetchData();
     } catch (err) {
@@ -225,13 +240,15 @@ export default function ProposalsPage() {
   const handleAccept = async () => {
     if (!acceptProposalId) return;
     try {
-      const response = await fetch(`/api/proposals/${acceptProposalId}/sign`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "accept", signerName: "Client", signerEmail: "" }),
-      });
-      const data = await response.json();
-      if (!data.success && !response.ok) throw new Error(data.error || "Failed to accept");
+      await fetchApi(
+        `/api/proposals/${acceptProposalId}/sign`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "accept", signerName: "Client", signerEmail: "" }),
+        },
+        { fallbackMessage: "Failed to accept proposal" },
+      );
       setAcceptProposalId(null);
       fetchData();
     } catch (err) {

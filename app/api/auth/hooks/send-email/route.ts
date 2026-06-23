@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "standardwebhooks";
+import { apiError } from "@/lib/api/response";
 import { sendEmail } from "@/lib/email/client";
 import {
   authTemplateTypeForAction,
@@ -54,13 +55,16 @@ export async function POST(request: NextRequest) {
     const action = email_data.email_action_type;
     const to = user.email;
     if (!to) {
-      return NextResponse.json({ error: "Missing user email" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing user email",
+      });
     }
 
     const siteUrl = getAuthBaseUrl();
     const templateType = authTemplateTypeForAction(action);
 
-    // Secure email change: two messages (current + new address). See Supabase docs for token/hash pairing.
     if (action === "email_change" && email_data.token_new && user.new_email) {
       const urlCurrent = buildAuthConfirmUrl({
         tokenHash: email_data.token_hash_new,
@@ -107,6 +111,7 @@ export async function POST(request: NextRequest) {
         text: renderedNew?.plainText ?? `Confirm new email: ${urlNew} (code: ${email_data.token_new})`,
       });
 
+      // Supabase Send Email hook expects an empty JSON object on success.
       return NextResponse.json({});
     }
 
@@ -147,9 +152,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({});
   } catch (e) {
     console.error("[auth/hooks/send-email]", e);
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Webhook verification failed" },
-      { status: 401 },
-    );
+    return apiError(request, {
+      status: 401,
+      code: "UNAUTHORIZED",
+      message: e instanceof Error ? e.message : "Webhook verification failed",
+    });
   }
 }

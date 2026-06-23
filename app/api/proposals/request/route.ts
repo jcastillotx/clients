@@ -1,8 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { proposals, serviceTemplates } from "@/lib/db/schema/proposals";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * POST /api/proposals/request
@@ -11,19 +17,25 @@ import { createClient } from "@/lib/supabase/server";
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const body = await request.json();
 
     if (!body.clientId) {
-      return NextResponse.json({ success: false, error: "Client ID is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID is required",
+      });
     }
 
-    // Option 1: Request from a service template
     if (body.serviceTemplateId) {
       const [template] = await db
         .select()
@@ -32,11 +44,15 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       if (!template) {
-        return NextResponse.json({ success: false, error: "Service template not found" }, { status: 404 });
+        return apiNotFound(request, "Service template not found");
       }
 
       if (!template.isActive) {
-        return NextResponse.json({ success: false, error: "This service is no longer available" }, { status: 400 });
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "This service is no longer available",
+        });
       }
 
       const [proposal] = await db
@@ -59,18 +75,29 @@ export async function POST(request: NextRequest) {
         })
         .returning();
 
-      return NextResponse.json(
-        { success: true, data: proposal, message: "Service requested successfully. A proposal has been created for your review." },
-        { status: 201 },
-      );
+      return apiSuccess(request, proposal, {
+        status: 201,
+        extra: {
+          proposal,
+          message:
+            "Service requested successfully. A proposal has been created for your review.",
+        },
+      });
     }
 
-    // Option 2: Custom service request
     if (!body.title?.trim()) {
-      return NextResponse.json({ success: false, error: "Service title is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Service title is required",
+      });
     }
     if (!body.description?.trim()) {
-      return NextResponse.json({ success: false, error: "Please describe what you need" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Please describe what you need",
+      });
     }
 
     const [proposal] = await db
@@ -92,16 +119,21 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(
-      { success: true, data: proposal, message: "Custom service request submitted. We will review and create a proposal for you." },
-      { status: 201 },
-    );
+    return apiSuccess(request, proposal, {
+      status: 201,
+      extra: {
+        proposal,
+        message:
+          "Custom service request submitted. We will review and create a proposal for you.",
+      },
+    });
   } catch (error) {
     console.error("Error creating service request:", error);
     const status = isDatabaseConfigurationError(error) ? 503 : 500;
-    return NextResponse.json(
-      { success: false, error: "Failed to submit request", message: error instanceof Error ? error.message : "Unknown error" },
-      { status },
-    );
+    return apiError(request, {
+      status,
+      code: status === 503 ? "SERVICE_UNAVAILABLE" : "INTERNAL_ERROR",
+      message: error instanceof Error ? error.message : "Failed to submit request",
+    });
   }
 }

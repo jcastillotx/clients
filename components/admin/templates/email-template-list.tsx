@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { EmailTemplateDialog } from "./email-template-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { fetchApi } from "@/lib/api/client";
 
 interface Template {
   id: string;
@@ -47,14 +48,9 @@ export function EmailTemplateList({ templates, onTemplatesChange }: EmailTemplat
     }
 
     try {
-      const response = await fetch(`/api/admin/templates/email/${templateId}`, {
-        method: "DELETE",
+      await fetchApi(`/api/admin/templates/email/${templateId}`, { method: "DELETE" }, {
+        fallbackMessage: "Failed to delete template",
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete template");
-      }
 
       onTemplatesChange(templates.filter((t) => t.id !== templateId));
 
@@ -77,18 +73,11 @@ export function EmailTemplateList({ templates, onTemplatesChange }: EmailTemplat
 
       const method = selectedTemplate ? "PATCH" : "POST";
 
-      const response = await fetch(url, {
+      const template = await fetchApi<Template>(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to save template");
-      }
-
-      const { template } = await response.json();
+      }, { fallbackMessage: "Failed to save template" });
 
       if (selectedTemplate) {
         onTemplatesChange(templates.map((t) => (t.id === template.id ? template : t)));

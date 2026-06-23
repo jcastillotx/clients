@@ -21,7 +21,7 @@ export default function BoardPage() {
           throw new Error("Failed to fetch board");
         }
         const data = await response.json();
-        setBoard(data.board);
+        setBoard(data.board ?? data.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {

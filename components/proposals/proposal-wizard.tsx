@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Plus, Trash2, ChevronLeft, ChevronRight, FileText, Sparkles } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 const proposalSchema = z.object({
   clientId: z.string().uuid("Please select a client"),
@@ -125,32 +126,29 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
     setError(null);
 
     try {
-      const response = await fetch("/api/ai/generate-proposal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientName: selectedClient.company_name,
-          projectTitle: title,
-          projectDescription: description || "",
-          lineItems: items
-            .filter((item) => item.description)
-            .map((item) => ({
-              description: item.description,
-              quantity: Number(item.quantity) || 1,
-              unitPrice: Number(item.unitPrice) || 0,
-              category: item.category || "",
-            })),
-          currency,
-          additionalContext: aiContext || undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to generate proposal");
-      }
-
-      const data = await response.json();
+      const data = await fetchApi<{ content: string }>(
+        "/api/ai/generate-proposal",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientName: selectedClient.company_name,
+            projectTitle: title,
+            projectDescription: description || "",
+            lineItems: items
+              .filter((item) => item.description)
+              .map((item) => ({
+                description: item.description,
+                quantity: Number(item.quantity) || 1,
+                unitPrice: Number(item.unitPrice) || 0,
+                category: item.category || "",
+              })),
+            currency,
+            additionalContext: aiContext || undefined,
+          }),
+        },
+        { fallbackMessage: "Failed to generate proposal" },
+      );
       setGeneratedContent(data.content);
 
       // Auto-populate the description if empty

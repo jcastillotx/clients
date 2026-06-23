@@ -1,4 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
+
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { calendarConnections } from "@/lib/db/schema/calendar-integrations";
@@ -13,26 +19,30 @@ import type { UserAvailability } from "@/lib/db/schema/calendar-integrations";
  * Calls Google Calendar Free/Busy API and Microsoft Graph calendarView.
  * Handles token refresh automatically.
  */
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return apiUnauthorized(request);
 
-  const userIdsParam = req.nextUrl.searchParams.get("userIds");
-  const start = req.nextUrl.searchParams.get("start");
-  const end = req.nextUrl.searchParams.get("end");
+  const userIdsParam = request.nextUrl.searchParams.get("userIds");
+  const start = request.nextUrl.searchParams.get("start");
+  const end = request.nextUrl.searchParams.get("end");
 
   if (!userIdsParam || !start || !end) {
-    return NextResponse.json({ error: "userIds, start, and end are required" }, { status: 400 });
+    return apiError(request, {
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "userIds, start, and end are required",
+    });
   }
 
   const startDate = new Date(start);
   const endDate = new Date(end);
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate >= endDate) {
-    return NextResponse.json({ error: "Invalid time range" }, { status: 400 });
+    return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Invalid time range" });
   }
 
   const userIds = userIdsParam
@@ -42,7 +52,7 @@ export async function GET(req: NextRequest) {
     .slice(0, 20); // cap at 20 users
 
   if (userIds.length === 0) {
-    return NextResponse.json({ availability: [] });
+    return apiSuccess(request, [], { extra: { availability: [] } });
   }
 
   // Fetch calendar connections for all requested users
@@ -83,7 +93,7 @@ export async function GET(req: NextRequest) {
 
       for (const conn of userConnections) {
         try {
-          let accessToken = await getValidAccessToken(conn);
+          const accessToken = await getValidAccessToken(conn);
           if (!accessToken) continue;
 
           if (conn.provider === "google") {
@@ -106,7 +116,7 @@ export async function GET(req: NextRequest) {
     }),
   );
 
-  return NextResponse.json({ availability: results });
+  return apiSuccess(request, results, { extra: { availability: results } });
 }
 
 // ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { TemplateCard } from "./template-card";
 import { TemplatePreviewDialog } from "./template-preview-dialog";
 import { Loader2 } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface Template {
   id: string;
@@ -67,17 +68,10 @@ export function ApplyTemplateDialog({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/projects/templates");
-      const json = await res.json();
-      if (json.success) {
-        setTemplates(Array.isArray(json.data) ? json.data : []);
-      } else {
-        const detail =
-          typeof json.message === "string" && json.message.trim()
-            ? `${json.error ?? "Error"}: ${json.message}`
-            : (json.error ?? "Failed to fetch templates");
-        setError(detail);
-      }
+      const data = await fetchApi<Template[]>("/api/projects/templates", undefined, {
+        fallbackMessage: "Failed to fetch templates",
+      });
+      setTemplates(Array.isArray(data) ? data : []);
     } catch {
       setError("Failed to fetch templates");
     } finally {
@@ -89,18 +83,17 @@ export function ApplyTemplateDialog({
     setApplying(true);
     setError(null);
     try {
-      const res = await fetch(`/api/projects/${projectId}/apply-template`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        onOpenChange(false);
-        onApplied?.(json.data);
-      } else {
-        setError(json.error || "Failed to apply template");
-      }
+      const result = await fetchApi<{ boardId: string; totalTasks: number; totalChecklists: number }>(
+        `/api/projects/${projectId}/apply-template`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId }),
+        },
+        { fallbackMessage: "Failed to apply template" },
+      );
+      onOpenChange(false);
+      onApplied?.(result);
     } catch {
       setError("Failed to apply template");
     } finally {

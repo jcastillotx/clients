@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { ApiClientError, fetchApi } from "@/lib/api/client";
 import {
   CheckCircle2,
   XCircle,
@@ -165,11 +166,10 @@ export function CalendarConnections({
   async function refreshConnections() {
     setLoading(true);
     try {
-      const res = await fetch("/api/calendar/connections", { credentials: "same-origin" });
-      if (res.ok) {
-        const data = await res.json();
-        setConnections(data);
-      }
+      const data = await fetchApi<CalendarConnection[]>("/api/calendar/connections", {
+        credentials: "same-origin",
+      });
+      setConnections(Array.isArray(data) ? data : []);
     } finally {
       setLoading(false);
     }
@@ -178,24 +178,22 @@ export function CalendarConnections({
   async function handleDisconnect(provider: string) {
     setDisconnecting(provider);
     try {
-      const res = await fetch(`/api/calendar/connections?provider=${provider}`, {
-        method: "DELETE",
-        credentials: "same-origin",
+      await fetchApi(
+        `/api/calendar/connections?provider=${provider}`,
+        { method: "DELETE", credentials: "same-origin" },
+        { fallbackMessage: "Please try again." },
+      );
+      setConnections((prev) => prev.filter((c) => c.provider !== provider));
+      toast({
+        title: "Calendar disconnected",
+        description: `${PROVIDER_LABELS[provider] ?? provider} has been disconnected.`,
       });
-
-      if (res.ok) {
-        setConnections((prev) => prev.filter((c) => c.provider !== provider));
-        toast({
-          title: "Calendar disconnected",
-          description: `${PROVIDER_LABELS[provider] ?? provider} has been disconnected.`,
-        });
-      } else {
-        toast({
-          title: "Failed to disconnect",
-          description: "Please try again.",
-          variant: "destructive",
-        });
-      }
+    } catch (err) {
+      toast({
+        title: "Failed to disconnect",
+        description: err instanceof ApiClientError ? err.message : "Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setDisconnecting(null);
     }

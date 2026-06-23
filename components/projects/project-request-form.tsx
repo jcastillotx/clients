@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface ClientOption {
   id: string;
@@ -65,29 +66,26 @@ export function ProjectRequestForm({ clients, canSelectClient, defaultClientId }
     setUploadProgressText(null);
 
     try {
-      const createResponse = await fetch("/api/projects/requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: selectedClientId || undefined,
-          title,
-          executiveSummary,
-          description: description || null,
-          desiredOutcome: desiredOutcome || null,
-          priority,
-          requestedStartDate: requestedStartDate || null,
-          requestedLaunchDate: requestedLaunchDate || null,
-          dueDate: requestedLaunchDate || null,
-          budgetRange: budgetRange || null,
-        }),
-      });
-
-      const createPayload = await createResponse.json();
-      if (!createResponse.ok) {
-        throw new Error(createPayload?.error || "Failed to create project request");
-      }
-
-      const requestRow = createPayload?.data as CreatedProjectRequest;
+      const requestRow = await fetchApi<CreatedProjectRequest>(
+        "/api/projects/requests",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId: selectedClientId || undefined,
+            title,
+            executiveSummary,
+            description: description || null,
+            desiredOutcome: desiredOutcome || null,
+            priority,
+            requestedStartDate: requestedStartDate || null,
+            requestedLaunchDate: requestedLaunchDate || null,
+            dueDate: requestedLaunchDate || null,
+            budgetRange: budgetRange || null,
+          }),
+        },
+        { fallbackMessage: "Failed to create project request" },
+      );
       if (!requestRow?.id || !requestRow?.client_id) {
         throw new Error("Project request was created but response payload was invalid");
       }
@@ -106,15 +104,11 @@ export function ProjectRequestForm({ clients, canSelectClient, defaultClientId }
           formData.append("clientId", requestRow.client_id);
           formData.append("requestId", requestRow.id);
 
-          const uploadResponse = await fetch("/api/documents/upload", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (!uploadResponse.ok) {
-            const uploadPayload = await uploadResponse.json().catch(() => ({}));
-            throw new Error(uploadPayload?.error || `Failed to upload ${file.name}`);
-          }
+          await fetchApi(
+            "/api/documents/upload",
+            { method: "POST", body: formData },
+            { fallbackMessage: `Failed to upload ${file.name}` },
+          );
         }
       }
 

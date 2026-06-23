@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+} from "@/lib/api/response";
 import { getS3Credentials } from "@/lib/storage/get-s3-credentials";
 
 // ---------------------------------------------------------------------------
@@ -114,18 +118,22 @@ export async function GET(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key");
 
   if (!key) {
-    return NextResponse.json({ error: "Missing key" }, { status: 400 });
+    return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Missing key" });
   }
 
   // Security: only serve objects under the branding/ prefix
   if (!key.startsWith("branding/")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiForbidden(request);
   }
 
   // getS3Credentials ignores the userId and searches company-level connections.
   const s3 = await getS3Credentials(undefined).catch(() => null);
   if (!s3) {
-    return NextResponse.json({ error: "S3 not configured" }, { status: 503 });
+    return apiError(request, {
+      status: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "S3 not configured",
+    });
   }
 
   const { accessKeyId, secretAccessKey, bucket, region } = s3;
@@ -142,10 +150,11 @@ export async function GET(request: NextRequest) {
   // Proxy the image server-side to avoid CORS issues with S3 redirects
   const s3Res = await fetch(presignedUrl);
   if (!s3Res.ok) {
-    return NextResponse.json(
-      { error: `S3 fetch failed: ${s3Res.status}` },
-      { status: 502 },
-    );
+    return apiError(request, {
+      status: 502,
+      code: "INTERNAL_ERROR",
+      message: `S3 fetch failed: ${s3Res.status}`,
+    });
   }
 
   const contentType = s3Res.headers.get("content-type") ?? "image/png";

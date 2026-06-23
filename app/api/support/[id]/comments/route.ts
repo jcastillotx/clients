@@ -1,24 +1,28 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { createTicketCommentSchema } from "@/lib/validations/support-ticket";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 
 /**
  * GET /api/support/[id]/comments
- *
- * Fetch all comments for a support ticket
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   const { data, error } = await supabase
@@ -34,37 +38,32 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (error) {
     console.error("Error fetching comments:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiInternalError(req, error.message);
   }
 
-  return NextResponse.json(data);
+  return apiSuccess(req, data ?? [], { extra: { comments: data ?? [] } });
 }
 
 /**
  * POST /api/support/[id]/comments
- *
- * Add a comment to a support ticket
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Parse and validate request body
   const body = await req.json();
 
   try {
     const validatedData = createTicketCommentSchema.parse(body);
 
-    // Verify ticket exists and user has access
     const { data: ticket, error: ticketError } = await supabase
       .from("support_tickets")
       .select("id, first_response_at, status")
@@ -72,10 +71,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .single();
 
     if (ticketError || !ticket) {
-      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+      return apiNotFound(req, "Ticket not found");
     }
 
-    // Create comment
     const { data, error } = await supabase
       .from("support_ticket_comments")
       .insert({
@@ -95,10 +93,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (error) {
       console.error("Error creating comment:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(req, error.message);
     }
 
-    // Update ticket's first_response_at if this is the first response from staff
     if (!ticket.first_response_at && !validatedData.isInternal) {
       await supabase
         .from("support_tickets")
@@ -108,7 +105,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         .eq("id", id);
     }
 
-    // If ticket was waiting_on_client, move it back to in_progress
     if (ticket.status === "waiting_on_client" && user.user_metadata?.role === "staff") {
       await supabase
         .from("support_tickets")
@@ -119,13 +115,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         .eq("id", id);
     }
 
-    return NextResponse.json(data, { status: 201 });
+    return apiSuccess(req, data, { status: 201, extra: { comment: data } });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
 
     console.error("Unexpected error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(req, "Internal server error");
   }
 }

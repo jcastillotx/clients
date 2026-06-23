@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
@@ -12,6 +11,14 @@ import {
   validateIntegrationProviderCategory,
 } from "@/lib/settings/integration-validation";
 import { z } from "zod";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 
 const querySchema = z.object({
   clientId: z.string().uuid(),
@@ -19,10 +26,6 @@ const querySchema = z.object({
   category: z.string().optional(),
 });
 
-/**
- * GET /api/settings/integrations
- * List encrypted settings for a client (masked values only)
- */
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
@@ -31,11 +34,11 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     if (!(await isUserAdmin(user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const { searchParams } = new URL(request.url);
@@ -46,7 +49,7 @@ export async function GET(request: Request) {
     });
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid parameters", details: parsed.error.flatten() }, { status: 400 });
+      return apiValidationError(request, parsed.error);
     }
 
     const { clientId, provider, category } = parsed.data;
@@ -54,13 +57,21 @@ export async function GET(request: Request) {
     const conditions = [eq(encryptedSettings.clientId, clientId)];
     if (provider) {
       if (!isIntegrationProvider(provider)) {
-        return NextResponse.json({ error: "Unsupported integration provider." }, { status: 400 });
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Unsupported integration provider.",
+        });
       }
       conditions.push(eq(encryptedSettings.provider, provider));
     }
     if (category) {
       if (!isIntegrationCategory(category)) {
-        return NextResponse.json({ error: "Unsupported integration category." }, { status: 400 });
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Unsupported integration category.",
+        });
       }
       conditions.push(eq(encryptedSettings.category, category));
     }
@@ -70,7 +81,6 @@ export async function GET(request: Request) {
       .from(encryptedSettings)
       .where(and(...conditions));
 
-    // Return masked values - never expose raw secrets
     const masked = settings.map((s: EncryptedSetting) => {
       let maskedValue = "";
       try {
@@ -94,10 +104,10 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json(masked);
+    return apiSuccess(request, masked);
   } catch (error) {
     console.error("Error fetching integration settings:", error);
-    return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch settings");
   }
 }
 
@@ -114,10 +124,6 @@ const upsertSchema = z.object({
   ),
 });
 
-/**
- * POST /api/settings/integrations
- * Create or update encrypted settings for a provider
- */
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -126,18 +132,18 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     if (!(await isUserAdmin(user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const body = await request.json();
     const parsed = upsertSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid request body", details: parsed.error.flatten() }, { status: 400 });
+      return apiValidationError(request, parsed.error);
     }
 
     const {
@@ -149,7 +155,11 @@ export async function POST(request: Request) {
     const providerValidation = validateIntegrationProviderCategory(requestedProvider, requestedCategory);
 
     if (!providerValidation.success) {
-      return NextResponse.json({ error: providerValidation.error }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: providerValidation.error,
+      });
     }
 
     const { provider, category } = providerValidation;
@@ -159,7 +169,6 @@ export async function POST(request: Request) {
     for (const setting of settingsToSave) {
       const encryptedValue = encrypt(setting.value);
 
-      // Check if setting already exists
       const existing = await db
         .select({ id: encryptedSettings.id })
         .from(encryptedSettings)
@@ -173,7 +182,6 @@ export async function POST(request: Request) {
         .limit(1);
 
       if (existing.length > 0) {
-        // Update
         const [updated] = await db
           .update(encryptedSettings)
           .set({
@@ -190,7 +198,6 @@ export async function POST(request: Request) {
           .returning();
         results.push({ key: setting.key, action: "updated", id: updated.id });
       } else {
-        // Insert
         const [inserted] = await db
           .insert(encryptedSettings)
           .values({
@@ -208,18 +215,18 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, results });
+    return apiSuccess(request, { results }, { extra: { success: true, results } });
   } catch (error) {
     console.error("Error saving integration settings:", error);
     const publicError = getPublicIntegrationError(error);
-    return NextResponse.json({ error: publicError.error }, { status: publicError.status });
+    return apiError(request, {
+      status: publicError.status,
+      code: publicError.status >= 500 ? "INTERNAL_ERROR" : "BAD_REQUEST",
+      message: publicError.error,
+    });
   }
 }
 
-/**
- * DELETE /api/settings/integrations
- * Remove a specific setting or all settings for a provider
- */
 export async function DELETE(request: Request) {
   try {
     const supabase = await createClient();
@@ -228,11 +235,11 @@ export async function DELETE(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     if (!(await isUserAdmin(user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const { searchParams } = new URL(request.url);
@@ -241,14 +248,16 @@ export async function DELETE(request: Request) {
     const provider = searchParams.get("provider");
 
     if (settingId) {
-      // Delete a single setting
       await db.delete(encryptedSettings).where(eq(encryptedSettings.id, settingId));
     } else if (clientId && provider) {
       if (!isIntegrationProvider(provider)) {
-        return NextResponse.json({ error: "Unsupported integration provider." }, { status: 400 });
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Unsupported integration provider.",
+        });
       }
 
-      // Delete all settings for a provider
       await db
         .delete(encryptedSettings)
         .where(
@@ -258,12 +267,16 @@ export async function DELETE(request: Request) {
           ),
         );
     } else {
-      return NextResponse.json({ error: "Provide either 'id' or 'clientId' + 'provider'" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Provide either 'id' or 'clientId' + 'provider'",
+      });
     }
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting integration settings:", error);
-    return NextResponse.json({ error: "Failed to delete settings" }, { status: 500 });
+    return apiInternalError(request, "Failed to delete settings");
   }
 }

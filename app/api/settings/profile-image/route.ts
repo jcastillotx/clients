@@ -1,4 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
+
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { getS3Credentials } from "@/lib/storage/get-s3-credentials";
 
@@ -120,7 +127,7 @@ function asRecord(value: unknown): Record<string, unknown> {
 // Returns: { avatarUrl }
 // ---------------------------------------------------------------------------
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -128,32 +135,34 @@ export async function POST(req: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    const formData = await req.formData();
+    const formData = await request.formData();
     const file = formData.get("file") as File | null;
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "No file provided" });
     }
 
     const extension = ALLOWED_TYPES[file.type];
     if (!extension) {
-      return NextResponse.json(
-        { error: "Only JPG, PNG, WEBP, and GIF are allowed" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Only JPG, PNG, WEBP, and GIF are allowed",
+      });
     }
     if (file.size > MAX_BYTES) {
-      return NextResponse.json({ error: "File must be 5MB or less" }, { status: 400 });
+      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "File must be 5MB or less" });
     }
 
     const s3 = await getS3Credentials(user.id);
     if (!s3) {
-      return NextResponse.json(
-        { error: "No S3 storage connection configured. Add a company S3 connection in Storage settings." },
-        { status: 503 },
-      );
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "No S3 storage connection configured. Add a company S3 connection in Storage settings.",
+      });
     }
     const { accessKeyId, secretAccessKey, bucket, region } = s3;
 
@@ -179,10 +188,7 @@ export async function POST(req: NextRequest) {
 
     if (!s3Res.ok) {
       const errText = await s3Res.text().catch(() => s3Res.status.toString());
-      return NextResponse.json(
-        { error: `S3 upload failed (${s3Res.status}): ${errText}` },
-        { status: 500 },
-      );
+      return apiInternalError(request, `S3 upload failed (${s3Res.status}): ${errText}`);
     }
 
     // Store as proxy URL so the bucket stays private
@@ -213,19 +219,19 @@ export async function POST(req: NextRequest) {
         console.warn("Auth metadata update via admin failed:", error.message);
         // Fall back to user-scoped update
         const { error: fallbackError } = await supabase.auth.updateUser({ data: mergedMetadata });
-        if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+        if (fallbackError) return apiInternalError(request, fallbackError.message);
       }
     } else {
       const { error } = await supabase.auth.updateUser({ data: mergedMetadata });
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return apiInternalError(request, error.message);
     }
 
-    return NextResponse.json({ success: true, avatarUrl });
+    return apiSuccess(request, { avatarUrl }, { extra: { success: true, avatarUrl } });
   } catch (error) {
     console.error("Error saving profile image:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to save profile image" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to save profile image",
     );
   }
 }
@@ -291,7 +297,7 @@ async function deleteS3Object(
 // Removes the avatar from S3, the users table, and auth metadata.
 // ---------------------------------------------------------------------------
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
     const supabase = await createClient();
     const {
@@ -299,7 +305,7 @@ export async function DELETE() {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     // Extract S3 key from stored avatar URL: /api/avatar?key=avatars%2F...
@@ -331,26 +337,27 @@ export async function DELETE() {
     }
 
     // Clear avatar in auth metadata
-    const { avatar: _removed, ...metaWithoutAvatar } = asRecord(user.user_metadata);
+    const metaWithoutAvatar = { ...asRecord(user.user_metadata) };
+    delete metaWithoutAvatar.avatar;
     if (adminClient) {
       const { error } = await adminClient.auth.admin.updateUserById(user.id, {
         user_metadata: metaWithoutAvatar,
       });
       if (error) {
         const { error: fallbackError } = await supabase.auth.updateUser({ data: metaWithoutAvatar });
-        if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+        if (fallbackError) return apiInternalError(request, fallbackError.message);
       }
     } else {
       const { error } = await supabase.auth.updateUser({ data: metaWithoutAvatar });
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return apiInternalError(request, error.message);
     }
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting profile image:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete profile image" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to delete profile image",
     );
   }
 }

@@ -1,11 +1,9 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { MeetingCalendar } from "@/components/meetings/meeting-calendar";
-import { MeetingList } from "@/components/meetings/meeting-list";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MeetingsTabs } from "@/components/meetings/meetings-tabs";
 import Link from "next/link";
-import { Plus, Calendar, List } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export const metadata = {
   title: "Meetings",
@@ -35,7 +33,13 @@ async function getMeetings() {
   return meetings;
 }
 
-export default async function MeetingsPage() {
+export default async function MeetingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab } = await searchParams;
+  const defaultTab = tab === "list" ? "list" : "calendar";
   const meetings = await getMeetings();
 
   return (
@@ -53,30 +57,7 @@ export default async function MeetingsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="calendar">
-            <Calendar className="mr-2 h-4 w-4" />
-            Calendar View
-          </TabsTrigger>
-          <TabsTrigger value="list">
-            <List className="mr-2 h-4 w-4" />
-            List View
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="calendar" className="space-y-4">
-          <Suspense fallback={<div>Loading calendar...</div>}>
-            <MeetingCalendar meetings={meetings} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="list" className="space-y-4">
-          <Suspense fallback={<div>Loading meetings...</div>}>
-            <MeetingList meetings={meetings} />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
+      <MeetingsTabs meetings={meetings} defaultTab={defaultTab} />
     </div>
   );
 }

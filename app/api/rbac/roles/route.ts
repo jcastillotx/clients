@@ -1,9 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { hasAnyPermission, hasPermission } from "@/lib/rbac/permissions";
 
-// GET /api/rbac/roles - List all roles
-export async function GET() {
+/** GET /api/rbac/roles — list all roles */
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
 
@@ -12,20 +18,17 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    // RBAC read policy: allow users with either roles.read (RBAC scope)
-    // or settings.read (broader settings visibility).
     const canReadRbac = await hasAnyPermission(["roles.read", "settings.read"], {
       supabase,
       userId: user.id,
     });
     if (!canReadRbac) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
-    // Fetch roles with their permissions
     const { data: roles, error } = await supabase
       .from("roles")
       .select(
@@ -38,24 +41,26 @@ export async function GET() {
       )
       .order("name");
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-    return NextResponse.json({ roles });
+    return apiSuccess(request, roles ?? [], { extra: { roles: roles ?? [] } });
   } catch (error) {
     console.error("Error fetching roles:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch roles" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch roles",
     );
   }
 }
 
-// POST /api/rbac/roles - Create a new role
+/** POST /api/rbac/roles — create a new role */
 export async function POST(request: Request) {
   try {
     const canCreate = await hasPermission("roles.create");
     if (!canCreate) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const supabase = await createClient();
@@ -64,10 +69,13 @@ export async function POST(request: Request) {
     const { name, description, permissionIds } = body;
 
     if (!name) {
-      return NextResponse.json({ error: "Role name is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Role name is required",
+      });
     }
 
-    // Create role
     const { data: role, error: roleError } = await supabase
       .from("roles")
       .insert({
@@ -78,9 +86,10 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (roleError) throw roleError;
+    if (roleError) {
+      throw roleError;
+    }
 
-    // Assign permissions if provided
     if (permissionIds && permissionIds.length > 0) {
       const rolePermissions = permissionIds.map((permissionId: string) => ({
         role_id: role.id,
@@ -89,15 +98,17 @@ export async function POST(request: Request) {
 
       const { error: permError } = await supabase.from("role_permissions").insert(rolePermissions);
 
-      if (permError) throw permError;
+      if (permError) {
+        throw permError;
+      }
     }
 
-    return NextResponse.json({ role }, { status: 201 });
+    return apiSuccess(request, role, { status: 201, extra: { role } });
   } catch (error) {
     console.error("Error creating role:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create role" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to create role",
     );
   }
 }

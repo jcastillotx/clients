@@ -1,8 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { proposals } from "@/lib/db/schema/proposals";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * POST /api/proposals/[id]/feedback
@@ -12,22 +18,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const body = await request.json();
 
     if (!body.feedback?.trim()) {
-      return NextResponse.json({ success: false, error: "Feedback message is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Feedback message is required",
+      });
     }
 
     const [existing] = await db.select().from(proposals).where(eq(proposals.id, id)).limit(1);
 
     if (!existing) {
-      return NextResponse.json({ success: false, error: "Proposal not found" }, { status: 404 });
+      return apiNotFound(request, "Proposal not found");
     }
 
     const [updated] = await db
@@ -39,13 +52,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .where(eq(proposals.id, id))
       .returning();
 
-    return NextResponse.json({ success: true, data: updated, message: "Feedback submitted successfully" });
+    return apiSuccess(request, updated, {
+      extra: { proposal: updated, message: "Feedback submitted successfully" },
+    });
   } catch (error) {
     console.error("Error submitting feedback:", error);
     const status = isDatabaseConfigurationError(error) ? 503 : 500;
-    return NextResponse.json(
-      { success: false, error: "Failed to submit feedback", message: error instanceof Error ? error.message : "Unknown error" },
-      { status },
-    );
+    return apiError(request, {
+      status,
+      code: status === 503 ? "SERVICE_UNAVAILABLE" : "INTERNAL_ERROR",
+      message: error instanceof Error ? error.message : "Failed to submit feedback",
+    });
   }
 }

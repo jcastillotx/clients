@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import {
   maintenancePlans,
@@ -7,6 +7,14 @@ import {
 import { eq, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 type DbTransaction = Parameters<typeof db.transaction>[0] extends (
   tx: infer T,
@@ -14,7 +22,7 @@ type DbTransaction = Parameters<typeof db.transaction>[0] extends (
   ? T
   : never;
 
-async function requirePlanAccess(planId: string) {
+async function requirePlanAccess(request: Request, planId: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,12 +30,7 @@ async function requirePlanAccess(planId: string) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      ),
-    };
+    return { error: apiUnauthorized(request) };
   }
 
   const access = await resolveRouteAccess(supabase, user);
@@ -38,21 +41,11 @@ async function requirePlanAccess(planId: string) {
     .limit(1);
 
   if (!plan) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Maintenance plan not found" },
-        { status: 404 },
-      ),
-    };
+    return { error: apiNotFound(request, "Maintenance plan not found") };
   }
 
   if (!canAccessClient(access, plan.clientId)) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Forbidden" },
-        { status: 403 },
-      ),
-    };
+    return { error: apiForbidden(request) };
   }
 
   return { user, access, plan };
@@ -68,7 +61,7 @@ export async function POST(
 ) {
   const { id: planId } = await params;
   try {
-    const guard = await requirePlanAccess(planId);
+    const guard = await requirePlanAccess(request, planId);
     if ("error" in guard) {
       return guard.error;
     }
@@ -80,13 +73,11 @@ export async function POST(
     const requiredFields = ["hoursUsed", "description"];
     for (const field of requiredFields) {
       if (!body[field]) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Missing required field: ${field}`,
-          },
-          { status: 400 },
-        );
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: `Missing required field: ${field}`,
+        });
       }
     }
 
@@ -94,13 +85,11 @@ export async function POST(
 
     // Check if plan is active
     if (plan.status !== "active") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Cannot log hours to an inactive maintenance plan",
-        },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Cannot log hours to an inactive maintenance plan",
+      });
     }
 
     // Calculate hours and check for overage
@@ -170,37 +159,39 @@ export async function POST(
       // TODO: Send email notification
     }
 
-    return NextResponse.json(
-      {
-        success: true,
+    const resultData = {
+      hoursUsed,
+      newUsedHours,
+      totalAvailable,
+      hoursRemaining: totalAvailable - newUsedHours,
+      isOverage,
+      overageHours,
+      overageAmount,
+      requiresApproval,
+      utilizationPercent: Math.round(utilizationPercent * 100) / 100,
+    };
+
+    return apiSuccess(request, resultData, {
+      status: 201,
+      extra: {
         message: requiresApproval
           ? "Hours logged successfully. Awaiting approval for overage."
           : "Hours logged successfully",
-        data: {
-          hoursUsed,
-          newUsedHours,
-          totalAvailable,
-          hoursRemaining: totalAvailable - newUsedHours,
-          isOverage,
-          overageHours,
-          overageAmount,
-          requiresApproval,
-          utilizationPercent: Math.round(utilizationPercent * 100) / 100,
-        },
+        data: resultData,
       },
-      { status: 201 },
-    );
+    });
   } catch (error) {
     console.error("Error logging maintenance plan usage:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to log hours",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to log hours",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to log hours",
     );
   }
 }
@@ -215,7 +206,7 @@ export async function GET(
 ) {
   const { id: planId } = await params;
   try {
-    const guard = await requirePlanAccess(planId);
+    const guard = await requirePlanAccess(request, planId);
     if ("error" in guard) {
       return guard.error;
     }
@@ -276,30 +267,30 @@ export async function GET(
       .from(maintenancePlanUsage)
       .where(eq(maintenancePlanUsage.planId, planId));
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        usageLogs,
-        summary,
-        pagination: {
-          limit,
-          offset,
-          total: count,
-          hasMore: offset + limit < count,
-        },
+    const payload = {
+      usageLogs,
+      summary,
+      pagination: {
+        limit,
+        offset,
+        total: count,
+        hasMore: offset + limit < count,
       },
-    });
+    };
+
+    return apiSuccess(request, payload);
   } catch (error) {
     console.error("Error fetching maintenance plan usage:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch usage history",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to fetch usage history",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch usage history",
     );
   }
 }

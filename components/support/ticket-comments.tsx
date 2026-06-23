@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
+import { fetchApi } from "@/lib/api/client";
 import { toast } from "sonner";
 import { LockClosedIcon } from "@radix-ui/react-icons";
 
@@ -85,25 +86,22 @@ export function SupportTicketComments({ ticketId, initialComments, currentUserId
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/support/${ticketId}/comments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const commentPayload = await fetchApi<CommentPayload>(
+        `/api/support/${ticketId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            comment: newComment,
+            isInternal,
+          }),
         },
-        body: JSON.stringify({
-          comment: newComment,
-          isInternal,
-        }),
-      });
+        { fallbackMessage: "Failed to add comment" },
+      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to add comment");
-      }
-
-      const result = await response.json();
-
-      setComments([...comments, normalizeComment(result)]);
+      setComments([...comments, normalizeComment(commentPayload)]);
       setNewComment("");
       setIsInternal(false);
       toast.success("Comment added successfully");

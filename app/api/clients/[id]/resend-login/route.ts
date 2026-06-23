@@ -1,5 +1,12 @@
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { auditLog, logger } from "@/lib/logger";
@@ -10,7 +17,7 @@ import { auditLog, logger } from "@/lib/logger";
  * Sends the primary contact a password recovery email (Supabase) so they can set/reset
  * their password and sign in — same mechanism as "Forgot password".
  */
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: clientId } = await params;
 
   try {
@@ -20,7 +27,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     } = await supabase.auth.getUser();
 
     if (!currentUser) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
@@ -38,7 +45,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
 
     if (!(canUpdateClients || hasManagementRole)) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request, "Permission denied");
     }
 
     const adminForDb = hasManagementRole ? createAdminClientIfAvailable() : null;
@@ -59,14 +66,15 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     if (clientError) throw clientError;
     if (!client) {
-      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+      return apiNotFound(request, "Client not found");
     }
 
     if (typeof client.primary_contact_id !== "string" || !client.primary_contact_id.length) {
-      return NextResponse.json(
-        { error: "Assign a primary contact before sending login information." },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Assign a primary contact before sending login information.",
+      });
     }
 
     const { data: contact, error: contactError } = await dbClient
@@ -77,21 +85,27 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     if (contactError) throw contactError;
     if (!contact?.email?.trim()) {
-      return NextResponse.json(
-        { error: "Primary contact has no email address on file." },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Primary contact has no email address on file.",
+      });
     }
     if (contact.deleted_at) {
-      return NextResponse.json({ error: "Primary contact user is inactive." }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Primary contact user is inactive.",
+      });
     }
 
     const authAdmin = createAdminClientIfAvailable();
     if (!authAdmin) {
-      return NextResponse.json(
-        { error: "Email could not be sent: server mail configuration is incomplete." },
-        { status: 503 },
-      );
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Email could not be sent: server mail configuration is incomplete.",
+      });
     }
 
     const email = contact.email.trim();
@@ -104,10 +118,11 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
         clientId,
         targetUserId: contact.id,
       });
-      return NextResponse.json(
-        { error: resetError.message || "Failed to send email" },
-        { status: 502 },
-      );
+      return apiError(request, {
+        status: 502,
+        code: "INTERNAL_ERROR",
+        message: resetError.message || "Failed to send email",
+      });
     }
 
     auditLog("client.login_info_sent", currentUser.id, {
@@ -116,16 +131,22 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       companyName: client.company_name,
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Login email sent",
-      sentTo: email,
-    });
+    return apiSuccess(
+      request,
+      { sentTo: email },
+      {
+        extra: {
+          success: true,
+          message: "Login email sent",
+          sentTo: email,
+        },
+      },
+    );
   } catch (error) {
     logger.error("POST /api/clients/[id]/resend-login", error, { clientId });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unexpected error" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Unexpected error",
     );
   }
 }

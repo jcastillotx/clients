@@ -1,29 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
 import { encrypt, decrypt, maskSecret } from "@/lib/encryption";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
-// Keys stored in system_settings under category = 'email'
 const EMAIL_KEYS = [
-  "provider",      // resend | gmail | office365 | sendgrid | mailgun | smtp
+  "provider",
   "from_email",
   "from_name",
-  // Resend / SendGrid / Mailgun
   "api_key",
   "mailgun_domain",
-  // SMTP (generic, Gmail, Office 365)
   "smtp_host",
   "smtp_port",
   "smtp_user",
   "smtp_password",
-  "smtp_encryption", // none | starttls | ssl
-  // OAuth (Gmail / Office 365) — written by /api/admin/email/callback/{provider}
-  "oauth_provider",         // google | microsoft
-  "oauth_account_email",    // connected mailbox
-  "oauth_access_token",     // encrypted
-  "oauth_refresh_token",    // encrypted
-  "oauth_token_expiry",     // ISO timestamp
+  "smtp_encryption",
+  "oauth_provider",
+  "oauth_account_email",
+  "oauth_access_token",
+  "oauth_refresh_token",
+  "oauth_token_expiry",
 ] as const;
 
 const SECRET_KEYS = new Set([
@@ -43,14 +46,20 @@ interface SettingRow {
  * GET /api/admin/email
  * Returns current email provider settings with secrets masked.
  */
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await isUserAdmin(user.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user) return apiUnauthorized(request);
+  if (!(await isUserAdmin(user.id))) return apiForbidden(request);
 
   const adminClient = createAdminClientIfAvailable();
-  if (!adminClient) return NextResponse.json({ error: "Admin client not configured" }, { status: 503 });
+  if (!adminClient) {
+    return apiError(request, {
+      status: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "Admin client not configured",
+    });
+  }
 
   const { data: rows, error: selectError } = await adminClient
     .from("system_settings")
@@ -59,7 +68,7 @@ export async function GET() {
 
   if (selectError) {
     console.error("[admin/email] Failed to load settings:", selectError);
-    return NextResponse.json({ error: "Failed to load email settings" }, { status: 500 });
+    return apiInternalError(request, "Failed to load email settings");
   }
 
   const settings: Record<string, string> = {};
@@ -72,7 +81,7 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(settings);
+  return apiSuccess(request, settings, { extra: settings });
 }
 
 /**
@@ -82,11 +91,17 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await isUserAdmin(user.id))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user) return apiUnauthorized(req);
+  if (!(await isUserAdmin(user.id))) return apiForbidden(req);
 
   const adminClient = createAdminClientIfAvailable();
-  if (!adminClient) return NextResponse.json({ error: "Admin client not configured" }, { status: 503 });
+  if (!adminClient) {
+    return apiError(req, {
+      status: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "Admin client not configured",
+    });
+  }
 
   const body = await req.json();
 
@@ -94,7 +109,6 @@ export async function PUT(req: NextRequest) {
     const raw: unknown = body[key];
     if (raw === undefined || raw === null) continue;
     const val = String(raw).trim();
-    // Skip blank values — preserve existing secret rather than overwrite with empty
     if (val === "" || val === "••••••••") continue;
 
     const isSecret = SECRET_KEYS.has(key);
@@ -114,17 +128,9 @@ export async function PUT(req: NextRequest) {
 
     if (error) {
       console.error(`[admin/email] Failed to save setting ${key}:`, error);
-      return NextResponse.json(
-        { error: `Failed to save ${key.replace(/_/g, " ")}` },
-        { status: 500 },
-      );
+      return apiInternalError(req, `Failed to save ${key.replace(/_/g, " ")}`);
     }
   }
 
-  return NextResponse.json({ success: true });
+  return apiSuccess(req, { saved: true }, { extra: { success: true } });
 }
-
-/**
- * POST /api/admin/email/test  — handled by /test sub-route below.
- * Kept here so the route file structure is clear.
- */

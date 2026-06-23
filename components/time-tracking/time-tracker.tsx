@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Play, Square, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { fetchApi } from "@/lib/api/client";
 
 interface TimeTrackerProps {
   onTimerStop?: () => void;
@@ -50,18 +51,27 @@ export function TimeTracker({ onTimerStop }: TimeTrackerProps) {
 
   const checkRunningTimer = async () => {
     try {
-      const response = await fetch("/api/time-tracking/start");
-      const data = await response.json();
+      const payload = await fetchApi<{
+        running?: boolean;
+        entry?: {
+          startedAt: string;
+          description?: string;
+          clientId?: string;
+          requestId?: string;
+          isBillable: boolean;
+          hourlyRate?: string;
+        };
+      }>("/api/time-tracking/start", undefined, { fallbackMessage: "Failed to check timer" });
 
-      if (data.running && data.entry) {
+      if (payload.running && payload.entry) {
         setIsRunning(true);
-        setCurrentEntry(data.entry);
-        setStartTime(new Date(data.entry.startedAt));
-        setDescription(data.entry.description || "");
-        setClientId(data.entry.clientId || "");
-        setRequestId(data.entry.requestId || "");
-        setIsBillable(data.entry.isBillable);
-        setHourlyRate(data.entry.hourlyRate || "");
+        setCurrentEntry(payload.entry);
+        setStartTime(new Date(payload.entry.startedAt));
+        setDescription(payload.entry.description || "");
+        setClientId(payload.entry.clientId || "");
+        setRequestId(payload.entry.requestId || "");
+        setIsBillable(payload.entry.isBillable);
+        setHourlyRate(payload.entry.hourlyRate || "");
       }
     } catch (error) {
       console.error("Error checking running timer:", error);
@@ -70,24 +80,21 @@ export function TimeTracker({ onTimerStop }: TimeTrackerProps) {
 
   const startTimer = async () => {
     try {
-      const response = await fetch("/api/time-tracking/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description,
-          clientId: clientId || null,
-          requestId: requestId || null,
-          isBillable,
-          hourlyRate: hourlyRate ? parseFloat(hourlyRate) : null,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to start timer");
-      }
-
-      const entry = await response.json();
+      const entry = await fetchApi<{ startedAt: string }>(
+        "/api/time-tracking/start",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            description,
+            clientId: clientId || null,
+            requestId: requestId || null,
+            isBillable,
+            hourlyRate: hourlyRate ? parseFloat(hourlyRate) : null,
+          }),
+        },
+        { fallbackMessage: "Failed to start timer" },
+      );
       setIsRunning(true);
       setCurrentEntry(entry);
       setStartTime(new Date(entry.startedAt));
@@ -100,19 +107,17 @@ export function TimeTracker({ onTimerStop }: TimeTrackerProps) {
 
   const stopTimer = async () => {
     try {
-      const response = await fetch("/api/time-tracking/stop", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: currentEntry?.id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to stop timer");
-      }
-
-      const stoppedEntry = await response.json();
+      const stoppedEntry = await fetchApi<{ durationMinutes: number }>(
+        "/api/time-tracking/stop",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: currentEntry?.id,
+          }),
+        },
+        { fallbackMessage: "Failed to stop timer" },
+      );
       setIsRunning(false);
       setCurrentEntry(null);
       setStartTime(null);

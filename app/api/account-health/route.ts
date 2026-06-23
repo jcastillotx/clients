@@ -1,4 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { db } from "@/lib/db";
 import { accountHealth } from "@/lib/db/schema/additional-features";
 import { eq, desc } from "drizzle-orm";
@@ -36,10 +45,6 @@ const upsertSchema = z.object({
     .optional(),
 });
 
-/**
- * GET /api/account-health
- * Retrieve account health for a client
- */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -49,25 +54,24 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
-
-    const searchParams = request.nextUrl.searchParams;
     const parsed = querySchema.safeParse({
-      clientId: searchParams.get("clientId"),
+      clientId: request.nextUrl.searchParams.get("clientId"),
     });
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Client ID is required" },
-        { status: 400 },
-      );
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Client ID is required",
+      });
     }
 
     const { clientId } = parsed.data;
     if (!canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const health = await db
@@ -78,26 +82,16 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (health.length === 0) {
-      return NextResponse.json(
-        { error: "Account health not found" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Account health not found");
     }
 
-    return NextResponse.json(health[0]);
+    return apiSuccess(request, health[0]);
   } catch (error) {
     console.error("Error fetching account health:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch account health" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to fetch account health");
   }
 }
 
-/**
- * POST /api/account-health
- * Calculate and store new account health
- */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -107,18 +101,14 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveRouteAccess(supabase, user);
-
     const body = await request.json();
     const parsed = upsertSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
+      return apiValidationError(request, parsed.error);
     }
 
     const {
@@ -133,7 +123,7 @@ export async function POST(request: NextRequest) {
     } = parsed.data;
 
     if (!canAccessClient(access, clientId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const newHealthRow: typeof accountHealth.$inferInsert = {
@@ -153,12 +143,9 @@ export async function POST(request: NextRequest) {
       .values(newHealthRow)
       .returning();
 
-    return NextResponse.json(newHealth[0], { status: 201 });
+    return apiSuccess(request, newHealth[0], { status: 201 });
   } catch (error) {
     console.error("Error creating account health:", error);
-    return NextResponse.json(
-      { error: "Failed to create account health" },
-      { status: 500 },
-    );
+    return apiInternalError(request, "Failed to create account health");
   }
 }

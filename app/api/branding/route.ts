@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import type { BrandingSettings } from "@/lib/branding/get-branding";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
-/**
- * POST /api/branding
- * Body: { clientId, logoUrl, domain, primaryColor, secondaryColor, settings }
- * Upserts white_label_configs using admin client to bypass RLS for admin users.
- * Extended settings are serialized as JSON into the custom_css column.
- */
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(req);
     }
 
     const body = (await req.json()) as {
@@ -31,10 +31,13 @@ export async function POST(req: NextRequest) {
     const { clientId, logoUrl, domain, primaryColor, secondaryColor, settings } = body;
 
     if (!clientId) {
-      return NextResponse.json({ error: "clientId is required" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "clientId is required",
+      });
     }
 
-    // Serialize extended settings as JSON into the custom_css column
     const customCss = settings ? JSON.stringify(settings) : null;
 
     const dbClient = createAdminClientIfAvailable() ?? supabase;
@@ -54,14 +57,14 @@ export async function POST(req: NextRequest) {
     );
 
     if (upsertError) {
-      return NextResponse.json({ error: upsertError.message }, { status: 500 });
+      return apiInternalError(req, upsertError.message);
     }
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(req, { saved: true }, { extra: { success: true } });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to save branding" },
-      { status: 500 },
+    return apiInternalError(
+      req,
+      error instanceof Error ? error.message : "Failed to save branding",
     );
   }
 }

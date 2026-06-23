@@ -1,8 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 
-async function ensureDocumentAccess(id: string) {
+async function ensureDocumentAccess(request: Request, id: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -10,9 +16,7 @@ async function ensureDocumentAccess(id: string) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return {
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
+    return { error: apiUnauthorized(request) };
   }
 
   const access = await resolveRouteAccess(supabase, user);
@@ -24,18 +28,11 @@ async function ensureDocumentAccess(id: string) {
     .single();
 
   if (error || !document) {
-    return {
-      error: NextResponse.json(
-        { error: "Document not found" },
-        { status: 404 },
-      ),
-    };
+    return { error: apiNotFound(request, "Document not found") };
   }
 
   if (!canAccessClient(access, document.client_id)) {
-    return {
-      error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
-    };
+    return { error: apiForbidden(request) };
   }
 
   return { supabase, document };
@@ -47,7 +44,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const guard = await ensureDocumentAccess(id);
+    const guard = await ensureDocumentAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -71,21 +68,15 @@ export async function GET(
     if (error) throw error;
 
     if (!document) {
-      return NextResponse.json(
-        { error: "Document not found" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Document not found");
     }
 
-    return NextResponse.json({ document });
+    return apiSuccess(request, document, { extra: { document } });
   } catch (error) {
     console.error("Error fetching document:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to fetch document",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch document",
     );
   }
 }
@@ -96,7 +87,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   try {
-    const guard = await ensureDocumentAccess(id);
+    const guard = await ensureDocumentAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -132,21 +123,15 @@ export async function PATCH(
     if (error) throw error;
 
     if (!document) {
-      return NextResponse.json(
-        { error: "Document not found" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Document not found");
     }
 
-    return NextResponse.json({ document });
+    return apiSuccess(request, document, { extra: { document } });
   } catch (error) {
     console.error("Error updating document:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to update document",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to update document",
     );
   }
 }
@@ -157,14 +142,13 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    const guard = await ensureDocumentAccess(id);
+    const guard = await ensureDocumentAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
 
     const { supabase } = guard;
 
-    // Soft delete document record
     const { error: dbError } = await supabase
       .from("documents")
       .update({ deleted_at: new Date().toISOString() })
@@ -172,18 +156,12 @@ export async function DELETE(
 
     if (dbError) throw dbError;
 
-    // Delete from storage (optional - can keep for recovery)
-    // await deleteFile(StorageBuckets.DOCUMENTS, document.storage_path);
-
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true });
   } catch (error) {
     console.error("Error deleting document:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to delete document",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to delete document",
     );
   }
 }

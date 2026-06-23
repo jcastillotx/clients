@@ -1,21 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { uploadFile, generateFilePath, StorageBuckets } from "@/lib/storage/upload";
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
 
-    // Get authenticated user
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    // Get form data
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const clientId = formData.get("clientId") as string;
@@ -25,10 +29,13 @@ export async function POST(request: Request) {
     const tags = formData.get("tags") as string | null;
 
     if (!file || !clientId || !name) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required fields",
+      });
     }
 
-    // Verify user has access to this client
     const { data: userClient } = await supabase.from("users").select("client_id").eq("id", user.id).single();
 
     const hasAccess =
@@ -43,13 +50,11 @@ export async function POST(request: Request) {
       ).data;
 
     if (!hasAccess) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      return apiForbidden(request, "Access denied");
     }
 
-    // Generate unique file path
     const filePath = generateFilePath(clientId, "documents", file.name);
 
-    // Upload to Supabase Storage
     const uploadResult = await uploadFile({
       bucket: StorageBuckets.DOCUMENTS,
       path: filePath,
@@ -57,10 +62,9 @@ export async function POST(request: Request) {
     });
 
     if (uploadResult.error) {
-      return NextResponse.json({ error: uploadResult.error }, { status: 500 });
+      return apiInternalError(request, uploadResult.error);
     }
 
-    // Create document record
     const { data: document, error: dbError } = await supabase
       .from("documents")
       .insert({
@@ -80,19 +84,16 @@ export async function POST(request: Request) {
       .single();
 
     if (dbError) {
-      // Clean up uploaded file if database insert fails
       await supabase.storage.from(StorageBuckets.DOCUMENTS).remove([uploadResult.path]);
-      return NextResponse.json({ error: dbError.message }, { status: 500 });
+      return apiInternalError(request, dbError.message);
     }
 
-    return NextResponse.json({ document }, { status: 201 });
+    return apiSuccess(request, document, { status: 201, extra: { document } });
   } catch (error) {
     console.error("Error uploading document:", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to upload document",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to upload document",
     );
   }
 }

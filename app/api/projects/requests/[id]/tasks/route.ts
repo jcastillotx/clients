@@ -1,4 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
+
 import { createClient } from "@/lib/supabase/server";
 
 async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
@@ -36,7 +44,7 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
  *
  * AJAX feed for project-request-related tasks.
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -46,7 +54,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveAccess(supabase, user);
@@ -59,11 +67,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (requestError || !requestRow) {
-      return NextResponse.json({ error: "Project request not found" }, { status: 404 });
+      return apiNotFound(request, "Project request not found");
     }
 
     if (!access.isAdmin && access.clientId !== requestRow.client_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const { data: tasks, error: tasksError } = await supabase
@@ -73,7 +81,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .order("created_at", { ascending: false });
 
     if (tasksError) {
-      return NextResponse.json({ error: tasksError.message }, { status: 500 });
+      return apiInternalError(request, tasksError.message);
     }
 
     const columnIds = Array.from(new Set((tasks || []).map((task) => task.column_id).filter(Boolean)));
@@ -92,10 +100,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     ]);
 
     if (columnsResult.error) {
-      return NextResponse.json({ error: columnsResult.error.message }, { status: 500 });
+      return apiInternalError(request, columnsResult.error.message);
     }
     if (assigneesResult.error) {
-      return NextResponse.json({ error: assigneesResult.error.message }, { status: 500 });
+      return apiInternalError(request, assigneesResult.error.message);
     }
 
     const columnNameById = new Map((columnsResult.data || []).map((column) => [column.id, column.name]));
@@ -122,9 +130,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       assignees: assigneesByTaskId.get(task.id) || [],
     }));
 
-    return NextResponse.json({ data: payload });
+    return apiSuccess(request, payload);
   } catch (error) {
     console.error("Error fetching project request tasks:", error);
-    return NextResponse.json({ error: "Failed to fetch project request tasks" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch project request tasks");
   }
 }

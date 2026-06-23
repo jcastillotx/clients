@@ -1,12 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { timeEntries } from "@/lib/db/schema/time-tracking";
 import { eq, and, isNull } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * POST /api/time-tracking/start
- * Start a new timer
  */
 export async function POST(request: NextRequest) {
   try {
@@ -14,11 +19,10 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
     const userId = user.id;
 
-    // Check if there's already a running timer
     const [runningTimer] = await db
       .select()
       .from(timeEntries)
@@ -26,13 +30,17 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (runningTimer) {
-      return NextResponse.json({ error: "Timer already running", entry: runningTimer }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Timer already running",
+        details: { entry: runningTimer },
+      });
     }
 
     const body = await request.json();
     const { clientId, requestId, taskId, projectId, description, isBillable, hourlyRate } = body;
 
-    // Create a new time entry with started_at but no ended_at
     const [entry] = await db
       .insert(timeEntries)
       .values({
@@ -51,24 +59,23 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(entry, { status: 201 });
+    return apiSuccess(request, entry, { status: 201, extra: entry as Record<string, unknown> });
   } catch (error) {
     console.error("Error starting timer:", error);
-    return NextResponse.json({ error: "Failed to start timer" }, { status: 500 });
+    return apiInternalError(request, "Failed to start timer");
   }
 }
 
 /**
  * GET /api/time-tracking/start
- * Get currently running timer
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
     const userId = user.id;
 
@@ -82,12 +89,14 @@ export async function GET() {
     });
 
     if (!runningTimer) {
-      return NextResponse.json({ running: false, entry: null });
+      const payload = { running: false, entry: null };
+      return apiSuccess(request, payload, { extra: payload });
     }
 
-    return NextResponse.json({ running: true, entry: runningTimer });
+    const payload = { running: true, entry: runningTimer };
+    return apiSuccess(request, payload, { extra: payload });
   } catch (error) {
     console.error("Error fetching running timer:", error);
-    return NextResponse.json({ error: "Failed to fetch running timer" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch running timer");
   }
 }

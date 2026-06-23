@@ -1,27 +1,35 @@
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe/client";
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
 
-    // Check authentication
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const { invoiceId } = await request.json();
 
     if (!invoiceId) {
-      return NextResponse.json({ error: "Invoice ID is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Invoice ID is required",
+      });
     }
 
-    // Fetch invoice with client details
     const { data: invoice, error: invoiceError } = await supabase
       .from("invoices")
       .select(
@@ -36,13 +44,13 @@ export async function POST(request: Request) {
       .single();
 
     if (invoiceError || !invoice) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      return apiNotFound(request, "Invoice not found");
     }
 
     const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
 
     if (!client) {
-      return NextResponse.json({ error: "Invoice client not found" }, { status: 404 });
+      return apiNotFound(request, "Invoice client not found");
     }
 
     let primaryContact: { id: string; name: string; email: string } | null = null;
@@ -61,21 +69,25 @@ export async function POST(request: Request) {
       }
     }
 
-    // Check if invoice is already paid
     if (invoice.status === "paid") {
-      return NextResponse.json({ error: "Invoice is already paid" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Invoice is already paid",
+      });
     }
 
-    // Check if invoice is cancelled
     if (invoice.status === "cancelled") {
-      return NextResponse.json({ error: "Invoice is cancelled" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Invoice is cancelled",
+      });
     }
 
-    // Get or create Stripe customer
     let customerId = client.stripe_customer_id;
 
     if (!customerId && primaryContact?.email) {
-      // Create Stripe customer
       const customer = await stripe.customers.create({
         email: primaryContact.email,
         name: client.company_name,
@@ -87,13 +99,11 @@ export async function POST(request: Request) {
 
       customerId = customer.id;
 
-      // Update client with Stripe customer ID
       await supabase.from("clients").update({ stripe_customer_id: customerId }).eq("id", client.id);
     }
 
-    // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(invoice.amount * 100), // Convert to cents
+      amount: Math.round(invoice.amount * 100),
       currency: "usd",
       customer: customerId || undefined,
       metadata: {
@@ -107,24 +117,25 @@ export async function POST(request: Request) {
       },
     });
 
-    // Update invoice with payment intent ID
     await supabase
       .from("invoices")
       .update({
         stripe_payment_intent_id: paymentIntent.id,
-        status: "sent", // Ensure status is at least "sent"
+        status: "sent",
       })
       .eq("id", invoice.id);
 
-    return NextResponse.json({
+    const payload = {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
-    });
+    };
+
+    return apiSuccess(request, payload, { extra: payload });
   } catch (error) {
     console.error("Error creating payment intent:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create payment intent" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to create payment intent",
     );
   }
 }

@@ -1,13 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { collectRoleNames } from "@/lib/rbac/role-row-utils";
 import { z } from "zod";
 import { createContentSchema } from "@/lib/validations/marketing";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 
-/**
- * GET /api/marketing/content-calendar
- * 
- * Fetch all content calendar items
- */
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
 
@@ -16,11 +20,10 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   try {
-    // Get user's client and role info
     const { data: userData } = await supabase
       .from("users")
       .select("client_id, is_super_admin")
@@ -32,21 +35,16 @@ export async function GET(req: NextRequest) {
       .select("role:roles(name)")
       .eq("user_id", user.id);
 
-    const roleNames = new Set<string>();
-    for (const row of roleRows || []) {
-      const roleName = String((row as any)?.role?.name || (row as any)?.role?.[0]?.name || "").toLowerCase();
-      if (roleName) roleNames.add(roleName);
-    }
+    const roleNames = collectRoleNames(roleRows);
 
     const isAdmin = Boolean(userData?.is_super_admin) || roleNames.has("admin") || roleNames.has("super_admin");
     const isAccountManager = roleNames.has("account_manager");
     const isStaff = isAdmin || isAccountManager || roleNames.has("staff");
 
     if (!isStaff) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(req);
     }
 
-    // Staff can optionally filter by client_id
     const clientIdFilter = req.nextUrl.searchParams.get("client_id");
 
     let query = supabase
@@ -68,18 +66,14 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json(data);
+    const rows = data ?? [];
+    return apiSuccess(req, rows, { extra: { items: rows } });
   } catch (error) {
     console.error("Error fetching content calendar:", error);
-    return NextResponse.json({ error: "Failed to fetch content calendar" }, { status: 500 });
+    return apiInternalError(req, "Failed to fetch content calendar");
   }
 }
 
-/**
- * POST /api/marketing/content-calendar
- * 
- * Create a new content calendar item
- */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
@@ -88,20 +82,21 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   try {
     const body = await req.json();
-    
-    // Validate input
     const validatedData = createContentSchema.parse(body);
 
-    // Get user's client_id
     const { data: userData } = await supabase.from("users").select("client_id").eq("id", user.id).single();
 
     if (!userData?.client_id) {
-      return NextResponse.json({ error: "User not associated with a client" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "User not associated with a client",
+      });
     }
 
     const { data, error } = await supabase
@@ -121,12 +116,12 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json(data, { status: 201 });
+    return apiSuccess(req, data, { status: 201, extra: { item: data } });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
     console.error("Error creating content:", error);
-    return NextResponse.json({ error: "Failed to create content" }, { status: 500 });
+    return apiInternalError(req, "Failed to create content");
   }
 }

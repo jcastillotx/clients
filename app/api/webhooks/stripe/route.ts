@@ -1,10 +1,15 @@
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { inngest } from "@/lib/inngest/client";
 import { dispatchNotification } from "@/lib/notifications/service";
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { processStripeWebhookRequest } from "@/lib/webhooks/stripe-webhook-request";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  errorCodeFromStatus,
+} from "@/lib/api/response";
 
 function getStripeConfig() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -49,17 +54,18 @@ async function logActivity(args: {
   });
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   const config = getStripeConfig();
   if (!config) {
-    return NextResponse.json(
-      { error: "Stripe webhook is not configured" },
-      { status: 503 },
-    );
+    return apiError(request, {
+      status: 503,
+      code: "SERVICE_UNAVAILABLE",
+      message: "Stripe webhook is not configured",
+    });
   }
 
   try {
-    const body = await req.text();
+    const body = await request.text();
     const headersList = await headers();
     const signature = headersList.get("stripe-signature");
 
@@ -264,15 +270,24 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(result.payload, { status: result.status });
+    if (result.status >= 400) {
+      const message =
+        typeof result.payload.error === "string"
+          ? result.payload.error
+          : "Webhook request failed";
+      return apiError(request, {
+        status: result.status,
+        code: errorCodeFromStatus(result.status),
+        message,
+      });
+    }
+
+    return apiSuccess(request, result.payload, { extra: result.payload, status: result.status });
   } catch (error) {
     console.error("Webhook error:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Webhook processing failed",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Webhook processing failed",
     );
   }
 }

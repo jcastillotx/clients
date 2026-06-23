@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface Role {
   id: string;
@@ -139,18 +140,11 @@ export function UserDialog({ open, onOpenChange, user, roles, clients, canAssign
       const url = user ? `/api/admin/users/${user.id}` : "/api/admin/users";
       const method = user ? "PATCH" : "POST";
 
-      const response = await fetch(url, {
+      const savedUser = await fetchApi<User>(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to save user");
-      }
-
-      const { user: savedUser } = await response.json();
+      }, { fallbackMessage: "Failed to save user" });
       if (!savedUser || typeof savedUser.id !== "string") {
         throw new Error("User saved but response payload was invalid");
       }

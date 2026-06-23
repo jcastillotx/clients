@@ -1,4 +1,7 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { ClientList } from "@/components/clients/client-list";
 import { syncMissingAuthUsers } from "@/lib/supabase/user-profile-sync";
 
@@ -19,9 +22,14 @@ interface QueryErrorShape {
   details?: string | null;
 }
 
+interface UserRoleRow {
+  role?: { name?: string | null } | Array<{ name?: string | null }> | null;
+}
+
 function isMissingLegacyClientColumn(error: QueryErrorShape | null) {
   if (!error) return false;
-  const detailText = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  const detailText =
+    `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
   return (
     (error.code === "42703" || detailText.includes("does not exist")) &&
     (detailText.includes("domain") || detailText.includes("industry"))
@@ -34,7 +42,11 @@ function isMissingLegacyClientColumn(error: QueryErrorShape | null) {
  * Fetches clients on the server with RLS automatically filtering by user's access.
  * For super admins, returns all clients. For staff, returns assigned clients only.
  */
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
@@ -45,16 +57,27 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
   if (!user) return null; // Type narrowing only; layout already guards auth
 
-  const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
+  const metadataRole = String(
+    user.user_metadata?.role ?? user.user_metadata?.app_role ?? "",
+  ).toLowerCase();
   const [userRowRes, userRolesRes] = await Promise.all([
-    supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    supabase
+      .from("users")
+      .select("id, is_super_admin")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id),
   ]);
 
   const userRow = userRowRes.data;
   const roleNames = new Set(
-    (userRolesRes.data ?? []).flatMap((entry: any) => {
-      const roleValue = Array.isArray(entry.role) ? entry.role[0]?.name : entry.role?.name;
+    ((userRolesRes.data ?? []) as UserRoleRow[]).flatMap((entry) => {
+      const roleValue = Array.isArray(entry.role)
+        ? entry.role[0]?.name
+        : entry.role?.name;
       return typeof roleValue === "string" ? [roleValue.toLowerCase()] : [];
     }),
   );
@@ -77,51 +100,21 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   }
 
   if (isAdminUser && !adminClient) {
-    console.warn("Service-role Supabase key missing; falling back to session client for /clients");
+    console.warn(
+      "Service-role Supabase key missing; falling back to session client for /clients",
+    );
   }
 
   const excludedClientIds = (process.env.PARENT_CLIENT_IDS ?? "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  const excludedCompanyNames = (process.env.PARENT_COMPANY_NAMES ?? "Kre8ivTech,Kre8iv Designs")
+  const excludedCompanyNames = (
+    process.env.PARENT_COMPANY_NAMES ?? "Kre8ivTech,Kre8iv Designs"
+  )
     .split(",")
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
-
-  // Build query with filters
-  let query = dbClient
-    .from("clients")
-    .select(
-      `
-      *,
-      _count:requests(count)
-    `,
-      { count: "exact" },
-    )
-    .order("created_at", { ascending: false });
-
-  if (excludedClientIds.length > 0) {
-    const formattedIds = excludedClientIds.map((id) => `"${id}"`).join(",");
-    query = query.not("id", "in", `(${formattedIds})`);
-  }
-
-  if (excludedCompanyNames.length > 0) {
-    const formattedNames = excludedCompanyNames.map((name) => `"${name}"`).join(",");
-    query = query.not("company_name", "in", `(${formattedNames})`);
-  }
-
-  // Apply search filter
-  if (resolvedSearchParams.search) {
-    query = query.or(
-      `company_name.ilike.%${resolvedSearchParams.search}%,domain.ilike.%${resolvedSearchParams.search}%,industry.ilike.%${resolvedSearchParams.search}%`,
-    );
-  }
-
-  // Apply status filter
-  if (resolvedSearchParams.status && resolvedSearchParams.status !== "all") {
-    query = query.eq("status", resolvedSearchParams.status);
-  }
 
   // Pagination
   const page = parseInt(resolvedSearchParams.page || "1");
@@ -144,6 +137,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     `,
         { count: "exact" },
       )
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (excludedClientIds.length > 0) {
@@ -152,7 +146,9 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     }
 
     if (excludedCompanyNames.length > 0) {
-      const formattedNames = excludedCompanyNames.map((name) => `"${name}"`).join(",");
+      const formattedNames = excludedCompanyNames
+        .map((name) => `"${name}"`)
+        .join(",");
       query = query.not("company_name", "in", `(${formattedNames})`);
     }
 
@@ -173,7 +169,9 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   let result = await runClientsQuery({ useLegacySearchColumns: true });
 
   if (isMissingLegacyClientColumn(result.error)) {
-    console.warn("Missing legacy client columns (domain/industry); retrying /clients query with core searchable fields");
+    console.warn(
+      "Missing legacy client columns (domain/industry); retrying /clients query with core searchable fields",
+    );
     result = await runClientsQuery({ useLegacySearchColumns: false });
   }
 
@@ -192,29 +190,39 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     ),
   );
 
-  let primaryContactsById = new Map<string, { id: string; name: string; email: string; phone?: string | null }>();
+  let primaryContactsById = new Map<
+    string,
+    { id: string; name: string; email: string; phone?: string | null }
+  >();
 
   if (primaryContactIds.length > 0) {
-    const { data: primaryContacts, error: primaryContactsError } = await dbClient
-      .from("users")
-      .select("id, name, email, phone")
-      .in("id", primaryContactIds);
+    const { data: primaryContacts, error: primaryContactsError } =
+      await dbClient
+        .from("users")
+        .select("id, name, email, phone")
+        .in("id", primaryContactIds);
 
     if (primaryContactsError) {
       console.error("Error fetching primary contacts:", primaryContactsError);
     } else {
-      primaryContactsById = new Map((primaryContacts ?? []).map((contact) => [contact.id, contact]));
+      primaryContactsById = new Map(
+        (primaryContacts ?? []).map((contact) => [contact.id, contact]),
+      );
     }
   }
 
   const clientsWithPrimaryContacts = (clients ?? []).map((client) => ({
     ...client,
     primary_contact:
-      typeof client.primary_contact_id === "string" ? primaryContactsById.get(client.primary_contact_id) ?? null : null,
+      typeof client.primary_contact_id === "string"
+        ? (primaryContactsById.get(client.primary_contact_id) ?? null)
+        : null,
   }));
 
   const filteredClients = clientsWithPrimaryContacts.filter((client) => {
-    const companyName = String(client.company_name ?? "").trim().toLowerCase();
+    const companyName = String(client.company_name ?? "")
+      .trim()
+      .toLowerCase();
     return !excludedCompanyNames.includes(companyName);
   });
 
@@ -227,7 +235,12 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      <ClientList initialData={filteredClients} totalCount={count || 0} currentPage={page} pageSize={pageSize} />
+      <ClientList
+        initialData={filteredClients}
+        totalCount={count || 0}
+        currentPage={page}
+        pageSize={pageSize}
+      />
     </div>
   );
 }

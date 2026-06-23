@@ -1,5 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { updateRequestSchema } from "@/lib/validations/request";
 import { isAdminUser } from "@/lib/rbac/check";
 import { z } from "zod";
@@ -17,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   const body = await req.json();
@@ -32,17 +42,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     ]);
 
     if (!request) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return apiNotFound(req, "Not found");
     }
     if (!dbUser) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+      return apiNotFound(req, "User profile not found");
     }
 
     const isAdmin = isAdminUser(user, dbUser, roleRows);
     const isSameClient = dbUser.client_id && request.client_id === dbUser.client_id;
 
     if (!isAdmin && !isSameClient) {
-      // Log unauthorized attempt before returning
       console.warn("[PATCH /api/requests/:id] Forbidden attempt", {
         userId: user.id,
         requestId: id,
@@ -55,7 +64,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         resource_id: id,
         metadata: { reason: "client_mismatch", ip: getClientIp(req) },
       });
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(req);
     }
 
     const updatePayload: Record<string, unknown> = {};
@@ -65,7 +74,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (validated.status !== undefined) updatePayload.status = validated.status;
     if (validated.dueDate !== undefined) updatePayload.due_date = validated.dueDate || null;
 
-    const currentCustomFields = (request as Record<string, unknown>).custom_fields as Record<string, unknown> || {};
+    const currentCustomFields =
+      ((request as Record<string, unknown>).custom_fields as Record<string, unknown>) || {};
     if (validated.type !== undefined || validated.customFields !== undefined) {
       updatePayload.custom_fields = {
         ...currentCustomFields,
@@ -88,13 +98,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           resource_id: id,
           metadata: { reason: "assignee_change_not_admin", ip: getClientIp(req) },
         });
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return apiForbidden(req);
       }
       updatePayload.assigned_to = validated.assignedTo || null;
     }
 
     if (Object.keys(updatePayload).length === 0) {
-      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "No fields to update",
+      });
     }
 
     const { data, error } = await supabase
@@ -106,10 +120,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     if (error) {
       console.error("[PATCH /api/requests/:id] DB error:", error);
-      return NextResponse.json({ error: "Failed to update request" }, { status: 500 });
+      return apiInternalError(req, "Failed to update request");
     }
 
-    // Audit: record successful update with before/after for key fields
     await supabase.from("activity_logs").insert({
       user_id: user.id,
       action: "request.updated",
@@ -127,13 +140,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     });
 
-    return NextResponse.json(data);
+    return apiSuccess(req, data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
     console.error("[PATCH /api/requests/:id] Unexpected error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(req, "Internal server error");
   }
 }
 
@@ -144,14 +157,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    return apiUnauthorized(req);
+  }
 
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
     supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle(),
     supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
   ]);
 
-  // Also check JWT metadata as a practical fallback when DB admin flags aren't populated
   const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const isAdminByMetadata =
     user.user_metadata?.is_super_admin === true ||
@@ -159,18 +173,44 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     metadataRole === "super_admin";
 
   if (!isAdminUser(user, dbUser, roleRows) && !isAdminByMetadata) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiForbidden(req);
   }
+
+  const { data: requestRow } = await supabase
+    .from("requests")
+    .select("custom_fields")
+    .eq("id", id)
+    .maybeSingle();
+
+  const deletedAt = new Date().toISOString();
+  const customFields = (requestRow?.custom_fields as Record<string, unknown> | null) ?? {};
+  const linkedTicketId =
+    typeof customFields.support_ticket_id === "string"
+      ? customFields.support_ticket_id
+      : typeof customFields.supportTicketId === "string"
+        ? customFields.supportTicketId
+        : null;
 
   const { error } = await supabase
     .from("requests")
-    .update({ deleted_at: new Date().toISOString() })
+    .update({ deleted_at: deletedAt })
     .eq("id", id);
 
   if (error) {
     console.error("[DELETE /api/requests/:id]", error);
-    return NextResponse.json({ error: "Failed to delete request" }, { status: 500 });
+    return apiInternalError(req, "Failed to delete request");
   }
+
+  if (linkedTicketId) {
+    await supabase
+      .from("support_tickets")
+      .update({ deleted_at: deletedAt })
+      .eq("id", linkedTicketId)
+      .is("deleted_at", null);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/requests");
 
   void supabase.from("activity_logs").insert({
     user_id: user.id,
@@ -180,5 +220,5 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     metadata: { ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null },
   });
 
-  return NextResponse.json({ success: true });
+  return apiSuccess(req, { deleted: true });
 }

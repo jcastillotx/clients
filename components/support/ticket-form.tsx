@@ -18,6 +18,7 @@ import {
   type WebsiteSupportAffectedArea,
   type WebsiteSupportPlatform,
 } from "@/lib/support/website-ticket-triage";
+import { fetchApi } from "@/lib/api/client";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { X } from "lucide-react";
@@ -190,23 +191,24 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
         },
       };
 
-      const response = await fetch("/api/support", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const ticket = await fetchApi<{ id: string }>(
+        "/api/support",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+        { fallbackMessage: "Failed to create ticket" },
+      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create ticket");
+      if (!ticket.id) {
+        throw new Error("Ticket created but response was missing an id");
       }
 
-      const result = await response.json();
-
       toast.success("Support ticket created successfully");
-      router.push(`/support/${result.id}`);
+      router.push(`/support/${ticket.id}`);
       router.refresh();
     } catch (error) {
       console.error("Error creating ticket:", error);

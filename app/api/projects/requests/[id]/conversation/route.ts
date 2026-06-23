@@ -1,4 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
+
 import { createClient } from "@/lib/supabase/server";
 
 type ParticipantRole = "client" | "staff";
@@ -38,7 +46,7 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
  *
  * Finds or creates a conversation linked to the request for real-time messaging.
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -48,7 +56,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveAccess(supabase, user);
@@ -60,11 +68,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (requestError || !requestRow) {
-      return NextResponse.json({ error: "Project request not found" }, { status: 404 });
+      return apiNotFound(request, "Project request not found");
     }
 
     if (!access.isAdmin && access.clientId !== requestRow.client_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const conversationLookup = await supabase
@@ -80,7 +88,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     const conversationError = conversationLookup.error;
 
     if (conversationError) {
-      return NextResponse.json({ error: conversationError.message }, { status: 500 });
+      return apiInternalError(request, conversationError.message);
     }
 
     if (!conversation) {
@@ -97,7 +105,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         .single();
 
       if (createError || !createdConversation) {
-        return NextResponse.json({ error: createError?.message || "Failed to create conversation" }, { status: 500 });
+        return apiInternalError(request, createError?.message || "Failed to create conversation");
       }
       conversation = createdConversation;
     }
@@ -113,7 +121,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .in("user_id", participantIds);
 
     if (participantsError) {
-      return NextResponse.json({ error: participantsError.message }, { status: 500 });
+      return apiInternalError(request, participantsError.message);
     }
 
     const existingIds = new Set((existingParticipants || []).map((participant) => participant.user_id));
@@ -127,18 +135,16 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       }));
       const { error: insertParticipantsError } = await supabase.from("conversation_participants").insert(records);
       if (insertParticipantsError) {
-        return NextResponse.json({ error: insertParticipantsError.message }, { status: 500 });
+        return apiInternalError(request, insertParticipantsError.message);
       }
     }
 
-    return NextResponse.json({
-      data: {
-        id: conversation.id,
-        title: conversation.title,
-      },
+    return apiSuccess(request, {
+      id: conversation.id,
+      title: conversation.title,
     });
   } catch (error) {
     console.error("Error getting project request conversation:", error);
-    return NextResponse.json({ error: "Failed to resolve project conversation" }, { status: 500 });
+    return apiInternalError(request, "Failed to resolve project conversation");
   }
 }

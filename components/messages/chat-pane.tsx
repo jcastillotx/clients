@@ -62,10 +62,10 @@ export function ChatPane({ conversationId, currentUserId }: ChatPaneProps) {
       setLoading(true);
       const response = await fetch(`/api/messages?conversationId=${conversationId}`);
       const data = await response.json();
-      setMessages((data.messages || []).reverse());
+      const messageList = data?.messages ?? data?.data ?? [];
+      setMessages((messageList || []).reverse());
 
-      // Mark unread messages as read
-      markMessagesAsRead(data.messages || []);
+      markMessagesAsRead(messageList || []);
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
@@ -105,12 +105,12 @@ export function ChatPane({ conversationId, currentUserId }: ChatPaneProps) {
           // Fetch the full message with sender info
           const response = await fetch(`/api/messages?conversationId=${conversationId}&limit=1`);
           const data = await response.json();
-          if (data.messages?.[0]) {
-            setMessages((prev) => [...prev, data.messages[0]]);
+          const latestMessage = data?.messages?.[0] ?? data?.data?.[0];
+          if (latestMessage) {
+            setMessages((prev) => [...prev, latestMessage]);
 
-            // Mark as read if not sent by current user
-            if (data.messages[0].senderId !== currentUserId) {
-              await fetch(`/api/messages/${data.messages[0].id}/read`, {
+            if (latestMessage.senderId !== currentUserId) {
+              await fetch(`/api/messages/${latestMessage.id}/read`, {
                 method: "POST",
               });
             }

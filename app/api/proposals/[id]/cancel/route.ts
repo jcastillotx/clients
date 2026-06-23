@@ -1,31 +1,44 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { proposals } from "@/lib/db/schema/proposals";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * POST /api/proposals/[id]/cancel
  * Client cancels a proposal
  */
-export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const [existing] = await db.select().from(proposals).where(eq(proposals.id, id)).limit(1);
 
     if (!existing) {
-      return NextResponse.json({ success: false, error: "Proposal not found" }, { status: 404 });
+      return apiNotFound(request, "Proposal not found");
     }
 
     if (existing.status === "accepted") {
-      return NextResponse.json({ success: false, error: "Cannot cancel an accepted proposal" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Cannot cancel an accepted proposal",
+      });
     }
 
     const [updated] = await db
@@ -38,13 +51,16 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       .where(eq(proposals.id, id))
       .returning();
 
-    return NextResponse.json({ success: true, data: updated, message: "Proposal cancelled successfully" });
+    return apiSuccess(request, updated, {
+      extra: { proposal: updated, message: "Proposal cancelled successfully" },
+    });
   } catch (error) {
     console.error("Error cancelling proposal:", error);
     const status = isDatabaseConfigurationError(error) ? 503 : 500;
-    return NextResponse.json(
-      { success: false, error: "Failed to cancel proposal", message: error instanceof Error ? error.message : "Unknown error" },
-      { status },
-    );
+    return apiError(request, {
+      status,
+      code: status === 503 ? "SERVICE_UNAVAILABLE" : "INTERNAL_ERROR",
+      message: error instanceof Error ? error.message : "Failed to cancel proposal",
+    });
   }
 }

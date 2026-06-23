@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { fetchApi } from "@/lib/api/client";
 
 interface Client {
   id: string;
@@ -64,31 +65,28 @@ export function CreateContractDialog({
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/contracts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description || null,
-          clientId: formData.clientId,
-          type: formData.type,
-          startDate: formData.startDate,
-          endDate: formData.endDate || null,
-          value: formData.value ? parseFloat(formData.value) : null,
-          currency: formData.currency,
-          billingCycle: formData.billingCycle || null,
-          terms: formData.terms || null,
-          autoRenew: formData.autoRenew,
-          noticeRequired: formData.noticeRequired ? parseInt(formData.noticeRequired) : null,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create contract");
-      }
-
-      const { contract } = await response.json();
+      const contract = await fetchApi(
+        "/api/contracts",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: formData.title,
+            description: formData.description || null,
+            clientId: formData.clientId,
+            type: formData.type,
+            startDate: formData.startDate,
+            endDate: formData.endDate || null,
+            value: formData.value ? parseFloat(formData.value) : null,
+            currency: formData.currency,
+            billingCycle: formData.billingCycle || null,
+            terms: formData.terms || null,
+            autoRenew: formData.autoRenew,
+            noticeRequired: formData.noticeRequired ? parseInt(formData.noticeRequired) : null,
+          }),
+        },
+        { fallbackMessage: "Failed to create contract" },
+      );
 
       // Reset form
       setFormData({

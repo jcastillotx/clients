@@ -1,9 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { conversations, conversationParticipants, messages } from "@/lib/db/schema/messages";
 import { users } from "@/lib/db/schema/users";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * GET /api/messages/conversations
@@ -18,10 +24,9 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    // Get conversations where user is a participant
     const userConversations = await db
       .select({
         id: conversations.id,
@@ -73,10 +78,12 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(conversations.lastMessageAt))
       .execute();
 
-    return NextResponse.json({ conversations: userConversations });
+    return apiSuccess(request, userConversations, {
+      extra: { conversations: userConversations },
+    });
   } catch (error) {
     console.error("Error fetching conversations:", error);
-    return NextResponse.json({ error: "Failed to fetch conversations" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch conversations");
   }
 }
 
@@ -93,20 +100,22 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
     const { clientId, title, participantIds, contextType, contextId } = body;
 
     if (!clientId || !participantIds || participantIds.length === 0) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Missing required fields",
+      });
     }
 
-    // Ensure current user is included in participants
     const allParticipants = Array.from(new Set([...participantIds, user.id]));
 
-    // Create conversation
     const [conversation] = await db
       .insert(conversations)
       .values({
@@ -118,7 +127,6 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Add participants
     await db.insert(conversationParticipants).values(
       allParticipants.map((userId) => ({
         conversationId: conversation.id,
@@ -127,9 +135,12 @@ export async function POST(request: NextRequest) {
       })),
     );
 
-    return NextResponse.json({ conversation }, { status: 201 });
+    return apiSuccess(request, conversation, {
+      status: 201,
+      extra: { conversation },
+    });
   } catch (error) {
     console.error("Error creating conversation:", error);
-    return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
+    return apiInternalError(request, "Failed to create conversation");
   }
 }

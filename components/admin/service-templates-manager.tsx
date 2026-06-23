@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, AlertCircle, DollarSign, FileText } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 interface ServiceTemplate {
   id: string;
@@ -71,20 +72,13 @@ export function ServiceTemplatesManager() {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/service-templates");
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setTemplates(Array.isArray(data.data) ? data.data : []);
-        setError(null);
-      } else {
-        const detail =
-          typeof data?.message === "string" && data.message.trim()
-            ? `${data.error ?? "Error"}: ${data.message}`
-            : (data?.error ?? "Failed to load templates");
-        setError(detail);
-      }
-    } catch {
-      setError("Unable to load service templates.");
+      const data = await fetchApi<ServiceTemplate[]>("/api/admin/service-templates", undefined, {
+        fallbackMessage: "Failed to load templates",
+      });
+      setTemplates(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load service templates.");
     } finally {
       setLoading(false);
     }
@@ -154,14 +148,15 @@ export function ServiceTemplatesManager() {
         ? `/api/admin/service-templates/${editingId}`
         : "/api/admin/service-templates";
 
-      const response = await fetch(url, {
-        method: editingId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, lineItems }),
-      });
-
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error);
+      await fetchApi(
+        url,
+        {
+          method: editingId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...formData, lineItems }),
+        },
+        { fallbackMessage: "Failed to save template" },
+      );
 
       setDialogOpen(false);
       fetchTemplates();
@@ -174,9 +169,9 @@ export function ServiceTemplatesManager() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/admin/service-templates/${id}`, { method: "DELETE" });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error);
+      await fetchApi(`/api/admin/service-templates/${id}`, { method: "DELETE" }, {
+        fallbackMessage: "Failed to delete template",
+      });
       setDeleteConfirmId(null);
       fetchTemplates();
     } catch (err) {

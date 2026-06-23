@@ -1,4 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
+
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { updateProjectRequestSchema } from "@/lib/validations/project-request";
@@ -91,7 +100,7 @@ async function getProjectRequest(supabase: Awaited<ReturnType<typeof createClien
  *
  * Returns a project request with attachments and related summary metrics.
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -101,18 +110,18 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveAccess(supabase, user);
     const { data: requestRow, error } = await getProjectRequest(supabase, id);
 
     if (error || !requestRow) {
-      return NextResponse.json({ error: "Project request not found" }, { status: 404 });
+      return apiNotFound(request, "Project request not found");
     }
 
     if (!access.isAdmin && access.clientId !== requestRow.client_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const [documentsResult, tasksCountResult, meetingsCountResult, feedbackCountResult] = await Promise.all([
@@ -127,24 +136,27 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       supabase.from("request_comments").select("id", { count: "exact", head: true }).eq("request_id", id),
     ]);
 
-    return NextResponse.json({
-      data: {
-        ...requestRow,
-        attachments: documentsResult.data || [],
-        metrics: {
-          tasksCount: tasksCountResult.count || 0,
-          meetingsCount: meetingsCountResult.count || 0,
-          feedbackCount: feedbackCountResult.count || 0,
-        },
+    const payload = {
+      ...requestRow,
+      attachments: documentsResult.data || [],
+      metrics: {
+        tasksCount: tasksCountResult.count || 0,
+        meetingsCount: meetingsCountResult.count || 0,
+        feedbackCount: feedbackCountResult.count || 0,
       },
-      access: {
-        ...access,
-        canReview: access.isStaff,
+    };
+
+    return apiSuccess(request, payload, {
+      extra: {
+        access: {
+          ...access,
+          canReview: access.isStaff,
+        },
       },
     });
   } catch (error) {
     console.error("Error fetching project request detail:", error);
-    return NextResponse.json({ error: "Failed to fetch project request" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch project request");
   }
 }
 
@@ -163,7 +175,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
@@ -178,11 +190,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single();
 
     if (existingError || !existingRequest) {
-      return NextResponse.json({ error: "Project request not found" }, { status: 404 });
+      return apiNotFound(request, "Project request not found");
     }
 
     if (!access.isAdmin && access.clientId !== existingRequest.client_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const updatePayload: Record<string, unknown> = {};
@@ -223,14 +235,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (validated.assignedTo !== undefined) {
       if (!access.isStaff) {
-        return NextResponse.json({ error: "Only staff can change assignment" }, { status: 403 });
+        return apiForbidden(request, "Only staff can change assignment");
       }
       updatePayload.assigned_to = validated.assignedTo;
     }
 
     if (validated.review) {
       if (!access.isStaff) {
-        return NextResponse.json({ error: "Only staff can submit a project estimate" }, { status: 403 });
+        return apiForbidden(request, "Only staff can submit a project estimate");
       }
       const currentReview = (currentCustomFields.review as Record<string, unknown>) || {};
       updatedCustomFields.review = {
@@ -293,30 +305,30 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(request, error.message);
     }
 
-    return NextResponse.json({ data });
+    return apiSuccess(request, data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
     console.error("Error updating project request:", error);
-    return NextResponse.json({ error: "Failed to update project request" }, { status: 500 });
+    return apiInternalError(request, "Failed to update project request");
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) return apiUnauthorized(request);
 
   const { isAdmin } = await resolveAccess(supabase, user);
-  if (!isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isAdmin) return apiForbidden(request);
 
   const { error } = await supabase
     .from("requests")
@@ -325,8 +337,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   if (error) {
     console.error("[DELETE /api/projects/requests/:id]", error);
-    return NextResponse.json({ error: "Failed to delete project request" }, { status: 500 });
+    return apiInternalError(request, "Failed to delete project request");
   }
 
-  return NextResponse.json({ success: true });
+  return apiSuccess(request, { deleted: true }, { extra: { success: true } });
 }

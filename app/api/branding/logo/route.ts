@@ -1,4 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
+
 import { createClient } from "@/lib/supabase/server";
 import { getS3Credentials } from "@/lib/storage/get-s3-credentials";
 
@@ -44,7 +51,7 @@ async function sha256Hex(data: string | ArrayBuffer): Promise<string> {
  * Body: FormData with "file" field
  * Returns: { logoUrl } — the /api/avatar proxy URL for the uploaded logo
  */
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -52,27 +59,34 @@ export async function POST(req: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
-    const formData = await req.formData();
+    const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    if (!file) {
+      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "No file provided" });
+    }
 
     const extension = ALLOWED_TYPES[file.type];
     if (!extension) {
-      return NextResponse.json({ error: "Only JPG, PNG, WEBP, and SVG are allowed" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Only JPG, PNG, WEBP, and SVG are allowed",
+      });
     }
     if (file.size > MAX_BYTES) {
-      return NextResponse.json({ error: "File must be 5MB or less" }, { status: 400 });
+      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "File must be 5MB or less" });
     }
 
     const s3 = await getS3Credentials(user.id);
     if (!s3) {
-      return NextResponse.json(
-        { error: "No S3 storage connection configured. Add a company S3 connection in Storage settings." },
-        { status: 503 },
-      );
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "No S3 storage connection configured. Add a company S3 connection in Storage settings.",
+      });
     }
     const { accessKeyId, secretAccessKey, bucket, region } = s3;
 
@@ -126,15 +140,15 @@ export async function POST(req: NextRequest) {
 
     if (!s3Res.ok) {
       const errText = await s3Res.text().catch(() => s3Res.status.toString());
-      return NextResponse.json({ error: `S3 upload failed (${s3Res.status}): ${errText}` }, { status: 500 });
+      return apiInternalError(request, `S3 upload failed (${s3Res.status}): ${errText}`);
     }
 
     const logoUrl = `/api/branding/image?key=${encodeURIComponent(key)}`;
-    return NextResponse.json({ success: true, logoUrl });
+    return apiSuccess(request, { logoUrl }, { extra: { success: true, logoUrl } });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to upload logo" },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to upload logo",
     );
   }
 }

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart3, TrendingUp, DollarSign, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { fetchApi } from "@/lib/api/client";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
 
 interface ReportData {
@@ -56,15 +57,14 @@ export function TimeReport() {
         groupBy,
       });
 
-      const response = await fetch(`/api/time-tracking/reports?${params}`);
-      if (!response.ok) {
-        throw new Error("Failed to generate report");
-      }
-
-      const data = await response.json();
-      setReportData(data);
+      const report = await fetchApi<ReportData>(
+        `/api/time-tracking/reports?${params}`,
+        undefined,
+        { fallbackMessage: "Failed to generate report" },
+      );
+      setReportData(report);
     } catch (error) {
-      toast.error("Failed to generate report");
+      toast.error(error instanceof Error ? error.message : "Failed to generate report");
     } finally {
       setLoading(false);
     }

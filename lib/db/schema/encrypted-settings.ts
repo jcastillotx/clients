@@ -27,6 +27,7 @@ export const integrationProviderEnum = [
   "openrouter",
   "openai",
   "google_ai",
+  "google_stitch",
   // Payments
   "stripe",
   // Email
@@ -175,6 +176,16 @@ export const PROVIDER_CONFIGS: ProviderConfig[] = [
       { key: "api_key", label: "API Key", placeholder: "AIzaSy...", required: true, type: "secret" },
     ],
     docsUrl: "https://ai.google.dev/docs",
+  },
+  {
+    provider: "google_stitch",
+    category: "ai",
+    displayName: "Google Stitch",
+    description: "Generate UI screens from text prompts and export HTML and screenshots.",
+    fields: [
+      { key: "api_key", label: "API Key", placeholder: "stitch_...", required: true, type: "secret" },
+    ],
+    docsUrl: "https://stitch.withgoogle.com/docs/",
   },
   // Payments
   {

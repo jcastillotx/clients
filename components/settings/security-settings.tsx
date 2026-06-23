@@ -9,17 +9,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { friendlyMfaRedirectTarget, getSafeMfaRedirectPath } from "@/lib/auth/mfa-redirect";
+import {
+  friendlyMfaRedirectTarget,
+  getSafeMfaRedirectPath,
+} from "@/lib/auth/mfa-redirect";
 import { createClient } from "@/lib/supabase/client";
-import { AlertTriangle, Loader2, Shield, Smartphone, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Loader2,
+  Shield,
+  Smartphone,
+  Trash2,
+} from "lucide-react";
 
 const passwordSchema = z
   .object({
-    currentPassword: z.string().min(8, "Password must be at least 8 characters"),
+    currentPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
     newPassword: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
@@ -85,12 +104,16 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
         password: data.currentPassword,
       });
       if (signInError) throw new Error("Current password is incorrect");
-      const { error: updateError } = await supabase.auth.updateUser({ password: data.newPassword });
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: data.newPassword,
+      });
       if (updateError) throw updateError;
       setPwSuccess(true);
       resetPw();
     } catch (err) {
-      setPwError(err instanceof Error ? err.message : "Failed to update password");
+      setPwError(
+        err instanceof Error ? err.message : "Failed to update password",
+      );
     } finally {
       setIsSubmittingPw(false);
     }
@@ -98,7 +121,8 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isVerifyingExistingFactor, setIsVerifyingExistingFactor] = useState(false);
+  const [isVerifyingExistingFactor, setIsVerifyingExistingFactor] =
+    useState(false);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [factors, setFactors] = useState<MfaFactor[]>([]);
   const [aal, setAal] = useState<string | null>(null);
@@ -106,9 +130,15 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const [success, setSuccess] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
   const [existingFactorCode, setExistingFactorCode] = useState("");
-  const [pendingFactor, setPendingFactor] = useState<EnrolledFactor | null>(null);
+  const [pendingFactor, setPendingFactor] = useState<EnrolledFactor | null>(
+    null,
+  );
   const verifiedTotpFactors = useMemo(
-    () => factors.filter((factor) => factor.factor_type === "totp" && factor.status === "verified"),
+    () =>
+      factors.filter(
+        (factor) =>
+          factor.factor_type === "totp" && factor.status === "verified",
+      ),
     [factors],
   );
   const challengeFactor = verifiedTotpFactors[0] ?? null;
@@ -118,7 +148,10 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
     setError(null);
 
     try {
-      const [{ data: factorData, error: factorsError }, { data: aalData, error: aalError }] = await Promise.all([
+      const [
+        { data: factorData, error: factorsError },
+        { data: aalData, error: aalError },
+      ] = await Promise.all([
         supabase.auth.mfa.listFactors(),
         supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
       ]);
@@ -131,14 +164,19 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
         throw aalError;
       }
 
-      const allFactors = [
-        ...(factorData?.all ?? []),
-      ].filter((factor, index, collection) => collection.findIndex((item) => item.id === factor.id) === index);
+      const allFactors = [...(factorData?.all ?? [])].filter(
+        (factor, index, collection) =>
+          collection.findIndex((item) => item.id === factor.id) === index,
+      );
 
       setFactors(allFactors as MfaFactor[]);
       setAal(aalData?.currentLevel ?? null);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Failed to load two-factor settings");
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Failed to load two-factor settings",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -172,7 +210,11 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
       setPendingFactor(data as EnrolledFactor);
       setVerificationCode("");
     } catch (enrollError) {
-      setError(enrollError instanceof Error ? enrollError.message : "Failed to start two-factor enrollment");
+      setError(
+        enrollError instanceof Error
+          ? enrollError.message
+          : "Failed to start two-factor enrollment",
+      );
     } finally {
       setIsEnrolling(false);
     }
@@ -189,9 +231,10 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
     setSuccess(null);
 
     try {
-      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
-        factorId: pendingFactor.id,
-      });
+      const { data: challengeData, error: challengeError } =
+        await supabase.auth.mfa.challenge({
+          factorId: pendingFactor.id,
+        });
 
       if (challengeError) {
         throw challengeError;
@@ -212,7 +255,11 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
       setSuccess("Two-factor authentication has been enabled.");
       await loadMfaState();
     } catch (verifyError) {
-      setError(verifyError instanceof Error ? verifyError.message : "Failed to verify authenticator code");
+      setError(
+        verifyError instanceof Error
+          ? verifyError.message
+          : "Failed to verify authenticator code",
+      );
     } finally {
       setIsVerifying(false);
     }
@@ -229,9 +276,10 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
     setSuccess(null);
 
     try {
-      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
-        factorId: challengeFactor.id,
-      });
+      const { data: challengeData, error: challengeError } =
+        await supabase.auth.mfa.challenge({
+          factorId: challengeFactor.id,
+        });
 
       if (challengeError) {
         throw challengeError;
@@ -258,7 +306,11 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
       setSuccess("Authenticator verified.");
       await loadMfaState();
     } catch (verifyError) {
-      setError(verifyError instanceof Error ? verifyError.message : "Failed to verify authenticator code");
+      setError(
+        verifyError instanceof Error
+          ? verifyError.message
+          : "Failed to verify authenticator code",
+      );
     } finally {
       setIsVerifyingExistingFactor(false);
     }
@@ -270,7 +322,9 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
     setSuccess(null);
 
     try {
-      const { error: unenrollError } = await supabase.auth.mfa.unenroll({ factorId });
+      const { error: unenrollError } = await supabase.auth.mfa.unenroll({
+        factorId,
+      });
       if (unenrollError) {
         throw unenrollError;
       }
@@ -278,7 +332,11 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
       setSuccess("Two-factor authentication method removed.");
       await loadMfaState();
     } catch (removeError) {
-      setError(removeError instanceof Error ? removeError.message : "Failed to remove two-factor method");
+      setError(
+        removeError instanceof Error
+          ? removeError.message
+          : "Failed to remove two-factor method",
+      );
     } finally {
       setIsRemoving(null);
     }
@@ -291,15 +349,22 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
       {/* MFA required banner — shown when middleware redirected an admin here */}
       {mfaRequired && (
         <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 shrink-0"
+            aria-hidden="true"
+          />
           <div>
-            <p className="font-semibold">Multi-factor authentication required</p>
+            <p className="font-semibold">
+              Multi-factor authentication required
+            </p>
             <p className="mt-0.5 text-amber-800 dark:text-amber-300">
-              Admin-only URLs (including from Settings) require an authenticator step before they load.{" "}
+              Admin-only URLs (including from Settings) require an authenticator
+              step before they load.{" "}
               {friendlyMfaTarget ? (
                 <>
-                  You were opening <strong>{friendlyMfaTarget}</strong>. Set up an authenticator app below; once
-                  this session reaches AAL2, you will be sent there automatically.
+                  You were opening <strong>{friendlyMfaTarget}</strong>. Set up
+                  an authenticator app below; once this session reaches AAL2,
+                  you will be sent there automatically.
                 </>
               ) : (
                 <>Use or set up an authenticator app below to continue.</>
@@ -314,7 +379,8 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
           <CardHeader>
             <CardTitle>Verify to continue</CardTitle>
             <CardDescription>
-              Enter your authenticator code to open {friendlyMfaTarget ?? "the requested admin page"}.
+              Enter your authenticator code to open{" "}
+              {friendlyMfaTarget ?? "the requested admin page"}.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -326,14 +392,22 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
                 autoComplete="one-time-code"
                 placeholder="123456"
                 value={existingFactorCode}
-                onChange={(event) => setExistingFactorCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(event) =>
+                  setExistingFactorCode(
+                    event.target.value.replace(/\D/g, "").slice(0, 6),
+                  )
+                }
               />
             </div>
             <Button
               onClick={() => void handleVerifyExistingFactor()}
-              disabled={isVerifyingExistingFactor || existingFactorCode.length !== 6}
+              disabled={
+                isVerifyingExistingFactor || existingFactorCode.length !== 6
+              }
             >
-              {isVerifyingExistingFactor ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isVerifyingExistingFactor ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
               Verify & Continue
             </Button>
           </CardContent>
@@ -344,16 +418,38 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
       <Card>
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
-          <CardDescription>Update your password to keep your account secure</CardDescription>
+          <CardDescription>
+            Update your password to keep your account secure
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handlePwSubmit(onPasswordSubmit)} className="space-y-4">
-            {pwError && <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">{pwError}</div>}
-            {pwSuccess && <div className="rounded-md bg-green-50 p-4 text-sm text-green-800">Password updated successfully!</div>}
+          <form
+            onSubmit={handlePwSubmit(onPasswordSubmit)}
+            className="space-y-4"
+          >
+            {pwError && (
+              <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+                {pwError}
+              </div>
+            )}
+            {pwSuccess && (
+              <div className="rounded-md bg-green-50 p-4 text-sm text-green-800">
+                Password updated successfully!
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="currentPassword">Current Password</Label>
-              <Input id="currentPassword" type="password" {...registerPw("currentPassword")} />
-              {pwErrors.currentPassword && <p className="text-sm text-destructive">{pwErrors.currentPassword.message}</p>}
+              <Input
+                id="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                {...registerPw("currentPassword")}
+              />
+              {pwErrors.currentPassword && (
+                <p className="text-sm text-destructive">
+                  {pwErrors.currentPassword.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
@@ -361,19 +457,40 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
                 id="newPassword"
                 {...registerPw("newPassword")}
                 onGeneratePassword={(pw) => {
-                  setPwValue("newPassword", pw, { shouldValidate: true, shouldDirty: true });
-                  setPwValue("confirmPassword", pw, { shouldValidate: true, shouldDirty: true });
+                  setPwValue("newPassword", pw, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  setPwValue("confirmPassword", pw, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
                 }}
               />
-              {pwErrors.newPassword && <p className="text-sm text-destructive">{pwErrors.newPassword.message}</p>}
+              {pwErrors.newPassword && (
+                <p className="text-sm text-destructive">
+                  {pwErrors.newPassword.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input id="confirmPassword" type="password" {...registerPw("confirmPassword")} />
-              {pwErrors.confirmPassword && <p className="text-sm text-destructive">{pwErrors.confirmPassword.message}</p>}
+              <Input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                {...registerPw("confirmPassword")}
+              />
+              {pwErrors.confirmPassword && (
+                <p className="text-sm text-destructive">
+                  {pwErrors.confirmPassword.message}
+                </p>
+              )}
             </div>
             <Button type="submit" disabled={isSubmittingPw}>
-              {isSubmittingPw && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmittingPw && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Update Password
             </Button>
           </form>
@@ -388,12 +505,21 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
             Two-Factor Authentication
           </CardTitle>
           <CardDescription>
-            Protect your account with an authenticator app and verification codes during sign-in.
+            Protect your account with an authenticator app and verification
+            codes during sign-in.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {error ? <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">{error}</div> : null}
-          {success ? <div className="rounded-md bg-green-50 p-4 text-sm text-green-800">{success}</div> : null}
+          {error ? (
+            <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          ) : null}
+          {success ? (
+            <div className="rounded-md bg-green-50 p-4 text-sm text-green-800">
+              {success}
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
             <Badge variant={factors.length > 0 ? "default" : "secondary"}>
@@ -417,14 +543,18 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
                   </div>
                 ) : (
                   factors.map((factor) => (
-                    <div key={factor.id} className="flex items-center justify-between rounded-lg border p-4">
+                    <div
+                      key={factor.id}
+                      className="flex items-center justify-between rounded-lg border p-4"
+                    >
                       <div>
                         <div className="flex items-center gap-2 font-medium">
                           <Smartphone className="h-4 w-4" />
                           {factor.friendly_name || "Authenticator App"}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Type: {factor.factor_type || "totp"} · Status: {factor.status || "verified"}
+                          Type: {factor.factor_type || "totp"} · Status:{" "}
+                          {factor.status || "verified"}
                         </p>
                       </div>
                       <Button
@@ -450,7 +580,8 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
                   <div>
                     <h3 className="font-medium">Finish setup</h3>
                     <p className="text-sm text-muted-foreground">
-                      Scan the QR code with your authenticator app, then enter the 6-digit code to verify.
+                      Scan the QR code with your authenticator app, then enter
+                      the 6-digit code to verify.
                     </p>
                   </div>
 
@@ -464,7 +595,9 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
                   {pendingFactor.totp?.secret ? (
                     <div className="space-y-1">
                       <p className="text-sm font-medium">Manual setup code</p>
-                      <p className="rounded bg-muted px-3 py-2 font-mono text-sm break-all">{pendingFactor.totp.secret}</p>
+                      <p className="rounded bg-muted px-3 py-2 font-mono text-sm break-all">
+                        {pendingFactor.totp.secret}
+                      </p>
                     </div>
                   ) : null}
 
@@ -476,13 +609,22 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
                       autoComplete="one-time-code"
                       placeholder="123456"
                       value={verificationCode}
-                      onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                      onChange={(event) =>
+                        setVerificationCode(
+                          event.target.value.replace(/\D/g, "").slice(0, 6),
+                        )
+                      }
                     />
                   </div>
 
                   <div className="flex gap-3">
-                    <Button onClick={() => void handleVerify()} disabled={isVerifying || verificationCode.length !== 6}>
-                      {isVerifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button
+                      onClick={() => void handleVerify()}
+                      disabled={isVerifying || verificationCode.length !== 6}
+                    >
+                      {isVerifying ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
                       Verify & Enable
                     </Button>
                     <Button
@@ -499,8 +641,15 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
                   </div>
                 </div>
               ) : (
-                <Button onClick={() => void handleEnroll()} disabled={isEnrolling}>
-                  {isEnrolling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="mr-2 h-4 w-4" />}
+                <Button
+                  onClick={() => void handleEnroll()}
+                  disabled={isEnrolling}
+                >
+                  {isEnrolling ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Shield className="mr-2 h-4 w-4" />
+                  )}
                   Enable Authenticator App
                 </Button>
               )}

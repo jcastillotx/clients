@@ -1,10 +1,17 @@
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { logger, auditLog } from "@/lib/logger";
 
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   try {
@@ -14,7 +21,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     } = await supabase.auth.getUser();
 
     if (!currentUser) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return apiUnauthorized(request, "Authentication required");
     }
 
     const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
@@ -33,7 +40,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
 
     if (!(canManageUsers || canUpdateUsers || hasManagementRole)) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const adminClient = createAdminClient();
@@ -45,10 +52,14 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     if (targetUserError) throw targetUserError;
     if (!targetUser || !targetUser.email) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return apiNotFound(request, "User not found");
     }
     if (targetUser.deleted_at) {
-      return NextResponse.json({ error: "Cannot reset password for a deleted user" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Cannot reset password for a deleted user",
+      });
     }
 
     const { error: resetError } = await adminClient.auth.resetPasswordForEmail(targetUser.email, {
@@ -59,15 +70,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     auditLog("admin.password_reset_sent", currentUser.id, { targetUserId: id });
 
-    return NextResponse.json({
-      success: true,
-      message: "Password reset email sent",
-    });
+    return apiSuccess(
+      request,
+      { sent: true },
+      { extra: { message: "Password reset email sent" } },
+    );
   } catch (error) {
     logger.error("Error sending password reset email", error, { targetUserId: id });
-    return NextResponse.json(
-      { error: "An unexpected error occurred. Please try again." },
-      { status: 500 },
-    );
+    return apiInternalError(request, "An unexpected error occurred. Please try again.");
   }
 }

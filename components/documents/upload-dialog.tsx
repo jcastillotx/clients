@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchApi } from "@/lib/api/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, X, FileIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -83,6 +84,10 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
     setIsUploading(true);
     setUploadProgress(0);
 
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => Math.min(prev + 10, 90));
+    }, 100);
+
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -95,23 +100,14 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
       }
 
       // Simulate progress for better UX (actual upload happens instantly for small files)
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90));
-      }, 100);
 
-      const response = await fetch("/api/documents/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const document = await fetchApi<Record<string, unknown>>(
+        "/api/documents/upload",
+        { method: "POST", body: formData },
+        { fallbackMessage: "Failed to upload document" },
+      );
 
       clearInterval(progressInterval);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to upload document");
-      }
-
-      const { document } = await response.json();
       setUploadProgress(100);
 
       // Reset form
@@ -128,6 +124,7 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
       console.error("Upload error:", error);
       alert(error instanceof Error ? error.message : "Failed to upload document");
     } finally {
+      clearInterval(progressInterval);
       setIsUploading(false);
       setUploadProgress(0);
     }

@@ -26,6 +26,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchApi } from "@/lib/api/client";
 
 interface ActivePlan {
   plan: any;
@@ -46,6 +47,7 @@ interface PlanTemplate {
   includedHours: string;
   hourlyRateOverage: string;
   rolloverEnabled: boolean;
+  isActive: boolean;
   servicesIncluded: Array<{ category: string; description: string; included: boolean }> | null;
 }
 
@@ -68,34 +70,30 @@ export default function MaintenancePlansPage() {
       setLoading(true);
 
       // Fetch active plans and available templates in parallel
-      const [plansRes, templatesRes, clientsRes] = await Promise.all([
-        fetch("/api/maintenance-plans?activeOnly=true"),
-        fetch("/api/admin/maintenance-plan-templates"),
-        fetch("/api/clients"),
+      const [plansData, templatesData, clientsData] = await Promise.all([
+        fetchApi<{ data: ActivePlan[] }>("/api/maintenance-plans?activeOnly=true", undefined, {
+          raw: true,
+          fallbackMessage: "Failed to load maintenance plans",
+        }),
+        fetchApi<{ data: PlanTemplate[] }>("/api/admin/maintenance-plan-templates", undefined, {
+          raw: true,
+          fallbackMessage: "Failed to load plan templates",
+        }),
+        fetchApi<Array<{ id: string }> | { data: Array<{ id: string }> }>("/api/clients", undefined, {
+          raw: true,
+          fallbackMessage: "Failed to load clients",
+        }),
       ]);
 
-      const plansData = await plansRes.json();
-      const templatesData = await templatesRes.json();
-      const clientsData = await clientsRes.json();
+      setActivePlans(plansData.data ?? []);
+      const active = (templatesData.data ?? []).filter((t) => t.isActive);
+      setAvailableTemplates(active);
 
-      if (plansRes.ok && plansData.success) {
-        setActivePlans(plansData.data ?? []);
-      }
-
-      if (templatesRes.ok && templatesData.success) {
-        // Only show active templates
-        const active = (templatesData.data ?? []).filter((t: any) => t.isActive);
-        setAvailableTemplates(active);
-      }
-
-      // Get client ID for subscription
       const clients = Array.isArray(clientsData)
         ? clientsData
-        : Array.isArray(clientsData?.data)
+        : Array.isArray(clientsData.data)
           ? clientsData.data
-          : clientsData?.client
-            ? [clientsData.client]
-            : [];
+          : [];
       if (clients.length > 0) {
         setClientId(clients[0].id);
       }
@@ -113,20 +111,18 @@ export default function MaintenancePlansPage() {
 
     try {
       setSubscribing(true);
-      const response = await fetch("/api/maintenance-plans/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          templateId: subscribeTemplate.id,
-          clientId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Failed to subscribe");
-      }
+      await fetchApi(
+        "/api/maintenance-plans/subscribe",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            templateId: subscribeTemplate.id,
+            clientId,
+          }),
+        },
+        { fallbackMessage: "Failed to subscribe" },
+      );
 
       setSubscribeTemplate(null);
       fetchData();

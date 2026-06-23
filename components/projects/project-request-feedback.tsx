@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchApi } from "@/lib/api/client";
 
 interface FeedbackUser {
   id: string;
@@ -42,15 +43,12 @@ export function ProjectRequestFeedback({ requestId }: ProjectRequestFeedbackProp
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/projects/requests/${requestId}/feedback`, {
-        method: "GET",
-        cache: "no-store",
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to load feedback");
-      }
-      setEntries(payload.data || []);
+      const data = await fetchApi<FeedbackEntry[]>(
+        `/api/projects/requests/${requestId}/feedback`,
+        { method: "GET", cache: "no-store" },
+        { fallbackMessage: "Failed to load feedback" },
+      );
+      setEntries(Array.isArray(data) ? data : []);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to load feedback");
     } finally {
@@ -72,20 +70,18 @@ export function ProjectRequestFeedback({ requestId }: ProjectRequestFeedbackProp
       setIsSubmitting(true);
       setError(null);
 
-      const response = await fetch(`/api/projects/requests/${requestId}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rating: rating === "none" ? undefined : Number(rating),
-          message: message.trim(),
-        }),
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to post feedback");
-      }
-
-      const newEntry = payload.data as FeedbackEntry;
+      const newEntry = await fetchApi<FeedbackEntry>(
+        `/api/projects/requests/${requestId}/feedback`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rating: rating === "none" ? undefined : Number(rating),
+            message: message.trim(),
+          }),
+        },
+        { fallbackMessage: "Failed to post feedback" },
+      );
       setEntries((previous) => [...previous, newEntry]);
       setRating("none");
       setMessage("");

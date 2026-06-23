@@ -1,6 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
+
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { isAiEmailPreviewMode } from "@/lib/features/incomplete-features";
 import { generateEmailSchema } from "@/lib/validations/ai";
 
 /**
@@ -8,7 +16,7 @@ import { generateEmailSchema } from "@/lib/validations/ai";
  * 
  * Generate an email using AI based on provided parameters
  */
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
   // Check authentication
@@ -17,11 +25,11 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(request);
   }
 
   try {
-    const body = await req.json();
+    const body = await request.json();
     
     // Validate input
     const validatedData = generateEmailSchema.parse(body);
@@ -38,19 +46,24 @@ export async function POST(req: NextRequest) {
       customInstructions: validatedData.customInstructions || "",
     });
 
-    return NextResponse.json({ 
+    const payload = {
       email,
-      subject: validatedData.subject || generateSubject(validatedData.purpose, validatedData.keyPoints),
-    });
+      subject:
+        validatedData.subject ||
+        generateSubject(validatedData.purpose, validatedData.keyPoints),
+      preview: isAiEmailPreviewMode(),
+      message: isAiEmailPreviewMode()
+        ? "Template preview only. Configure OPENAI_API_KEY or ANTHROPIC_API_KEY for AI generation."
+        : undefined,
+    };
+
+    return apiSuccess(request, payload, { extra: payload });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
     console.error("Error generating email:", error);
-    return NextResponse.json(
-      { error: "Failed to generate email" },
-      { status: 500 }
-    );
+    return apiInternalError(request, "Failed to generate email");
   }
 }
 
@@ -75,7 +88,7 @@ function generateEmailContent(params: {
     friendly: "warm and friendly",
     formal: "formal and respectful",
     casual: "casual and conversational",
-  };
+  } as const;
 
   const closings = {
     professional: "Best regards",
@@ -104,6 +117,7 @@ function generateEmailContent(params: {
   };
 
   body += openings[params.purpose as keyof typeof openings] || openings.custom;
+  body += ` This message uses a ${toneAdjectives[params.tone as keyof typeof toneAdjectives] || toneAdjectives.professional} tone.`;
   body += "\n\n";
 
   // Add key points as paragraphs
@@ -139,7 +153,7 @@ function generateEmailContent(params: {
 /**
  * Generate a subject line based on purpose and key points
  */
-function generateSubject(purpose: string, keyPoints: string): string {
+function generateSubject(purpose: string, _keyPoints: string): string {
   const subjects = {
     introduction: "Introduction - [Your Company Name]",
     "follow-up": "Following Up on Our Conversation",

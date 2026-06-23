@@ -1,23 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiSuccess,
+} from "@/lib/api/response";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { requireAuthenticatedUser } from "@/lib/auth/route-guards";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const auth = await requireAuthenticatedUser();
+    const auth = await requireAuthenticatedUser(request);
     if ("error" in auth) {
       return auth.error;
     }
 
     const canView = await hasPermission("reports.financial");
     if (!canView) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const supabase = await createClient();
 
-    // Fetch all invoices with client info
     const { data: invoices } = await supabase.from("invoices").select(
       `
         id,
@@ -31,7 +34,6 @@ export async function GET() {
       `,
     );
 
-    // Group by client and calculate totals
     const clientMap = new Map<
       string,
       {
@@ -74,17 +76,13 @@ export async function GET() {
       },
     );
 
-    // Convert to array and sort by revenue
     const clients = Array.from(clientMap.values())
       .sort((a, b) => b.total_revenue - a.total_revenue)
-      .slice(0, 10); // Top 10 clients
+      .slice(0, 10);
 
-    return NextResponse.json({ clients });
+    return apiSuccess(request, clients, { extra: { clients } });
   } catch (error) {
     console.error("Error fetching top clients:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred. Please try again." },
-      { status: 500 },
-    );
+    return apiInternalError(request, "An unexpected error occurred. Please try again.");
   }
 }

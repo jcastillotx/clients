@@ -1,1 +1,1 @@
-{"fired":true,"signals":["no_target","missing_constraint"],"platform":"codex"}
+{"fired":false,"signals":["missing_constraint"],"platform":"codex"}

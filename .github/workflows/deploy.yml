@@ -1,139 +1,62 @@
-name: Deploy (manual)
+name: Deploy readiness (manual)
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Target environment"
+        description: "Target environment label"
         required: true
         default: production
         type: choice
         options:
           - production
           - staging
-      initiated_by:
-        description: "Who clicked update in the admin UI"
-        required: false
-        default: ""
-      requested_from:
-        description: "App URL that dispatched this workflow"
-        required: false
-        default: ""
-      current_sha:
-        description: "Currently deployed SHA (if provided)"
-        required: false
-        default: ""
-      latest_sha:
-        description: "Latest SHA at time of dispatch (if known)"
-        required: false
-        default: ""
 
 jobs:
-  deploy:
+  verify:
     runs-on: ubuntu-latest
-    steps:
-      - name: Summary
-        run: |
-          echo "Environment: ${{ inputs.environment }}"
-          echo "Initiated by: ${{ inputs.initiated_by }}"
-          echo "Requested from: ${{ inputs.requested_from }}"
-          echo "Current SHA: ${{ inputs.current_sha }}"
-          echo "Latest SHA: ${{ inputs.latest_sha }}"
+    timeout-minutes: 20
 
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate deploy secrets exist
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_APP_ROOT: ${{ secrets.DEPLOY_APP_ROOT }}
-          DEPLOY_REPO_URL: ${{ secrets.DEPLOY_REPO_URL }}
-        run: |
-          set -euo pipefail
-          missing=0
-          for k in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_APP_ROOT DEPLOY_REPO_URL; do
-            if [ -z "${!k:-}" ]; then
-              echo "Missing required secret: $k" >&2
-              missing=1
-            fi
-          done
-          if [ "$missing" -eq 1 ]; then
-            echo "" >&2
-            echo "Set these GitHub repository secrets to enable deploy-from-admin:" >&2
-            echo "- DEPLOY_HOST (server hostname)" >&2
-            echo "- DEPLOY_USER (ssh username)" >&2
-            echo "- DEPLOY_SSH_KEY (private key)" >&2
-            echo "- DEPLOY_APP_ROOT (e.g. /home/user/apps/client-portal)" >&2
-            echo "- DEPLOY_REPO_URL (git@github.com:owner/repo.git)" >&2
-            echo "Optional: DEPLOY_BRANCH (default: main)" >&2
-            exit 1
-          fi
-
-      - name: Deploy via SSH (release-style)
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            set -euo pipefail
-            export APP_ROOT="${{ secrets.DEPLOY_APP_ROOT }}"
-            export REPO_URL="${{ secrets.DEPLOY_REPO_URL }}"
-            export BRANCH="${{ secrets.DEPLOY_BRANCH || 'main' }}"
+          version: 9
 
-            RELEASES_DIR="$APP_ROOT/releases"
-            SHARED_DIR="$APP_ROOT/shared"
-            TS="$(date +%F_%H%M%S)"
-            NEW_RELEASE="$RELEASES_DIR/$TS"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
 
-            mkdir -p "$RELEASES_DIR" "$SHARED_DIR/storage"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-            echo "==> Creating release: $NEW_RELEASE"
-            mkdir -p "$NEW_RELEASE"
-            git clone --branch "$BRANCH" --depth 1 "$REPO_URL" "$NEW_RELEASE"
+      - name: Type check
+        run: pnpm type-check
 
-            echo "==> Linking shared .env and storage"
-            if [[ ! -f "$SHARED_DIR/.env" ]]; then
-              echo "Missing $SHARED_DIR/.env. Copy your production env there first." >&2
-              exit 1
-            fi
-            ln -sfn "$SHARED_DIR/.env" "$NEW_RELEASE/.env"
-            rm -rf "$NEW_RELEASE/storage"
-            ln -sfn "$SHARED_DIR/storage" "$NEW_RELEASE/storage"
+      - name: Unit tests
+        run: pnpm test:run
 
-            echo "==> Injecting APP_BUILD_SHA"
-            cd "$NEW_RELEASE"
-            SHA="$(git rev-parse HEAD || true)"
-            if [[ -n "$SHA" ]]; then
-              if grep -q '^APP_BUILD_SHA=' "$SHARED_DIR/.env"; then
-                sed -i "s/^APP_BUILD_SHA=.*/APP_BUILD_SHA=$SHA/" "$SHARED_DIR/.env"
-              else
-                echo "" >> "$SHARED_DIR/.env"
-                echo "APP_BUILD_SHA=$SHA" >> "$SHARED_DIR/.env"
-              fi
-            fi
+      - name: Production build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
+          SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
-            echo "==> Installing dependencies"
-            composer install --no-dev --prefer-dist --optimize-autoloader
-
-            echo "==> Permissions"
-            chmod -R 775 "$NEW_RELEASE/storage" "$NEW_RELEASE/bootstrap/cache" || true
-
-            echo "==> Running migrations"
-            php artisan migrate --force
-
-            echo "==> Caching"
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-
-            echo "==> Switching current symlink"
-            ln -sfn "$NEW_RELEASE" "$APP_ROOT/current"
-
-            echo "==> Signaling workers"
-            php artisan queue:restart || true
-
-            echo "==> Done. Current release is now: $TS"
-
+      - name: Deploy instructions
+        run: |
+          echo "Environment: ${{ inputs.environment }}"
+          echo ""
+          echo "This Next.js app deploys via Vercel (see vercel.json and docs/DEPLOYMENT.md)."
+          echo "Promote the latest green preview deployment, or run: vercel --prod"
+          echo ""
+          echo "Before promoting:"
+          echo "  1. Confirm Supabase migrations are applied"
+          echo "  2. Confirm RLS policies from scripts/rls-policies.sql"
+          echo "  3. Confirm Stripe/Inngest/Resend webhooks point to production URL"

@@ -41,7 +41,7 @@ export function ConversationList({ selectedConversationId, onConversationSelect 
       setLoading(true);
       const response = await fetch("/api/messages/conversations");
       const data = await response.json();
-      setConversations(data.conversations || []);
+      setConversations(data.conversations ?? data.data ?? []);
     } catch (error) {
       console.error("Error fetching conversations:", error);
     } finally {

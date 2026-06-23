@@ -112,7 +112,9 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
 
       setMagicLinkSent(true);
     } catch (err) {
-      setAuthError(err instanceof Error ? err.message : "Failed to send magic link");
+      setAuthError(
+        err instanceof Error ? err.message : "Failed to send magic link",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -186,7 +188,11 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
 
       {/* Form */}
       <form
-        onSubmit={authMode === "password" ? handleSubmit(onPasswordSubmit) : (e) => e.preventDefault()}
+        onSubmit={
+          authMode === "password"
+            ? handleSubmit(onPasswordSubmit)
+            : (e) => e.preventDefault()
+        }
         className="flex flex-col gap-5"
       >
         {authError && (
@@ -202,7 +208,10 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
 
         {/* Email field */}
         <div className="flex flex-col gap-2">
-          <Label htmlFor="email" className="text-sm font-medium text-foreground">
+          <Label
+            htmlFor="email"
+            className="text-sm font-medium text-foreground"
+          >
             Email
           </Label>
           <div className="relative">
@@ -243,6 +252,7 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="current-password"
                   placeholder="Enter your password"
                   className="h-12 rounded-lg border-border/70 bg-background/70 pl-10 shadow-sm transition focus:ring-2 focus:ring-primary/50"
                   {...register("password")}
@@ -261,7 +271,9 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
               className="h-12 w-full rounded-lg text-base font-semibold shadow-lg shadow-primary/10 transition hover:-translate-y-[1px] hover:shadow-primary/20"
               disabled={isSubmitting}
             >
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Sign In
             </Button>
           </>

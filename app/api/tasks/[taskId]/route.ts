@@ -1,5 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 import { db } from "@/lib/db";
 import {
   staffTasks,
@@ -11,7 +17,6 @@ import { eq } from "drizzle-orm";
 
 /**
  * GET /api/tasks/[taskId]
- * Get a specific task with all related data
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const { taskId } = await params;
@@ -23,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const task = await db.query.staffTasks.findFirst({
@@ -79,19 +84,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
 
     if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      return apiNotFound(request, "Task not found");
     }
 
-    return NextResponse.json({ task });
+    return apiSuccess(request, task, { extra: { task } });
   } catch (error) {
     console.error("Error fetching task:", error);
-    return NextResponse.json({ error: "Failed to fetch task" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch task");
   }
 }
 
 /**
  * PATCH /api/tasks/[taskId]
- * Update a task
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const { taskId } = await params;
@@ -103,7 +107,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
@@ -120,7 +124,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       completedAt,
     } = body;
 
-    // Update task
     const [task] = await db
       .update(staffTasks)
       .set({
@@ -138,15 +141,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .returning();
 
     if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      return apiNotFound(request, "Task not found");
     }
 
-    // Update assignees if provided
     if (assignees !== undefined) {
-      // Remove existing assignees
       await db.delete(staffTaskAssignees).where(eq(staffTaskAssignees.taskId, taskId));
 
-      // Add new assignees
       if (assignees.length > 0) {
         await db.insert(staffTaskAssignees).values(
           assignees.map((userId: string) => ({
@@ -156,7 +156,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         );
       }
 
-      // Log activity
       await db.insert(staffTaskComments).values({
         taskId: taskId,
         userId: user.id,
@@ -165,12 +164,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       });
     }
 
-    // Update labels if provided
     if (labels !== undefined) {
-      // Remove existing labels
       await db.delete(staffTaskLabelRelations).where(eq(staffTaskLabelRelations.taskId, taskId));
 
-      // Add new labels
       if (labels.length > 0) {
         await db.insert(staffTaskLabelRelations).values(
           labels.map((labelId: string) => ({
@@ -181,7 +177,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    // Fetch updated task with relations
     const updatedTask = await db.query.staffTasks.findFirst({
       where: eq(staffTasks.id, taskId),
       with: {
@@ -206,16 +201,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     });
 
-    return NextResponse.json({ task: updatedTask });
+    return apiSuccess(request, updatedTask, { extra: { task: updatedTask } });
   } catch (error) {
     console.error("Error updating task:", error);
-    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
+    return apiInternalError(request, "Failed to update task");
   }
 }
 
 /**
  * DELETE /api/tasks/[taskId]
- * Delete a task
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   const { taskId } = await params;
@@ -227,7 +221,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const deleted = await db
@@ -236,12 +230,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       .returning({ id: staffTasks.id });
 
     if (deleted.length === 0) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      return apiNotFound(request, "Task not found");
     }
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true });
   } catch (error) {
     console.error("Error deleting task:", error);
-    return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
+    return apiInternalError(request, "Failed to delete task");
   }
 }

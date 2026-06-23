@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
+import { fetchApi, fetchBinary } from "@/lib/api/client";
 
 interface ProposalDetailProps {
   proposal: any;
@@ -46,11 +47,9 @@ export function ProposalDetail({ proposal, clients }: ProposalDetailProps) {
   const handleSend = async () => {
     setIsSending(true);
     try {
-      const response = await fetch(`/api/proposals/${proposal.id}/send`, {
-        method: "POST",
+      await fetchApi(`/api/proposals/${proposal.id}/send`, { method: "POST" }, {
+        fallbackMessage: "Failed to send proposal",
       });
-
-      if (!response.ok) throw new Error("Failed to send proposal");
 
       router.refresh();
     } catch (error) {
@@ -81,10 +80,9 @@ export function ProposalDetail({ proposal, clients }: ProposalDetailProps) {
 
   const handleDownloadPDF = async () => {
     try {
-      const response = await fetch(`/api/proposals/${proposal.id}/pdf`);
-      if (!response.ok) throw new Error("Failed to generate PDF");
-
-      const blob = await response.blob();
+      const blob = await fetchBinary(`/api/proposals/${proposal.id}/pdf`, undefined, {
+        fallbackMessage: "Failed to generate PDF",
+      });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

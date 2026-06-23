@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Shield, Plus, Download, CheckCircle, Clock, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { fetchApi } from "@/lib/api/client";
 
 interface PrivacyRequest {
   id: string;
@@ -49,12 +50,12 @@ export function PrivacyRequests({ clientId }: PrivacyRequestsProps) {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/privacy-requests?clientId=${clientId}`);
-
-      if (!response.ok) throw new Error("Failed to fetch requests");
-
-      const data = await response.json();
-      setRequests(data);
+      const data = await fetchApi<PrivacyRequest[]>(
+        `/api/privacy-requests?clientId=${clientId}`,
+        undefined,
+        { fallbackMessage: "Failed to fetch requests" },
+      );
+      setRequests(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error("Failed to load privacy requests");
     } finally {
@@ -64,17 +65,19 @@ export function PrivacyRequests({ clientId }: PrivacyRequestsProps) {
 
   const handleCreate = async () => {
     try {
-      const response = await fetch("/api/privacy-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId,
-          requestType: formData.requestType,
-          notes: formData.notes,
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create request");
+      await fetchApi(
+        "/api/privacy-requests",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId,
+            requestType: formData.requestType,
+            notes: formData.notes,
+          }),
+        },
+        { fallbackMessage: "Failed to create request" },
+      );
 
       toast.success("Privacy request submitted");
       setDialogOpen(false);

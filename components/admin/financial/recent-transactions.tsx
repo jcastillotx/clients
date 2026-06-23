@@ -29,7 +29,7 @@ export function RecentTransactions() {
       const response = await fetch("/api/financial/recent-transactions");
       if (response.ok) {
         const data = await response.json();
-        setTransactions(data.transactions);
+        setTransactions(data.transactions ?? data.data ?? []);
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);

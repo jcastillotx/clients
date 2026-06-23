@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { PaymentModal } from "./payment-modal";
 import { toast } from "sonner";
+import { fetchApi } from "@/lib/api/client";
 
 interface InvoiceActionsProps {
   invoice: {
@@ -28,12 +29,11 @@ export function InvoiceActions({ invoice, canManageInvoices }: InvoiceActionsPro
   const handleSendInvoice = async () => {
     setIsUpdating(true);
     try {
-      const response = await fetch(`/api/invoices/${invoice.id}/send`, { method: "POST" });
-      const payload = (await response.json().catch(() => ({}))) as { error?: string; sentTo?: string };
-
-      if (!response.ok) {
-        throw new Error(payload.error || "Failed to send invoice");
-      }
+      const payload = await fetchApi<{ sentTo?: string }>(
+        `/api/invoices/${invoice.id}/send`,
+        { method: "POST" },
+        { fallbackMessage: "Failed to send invoice" },
+      );
 
       toast.success("Invoice sent", {
         description: payload.sentTo ? `Email delivered to ${payload.sentTo}` : undefined,

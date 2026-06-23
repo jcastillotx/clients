@@ -28,7 +28,7 @@ export default function ReportsPage() {
               Custom Dashboard
             </Button>
           </Link>
-          <Link href="/reports/builder">
+          <Link href="/reports/custom">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               New Report

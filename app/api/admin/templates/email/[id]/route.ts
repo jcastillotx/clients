@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
 import { extractVariables } from "@/lib/templates/template-engine";
 import { requirePermission } from "@/lib/auth/route-guards";
+import {
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+} from "@/lib/api/response";
 
 export async function GET(
   request: Request,
@@ -9,7 +13,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const guard = await requirePermission("settings.manage");
+    const guard = await requirePermission("settings.manage", request);
     if ("error" in guard) {
       return guard.error;
     }
@@ -26,21 +30,15 @@ export async function GET(
     if (error) throw error;
 
     if (!template) {
-      return NextResponse.json(
-        { error: "Template not found" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Template not found");
     }
 
-    return NextResponse.json({ template });
+    return apiSuccess(request, template, { extra: { template } });
   } catch (error) {
     console.error("Error fetching email template:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to fetch template",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch template",
     );
   }
 }
@@ -51,7 +49,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   try {
-    const guard = await requirePermission("settings.manage");
+    const guard = await requirePermission("settings.manage", request);
     if ("error" in guard) {
       return guard.error;
     }
@@ -70,14 +68,12 @@ export async function PATCH(
 
     const supabase = await createClient();
 
-    // Get current template to check type
     const { data: currentTemplate } = await supabase
       .from("email_templates")
       .select("type")
       .eq("id", id)
       .single();
 
-    // If setting as default for this type, unset other defaults
     if (isDefault && currentTemplate) {
       await supabase
         .from("email_templates")
@@ -87,7 +83,6 @@ export async function PATCH(
         .neq("id", id);
     }
 
-    // Extract available variables from the template
     const availableVariables = htmlContent
       ? extractVariables(htmlContent)
       : undefined;
@@ -122,21 +117,15 @@ export async function PATCH(
     if (error) throw error;
 
     if (!template) {
-      return NextResponse.json(
-        { error: "Template not found" },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Template not found");
     }
 
-    return NextResponse.json({ template });
+    return apiSuccess(request, template, { extra: { template } });
   } catch (error) {
     console.error("Error updating email template:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to update template",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to update template",
     );
   }
 }
@@ -147,14 +136,13 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    const guard = await requirePermission("settings.manage");
+    const guard = await requirePermission("settings.manage", request);
     if ("error" in guard) {
       return guard.error;
     }
 
     const supabase = await createClient();
 
-    // Soft delete
     const { error } = await supabase
       .from("email_templates")
       .update({ deleted_at: new Date().toISOString() })
@@ -163,15 +151,12 @@ export async function DELETE(
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true });
+    return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
     console.error("Error deleting email template:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to delete template",
-      },
-      { status: 500 },
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to delete template",
     );
   }
 }

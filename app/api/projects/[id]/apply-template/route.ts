@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema/projects";
 import { projectTaskTemplates } from "@/lib/db/schema/project-templates";
@@ -14,6 +14,14 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminUser } from "@/lib/rbac/check";
 import { builtInProjectTemplates } from "@/lib/templates/project-templates";
 import type { ProjectTemplatePhase } from "@/lib/db/schema/project-templates";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * POST /api/projects/[id]/apply-template
@@ -33,14 +41,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
     const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
       supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
       supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
     ]);
     if (!isAdminUser(user, dbUser, roleRows)) {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     // Verify project exists
@@ -51,14 +59,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .limit(1);
 
     if (!project) {
-      return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 });
+      return apiNotFound(request, "Project not found");
     }
 
     const body = await request.json();
     const { templateId } = body;
 
     if (!templateId) {
-      return NextResponse.json({ success: false, error: "Template ID is required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Template ID is required",
+      });
     }
 
     // Resolve template phases
@@ -71,7 +83,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         (t) => t.name.toLowerCase().replace(/\s+/g, "-") === slug,
       );
       if (!builtIn) {
-        return NextResponse.json({ success: false, error: "Built-in template not found" }, { status: 404 });
+        return apiNotFound(request, "Built-in template not found");
       }
       phases = builtIn.phases;
       templateName = builtIn.name;
@@ -83,7 +95,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .limit(1);
 
       if (!dbTemplate) {
-        return NextResponse.json({ success: false, error: "Template not found" }, { status: 404 });
+        return apiNotFound(request, "Template not found");
       }
       phases = dbTemplate.phases;
       templateName = dbTemplate.name;
@@ -187,18 +199,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        boardId: board.id,
-        boardName: board.name,
-        totalPhases: phases.length,
-        totalTasks,
-        totalChecklists,
-      },
-    });
+    const result = {
+      boardId: board.id,
+      boardName: board.name,
+      totalPhases: phases.length,
+      totalTasks,
+      totalChecklists,
+    };
+
+    return apiSuccess(request, result);
   } catch (error) {
     console.error("Error applying template to project:", error);
-    return NextResponse.json({ success: false, error: "Failed to apply template" }, { status: 500 });
+    return apiInternalError(request, "Failed to apply template");
   }
 }

@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateMeetingSchema } from "@/lib/validations/meeting";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { z } from "zod";
 
 interface RouteParams {
@@ -11,20 +18,17 @@ interface RouteParams {
 
 /**
  * GET /api/meetings/[id]
- *
- * Fetch a single meeting by ID
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   const { data: meeting, error } = await supabase
@@ -44,41 +48,36 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
   if (error) {
     if (error.code === "PGRST116") {
-      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+      return apiNotFound(req, "Meeting not found");
     }
     console.error("Error fetching meeting:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiInternalError(req, error.message);
   }
 
-  return NextResponse.json(meeting);
+  return apiSuccess(req, meeting, { extra: { meeting } });
 }
 
 /**
  * PATCH /api/meetings/[id]
- *
- * Update a meeting
  */
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Parse and validate request body
   const body = await req.json();
 
   try {
     const validatedData = updateMeetingSchema.parse(body);
 
-    // Build update object
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
 
     if (validatedData.title !== undefined) updateData.title = validatedData.title;
     if (validatedData.description !== undefined) updateData.description = validatedData.description;
@@ -96,7 +95,6 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     updateData.updated_at = new Date().toISOString();
 
-    // Update meeting
     const { data: meeting, error: updateError } = await supabase
       .from("meetings")
       .update(updateData)
@@ -113,42 +111,38 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     if (updateError) {
       if (updateError.code === "PGRST116") {
-        return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+        return apiNotFound(req, "Meeting not found");
       }
       console.error("Error updating meeting:", updateError);
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return apiInternalError(req, updateError.message);
     }
 
-    return NextResponse.json(meeting);
+    return apiSuccess(req, meeting, { extra: { meeting } });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
 
     console.error("Unexpected error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(req, "Internal server error");
   }
 }
 
 /**
  * DELETE /api/meetings/[id]
- *
- * Delete a meeting (soft delete)
  */
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Soft delete
   const { error } = await supabase
     .from("meetings")
     .update({ deleted_at: new Date().toISOString() })
@@ -156,11 +150,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
   if (error) {
     if (error.code === "PGRST116") {
-      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+      return apiNotFound(req, "Meeting not found");
     }
     console.error("Error deleting meeting:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiInternalError(req, error.message);
   }
 
-  return NextResponse.json({ success: true });
+  return apiSuccess(req, { deleted: true });
 }

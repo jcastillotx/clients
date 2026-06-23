@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
   FileText,
+  FileSignature,
   Receipt,
   Settings,
   LogOut,
@@ -43,9 +44,13 @@ import {
   Shield,
   EyeOff,
   CalendarCheck,
+  Archive,
+  BookOpen,
+  DollarSign,
   Menu,
   X,
   ChevronDown,
+  Wand2,
 } from "lucide-react";
 import { ComponentType } from "react";
 
@@ -74,7 +79,12 @@ interface NavItem {
   href: string;
   icon: ComponentType<{ className?: string }>;
   access?: AccessLevel;
+  /** Match `?tab=` query param; use `defaultWhenNoTab` when href has no tab. */
   matchesTab?: string;
+  /** Highlight when pathname matches and no `tab` query is present. */
+  defaultWhenNoTab?: boolean;
+  /** Only highlight on exact pathname (not child routes). */
+  exactMatch?: boolean;
 }
 
 interface NavSection {
@@ -82,7 +92,12 @@ interface NavSection {
   items: NavItem[];
 }
 
-function canAccessItem(access: AccessLevel | undefined, isStaff: boolean, isAdmin: boolean, isAccountManager: boolean) {
+function canAccessItem(
+  access: AccessLevel | undefined,
+  isStaff: boolean,
+  isAdmin: boolean,
+  isAccountManager: boolean,
+) {
   if (!access || access === "all") return true;
   if (access === "staff") return isStaff || isAdmin;
   if (access === "manager") return isAdmin || isAccountManager;
@@ -95,100 +110,299 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Service Requests", href: "/requests", icon: ClipboardCheck },
       { name: "Support Tickets", href: "/support", icon: HelpCircle },
-      { name: "Maintenance Plans", href: "/maintenance-plans", icon: ShieldCheck },
+      {
+        name: "Maintenance Plans",
+        href: "/maintenance-plans",
+        icon: ShieldCheck,
+      },
       { name: "File Storage", href: "/documents", icon: FolderOpen },
+      { name: "Contracts", href: "/contracts", icon: FileSignature, access: "staff" },
       { name: "Proposals", href: "/proposals", icon: FileText },
-      { name: "Invoices & Payments", href: "/invoices", icon: Receipt, access: "manager" },
+      {
+        name: "Invoices & Payments",
+        href: "/invoices",
+        icon: Receipt,
+        access: "manager",
+      },
     ],
   },
   {
     title: "Projects",
     items: [
-      { name: "Project Requests", href: "/projects/requests", icon: ClipboardCheck },
-      { name: "Project Timeline", href: "/projects", icon: CalendarRange },
-      { name: "Project Messages", href: "/projects/messages", icon: MessageSquareText },
-      { name: "Project Feedback", href: "/projects/feedback", icon: MessageCircleMore },
-      { name: "Time Tracking", href: "/time-tracking", icon: Clock3, access: "staff" },
+      {
+        name: "Project Requests",
+        href: "/projects/requests",
+        icon: ClipboardCheck,
+      },
+      { name: "Project Timeline", href: "/projects", icon: CalendarRange, defaultWhenNoTab: true },
+      {
+        name: "Project Messages",
+        href: "/projects/messages",
+        icon: MessageSquareText,
+      },
+      {
+        name: "Project Feedback",
+        href: "/projects/feedback",
+        icon: MessageCircleMore,
+      },
+      {
+        name: "Time Tracking",
+        href: "/time-tracking",
+        icon: Clock3,
+        access: "staff",
+      },
       { name: "Task Board", href: "/tasks", icon: Columns3, access: "staff" },
-      { name: "Project Budgets", href: "/projects", icon: Briefcase, access: "staff" },
-      { name: "Staff Tasks", href: "/tasks", icon: ClipboardCheck, access: "staff" },
+      {
+        name: "Project Budgets",
+        href: "/projects/budgets",
+        icon: DollarSign,
+        access: "staff",
+      },
     ],
   },
   {
     title: "Communication",
     items: [
       { name: "Messages", href: "/messages", icon: MessageSquareText },
-      { name: "Meetings", href: "/meetings", icon: CalendarDays, access: "staff" },
-      { name: "Meeting Notes", href: "/meetings", icon: NotebookText, access: "staff" },
-      { name: "Email Assistant", href: "/ai/email-assistant", icon: Mail, access: "staff" },
+      {
+        name: "Meetings",
+        href: "/meetings",
+        icon: CalendarDays,
+        access: "staff",
+        defaultWhenNoTab: true,
+      },
+      {
+        name: "Meeting Notes",
+        href: "/meetings?tab=list",
+        icon: NotebookText,
+        access: "staff",
+        matchesTab: "list",
+      },
+      {
+        name: "Email Assistant",
+        href: "/ai/email-assistant",
+        icon: Mail,
+        access: "staff",
+      },
     ],
   },
   {
     title: "Marketing",
     items: [
       { name: "Marketing Overview", href: "/marketing", icon: Megaphone },
-      { name: "Campaigns", href: "/marketing/campaigns", icon: Megaphone, access: "staff" },
-      { name: "Lead Management", href: "/marketing/leads", icon: Users, access: "staff" },
-      { name: "Content Calendar", href: "/marketing/content-calendar", icon: CalendarDays, access: "staff" },
-      { name: "Social Media", href: "/social-media", icon: Share2, access: "staff" },
-      { name: "Ad Management", href: "/ads", icon: TrendingUp, access: "staff" },
-      { name: "Brand Monitoring", href: "/brand/monitoring", icon: Globe, access: "staff" },
+      {
+        name: "Campaigns",
+        href: "/marketing/campaigns",
+        icon: Megaphone,
+        access: "staff",
+      },
+      {
+        name: "Lead Management",
+        href: "/marketing/leads",
+        icon: Users,
+        access: "staff",
+      },
+      {
+        name: "Content Calendar",
+        href: "/marketing/content-calendar",
+        icon: CalendarDays,
+        access: "staff",
+      },
+      {
+        name: "Social Media",
+        href: "/social-media",
+        icon: Share2,
+        access: "staff",
+      },
+      {
+        name: "Ad Management",
+        href: "/ads",
+        icon: TrendingUp,
+        access: "staff",
+      },
+      {
+        name: "Brand Monitoring",
+        href: "/brand/monitoring",
+        icon: Globe,
+        access: "staff",
+      },
+      {
+        name: "Brand Guide",
+        href: "/brand/guide",
+        icon: BookOpen,
+        access: "staff",
+      },
+      {
+        name: "Brand Competitors",
+        href: "/brand/competitors",
+        icon: Users,
+        access: "staff",
+      },
     ],
   },
   {
     title: "AI & Automation",
     items: [
-      { name: "AI Management", href: "/ai/workflows", icon: BrainCircuit, access: "staff" },
-      { name: "AI Assistant", href: "/ai/assistant", icon: Bot, access: "staff" },
-      { name: "Automation", href: "/automation", icon: Sparkles, access: "staff" },
-      { name: "AI Analytics", href: "/ai/analytics", icon: BarChart3, access: "staff" },
+      {
+        name: "AI Management",
+        href: "/ai/workflows",
+        icon: BrainCircuit,
+        access: "staff",
+      },
+      {
+        name: "AI Assistant",
+        href: "/ai/assistant",
+        icon: Bot,
+        access: "staff",
+      },
+      {
+        name: "Design Studio",
+        href: "/ai/design",
+        icon: Wand2,
+        access: "staff",
+      },
+      {
+        name: "Automation",
+        href: "/automation",
+        icon: Sparkles,
+        access: "staff",
+      },
+      {
+        name: "AI Analytics",
+        href: "/ai/analytics",
+        icon: BarChart3,
+        access: "staff",
+      },
     ],
   },
   {
     title: "Reports",
     items: [
-      { name: "Reports Dashboard", href: "/reports", icon: BarChart3, access: "staff" },
-      { name: "Team Workload", href: "/time-tracking/reports", icon: Users, access: "staff" },
-      { name: "Client Reports", href: "/reports/custom", icon: FileText, access: "staff" },
-      { name: "Activity Log", href: "/reports", icon: Clock3, access: "staff" },
+      {
+        name: "Reports Dashboard",
+        href: "/reports",
+        icon: BarChart3,
+        access: "staff",
+        defaultWhenNoTab: true,
+      },
+      {
+        name: "Team Workload",
+        href: "/time-tracking/reports",
+        icon: Users,
+        access: "staff",
+      },
+      {
+        name: "Client Reports",
+        href: "/reports/custom",
+        icon: FileText,
+        access: "staff",
+      },
     ],
   },
   {
     title: "Management",
     items: [
       { name: "Clients", href: "/clients", icon: Briefcase, access: "staff" },
+      {
+        name: "Archive",
+        href: "/admin/archive",
+        icon: Archive,
+        access: "admin",
+      },
       { name: "Users", href: "/users", icon: Users, access: "manager" },
       { name: "Partners", href: "/partners", icon: LinkIcon, access: "staff" },
       { name: "Referrals", href: "/referrals", icon: Star, access: "staff" },
-      { name: "Staff Guides", href: "/staff-guides", icon: GraduationCap, access: "staff" },
-      { name: "Feedback & Surveys", href: "/surveys", icon: MessageCircleMore, access: "staff" },
-      { name: "Account Health", href: "/account-health", icon: Heart, access: "staff" },
+      {
+        name: "Staff Guides",
+        href: "/staff-guides",
+        icon: GraduationCap,
+        access: "staff",
+      },
+      {
+        name: "Feedback & Surveys",
+        href: "/surveys",
+        icon: MessageCircleMore,
+        access: "staff",
+      },
+      {
+        name: "Account Health",
+        href: "/account-health",
+        icon: Heart,
+        access: "staff",
+      },
+      {
+        name: "Knowledge Base",
+        href: "/knowledge-base",
+        icon: BookOpen,
+        access: "staff",
+      },
+    ],
+  },
+  {
+    title: "Administration",
+    items: [
+      { name: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, access: "admin", exactMatch: true },
+      { name: "Roles & Permissions", href: "/admin/roles", icon: Shield, access: "admin" },
+      { name: "Feature Flags", href: "/admin/features", icon: Sparkles, access: "admin" },
+      { name: "Financial Overview", href: "/admin/financial", icon: DollarSign, access: "admin" },
+      { name: "All Support Tickets", href: "/admin/tickets", icon: HelpCircle, access: "admin" },
+      {
+        name: "Invoice & Email Templates",
+        href: "/admin/settings/templates",
+        icon: FileText,
+        access: "admin",
+      },
     ],
   },
   {
     title: "Branding",
     items: [
-      { name: "Portal Branding", href: "/branding", icon: Settings, access: "admin" },
+      {
+        name: "Portal Branding",
+        href: "/branding",
+        icon: Settings,
+        access: "admin",
+      },
     ],
   },
   {
     title: "Storage",
     items: [
-      { name: "Storage Management", href: "/storage", icon: Database, access: "staff" },
+      {
+        name: "Storage Management",
+        href: "/storage",
+        icon: Database,
+        access: "staff",
+      },
     ],
   },
   {
     title: "Integrations",
     items: [
-      { name: "Integrations", href: "/integrations", icon: LinkIcon, access: "admin" },
+      {
+        name: "Integrations",
+        href: "/integrations",
+        icon: LinkIcon,
+        access: "admin",
+      },
       { name: "Webhooks", href: "/webhooks", icon: LinkIcon, access: "admin" },
     ],
   },
   {
     title: "Security",
     items: [
-      { name: "Security Overview", href: "/security-overview", icon: Shield, access: "staff" },
-      { name: "Privacy Requests", href: "/privacy-requests", icon: EyeOff, access: "staff" },
+      {
+        name: "Security Overview",
+        href: "/security-overview",
+        icon: Shield,
+        access: "staff",
+      },
+      {
+        name: "Privacy Requests",
+        href: "/privacy-requests",
+        icon: EyeOff,
+        access: "staff",
+      },
     ],
   },
   {
@@ -202,10 +416,30 @@ const navigationSections: NavSection[] = [
         icon: ShieldCheck,
         access: "admin",
       },
-      { name: "Service Templates", href: "/settings/service-templates", icon: Briefcase, access: "admin" },
-      { name: "Form Templates", href: "/admin/template-forms", icon: FileText, access: "admin" },
-      { name: "Email Provider", href: "/admin/email", icon: Mail, access: "admin" },
-      { name: "Calendar", href: "/settings/calendar", icon: CalendarCheck, access: "staff" },
+      {
+        name: "Service Templates",
+        href: "/settings/service-templates",
+        icon: Briefcase,
+        access: "admin",
+      },
+      {
+        name: "Form Templates",
+        href: "/admin/template-forms",
+        icon: FileText,
+        access: "admin",
+      },
+      {
+        name: "Email Provider",
+        href: "/admin/email",
+        icon: Mail,
+        access: "admin",
+      },
+      {
+        name: "Calendar",
+        href: "/settings/calendar",
+        icon: CalendarCheck,
+        access: "staff",
+      },
     ],
   },
 ];
@@ -224,11 +458,27 @@ function isNavItemActive(
   item: NavItem,
 ): boolean {
   const [itemPathname, itemSearch] = item.href.split("?");
-  const itemTab =
-    item.matchesTab ?? (itemSearch ? new URLSearchParams(itemSearch).get("tab") : null);
+  const hrefTab = itemSearch ? new URLSearchParams(itemSearch).get("tab") : null;
+  const tabFromItem = item.matchesTab ?? hrefTab;
   const currentTab = searchParams.get("tab");
-  const isTabMatch = itemTab ? currentTab === itemTab : true;
-  return (pathname === itemPathname && isTabMatch) || pathname.startsWith(`${itemPathname}/`);
+
+  const pathnameMatch = item.exactMatch
+    ? pathname === itemPathname
+    : pathname === itemPathname || pathname.startsWith(`${itemPathname}/`);
+
+  if (!pathnameMatch) {
+    return false;
+  }
+
+  if (tabFromItem) {
+    return currentTab === tabFromItem;
+  }
+
+  if (item.defaultWhenNoTab) {
+    return !currentTab;
+  }
+
+  return pathname === itemPathname || pathname.startsWith(`${itemPathname}/`);
 }
 
 export function DashboardNav({
@@ -247,7 +497,9 @@ export function DashboardNav({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   /** Admin-only: collapsed state per section (persisted). `undefined` = expanded (default). */
-  const [adminSectionOpen, setAdminSectionOpen] = useState<Record<string, boolean>>({});
+  const [adminSectionOpen, setAdminSectionOpen] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (!isAdmin || typeof window === "undefined") return;
@@ -288,7 +540,8 @@ export function DashboardNav({
     router.push("/login");
   };
 
-  const widthClass = sidebarWidthClass[sidebarWidth] ?? sidebarWidthClass.standard;
+  const widthClass =
+    sidebarWidthClass[sidebarWidth] ?? sidebarWidthClass.standard;
 
   return (
     <>
@@ -318,13 +571,19 @@ export function DashboardNav({
           "fixed inset-y-0 left-0 z-[58] transition-transform duration-300 ease-in-out md:transition-none",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
-        style={{ backgroundColor: "var(--sidebar-bg)", color: "var(--sidebar-text)" }}
+        style={{
+          backgroundColor: "var(--sidebar-bg)",
+          color: "var(--sidebar-text)",
+        }}
         aria-label="Main navigation"
       >
         {/* Close button inside sidebar — mobile only */}
         <button
           className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg md:hidden"
-          style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "var(--sidebar-text)" }}
+          style={{
+            backgroundColor: "rgba(255,255,255,0.1)",
+            color: "var(--sidebar-text)",
+          }}
           onClick={() => setMobileOpen(false)}
           aria-label="Close navigation menu"
         >
@@ -333,27 +592,45 @@ export function DashboardNav({
 
         <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-white/5 to-transparent" />
         {/* Logo */}
-        <div className="relative flex h-20 items-center px-6" style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+        <div
+          className="relative flex h-20 items-center px-6"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}
+        >
           {logoUrl ? (
             <img
               src={logoUrl}
               alt="Company logo"
               className="h-11 w-11 rounded-xl object-contain p-1"
-              style={{ border: "1px solid rgba(255,255,255,0.2)", backgroundColor: "rgba(255,255,255,0.1)" }}
+              style={{
+                border: "1px solid rgba(255,255,255,0.2)",
+                backgroundColor: "rgba(255,255,255,0.1)",
+              }}
             />
           ) : (
             <div
               className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold"
-              style={{ border: "1px solid rgba(255,255,255,0.2)", backgroundColor: "rgba(255,255,255,0.15)", color: "var(--sidebar-text)" }}
+              style={{
+                border: "1px solid rgba(255,255,255,0.2)",
+                backgroundColor: "rgba(255,255,255,0.15)",
+                color: "var(--sidebar-text)",
+              }}
             >
               {brandText ? brandText.slice(0, 1).toUpperCase() : "K"}
             </div>
           )}
           <div className="ml-3 hidden md:block">
-            <h1 className="text-lg font-bold font-heading leading-none" style={{ color: "var(--sidebar-text)" }}>
+            <h1
+              className="text-lg font-bold font-heading leading-none"
+              style={{ color: "var(--sidebar-text)" }}
+            >
               {brandText || "KRE8IV"}
             </h1>
-            <p className="mt-1 text-xs uppercase tracking-[0.18em]" style={{ color: "var(--sidebar-text)", opacity: 0.55 }}>{siteTitle}</p>
+            <p
+              className="mt-1 text-xs uppercase tracking-[0.18em]"
+              style={{ color: "var(--sidebar-text)", opacity: 0.55 }}
+            >
+              {siteTitle}
+            </p>
           </div>
         </div>
 
@@ -383,7 +660,8 @@ export function DashboardNav({
             );
             if (visibleItems.length === 0) return null;
 
-            const sectionExpanded = !isAdmin || isAdminSectionExpanded(section.title);
+            const sectionExpanded =
+              !isAdmin || isAdminSectionExpanded(section.title);
 
             return (
               <div key={section.title}>
@@ -417,9 +695,18 @@ export function DashboardNav({
                     {section.title}
                   </p>
                 )}
-                <div className={cn("space-y-1.5", isAdmin && !sectionExpanded && "hidden")}>
+                <div
+                  className={cn(
+                    "space-y-1.5",
+                    isAdmin && !sectionExpanded && "hidden",
+                  )}
+                >
                   {visibleItems.map((item) => {
-                    const isActive = isNavItemActive(pathname, searchParams, item);
+                    const isActive = isNavItemActive(
+                      pathname,
+                      searchParams,
+                      item,
+                    );
                     return (
                       <Link key={item.name} href={item.href}>
                         <Button
@@ -434,7 +721,10 @@ export function DashboardNav({
                           )}
                           style={{ color: "var(--sidebar-text)" }}
                         >
-                          <item.icon className="h-4 w-4 md:mr-3 shrink-0" aria-hidden="true" />
+                          <item.icon
+                            className="h-4 w-4 md:mr-3 shrink-0"
+                            aria-hidden="true"
+                          />
                           <span className="hidden md:inline">{item.name}</span>
                         </Button>
                       </Link>
@@ -447,11 +737,25 @@ export function DashboardNav({
         </nav>
 
         {/* User section */}
-        <div className="relative border-t p-3 md:p-4" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
-          <div className="mb-3 hidden items-center gap-3 rounded-xl border p-2.5 md:flex" style={{ borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(255,255,255,0.08)" }}>
+        <div
+          className="relative border-t p-3 md:p-4"
+          style={{ borderColor: "rgba(255,255,255,0.12)" }}
+        >
+          <div
+            className="mb-3 hidden items-center gap-3 rounded-xl border p-2.5 md:flex"
+            style={{
+              borderColor: "rgba(255,255,255,0.12)",
+              backgroundColor: "rgba(255,255,255,0.08)",
+            }}
+          >
             <Avatar>
               <AvatarImage src={user.user_metadata?.avatar} />
-              <AvatarFallback style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--sidebar-text)" }}>
+              <AvatarFallback
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                  color: "var(--sidebar-text)",
+                }}
+              >
                 {user.user_metadata?.name
                   ?.split(" ")
                   .map((n) => n[0])
@@ -459,8 +763,18 @@ export function DashboardNav({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium" style={{ color: "var(--sidebar-text)" }}>{user.user_metadata?.name || "User"}</p>
-              <p className="truncate text-xs" style={{ color: "var(--sidebar-text)", opacity: 0.75 }}>{user.email}</p>
+              <p
+                className="truncate text-sm font-medium"
+                style={{ color: "var(--sidebar-text)" }}
+              >
+                {user.user_metadata?.name || "User"}
+              </p>
+              <p
+                className="truncate text-xs"
+                style={{ color: "var(--sidebar-text)", opacity: 0.75 }}
+              >
+                {user.email}
+              </p>
             </div>
           </div>
           <Button
@@ -468,7 +782,11 @@ export function DashboardNav({
             size="sm"
             aria-label="Sign out"
             className="w-full rounded-xl hover:bg-white/10"
-            style={{ color: "var(--sidebar-text)", borderColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.15)" }}
+            style={{
+              color: "var(--sidebar-text)",
+              borderColor: "rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.15)",
+            }}
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 md:mr-2" aria-hidden="true" />

@@ -119,7 +119,8 @@ export function DocumentLibrary({
       const response = await fetch(`/api/documents/${documentId}/download`);
       if (!response.ok) throw new Error("Failed to generate download URL");
 
-      const { url, fileName } = await response.json();
+      const body = await response.json();
+      const { url, fileName } = body?.data ?? body;
 
       // Create temporary link and trigger download
       const link = document.createElement("a");

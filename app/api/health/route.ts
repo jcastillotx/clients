@@ -1,61 +1,55 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { apiSuccess } from "@/lib/api/response";
 import { logger } from "@/lib/logger";
 
 /**
  * Health check endpoint
  * Returns system status for the top bar indicator
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     
     // Check database connection
-    const { data, error } = await supabase.from("clients").select("id").limit(1);
+    const { error } = await supabase.from("clients").select("id").limit(1);
     
     // Check if query failed (Supabase returns errors in error field, doesn't throw)
     if (error) {
       // PGRST116 = "no rows returned" which is acceptable (table exists but empty)
       if (error.code !== "PGRST116") {
         logger.error("Health check database error", error, { code: error.code });
-        return NextResponse.json(
-          { 
-            status: "degraded",
-            timestamp: new Date().toISOString(),
-            services: {
-              database: "error",
-              auth: "unknown"
-            },
-            error: error.message,
-            code: error.code
+        return apiSuccess(request, {
+          status: "degraded",
+          timestamp: new Date().toISOString(),
+          services: {
+            database: "error",
+            auth: "unknown",
           },
-          { status: 503 }
-        );
+          code: error.code,
+          errorMessage: error.message,
+        }, { status: 503 });
       }
     }
 
-    return NextResponse.json({ 
+    return apiSuccess(request, {
       status: "operational",
       timestamp: new Date().toISOString(),
       services: {
         database: "ok",
-        auth: "ok"
-      }
+        auth: "ok",
+      },
     });
   } catch (error) {
     logger.error("Health check exception", error);
-    return NextResponse.json(
-      { 
-        status: "down",
-        timestamp: new Date().toISOString(),
-        services: {
-          database: "down",
-          auth: "unknown"
-        },
-        error: "Health check failed"
+    return apiSuccess(request, {
+      status: "down",
+      timestamp: new Date().toISOString(),
+      services: {
+        database: "down",
+        auth: "unknown",
       },
-      { status: 503 }
-    );
+      errorMessage: "Health check failed",
+    }, { status: 503 });
   }
 }
 

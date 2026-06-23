@@ -33,7 +33,7 @@ export function KanbanBoard({ board, onUpdate }: KanbanBoardProps) {
       // Refresh board data
       const boardResponse = await fetch(`/api/tasks/boards/${board.id}`);
       const boardData = await boardResponse.json();
-      onUpdate(boardData.board);
+      onUpdate(boardData.board ?? boardData.data);
     } catch (error) {
       console.error("Error moving task:", error);
     }
@@ -58,13 +58,13 @@ export function KanbanBoard({ board, onUpdate }: KanbanBoardProps) {
     // Refresh the board to get updated task
     const boardResponse = await fetch(`/api/tasks/boards/${board.id}`);
     const boardData = await boardResponse.json();
-    onUpdate(boardData.board);
+    onUpdate(boardData.board ?? boardData.data);
 
     // Update selected task if it's the one being viewed
     if (selectedTask?.id === taskId) {
       const taskResponse = await fetch(`/api/tasks/${taskId}`);
       const taskData = await taskResponse.json();
-      setSelectedTask(taskData.task);
+      setSelectedTask(taskData.task ?? taskData.data);
     }
   };
 

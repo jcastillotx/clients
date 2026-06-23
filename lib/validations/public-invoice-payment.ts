@@ -8,6 +8,7 @@ export const createPublicInvoiceCheckoutSchema = z.object({
   contactName: z.string().min(1, "Contact name is required").max(255),
   phone: z.string().max(50).optional().nullable(),
   businessInfo: z.string().max(2000).optional().nullable(),
+  turnstileToken: z.string().min(1).optional().nullable(),
 });
 
 export type CreatePublicInvoiceCheckoutInput = z.infer<typeof createPublicInvoiceCheckoutSchema>;

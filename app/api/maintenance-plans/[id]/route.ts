@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import {
   maintenancePlans,
@@ -7,8 +7,16 @@ import {
 import { eq, sql, desc } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import {
+  apiError,
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
-async function requirePlanAccess(planId: string) {
+async function requirePlanAccess(request: Request, planId: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,12 +24,7 @@ async function requirePlanAccess(planId: string) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      ),
-    };
+    return { error: apiUnauthorized(request) };
   }
 
   const access = await resolveRouteAccess(supabase, user);
@@ -32,21 +35,11 @@ async function requirePlanAccess(planId: string) {
     .limit(1);
 
   if (!plan) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Maintenance plan not found" },
-        { status: 404 },
-      ),
-    };
+    return { error: apiNotFound(request, "Maintenance plan not found") };
   }
 
   if (!canAccessClient(access, plan.clientId)) {
-    return {
-      error: NextResponse.json(
-        { success: false, error: "Forbidden" },
-        { status: 403 },
-      ),
-    };
+    return { error: apiForbidden(request) };
   }
 
   return { user, access };
@@ -62,7 +55,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const guard = await requirePlanAccess(id);
+    const guard = await requirePlanAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -100,13 +93,7 @@ export async function GET(
       .limit(1);
 
     if (!plan) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Maintenance plan not found",
-        },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Maintenance plan not found");
     }
 
     // Get recent usage logs
@@ -134,24 +121,19 @@ export async function GET(
       .orderBy(desc(maintenancePlanUsage.loggedAt))
       .limit(50);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        ...plan,
-        usageLogs,
-      },
-    });
+    return apiSuccess(request, { ...plan, usageLogs });
   } catch (error) {
     console.error("Error fetching maintenance plan:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch maintenance plan",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to fetch maintenance plan",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to fetch maintenance plan",
     );
   }
 }
@@ -166,7 +148,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   try {
-    const guard = await requirePlanAccess(id);
+    const guard = await requirePlanAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -181,13 +163,7 @@ export async function PATCH(
       .limit(1);
 
     if (!existingPlan) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Maintenance plan not found",
-        },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Maintenance plan not found");
     }
 
     // Update plan
@@ -200,22 +176,21 @@ export async function PATCH(
       .where(eq(maintenancePlans.id, id))
       .returning();
 
-    return NextResponse.json({
-      success: true,
-      data: updatedPlan,
-      message: "Maintenance plan updated successfully",
+    return apiSuccess(request, updatedPlan, {
+      extra: { message: "Maintenance plan updated successfully" },
     });
   } catch (error) {
     console.error("Error updating maintenance plan:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update maintenance plan",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to update maintenance plan",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to update maintenance plan",
     );
   }
 }
@@ -230,7 +205,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    const guard = await requirePlanAccess(id);
+    const guard = await requirePlanAccess(request, id);
     if ("error" in guard) {
       return guard.error;
     }
@@ -243,13 +218,7 @@ export async function DELETE(
       .limit(1);
 
     if (!existingPlan) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Maintenance plan not found",
-        },
-        { status: 404 },
-      );
+      return apiNotFound(request, "Maintenance plan not found");
     }
 
     // Soft delete
@@ -261,21 +230,21 @@ export async function DELETE(
       })
       .where(eq(maintenancePlans.id, id));
 
-    return NextResponse.json({
-      success: true,
-      message: "Maintenance plan deleted successfully",
+    return apiSuccess(request, { deleted: true }, {
+      extra: { message: "Maintenance plan deleted successfully" },
     });
   } catch (error) {
     console.error("Error deleting maintenance plan:", error);
-    const status = isDatabaseConfigurationError(error) ? 503 : 500;
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to delete maintenance plan",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status },
+    if (isDatabaseConfigurationError(error)) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Failed to delete maintenance plan",
+      });
+    }
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "Failed to delete maintenance plan",
     );
   }
 }

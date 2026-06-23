@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchApi } from "@/lib/api/client";
 
 type QuestionType = "text" | "rating" | "nps" | "multiple_choice" | "checkbox";
 
@@ -89,25 +90,24 @@ export function SurveyCreateForm({ clients, canSelectClient, defaultClientId }: 
         };
       });
 
-      const response = await fetch("/api/surveys", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      await fetchApi(
+        "/api/surveys",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            description: description || null,
+            clientId: canSelectClient ? (clientId && clientId !== "all_clients" ? clientId : null) : defaultClientId || null,
+            isActive,
+            anonymousAllowed,
+            questions: normalizedQuestions,
+          }),
         },
-        body: JSON.stringify({
-          title,
-          description: description || null,
-          clientId: canSelectClient ? (clientId && clientId !== "all_clients" ? clientId : null) : defaultClientId || null,
-          isActive,
-          anonymousAllowed,
-          questions: normalizedQuestions,
-        }),
-      });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to create survey");
-      }
+        { fallbackMessage: "Failed to create survey" },
+      );
 
       router.push("/surveys");
       router.refresh();

@@ -1,8 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { timeEntries } from "@/lib/db/schema/time-tracking";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
+import type { TimeReportBucket } from "@/lib/api/route-types";
 import { createClient } from "@/lib/supabase/server";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * GET /api/time-tracking/reports
@@ -14,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
     const userId = user.id;
 
@@ -24,7 +31,11 @@ export async function GET(request: NextRequest) {
     const groupBy = searchParams.get("groupBy") || "day"; // day, week, month, client, request
 
     if (!startDate || !endDate) {
-      return NextResponse.json({ error: "Start date and end date are required" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Start date and end date are required",
+      });
     }
 
     const start = new Date(startDate);
@@ -48,10 +59,10 @@ export async function GET(request: NextRequest) {
     const totalAmount = entries.reduce((sum, entry) => sum + parseFloat(entry.totalAmount || "0"), 0);
 
     // Group data based on groupBy parameter
-    let groupedData: any[] = [];
+    let groupedData: TimeReportBucket[] = [];
 
     if (groupBy === "day") {
-      const dayMap = new Map<string, any>();
+      const dayMap = new Map<string, TimeReportBucket>();
       entries.forEach((entry) => {
         if (!entry.startedAt) return;
         const day = entry.startedAt.toISOString().split("T")[0];
@@ -64,7 +75,7 @@ export async function GET(request: NextRequest) {
             entries: 0,
           });
         }
-        const dayData = dayMap.get(day);
+        const dayData = dayMap.get(day)!;
         dayData.totalMinutes += entry.durationMinutes || 0;
         if (entry.isBillable) {
           dayData.billableMinutes += entry.durationMinutes || 0;
@@ -72,9 +83,11 @@ export async function GET(request: NextRequest) {
         dayData.totalAmount += parseFloat(entry.totalAmount || "0");
         dayData.entries += 1;
       });
-      groupedData = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+      groupedData = Array.from(dayMap.values()).sort((a, b) =>
+        (a.date ?? "").localeCompare(b.date ?? ""),
+      );
     } else if (groupBy === "week") {
-      const weekMap = new Map<string, any>();
+      const weekMap = new Map<string, TimeReportBucket>();
       entries.forEach((entry) => {
         if (!entry.startedAt) return;
         const week = getWeekStart(entry.startedAt);
@@ -87,7 +100,7 @@ export async function GET(request: NextRequest) {
             entries: 0,
           });
         }
-        const weekData = weekMap.get(week);
+        const weekData = weekMap.get(week)!;
         weekData.totalMinutes += entry.durationMinutes || 0;
         if (entry.isBillable) {
           weekData.billableMinutes += entry.durationMinutes || 0;
@@ -95,9 +108,11 @@ export async function GET(request: NextRequest) {
         weekData.totalAmount += parseFloat(entry.totalAmount || "0");
         weekData.entries += 1;
       });
-      groupedData = Array.from(weekMap.values()).sort((a, b) => a.week.localeCompare(b.week));
+      groupedData = Array.from(weekMap.values()).sort((a, b) =>
+        (a.week ?? "").localeCompare(b.week ?? ""),
+      );
     } else if (groupBy === "month") {
-      const monthMap = new Map<string, any>();
+      const monthMap = new Map<string, TimeReportBucket>();
       entries.forEach((entry) => {
         if (!entry.startedAt) return;
         const month = entry.startedAt.toISOString().substring(0, 7); // YYYY-MM
@@ -110,7 +125,7 @@ export async function GET(request: NextRequest) {
             entries: 0,
           });
         }
-        const monthData = monthMap.get(month);
+        const monthData = monthMap.get(month)!;
         monthData.totalMinutes += entry.durationMinutes || 0;
         if (entry.isBillable) {
           monthData.billableMinutes += entry.durationMinutes || 0;
@@ -118,12 +133,14 @@ export async function GET(request: NextRequest) {
         monthData.totalAmount += parseFloat(entry.totalAmount || "0");
         monthData.entries += 1;
       });
-      groupedData = Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+      groupedData = Array.from(monthMap.values()).sort((a, b) =>
+        (a.month ?? "").localeCompare(b.month ?? ""),
+      );
     } else if (groupBy === "client") {
-      const clientMap = new Map<string, any>();
+      const clientMap = new Map<string, TimeReportBucket>();
       entries.forEach((entry) => {
         const clientId = entry.clientId || "no-client";
-        const clientName = (entry.client as any)?.name || "No Client";
+        const clientName = entry.client?.companyName ?? "No Client";
         if (!clientMap.has(clientId)) {
           clientMap.set(clientId, {
             clientId,
@@ -134,7 +151,7 @@ export async function GET(request: NextRequest) {
             entries: 0,
           });
         }
-        const clientData = clientMap.get(clientId);
+        const clientData = clientMap.get(clientId)!;
         clientData.totalMinutes += entry.durationMinutes || 0;
         if (entry.isBillable) {
           clientData.billableMinutes += entry.durationMinutes || 0;
@@ -144,10 +161,10 @@ export async function GET(request: NextRequest) {
       });
       groupedData = Array.from(clientMap.values()).sort((a, b) => b.totalMinutes - a.totalMinutes);
     } else if (groupBy === "request") {
-      const requestMap = new Map<string, any>();
+      const requestMap = new Map<string, TimeReportBucket>();
       entries.forEach((entry) => {
         const requestId = entry.requestId || "no-request";
-        const requestTitle = (entry.request as any)?.title || "No Request";
+        const requestTitle = entry.request?.title ?? "No Request";
         if (!requestMap.has(requestId)) {
           requestMap.set(requestId, {
             requestId,
@@ -158,7 +175,7 @@ export async function GET(request: NextRequest) {
             entries: 0,
           });
         }
-        const requestData = requestMap.get(requestId);
+        const requestData = requestMap.get(requestId)!;
         requestData.totalMinutes += entry.durationMinutes || 0;
         if (entry.isBillable) {
           requestData.billableMinutes += entry.durationMinutes || 0;
@@ -169,7 +186,7 @@ export async function GET(request: NextRequest) {
       groupedData = Array.from(requestMap.values()).sort((a, b) => b.totalMinutes - a.totalMinutes);
     }
 
-    return NextResponse.json({
+    const payload = {
       summary: {
         totalMinutes,
         totalHours: Math.round((totalMinutes / 60) * 100) / 100,
@@ -182,10 +199,12 @@ export async function GET(request: NextRequest) {
       },
       groupedData,
       entries,
-    });
+    };
+
+    return apiSuccess(request, payload, { extra: payload });
   } catch (error) {
     console.error("Error generating report:", error);
-    return NextResponse.json({ error: "Failed to generate report" }, { status: 500 });
+    return apiInternalError(request, "Failed to generate report");
   }
 }
 

@@ -73,13 +73,14 @@ export function PostScheduler({ clientId, userId, accounts, onPostCreated }: Pos
       }
 
       const newPost = await response.json();
+      const post = newPost.data ?? newPost;
 
       toast({
         title: "Success",
         description: publishNow ? "Post published successfully!" : "Post scheduled successfully!",
       });
 
-      onPostCreated(newPost);
+      onPostCreated(post);
 
       // Reset form
       setContent("");

@@ -1,7 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createProjectRequestSchema } from "@/lib/validations/project-request";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 
 type UserAccess = {
   clientId: string | null;
@@ -59,11 +66,6 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
   } satisfies UserAccess;
 }
 
-/**
- * GET /api/projects/requests
- *
- * Lists all project requests available to the current user.
- */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -73,7 +75,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveAccess(supabase, user);
@@ -108,24 +110,17 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query;
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(request, error.message);
     }
 
-    return NextResponse.json({
-      data: data || [],
-      access,
-    });
+    const rows = data || [];
+    return apiSuccess(request, rows, { extra: { access } });
   } catch (error) {
     console.error("Error listing project requests:", error);
-    return NextResponse.json({ error: "Failed to list project requests" }, { status: 500 });
+    return apiInternalError(request, "Failed to list project requests");
   }
 }
 
-/**
- * POST /api/projects/requests
- *
- * Creates a new project request (stored in requests with custom_fields.type=project).
- */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -135,7 +130,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const body = await request.json();
@@ -144,7 +139,11 @@ export async function POST(request: NextRequest) {
 
     const effectiveClientId = access.isStaff && validated.clientId ? validated.clientId : access.clientId;
     if (!effectiveClientId) {
-      return NextResponse.json({ error: "No client is assigned to this user" }, { status: 400 });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "No client is assigned to this user",
+      });
     }
 
     const dueDate = normalizeDate(validated.dueDate) ?? normalizeDate(validated.requestedLaunchDate);
@@ -192,15 +191,15 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(request, error.message);
     }
 
-    return NextResponse.json({ data }, { status: 201 });
+    return apiSuccess(request, data, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
     console.error("Error creating project request:", error);
-    return NextResponse.json({ error: "Failed to create project request" }, { status: 500 });
+    return apiInternalError(request, "Failed to create project request");
   }
 }

@@ -1,26 +1,28 @@
 import { createClient } from "@/lib/supabase/server";
-import { createMeetingSchema, updateMeetingSchema } from "@/lib/validations/meeting";
-import { NextRequest, NextResponse } from "next/server";
+import { createMeetingSchema } from "@/lib/validations/meeting";
+import { NextRequest } from "next/server";
+import {
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
 import { z } from "zod";
 
 /**
  * GET /api/meetings
- *
- * Fetch all meetings for the authenticated user's client
  */
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Get search params
   const searchParams = req.nextUrl.searchParams;
   const search = searchParams.get("search");
   const status = searchParams.get("status");
@@ -30,7 +32,6 @@ export async function GET(req: NextRequest) {
   const sortBy = searchParams.get("sortBy") || "scheduled_at";
   const sortOrder = searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
 
-  // Build query
   let query = supabase
     .from("meetings")
     .select(
@@ -43,7 +44,6 @@ export async function GET(req: NextRequest) {
     )
     .order(sortBy, { ascending: sortOrder === "asc" });
 
-  // Apply filters
   if (search) {
     query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
   }
@@ -68,36 +68,32 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error("Error fetching meetings:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiInternalError(req, error.message);
   }
 
-  return NextResponse.json(data);
+  const meetings = data ?? [];
+  return apiSuccess(req, meetings, { extra: { meetings } });
 }
 
 /**
  * POST /api/meetings
- *
- * Create a new meeting
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
-  // Parse and validate request body
   const body = await req.json();
 
   try {
     const validatedData = createMeetingSchema.parse(body);
 
-    // Create meeting
     const { data: meeting, error: createError } = await supabase
       .from("meetings")
       .insert({
@@ -127,10 +123,9 @@ export async function POST(req: NextRequest) {
 
     if (createError) {
       console.error("Error creating meeting:", createError);
-      return NextResponse.json({ error: createError.message }, { status: 500 });
+      return apiInternalError(req, createError.message);
     }
 
-    // Create attendee records if attendees are provided
     if (validatedData.attendees && validatedData.attendees.length > 0) {
       const attendeeRecords = validatedData.attendees
         .filter((attendee) => attendee.userId)
@@ -145,18 +140,17 @@ export async function POST(req: NextRequest) {
 
         if (attendeeError) {
           console.error("Error creating attendee records:", attendeeError);
-          // Don't fail the request, just log the error
         }
       }
     }
 
-    return NextResponse.json(meeting, { status: 201 });
+    return apiSuccess(req, meeting, { status: 201, extra: { meeting } });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(req, error);
     }
 
     console.error("Unexpected error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiInternalError(req, "Internal server error");
   }
 }

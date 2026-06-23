@@ -1,12 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { collectRoleNames } from "@/lib/rbac/role-row-utils";
+import {
+  apiError,
+  apiInternalError,
+  apiSuccess,
+  apiUnauthorized,
+} from "@/lib/api/response";
 
 /**
  * GET /api/marketing/features
- *
- * Returns the marketing feature flags for a given client.
- * - Admin/account managers can pass ?client_id=<uuid> to view any client's features.
- * - Regular users see features for their own client.
  */
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -16,11 +19,10 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiUnauthorized(req);
   }
 
   try {
-    // Determine the user's role and client
     const { data: userData } = await supabase
       .from("users")
       .select("client_id, is_super_admin")
@@ -32,17 +34,12 @@ export async function GET(req: NextRequest) {
       .select("role:roles(name)")
       .eq("user_id", user.id);
 
-    const roleNames = new Set<string>();
-    for (const row of roleRows || []) {
-      const roleName = String((row as any)?.role?.name || (row as any)?.role?.[0]?.name || "").toLowerCase();
-      if (roleName) roleNames.add(roleName);
-    }
+    const roleNames = collectRoleNames(roleRows);
 
     const isAdmin = Boolean(userData?.is_super_admin) || roleNames.has("admin") || roleNames.has("super_admin");
     const isAccountManager = roleNames.has("account_manager");
     const isStaff = isAdmin || isAccountManager || roleNames.has("staff");
 
-    // Determine which client to look up
     const requestedClientId = req.nextUrl.searchParams.get("client_id");
     let clientId: string | null = null;
 
@@ -53,10 +50,13 @@ export async function GET(req: NextRequest) {
     }
 
     if (!clientId) {
-      return NextResponse.json({ error: "No client context" }, { status: 400 });
+      return apiError(req, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "No client context",
+      });
     }
 
-    // Fetch marketing-category features with their client-level overrides
     const { data: allFeatures, error: featuresError } = await supabase
       .from("features")
       .select("id, name, display_name, description, category, is_enabled_by_default")
@@ -65,7 +65,6 @@ export async function GET(req: NextRequest) {
 
     if (featuresError) throw featuresError;
 
-    // Fetch client-level overrides for these features
     const featureIds = (allFeatures || []).map((f) => f.id);
     const { data: clientOverrides } = await supabase
       .from("client_features")
@@ -77,7 +76,6 @@ export async function GET(req: NextRequest) {
       (clientOverrides || []).map((co) => [co.feature_id, co]),
     );
 
-    // Also fetch summary counts for each enabled feature
     const [
       { count: campaignCount },
       { count: leadCount },
@@ -107,13 +105,10 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({
-      clientId,
-      features,
-      isStaff,
-    });
+    const payload = { clientId, features, isStaff };
+    return apiSuccess(req, payload, { extra: payload });
   } catch (error) {
     console.error("Error fetching marketing features:", error);
-    return NextResponse.json({ error: "Failed to fetch marketing features" }, { status: 500 });
+    return apiInternalError(req, "Failed to fetch marketing features");
   }
 }

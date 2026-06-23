@@ -68,7 +68,7 @@ export function MarketingOverview({ clientId }: MarketingOverviewProps) {
         const res = await fetch(`/api/marketing/features${params}`);
         if (!res.ok) throw new Error("Failed to load marketing features");
         const json = await res.json();
-        setData(json);
+        setData(json.data ?? json);
       } catch (err: any) {
         setError(err.message);
       } finally {

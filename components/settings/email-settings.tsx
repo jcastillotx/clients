@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Send, Eye, EyeOff, CheckCircle2, Info, Link2, Link2Off, AlertTriangle } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 
 // ---------------------------------------------------------------------------
 // Provider definitions
@@ -140,32 +141,27 @@ export function EmailSettings() {
   const errorDescriptionParam = searchParams.get("error_description");
 
   const loadSettings = useCallback(async () => {
-    const res = await fetch("/api/admin/email", { credentials: "same-origin" });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(
-        typeof data.error === "string" ? data.error : "Failed to load email settings",
-      );
-    }
+    const body = await fetchApi<Record<string, string>>("/api/admin/email", {
+      credentials: "same-origin",
+    }, { fallbackMessage: "Failed to load email settings" });
 
-    const data: Record<string, string> = await res.json();
     setForm((prev) => ({
       ...prev,
-      provider: (data.provider as Provider) ?? "resend",
-      from_email: data.from_email ?? "",
-      from_name: data.from_name ?? "",
-      api_key: data.api_key ?? "",
-      mailgun_domain: data.mailgun_domain ?? "",
-      smtp_host: data.smtp_host ?? "",
-      smtp_port: data.smtp_port ?? "587",
-      smtp_user: data.smtp_user ?? "",
-      smtp_password: data.smtp_password ?? "",
-      smtp_encryption: (data.smtp_encryption as FormState["smtp_encryption"]) ?? "starttls",
+      provider: (body.provider as Provider) ?? "resend",
+      from_email: body.from_email ?? "",
+      from_name: body.from_name ?? "",
+      api_key: body.api_key ?? "",
+      mailgun_domain: body.mailgun_domain ?? "",
+      smtp_host: body.smtp_host ?? "",
+      smtp_port: body.smtp_port ?? "587",
+      smtp_user: body.smtp_user ?? "",
+      smtp_password: body.smtp_password ?? "",
+      smtp_encryption: (body.smtp_encryption as FormState["smtp_encryption"]) ?? "starttls",
     }));
     setOauth({
-      provider: (data.oauth_provider as OAuthKind) || null,
-      accountEmail: data.oauth_account_email ?? "",
-      tokenExpiry: data.oauth_token_expiry ?? "",
+      provider: (body.oauth_provider as OAuthKind) || null,
+      accountEmail: body.oauth_account_email ?? "",
+      tokenExpiry: body.oauth_token_expiry ?? "",
     });
   }, []);
 
@@ -210,23 +206,24 @@ export function EmailSettings() {
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/email", {
-        method: "PUT",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+      await fetchApi(
+        "/api/admin/email",
+        {
+          method: "PUT",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        },
+        { fallbackMessage: "Failed to save email settings" },
+      );
+      toast({ title: "Email settings saved" });
+      await loadSettings();
+    } catch (error) {
+      toast({
+        title: "Failed to save",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
       });
-      if (res.ok) {
-        toast({ title: "Email settings saved" });
-        await loadSettings();
-      } else {
-        const data = await res.json().catch(() => ({}));
-        toast({
-          title: "Failed to save",
-          description: typeof data.error === "string" ? data.error : "Unknown error",
-          variant: "destructive",
-        });
-      }
     } finally {
       setSaving(false);
     }
@@ -236,18 +233,23 @@ export function EmailSettings() {
     if (!testEmail) return;
     setTesting(true);
     try {
-      const res = await fetch("/api/admin/email/test", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: testEmail }),
+      await fetchApi(
+        "/api/admin/email/test",
+        {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: testEmail }),
+        },
+        { fallbackMessage: "Failed to send test email" },
+      );
+      toast({ title: "Test email sent", description: `Delivered to ${testEmail}` });
+    } catch (error) {
+      toast({
+        title: "Send failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
       });
-      const data = await res.json();
-      if (res.ok) {
-        toast({ title: "Test email sent", description: `Delivered to ${testEmail}` });
-      } else {
-        toast({ title: "Send failed", description: data.error ?? "Unknown error", variant: "destructive" });
-      }
     } finally {
       setTesting(false);
     }
@@ -256,17 +258,15 @@ export function EmailSettings() {
   async function handleDisconnect() {
     setDisconnecting(true);
     try {
-      const res = await fetch("/api/admin/email/disconnect", {
+      await fetchApi("/api/admin/email/disconnect", {
         method: "POST",
         credentials: "same-origin",
-      });
-      if (res.ok) {
-        toast({ title: "Disconnected" });
-        setOauth(DEFAULT_OAUTH);
-        await loadSettings();
-      } else {
-        toast({ title: "Failed to disconnect", variant: "destructive" });
-      }
+      }, { fallbackMessage: "Failed to disconnect email provider" });
+      toast({ title: "Disconnected" });
+      setOauth(DEFAULT_OAUTH);
+      await loadSettings();
+    } catch {
+      toast({ title: "Failed to disconnect", variant: "destructive" });
     } finally {
       setDisconnecting(false);
     }

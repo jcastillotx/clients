@@ -1,4 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {
+  apiForbidden,
+  apiInternalError,
+  apiNotFound,
+  apiSuccess,
+  apiUnauthorized,
+  apiValidationError,
+} from "@/lib/api/response";
+
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { projectRequestFeedbackSchema } from "@/lib/validations/project-request";
@@ -54,7 +63,7 @@ const parseFeedback = (content: string) => {
  *
  * Returns feedback/comments for project request.
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -64,7 +73,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveAccess(supabase, user);
@@ -76,11 +85,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (requestError || !requestRow) {
-      return NextResponse.json({ error: "Project request not found" }, { status: 404 });
+      return apiNotFound(request, "Project request not found");
     }
 
     if (!access.isAdmin && access.clientId !== requestRow.client_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const { data, error } = await supabase
@@ -98,7 +107,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .order("created_at", { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(request, error.message);
     }
 
     const payload = (data || []).map((comment) => {
@@ -115,10 +124,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       };
     });
 
-    return NextResponse.json({ data: payload });
+    return apiSuccess(request, payload);
   } catch (error) {
     console.error("Error fetching project feedback:", error);
-    return NextResponse.json({ error: "Failed to fetch project feedback" }, { status: 500 });
+    return apiInternalError(request, "Failed to fetch project feedback");
   }
 }
 
@@ -137,7 +146,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiUnauthorized(request);
     }
 
     const access = await resolveAccess(supabase, user);
@@ -149,11 +158,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (requestError || !requestRow) {
-      return NextResponse.json({ error: "Project request not found" }, { status: 404 });
+      return apiNotFound(request, "Project request not found");
     }
 
     if (!access.isAdmin && access.clientId !== requestRow.client_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiForbidden(request);
     }
 
     const body = await request.json();
@@ -179,31 +188,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiInternalError(request, error.message);
     }
 
     const parsed = parseFeedback(data.content || "");
     const userRelation = data.user as { id: string; name: string; avatar?: string | null } | Array<{ id: string; name: string; avatar?: string | null }>;
     const normalizedUser = Array.isArray(userRelation) ? userRelation[0] : userRelation;
 
-    return NextResponse.json(
+    return apiSuccess(
+      request,
       {
-        data: {
-          id: data.id,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          rating: parsed.rating,
-          message: parsed.message,
-          user: normalizedUser || null,
-        },
+        id: data.id,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        rating: parsed.rating,
+        message: parsed.message,
+        user: normalizedUser || null,
       },
       { status: 201 },
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.errors }, { status: 400 });
+      return apiValidationError(request, error);
     }
     console.error("Error creating project feedback:", error);
-    return NextResponse.json({ error: "Failed to submit feedback" }, { status: 500 });
+    return apiInternalError(request, "Failed to submit feedback");
   }
 }

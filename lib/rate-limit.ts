@@ -1,65 +1,110 @@
 /**
- * In-memory rate limiter with sliding window algorithm.
+ * Rate limiting with optional Upstash Redis for distributed/serverless deploys.
  *
- * Works out of the box with no external dependencies.
- * For distributed/production environments, swap the store for
- * Upstash Redis by setting UPSTASH_REDIS_REST_URL and
- * UPSTASH_REDIS_REST_TOKEN, then replace the Map with:
- *   import { Ratelimit } from "@upstash/ratelimit"
- *   import { Redis } from "@upstash/redis"
+ * When UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set, limits are
+ * enforced globally across all Vercel instances. Otherwise falls back to an
+ * in-memory sliding window (single-process only).
  */
+
+import { Ratelimit, type Duration } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 interface RateLimitEntry {
   count: number;
   resetAt: number;
 }
 
-const store = new Map<string, RateLimitEntry>();
+const memoryStore = new Map<string, RateLimitEntry>();
 
-// Purge expired entries every 5 minutes to prevent unbounded memory growth
-setInterval(
-  () => {
-    const now = Date.now();
-    for (const [key, entry] of store.entries()) {
-      if (entry.resetAt < now) store.delete(key);
-    }
-  },
-  5 * 60 * 1000
-);
+// Purge expired in-memory entries every 5 minutes
+if (typeof setInterval !== "undefined") {
+  setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, entry] of memoryStore.entries()) {
+        if (entry.resetAt < now) memoryStore.delete(key);
+      }
+    },
+    5 * 60 * 1000,
+  );
+}
 
 export interface RateLimitConfig {
-  /** Maximum requests allowed in the window */
   limit: number;
-  /** Window duration in milliseconds */
   windowMs: number;
 }
 
 export interface RateLimitResult {
   success: boolean;
-  /** Requests remaining in the current window */
   remaining: number;
-  /** Epoch ms when the current window resets */
   resetAt: number;
 }
 
-/**
- * Check rate limit for the given identifier (e.g. IP address or user ID).
- * Returns `success: true` if the request is within limits.
- */
-export function rateLimit(
+let upstashRedis: Redis | null = null;
+const upstashLimiters = new Map<string, Ratelimit>();
+
+function isUpstashConfigured(): boolean {
+  return Boolean(
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+  );
+}
+
+function getUpstashRedis(): Redis {
+  if (!upstashRedis) {
+    upstashRedis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    });
+  }
+  return upstashRedis;
+}
+
+function windowMsToDuration(windowMs: number): Duration {
+  if (windowMs >= 60_000 && windowMs % 60_000 === 0) {
+    return `${windowMs / 60_000} m`;
+  }
+  return `${Math.max(1, Math.ceil(windowMs / 1000))} s`;
+}
+
+function getUpstashLimiter(prefix: string, config: RateLimitConfig): Ratelimit {
+  const cacheKey = `${prefix}:${config.limit}:${config.windowMs}`;
+  const existing = upstashLimiters.get(cacheKey);
+  if (existing) {
+    return existing;
+  }
+
+  const limiter = new Ratelimit({
+    redis: getUpstashRedis(),
+    limiter: Ratelimit.slidingWindow(
+      config.limit,
+      windowMsToDuration(config.windowMs),
+    ),
+    prefix: `kre8iv:${prefix}`,
+    analytics: true,
+  });
+
+  upstashLimiters.set(cacheKey, limiter);
+  return limiter;
+}
+
+function rateLimitInMemory(
   identifier: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
 ): RateLimitResult {
   const now = Date.now();
-  const key = identifier;
-
-  const existing = store.get(key);
+  const existing = memoryStore.get(identifier);
 
   if (!existing || existing.resetAt < now) {
-    // New window
-    const entry: RateLimitEntry = { count: 1, resetAt: now + config.windowMs };
-    store.set(key, entry);
-    return { success: true, remaining: config.limit - 1, resetAt: entry.resetAt };
+    const entry: RateLimitEntry = {
+      count: 1,
+      resetAt: now + config.windowMs,
+    };
+    memoryStore.set(identifier, entry);
+    return {
+      success: true,
+      remaining: config.limit - 1,
+      resetAt: entry.resetAt,
+    };
   }
 
   if (existing.count >= config.limit) {
@@ -75,30 +120,82 @@ export function rateLimit(
 }
 
 /**
- * Pre-configured limiters for common use cases.
+ * Check rate limit for the given identifier (e.g. IP address or user ID).
  */
+export async function rateLimit(
+  identifier: string,
+  config: RateLimitConfig,
+  prefix = "default",
+): Promise<RateLimitResult> {
+  if (isUpstashConfigured()) {
+    const limiter = getUpstashLimiter(prefix, config);
+    const result = await limiter.limit(identifier);
+    return {
+      success: result.success,
+      remaining: result.remaining,
+      resetAt: result.reset,
+    };
+  }
+
+  return rateLimitInMemory(`${prefix}:${identifier}`, config);
+}
+
+export type LimiterFn = (id: string) => Promise<RateLimitResult>;
+
+function createLimiter(
+  prefix: string,
+  config: RateLimitConfig,
+): LimiterFn {
+  return (id: string) => rateLimit(id, config, prefix);
+}
+
+/** Pre-configured limiters for common use cases. */
 export const limiters = {
-  /** Auth endpoints: 10 requests per minute per IP */
-  auth: (ip: string) => rateLimit(`auth:${ip}`, { limit: 10, windowMs: 60_000 }),
-
-  /** API endpoints: 100 requests per minute per user/IP */
-  api: (id: string) => rateLimit(`api:${id}`, { limit: 100, windowMs: 60_000 }),
-
-  /** Password reset / sensitive actions: 5 per 15 minutes */
-  sensitive: (id: string) =>
-    rateLimit(`sensitive:${id}`, { limit: 5, windowMs: 15 * 60_000 }),
+  auth: createLimiter("auth", { limit: 10, windowMs: 60_000 }),
+  api: createLimiter("api", { limit: 100, windowMs: 60_000 }),
+  sensitive: createLimiter("sensitive", { limit: 5, windowMs: 15 * 60_000 }),
+  publicIntake: createLimiter("public-intake", {
+    limit: 5,
+    windowMs: 15 * 60_000,
+  }),
+  publicPayment: createLimiter("public-payment", {
+    limit: 10,
+    windowMs: 15 * 60_000,
+  }),
 };
+
+export const rateLimitLimits = {
+  auth: 10,
+  api: 100,
+  sensitive: 5,
+  publicIntake: 5,
+  publicPayment: 10,
+} as const;
+
+/** Whether distributed Upstash limiting is active. */
+export function isDistributedRateLimitEnabled(): boolean {
+  return isUpstashConfigured();
+}
 
 /**
  * Extract the real client IP from Next.js request headers.
- * Falls back to a placeholder if behind a proxy without proper headers.
  */
 export function getClientIp(request: Request): string {
   const forwarded =
-    (request.headers as Headers).get("x-forwarded-for") ??
-    (request.headers as Headers).get("cf-connecting-ip") ??
-    (request.headers as Headers).get("x-real-ip") ??
+    request.headers.get("x-forwarded-for") ??
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-real-ip") ??
     "unknown";
-  // x-forwarded-for may be a comma-separated list; take the first (client) IP
   return forwarded.split(",")[0].trim();
+}
+
+/** @internal Reset in-memory store for tests. */
+export function resetMemoryRateLimitStoreForTests(): void {
+  memoryStore.clear();
+}
+
+/** @internal Reset Upstash client cache for tests. */
+export function resetUpstashRateLimitCacheForTests(): void {
+  upstashRedis = null;
+  upstashLimiters.clear();
 }
