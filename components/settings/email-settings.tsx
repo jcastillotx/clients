@@ -279,6 +279,13 @@ export function EmailSettings() {
   const oauthMeta = meta.oauth;
   const isConnectedViaOAuth =
     oauthMeta != null && oauth.provider === oauthMeta.kind && oauth.accountEmail !== "";
+  const configuredFromEmail = form.from_email.trim();
+  const connectedAccountEmail = oauth.accountEmail.trim();
+  const isMicrosoftAliasSender =
+    oauthMeta?.kind === "microsoft" &&
+    configuredFromEmail !== "" &&
+    connectedAccountEmail !== "" &&
+    configuredFromEmail.toLowerCase() !== connectedAccountEmail.toLowerCase();
 
   if (loading) {
     return (
@@ -393,8 +400,21 @@ export function EmailSettings() {
                 </div>
                 <p className="text-sm text-muted-foreground">{oauth.accountEmail}</p>
                 <p className="text-xs text-muted-foreground">
-                  Tokens are stored encrypted. Emails will be sent from this mailbox.
+                  Tokens are stored encrypted.
                 </p>
+                {configuredFromEmail && (
+                  <p className="text-xs text-muted-foreground">
+                    Sending as{" "}
+                    <span className="font-medium text-foreground">{configuredFromEmail}</span>
+                    {isMicrosoftAliasSender ? " through the connected Microsoft account." : "."}
+                  </p>
+                )}
+                {isMicrosoftAliasSender && (
+                  <p className="text-xs text-muted-foreground">
+                    Microsoft must allow this account to send as that alias or shared address.
+                    Reconnect if Microsoft asks for the updated send-as permission.
+                  </p>
+                )}
               </div>
               <Button
                 variant="outline"

@@ -298,7 +298,7 @@ export async function sendViaMicrosoftGraph(cfg: EmailConfig, options: EmailOpti
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      message: buildGraphMessage(options),
+      message: buildGraphMessage(cfg, options),
       saveToSentItems: true,
     }),
   });
@@ -387,7 +387,7 @@ async function getMicrosoftAccessToken(cfg: EmailConfig): Promise<string> {
     client_secret: clientSecret,
     refresh_token: cfg.oauth_refresh_token,
     grant_type: "refresh_token",
-    scope: "openid email profile offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/User.Read",
+    scope: "openid email profile offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Mail.Send.Shared https://graph.microsoft.com/User.Read",
   });
 
   await persistRefreshedOAuthToken(token);
@@ -496,13 +496,24 @@ function buildRawMimeMessage(cfg: EmailConfig, options: EmailOptions): string {
   return base64UrlEncode(lines.join("\r\n"));
 }
 
-function buildGraphMessage(options: EmailOptions) {
+function buildGraphMessage(cfg: EmailConfig, options: EmailOptions) {
+  const fromAddress = cfg.from_email?.trim();
+  const fromName = cfg.from_name?.trim();
+
   return {
     subject: options.subject,
     body: {
       contentType: options.html ? "HTML" : "Text",
       content: options.html ?? options.text ?? "",
     },
+    from: fromAddress
+      ? {
+          emailAddress: {
+            address: fromAddress,
+            ...(fromName ? { name: fromName } : {}),
+          },
+        }
+      : undefined,
     toRecipients: buildGraphRecipients(options.to),
     ccRecipients: options.cc ? buildGraphRecipients(options.cc) : undefined,
     bccRecipients: options.bcc ? buildGraphRecipients(options.bcc) : undefined,

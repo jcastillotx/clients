@@ -10,7 +10,7 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const TOKEN_SCOPE =
-  "openid email profile offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/User.Read";
+  "openid email profile offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Mail.Send.Shared https://graph.microsoft.com/User.Read";
 
 /**
  * GET /api/admin/email/callback/microsoft

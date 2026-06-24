@@ -15,6 +15,7 @@ const MICROSOFT_SCOPES = [
   "profile",
   "offline_access",
   "https://graph.microsoft.com/Mail.Send",
+  "https://graph.microsoft.com/Mail.Send.Shared",
   "https://graph.microsoft.com/User.Read",
 ].join(" ");
 
