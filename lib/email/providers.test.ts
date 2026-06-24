@@ -47,4 +47,39 @@ describe("Microsoft Graph email provider", () => {
       { emailAddress: { address: "client@example.com" } },
     ]);
   });
+
+  it("maps Microsoft send-as permission failures to an actionable message", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+      Response.json(
+        {
+          error: {
+            message:
+              "The user account which was used to submit this request does not have the right to send mail on behalf of the specified sending account., Cannot submit message.",
+          },
+        },
+        { status: 403 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      sendViaMicrosoftGraph(
+        {
+          provider: "office365",
+          from_email: "noreply@kre8ivdesigns.com",
+          from_name: "Kre8ivdesigns Marketing",
+          oauth_account_email: "j.castillo@castillocollective.com",
+          oauth_access_token: "fresh-token",
+          oauth_token_expiry: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        },
+        {
+          to: "client@example.com",
+          subject: "Alias test",
+          html: "<p>Hello</p>",
+        },
+      ),
+    ).rejects.toThrow(
+      "Connected account j.castillo@castillocollective.com is not allowed to send as noreply@kre8ivdesigns.com.",
+    );
+  });
 });

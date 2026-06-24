@@ -305,7 +305,10 @@ export async function sendViaMicrosoftGraph(cfg: EmailConfig, options: EmailOpti
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(readProviderError(data) ?? `Microsoft Graph error ${res.status}`);
+    const providerError = readProviderError(data);
+    throw new Error(
+      formatMicrosoftGraphError(providerError, cfg) ?? `Microsoft Graph error ${res.status}`,
+    );
   }
 }
 
@@ -572,6 +575,28 @@ function readProviderError(data: unknown): string | null {
   }
 
   return null;
+}
+
+function formatMicrosoftGraphError(message: string | null, cfg: EmailConfig): string | null {
+  if (!message) {
+    return null;
+  }
+
+  const connectedAccount = cfg.oauth_account_email?.trim();
+  const fromAddress = cfg.from_email?.trim();
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("does not have the right to send mail on behalf") ||
+    normalized.includes("cannot submit message")
+  ) {
+    const senderLabel = fromAddress ? ` as ${fromAddress}` : "";
+    const accountLabel = connectedAccount ? `Connected account ${connectedAccount}` : "The connected Microsoft account";
+
+    return `${accountLabel} is not allowed to send${senderLabel}. In Microsoft 365, enable send from aliases for this mailbox or grant Send As / Send on Behalf permission for the sender address, then reconnect Microsoft and send the test again.`;
+  }
+
+  return message;
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
