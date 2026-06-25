@@ -126,12 +126,36 @@ export function extractApiErrorMessage(
   }
 
   const record = payload as Record<string, unknown>;
+  const err = record.error;
+
+  if (err && typeof err === "object") {
+    const errorRecord = err as {
+      details?: unknown;
+      message?: unknown;
+    };
+    const details = errorRecord.details;
+
+    if (Array.isArray(details)) {
+      const firstDetail = details.find(
+        (detail): detail is { message: string } =>
+          Boolean(
+            detail &&
+              typeof detail === "object" &&
+              typeof (detail as { message?: unknown }).message === "string" &&
+              (detail as { message: string }).message.trim(),
+          ),
+      );
+
+      if (firstDetail) {
+        return firstDetail.message;
+      }
+    }
+  }
 
   if (typeof record.message === "string" && record.message.trim()) {
     return record.message;
   }
 
-  const err = record.error;
   if (typeof err === "string") {
     return err;
   }

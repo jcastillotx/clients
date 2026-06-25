@@ -29,6 +29,27 @@ interface CreatedProjectRequest {
 
 const nameFromFilename = (filename: string) => filename.replace(/\.[^/.]+$/, "");
 
+function validateProjectRequestDraft(input: {
+  title: string;
+  executiveSummary: string;
+  selectedClientId: string;
+  canSelectClient: boolean;
+}): string | null {
+  if (input.canSelectClient && !input.selectedClientId) {
+    return "Select a client before submitting this project request.";
+  }
+
+  if (input.title.trim().length < 3) {
+    return "Project title must be at least 3 characters.";
+  }
+
+  if (input.executiveSummary.trim().length < 20) {
+    return "Executive summary must be at least 20 characters.";
+  }
+
+  return null;
+}
+
 export function ProjectRequestForm({ clients, canSelectClient, defaultClientId }: ProjectRequestFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -66,6 +87,18 @@ export function ProjectRequestForm({ clients, canSelectClient, defaultClientId }
     setUploadProgressText(null);
 
     try {
+      const validationError = validateProjectRequestDraft({
+        title,
+        executiveSummary,
+        selectedClientId,
+        canSelectClient,
+      });
+
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
       const requestRow = await fetchApi<CreatedProjectRequest>(
         "/api/projects/requests",
         {
@@ -276,7 +309,10 @@ export function ProjectRequestForm({ clients, canSelectClient, defaultClientId }
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting || !title || !executiveSummary || (canSelectClient && !selectedClientId)}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !title.trim() || !executiveSummary.trim() || (canSelectClient && !selectedClientId)}
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

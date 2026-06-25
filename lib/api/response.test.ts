@@ -74,4 +74,23 @@ describe("api response helpers", () => {
 
     expect(extractApiErrorMessage(null, "fallback")).toBe("fallback");
   });
+
+  it("prefers validation detail messages over generic validation errors", () => {
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Validation error",
+          details: [
+            {
+              path: ["executiveSummary"],
+              message: "Executive summary must be at least 20 characters",
+            },
+          ],
+        },
+        message: "Validation error",
+      }),
+    ).toBe("Executive summary must be at least 20 characters");
+  });
 });
