@@ -138,6 +138,14 @@ export async function POST(req: NextRequest) {
 
     const isAdmin = isAdminUser(user, dbUser, roleRows);
 
+    if (isAdmin && !validatedData.clientId) {
+      return apiError(req, {
+        status: 400,
+        code: "VALIDATION_ERROR",
+        message: "Please select a client",
+      });
+    }
+
     const effectiveClientId = isAdmin ? validatedData.clientId : dbUser.client_id;
     if (!effectiveClientId) {
       return apiError(req, {
@@ -147,7 +155,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (!isAdmin && validatedData.clientId !== dbUser.client_id) {
+    if (!isAdmin && validatedData.clientId && validatedData.clientId !== dbUser.client_id) {
       return apiError(req, {
         status: 403,
         code: "FORBIDDEN",
@@ -164,7 +172,7 @@ export async function POST(req: NextRequest) {
       title: validatedData.title,
       description: validatedData.description,
       priority: validatedData.priority,
-      status: validatedData.status || "pending",
+      status: isAdmin ? validatedData.status || "pending" : "pending",
       due_date: validatedData.dueDate || null,
       created_by: user.id,
       client_id: effectiveClientId,

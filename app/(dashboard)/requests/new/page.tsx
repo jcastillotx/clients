@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { RequestForm } from "@/components/requests/request-form";
+import { collectRoleNames } from "@/lib/rbac/role-row-utils";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -42,11 +43,13 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
       .from("user_roles")
       .select("role:roles(name)")
       .eq("user_id", user.id);
-    canAssignUsers = (roleRows || []).some((row: any) => {
-      const roleName = String(row?.role?.name || row?.role?.[0]?.name || "").toLowerCase();
-      return roleName === "admin" || roleName === "super_admin";
-    });
+    const roleNames = collectRoleNames(roleRows);
+    canAssignUsers = roleNames.has("admin") || roleNames.has("super_admin");
   }
+
+  const defaultClientId = canAssignUsers
+    ? resolvedSearchParams.client_id
+    : dbUser?.client_id || undefined;
 
   // Fetch clients for dropdown
   const clientsQuery = supabase.from("clients").select("id, company_name").eq("status", "active").order("company_name");
@@ -68,8 +71,10 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
       <RequestForm
         clients={clients || []}
         assignableUsers={assignableUsers || []}
-        preselectedClientId={resolvedSearchParams.client_id}
+        preselectedClientId={defaultClientId}
         canAssignUsers={canAssignUsers}
+        canSelectClient={canAssignUsers}
+        canManageStatus={canAssignUsers}
       />
     </div>
   );

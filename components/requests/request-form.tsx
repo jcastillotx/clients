@@ -4,7 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createRequestSchema, type CreateRequestInput } from "@/lib/validations/request";
+import {
+  createRequestSchema,
+  type CreateRequestInput,
+  type RequestStatus,
+  type RequestType,
+} from "@/lib/validations/request";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +31,8 @@ interface RequestFormProps {
   }>;
   preselectedClientId?: string;
   canAssignUsers?: boolean;
+  canSelectClient?: boolean;
+  canManageStatus?: boolean;
 }
 
 const requestTypes = [
@@ -37,7 +44,14 @@ const requestTypes = [
   { value: "other", label: "Other" },
 ] as const;
 
-export function RequestForm({ clients, assignableUsers, preselectedClientId, canAssignUsers = false }: RequestFormProps) {
+export function RequestForm({
+  clients,
+  assignableUsers,
+  preselectedClientId,
+  canAssignUsers = false,
+  canSelectClient = false,
+  canManageStatus = false,
+}: RequestFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +78,9 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
   const status = watch("status");
   const type = watch("type");
   const assignedTo = watch("assignedTo");
+  const selectedClientName =
+    clients.find((client) => client.id === clientId)?.company_name ||
+    "Your organization";
 
   const onSubmit = async (data: CreateRequestInput) => {
     setIsSubmitting(true);
@@ -89,6 +106,8 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...data,
+            clientId: canSelectClient ? data.clientId : preselectedClientId,
+            status: canManageStatus ? data.status : "pending",
             assignedTo: canAssignUsers ? data.assignedTo || undefined : undefined,
             customFields: {
               ...(data.customFields || {}),
@@ -124,18 +143,22 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
             <Label htmlFor="clientId">
               Client <span className="text-destructive">*</span>
             </Label>
-            <Select value={clientId} onValueChange={(value) => setValue("clientId", value)}>
-              <SelectTrigger id="clientId">
-                <SelectValue placeholder="Select a client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.company_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {canSelectClient ? (
+              <Select value={clientId} onValueChange={(value) => setValue("clientId", value)}>
+                <SelectTrigger id="clientId">
+                  <SelectValue placeholder="Select a client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.company_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input id="clientId" value={selectedClientName} disabled />
+            )}
             {errors.clientId && <p className="text-sm text-destructive">{errors.clientId.message}</p>}
           </div>
 
@@ -183,7 +206,7 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
-              <Select value={type} onValueChange={(value) => setValue("type", value as any)}>
+              <Select value={type} onValueChange={(value: RequestType) => setValue("type", value)}>
                 <SelectTrigger id="type">
                   <SelectValue />
                 </SelectTrigger>
@@ -199,7 +222,10 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
 
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select value={priority} onValueChange={(value) => setValue("priority", value as any)}>
+              <Select
+                value={priority}
+                onValueChange={(value: CreateRequestInput["priority"]) => setValue("priority", value)}
+              >
                 <SelectTrigger id="priority">
                   <SelectValue />
                 </SelectTrigger>
@@ -213,21 +239,25 @@ export function RequestForm({ clients, assignableUsers, preselectedClientId, can
 
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={(value) => setValue("status", value as any)}>
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="awaiting_approval">In Review</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="on_hold">On Hold</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+              {canManageStatus ? (
+                <Select value={status} onValueChange={(value: RequestStatus) => setValue("status", value)}>
+                  <SelectTrigger id="status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="awaiting_approval">In Review</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="on_hold">On Hold</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input id="status" value="Pending" disabled />
+              )}
             </div>
           </div>
 
