@@ -1,6 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { RequestForm } from "@/components/requests/request-form";
 import { collectRoleNames } from "@/lib/rbac/role-row-utils";
+import { getAssignableUsersForClient } from "@/lib/users/assignable-users";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -57,9 +58,23 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
     ? await clientsQuery
     : await clientsQuery.eq("id", dbUser?.client_id || "00000000-0000-0000-0000-000000000000");
 
-  const { data: assignableUsers } = canAssignUsers
-    ? await supabase.from("users").select("id, name, email").is("deleted_at", null).order("name")
-    : { data: [] };
+  const assignableDbClient =
+    canAssignUsers ? (createAdminClientIfAvailable() ?? supabase) : supabase;
+  const assignableUsers = canAssignUsers
+    ? [
+        ...new Map(
+          (
+            await Promise.all(
+              (clients || []).map((client) =>
+                getAssignableUsersForClient(assignableDbClient, client.id),
+              ),
+            )
+          )
+            .flat()
+            .map((assignableUser) => [assignableUser.id, assignableUser] as const),
+        ).values(),
+      ]
+    : [];
 
   return (
     <div className="flex flex-col gap-8 p-8 max-w-4xl mx-auto">
@@ -70,7 +85,7 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
 
       <RequestForm
         clients={clients || []}
-        assignableUsers={assignableUsers || []}
+        assignableUsers={assignableUsers}
         preselectedClientId={defaultClientId}
         canAssignUsers={canAssignUsers}
         canSelectClient={canAssignUsers}

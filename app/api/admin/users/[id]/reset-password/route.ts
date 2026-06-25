@@ -29,17 +29,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       currentUser.user_metadata?.is_super_admin === true ||
       metadataRole === Roles.SUPER_ADMIN ||
       metadataRole === Roles.ADMIN;
-    const hasManagementMetadataRole = isAdminMetadataRole || metadataRole === Roles.ACCOUNT_MANAGER;
-
     const accessOptions = { supabase, userId: currentUser.id };
-    const [canManageUsers, canUpdateUsers, hasManagementRoleDb] = await Promise.all([
+    const [canManageUsers, hasAdminRoleDb] = await Promise.all([
       hasPermission(Permissions.USERS_MANAGE, accessOptions),
-      hasPermission(Permissions.USERS_UPDATE, accessOptions),
-      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN], accessOptions),
     ]);
-    const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+    const hasAdminRole = hasAdminRoleDb || isAdminMetadataRole;
 
-    if (!(canManageUsers || canUpdateUsers || hasManagementRole)) {
+    if (!(canManageUsers || hasAdminRole)) {
       return apiForbidden(request);
     }
 

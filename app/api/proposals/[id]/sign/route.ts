@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest } from "next/server";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { dispatchNotification } from "@/lib/notifications/service";
+import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import { verifyProposalAccessToken } from "@/lib/proposals/public-access";
 import {
   apiError,
@@ -156,20 +157,24 @@ export async function POST(
       data: { user: actorUser },
     } = await supabase.auth.getUser();
 
-    await dispatchNotification({
-      eventType:
-        action === "accept" ? "proposal_accepted" : "proposal_rejected",
-      clientId: proposal.client_id,
-      subjectType: "proposal",
-      subjectId: proposal.id,
-      actorUserId: actorUser?.id,
-      recipientUserIds: proposal.created_by ? [proposal.created_by] : undefined,
-      extraEmails: signerEmail ? [signerEmail] : [],
-      data: {
-        proposalTitle: proposal.title,
-        signerName,
-      },
-    });
+    try {
+      await dispatchNotification({
+        eventType:
+          action === "accept" ? "proposal_accepted" : "proposal_rejected",
+        clientId: proposal.client_id,
+        subjectType: "proposal",
+        subjectId: proposal.id,
+        actorUserId: actorUser?.id,
+        recipientUserIds: proposal.created_by ? [proposal.created_by] : undefined,
+        extraEmails: await withPlatformNotificationEmails(signerEmail ? [signerEmail] : []),
+        data: {
+          proposalTitle: proposal.title,
+          signerName,
+        },
+      });
+    } catch (notifyErr) {
+      console.error("[POST /api/proposals/:id/sign] notification dispatch:", notifyErr);
+    }
 
     const message =
       action === "accept"

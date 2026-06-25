@@ -6,6 +6,9 @@ import {
   apiUnauthorized,
   apiValidationError,
 } from "@/lib/api/response";
+import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
+import { dispatchNotification } from "@/lib/notifications/service";
+import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import { createSupportTicketSchema } from "@/lib/validations/support-ticket";
 import { buildWebsiteSupportTriage } from "@/lib/support/website-ticket-triage";
 import { calculateSlaDueDates } from "@/lib/utils/sla";
@@ -167,6 +170,28 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error("Error creating ticket:", error);
       return apiInternalError(req, error.message);
+    }
+
+    try {
+      const base = getAuthBaseUrl();
+      await dispatchNotification({
+        eventType: "support_ticket_created",
+        clientId,
+        subjectType: "support_ticket",
+        subjectId: data.id,
+        actorUserId: user.id,
+        recipientUserIds: validatedData.assignedTo ? [validatedData.assignedTo] : [],
+        extraEmails: await withPlatformNotificationEmails(),
+        data: {
+          ticketSubject: data.subject,
+          ticketNumber: data.ticket_number,
+          ticketPriority: data.priority,
+          ticketCategory: data.category,
+          ticketUrl: `${base}/support/${data.id}`,
+        },
+      });
+    } catch (notifyErr) {
+      console.error("[POST /api/support] notification dispatch:", notifyErr);
     }
 
     return apiSuccess(req, data, { status: 201 });

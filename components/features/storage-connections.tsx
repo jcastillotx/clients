@@ -557,12 +557,12 @@ function AddConnectionDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {ownerType === "company" ? "New Company Storage Connection" : "New Client Storage Connection"}
+            {ownerType === "company" ? "New Platform Storage Connection" : "New Client Storage Connection"}
           </DialogTitle>
           <DialogDescription>
             {ownerType === "company"
-              ? "Connect a company-wide storage provider accessible to all staff"
-              : "Connect this client's cloud storage so staff can access their files"}
+              ? "Connect a platform-wide storage provider for shared platform files and workflows"
+              : "Connect this client's cloud storage so the platform can access their files"}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -589,7 +589,7 @@ function AddConnectionDialog({
             <Input
               value={formData.connectionName}
               onChange={(e) => update({ connectionName: e.target.value })}
-              placeholder={ownerType === "company" ? "Company Primary Storage" : "Client Google Drive"}
+              placeholder={ownerType === "company" ? "Platform Primary Storage" : "Client Google Drive"}
             />
           </div>
 
@@ -643,7 +643,7 @@ export function StorageConnections({ clientId, isAdmin, companyClientId }: Stora
 
       const fetches: Promise<Response>[] = [];
 
-      // Fetch company-level connections (admin sees these)
+      // Fetch platform-level connections (stored as ownerType="company" for compatibility).
       if (isAdmin && resolvedCompanyClientId) {
         fetches.push(fetch(`/api/storage-connections?clientId=${resolvedCompanyClientId}&ownerType=company`));
       }
@@ -702,7 +702,7 @@ export function StorageConnections({ clientId, isAdmin, companyClientId }: Stora
 
   return (
     <div className="space-y-8">
-      {/* Company Storage Section */}
+      {/* Platform Storage Section */}
       {isAdmin && (
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -711,9 +711,9 @@ export function StorageConnections({ clientId, isAdmin, companyClientId }: Stora
                 <Building2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold">Company Storage</h2>
+                <h2 className="text-xl font-semibold">Platform Storage</h2>
                 <p className="text-sm text-muted-foreground">
-                  Company-wide storage connections accessible to all staff. AWS S3 is recommended as primary storage.
+                  Platform-wide storage connections for shared platform files and workflows. AWS S3 is recommended as primary storage.
                 </p>
               </div>
             </div>
@@ -735,9 +735,9 @@ export function StorageConnections({ clientId, isAdmin, companyClientId }: Stora
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-8 text-center">
                 <HardDrive className="h-10 w-10 mb-3 text-muted-foreground/50" />
-                <h3 className="font-semibold mb-1">No Company Storage Connected</h3>
+                <h3 className="font-semibold mb-1">No Platform Storage Connected</h3>
                 <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                  Set up your primary company storage (AWS S3 recommended) and optionally connect Dropbox, Google Drive, or OneDrive for company-wide file access.
+                  Set up primary platform storage (AWS S3 recommended) and optionally connect Dropbox, Google Drive, or OneDrive for shared platform file access.
                 </p>
               </CardContent>
             </Card>
@@ -757,7 +757,7 @@ export function StorageConnections({ clientId, isAdmin, companyClientId }: Stora
             <div>
               <h2 className="text-xl font-semibold">Client Storage</h2>
               <p className="text-sm text-muted-foreground">
-                Connect this client&apos;s own cloud storage so staff can access and manage their files directly.
+                Client-owned storage connections let clients grant the platform access to their files for delivery, support, and sync workflows.
               </p>
             </div>
           </div>
@@ -781,7 +781,7 @@ export function StorageConnections({ clientId, isAdmin, companyClientId }: Stora
               <FolderOpen className="h-10 w-10 mb-3 text-muted-foreground/50" />
               <h3 className="font-semibold mb-1">No Client Storage Connected</h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                Connect the client&apos;s Dropbox, Google Drive, or OneDrive so your team can access their files without leaving the platform.
+                Connect the client&apos;s Dropbox, Google Drive, or OneDrive so they can grant platform access without moving files out of their account.
               </p>
             </CardContent>
           </Card>

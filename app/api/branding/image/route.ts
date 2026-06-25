@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     return apiForbidden(request);
   }
 
-  // getS3Credentials ignores the userId and searches company-level connections.
+  // getS3Credentials ignores the userId and searches platform-level connections.
   const s3 = await getS3Credentials(undefined).catch(() => null);
   if (!s3) {
     return apiError(request, {

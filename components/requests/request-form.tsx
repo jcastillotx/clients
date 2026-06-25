@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,8 +26,10 @@ interface RequestFormProps {
   }>;
   assignableUsers: Array<{
     id: string;
-    name: string;
+    name: string | null;
     email?: string | null;
+    client_id?: string | null;
+    is_platform_staff?: boolean;
   }>;
   preselectedClientId?: string;
   canAssignUsers?: boolean;
@@ -78,9 +80,21 @@ export function RequestForm({
   const status = watch("status");
   const type = watch("type");
   const assignedTo = watch("assignedTo");
+  const scopedAssignableUsers = assignableUsers.filter(
+    (user) => user.is_platform_staff || (clientId && user.client_id === clientId),
+  );
   const selectedClientName =
     clients.find((client) => client.id === clientId)?.company_name ||
     "Your organization";
+
+  useEffect(() => {
+    if (
+      assignedTo &&
+      !scopedAssignableUsers.some((user) => user.id === assignedTo)
+    ) {
+      setValue("assignedTo", undefined);
+    }
+  }, [assignedTo, scopedAssignableUsers, setValue]);
 
   const onSubmit = async (data: CreateRequestInput) => {
     setIsSubmitting(true);
@@ -171,9 +185,9 @@ export function RequestForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {assignableUsers.map((u) => (
+                  {scopedAssignableUsers.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
-                      {u.name || u.email || "User"}
+                      {formatAssignableUserLabel(u)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -305,4 +319,15 @@ export function RequestForm({
       </CardContent>
     </Card>
   );
+}
+
+function formatAssignableUserLabel(user: {
+  name: string | null;
+  email?: string | null;
+}) {
+  if (user.name && user.email) {
+    return `${user.name} (${user.email})`;
+  }
+
+  return user.name || user.email || "User";
 }

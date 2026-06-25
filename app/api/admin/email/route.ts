@@ -15,6 +15,7 @@ const EMAIL_KEYS = [
   "provider",
   "from_email",
   "from_name",
+  "platform_notification_email",
   "api_key",
   "mailgun_domain",
   "smtp_host",
@@ -109,6 +110,26 @@ export async function PUT(req: NextRequest) {
     const raw: unknown = body[key];
     if (raw === undefined || raw === null) continue;
     const val = String(raw).trim();
+    if (key === "platform_notification_email" && val === "") {
+      const { error } = await adminClient.from("system_settings").upsert(
+        {
+          category: "email",
+          key,
+          value: "",
+          is_encrypted: false,
+          updated_by: user.id,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "category,key" },
+      );
+
+      if (error) {
+        console.error(`[admin/email] Failed to save setting ${key}:`, error);
+        return apiInternalError(req, `Failed to save ${key.replace(/_/g, " ")}`);
+      }
+      continue;
+    }
+
     if (val === "" || val === "••••••••") continue;
 
     const isSecret = SECRET_KEYS.has(key);

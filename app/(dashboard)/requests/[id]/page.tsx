@@ -5,6 +5,7 @@ import { RequestDetail } from "@/components/requests/request-detail";
 import { RequestComments } from "@/components/requests/request-comments";
 import { RequestRealtime } from "@/components/requests/request-realtime";
 import { isAdminUser } from "@/lib/rbac/check";
+import { getAssignableUsersForClient } from "@/lib/users/assignable-users";
 
 interface RequestDetailPageProps {
   params: Promise<{
@@ -52,7 +53,7 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
   // Admin client bypasses RLS so admins can:
   //   - read requests across all clients (not just their own client_id)
   //   - read all comments on those requests
-  //   - list all users for the assignee picker
+  //   - list scoped users for the assignee picker
   // Regular users fall back to the session-scoped client which enforces RLS.
   const adminClient = canManageWorkflow ? createAdminClientIfAvailable() : null;
   const dbClient = adminClient ?? supabase;
@@ -86,8 +87,8 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
     assigned_user: normalizeRelation((request as any).assigned_user),
   };
 
-  // Parallel fetch: comments + assignable users
-  const [{ data: comments }, { data: assignableUsers }] = await Promise.all([
+  // Parallel fetch: comments + scoped assignable users
+  const [{ data: comments }, assignableUsers] = await Promise.all([
     // Admin client used so admins can see comments across all client requests
     dbClient
       .from("request_comments")
@@ -102,10 +103,9 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       )
       .eq("request_id", id)
       .order("created_at", { ascending: true }),
-    // Admin client used so admins can see all users across clients for assignment
     canManageWorkflow
-      ? dbClient.from("users").select("id, name, email").is("deleted_at", null).order("name")
-      : Promise.resolve({ data: [] }),
+      ? getAssignableUsersForClient(dbClient, normalizedRequest.client_id)
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -114,7 +114,7 @@ export default async function RequestDetailPage({ params }: RequestDetailPagePro
       <RequestRealtime requestId={id} />
 
       {/* Request details */}
-      <RequestDetail request={normalizedRequest as any} assignableUsers={assignableUsers || []} canManageWorkflow={canManageWorkflow} canDelete={canDelete} />
+      <RequestDetail request={normalizedRequest as any} assignableUsers={assignableUsers} canManageWorkflow={canManageWorkflow} canDelete={canDelete} />
 
       {/* Comments section with real-time updates */}
       <RequestComments

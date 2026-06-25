@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
       return apiError(request, {
         status: 503,
         code: "SERVICE_UNAVAILABLE",
-        message: "No S3 storage connection configured. Add a company S3 connection in Storage settings.",
+        message: "No S3 storage connection configured. Add a platform S3 connection in Storage settings.",
       });
     }
     const { accessKeyId, secretAccessKey, bucket, region } = s3;

@@ -3,11 +3,13 @@ import {
   parsePaginationSearchParams,
 } from "@/lib/api/pagination";
 import { apiError, apiSuccess } from "@/lib/api/response";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
 import { createRequestSchema } from "@/lib/validations/request";
 import { dispatchNotification } from "@/lib/notifications/service";
+import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import { isAdminUser } from "@/lib/rbac/check";
+import { isUserAssignableToClient } from "@/lib/users/assignable-users";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -163,6 +165,23 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (validatedData.assignedTo && isAdmin) {
+      const assignmentClient = createAdminClientIfAvailable() ?? supabase;
+      const canAssignToRequest = await isUserAssignableToClient(
+        assignmentClient,
+        validatedData.assignedTo,
+        effectiveClientId,
+      );
+      if (!canAssignToRequest) {
+        return apiError(req, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message:
+            "Assignee must belong to this request's client or be platform staff/admin",
+        });
+      }
+    }
+
     const customFields = {
       ...(validatedData.customFields || {}),
       type: validatedData.type,
@@ -217,6 +236,7 @@ export async function POST(req: NextRequest) {
         subjectId: row.id,
         actorUserId: user.id,
         recipientUserIds: validatedData.assignedTo ? [validatedData.assignedTo] : undefined,
+        extraEmails: isAdmin ? [] : await withPlatformNotificationEmails(),
         data: {
           request_title: row.title,
           request_priority: row.priority,

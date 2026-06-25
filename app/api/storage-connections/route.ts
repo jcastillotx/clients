@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     const isAdmin = isAdminUser(user, dbUser);
 
     if (ownerType === "company" && !isAdmin) {
-      return apiForbidden(request, "Only admins can manage company storage");
+      return apiForbidden(request, "Only admins can manage platform storage");
     }
 
     if (!isAdmin && dbUser.clientId !== clientId) {
@@ -205,7 +205,7 @@ export async function DELETE(request: NextRequest) {
     const isAdmin = isAdminUser(user, dbUser);
 
     if (connection.ownerType === "company" && !isAdmin) {
-      return apiForbidden(request, "Only admins can manage company storage");
+      return apiForbidden(request, "Only admins can manage platform storage");
     }
 
     if (!isAdmin && dbUser.clientId !== connection.clientId) {

@@ -22,6 +22,8 @@ export function buildNotificationTemplate(
   const proposalTitle = String(data.proposalTitle || "Proposal");
   const invoiceNumber = String(data.invoiceNumber || "Invoice");
   const requestTitle = String(data.requestTitle || "Request");
+  const proposalTitleForFeedback = String(data.proposalTitle || "Proposal");
+  const ticketSubject = String(data.ticketSubject || "Support ticket");
   const amount = data.amount ? String(data.amount) : null;
 
   switch (eventType) {
@@ -49,10 +51,28 @@ export function buildNotificationTemplate(
       return { subject, message, html: htmlWrap(subject, message) };
     }
 
+    case "project_request_feedback_created": {
+      const subject = `New Project Request Feedback: ${requestTitle}`;
+      const message = `New feedback was submitted for project request: ${requestTitle}.`;
+      return { subject, message, html: htmlWrap(subject, message) };
+    }
+
     case "service_request_created": {
       const title = String(data.requestTitle || data.request_title || requestTitle);
       const subject = `New service request: ${title}`;
       const message = `A new service request was created: ${title}.`;
+      return { subject, message, html: htmlWrap(subject, message) };
+    }
+
+    case "support_ticket_created": {
+      const subject = `New Support Ticket: ${ticketSubject}`;
+      const message = `A new support ticket was submitted: ${ticketSubject}.`;
+      return { subject, message, html: htmlWrap(subject, message) };
+    }
+
+    case "proposal_feedback_created": {
+      const subject = `New Proposal Feedback: ${proposalTitleForFeedback}`;
+      const message = `New feedback was submitted for proposal: ${proposalTitleForFeedback}.`;
       return { subject, message, html: htmlWrap(subject, message) };
     }
 

@@ -33,10 +33,28 @@ describe("buildNotificationTemplate", () => {
     expect(t.html).toContain("New Landing Page");
   });
 
+  it("builds project_request_feedback_created notification", () => {
+    const t = buildNotificationTemplate("project_request_feedback_created", { requestTitle: "New Landing Page" });
+    expect(t.subject).toContain("New Project Request Feedback");
+    expect(t.message).toContain("New Landing Page");
+  });
+
   it("builds service_request_created notification", () => {
     const t = buildNotificationTemplate("service_request_created", { request_title: "Fix DNS" });
     expect(t.subject).toContain("Fix DNS");
     expect(t.message).toContain("Fix DNS");
+  });
+
+  it("builds support_ticket_created notification", () => {
+    const t = buildNotificationTemplate("support_ticket_created", { ticketSubject: "Checkout error" });
+    expect(t.subject).toContain("New Support Ticket");
+    expect(t.message).toContain("Checkout error");
+  });
+
+  it("builds proposal_feedback_created notification", () => {
+    const t = buildNotificationTemplate("proposal_feedback_created", { proposalTitle: "Website Proposal" });
+    expect(t.subject).toContain("New Proposal Feedback");
+    expect(t.message).toContain("Website Proposal");
   });
 
   it("builds staff_task_created notification", () => {

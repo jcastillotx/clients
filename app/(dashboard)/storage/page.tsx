@@ -3,7 +3,7 @@ import { StorageConnections } from "@/components/features/storage-connections";
 
 export const metadata = {
   title: "Storage Management | KRE8IV",
-  description: "Manage company and client cloud storage connections",
+  description: "Manage platform and client cloud storage connections",
 };
 
 const DEFAULT_PARENT_COMPANY_NAMES = ["Kre8ivTech", "Kre8iv Designs"];
@@ -40,7 +40,7 @@ export default async function StoragePage() {
     userData?.is_super_admin || userRole === "admin" || userRole === "super_admin" || hasAdminRole,
   );
 
-  // Resolve the company client ID for company-level connections
+  // Resolve the backing client record used for platform-level connections.
   let companyClientId: string | null = clientId;
 
   if (!companyClientId) {
@@ -115,7 +115,7 @@ export default async function StoragePage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Storage Management</h1>
         <p className="text-muted-foreground">
-          Manage cloud storage connections for your company and clients
+          Manage platform storage and client-owned storage access
         </p>
       </div>
 

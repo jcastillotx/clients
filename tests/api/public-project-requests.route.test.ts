@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/public/project-requests/route";
 import { extractApiErrorMessage } from "@/lib/api/response";
 import { assertTurnstileToken } from "@/lib/turnstile/verify";
@@ -31,6 +31,15 @@ vi.mock("@/lib/supabase/server", () => ({
   createAdminClientIfAvailable: vi.fn(),
 }));
 
+function restoreEnvValue(key: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[key];
+    return;
+  }
+
+  process.env[key] = value;
+}
+
 const validPayload = {
   companyName: "Acme Corp",
   contactName: "Jane Doe",
@@ -59,6 +68,16 @@ function createAdminMock() {
     from: vi.fn((table: string) => {
       if (table === "users") return usersChain;
       if (table === "user_roles") return userRolesChain;
+      if (table === "system_settings") {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { value: process.env.PLATFORM_NOTIFICATION_EMAIL ?? "" },
+            error: null,
+          }),
+        };
+      }
       if (table === "clients") {
         return {
           insert: vi.fn().mockReturnThis(),
@@ -85,10 +104,21 @@ function createAdminMock() {
 }
 
 describe("POST /api/public/project-requests", () => {
+  const originalPlatformNotificationEmail =
+    process.env.PLATFORM_NOTIFICATION_EMAIL;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.PLATFORM_NOTIFICATION_EMAIL = "platform@example.com";
     vi.mocked(assertTurnstileToken).mockResolvedValue({ ok: true });
     vi.mocked(createAdminClientIfAvailable).mockReturnValue(createAdminMock() as never);
+  });
+
+  afterEach(() => {
+    restoreEnvValue(
+      "PLATFORM_NOTIFICATION_EMAIL",
+      originalPlatformNotificationEmail,
+    );
   });
 
   it("returns 503 when public intake is not configured", async () => {
@@ -144,5 +174,10 @@ describe("POST /api/public/project-requests", () => {
     expect(body.data.requestId).toBe("request-1");
     expect(body.data.clientId).toBe("client-1");
     expect(dispatchNotification).toHaveBeenCalledOnce();
+    expect(dispatchNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extraEmails: ["jane@acme.com", "platform@example.com"],
+      }),
+    );
   });
 });

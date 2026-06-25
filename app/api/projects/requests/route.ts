@@ -1,7 +1,10 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
 import { createProjectRequestSchema } from "@/lib/validations/project-request";
+import { dispatchNotification } from "@/lib/notifications/service";
+import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import {
   apiError,
   apiInternalError,
@@ -192,6 +195,28 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return apiInternalError(request, error.message);
+    }
+
+    if (!access.isStaff) {
+      try {
+        const base = getAuthBaseUrl();
+        await dispatchNotification({
+          eventType: "project_request_created",
+          clientId: effectiveClientId,
+          subjectType: "request",
+          subjectId: data.id,
+          actorUserId: user.id,
+          recipientUserIds: [],
+          extraEmails: await withPlatformNotificationEmails(),
+          data: {
+            requestTitle: data.title,
+            requestPriority: data.priority,
+            requestUrl: `${base}/projects/requests/${data.id}`,
+          },
+        });
+      } catch (notifyErr) {
+        console.error("[POST /api/projects/requests] notification dispatch:", notifyErr);
+      }
     }
 
     return apiSuccess(request, data, { status: 201 });

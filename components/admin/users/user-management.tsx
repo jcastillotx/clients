@@ -57,9 +57,16 @@ interface UserManagementProps {
   roles: Role[];
   clients: Client[];
   canAssignRoles?: boolean;
+  canSendPasswordResets?: boolean;
 }
 
-export function UserManagement({ initialUsers, roles, clients, canAssignRoles = true }: UserManagementProps) {
+export function UserManagement({
+  initialUsers,
+  roles,
+  clients,
+  canAssignRoles = true,
+  canSendPasswordResets = false,
+}: UserManagementProps) {
   const [users, setUsers] = useState(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -254,10 +261,12 @@ export function UserManagement({ initialUsers, roles, clients, canAssignRoles = 
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSendPasswordReset(user)}>
-                          <KeyRound className="mr-2 h-4 w-4" />
-                          Send Password Reset
-                        </DropdownMenuItem>
+                        {canSendPasswordResets && (
+                          <DropdownMenuItem onClick={() => handleSendPasswordReset(user)}>
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Send Password Reset
+                          </DropdownMenuItem>
+                        )}
                         {!user.user_roles?.some(({ role }) =>
                           role.name === "admin" || role.name === "super_admin"
                         ) && (

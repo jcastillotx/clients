@@ -88,6 +88,7 @@ interface FormState {
   provider: Provider;
   from_email: string;
   from_name: string;
+  platform_notification_email: string;
   // API-key providers
   api_key: string;
   mailgun_domain: string;
@@ -109,6 +110,7 @@ const DEFAULT_FORM: FormState = {
   provider: "resend",
   from_email: "",
   from_name: "",
+  platform_notification_email: "",
   api_key: "",
   mailgun_domain: "",
   smtp_host: "",
@@ -150,6 +152,7 @@ export function EmailSettings() {
       provider: (body.provider as Provider) ?? "resend",
       from_email: body.from_email ?? "",
       from_name: body.from_name ?? "",
+      platform_notification_email: body.platform_notification_email ?? "",
       api_key: body.api_key ?? "",
       mailgun_domain: body.mailgun_domain ?? "",
       smtp_host: body.smtp_host ?? "",
@@ -383,6 +386,21 @@ export function EmailSettings() {
             onChange={(e) => set("from_name", e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="platform_notification_email">Platform notification email</Label>
+        <Input
+          id="platform_notification_email"
+          type="text"
+          placeholder="ops@yourdomain.com"
+          value={form.platform_notification_email}
+          onChange={(e) => set("platform_notification_email", e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          Client-submitted requests, support tickets, and proposal responses are sent here.
+          Use commas to notify more than one platform inbox.
+        </p>
       </div>
 
       {/* OAuth connection block — Gmail / Office 365 */}

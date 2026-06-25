@@ -8,6 +8,7 @@ import {
   apiValidationError,
 } from "@/lib/api/response";
 import { dispatchNotification } from "@/lib/notifications/service";
+import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import { getClientIp, limiters, rateLimitLimits } from "@/lib/rate-limit";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { assertTurnstileToken } from "@/lib/turnstile/verify";
@@ -209,18 +210,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dispatchNotification({
-      eventType: "project_request_created",
-      clientId: projectRequest.client_id,
-      subjectType: "request",
-      subjectId: projectRequest.id,
-      recipientUserIds: [intakeOwnerId],
-      extraEmails: [intakePayload.contactEmail],
-      data: {
-        requestTitle: intakePayload.title,
-        companyName: intakePayload.companyName,
-      },
-    });
+    try {
+      await dispatchNotification({
+        eventType: "project_request_created",
+        clientId: projectRequest.client_id,
+        subjectType: "request",
+        subjectId: projectRequest.id,
+        recipientUserIds: [intakeOwnerId],
+        extraEmails: await withPlatformNotificationEmails([intakePayload.contactEmail]),
+        data: {
+          requestTitle: intakePayload.title,
+          companyName: intakePayload.companyName,
+        },
+      });
+    } catch (notifyErr) {
+      console.error("[POST /api/public/project-requests] notification dispatch:", notifyErr);
+    }
 
     const result = {
       requestId: projectRequest.id,

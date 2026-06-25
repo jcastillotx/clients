@@ -3,7 +3,10 @@ export const notificationEventTypes = [
   "proposal_accepted",
   "proposal_rejected",
   "project_request_created",
+  "project_request_feedback_created",
   "service_request_created",
+  "support_ticket_created",
+  "proposal_feedback_created",
   "staff_task_created",
   "invoice_paid",
   "invoice_payment_failed",
@@ -16,7 +19,13 @@ export type NotificationEventType = (typeof notificationEventTypes)[number];
 export type NotificationPayload = {
   eventType: NotificationEventType;
   clientId: string;
-  subjectType: "proposal" | "invoice" | "request" | "client" | "task";
+  subjectType:
+    | "proposal"
+    | "invoice"
+    | "request"
+    | "client"
+    | "task"
+    | "support_ticket";
   subjectId: string;
   actorUserId?: string;
   recipientUserIds?: string[];

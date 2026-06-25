@@ -10,6 +10,9 @@ import {
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
+import { dispatchNotification } from "@/lib/notifications/service";
+import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import { projectRequestFeedbackSchema } from "@/lib/validations/project-request";
 
 async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
@@ -79,7 +82,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const access = await resolveAccess(supabase, user);
     const { data: requestRow, error: requestError } = await supabase
       .from("requests")
-      .select("id, client_id")
+      .select("id, client_id, title")
       .eq("id", id)
       .contains("custom_fields", { type: "project" })
       .single();
@@ -152,7 +155,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const access = await resolveAccess(supabase, user);
     const { data: requestRow, error: requestError } = await supabase
       .from("requests")
-      .select("id, client_id")
+      .select("id, client_id, title")
       .eq("id", id)
       .contains("custom_fields", { type: "project" })
       .single();
@@ -194,6 +197,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const parsed = parseFeedback(data.content || "");
     const userRelation = data.user as { id: string; name: string; avatar?: string | null } | Array<{ id: string; name: string; avatar?: string | null }>;
     const normalizedUser = Array.isArray(userRelation) ? userRelation[0] : userRelation;
+
+    if (!access.isAdmin) {
+      try {
+        const base = getAuthBaseUrl();
+        await dispatchNotification({
+          eventType: "project_request_feedback_created",
+          clientId: requestRow.client_id,
+          subjectType: "request",
+          subjectId: requestRow.id,
+          actorUserId: user.id,
+          recipientUserIds: [],
+          extraEmails: await withPlatformNotificationEmails(),
+          data: {
+            requestTitle: requestRow.title,
+            feedbackMessage: parsed.message,
+            feedbackRating: parsed.rating,
+            requestUrl: `${base}/projects/requests/${requestRow.id}`,
+          },
+        });
+      } catch (notifyErr) {
+        console.error("[POST /api/projects/requests/:id/feedback] notification dispatch:", notifyErr);
+      }
+    }
 
     return apiSuccess(
       request,

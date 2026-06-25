@@ -35,8 +35,8 @@ function extractCreds(
 }
 
 /**
- * Load S3 credentials from the company storage connection stored in the DB.
- * Searches all company S3 connections (not scoped to a specific client) so
+ * Load S3 credentials from the platform storage connection stored in the DB.
+ * Searches all platform S3 connections (stored as ownerType="company" for compatibility) so
  * admin users without a clientId still get credentials.
  * Falls back to env vars if no DB connection is found.
  */
@@ -45,7 +45,7 @@ export async function getS3Credentials(
 ): Promise<S3Credentials | null> {
   void _userId;
 
-  // Find any active company-level S3 connection across all clients
+  // Find any active platform-level S3 connection across all clients.
   const connections = await db
     .select()
     .from(storageConnections)

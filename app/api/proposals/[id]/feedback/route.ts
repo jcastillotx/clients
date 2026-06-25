@@ -3,6 +3,8 @@ import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { proposals } from "@/lib/db/schema/proposals";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import { dispatchNotification } from "@/lib/notifications/service";
+import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import {
   apiError,
   apiNotFound,
@@ -51,6 +53,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })
       .where(eq(proposals.id, id))
       .returning();
+
+    try {
+      await dispatchNotification({
+        eventType: "proposal_feedback_created",
+        clientId: existing.clientId,
+        subjectType: "proposal",
+        subjectId: existing.id,
+        actorUserId: user.id,
+        recipientUserIds: existing.createdBy ? [existing.createdBy] : undefined,
+        extraEmails: await withPlatformNotificationEmails(),
+        data: {
+          proposalTitle: existing.title,
+          feedbackMessage: body.feedback,
+        },
+      });
+    } catch (notifyErr) {
+      console.error("[POST /api/proposals/:id/feedback] notification dispatch:", notifyErr);
+    }
 
     return apiSuccess(request, updated, {
       extra: { proposal: updated, message: "Feedback submitted successfully" },

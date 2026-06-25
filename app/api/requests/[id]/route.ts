@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import {
   apiError,
   apiForbidden,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/response";
 import { updateRequestSchema } from "@/lib/validations/request";
 import { isAdminUser } from "@/lib/rbac/check";
+import { isUserAssignableToClient } from "@/lib/users/assignable-users";
 import { z } from "zod";
 
 /** Best-effort client IP for audit logs (Vercel sets x-forwarded-for). */
@@ -99,6 +100,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           metadata: { reason: "assignee_change_not_admin", ip: getClientIp(req) },
         });
         return apiForbidden(req);
+      }
+      if (validated.assignedTo) {
+        const assignmentClient = createAdminClientIfAvailable() ?? supabase;
+        const canAssignToRequest = await isUserAssignableToClient(
+          assignmentClient,
+          validated.assignedTo,
+          request.client_id,
+        );
+        if (!canAssignToRequest) {
+          return apiError(req, {
+            status: 400,
+            code: "BAD_REQUEST",
+            message:
+              "Assignee must belong to this request's client or be platform staff/admin",
+          });
+        }
       }
       updatePayload.assigned_to = validated.assignedTo || null;
     }

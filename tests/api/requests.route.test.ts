@@ -1,21 +1,36 @@
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/requests/route";
 import { createClient } from "@/lib/supabase/server";
 import { dispatchNotification } from "@/lib/notifications/service";
+import { isUserAssignableToClient } from "@/lib/users/assignable-users";
 import { jsonRequest, readJson } from "../helpers/http";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
+  createAdminClientIfAvailable: vi.fn().mockReturnValue(null),
 }));
 
 vi.mock("@/lib/notifications/service", () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/users/assignable-users", () => ({
+  isUserAssignableToClient: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock("@/lib/supabase/redirect-url", () => ({
   getAuthBaseUrl: vi.fn().mockReturnValue("https://clients.example.test"),
 }));
+
+function restoreEnvValue(key: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[key];
+    return;
+  }
+
+  process.env[key] = value;
+}
 
 const ownClientId = "11111111-1111-1111-1111-111111111111";
 const otherClientId = "22222222-2222-2222-2222-222222222222";
@@ -91,8 +106,20 @@ function createRequestClientMock(options: {
 }
 
 describe("POST /api/requests", () => {
+  const originalPlatformNotificationEmail =
+    process.env.PLATFORM_NOTIFICATION_EMAIL;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.PLATFORM_NOTIFICATION_EMAIL = "platform@example.com";
+    vi.mocked(isUserAssignableToClient).mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    restoreEnvValue(
+      "PLATFORM_NOTIFICATION_EMAIL",
+      originalPlatformNotificationEmail,
+    );
   });
 
   it("forces client-created requests to pending for the user's assigned client", async () => {
@@ -125,6 +152,11 @@ describe("POST /api/requests", () => {
       status: "pending",
     });
     expect(dispatchNotification).toHaveBeenCalledOnce();
+    expect(dispatchNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extraEmails: ["platform@example.com"],
+      }),
+    );
   });
 
   it("derives the client for client-created requests when clientId is omitted", async () => {
@@ -183,5 +215,40 @@ describe("POST /api/requests", () => {
       client_id: otherClientId,
       status: "in_progress",
     });
+    expect(dispatchNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extraEmails: [],
+      }),
+    );
+  });
+
+  it("rejects admin-created assignments outside the request client or platform staff", async () => {
+    vi.mocked(isUserAssignableToClient).mockResolvedValue(false);
+    const mock = createRequestClientMock({
+      dbUser: {
+        id: "admin-1",
+        client_id: null,
+        is_super_admin: true,
+        name: "Admin User",
+        email: "admin@example.com",
+      },
+    });
+    vi.mocked(createClient).mockResolvedValue(mock.supabase as never);
+
+    const response = await POST(
+      jsonRequest(
+        "http://localhost/api/requests",
+        createPostPayload({
+          clientId: otherClientId,
+          assignedTo: "33333333-3333-3333-3333-333333333333",
+        }),
+      ) as NextRequest,
+    );
+    const body = await readJson<{ error: { code: string; message: string } }>(response);
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("BAD_REQUEST");
+    expect(body.error.message).toContain("Assignee must belong");
+    expect(mock.getInsertedPayload()).toBeNull();
   });
 });

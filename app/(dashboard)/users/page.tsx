@@ -249,6 +249,7 @@ export default async function UsersPage() {
         roles={roles}
         clients={clients}
         canAssignRoles={canAssignRoles || canManageUsers || isAdminMetadataRole}
+        canSendPasswordResets={canManageUsers || isAdminMetadataRole}
       />
     </div>
   );

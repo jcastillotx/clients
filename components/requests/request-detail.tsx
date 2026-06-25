@@ -43,8 +43,10 @@ interface RequestDetailProps {
   };
   assignableUsers?: Array<{
     id: string;
-    name: string;
+    name: string | null;
     email?: string | null;
+    client_id?: string | null;
+    is_platform_staff?: boolean;
   }>;
   canManageWorkflow?: boolean;
   canDelete?: boolean;
@@ -292,7 +294,7 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
                         <SelectItem value="unassigned">Unassigned</SelectItem>
                         {assignableUsers.map((u) => (
                           <SelectItem key={u.id} value={u.id}>
-                            {u.name || u.email || "User"}
+                            {formatAssignableUserLabel(u)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -342,6 +344,17 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
       />
     </div>
   );
+}
+
+function formatAssignableUserLabel(user: {
+  name: string | null;
+  email?: string | null;
+}) {
+  if (user.name && user.email) {
+    return `${user.name} (${user.email})`;
+  }
+
+  return user.name || user.email || "User";
 }
 
 function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
