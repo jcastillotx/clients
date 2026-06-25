@@ -148,7 +148,10 @@ export function UserSettings({ user }: UserSettingsProps) {
           {/* Avatar */}
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={avatarUrl || undefined} />
+              <AvatarImage
+                src={avatarUrl || undefined}
+                alt={user.name ? `${user.name} profile photo` : "Profile photo"}
+              />
               <AvatarFallback>
                 <User className="h-10 w-10" />
               </AvatarFallback>
