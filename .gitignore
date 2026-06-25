@@ -59,6 +59,9 @@ yarn-error.log*
 *.swo
 *~
 
+# Local agent/session state
+.ijfw/
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
