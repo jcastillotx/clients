@@ -566,9 +566,9 @@ export function DashboardNav({
       {/* Sidebar */}
       <aside
         className={cn(
-          `flex h-screen shrink-0 flex-col border-r border-border/70 backdrop-blur ${widthClass}`,
-          "md:relative md:translate-x-0",
-          "fixed inset-y-0 left-0 z-[58] transition-transform duration-300 ease-in-out md:transition-none",
+          `flex h-dvh min-h-dvh shrink-0 flex-col border-r border-border/70 backdrop-blur ${widthClass}`,
+          "md:sticky md:top-0 md:translate-x-0",
+          "fixed inset-y-0 left-0 z-[58] transition-transform duration-300 ease-in-out md:bottom-auto md:transition-none",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
         style={{
@@ -738,11 +738,11 @@ export function DashboardNav({
 
         {/* User section */}
         <div
-          className="relative border-t p-3 md:p-4"
+          className="relative border-t p-3 shadow-[0_-16px_32px_rgba(15,23,42,0.08)] md:p-4"
           style={{ borderColor: "rgba(255,255,255,0.12)" }}
         >
           <div
-            className="mb-3 hidden items-center gap-3 rounded-xl border p-2.5 md:flex"
+            className="mb-3 hidden items-center gap-3 rounded-xl border p-2.5 shadow-sm md:flex"
             style={{
               borderColor: "rgba(255,255,255,0.12)",
               backgroundColor: "rgba(255,255,255,0.08)",
@@ -781,11 +781,10 @@ export function DashboardNav({
             variant="ghost"
             size="sm"
             aria-label="Sign out"
-            className="w-full rounded-xl hover:bg-white/10"
+            className="h-10 w-full justify-center rounded-xl bg-white/10 text-sm font-semibold transition hover:bg-white/15 hover:shadow-sm md:justify-start"
             style={{
               color: "var(--sidebar-text)",
-              borderColor: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.18)",
             }}
             onClick={handleLogout}
           >
