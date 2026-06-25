@@ -6,6 +6,8 @@ import {
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import { hasPermission } from "@/lib/rbac/permissions";
 import { uploadFile, generateFilePath, StorageBuckets } from "@/lib/storage/upload";
 
 export async function POST(request: Request) {
@@ -14,11 +16,22 @@ export async function POST(request: Request) {
 
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
       return apiUnauthorized(request);
     }
+
+    const canCreate = await hasPermission("documents.create", {
+      supabase,
+      userId: user.id,
+    });
+    if (!canCreate) {
+      return apiForbidden(request, "Permission denied");
+    }
+
+    const access = await resolveRouteAccess(supabase, user);
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -36,20 +49,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const { data: userClient } = await supabase.from("users").select("client_id").eq("id", user.id).single();
-
-    const hasAccess =
-      userClient?.client_id === clientId ||
-      (
-        await supabase
-          .from("staff_assignments")
-          .select("id")
-          .eq("staff_user_id", user.id)
-          .eq("client_id", clientId)
-          .single()
-      ).data;
-
-    if (!hasAccess) {
+    if (!canAccessClient(access, clientId)) {
       return apiForbidden(request, "Access denied");
     }
 

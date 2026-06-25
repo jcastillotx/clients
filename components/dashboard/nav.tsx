@@ -424,7 +424,7 @@ const navigationSections: NavSection[] = [
       },
       {
         name: "Form Templates",
-        href: "/admin/template-forms",
+        href: "/settings/form-templates",
         icon: FileText,
         access: "admin",
       },

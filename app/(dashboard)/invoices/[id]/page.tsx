@@ -49,7 +49,7 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
       `
       *,
       client:clients(*),
-      invoice_items(id, description, quantity, unit_price, amount)
+      invoice_items(id, description, details, quantity, unit_price, amount)
     `,
     )
     .eq("id", id)
@@ -111,7 +111,14 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
       <InvoiceDetail invoice={invoiceWithUsers} canManageInvoices={canManageInvoices} />
 
       {/* Invoice items table */}
-      <InvoiceItems items={invoiceWithUsers.invoice_items || []} total={invoiceWithUsers.amount} />
+      <InvoiceItems
+        items={invoiceWithUsers.invoice_items || []}
+        subtotal={invoiceWithUsers.subtotal}
+        taxRate={invoiceWithUsers.tax_rate}
+        taxAmount={invoiceWithUsers.tax_amount}
+        discountAmount={invoiceWithUsers.discount_amount}
+        total={invoiceWithUsers.amount}
+      />
 
       {/* Invoice actions (send, mark paid, download PDF, etc.) */}
       <InvoiceActions invoice={invoiceWithUsers} canManageInvoices={canManageInvoices} />

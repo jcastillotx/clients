@@ -134,6 +134,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 1.5,
   },
+  itemDetails: {
+    fontSize: 8,
+    color: "#666",
+    marginTop: 2,
+    lineHeight: 1.4,
+  },
 });
 
 interface InvoicePDFProps {
@@ -154,18 +160,27 @@ interface InvoicePDFProps {
     };
     invoice_items: Array<{
       description: string;
+      details?: string | null;
       quantity: number;
       unit_price: number;
       amount: number;
     }>;
     amount: number;
+    subtotal?: number | null;
+    tax_rate?: number | null;
+    tax_amount?: number | null;
+    discount_amount?: number | null;
   };
 }
 
 export function InvoicePDF({ invoice }: InvoicePDFProps) {
-  const subtotal = invoice.invoice_items.reduce((sum, item) => sum + item.amount, 0);
-  const tax = 0; // Can be calculated based on tax rate
-  const total = subtotal + tax;
+  const subtotal =
+    invoice.subtotal != null
+      ? Number(invoice.subtotal)
+      : invoice.invoice_items.reduce((sum, item) => sum + item.amount, 0);
+  const discountAmount = Number(invoice.discount_amount ?? 0);
+  const taxAmount = Number(invoice.tax_amount ?? 0);
+  const total = Number(invoice.amount);
 
   return (
     <Document>
@@ -235,7 +250,10 @@ export function InvoicePDF({ invoice }: InvoicePDFProps) {
           </View>
           {invoice.invoice_items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
-              <Text style={styles.colDescription}>{item.description}</Text>
+              <View style={styles.colDescription}>
+                <Text>{item.description}</Text>
+                {item.details ? <Text style={styles.itemDetails}>{item.details}</Text> : null}
+              </View>
               <Text style={styles.colQuantity}>{item.quantity}</Text>
               <Text style={styles.colPrice}>${item.unit_price.toFixed(2)}</Text>
               <Text style={styles.colAmount}>${item.amount.toFixed(2)}</Text>
@@ -249,10 +267,18 @@ export function InvoicePDF({ invoice }: InvoicePDFProps) {
             <Text style={styles.totalLabel}>Subtotal:</Text>
             <Text style={styles.totalValue}>${subtotal.toFixed(2)}</Text>
           </View>
-          {tax > 0 && (
+          {discountAmount > 0 && (
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Tax:</Text>
-              <Text style={styles.totalValue}>${tax.toFixed(2)}</Text>
+              <Text style={styles.totalLabel}>Discount:</Text>
+              <Text style={styles.totalValue}>-${discountAmount.toFixed(2)}</Text>
+            </View>
+          )}
+          {taxAmount > 0 && (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>
+                Tax{invoice.tax_rate != null ? ` (${Number(invoice.tax_rate).toFixed(2)}%)` : ""}:
+              </Text>
+              <Text style={styles.totalValue}>${taxAmount.toFixed(2)}</Text>
             </View>
           )}
           <View style={styles.grandTotalRow}>

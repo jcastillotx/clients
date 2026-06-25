@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { friendlyMfaRedirectTarget, getSafeMfaRedirectPath } from "./mfa-redirect";
+import {
+  friendlyMfaRedirectTarget,
+  getSafeMfaRedirectPath,
+  resolveMfaRedirectPath,
+} from "./mfa-redirect";
 
 describe("MFA redirect helpers", () => {
   it("keeps same-site redirect paths with query strings", () => {
@@ -16,6 +20,16 @@ describe("MFA redirect helpers", () => {
   it("labels known admin targets", () => {
     expect(friendlyMfaRedirectTarget("/admin/email")).toBe("Email provider");
     expect(friendlyMfaRedirectTarget("/admin/template-forms?foo=bar")).toBe("Form templates");
+    expect(friendlyMfaRedirectTarget("/settings/form-templates")).toBe("Form templates");
+  });
+
+  it("resolves legacy admin aliases to settings routes", () => {
+    expect(resolveMfaRedirectPath("/admin/template-forms")).toBe("/settings/form-templates");
+    expect(resolveMfaRedirectPath("/admin/template-forms?foo=bar")).toBe(
+      "/settings/form-templates?foo=bar",
+    );
+    expect(resolveMfaRedirectPath("/admin/service-templates")).toBe("/settings/service-templates");
+    expect(resolveMfaRedirectPath("/admin/features")).toBe("/admin/features");
   });
 
   it("builds labels for unknown admin targets", () => {

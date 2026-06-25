@@ -1,44 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { calculateInvoiceTotals } from "@/lib/invoices/calculate-totals";
+import { formatTaxLocationLabel, getTaxRateForClient } from "@/lib/invoices/tax-rates";
+import { createInvoiceSchema, type CreateInvoiceInput } from "@/lib/validations/invoice";
+import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const invoiceSchema = z.object({
-  clientId: z.string().uuid("Please select a client"),
-  invoiceNumber: z.string().min(1, "Invoice number is required"),
-  dueDate: z.string().optional(),
-  notes: z.string().optional(),
-  items: z
-    .array(
-      z.object({
-        description: z.string().min(1, "Description is required"),
-        quantity: z.coerce.number().min(0.01, "Quantity must be positive"),
-        unitPrice: z.coerce.number().min(0, "Unit price must be positive"),
-      }),
-    )
-    .min(1, "At least one item is required"),
-});
-
-type InvoiceFormInput = z.infer<typeof invoiceSchema>;
+export interface InvoiceClientOption {
+  id: string;
+  company_name: string;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+}
 
 interface InvoiceFormProps {
-  clients: Array<{
-    id: string;
-    company_name: string;
-  }>;
+  clients: InvoiceClientOption[];
   preselectedClientId?: string;
 }
 
@@ -46,6 +36,8 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [taxRateManuallySet, setTaxRateManuallySet] = useState(false);
+  const [expandedItemIndexes, setExpandedItemIndexes] = useState<Set<number>>(new Set());
 
   const {
     register,
@@ -54,12 +46,15 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
     setValue,
     watch,
     control,
-  } = useForm<InvoiceFormInput>({
-    resolver: zodResolver(invoiceSchema),
+  } = useForm<CreateInvoiceInput>({
+    resolver: zodResolver(createInvoiceSchema),
     defaultValues: {
       clientId: preselectedClientId || "",
       invoiceNumber: `INV-${Date.now()}`,
-      items: [{ description: "", quantity: 1, unitPrice: 0 }],
+      taxRate: 0,
+      discountType: "none",
+      discountValue: 0,
+      items: [{ description: "", details: "", quantity: 1, unitPrice: 0 }],
     },
   });
 
@@ -70,15 +65,48 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
 
   const clientId = watch("clientId");
   const items = watch("items");
+  const taxRate = watch("taxRate");
+  const discountType = watch("discountType");
+  const discountValue = watch("discountValue");
 
-  // Calculate totals
-  const subtotal = items.reduce((sum, item) => {
-    const quantity = parseFloat(item.quantity?.toString() || "0");
-    const unitPrice = parseFloat(item.unitPrice?.toString() || "0");
-    return sum + quantity * unitPrice;
-  }, 0);
+  const selectedClient = useMemo(
+    () => clients.find((client) => client.id === clientId),
+    [clients, clientId],
+  );
 
-  const onSubmit = async (data: InvoiceFormInput) => {
+  const suggestedTaxRate = useMemo(() => {
+    if (!selectedClient) return 0;
+    return getTaxRateForClient(selectedClient);
+  }, [selectedClient]);
+
+  useEffect(() => {
+    if (!clientId || taxRateManuallySet) return;
+    setValue("taxRate", suggestedTaxRate);
+  }, [clientId, suggestedTaxRate, taxRateManuallySet, setValue]);
+
+  const totals = calculateInvoiceTotals({
+    items: items.map((item) => ({
+      quantity: Number(item.quantity) || 0,
+      unitPrice: Number(item.unitPrice) || 0,
+    })),
+    taxRate: Number(taxRate) || 0,
+    discountType: discountType ?? "none",
+    discountValue: Number(discountValue) || 0,
+  });
+
+  const toggleItemDetails = (index: number) => {
+    setExpandedItemIndexes((current) => {
+      const next = new Set(current);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
+  const onSubmit = async (data: CreateInvoiceInput) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -90,13 +118,28 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
 
       if (!user) throw new Error("Not authenticated");
 
-      // Create invoice
+      const computedTotals = calculateInvoiceTotals({
+        items: data.items.map((item) => ({
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        taxRate: data.taxRate,
+        discountType: data.discountType,
+        discountValue: data.discountValue,
+      });
+
       const { data: invoice, error: invoiceError } = await supabase
         .from("invoices")
         .insert({
           client_id: data.clientId,
           invoice_number: data.invoiceNumber,
-          amount: subtotal,
+          amount: computedTotals.total,
+          subtotal: computedTotals.subtotal,
+          tax_rate: data.taxRate,
+          tax_amount: computedTotals.taxAmount,
+          discount_type: data.discountType,
+          discount_value: data.discountValue,
+          discount_amount: computedTotals.discountAmount,
           status: "draft",
           due_date: data.dueDate || null,
           notes: data.notes || null,
@@ -107,10 +150,10 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
 
       if (invoiceError) throw invoiceError;
 
-      // Create invoice items
       const itemsToInsert = data.items.map((item) => ({
         invoice_id: invoice.id,
         description: item.description,
+        details: item.details?.trim() || null,
         quantity: item.quantity,
         unit_price: item.unitPrice,
         amount: item.quantity * item.unitPrice,
@@ -131,7 +174,6 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">{error}</div>}
 
-      {/* Invoice Details */}
       <Card>
         <CardHeader>
           <CardTitle>Invoice Details</CardTitle>
@@ -142,7 +184,13 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
               <Label htmlFor="clientId">
                 Client <span className="text-destructive">*</span>
               </Label>
-              <Select value={clientId} onValueChange={(value) => setValue("clientId", value)}>
+              <Select
+                value={clientId}
+                onValueChange={(value) => {
+                  setTaxRateManuallySet(false);
+                  setValue("clientId", value);
+                }}
+              >
                 <SelectTrigger id="clientId">
                   <SelectValue placeholder="Select a client" />
                 </SelectTrigger>
@@ -180,15 +228,81 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
         </CardContent>
       </Card>
 
-      {/* Invoice Items */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tax & Discount</CardTitle>
+          <CardDescription>
+            Tax is suggested from the client&apos;s billing location. You can override the rate below.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="taxRate">Tax Rate (%)</Label>
+              <Input
+                id="taxRate"
+                type="number"
+                step="0.001"
+                min="0"
+                max="100"
+                {...register("taxRate", {
+                  onChange: () => setTaxRateManuallySet(true),
+                })}
+              />
+              {errors.taxRate && <p className="text-sm text-destructive">{errors.taxRate.message}</p>}
+              {selectedClient && (
+                <p className="text-xs text-muted-foreground">
+                  {formatTaxLocationLabel(selectedClient)} — suggested {suggestedTaxRate.toFixed(2)}%
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="discountType">Discount Type</Label>
+              <Select
+                value={discountType}
+                onValueChange={(value: CreateInvoiceInput["discountType"]) => setValue("discountType", value)}
+              >
+                <SelectTrigger id="discountType">
+                  <SelectValue placeholder="No discount" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No discount</SelectItem>
+                  <SelectItem value="percentage">Percentage (%)</SelectItem>
+                  <SelectItem value="fixed">Fixed amount ($)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="discountValue">
+                {discountType === "percentage" ? "Discount (%)" : "Discount ($)"}
+              </Label>
+              <Input
+                id="discountValue"
+                type="number"
+                step="0.01"
+                min="0"
+                disabled={discountType === "none"}
+                {...register("discountValue")}
+              />
+              {errors.discountValue && <p className="text-sm text-destructive">{errors.discountValue.message}</p>}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle>Invoice Items</CardTitle>
+          <div>
+            <CardTitle>Invoice Items</CardTitle>
+            <CardDescription>Add line items and optional details for each service or product.</CardDescription>
+          </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ description: "", quantity: 1, unitPrice: 0 })}
+            onClick={() => append({ description: "", details: "", quantity: 1, unitPrice: 0 })}
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Item
@@ -207,36 +321,67 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fields.map((field, index) => (
-                  <TableRow key={field.id}>
-                    <TableCell>
-                      <Input placeholder="Item description" {...register(`items.${index}.description`)} />
-                      {errors.items?.[index]?.description && (
-                        <p className="text-xs text-destructive mt-1">{errors.items[index]?.description?.message}</p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Input type="number" step="0.01" placeholder="1" {...register(`items.${index}.quantity`)} />
-                    </TableCell>
-                    <TableCell>
-                      <Input type="number" step="0.01" placeholder="0.00" {...register(`items.${index}.unitPrice`)} />
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      $
-                      {(
-                        (parseFloat(items[index]?.quantity?.toString() || "0") || 0) *
-                        (parseFloat(items[index]?.unitPrice?.toString() || "0") || 0)
-                      ).toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      {fields.length > 1 && (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {fields.map((field, index) => {
+                  const lineTotal =
+                    (Number(items[index]?.quantity) || 0) * (Number(items[index]?.unitPrice) || 0);
+                  const isExpanded = expandedItemIndexes.has(index);
+
+                  return (
+                    <TableRow key={field.id} className="align-top">
+                      <TableCell>
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Item description"
+                              className="flex-1"
+                              {...register(`items.${index}.description`)}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="shrink-0 px-2"
+                              onClick={() => toggleItemDetails(index)}
+                              aria-expanded={isExpanded}
+                              aria-label="Toggle additional details"
+                            >
+                              <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
+                            </Button>
+                          </div>
+                          {isExpanded && (
+                            <Textarea
+                              placeholder="Additional details (scope, deliverables, notes...)"
+                              rows={3}
+                              {...register(`items.${index}.details`)}
+                            />
+                          )}
+                          {errors.items?.[index]?.description && (
+                            <p className="text-xs text-destructive">{errors.items[index]?.description?.message}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Input type="number" step="0.01" placeholder="1" {...register(`items.${index}.quantity`)} />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          {...register(`items.${index}.unitPrice`)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-semibold">${lineTotal.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {fields.length > 1 && (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
 
@@ -244,17 +389,28 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
 
             <Separator />
 
-            {/* Total */}
             <div className="flex justify-end">
               <div className="w-full max-w-xs space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>${totals.subtotal.toFixed(2)}</span>
                 </div>
+                {totals.discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-700">
+                    <span>Discount</span>
+                    <span>-${totals.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {totals.taxAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tax ({Number(taxRate).toFixed(2)}%)</span>
+                    <span>${totals.taxAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>${totals.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -262,7 +418,6 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
         </CardContent>
       </Card>
 
-      {/* Actions */}
       <div className="flex gap-4">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

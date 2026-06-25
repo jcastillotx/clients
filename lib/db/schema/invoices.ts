@@ -11,6 +11,12 @@ export const invoices = pgTable("invoices", {
     .references(() => clients.id)
     .notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 3 }).default("0"),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
+  discountType: text("discount_type", { enum: ["none", "percentage", "fixed"] }).default("none"),
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).default("0"),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
   status: text("status", { enum: invoiceStatusEnum }).default("draft").notNull(),
   dueDate: timestamp("due_date", { withTimezone: true }),
   paidAt: timestamp("paid_at", { withTimezone: true }),
@@ -31,6 +37,7 @@ export const invoiceItems = pgTable("invoice_items", {
     .references(() => invoices.id, { onDelete: "cascade" })
     .notNull(),
   description: text("description").notNull(),
+  details: text("details"),
   quantity: decimal("quantity", { precision: 10, scale: 2 }).default("1").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),

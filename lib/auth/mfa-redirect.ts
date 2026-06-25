@@ -1,10 +1,17 @@
 const KNOWN_MFA_TARGETS: Record<string, string> = {
   "/settings/maintenance-templates": "Maintenance plan templates",
   "/settings/service-templates": "Service templates",
+  "/settings/form-templates": "Form templates",
   "/admin/maintenance-plans": "Maintenance plan templates",
   "/admin/service-templates": "Service templates",
   "/admin/template-forms": "Form templates",
   "/admin/email": "Email provider",
+};
+
+const LEGACY_MFA_REDIRECTS: Record<string, string> = {
+  "/admin/template-forms": "/settings/form-templates",
+  "/admin/service-templates": "/settings/service-templates",
+  "/admin/maintenance-plans": "/settings/maintenance-templates",
 };
 
 export function getSafeMfaRedirectPath(nextRaw: string | null | undefined): string {
@@ -15,6 +22,20 @@ export function getSafeMfaRedirectPath(nextRaw: string | null | undefined): stri
   }
 
   return trimmed;
+}
+
+/** Resolve legacy admin aliases to their settings routes after MFA. */
+export function resolveMfaRedirectPath(nextRaw: string | null | undefined): string {
+  const safePath = getSafeMfaRedirectPath(nextRaw);
+  const [pathOnly, query = ""] = safePath.split("?");
+  const normalizedPath = (pathOnly ?? safePath).replace(/\/$/, "") || "/";
+  const legacyTarget = LEGACY_MFA_REDIRECTS[normalizedPath];
+
+  if (!legacyTarget) {
+    return safePath;
+  }
+
+  return query ? `${legacyTarget}?${query}` : legacyTarget;
 }
 
 /** Human label for `next` when middleware sends admins here for MFA (AAL2). */

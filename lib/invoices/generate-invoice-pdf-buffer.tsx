@@ -21,6 +21,7 @@ export async function generateInvoicePdfBuffer(
         invoice_items(
           id,
           description,
+          details,
           quantity,
           unit_price,
           amount

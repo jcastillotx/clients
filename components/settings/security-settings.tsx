@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   friendlyMfaRedirectTarget,
-  getSafeMfaRedirectPath,
+  resolveMfaRedirectPath,
 } from "@/lib/auth/mfa-redirect";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -74,12 +74,20 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mfaRequired = searchParams.get("mfa_required") === "1";
-  const redirectAfterMfa = getSafeMfaRedirectPath(searchParams.get("next"));
+  const redirectAfterMfa = resolveMfaRedirectPath(searchParams.get("next"));
   const friendlyMfaTarget = useMemo(
     () => friendlyMfaRedirectTarget(redirectAfterMfa),
     [redirectAfterMfa],
   );
-  // Also support legacy ?tab=security&mfa_required=1 redirects
+
+  const completeMfaRedirect = useCallback(() => {
+    if (!mfaRequired) {
+      return;
+    }
+
+    router.refresh();
+    window.location.assign(redirectAfterMfa);
+  }, [mfaRequired, redirectAfterMfa, router]);
 
   // Password change state
   const [pwSuccess, setPwSuccess] = useState(false);
@@ -188,9 +196,9 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
 
   useEffect(() => {
     if (mfaRequired && aal === "aal2") {
-      router.replace(redirectAfterMfa);
+      completeMfaRedirect();
     }
-  }, [aal, mfaRequired, redirectAfterMfa, router]);
+  }, [aal, completeMfaRedirect, mfaRequired]);
 
   const handleEnroll = async () => {
     setIsEnrolling(true);
@@ -253,6 +261,12 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
       setPendingFactor(null);
       setVerificationCode("");
       setSuccess("Two-factor authentication has been enabled.");
+
+      if (mfaRequired) {
+        completeMfaRedirect();
+        return;
+      }
+
       await loadMfaState();
     } catch (verifyError) {
       setError(
@@ -299,7 +313,7 @@ export function SecuritySettings({ user }: SecuritySettingsProps = {}) {
 
       if (mfaRequired) {
         setSuccess("Authenticator verified. Redirecting...");
-        router.replace(redirectAfterMfa);
+        completeMfaRedirect();
         return;
       }
 

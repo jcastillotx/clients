@@ -38,10 +38,10 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
     redirect("/invoices");
   }
 
-  // Fetch clients for dropdown
+  // Fetch clients for dropdown (include location for tax calculation)
   const { data: clients } = await supabase
     .from("clients")
-    .select("id, company_name")
+    .select("id, company_name, city, state, country")
     .eq("status", "active")
     .order("company_name");
 

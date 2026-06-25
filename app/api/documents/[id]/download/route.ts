@@ -6,6 +6,7 @@ import {
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { getSignedUrl, StorageBuckets } from "@/lib/storage/upload";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -15,11 +16,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
       return apiUnauthorized(request);
     }
+
+    const access = await resolveRouteAccess(supabase, user);
 
     const { data: document, error } = await supabase
       .from("documents")
@@ -32,26 +36,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return apiNotFound(request, "Document not found");
     }
 
-    const { data: access } = await supabase.from("users").select("client_id").eq("id", user.id).single();
+    const { data: share } = await supabase
+      .from("document_shares")
+      .select("id")
+      .eq("document_id", id)
+      .eq("shared_with_user_id", user.id)
+      .maybeSingle();
 
-    const hasAccess =
-      access?.client_id === document.client_id ||
-      (
-        await supabase
-          .from("staff_assignments")
-          .select("id")
-          .eq("staff_user_id", user.id)
-          .eq("client_id", document.client_id)
-          .single()
-      ).data ||
-      (
-        await supabase
-          .from("document_shares")
-          .select("id")
-          .eq("document_id", id)
-          .eq("shared_with_user_id", user.id)
-          .single()
-      ).data;
+    const hasAccess = canAccessClient(access, document.client_id) || Boolean(share);
 
     if (!hasAccess) {
       return apiForbidden(request, "Access denied");
