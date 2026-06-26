@@ -451,6 +451,38 @@ const sidebarWidthClass: Record<string, string> = {
 };
 
 const ADMIN_NAV_SECTIONS_KEY = "kre8iv-admin-nav-sections";
+const RESERVED_PROJECT_PATHS = new Set(["requests", "messages", "feedback", "budgets", "templates", "new"]);
+
+function getCurrentProjectId(pathname: string): string | null {
+  const match = pathname.match(/^\/projects\/([^/?#]+)(?:\/|$)/);
+  if (!match || RESERVED_PROJECT_PATHS.has(match[1])) {
+    return null;
+  }
+  return match[1];
+}
+
+function resolveProjectNavHref(item: NavItem, currentProjectId: string | null): string {
+  if (!currentProjectId) {
+    return item.href;
+  }
+
+  switch (item.name) {
+    case "Project Timeline":
+      return `/projects/${currentProjectId}/timeline`;
+    case "Project Messages":
+      return `/projects/${currentProjectId}/messages`;
+    case "Project Feedback":
+      return `/projects/${currentProjectId}/feedback`;
+    case "Time Tracking":
+      return `/time-tracking?projectId=${currentProjectId}`;
+    case "Task Board":
+      return `/projects/${currentProjectId}/tasks`;
+    case "Project Budgets":
+      return `/projects/${currentProjectId}/budget`;
+    default:
+      return item.href;
+  }
+}
 
 function isNavItemActive(
   pathname: string,
@@ -494,6 +526,7 @@ export function DashboardNav({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const currentProjectId = getCurrentProjectId(pathname);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   /** Admin-only: collapsed state per section (persisted). `undefined` = expanded (default). */
@@ -702,13 +735,18 @@ export function DashboardNav({
                   )}
                 >
                   {visibleItems.map((item) => {
+                    const resolvedHref =
+                      section.title === "Projects"
+                        ? resolveProjectNavHref(item, currentProjectId)
+                        : item.href;
+                    const activeItem = { ...item, href: resolvedHref };
                     const isActive = isNavItemActive(
                       pathname,
                       searchParams,
-                      item,
+                      activeItem,
                     );
                     return (
-                      <Link key={item.name} href={item.href}>
+                      <Link key={item.name} href={resolvedHref}>
                         <Button
                           variant="ghost"
                           aria-current={isActive ? "page" : undefined}

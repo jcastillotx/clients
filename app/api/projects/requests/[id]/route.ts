@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { eq, sql } from "drizzle-orm";
 import {
   apiForbidden,
   apiInternalError,
@@ -9,6 +10,9 @@ import {
 } from "@/lib/api/response";
 
 import { z } from "zod";
+import { db } from "@/lib/db";
+import { projectBudgets, projects, type Currency } from "@/lib/db/schema/projects";
+import { staffTaskBoards, staffTaskColumns } from "@/lib/db/schema/staff-tasks";
 import { createClient } from "@/lib/supabase/server";
 import { updateProjectRequestSchema } from "@/lib/validations/project-request";
 
@@ -27,6 +31,22 @@ type ProjectCustomFields = Record<string, unknown> & {
   requestedLaunchDate?: string | null;
   review?: Record<string, unknown>;
   clientDecision?: string;
+  projectId?: string;
+  convertedProjectId?: string;
+  projectConvertedAt?: string;
+  taskBoardId?: string;
+};
+
+type ExistingProjectRequest = {
+  id: string;
+  client_id: string;
+  title: string;
+  description: string | null;
+  priority: "low" | "medium" | "high" | "urgent" | null;
+  status: string | null;
+  due_date: string | null;
+  assigned_to: string | null;
+  custom_fields: ProjectCustomFields | null;
 };
 
 const normalizeDate = (value?: string | null) => {
@@ -39,6 +59,163 @@ const normalizeDate = (value?: string | null) => {
   }
   return parsed.toISOString();
 };
+
+const parseDate = (value?: string | null) => {
+  const normalized = normalizeDate(value);
+  return normalized ? new Date(normalized) : null;
+};
+
+const normalizeCurrency = (value: unknown): Currency => {
+  const currency = String(value || "USD").toUpperCase();
+  return ["USD", "EUR", "GBP", "CAD", "AUD"].includes(currency) ? (currency as Currency) : "USD";
+};
+
+const numberString = (value: unknown) => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed.toFixed(2) : null;
+};
+
+async function createDefaultTaskBoard(projectId: string, projectName: string, userId: string) {
+  const [board] = await db
+    .insert(staffTaskBoards)
+    .values({
+      name: `${projectName} Board`,
+      description: "Default task board created when the project request was approved.",
+      createdBy: userId,
+      isDefault: false,
+      color: "#5b5a88",
+      columnOrder: [],
+    })
+    .returning();
+
+  const columns = await db
+    .insert(staffTaskColumns)
+    .values([
+      { boardId: board.id, name: "To Do", position: 0, color: "#94a3b8", icon: "list" },
+      { boardId: board.id, name: "In Progress", position: 1, color: "#3b82f6", icon: "loader" },
+      { boardId: board.id, name: "Review", position: 2, color: "#f59e0b", icon: "eye" },
+      { boardId: board.id, name: "Done", position: 3, color: "#10b981", icon: "check", isDoneColumn: true },
+    ])
+    .returning({ id: staffTaskColumns.id });
+
+  await db
+    .update(staffTaskBoards)
+    .set({ columnOrder: columns.map((column) => column.id) })
+    .where(eq(staffTaskBoards.id, board.id));
+
+  await db
+    .update(projects)
+    .set({
+      metadata: sql`COALESCE(${projects.metadata}, '{}'::jsonb) || ${JSON.stringify({
+        taskBoardId: board.id,
+      })}::jsonb`,
+      updatedAt: new Date(),
+    })
+    .where(eq(projects.id, projectId));
+
+  return board.id;
+}
+
+async function ensureApprovedProject(
+  requestRow: ExistingProjectRequest,
+  customFields: ProjectCustomFields,
+  userId: string,
+) {
+  const existingLinkedProjectId =
+    typeof customFields.projectId === "string"
+      ? customFields.projectId
+      : typeof customFields.convertedProjectId === "string"
+        ? customFields.convertedProjectId
+        : null;
+
+  const [linkedProject] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      metadata: projects.metadata,
+    })
+    .from(projects)
+    .where(
+      existingLinkedProjectId
+        ? eq(projects.id, existingLinkedProjectId)
+        : sql`${projects.metadata}->>'sourceProjectRequestId' = ${requestRow.id}`,
+    )
+    .limit(1);
+
+  if (linkedProject) {
+    const taskBoardId = linkedProject.metadata?.taskBoardId
+      ? linkedProject.metadata.taskBoardId
+      : await createDefaultTaskBoard(linkedProject.id, linkedProject.name, userId);
+
+    return {
+      projectId: linkedProject.id,
+      taskBoardId,
+      convertedAt: customFields.projectConvertedAt || new Date().toISOString(),
+    };
+  }
+
+  const review = (customFields.review || {}) as Record<string, unknown>;
+  const startDate = parseDate(
+    typeof review.estimatedStartDate === "string" ? review.estimatedStartDate : customFields.requestedStartDate,
+  );
+  const endDate = parseDate(
+    typeof review.estimatedEndDate === "string"
+      ? review.estimatedEndDate
+      : customFields.requestedLaunchDate || requestRow.due_date,
+  );
+  const estimateAmount = numberString(review.estimateAmount);
+  const estimatedHours = numberString(review.estimatedHours);
+  const currency = normalizeCurrency(review.estimateCurrency);
+  const convertedAt = new Date().toISOString();
+
+  const [project] = await db
+    .insert(projects)
+    .values({
+      clientId: requestRow.client_id,
+      name: requestRow.title,
+      description:
+        typeof review.responseSummary === "string"
+          ? review.responseSummary
+          : requestRow.description || customFields.executiveSummary || null,
+      status: "planning",
+      startDate,
+      endDate,
+      estimatedHours,
+      budgetAmount: estimateAmount,
+      currency,
+      projectManagerId: requestRow.assigned_to,
+      metadata: {
+        source: "project_request",
+        sourceProjectRequestId: requestRow.id,
+        projectRequestId: requestRow.id,
+        projectConvertedAt: convertedAt,
+        priority: requestRow.priority === "urgent" ? "critical" : requestRow.priority ?? undefined,
+        reviewStatus: typeof review.status === "string" ? review.status : undefined,
+      },
+    })
+    .returning();
+
+  if (estimateAmount) {
+    await db.insert(projectBudgets).values({
+      projectId: project.id,
+      category: "other",
+      allocatedAmount: estimateAmount,
+      currency,
+      notes: "Initial budget created from the approved project request estimate.",
+    });
+  }
+
+  const taskBoardId = await createDefaultTaskBoard(project.id, project.name, userId);
+
+  return {
+    projectId: project.id,
+    taskBoardId,
+    convertedAt,
+  };
+}
 
 async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
@@ -184,10 +361,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const access = await resolveAccess(supabase, user);
     const { data: existingRequest, error: existingError } = await supabase
       .from("requests")
-      .select("id, client_id, custom_fields")
+      .select("id, client_id, title, description, priority, status, due_date, assigned_to, custom_fields")
       .eq("id", id)
       .contains("custom_fields", { type: "project" })
-      .single();
+      .single<ExistingProjectRequest>();
 
     if (existingError || !existingRequest) {
       return apiNotFound(request, "Project request not found");
@@ -286,6 +463,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (validated.metadata) {
       Object.assign(updatedCustomFields, validated.metadata);
+    }
+
+    if (updatePayload.status === "approved" || (!updatePayload.status && existingRequest.status === "approved")) {
+      const projectLink = await ensureApprovedProject(existingRequest, updatedCustomFields, user.id);
+      updatedCustomFields.projectId = projectLink.projectId;
+      updatedCustomFields.convertedProjectId = projectLink.projectId;
+      updatedCustomFields.projectConvertedAt = projectLink.convertedAt;
+      updatedCustomFields.taskBoardId = projectLink.taskBoardId;
     }
 
     updatePayload.custom_fields = updatedCustomFields;

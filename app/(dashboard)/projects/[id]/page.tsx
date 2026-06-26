@@ -18,7 +18,19 @@ import { MilestoneList } from "@/components/projects/milestone-list";
 import { DeliverableList } from "@/components/projects/deliverable-list";
 import { ProjectReviewPanel } from "@/components/projects/project-review-panel";
 import { formatCurrency } from "@/lib/utils";
-import { Calendar, DollarSign, Users, TrendingUp, Edit, Clock, Target } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Columns3,
+  DollarSign,
+  Edit,
+  MessageCircleMore,
+  MessageSquareText,
+  Target,
+  Timer,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
@@ -257,7 +269,7 @@ async function ProjectDetails({ id }: { id: string }) {
           </Card>
 
           {/* Quick Links */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Button variant="outline" asChild className="h-auto py-4">
               <Link href={`/projects/${project.id}/timeline`}>
                 <div className="flex flex-col items-center gap-2">
@@ -271,6 +283,38 @@ async function ProjectDetails({ id }: { id: string }) {
                 <div className="flex flex-col items-center gap-2">
                   <DollarSign className="h-6 w-6" />
                   <span>Budget Details</span>
+                </div>
+              </Link>
+            </Button>
+            <Button variant="outline" asChild className="h-auto py-4">
+              <Link href={`/projects/${project.id}/messages`}>
+                <div className="flex flex-col items-center gap-2">
+                  <MessageSquareText className="h-6 w-6" />
+                  <span>Messages</span>
+                </div>
+              </Link>
+            </Button>
+            <Button variant="outline" asChild className="h-auto py-4">
+              <Link href={`/projects/${project.id}/feedback`}>
+                <div className="flex flex-col items-center gap-2">
+                  <MessageCircleMore className="h-6 w-6" />
+                  <span>Feedback</span>
+                </div>
+              </Link>
+            </Button>
+            <Button variant="outline" asChild className="h-auto py-4">
+              <Link href={`/time-tracking?projectId=${project.id}`}>
+                <div className="flex flex-col items-center gap-2">
+                  <Timer className="h-6 w-6" />
+                  <span>Time Tracking</span>
+                </div>
+              </Link>
+            </Button>
+            <Button variant="outline" asChild className="h-auto py-4">
+              <Link href={`/projects/${project.id}/tasks`}>
+                <div className="flex flex-col items-center gap-2">
+                  <Columns3 className="h-6 w-6" />
+                  <span>Task Board</span>
                 </div>
               </Link>
             </Button>

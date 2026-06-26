@@ -14,9 +14,10 @@ import { fetchApi } from "@/lib/api/client";
 
 interface TimeTrackerProps {
   onTimerStop?: () => void;
+  initialProjectId?: string | null;
 }
 
-export function TimeTracker({ onTimerStop }: TimeTrackerProps) {
+export function TimeTracker({ onTimerStop, initialProjectId }: TimeTrackerProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -26,6 +27,7 @@ export function TimeTracker({ onTimerStop }: TimeTrackerProps) {
   const [description, setDescription] = useState("");
   const [clientId, setClientId] = useState("");
   const [requestId, setRequestId] = useState("");
+  const [projectId] = useState(initialProjectId || "");
   const [isBillable, setIsBillable] = useState(true);
   const [hourlyRate, setHourlyRate] = useState("");
 
@@ -58,6 +60,7 @@ export function TimeTracker({ onTimerStop }: TimeTrackerProps) {
           description?: string;
           clientId?: string;
           requestId?: string;
+          projectId?: string;
           isBillable: boolean;
           hourlyRate?: string;
         };
@@ -89,6 +92,7 @@ export function TimeTracker({ onTimerStop }: TimeTrackerProps) {
             description,
             clientId: clientId || null,
             requestId: requestId || null,
+            projectId: projectId || null,
             isBillable,
             hourlyRate: hourlyRate ? parseFloat(hourlyRate) : null,
           }),
@@ -216,6 +220,13 @@ export function TimeTracker({ onTimerStop }: TimeTrackerProps) {
               />
             </div>
           </div>
+
+          {projectId && (
+            <div className="space-y-2">
+              <Label htmlFor="projectId">Project</Label>
+              <Input id="projectId" value={projectId} readOnly />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center space-x-2">

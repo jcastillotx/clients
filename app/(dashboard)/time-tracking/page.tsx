@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { TimeTracker } from "@/components/time-tracking/time-tracker";
 import { TimeEntryList } from "@/components/time-tracking/time-entry-list";
 import { TimeEntryForm } from "@/components/time-tracking/time-entry-form";
@@ -8,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, List, Plus } from "lucide-react";
 
 export default function TimeTrackingPage() {
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get("projectId");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleTimerStop = () => {
@@ -42,17 +45,17 @@ export default function TimeTrackingPage() {
         </TabsList>
 
         <TabsContent value="timer" className="space-y-6">
-          <TimeTracker onTimerStop={handleTimerStop} />
-          <TimeEntryList refreshTrigger={refreshTrigger} />
+          <TimeTracker onTimerStop={handleTimerStop} initialProjectId={projectId} />
+          <TimeEntryList refreshTrigger={refreshTrigger} projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="entries">
-          <TimeEntryList refreshTrigger={refreshTrigger} />
+          <TimeEntryList refreshTrigger={refreshTrigger} projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="manual" className="space-y-6">
-          <TimeEntryForm onEntryCreated={handleEntryCreated} />
-          <TimeEntryList refreshTrigger={refreshTrigger} />
+          <TimeEntryForm onEntryCreated={handleEntryCreated} initialProjectId={projectId} />
+          <TimeEntryList refreshTrigger={refreshTrigger} projectId={projectId} />
         </TabsContent>
       </Tabs>
     </div>

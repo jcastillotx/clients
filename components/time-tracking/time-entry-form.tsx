@@ -13,14 +13,16 @@ import { fetchApi } from "@/lib/api/client";
 
 interface TimeEntryFormProps {
   onEntryCreated?: () => void;
+  initialProjectId?: string | null;
 }
 
-export function TimeEntryForm({ onEntryCreated }: TimeEntryFormProps) {
+export function TimeEntryForm({ onEntryCreated, initialProjectId }: TimeEntryFormProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
     clientId: "",
     requestId: "",
+    projectId: initialProjectId || "",
     startedAt: "",
     endedAt: "",
     isBillable: true,
@@ -61,6 +63,7 @@ export function TimeEntryForm({ onEntryCreated }: TimeEntryFormProps) {
             description: formData.description,
             clientId: formData.clientId || null,
             requestId: formData.requestId || null,
+            projectId: formData.projectId || null,
             startedAt: formData.startedAt,
             endedAt: formData.endedAt,
             durationMinutes: duration,
@@ -78,6 +81,7 @@ export function TimeEntryForm({ onEntryCreated }: TimeEntryFormProps) {
         description: "",
         clientId: "",
         requestId: "",
+        projectId: initialProjectId || "",
         startedAt: "",
         endedAt: "",
         isBillable: true,
@@ -139,6 +143,13 @@ export function TimeEntryForm({ onEntryCreated }: TimeEntryFormProps) {
               />
             </div>
           </div>
+
+          {initialProjectId && (
+            <div className="space-y-2">
+              <Label htmlFor="projectId">Project</Label>
+              <Input id="projectId" value={formData.projectId} readOnly />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

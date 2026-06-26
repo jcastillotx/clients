@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const clientId = searchParams.get("clientId");
     const requestId = searchParams.get("requestId");
+    const projectId = searchParams.get("projectId");
 
     const conditions = [eq(timeEntries.userId, userId)];
 
@@ -44,6 +45,9 @@ export async function GET(request: NextRequest) {
     }
     if (requestId) {
       conditions.push(eq(timeEntries.requestId, requestId));
+    }
+    if (projectId) {
+      conditions.push(eq(timeEntries.projectId, projectId));
     }
 
     const entries = await db.query.timeEntries.findMany({

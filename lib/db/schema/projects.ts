@@ -82,6 +82,12 @@ export const projects = pgTable("projects", {
     repository?: string;
     slackChannel?: string;
     notes?: string;
+    source?: string;
+    sourceProjectRequestId?: string;
+    projectRequestId?: string;
+    projectConvertedAt?: string;
+    taskBoardId?: string;
+    reviewStatus?: string;
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

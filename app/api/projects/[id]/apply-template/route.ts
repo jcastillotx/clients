@@ -9,7 +9,7 @@ import {
   staffTaskChecklists,
   staffTaskLabels,
 } from "@/lib/db/schema/staff-tasks";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUser } from "@/lib/rbac/check";
 import { builtInProjectTemplates } from "@/lib/templates/project-templates";
@@ -129,6 +129,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Update board with column order
     await db.update(staffTaskBoards).set({ columnOrder: columnIds }).where(eq(staffTaskBoards.id, board.id));
+    await db
+      .update(projects)
+      .set({
+        metadata: sql`COALESCE(${projects.metadata}, '{}'::jsonb) || ${JSON.stringify({
+          taskBoardId: board.id,
+        })}::jsonb`,
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.id, projectId));
 
     // Collect all unique labels from the template
     const allLabels = new Set<string>();

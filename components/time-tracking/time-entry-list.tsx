@@ -15,6 +15,7 @@ import { fetchApi } from "@/lib/api/client";
 
 interface TimeEntryListProps {
   refreshTrigger?: number;
+  projectId?: string | null;
 }
 
 /** Shape returned by GET /api/time-tracking (subset used by this list). */
@@ -32,7 +33,7 @@ interface TimeEntryRow {
   request?: { title?: string | null };
 }
 
-export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
+export function TimeEntryList({ refreshTrigger, projectId }: TimeEntryListProps) {
   const [entries, setEntries] = useState<TimeEntryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState("");
@@ -43,9 +44,9 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
 
   useEffect(() => {
     fetchEntries();
-    // Only refetch when refreshTrigger changes; date/status filters use Apply.
+    // Only refetch when refreshTrigger/project changes; date/status filters use Apply.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
-  }, [refreshTrigger]);
+  }, [refreshTrigger, projectId]);
 
   const fetchEntries = async () => {
     try {
@@ -54,6 +55,7 @@ export function TimeEntryList({ refreshTrigger }: TimeEntryListProps) {
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
       if (statusFilter) params.append("status", statusFilter);
+      if (projectId) params.append("projectId", projectId);
 
       const rows = await fetchApi<TimeEntryRow[]>(
         `/api/time-tracking?${params}`,
