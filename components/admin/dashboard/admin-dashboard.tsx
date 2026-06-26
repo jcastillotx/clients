@@ -1,193 +1,275 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Users,
-  Building2,
-  FileText,
-  DollarSign,
-  FileSignature,
-  TrendingUp,
-  AlertTriangle,
-  Activity,
-  HelpCircle,
-} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  Building2,
+  CalendarClock,
+  DollarSign,
+  FileText,
+  FolderOpen,
+  HeartPulse,
+  HelpCircle,
+  Receipt,
+  Server,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
-interface Stats {
-  clients: { total: number; active: number };
-  users: { total: number };
-  requests: { total: number; pending: number };
-  invoices: { total: number; unpaid: number };
-  contracts: { total: number; active: number };
-  tickets: { total: number; open: number };
-}
+type Severity = "critical" | "high" | "medium";
 
-interface ActivityLog {
-  id: string;
-  description: string;
-  created_at: string;
-  causer?: {
+type AdminDashboardData = {
+  generatedAt: string;
+  platform: {
+    clients: { total: number; active: number };
+    users: { total: number; active: number };
+    requests: { total: number; open: number; last30: number };
+    projects: { total: number; active: number };
+    documents: { total: number; last30: number };
+    tickets: { total: number; open: number; urgent: number; breached: number; last30: number };
+    meetings: { upcoming: number };
+    contracts: { total: number; active: number };
+    invoices: { total: number; unpaid: number; overdue: number };
+  };
+  financials: {
+    paidThisMonth: number;
+    createdLast30: number;
+    outstandingRecent: number;
+    unpaidCount: number;
+    overdueCount: number;
+    recentInvoices: Array<{
+      id: string;
+      invoiceNumber: string;
+      clientName: string;
+      amount: number;
+      status: string;
+      dueDate: string | null;
+      createdAt: string | null;
+    }>;
+  };
+  issues: Array<{
     id: string;
-    name: string;
-    email: string;
-  } | null;
-}
-
-interface TopClient {
-  id: string;
-  company_name: string;
-  totalRevenue: number;
-}
-
-interface SLABreach {
-  id: string;
-  title: string;
-  request_number: string;
-  sla_breach_type: string;
-  sla_breach_at: string;
-  client?: {
+    title: string;
+    detail: string;
+    severity: Severity;
+    createdAt: string | null;
+  }>;
+  analytics: {
+    requestVolume30Days: number;
+    ticketVolume30Days: number;
+    documentUploads30Days: number;
+    openRequestRate: number;
+    openTicketRate: number;
+  };
+  recentTickets: Array<{
     id: string;
-    company_name: string;
-  } | null;
-}
+    ticketNumber: string;
+    subject: string;
+    status: string;
+    priority: string;
+    clientName: string;
+    assignedTo: string | null;
+    createdAt: string | null;
+    hasSlaBreach: boolean;
+  }>;
+  recentActivity: Array<{
+    id: string;
+    description: string;
+    subjectType: string;
+    createdAt: string;
+    actor: string | null;
+  }>;
+};
 
-interface RecentTicket {
-  id: string;
-  ticket_number: string;
-  subject: string;
-  status: string;
-  priority: string;
-  created_at: string;
-  client?: { company_name: string } | null;
-  assigned_user?: { name: string; avatar?: string } | null;
-}
+export function AdminDashboard({ data }: { data: AdminDashboardData }) {
+  const systemStatus = data.issues.some((issue) => issue.severity === "critical")
+    ? "Attention Needed"
+    : data.issues.some((issue) => issue.severity === "high")
+      ? "Degraded"
+      : "Operational";
 
-interface AdminDashboardProps {
-  stats: Stats;
-  recentActivity: ActivityLog[];
-  topClients: TopClient[];
-  slaBreaches: SLABreach[];
-  recentTickets: RecentTicket[];
-}
+  const statusBadge =
+    systemStatus === "Operational" ? "bg-emerald-500" : systemStatus === "Degraded" ? "bg-amber-500" : "bg-red-500";
 
-export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches, recentTickets }: AdminDashboardProps) {
-  const statCards = [
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(amount);
+
+  const formatWhen = (value: string | null) => {
+    if (!value) {
+      return "No timestamp";
+    }
+    return formatDistanceToNow(new Date(value), { addSuffix: true });
+  };
+
+  const severityVariant = (severity: Severity) => {
+    if (severity === "critical") return "destructive";
+    if (severity === "high") return "default";
+    return "secondary";
+  };
+
+  const platformCards = [
     {
-      title: "Total Clients",
-      value: stats.clients.total,
-      subtitle: `${stats.clients.active} active`,
+      title: "Clients",
+      value: data.platform.clients.total,
+      detail: `${data.platform.clients.active} active`,
       icon: Building2,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
     },
     {
-      title: "Total Users",
-      value: stats.users.total,
+      title: "Users",
+      value: data.platform.users.total,
+      detail: `${data.platform.users.active} active`,
       icon: Users,
-      color: "text-green-600",
-      bgColor: "bg-green-100",
     },
     {
       title: "Requests",
-      value: stats.requests.total,
-      subtitle: `${stats.requests.pending} pending`,
+      value: data.platform.requests.open,
+      detail: `${data.platform.requests.last30} submitted in 30 days`,
       icon: FileText,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100",
     },
     {
-      title: "Invoices",
-      value: stats.invoices.total,
-      subtitle: `${stats.invoices.unpaid} unpaid`,
-      icon: DollarSign,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-    },
-    {
-      title: "Contracts",
-      value: stats.contracts.total,
-      subtitle: `${stats.contracts.active} active`,
-      icon: FileSignature,
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-100",
-    },
-    {
-      title: "Support Tickets",
-      value: stats.tickets.total,
-      subtitle: `${stats.tickets.open} open`,
+      title: "Tickets",
+      value: data.platform.tickets.open,
+      detail: `${data.platform.tickets.urgent} urgent, ${data.platform.tickets.breached} SLA breached`,
       icon: HelpCircle,
-      color: "text-orange-600",
-      bgColor: "bg-orange-100",
+    },
+    {
+      title: "Projects",
+      value: data.platform.projects.active,
+      detail: `${data.platform.projects.total} total projects`,
+      icon: FolderOpen,
+    },
+    {
+      title: "Meetings",
+      value: data.platform.meetings.upcoming,
+      detail: "upcoming scheduled meetings",
+      icon: CalendarClock,
     },
   ];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">System overview and key metrics</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Server className="h-7 w-7 text-primary" />
+            <h1 className="text-3xl font-bold tracking-tight">Platform Status</h1>
+          </div>
+          <p className="mt-1 text-muted-foreground">
+            Admin operations, financial snapshots, errors, and platform analytics.
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card px-4 py-3 text-right">
+          <Badge className={statusBadge}>{systemStatus}</Badge>
+          <p className="mt-2 text-xs text-muted-foreground">Updated {formatWhen(data.generatedAt)}</p>
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {statCards.map((stat) => {
-          const Icon = stat.icon;
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Paid This Month</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(data.financials.paidThisMonth)}</div>
+            <p className="text-xs text-muted-foreground">{formatCurrency(data.financials.createdLast30)} invoiced in 30 days</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+            <Receipt className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.financials.unpaidCount.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {data.financials.overdueCount} overdue invoices in the platform
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Open Workload</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(data.platform.requests.open + data.platform.tickets.open).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">open requests and support tickets</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Operational Issues</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.issues.length.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">errors, failed jobs, or breached SLAs</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {platformCards.map((item) => {
+          const Icon = item.icon;
           return (
-            <Card key={stat.title}>
+            <Card key={item.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <div className={`rounded-lg p-2 ${stat.bgColor}`}>
-                  <Icon className={`h-4 w-4 ${stat.color}`} />
-                </div>
+                <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value.toLocaleString()}</div>
-                {stat.subtitle && <p className="text-xs text-muted-foreground">{stat.subtitle}</p>}
+                <div className="text-2xl font-bold">{item.value.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">{item.detail}</p>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Top Clients by Revenue */}
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              <CardTitle>Top Clients by Revenue</CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <CardTitle>Financial Snapshot</CardTitle>
+                <CardDescription>Recent invoices and revenue movement from live invoice records.</CardDescription>
+              </div>
+              <Link href="/admin/financial" className="text-sm text-primary hover:underline">
+                Financial overview
+              </Link>
             </div>
-            <CardDescription>Highest revenue generating clients</CardDescription>
           </CardHeader>
           <CardContent>
-            {topClients.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No revenue data available</p>
+            {data.financials.recentInvoices.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No invoices found.</p>
             ) : (
               <div className="space-y-3">
-                {topClients.map((client, index) => (
-                  <div key={client.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className="font-medium">{client.company_name}</p>
-                      </div>
+                {data.financials.recentInvoices.map((invoice) => (
+                  <div key={invoice.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                    <div>
+                      <p className="font-medium">{invoice.invoiceNumber}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {invoice.clientName} • {formatWhen(invoice.createdAt)}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(client.totalRevenue)}</p>
+                      <p className="font-semibold">{formatCurrency(invoice.amount)}</p>
+                      <Badge variant={invoice.status === "paid" ? "secondary" : invoice.status === "overdue" ? "destructive" : "outline"}>
+                        {invoice.status}
+                      </Badge>
                     </div>
                   </div>
                 ))}
@@ -196,42 +278,104 @@ export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches,
           </CardContent>
         </Card>
 
-        {/* SLA Breaches */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              <CardTitle>Recent SLA Breaches</CardTitle>
+              <BarChart3 className="h-5 w-5 text-primary" />
+              <CardTitle>Analytics</CardTitle>
             </div>
-            <CardDescription>Requests that exceeded SLA targets</CardDescription>
+            <CardDescription>Last 30 days and current operational ratios.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <MetricBar label="Open request rate" value={data.analytics.openRequestRate} />
+            <MetricBar label="Open ticket rate" value={data.analytics.openTicketRate} />
+            <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+              <div className="rounded-lg border p-2">
+                <p className="text-lg font-semibold">{data.analytics.requestVolume30Days}</p>
+                <p className="text-xs text-muted-foreground">requests</p>
+              </div>
+              <div className="rounded-lg border p-2">
+                <p className="text-lg font-semibold">{data.analytics.ticketVolume30Days}</p>
+                <p className="text-xs text-muted-foreground">tickets</p>
+              </div>
+              <div className="rounded-lg border p-2">
+                <p className="text-lg font-semibold">{data.analytics.documentUploads30Days}</p>
+                <p className="text-xs text-muted-foreground">uploads</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <CardTitle>Errors & Risks</CardTitle>
+            </div>
+            <CardDescription>Failed jobs, report delivery errors, urgent tickets, and breached SLAs.</CardDescription>
           </CardHeader>
           <CardContent>
-            {slaBreaches.length === 0 ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <p className="text-sm font-medium text-green-600">No SLA breaches</p>
-                  <p className="text-xs text-muted-foreground">All requests within SLA</p>
-                </div>
+            {data.issues.length === 0 ? (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                No current operational issues found.
               </div>
             ) : (
               <div className="space-y-3">
-                {slaBreaches.map((breach) => (
-                  <div key={breach.id} className="space-y-1 rounded-lg border p-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium">{breach.title}</p>
+                {data.issues.map((issue) => (
+                  <div key={issue.id} className="rounded-lg border p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{issue.title}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{issue.detail}</p>
+                      </div>
+                      <Badge variant={severityVariant(issue.severity)}>{issue.severity}</Badge>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">{formatWhen(issue.createdAt)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                <CardTitle>Recent Support</CardTitle>
+              </div>
+              <Link href="/admin/tickets" className="text-sm text-primary hover:underline">
+                View tickets
+              </Link>
+            </div>
+            <CardDescription>Latest support queue entries across all clients.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data.recentTickets.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No support tickets found.</p>
+            ) : (
+              <div className="space-y-3">
+                {data.recentTickets.map((ticket) => (
+                  <div key={ticket.id} className="rounded-lg border p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{ticket.subject}</p>
                         <p className="text-xs text-muted-foreground">
-                          {breach.request_number} • {breach.client?.company_name}
+                          {ticket.ticketNumber} • {ticket.clientName} • {formatWhen(ticket.createdAt)}
                         </p>
                       </div>
-                      <Badge variant="destructive" className="text-xs">
-                        {breach.sla_breach_type}
-                      </Badge>
+                      <div className="flex gap-1">
+                        {ticket.hasSlaBreach ? <Badge variant="destructive">SLA</Badge> : null}
+                        <Badge variant={ticket.priority === "urgent" || ticket.priority === "high" ? "default" : "secondary"}>
+                          {ticket.priority}
+                        </Badge>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(breach.sla_breach_at), {
-                        addSuffix: true,
-                      })}
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {ticket.assignedTo ? `Assigned to ${ticket.assignedTo}` : "Unassigned"} • {ticket.status.replace(/_/g, " ")}
                     </p>
                   </div>
                 ))}
@@ -241,82 +385,27 @@ export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches,
         </Card>
       </div>
 
-      {/* Recent Support Tickets */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5 text-orange-600" />
-              <CardTitle>Recent Support Tickets</CardTitle>
-            </div>
-            <Link href="/admin/tickets" className="text-sm text-primary hover:underline">
-              View all
-            </Link>
-          </div>
-          <CardDescription>Latest tickets across all clients</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {recentTickets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No support tickets</p>
-          ) : (
-            <div className="space-y-3">
-              {recentTickets.map((ticket) => (
-                <div key={ticket.id} className="space-y-1 rounded-lg border p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">{ticket.subject}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {ticket.ticket_number} • {ticket.client?.company_name}
-                      </p>
-                    </div>
-                    <div className="flex gap-1.5">
-                      <Badge variant={ticket.priority === "urgent" || ticket.priority === "high" ? "destructive" : "secondary"} className="text-xs">
-                        {ticket.priority}
-                      </Badge>
-                      <Badge variant={ticket.status === "open" ? "default" : "outline"} className="text-xs">
-                        {ticket.status.replace(/_/g, " ")}
-                      </Badge>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {ticket.assigned_user ? `Assigned to ${ticket.assigned_user.name}` : "Unassigned"} •{" "}
-                    {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-blue-600" />
-            <CardTitle>Recent Activity</CardTitle>
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <CardTitle>Recent Platform Activity</CardTitle>
           </div>
-          <CardDescription>Latest system events and user actions</CardDescription>
+          <CardDescription>Latest system and user activity from the audit log.</CardDescription>
         </CardHeader>
         <CardContent>
-          {recentActivity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No recent activity</p>
+          {data.recentActivity.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No recent activity found.</p>
           ) : (
             <div className="space-y-3">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 border-b pb-3 last:border-0">
-                  <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                  <div className="flex-1 space-y-1">
+              {data.recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-start gap-3 border-b pb-3 last:border-0 last:pb-0">
+                  <HeartPulse className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
                     <p className="text-sm">{activity.description}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {activity.causer && <span>{activity.causer.name}</span>}
-                      <span>•</span>
-                      <span>
-                        {formatDistanceToNow(new Date(activity.created_at), {
-                          addSuffix: true,
-                        })}
-                      </span>
-                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {activity.actor || "System"} • {activity.subjectType} • {formatWhen(activity.createdAt)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -324,6 +413,20 @@ export function AdminDashboard({ stats, recentActivity, topClients, slaBreaches,
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function MetricBar({ label, value }: { label: string; value: number }) {
+  const clamped = Math.max(0, Math.min(100, value));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-sm">
+        <span className="font-medium">{label}</span>
+        <span className="text-muted-foreground">{clamped}%</span>
+      </div>
+      <Progress value={clamped} />
     </div>
   );
 }
