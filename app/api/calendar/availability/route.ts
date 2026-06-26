@@ -11,6 +11,11 @@ import { calendarConnections } from "@/lib/db/schema/calendar-integrations";
 import { decrypt, encrypt } from "@/lib/encryption";
 import { eq, and, inArray } from "drizzle-orm";
 import type { UserAvailability } from "@/lib/db/schema/calendar-integrations";
+import {
+  getMicrosoftCalendarTenant,
+  hasCompleteCalendarOAuthCredentials,
+  resolveCalendarOAuthCredentialsForUser,
+} from "@/lib/calendar/oauth-credentials";
 
 /**
  * GET /api/calendar/availability?userIds=id1,id2&start=ISO&end=ISO
@@ -20,6 +25,7 @@ import type { UserAvailability } from "@/lib/db/schema/calendar-integrations";
  * Handles token refresh automatically.
  */
 export async function GET(request: NextRequest) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin;
   const supabase = await createClient();
   const {
     data: { user },
@@ -93,7 +99,7 @@ export async function GET(request: NextRequest) {
 
       for (const conn of userConnections) {
         try {
-          const accessToken = await getValidAccessToken(conn);
+          const accessToken = await getValidAccessToken(conn, appUrl);
           if (!accessToken) continue;
 
           if (conn.provider === "google") {
@@ -125,6 +131,7 @@ export async function GET(request: NextRequest) {
 
 async function getValidAccessToken(
   conn: typeof calendarConnections.$inferSelect,
+  appUrl: string,
 ): Promise<string | null> {
   const isExpired = conn.tokenExpiry ? conn.tokenExpiry <= new Date(Date.now() + 60_000) : false;
 
@@ -143,8 +150,8 @@ async function getValidAccessToken(
     const refreshToken = decrypt(conn.encryptedRefreshToken);
     const newTokens =
       conn.provider === "google"
-        ? await refreshGoogleToken(refreshToken)
-        : await refreshMicrosoftToken(refreshToken);
+        ? await refreshGoogleToken(refreshToken, conn.userId)
+        : await refreshMicrosoftToken(refreshToken, conn.userId, appUrl);
 
     if (!newTokens?.access_token) return null;
 
@@ -172,13 +179,18 @@ async function getValidAccessToken(
   }
 }
 
-async function refreshGoogleToken(refreshToken: string) {
+async function refreshGoogleToken(refreshToken: string, userId: string) {
+  const credentials = await resolveCalendarOAuthCredentialsForUser(userId, "google");
+  if (!hasCompleteCalendarOAuthCredentials(credentials)) {
+    return null;
+  }
+
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID ?? "",
-      client_secret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET ?? "",
+      client_id: credentials.client_id ?? "",
+      client_secret: credentials.client_secret ?? "",
       refresh_token: refreshToken,
       grant_type: "refresh_token",
     }),
@@ -186,14 +198,18 @@ async function refreshGoogleToken(refreshToken: string) {
   return res.json();
 }
 
-async function refreshMicrosoftToken(refreshToken: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const res = await fetch("https://login.microsoftonline.com/common/oauth2/v2.0/token", {
+async function refreshMicrosoftToken(refreshToken: string, userId: string, appUrl: string) {
+  const credentials = await resolveCalendarOAuthCredentialsForUser(userId, "microsoft");
+  if (!hasCompleteCalendarOAuthCredentials(credentials)) {
+    return null;
+  }
+
+  const res = await fetch(`https://login.microsoftonline.com/${getMicrosoftCalendarTenant(credentials)}/oauth2/v2.0/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: process.env.MICROSOFT_CALENDAR_CLIENT_ID ?? "",
-      client_secret: process.env.MICROSOFT_CALENDAR_CLIENT_SECRET ?? "",
+      client_id: credentials.client_id ?? "",
+      client_secret: credentials.client_secret ?? "",
       redirect_uri: `${appUrl}/api/calendar/callback/microsoft`,
       refresh_token: refreshToken,
       grant_type: "refresh_token",

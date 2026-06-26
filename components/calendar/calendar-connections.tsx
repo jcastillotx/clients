@@ -146,9 +146,9 @@ export function CalendarConnections({
         microsoft_oauth_denied: "Microsoft OAuth was denied or cancelled.",
         token_exchange_failed: "Token exchange failed. Please try again.",
         not_configured:
-          "Calendar OAuth is not fully configured on the server (client IDs/secrets or state secret).",
-        google_not_configured: `Set GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET. In Google Cloud, add redirect URI ${appOrigin || "(your app)"}/api/calendar/callback/google. Set CALENDAR_OAUTH_STATE_SECRET or ENCRYPTION_KEY.`,
-        microsoft_not_configured: `Set MICROSOFT_CALENDAR_CLIENT_ID and MICROSOFT_CALENDAR_CLIENT_SECRET. In Azure, add redirect URI ${appOrigin || "(your app)"}/api/calendar/callback/microsoft. Set CALENDAR_OAUTH_STATE_SECRET or ENCRYPTION_KEY.`,
+          "Calendar OAuth is not fully configured. Add calendar credentials in Integrations, or set the calendar OAuth env vars.",
+        google_not_configured: `Add Google Calendar OAuth credentials in Integrations → Calendar, or set GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET. In Google Cloud, add redirect URI ${appOrigin || "(your app)"}/api/calendar/callback/google.`,
+        microsoft_not_configured: `Add Microsoft Outlook Calendar OAuth credentials in Integrations → Calendar, or set MICROSOFT_CALENDAR_CLIENT_ID and MICROSOFT_CALENDAR_CLIENT_SECRET. In Azure, add redirect URI ${appOrigin || "(your app)"}/api/calendar/callback/microsoft.`,
         oauth_state_not_configured:
           "OAuth state signing is not configured. Set CALENDAR_OAUTH_STATE_SECRET (32+ random characters) or reuse ENCRYPTION_KEY.",
         invalid_state:

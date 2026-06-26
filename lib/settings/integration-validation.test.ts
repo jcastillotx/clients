@@ -31,6 +31,19 @@ describe("integration validation", () => {
     });
   });
 
+  it("accepts calendar OAuth providers", () => {
+    expect(validateIntegrationProviderCategory("google_calendar", "calendar")).toEqual({
+      success: true,
+      provider: "google_calendar",
+      category: "calendar",
+    });
+    expect(validateIntegrationProviderCategory("microsoft_calendar", "calendar")).toEqual({
+      success: true,
+      provider: "microsoft_calendar",
+      category: "calendar",
+    });
+  });
+
   it("accepts Google Stitch as an AI provider", () => {
     expect(validateIntegrationProviderCategory("google_stitch", "ai")).toEqual({
       success: true,

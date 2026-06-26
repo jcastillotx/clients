@@ -13,6 +13,7 @@ export const integrationCategoryEnum = [
   "social",
   "analytics",
   "automation",
+  "calendar",
   "storage",
   "branding",
 ] as const;
@@ -34,6 +35,9 @@ export const integrationProviderEnum = [
   "resend",
   "google_workspace",
   "office365",
+  // Calendar OAuth
+  "google_calendar",
+  "microsoft_calendar",
   // Social OAuth
   "facebook",
   "instagram",
@@ -240,6 +244,30 @@ export const PROVIDER_CONFIGS: ProviderConfig[] = [
       { key: "smtp_port", label: "SMTP Port", placeholder: "587", required: false, type: "text" },
     ],
     docsUrl: "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",
+  },
+  // Calendar OAuth
+  {
+    provider: "google_calendar",
+    category: "calendar",
+    displayName: "Google Calendar",
+    description: "OAuth credentials for staff Google Calendar availability checks.",
+    fields: [
+      { key: "client_id", label: "OAuth Client ID", placeholder: "xxxxxxxx.apps.googleusercontent.com", required: true, type: "text" },
+      { key: "client_secret", label: "OAuth Client Secret", placeholder: "GOCSPX-...", required: true, type: "secret" },
+    ],
+    docsUrl: "https://developers.google.com/calendar/api/guides/auth",
+  },
+  {
+    provider: "microsoft_calendar",
+    category: "calendar",
+    displayName: "Microsoft Outlook Calendar",
+    description: "OAuth credentials for staff Outlook Calendar availability checks through Microsoft Graph.",
+    fields: [
+      { key: "client_id", label: "Application (client) ID", placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", required: true, type: "text" },
+      { key: "client_secret", label: "Client Secret", placeholder: "Azure app client secret", required: true, type: "secret" },
+      { key: "tenant_id", label: "Tenant ID", placeholder: "common", required: false, type: "text" },
+    ],
+    docsUrl: "https://learn.microsoft.com/en-us/graph/auth-v2-user",
   },
   {
     provider: "google_ads",

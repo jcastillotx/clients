@@ -4,6 +4,10 @@ import { calendarConnections } from "@/lib/db/schema/calendar-integrations";
 import { encrypt } from "@/lib/encryption";
 import { eq, and } from "drizzle-orm";
 import { getSigningSecret, verifySignedToken } from "@/lib/auth/signed-token";
+import {
+  hasCompleteCalendarOAuthCredentials,
+  resolveCalendarOAuthCredentialsForUser,
+} from "@/lib/calendar/oauth-credentials";
 
 /**
  * GET /api/calendar/callback/google
@@ -16,7 +20,7 @@ import { getSigningSecret, verifySignedToken } from "@/lib/auth/signed-token";
  *   NEXT_PUBLIC_APP_URL
  */
 export async function GET(req: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin;
   const redirectBase = `${appUrl}/settings/calendar`;
 
   const code = req.nextUrl.searchParams.get("code");
@@ -39,6 +43,10 @@ export async function GET(req: NextRequest) {
     typeof statePayload?.userId === "string" ? statePayload.userId : null;
   const provider =
     typeof statePayload?.provider === "string" ? statePayload.provider : null;
+  const credentialClientId =
+    typeof statePayload?.credentialClientId === "string"
+      ? statePayload.credentialClientId
+      : null;
 
   const UUID_REGEX =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,9 +54,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${redirectBase}?error=invalid_state`);
   }
 
-  const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
+  const credentials = await resolveCalendarOAuthCredentialsForUser(
+    userId,
+    "google",
+    credentialClientId,
+  );
+  if (!hasCompleteCalendarOAuthCredentials(credentials)) {
     return NextResponse.redirect(`${redirectBase}?error=google_not_configured`);
   }
 
@@ -61,8 +72,8 @@ export async function GET(req: NextRequest) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code,
-        client_id: clientId,
-        client_secret: clientSecret,
+        client_id: credentials.client_id ?? "",
+        client_secret: credentials.client_secret ?? "",
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),

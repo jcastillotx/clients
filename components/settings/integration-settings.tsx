@@ -22,6 +22,7 @@ import {
   Share2,
   BarChart3,
   Zap,
+  CalendarDays,
   HardDrive,
   Palette,
 } from "lucide-react";
@@ -57,6 +58,7 @@ const CATEGORY_CONFIG: Record<IntegrationCategory, { label: string; icon: React.
   social: { label: "Social Media", icon: <Share2 className="h-4 w-4" />, description: "Social platform OAuth credentials" },
   analytics: { label: "Analytics", icon: <BarChart3 className="h-4 w-4" />, description: "Analytics & tracking setup" },
   automation: { label: "Automation", icon: <Zap className="h-4 w-4" />, description: "Workflow automation integrations" },
+  calendar: { label: "Calendar", icon: <CalendarDays className="h-4 w-4" />, description: "Calendar OAuth credentials for availability checks" },
   storage: { label: "Cloud Storage", icon: <HardDrive className="h-4 w-4" />, description: "Cloud storage OAuth credentials" },
   branding: { label: "Branding & SEO", icon: <Palette className="h-4 w-4" />, description: "Brand, ad, SEO, and creative platform integrations" },
 };
