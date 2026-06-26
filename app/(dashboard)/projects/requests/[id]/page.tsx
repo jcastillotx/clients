@@ -403,13 +403,15 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
                           </p>
                         </div>
                       </div>
-                      {attachment.storage_url ? (
-                        <Button asChild size="sm" variant="outline">
-                          <a href={attachment.storage_url} target="_blank" rel="noreferrer">
-                            Open
-                          </a>
-                        </Button>
-                      ) : null}
+                      <Button asChild size="sm" variant="outline">
+                        <a
+                          href={`/api/documents/${attachment.id}/download?redirect=1`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open
+                        </a>
+                      </Button>
                     </div>
                   ))}
                 </div>

@@ -41,6 +41,7 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (selectedFile: File | null) => {
@@ -77,12 +78,13 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
     e.preventDefault();
 
     if (!file || !name || !clientId) {
-      alert("Please fill in all required fields");
+      setUploadError("Please fill in all required fields");
       return;
     }
 
     setIsUploading(true);
     setUploadProgress(0);
+    setUploadError(null);
 
     const progressInterval = setInterval(() => {
       setUploadProgress((prev) => Math.min(prev + 10, 90));
@@ -122,7 +124,7 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
       onSuccess(document);
     } catch (error) {
       console.error("Upload error:", error);
-      alert(error instanceof Error ? error.message : "Failed to upload document");
+      setUploadError(error instanceof Error ? error.message : "Failed to upload document");
     } finally {
       clearInterval(progressInterval);
       setIsUploading(false);
@@ -142,6 +144,12 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {uploadError ? (
+              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {uploadError}
+              </div>
+            ) : null}
+
             {/* File Upload */}
             <div className="space-y-2">
               <Label>File *</Label>

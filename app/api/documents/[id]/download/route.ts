@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import {
+  apiError,
   apiForbidden,
   apiInternalError,
   apiNotFound,
@@ -7,7 +8,8 @@ import {
   apiUnauthorized,
 } from "@/lib/api/response";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
-import { getSignedUrl, StorageBuckets } from "@/lib/storage/upload";
+import { getS3Credentials } from "@/lib/storage/get-s3-credentials";
+import { createS3SignedGetUrl } from "@/lib/storage/s3";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -49,10 +51,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return apiForbidden(request, "Access denied");
     }
 
-    const { url, error: urlError } = await getSignedUrl(StorageBuckets.DOCUMENTS, document.storage_path, 3600);
+    const s3Credentials = await getS3Credentials(user.id);
 
-    if (urlError || !url) {
-      return apiInternalError(request, "Failed to generate download URL");
+    if (!s3Credentials) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message:
+          "No S3 storage connection configured. Add a platform S3 connection in Storage settings.",
+      });
+    }
+
+    const url = await createS3SignedGetUrl({
+      credentials: s3Credentials,
+      key: document.storage_path,
+      expiresInSeconds: 3600,
+    });
+
+    if (new URL(request.url).searchParams.get("redirect") === "1") {
+      return Response.redirect(url);
     }
 
     await supabase
