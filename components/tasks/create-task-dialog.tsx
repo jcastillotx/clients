@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { toast } from "sonner";
+import { fetchApi } from "@/lib/api/client";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -26,14 +28,45 @@ interface CreateTaskDialogProps {
 export function CreateTaskDialog({ open, onOpenChange, status, boardId, columnId, onSuccess }: CreateTaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would call an API
-    console.log("Creating task:", { title, description, status });
-    onOpenChange(false);
-    setTitle("");
-    setDescription("");
+
+    if (!boardId || !columnId) {
+      toast.error("Unable to create task because the board column is missing.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await fetchApi(
+        "/api/tasks",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            boardId,
+            columnId,
+            title,
+            description: description || null,
+            priority: "normal",
+            status,
+          }),
+        },
+        { fallbackMessage: "Failed to create task" },
+      );
+
+      toast.success("Task created");
+      onOpenChange(false);
+      setTitle("");
+      setDescription("");
+      onSuccess?.();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create task");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -68,7 +101,9 @@ export function CreateTaskDialog({ open, onOpenChange, status, boardId, columnId
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Create Task</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Creating..." : "Create Task"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
