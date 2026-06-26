@@ -1,7 +1,8 @@
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
-import { hasPermission, Roles } from "@/lib/rbac/permissions";
+import { hasPermission } from "@/lib/rbac/permissions";
 import { redirect } from "next/navigation";
 import { DocumentLibrary } from "@/components/documents/document-library";
+import { resolveRouteAccess } from "@/lib/auth/route-access";
 
 export default async function DocumentsPage({
   searchParams,
@@ -20,15 +21,8 @@ export default async function DocumentsPage({
     redirect("/login");
   }
 
-  // Check management role for admin access
-  const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
-  const hasManagementRole =
-    user.user_metadata?.is_super_admin === true ||
-    metadataRole === Roles.SUPER_ADMIN ||
-    metadataRole === Roles.ADMIN ||
-    metadataRole === Roles.ACCOUNT_MANAGER;
-
-  const adminClient = hasManagementRole ? createAdminClientIfAvailable() : null;
+  const access = await resolveRouteAccess(supabase, user);
+  const adminClient = access.isAdmin ? createAdminClientIfAvailable() : null;
   const dbClient = adminClient ?? supabase;
 
   // Check permission (fallback to true if RBAC not set up)
@@ -54,6 +48,8 @@ export default async function DocumentsPage({
 
   if (resolvedSearchParams.clientId) {
     query = query.eq("client_id", resolvedSearchParams.clientId);
+  } else if (!access.isAdmin && access.clientId) {
+    query = query.eq("client_id", access.clientId);
   }
 
   if (resolvedSearchParams.requestId) {
@@ -66,11 +62,17 @@ export default async function DocumentsPage({
   let foldersQuery = dbClient.from("folders").select("*").order("name");
   if (resolvedSearchParams.clientId) {
     foldersQuery = foldersQuery.eq("client_id", resolvedSearchParams.clientId);
+  } else if (!access.isAdmin && access.clientId) {
+    foldersQuery = foldersQuery.eq("client_id", access.clientId);
   }
   const { data: folders } = await foldersQuery;
 
   // Fetch clients for filter dropdown
-  const { data: clients } = await dbClient.from("clients").select("id, company_name").order("company_name");
+  let clientsQuery = dbClient.from("clients").select("id, company_name").order("company_name");
+  if (!access.isAdmin && access.clientId) {
+    clientsQuery = clientsQuery.eq("id", access.clientId);
+  }
+  const { data: clients } = await clientsQuery;
 
   const canUpload = await hasPermission("documents.create");
 

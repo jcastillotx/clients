@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { calculateInvoiceTotals } from "@/lib/invoices/calculate-totals";
+import { calculateNextRecurringDate, type RecurringInterval } from "@/lib/invoices/recurring";
 import { formatTaxLocationLabel, getTaxRateForClient } from "@/lib/invoices/tax-rates";
 import { createInvoiceSchema, type CreateInvoiceInput } from "@/lib/validations/invoice";
 import { ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
@@ -51,6 +52,8 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
     defaultValues: {
       clientId: preselectedClientId || "",
       invoiceNumber: `INV-${Date.now()}`,
+      billingType: "single",
+      recurringInterval: "monthly",
       taxRate: 0,
       discountType: "none",
       discountValue: 0,
@@ -68,6 +71,8 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
   const taxRate = watch("taxRate");
   const discountType = watch("discountType");
   const discountValue = watch("discountValue");
+  const billingType = watch("billingType");
+  const recurringInterval = watch("recurringInterval");
 
   const selectedClient = useMemo(
     () => clients.find((client) => client.id === clientId),
@@ -127,6 +132,8 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
         discountType: data.discountType,
         discountValue: data.discountValue,
       });
+      const isRecurring = data.billingType === "recurring";
+      const selectedRecurringInterval = data.recurringInterval ?? "monthly";
 
       const { data: invoice, error: invoiceError } = await supabase
         .from("invoices")
@@ -143,6 +150,11 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
           status: "draft",
           due_date: data.dueDate || null,
           notes: data.notes || null,
+          is_recurring: isRecurring,
+          recurring_interval: isRecurring ? selectedRecurringInterval : null,
+          next_recurring_date: isRecurring
+            ? calculateNextRecurringDate(new Date(), selectedRecurringInterval).toISOString()
+            : null,
           created_by: user.id,
         })
         .select()
@@ -219,6 +231,56 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
               <Label htmlFor="dueDate">Due Date</Label>
               <Input id="dueDate" type="date" {...register("dueDate")} />
             </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="billingType">Billing Type</Label>
+              <Select
+                value={billingType}
+                onValueChange={(value: CreateInvoiceInput["billingType"]) => {
+                  setValue("billingType", value, { shouldValidate: true });
+                  if (value === "single") {
+                    setValue("recurringInterval", undefined);
+                  } else if (!recurringInterval) {
+                    setValue("recurringInterval", "monthly", { shouldValidate: true });
+                  }
+                }}
+              >
+                <SelectTrigger id="billingType">
+                  <SelectValue placeholder="Select billing type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Single invoice</SelectItem>
+                  <SelectItem value="recurring">Recurring invoice</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {billingType === "recurring" && (
+              <div className="space-y-2">
+                <Label htmlFor="recurringInterval">Recurring Cycle</Label>
+                <Select
+                  value={recurringInterval ?? "monthly"}
+                  onValueChange={(value: RecurringInterval) => {
+                    setValue("recurringInterval", value, { shouldValidate: true });
+                  }}
+                >
+                  <SelectTrigger id="recurringInterval">
+                    <SelectValue placeholder="Select cycle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.recurringInterval && (
+                  <p className="text-sm text-destructive">{errors.recurringInterval.message}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

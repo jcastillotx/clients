@@ -2,6 +2,7 @@ import { inngest } from "../client";
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { sendInvoiceEmailWithPdf } from "@/lib/email/send-invoice-email";
 import { resolveInvoiceRecipientEmail } from "@/lib/email/invoice-email-context";
+import { calculateNextRecurringDate, type RecurringInterval } from "@/lib/invoices/recurring";
 
 // Generate recurring invoices daily
 export const generateRecurringInvoices = inngest.createFunction(
@@ -11,7 +12,7 @@ export const generateRecurringInvoices = inngest.createFunction(
   },
   { cron: "0 2 * * *" }, // Daily at 2am UTC
   async ({ step }) => {
-    const supabase = await createClient();
+    const supabase = createAdminClientIfAvailable() ?? (await createClient());
 
     // Step 1: Find active recurring invoices due for generation
     const recurringInvoices = await step.run("find-recurring-invoices", async () => {
@@ -24,8 +25,8 @@ export const generateRecurringInvoices = inngest.createFunction(
         `,
         )
         .eq("is_recurring", true)
-        .eq("status", "active")
-        .lte("next_generation_date", new Date().toISOString());
+        .neq("status", "cancelled")
+        .lte("next_recurring_date", new Date().toISOString());
 
       return data || [];
     });
@@ -36,44 +37,41 @@ export const generateRecurringInvoices = inngest.createFunction(
     for (const template of recurringInvoices) {
       const newInvoice = await step.run(`generate-invoice-${template.id}`, async () => {
         // Calculate next invoice number
-        const { data: invoiceNumber } = await supabase.rpc("generate_invoice_number");
+        const { data: invoiceNumber, error: invoiceNumberError } = await supabase.rpc("generate_invoice_number");
+        if (invoiceNumberError) {
+          console.warn("generateRecurringInvoices: generate_invoice_number unavailable", invoiceNumberError);
+        }
+        const generatedInvoiceNumber =
+          typeof invoiceNumber === "string" && invoiceNumber.trim().length > 0
+            ? invoiceNumber
+            : `${template.invoice_number}-${Date.now()}`;
 
         // Calculate next due date
         const nextDueDate = new Date();
         const daysUntilDue = template.payment_terms || 30;
         nextDueDate.setDate(nextDueDate.getDate() + daysUntilDue);
 
-        // Calculate next generation date based on frequency
-        const nextGenDate = new Date();
-        switch (template.recurring_frequency) {
-          case "monthly":
-            nextGenDate.setMonth(nextGenDate.getMonth() + 1);
-            break;
-          case "quarterly":
-            nextGenDate.setMonth(nextGenDate.getMonth() + 3);
-            break;
-          case "annually":
-            nextGenDate.setFullYear(nextGenDate.getFullYear() + 1);
-            break;
-        }
+        const recurringInterval = (template.recurring_interval || "monthly") as RecurringInterval;
+        const nextRecurringDate = calculateNextRecurringDate(new Date(), recurringInterval);
 
         // Create new invoice
         const { data: newInvoice, error } = await supabase
           .from("invoices")
           .insert({
-            invoice_number: invoiceNumber,
+            invoice_number: generatedInvoiceNumber,
             client_id: template.client_id,
-            issue_date: new Date().toISOString(),
             due_date: nextDueDate.toISOString(),
             amount: template.amount,
+            subtotal: template.subtotal,
+            tax_rate: template.tax_rate,
             tax_amount: template.tax_amount,
+            discount_type: template.discount_type,
+            discount_value: template.discount_value,
             discount_amount: template.discount_amount,
-            currency: template.currency,
             status: "draft",
-            payment_terms: template.payment_terms,
             notes: template.notes,
             is_recurring: false, // Generated invoice is not recurring
-            recurring_parent_id: template.id,
+            created_by: template.created_by,
           })
           .select()
           .single();
@@ -91,6 +89,7 @@ export const generateRecurringInvoices = inngest.createFunction(
             items.map((item) => ({
               invoice_id: newInvoice.id,
               description: item.description,
+              details: item.details,
               quantity: item.quantity,
               unit_price: item.unit_price,
               amount: item.amount,
@@ -102,8 +101,8 @@ export const generateRecurringInvoices = inngest.createFunction(
         await supabase
           .from("invoices")
           .update({
-            next_generation_date: nextGenDate.toISOString(),
-            last_generated_at: new Date().toISOString(),
+            next_recurring_date: nextRecurringDate.toISOString(),
+            updated_at: new Date().toISOString(),
           })
           .eq("id", template.id);
 

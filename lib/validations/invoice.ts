@@ -1,6 +1,10 @@
 import { z } from "zod";
 
+import { recurringIntervals } from "@/lib/invoices/recurring";
+
 export const discountTypeSchema = z.enum(["none", "percentage", "fixed"]);
+export const billingTypeSchema = z.enum(["single", "recurring"]);
+export const recurringIntervalSchema = z.enum(recurringIntervals);
 
 export const invoiceLineItemSchema = z.object({
   description: z.string().min(1, "Description is required"),
@@ -15,6 +19,8 @@ export const createInvoiceSchema = z
     invoiceNumber: z.string().min(1, "Invoice number is required"),
     dueDate: z.string().optional(),
     notes: z.string().optional(),
+    billingType: billingTypeSchema.default("single"),
+    recurringInterval: recurringIntervalSchema.optional(),
     taxRate: z.coerce.number().min(0, "Tax rate cannot be negative").max(100, "Tax rate cannot exceed 100%"),
     discountType: discountTypeSchema.default("none"),
     discountValue: z.coerce.number().min(0, "Discount cannot be negative"),
@@ -26,6 +32,14 @@ export const createInvoiceSchema = z
         code: z.ZodIssueCode.custom,
         message: "Percentage discount cannot exceed 100%",
         path: ["discountValue"],
+      });
+    }
+
+    if (data.billingType === "recurring" && !data.recurringInterval) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select a recurring cycle",
+        path: ["recurringInterval"],
       });
     }
   });

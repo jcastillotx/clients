@@ -2,8 +2,9 @@ import {
   buildPaginationMeta,
   parsePaginationSearchParams,
 } from "@/lib/api/pagination";
-import { apiError, apiSuccess } from "@/lib/api/response";
-import { createClient } from "@/lib/supabase/server";
+import { apiError, apiForbidden, apiSuccess } from "@/lib/api/response";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
@@ -27,8 +28,16 @@ export async function GET(request: Request) {
       });
     }
 
+    const access = await resolveRouteAccess(supabase, user);
+    const adminClient = access.isAdmin ? createAdminClientIfAvailable() : null;
+    const dbClient = adminClient ?? supabase;
+
+    if (clientId && !canAccessClient(access, clientId)) {
+      return apiForbidden(request, "Access denied");
+    }
+
     // Build query
-    let query = supabase
+    let query = dbClient
       .from("documents")
       .select(
         `
@@ -49,6 +58,8 @@ export async function GET(request: Request) {
     // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
+    } else if (!access.isAdmin && access.clientId) {
+      query = query.eq("client_id", access.clientId);
     }
 
     // Filter by request if provided
