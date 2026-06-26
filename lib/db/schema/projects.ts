@@ -1,4 +1,15 @@
-import { pgTable, uuid, text, decimal, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  text,
+  decimal,
+  timestamp,
+  integer,
+  jsonb,
+  index,
+  uniqueIndex,
+  foreignKey,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { clients } from "./clients";
 import { users } from "./users";
@@ -20,6 +31,12 @@ export type BudgetCategory = (typeof budgetCategoryEnum)[number];
  */
 export const deliverableStatusEnum = ["pending", "in_progress", "review", "completed", "rejected"] as const;
 export type DeliverableStatus = (typeof deliverableStatusEnum)[number];
+
+export const projectReviewItemTypeEnum = ["website", "image"] as const;
+export type ProjectReviewItemType = (typeof projectReviewItemTypeEnum)[number];
+
+export const projectReviewStatusEnum = ["open", "in_review", "resolved", "archived"] as const;
+export type ProjectReviewStatus = (typeof projectReviewStatusEnum)[number];
 
 /**
  * Currency enum
@@ -173,6 +190,74 @@ export const projectDeliverables = pgTable("project_deliverables", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const projectReviewItems = pgTable(
+  "project_review_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .references(() => projects.id, { onDelete: "cascade" })
+      .notNull(),
+    type: text("type", { enum: projectReviewItemTypeEnum }).notNull(),
+    title: text("title").notNull(),
+    websiteUrl: text("website_url"),
+    imageStoragePath: text("image_storage_path"),
+    imageFileName: text("image_file_name"),
+    imageMimeType: text("image_mime_type"),
+    imageSize: integer("image_size"),
+    status: text("status", { enum: projectReviewStatusEnum }).default("open").notNull(),
+    createdBy: uuid("created_by").references(() => users.id),
+    metadata: jsonb("metadata").$type<{
+      viewport?: string;
+      notes?: string;
+    }>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    idProjectIdx: uniqueIndex("project_review_items_id_project_id_idx").on(
+      table.id,
+      table.projectId,
+    ),
+    projectIdx: index("project_review_items_project_id_idx").on(table.projectId),
+    statusIdx: index("project_review_items_status_idx").on(table.status),
+  }),
+);
+
+export const projectReviewComments = pgTable(
+  "project_review_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reviewItemId: uuid("review_item_id")
+      .references(() => projectReviewItems.id, { onDelete: "cascade" })
+      .notNull(),
+    projectId: uuid("project_id")
+      .references(() => projects.id, { onDelete: "cascade" })
+      .notNull(),
+    authorId: uuid("author_id").references(() => users.id),
+    body: text("body").notNull(),
+    xPercent: decimal("x_percent", { precision: 6, scale: 3 }),
+    yPercent: decimal("y_percent", { precision: 6, scale: 3 }),
+    status: text("status", { enum: projectReviewStatusEnum }).default("open").notNull(),
+    metadata: jsonb("metadata").$type<{
+      userAgent?: string;
+      viewportWidth?: number;
+      viewportHeight?: number;
+    }>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    reviewProjectFk: foreignKey({
+      columns: [table.reviewItemId, table.projectId],
+      foreignColumns: [projectReviewItems.id, projectReviewItems.projectId],
+      name: "project_review_comments_review_project_fk",
+    }).onDelete("cascade"),
+    reviewItemIdx: index("project_review_comments_review_item_id_idx").on(table.reviewItemId),
+    projectIdx: index("project_review_comments_project_id_idx").on(table.projectId),
+    statusIdx: index("project_review_comments_status_idx").on(table.status),
+  }),
+);
+
 /**
  * Project relations
  */
@@ -189,6 +274,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   costEntries: many(projectCostEntries),
   milestones: many(projectMilestones),
   deliverables: many(projectDeliverables),
+  reviewItems: many(projectReviewItems),
 }));
 
 export const projectBudgetsRelations = relations(projectBudgets, ({ one, many }) => ({
@@ -237,6 +323,33 @@ export const projectDeliverablesRelations = relations(projectDeliverables, ({ on
   }),
 }));
 
+export const projectReviewItemsRelations = relations(projectReviewItems, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [projectReviewItems.projectId],
+    references: [projects.id],
+  }),
+  creator: one(users, {
+    fields: [projectReviewItems.createdBy],
+    references: [users.id],
+  }),
+  comments: many(projectReviewComments),
+}));
+
+export const projectReviewCommentsRelations = relations(projectReviewComments, ({ one }) => ({
+  reviewItem: one(projectReviewItems, {
+    fields: [projectReviewComments.reviewItemId],
+    references: [projectReviewItems.id],
+  }),
+  project: one(projects, {
+    fields: [projectReviewComments.projectId],
+    references: [projects.id],
+  }),
+  author: one(users, {
+    fields: [projectReviewComments.authorId],
+    references: [users.id],
+  }),
+}));
+
 /**
  * TypeScript types
  */
@@ -250,3 +363,7 @@ export type ProjectMilestone = typeof projectMilestones.$inferSelect;
 export type NewProjectMilestone = typeof projectMilestones.$inferInsert;
 export type ProjectDeliverable = typeof projectDeliverables.$inferSelect;
 export type NewProjectDeliverable = typeof projectDeliverables.$inferInsert;
+export type ProjectReviewItem = typeof projectReviewItems.$inferSelect;
+export type NewProjectReviewItem = typeof projectReviewItems.$inferInsert;
+export type ProjectReviewComment = typeof projectReviewComments.$inferSelect;
+export type NewProjectReviewComment = typeof projectReviewComments.$inferInsert;

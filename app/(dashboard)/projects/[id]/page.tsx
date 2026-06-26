@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MilestoneList } from "@/components/projects/milestone-list";
 import { DeliverableList } from "@/components/projects/deliverable-list";
+import { ProjectReviewPanel } from "@/components/projects/project-review-panel";
 import { formatCurrency } from "@/lib/utils";
 import { Calendar, DollarSign, Users, TrendingUp, Edit, Clock, Target } from "lucide-react";
 import Link from "next/link";
@@ -190,6 +191,7 @@ async function ProjectDetails({ id }: { id: string }) {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="milestones">Milestones ({project.milestones.length})</TabsTrigger>
           <TabsTrigger value="deliverables">Deliverables ({project.deliverables.length})</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
         </TabsList>
 
@@ -289,6 +291,10 @@ async function ProjectDetails({ id }: { id: string }) {
 
         <TabsContent value="deliverables" className="mt-6">
           <DeliverableList deliverables={project.deliverables} />
+        </TabsContent>
+
+        <TabsContent value="reviews" className="mt-6">
+          <ProjectReviewPanel projectId={project.id} />
         </TabsContent>
 
         <TabsContent value="team" className="mt-6">
