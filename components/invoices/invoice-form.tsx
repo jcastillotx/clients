@@ -33,6 +33,26 @@ interface InvoiceFormProps {
   preselectedClientId?: string;
 }
 
+function getInvoiceFormErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+
+    if (typeof record.message === "string" && record.message.trim().length > 0) {
+      return record.message;
+    }
+
+    if (typeof record.details === "string" && record.details.trim().length > 0) {
+      return record.details;
+    }
+  }
+
+  return "Failed to create invoice";
+}
+
 export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -160,7 +180,7 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
         .select()
         .single();
 
-      if (invoiceError) throw invoiceError;
+      if (invoiceError) throw new Error(invoiceError.message);
 
       const itemsToInsert = data.items.map((item) => ({
         invoice_id: invoice.id,
@@ -173,11 +193,20 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
 
       const { error: itemsError } = await supabase.from("invoice_items").insert(itemsToInsert);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        const { error: cleanupError } = await supabase.from("invoices").delete().eq("id", invoice.id);
+
+        if (cleanupError) {
+          console.error("Failed to clean up invoice after item insert error:", cleanupError);
+        }
+
+        throw new Error(itemsError.message);
+      }
 
       router.push(`/invoices/${invoice.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create invoice");
+      console.error("Failed to create invoice:", err);
+      setError(getInvoiceFormErrorMessage(err));
       setIsSubmitting(false);
     }
   };
