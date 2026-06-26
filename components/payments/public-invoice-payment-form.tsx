@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, CreditCard, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,14 @@ type FormState = {
   businessInfo: string;
 };
 
+type PublicInvoiceLookup = {
+  invoiceNumber: string;
+  amountFormatted: string;
+  status: string;
+  businessName: string;
+  email: string;
+};
+
 const initialFormState: FormState = {
   invoiceNumber: "",
   paymentAmount: "",
@@ -41,6 +49,7 @@ export function PublicInvoicePaymentForm() {
     invoiceNumber: searchParams.get("invoice") || "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
@@ -48,6 +57,61 @@ export function PublicInvoicePaymentForm() {
 
   const status = searchParams.get("status");
   const invoiceFromQuery = searchParams.get("invoice");
+
+  useEffect(() => {
+    const invoiceNumber = invoiceFromQuery?.trim();
+    if (!invoiceNumber) {
+      return;
+    }
+
+    let isActive = true;
+    setIsLoadingInvoice(true);
+    setError(null);
+
+    fetchApi<PublicInvoiceLookup>(
+      `/api/public/invoices/lookup?invoice=${encodeURIComponent(invoiceNumber)}`,
+      undefined,
+      { fallbackMessage: "Unable to load invoice details." },
+    )
+      .then((invoice) => {
+        if (!isActive) {
+          return;
+        }
+
+        setFormState((previous) => ({
+          ...previous,
+          invoiceNumber: invoice.invoiceNumber,
+          paymentAmount: invoice.amountFormatted,
+          email: previous.email || invoice.email,
+          businessName: previous.businessName || invoice.businessName,
+        }));
+
+        if (invoice.status === "paid") {
+          setError("This invoice is already paid.");
+        } else if (invoice.status === "cancelled") {
+          setError("This invoice has been cancelled and cannot be paid.");
+        }
+      })
+      .catch((lookupError) => {
+        if (!isActive) {
+          return;
+        }
+        setError(
+          lookupError instanceof Error
+            ? lookupError.message
+            : "Unable to load invoice details.",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoadingInvoice(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [invoiceFromQuery]);
 
   const statusMessage = useMemo(() => {
     if (status === "success") {
@@ -181,8 +245,11 @@ export function PublicInvoicePaymentForm() {
                   required
                   value={formState.paymentAmount}
                   onChange={(event) => updateField("paymentAmount", event.target.value)}
-                  placeholder="0.00"
+                  placeholder={isLoadingInvoice ? "Loading..." : "0.00"}
                 />
+                {isLoadingInvoice ? (
+                  <p className="text-xs text-muted-foreground">Loading invoice total...</p>
+                ) : null}
               </div>
             </div>
 

@@ -12,3 +12,9 @@ export const createPublicInvoiceCheckoutSchema = z.object({
 });
 
 export type CreatePublicInvoiceCheckoutInput = z.infer<typeof createPublicInvoiceCheckoutSchema>;
+
+export const lookupPublicInvoiceSchema = z.object({
+  invoice: z.string().min(1, "Invoice number is required").max(100),
+});
+
+export type LookupPublicInvoiceInput = z.infer<typeof lookupPublicInvoiceSchema>;
