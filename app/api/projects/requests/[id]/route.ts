@@ -49,6 +49,8 @@ type ExistingProjectRequest = {
   custom_fields: ProjectCustomFields | null;
 };
 
+type ProjectMetadata = NonNullable<typeof projects.$inferSelect.metadata>;
+
 const normalizeDate = (value?: string | null) => {
   if (!value) {
     return null;
@@ -76,6 +78,10 @@ const numberString = (value: unknown) => {
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed.toFixed(2) : null;
+};
+
+const asProjectMetadata = (value: unknown): ProjectMetadata => {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as ProjectMetadata) : {};
 };
 
 async function createDefaultTaskBoard(projectId: string, projectName: string, userId: string) {
@@ -106,12 +112,19 @@ async function createDefaultTaskBoard(projectId: string, projectName: string, us
     .set({ columnOrder: columns.map((column) => column.id) })
     .where(eq(staffTaskBoards.id, board.id));
 
+  const [project] = await db
+    .select({ metadata: projects.metadata })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
   await db
     .update(projects)
     .set({
-      metadata: sql`COALESCE(${projects.metadata}, '{}'::jsonb) || ${JSON.stringify({
+      metadata: {
+        ...asProjectMetadata(project?.metadata),
         taskBoardId: board.id,
-      })}::jsonb`,
+      },
       updatedAt: new Date(),
     })
     .where(eq(projects.id, projectId));

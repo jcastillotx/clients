@@ -9,7 +9,7 @@ import {
   staffTaskChecklists,
   staffTaskLabels,
 } from "@/lib/db/schema/staff-tasks";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUser } from "@/lib/rbac/check";
 import { builtInProjectTemplates } from "@/lib/templates/project-templates";
@@ -22,6 +22,12 @@ import {
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
+
+type ProjectMetadata = NonNullable<typeof projects.$inferSelect.metadata>;
+
+const asProjectMetadata = (value: unknown): ProjectMetadata => {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as ProjectMetadata) : {};
+};
 
 /**
  * POST /api/projects/[id]/apply-template
@@ -132,9 +138,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await db
       .update(projects)
       .set({
-        metadata: sql`COALESCE(${projects.metadata}, '{}'::jsonb) || ${JSON.stringify({
+        metadata: {
+          ...asProjectMetadata(project.metadata),
           taskBoardId: board.id,
-        })}::jsonb`,
+        },
         updatedAt: new Date(),
       })
       .where(eq(projects.id, projectId));
