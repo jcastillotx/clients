@@ -42,6 +42,7 @@ const validPayload = {
 describe("POST /api/public/invoices/create-checkout-session", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     vi.mocked(assertTurnstileToken).mockResolvedValue({ ok: true });
   });
 
@@ -115,8 +116,42 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
     expect(extractApiErrorMessage(body)).toContain("Payment amount must match");
   });
 
+  it("returns 503 when Stripe is not configured", async () => {
+    vi.mocked(createAdminClientIfAvailable).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: {
+            id: "inv-1",
+            invoice_number: "INV-1001",
+            client_id: "client-1",
+            amount: 1500,
+            status: "sent",
+            client: { id: "client-1", company_name: "Acme", email: "billing@acme.com" },
+          },
+          error: null,
+        }),
+      }),
+    } as never);
+
+    const response = await POST(
+      jsonRequest(
+        "http://localhost/api/public/invoices/create-checkout-session",
+        validPayload,
+      ) as NextRequest,
+    );
+    const body = await readJson<Record<string, unknown>>(response);
+
+    expect(response.status).toBe(503);
+    expect(extractApiErrorMessage(body)).toContain("Online payments are not configured");
+    expect(getStripe).not.toHaveBeenCalled();
+  });
+
   it("creates a checkout session for valid requests", async () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_123");
 
     vi.mocked(createAdminClientIfAvailable).mockReturnValue({
       from: vi.fn().mockReturnValue({

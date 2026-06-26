@@ -128,6 +128,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Online payments are not configured yet. Please contact support to pay this invoice.",
+      });
+    }
+
     if (invoice.status === "draft") {
       await adminClient.from("invoices").update({ status: "sent" }).eq("id", invoice.id);
     }
