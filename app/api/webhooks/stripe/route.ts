@@ -1,31 +1,18 @@
 import { headers } from "next/headers";
-import Stripe from "stripe";
-import { inngest } from "@/lib/inngest/client";
-import { dispatchNotification } from "@/lib/notifications/service";
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
-import { processStripeWebhookRequest } from "@/lib/webhooks/stripe-webhook-request";
+import type Stripe from "stripe";
+
 import {
   apiError,
   apiInternalError,
   apiSuccess,
   errorCodeFromStatus,
 } from "@/lib/api/response";
-
-function getStripeConfig() {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!secretKey || !webhookSecret) {
-    return null;
-  }
-
-  return {
-    stripe: new Stripe(secretKey, {
-      apiVersion: "2023-10-16",
-    }),
-    webhookSecret,
-  };
-}
+import { inngest } from "@/lib/inngest/client";
+import { dispatchNotification } from "@/lib/notifications/service";
+import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import { createStripeClient } from "@/lib/stripe/client";
+import { resolveStripeWebhookSecrets } from "@/lib/stripe/settings";
+import { processStripeWebhookRequest } from "@/lib/webhooks/stripe-webhook-request";
 
 async function hasProcessedEvent(eventId: string) {
   const supabase = createAdminClientIfAvailable() ?? (await createClient());
@@ -55,16 +42,19 @@ async function logActivity(args: {
 }
 
 export async function POST(request: Request) {
-  const config = getStripeConfig();
-  if (!config) {
-    return apiError(request, {
-      status: 503,
-      code: "SERVICE_UNAVAILABLE",
-      message: "Stripe webhook is not configured",
-    });
-  }
-
   try {
+    const webhookSecrets = await resolveStripeWebhookSecrets();
+    if (webhookSecrets.length === 0) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Stripe webhook is not configured",
+      });
+    }
+
+    const stripe = createStripeClient(
+      process.env.STRIPE_SECRET_KEY ?? "sk_test_webhook_signature_only",
+    );
     const body = await request.text();
     const headersList = await headers();
     const signature = headersList.get("stripe-signature");
@@ -72,9 +62,9 @@ export async function POST(request: Request) {
     const result = await processStripeWebhookRequest({
       body,
       signature,
-      webhookSecret: config.webhookSecret,
+      webhookSecrets,
       constructEvent: (rawBody, rawSignature, secret) =>
-        config.stripe.webhooks.constructEvent(rawBody, rawSignature, secret),
+        stripe.webhooks.constructEvent(rawBody, rawSignature, secret),
       hasProcessedEvent,
       onEvent: async (event) => {
         const supabase = createAdminClientIfAvailable() ?? (await createClient());

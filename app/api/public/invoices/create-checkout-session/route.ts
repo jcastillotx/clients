@@ -11,6 +11,7 @@ import {
 import { getClientIp, limiters, rateLimitLimits } from "@/lib/rate-limit";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
+import { resolveStripeCredentialsForClient } from "@/lib/stripe/settings";
 import { createPublicInvoiceCheckoutSchema } from "@/lib/validations/public-invoice-payment";
 import { assertTurnstileToken } from "@/lib/turnstile/verify";
 
@@ -128,7 +129,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (!process.env.STRIPE_SECRET_KEY) {
+    const stripeCredentials = await resolveStripeCredentialsForClient(invoice.client_id);
+    if (!stripeCredentials.secret_key) {
       return apiError(request, {
         status: 503,
         code: "SERVICE_UNAVAILABLE",
@@ -140,7 +142,7 @@ export async function POST(request: NextRequest) {
       await adminClient.from("invoices").update({ status: "sent" }).eq("id", invoice.id);
     }
 
-    const stripe = getStripe();
+    const stripe = getStripe(stripeCredentials.secret_key);
     const origin = resolveOrigin(request);
     const clientRecord = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
 

@@ -43,6 +43,35 @@ describe("processStripeWebhookRequest", () => {
     expect(result.payload).toEqual({ error: "Invalid signature" });
   });
 
+  it("tries saved webhook secrets until one verifies", async () => {
+    const constructEvent = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error("bad signature");
+      })
+      .mockReturnValue({
+        id: "evt_new",
+        type: "payment_intent.succeeded",
+        data: { object: { id: "pi_1" } },
+      });
+    const hasProcessedEvent = vi.fn().mockResolvedValue(false);
+    const onEvent = vi.fn().mockResolvedValue(undefined);
+
+    const result = await processStripeWebhookRequest({
+      body: "{}",
+      signature: "sig",
+      webhookSecrets: ["whsec_bad", "whsec_good"],
+      constructEvent,
+      hasProcessedEvent,
+      onEvent,
+    });
+
+    expect(result.status).toBe(200);
+    expect(constructEvent).toHaveBeenNthCalledWith(1, "{}", "sig", "whsec_bad");
+    expect(constructEvent).toHaveBeenNthCalledWith(2, "{}", "sig", "whsec_good");
+    expect(onEvent).toHaveBeenCalledOnce();
+  });
+
   it("processes non-duplicate events exactly once", async () => {
     const constructEvent = vi.fn().mockReturnValue({
       id: "evt_new",

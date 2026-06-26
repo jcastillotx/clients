@@ -5,6 +5,7 @@ import { extractApiErrorMessage } from "@/lib/api/response";
 import { assertTurnstileToken } from "@/lib/turnstile/verify";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
+import { resolveStripeCredentialsForClient } from "@/lib/stripe/settings";
 import { jsonRequest, readJson } from "../helpers/http";
 
 vi.mock("@/lib/rate-limit", () => ({
@@ -31,6 +32,10 @@ vi.mock("@/lib/stripe/client", () => ({
   getStripe: vi.fn(),
 }));
 
+vi.mock("@/lib/stripe/settings", () => ({
+  resolveStripeCredentialsForClient: vi.fn(),
+}));
+
 const validPayload = {
   invoiceNumber: "INV-1001",
   paymentAmount: 1500,
@@ -44,6 +49,9 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
     vi.mocked(assertTurnstileToken).mockResolvedValue({ ok: true });
+    vi.mocked(resolveStripeCredentialsForClient).mockResolvedValue({
+      secret_key: "sk_test_saved",
+    });
   });
 
   it("returns 500 when admin client is unavailable", async () => {
@@ -117,6 +125,8 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
   });
 
   it("returns 503 when Stripe is not configured", async () => {
+    vi.mocked(resolveStripeCredentialsForClient).mockResolvedValue({});
+
     vi.mocked(createAdminClientIfAvailable).mockReturnValue({
       from: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnThis(),
@@ -151,7 +161,6 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
 
   it("creates a checkout session for valid requests", async () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
-    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_123");
 
     vi.mocked(createAdminClientIfAvailable).mockReturnValue({
       from: vi.fn().mockReturnValue({
@@ -202,5 +211,6 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
     expect(body.data.sessionId).toBe("cs_test_123");
     expect(body.data.checkoutUrl).toContain("checkout.stripe.test");
     expect(body.checkoutUrl).toContain("checkout.stripe.test");
+    expect(getStripe).toHaveBeenCalledWith("sk_test_saved");
   });
 });

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { extractApiErrorMessage } from "@/lib/api/response";
+import { resolveStripeWebhookSecrets } from "@/lib/stripe/settings";
 import { readJson } from "../helpers/http";
 
 vi.mock("next/headers", () => ({
@@ -19,6 +20,10 @@ vi.mock("@/lib/notifications/service", () => ({
   dispatchNotification: vi.fn(),
 }));
 
+vi.mock("@/lib/stripe/settings", () => ({
+  resolveStripeWebhookSecrets: vi.fn(),
+}));
+
 describe("POST /api/webhooks/stripe", () => {
   const originalStripeSecret = process.env.STRIPE_SECRET_KEY;
   const originalWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -26,6 +31,7 @@ describe("POST /api/webhooks/stripe", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    vi.mocked(resolveStripeWebhookSecrets).mockResolvedValue(["whsec_test_123"]);
   });
 
   afterEach(() => {
@@ -34,8 +40,7 @@ describe("POST /api/webhooks/stripe", () => {
   });
 
   it("returns 503 when Stripe webhook is not configured", async () => {
-    delete process.env.STRIPE_SECRET_KEY;
-    delete process.env.STRIPE_WEBHOOK_SECRET;
+    vi.mocked(resolveStripeWebhookSecrets).mockResolvedValue([]);
 
     const { POST } = await import("@/app/api/webhooks/stripe/route");
     const response = await POST(

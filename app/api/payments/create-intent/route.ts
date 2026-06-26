@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe/client";
+import { getStripe } from "@/lib/stripe/client";
+import { resolveStripeCredentialsForClient } from "@/lib/stripe/settings";
 import {
   apiError,
   apiInternalError,
@@ -85,6 +86,16 @@ export async function POST(request: Request) {
       });
     }
 
+    const stripeCredentials = await resolveStripeCredentialsForClient(invoice.client_id);
+    if (!stripeCredentials.secret_key) {
+      return apiError(request, {
+        status: 503,
+        code: "SERVICE_UNAVAILABLE",
+        message: "Online payments are not configured yet. Please contact support to pay this invoice.",
+      });
+    }
+
+    const stripe = getStripe(stripeCredentials.secret_key);
     let customerId = client.stripe_customer_id;
 
     if (!customerId && primaryContact?.email) {
