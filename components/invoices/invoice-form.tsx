@@ -231,9 +231,7 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
               <Label htmlFor="dueDate">Due Date</Label>
               <Input id="dueDate" type="date" {...register("dueDate")} />
             </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="billingType">Billing Type</Label>
               <Select
@@ -256,8 +254,10 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            {billingType === "recurring" && (
+          {billingType === "recurring" && (
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="recurringInterval">Recurring Cycle</Label>
                 <Select
@@ -280,8 +280,8 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
                   <p className="text-sm text-destructive">{errors.recurringInterval.message}</p>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
