@@ -1,19 +1,22 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
+  apiForbidden,
   apiInternalError,
   apiNotFound,
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
 import { db } from "@/lib/db";
+import { projects } from "@/lib/db/schema/projects";
 import {
   staffTasks,
   staffTaskAssignees,
   staffTaskLabelRelations,
   staffTaskComments,
 } from "@/lib/db/schema/staff-tasks";
-import { eq } from "drizzle-orm";
+import { isAdminUser } from "@/lib/rbac/check";
+import { eq, sql } from "drizzle-orm";
 
 /**
  * GET /api/tasks/[taskId]
@@ -223,6 +226,61 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (authError || !user) {
       return apiUnauthorized(request);
     }
+
+    const task = await db.query.staffTasks.findFirst({
+      where: eq(staffTasks.id, taskId),
+      columns: {
+        id: true,
+        boardId: true,
+        createdBy: true,
+      },
+      with: {
+        assignees: {
+          columns: {
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (!task) {
+      return apiNotFound(request, "Task not found");
+    }
+
+    const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
+      supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
+      supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    ]);
+
+    const [linkedProject] = await db
+      .select({
+        projectManagerId: projects.projectManagerId,
+        teamMembers: projects.teamMembers,
+      })
+      .from(projects)
+      .where(sql`${projects.metadata}->>'taskBoardId' = ${task.boardId}`)
+      .limit(1);
+
+    const isTaskOwner = task.createdBy === user.id;
+    const isAssignee = task.assignees.some((assignee) => assignee.userId === user.id);
+    const isProjectManager = linkedProject?.projectManagerId === user.id;
+    const isProjectTeamMember =
+      linkedProject?.teamMembers?.some((member) => member.userId === user.id) ?? false;
+    const canManageProjectTasks =
+      isAdminUser(user, dbUser, roleRows, ["staff", "account_manager"]) ||
+      isTaskOwner ||
+      isAssignee ||
+      isProjectManager ||
+      isProjectTeamMember;
+
+    if (!canManageProjectTasks) {
+      return apiForbidden(request, "You do not have permission to delete this task");
+    }
+
+    await db
+      .update(staffTasks)
+      .set({ parentId: null, updatedAt: new Date() })
+      .where(eq(staffTasks.parentId, taskId));
 
     const deleted = await db
       .delete(staffTasks)

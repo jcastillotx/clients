@@ -18,6 +18,12 @@ export function KanbanBoard({ board, onUpdate }: KanbanBoardProps) {
   const [createTaskColumn, setCreateTaskColumn] = useState<string | null>(null);
   const [draggedTask, setDraggedTask] = useState<any>(null);
 
+  const refreshBoard = async () => {
+    const boardResponse = await fetch(`/api/tasks/boards/${board.id}`);
+    const boardData = await boardResponse.json();
+    onUpdate(boardData.board ?? boardData.data);
+  };
+
   const handleTaskMove = async (taskId: string, newColumnId: string, newPosition: number) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}/move`, {
@@ -30,10 +36,7 @@ export function KanbanBoard({ board, onUpdate }: KanbanBoardProps) {
         throw new Error("Failed to move task");
       }
 
-      // Refresh board data
-      const boardResponse = await fetch(`/api/tasks/boards/${board.id}`);
-      const boardData = await boardResponse.json();
-      onUpdate(boardData.board ?? boardData.data);
+      await refreshBoard();
     } catch (error) {
       console.error("Error moving task:", error);
     }
@@ -55,10 +58,7 @@ export function KanbanBoard({ board, onUpdate }: KanbanBoardProps) {
   };
 
   const handleTaskUpdate = async (taskId: string) => {
-    // Refresh the board to get updated task
-    const boardResponse = await fetch(`/api/tasks/boards/${board.id}`);
-    const boardData = await boardResponse.json();
-    onUpdate(boardData.board ?? boardData.data);
+    await refreshBoard();
 
     // Update selected task if it's the one being viewed
     if (selectedTask?.id === taskId) {
@@ -66,6 +66,11 @@ export function KanbanBoard({ board, onUpdate }: KanbanBoardProps) {
       const taskData = await taskResponse.json();
       setSelectedTask(taskData.task ?? taskData.data);
     }
+  };
+
+  const handleTaskDeleted = async () => {
+    setSelectedTask(null);
+    await refreshBoard();
   };
 
   const columns = useMemo(() => {
@@ -133,6 +138,7 @@ export function KanbanBoard({ board, onUpdate }: KanbanBoardProps) {
           open={!!selectedTask}
           onOpenChange={(open) => !open && setSelectedTask(null)}
           onUpdate={handleTaskUpdate}
+          onDeleted={handleTaskDeleted}
         />
       )}
 
