@@ -138,9 +138,11 @@ async function ProjectDetails({ id }: { id: string }) {
         </div>
         <div className="flex gap-2">
           <ApplyTemplateButton projectId={project.id} projectName={project.name} />
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/projects/${project.id}/edit`}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Link>
           </Button>
           {isAdmin && <DeleteProjectButton projectId={project.id} />}
         </div>
