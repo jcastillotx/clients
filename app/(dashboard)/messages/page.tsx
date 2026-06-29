@@ -23,12 +23,14 @@ interface ConversationParticipant {
   id: string;
   name: string;
   email: string;
+  client_id: string | null;
 }
 
 export default function MessagesPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [clientId, setClientId] = useState<string>("");
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showNewConversationDialog, setShowNewConversationDialog] = useState(false);
   const [conversationTitle, setConversationTitle] = useState("");
@@ -51,15 +53,29 @@ export default function MessagesPage() {
 
     setCurrentUserId(user.id);
 
-    const { data: userRow } = await supabase.from("users").select("client_id").eq("id", user.id).maybeSingle();
-    const resolvedClientId = userRow?.client_id || "";
+    const { data: userRow } = await supabase.from("users").select("client_id, is_super_admin").eq("id", user.id).maybeSingle();
+    const resolvedClientId = userRow?.client_id ?? null;
+    const userIsAdmin = Boolean(userRow?.is_super_admin);
     setClientId(resolvedClientId);
+    setIsAdmin(userIsAdmin);
+
+    // For admins without a client, fetch all active users platform-wide
+    if (!resolvedClientId && userIsAdmin) {
+      const { data: participantRows } = await supabase
+        .from("users")
+        .select("id, name, email, client_id")
+        .eq("is_active", true)
+        .neq("id", user.id)
+        .order("name", { ascending: true });
+      setParticipants(participantRows || []);
+      return;
+    }
 
     if (!resolvedClientId) return;
 
     const { data: participantRows } = await supabase
       .from("users")
-      .select("id, name, email")
+      .select("id, name, email, client_id")
       .eq("client_id", resolvedClientId)
       .neq("id", user.id)
       .order("name", { ascending: true });
@@ -74,7 +90,11 @@ export default function MessagesPage() {
   };
 
   const startNewConversation = async () => {
-    if (!clientId || selectedParticipantIds.length === 0) return;
+    if (selectedParticipantIds.length === 0) return;
+
+    // For admin users without their own clientId, derive it from the first selected participant
+    const effectiveClientId = clientId ?? participants.find((p) => selectedParticipantIds.includes(p.id))?.client_id ?? null;
+    if (!effectiveClientId) return;
 
     try {
       setIsCreatingConversation(true);
@@ -83,7 +103,7 @@ export default function MessagesPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clientId,
+          clientId: effectiveClientId,
           title: conversationTitle.trim() || null,
           participantIds: selectedParticipantIds,
         }),
@@ -221,7 +241,7 @@ export default function MessagesPage() {
             <Button variant="outline" onClick={() => setShowNewConversationDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={startNewConversation} disabled={isCreatingConversation || !clientId || selectedParticipantIds.length === 0}>
+            <Button onClick={startNewConversation} disabled={isCreatingConversation || selectedParticipantIds.length === 0}>
               {isCreatingConversation ? "Starting..." : "Start conversation"}
             </Button>
           </DialogFooter>

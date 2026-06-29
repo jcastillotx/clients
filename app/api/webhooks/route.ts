@@ -85,9 +85,26 @@ export async function GET(request: NextRequest) {
       return auth.error;
     }
 
-    const parsed = querySchema.safeParse({
-      clientId: request.nextUrl.searchParams.get("clientId"),
-    });
+    const rawClientId = request.nextUrl.searchParams.get("clientId");
+    const adminAll = request.nextUrl.searchParams.get("adminAll") === "true";
+
+    // Admin users may request all webhooks across clients
+    if (adminAll || !rawClientId) {
+      if (!auth.access.isAdmin) {
+        return apiForbidden(request);
+      }
+      const endpoints = await db
+        .select()
+        .from(webhookEndpoints)
+        .orderBy(desc(webhookEndpoints.createdAt));
+      const sanitized = endpoints.map((endpoint: (typeof endpoints)[number]) => ({
+        ...endpoint,
+        secret: undefined,
+      }));
+      return apiSuccess(request, sanitized);
+    }
+
+    const parsed = querySchema.safeParse({ clientId: rawClientId });
     if (!parsed.success) {
       return apiError(request, {
         status: 400,

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import {
   apiError,
+  apiForbidden,
   apiInternalError,
   apiSuccess,
   apiUnauthorized,
@@ -9,6 +10,7 @@ import { db } from "@/lib/db";
 import { dataPrivacyRequests } from "@/lib/db/schema/additional-features";
 import { eq, desc, and } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import { resolveRouteAccess } from "@/lib/auth/route-access";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,13 +23,25 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const clientId = searchParams.get("clientId");
     const userId = searchParams.get("userId");
+    const adminAll = searchParams.get("adminAll") === "true";
 
-    if (!clientId && !userId) {
-      return apiError(request, {
-        status: 400,
-        code: "BAD_REQUEST",
-        message: "Client ID or User ID is required",
-      });
+    // Admin users may request all privacy requests across clients
+    if (adminAll || (!clientId && !userId)) {
+      const access = await resolveRouteAccess(supabase, user);
+      if (!access.isAdmin) {
+        return adminAll
+          ? apiForbidden(request)
+          : apiError(request, {
+              status: 400,
+              code: "BAD_REQUEST",
+              message: "Client ID or User ID is required",
+            });
+      }
+      const rows = await db
+        .select()
+        .from(dataPrivacyRequests)
+        .orderBy(desc(dataPrivacyRequests.requestedAt));
+      return apiSuccess(request, rows);
     }
 
     const conditions = [];

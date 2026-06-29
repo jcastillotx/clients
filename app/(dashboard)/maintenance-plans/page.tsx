@@ -15,6 +15,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   Clock,
   DollarSign,
@@ -24,9 +26,11 @@ import {
   AlertCircle,
   ShieldCheck,
   ArrowRight,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchApi } from "@/lib/api/client";
+import { createClient } from "@/lib/supabase/client";
 
 interface ActivePlan {
   plan: any;
@@ -51,6 +55,11 @@ interface PlanTemplate {
   servicesIncluded: Array<{ category: string; description: string; included: boolean }> | null;
 }
 
+interface ClientOption {
+  id: string;
+  company_name: string;
+}
+
 export default function MaintenancePlansPage() {
   const router = useRouter();
   const [activePlans, setActivePlans] = useState<ActivePlan[]>([]);
@@ -60,43 +69,75 @@ export default function MaintenancePlansPage() {
   const [subscribeTemplate, setSubscribeTemplate] = useState<PlanTemplate | null>(null);
   const [subscribing, setSubscribing] = useState(false);
   const [clientId, setClientId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [clientOptions, setClientOptions] = useState<ClientOption[]>([]);
+  const [selectedClientName, setSelectedClientName] = useState<string>("");
 
   useEffect(() => {
-    fetchData();
+    initPage();
   }, []);
 
-  const fetchData = async () => {
+  const initPage = async () => {
+    try {
+      // Detect admin status from session
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userRow } = await supabase
+        .from("users")
+        .select("client_id, is_super_admin")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const ownClientId = userRow?.client_id ?? null;
+      const userIsAdmin = Boolean(userRow?.is_super_admin);
+      setIsAdmin(userIsAdmin);
+
+      if (ownClientId) {
+        // Normal client user — set their clientId and fetch data
+        setClientId(ownClientId);
+        await fetchData(ownClientId);
+      } else if (userIsAdmin) {
+        // Admin user — load all clients for the selector, fetch templates
+        const clientsData = await fetchApi<{ data: Array<ClientOption> } | Array<ClientOption>>("/api/clients", undefined, {
+          raw: true,
+          fallbackMessage: "Failed to load clients",
+        });
+        const clients: ClientOption[] = Array.isArray(clientsData)
+          ? (clientsData as Array<ClientOption>)
+          : Array.isArray((clientsData as { data: Array<ClientOption> }).data)
+            ? (clientsData as { data: Array<ClientOption> }).data
+            : [];
+        setClientOptions(clients);
+        // Fetch templates (no plans yet — admin must choose a client first)
+        await fetchData(null);
+      }
+    } catch {
+      setErrorMessage("Unable to load page.");
+    }
+  };
+
+  const fetchData = async (activeClientId: string | null) => {
     try {
       setLoading(true);
 
-      // Fetch active plans and available templates in parallel
-      const [plansData, templatesData, clientsData] = await Promise.all([
-        fetchApi<{ data: ActivePlan[] }>("/api/maintenance-plans?activeOnly=true", undefined, {
-          raw: true,
-          fallbackMessage: "Failed to load maintenance plans",
-        }),
+      const [plansData, templatesData] = await Promise.all([
+        activeClientId
+          ? fetchApi<{ data: ActivePlan[] }>("/api/maintenance-plans?activeOnly=true", undefined, {
+              raw: true,
+              fallbackMessage: "Failed to load maintenance plans",
+            })
+          : Promise.resolve({ data: [] as ActivePlan[] }),
         fetchApi<{ data: PlanTemplate[] }>("/api/admin/maintenance-plan-templates", undefined, {
           raw: true,
           fallbackMessage: "Failed to load plan templates",
         }),
-        fetchApi<Array<{ id: string }> | { data: Array<{ id: string }> }>("/api/clients", undefined, {
-          raw: true,
-          fallbackMessage: "Failed to load clients",
-        }),
       ]);
 
       setActivePlans(plansData.data ?? []);
-      const active = (templatesData.data ?? []).filter((t) => t.isActive);
+      const active = (templatesData.data ?? []).filter((t: PlanTemplate) => t.isActive);
       setAvailableTemplates(active);
-
-      const clients = Array.isArray(clientsData)
-        ? clientsData
-        : Array.isArray(clientsData.data)
-          ? clientsData.data
-          : [];
-      if (clients.length > 0) {
-        setClientId(clients[0].id);
-      }
 
       setErrorMessage(null);
     } catch {
@@ -104,6 +145,13 @@ export default function MaintenancePlansPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAdminClientSelect = async (selectedId: string) => {
+    const selected = clientOptions.find((c) => c.id === selectedId);
+    setClientId(selectedId);
+    setSelectedClientName(selected?.company_name ?? "");
+    await fetchData(selectedId);
   };
 
   const handleSubscribe = async () => {
@@ -125,7 +173,7 @@ export default function MaintenancePlansPage() {
       );
 
       setSubscribeTemplate(null);
-      fetchData();
+      fetchData(clientId);
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Failed to subscribe to plan");
     } finally {
@@ -176,6 +224,43 @@ export default function MaintenancePlansPage() {
         <h1 className="text-3xl font-bold">Maintenance Plans</h1>
         <p className="text-muted-foreground mt-1">View your maintenance plan and track usage</p>
       </div>
+
+      {/* Admin client selector */}
+      {isAdmin && clientOptions.length > 0 && (
+        <div className="rounded-lg border border-border/70 bg-card p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span>Admin view</span>
+            {clientId && selectedClientName && (
+              <span className="text-muted-foreground">
+                — Creating plans for: <span className="font-semibold text-foreground">{selectedClientName}</span>
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Label htmlFor="admin-client-select" className="text-sm text-muted-foreground whitespace-nowrap">
+              Select client:
+            </Label>
+            <Select value={clientId ?? ""} onValueChange={handleAdminClientSelect}>
+              <SelectTrigger id="admin-client-select" className="w-64">
+                <SelectValue placeholder="Choose a client to manage plans for..." />
+              </SelectTrigger>
+              <SelectContent>
+                {clientOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.company_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {!clientId && (
+            <p className="text-xs text-muted-foreground">
+              Select a client above to view or create maintenance plans.
+            </p>
+          )}
+        </div>
+      )}
 
       {errorMessage && (
         <Alert variant="destructive">
@@ -378,8 +463,19 @@ export default function MaintenancePlansPage() {
         </div>
       )}
 
-      {/* Empty state */}
-      {activePlans.length === 0 && availableTemplates.length === 0 && (
+      {/* Admin has not selected a client yet */}
+      {isAdmin && !clientId && clientOptions.length === 0 && (
+        <div className="text-center py-12">
+          <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold">No clients available</h3>
+          <p className="text-muted-foreground mt-1">
+            There are no client accounts to manage maintenance plans for.
+          </p>
+        </div>
+      )}
+
+      {/* Empty state — only show when a client is selected or for non-admin users */}
+      {(!isAdmin || clientId) && activePlans.length === 0 && availableTemplates.length === 0 && (
         <div className="text-center py-12">
           <ShieldCheck className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold">No maintenance plans available</h3>

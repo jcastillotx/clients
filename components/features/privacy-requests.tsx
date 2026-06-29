@@ -31,7 +31,7 @@ interface PrivacyRequest {
 }
 
 interface PrivacyRequestsProps {
-  clientId: string;
+  clientId: string | null;
 }
 
 export function PrivacyRequests({ clientId }: PrivacyRequestsProps) {
@@ -50,8 +50,11 @@ export function PrivacyRequests({ clientId }: PrivacyRequestsProps) {
   const fetchRequests = async () => {
     try {
       setLoading(true);
+      const url = clientId
+        ? `/api/privacy-requests?clientId=${clientId}`
+        : `/api/privacy-requests?adminAll=true`;
       const data = await fetchApi<PrivacyRequest[]>(
-        `/api/privacy-requests?clientId=${clientId}`,
+        url,
         undefined,
         { fallbackMessage: "Failed to fetch requests" },
       );

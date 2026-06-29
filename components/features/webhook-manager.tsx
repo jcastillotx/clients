@@ -34,7 +34,7 @@ interface WebhookEndpoint {
 }
 
 interface WebhookManagerProps {
-  clientId: string;
+  clientId: string | null;
 }
 
 const AVAILABLE_EVENTS = [
@@ -64,8 +64,11 @@ export function WebhookManager({ clientId }: WebhookManagerProps) {
   const fetchEndpoints = async () => {
     try {
       setLoading(true);
+      const url = clientId
+        ? `/api/webhooks?clientId=${clientId}`
+        : `/api/webhooks?adminAll=true`;
       const data = await fetchApi<WebhookEndpoint[]>(
-        `/api/webhooks?clientId=${clientId}`,
+        url,
         undefined,
         { fallbackMessage: "Failed to fetch webhooks" },
       );
