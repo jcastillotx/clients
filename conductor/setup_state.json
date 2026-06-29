@@ -1,0 +1,47 @@
+{
+  "status": "complete",
+  "project_type": "brownfield",
+  "current_section": "complete",
+  "current_question": 0,
+  "completed_sections": ["product", "guidelines", "tech_stack", "workflow", "styleguides"],
+  "answers": {
+    "project_name": "Kre8iv Clients Platform",
+    "project_description": "A comprehensive client management SaaS platform for agencies to manage clients, projects, invoices, and communications",
+    "problem_statement": "There's no single platform built specifically for web/digital agencies that handles the full client lifecycle",
+    "target_users": "Web and digital agency owners and their staff (account managers, project managers, developers)",
+    "key_goals": "Migrate from Laravel 11 to Next.js 15 with full feature parity across 55+ features; deploy to production; eliminate dependency on legacy PHP infrastructure",
+    "voice_tone": "Professional and direct — clear, agency-grade language without fluff",
+    "design_principles": "Simplicity over features; performance first; reliability over novelty",
+    "tech_stack": {
+      "language": "TypeScript 5.3 (strict)",
+      "frontend": "React 19, Next.js 15.2 (App Router)",
+      "ui": "shadcn/ui + Radix UI, Tailwind CSS 3.4",
+      "backend": "Next.js API Routes (full-stack)",
+      "database": "PostgreSQL via Supabase + Drizzle ORM 0.29",
+      "auth": "Supabase Auth (SSR)",
+      "payments": "Stripe 14",
+      "background_jobs": "Inngest 3",
+      "email": "Resend 3 (primary transactional) + Microsoft 365 connector + Google Workspace connector",
+      "testing": "Vitest + Playwright",
+      "monitoring": "Sentry",
+      "infrastructure": "Vercel (current); AWS (planned future migration)"
+    },
+    "tdd_strictness": "Strict — tests required before implementation (red → green → refactor)",
+    "commit_strategy": "Conventional Commits (feat:, fix:, refactor:, chore:, perf:, docs:, test:, ci:)",
+    "code_review": "Required for all non-trivial changes — use code-reviewer agent after every feature",
+    "verification_checkpoints": "After each phase completion — verify before moving to the next phase of a track",
+    "style_guides": ["typescript", "sql"]
+  },
+  "files_created": [
+    "conductor/index.md",
+    "conductor/product.md",
+    "conductor/product-guidelines.md",
+    "conductor/tech-stack.md",
+    "conductor/workflow.md",
+    "conductor/tracks.md",
+    "conductor/code_styleguides/typescript.md",
+    "conductor/code_styleguides/sql.md"
+  ],
+  "started_at": "2026-06-28T00:00:00Z",
+  "last_updated": "2026-06-28T00:00:00Z"
+}
