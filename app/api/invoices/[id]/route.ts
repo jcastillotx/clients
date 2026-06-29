@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (error || !data) return apiNotFound(req, "Invoice not found");
 
-  return apiSuccess(data);
+  return apiSuccess(req, data);
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -52,5 +52,5 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { error } = await supabase.from("invoices").delete().eq("id", id);
   if (error) return apiInternalError(req, error.message);
 
-  return apiSuccess({ deleted: true });
+  return apiSuccess(req, { deleted: true });
 }
