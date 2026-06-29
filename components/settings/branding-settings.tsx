@@ -174,7 +174,9 @@ export function BrandingSettings({
       );
 
       setSuccess(true);
-      router.refresh();
+      // router.refresh() only re-renders the page segment, not the layout where
+      // CSS vars (sidebar colors, primary color) are injected — need a full reload.
+      window.location.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save branding");
     } finally {
