@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { collectRoleNames } from "@/lib/rbac/role-row-utils";
 import {
-  apiError,
   apiInternalError,
   apiSuccess,
   apiUnauthorized,

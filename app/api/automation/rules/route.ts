@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { collectRoleNames } from "@/lib/rbac/role-row-utils";
 import { z } from "zod";
 import {
-  apiError,
   apiForbidden,
   apiInternalError,
   apiSuccess,
