@@ -1,17 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Calendar, Send, TrendingUp } from "lucide-react";
 
-// Mock data - replace with actual API call
-const mockStats = {
-  totalTemplates: 8,
-  scheduledReports: 5,
-  reportsSent: 142,
-  activeSchedules: 4,
-};
+interface ReportStatsProps {
+  totalTemplates: number;
+  scheduledReports: number;
+  reportsSent: number;
+  activeSchedules: number;
+}
 
-export async function ReportStats() {
-  // const stats = await fetchReportStats();
-  const stats = mockStats;
+export function ReportStats({ totalTemplates, scheduledReports, reportsSent, activeSchedules }: ReportStatsProps) {
+  const activePercent =
+    scheduledReports > 0 ? ((activeSchedules / scheduledReports) * 100).toFixed(0) : "0";
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
@@ -21,7 +20,7 @@ export async function ReportStats() {
           <FileText className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.totalTemplates}</div>
+          <div className="text-2xl font-bold">{totalTemplates}</div>
           <p className="text-xs text-muted-foreground">Available templates</p>
         </CardContent>
       </Card>
@@ -32,8 +31,8 @@ export async function ReportStats() {
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.scheduledReports}</div>
-          <p className="text-xs text-muted-foreground">{stats.activeSchedules} active</p>
+          <div className="text-2xl font-bold">{scheduledReports}</div>
+          <p className="text-xs text-muted-foreground">{activeSchedules} active</p>
         </CardContent>
       </Card>
 
@@ -43,7 +42,7 @@ export async function ReportStats() {
           <Send className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.reportsSent}</div>
+          <div className="text-2xl font-bold">{reportsSent}</div>
           <p className="text-xs text-muted-foreground">Last 30 days</p>
         </CardContent>
       </Card>
@@ -54,10 +53,8 @@ export async function ReportStats() {
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.activeSchedules}</div>
-          <p className="text-xs text-muted-foreground">
-            {((stats.activeSchedules / stats.scheduledReports) * 100).toFixed(0)}% of total
-          </p>
+          <div className="text-2xl font-bold">{activeSchedules}</div>
+          <p className="text-xs text-muted-foreground">{activePercent}% of total</p>
         </CardContent>
       </Card>
     </div>

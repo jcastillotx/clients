@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText, Calendar, TrendingUp } from "lucide-react";
@@ -7,13 +6,46 @@ import { ReportsList } from "@/components/reports/reports-list";
 import { ReportStats } from "@/components/reports/report-stats";
 import { ScheduledReportsList } from "@/components/reports/scheduled-reports-list";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Reports & Analytics",
   description: "Generate and manage reports and custom dashboards",
 };
 
-export default function ReportsPage() {
+export default async function ReportsPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [templatesResult, schedulesResult, deliveriesResult] = await Promise.all([
+    supabase
+      .from("report_templates")
+      .select("*, created_by_user:users!report_templates_created_by_fkey(id, name)")
+      .order("created_at", { ascending: false }),
+    user
+      ? supabase
+          .from("report_schedules")
+          .select("*, template:report_templates(id, name, report_type)")
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("report_deliveries")
+      .select("id, sent_at, status")
+      .eq("status", "sent")
+      .gte("sent_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+  ]);
+
+  const templates = templatesResult.data ?? [];
+  const schedules = schedulesResult.data ?? [];
+  const deliveries = deliveriesResult.data ?? [];
+
+  const totalSchedules = schedules.length;
+  const activeSchedules = schedules.filter((s) => s.is_active).length;
+  const reportsSent = deliveries.length;
+
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -37,9 +69,12 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <Suspense fallback={<StatsLoadingSkeleton />}>
-        <ReportStats />
-      </Suspense>
+      <ReportStats
+        totalTemplates={templates.length}
+        scheduledReports={totalSchedules}
+        reportsSent={reportsSent}
+        activeSchedules={activeSchedules}
+      />
 
       <Tabs defaultValue="templates" className="space-y-4">
         <TabsList>
@@ -60,9 +95,7 @@ export default function ReportsPage() {
               <CardDescription>Create and manage reusable report templates</CardDescription>
             </CardHeader>
             <CardContent>
-              <Suspense fallback={<ListLoadingSkeleton />}>
-                <ReportsList />
-              </Suspense>
+              <ReportsList templates={templates} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -74,49 +107,11 @@ export default function ReportsPage() {
               <CardDescription>Automated report generation and delivery</CardDescription>
             </CardHeader>
             <CardContent>
-              <Suspense fallback={<ListLoadingSkeleton />}>
-                <ScheduledReportsList />
-              </Suspense>
+              <ScheduledReportsList schedules={schedules} />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-function StatsLoadingSkeleton() {
-  return (
-    <div className="grid gap-4 md:grid-cols-4">
-      {[1, 2, 3, 4].map((i) => (
-        <Card key={i}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-4 bg-muted animate-pulse rounded" />
-          </CardHeader>
-          <CardContent>
-            <div className="h-8 w-16 bg-muted animate-pulse rounded mb-2" />
-            <div className="h-3 w-32 bg-muted animate-pulse rounded" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function ListLoadingSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
-          <div className="h-12 w-12 bg-muted animate-pulse rounded" />
-          <div className="flex-1 space-y-2">
-            <div className="h-4 w-48 bg-muted animate-pulse rounded" />
-            <div className="h-3 w-64 bg-muted animate-pulse rounded" />
-          </div>
-          <div className="h-8 w-24 bg-muted animate-pulse rounded" />
-        </div>
-      ))}
     </div>
   );
 }
