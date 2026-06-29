@@ -49,14 +49,6 @@ export async function GET(req: NextRequest) {
       clientId = userData?.client_id || null;
     }
 
-    if (!clientId) {
-      return apiError(req, {
-        status: 400,
-        code: "BAD_REQUEST",
-        message: "No client context",
-      });
-    }
-
     const { data: allFeatures, error: featuresError } = await supabase
       .from("features")
       .select("id, name, display_name, description, category, is_enabled_by_default")
@@ -64,6 +56,20 @@ export async function GET(req: NextRequest) {
       .order("display_name");
 
     if (featuresError) throw featuresError;
+
+    // For admins with no client context, return platform defaults with no counts
+    if (!clientId) {
+      const features = (allFeatures || []).map((f) => ({
+        name: f.name,
+        displayName: f.display_name,
+        description: f.description,
+        isEnabled: f.is_enabled_by_default,
+        itemCount: 0,
+        config: null,
+      }));
+      const payload = { clientId: null, features, isStaff, noClientContext: true };
+      return apiSuccess(req, payload, { extra: payload });
+    }
 
     const featureIds = (allFeatures || []).map((f) => f.id);
     const { data: clientOverrides } = await supabase
@@ -105,7 +111,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    const payload = { clientId, features, isStaff };
+    const payload = { clientId, features, isStaff, noClientContext: false };
     return apiSuccess(req, payload, { extra: payload });
   } catch (error) {
     console.error("Error fetching marketing features:", error);
