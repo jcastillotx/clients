@@ -47,6 +47,7 @@ import {
   Archive,
   BookOpen,
   DollarSign,
+  ListChecks,
   Menu,
   X,
   ChevronDown,
@@ -346,6 +347,7 @@ const navigationSections: NavSection[] = [
       { name: "Feature Flags", href: "/admin/features", icon: Sparkles, access: "admin" },
       { name: "Financial Overview", href: "/admin/financial", icon: DollarSign, access: "admin" },
       { name: "All Support Tickets", href: "/admin/tickets", icon: HelpCircle, access: "admin" },
+      { name: "Project Task Lists", href: "/admin/project-task-templates", icon: ListChecks, access: "admin" },
       {
         name: "Invoice & Email Templates",
         href: "/admin/settings/templates",
