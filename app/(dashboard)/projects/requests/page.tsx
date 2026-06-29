@@ -60,7 +60,9 @@ export default async function ProjectRequestsPage() {
       ])
     : [{ data: null }, { data: [] }];
 
-  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
+  // Use DB as authoritative source for admin status (not JWT metadata)
+  const isAdmin = Boolean(dbUser?.is_super_admin);
+
   const roleNames = (roleRows || []).map((row: unknown) => {
     const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
     if (Array.isArray(roleRow.role)) {
@@ -69,19 +71,8 @@ export default async function ProjectRequestsPage() {
     return String(roleRow.role?.name || "").toLowerCase();
   });
 
-  const isAdmin = Boolean(
-    dbUser?.is_super_admin ||
-      user?.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
-  );
-
   const isStaff = Boolean(
     isAdmin ||
-      metadataRole === "staff" ||
-      metadataRole === "account_manager" ||
       roleNames.includes("staff") ||
       roleNames.includes("account_manager"),
   );

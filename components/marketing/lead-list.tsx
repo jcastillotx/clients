@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,17 +16,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Star } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Eye, Mail, Phone, Star, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/utils/format";
+import { fetchApi } from "@/lib/api/client";
 import type { Lead } from "@/lib/db/schema/marketing";
 
-const mockLeads: Lead[] = [];
-
 export function LeadList() {
-  const [leads] = useState<Lead[]>(mockLeads);
+  const router = useRouter();
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
+
+  useEffect(() => {
+    fetchApi<Lead[]>("/api/marketing/leads", {}, { fallbackMessage: "Failed to load leads" })
+      .then((data) => setLeads(Array.isArray(data) ? data : []))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load leads"))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this lead?")) return;
+    try {
+      await fetchApi(`/api/marketing/leads/${id}`, { method: "DELETE" }, { fallbackMessage: "Failed to delete lead" });
+      setLeads((prev) => prev.filter((l) => l.id !== id));
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete lead");
+    }
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -69,6 +89,27 @@ export function LeadList() {
     const matchesSource = sourceFilter === "all" || lead.source === sourceFilter;
     return matchesSearch && matchesStatus && matchesSource;
   });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Error Loading Leads</CardTitle>
+          <CardDescription>{error}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   if (leads.length === 0) {
     return (
@@ -199,20 +240,20 @@ export function LeadList() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/marketing/leads/${lead.id}`)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/marketing/leads/${lead.id}/edit`)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Lead
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => window.open(`mailto:${lead.email}`, "_blank")}>
                             <Mail className="mr-2 h-4 w-4" />
                             Send Email
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(lead.id)}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>

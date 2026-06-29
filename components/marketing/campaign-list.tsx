@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,14 +14,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Trash2, Eye, TrendingUp } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Eye, TrendingUp, Loader2 } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils/format";
+import { fetchApi } from "@/lib/api/client";
 import type { Campaign } from "@/lib/db/schema/marketing";
 
-const mockCampaigns: Campaign[] = [];
-
 export function CampaignList() {
-  const [campaigns] = useState<Campaign[]>(mockCampaigns);
+  const router = useRouter();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchApi<Campaign[]>("/api/marketing/campaigns", {}, { fallbackMessage: "Failed to load campaigns" })
+      .then((data) => setCampaigns(Array.isArray(data) ? data : []))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load campaigns"))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this campaign?")) return;
+    try {
+      await fetchApi(`/api/marketing/campaigns/${id}`, { method: "DELETE" }, { fallbackMessage: "Failed to delete campaign" });
+      setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete campaign");
+    }
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -47,6 +67,27 @@ export function CampaignList() {
     };
     return colors[type] || "bg-gray-100 text-gray-800";
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Error Loading Campaigns</CardTitle>
+          <CardDescription>{error}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   if (campaigns.length === 0) {
     return (
@@ -127,16 +168,16 @@ export function CampaignList() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/marketing/campaigns/${campaign.id}`)}>
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/marketing/campaigns/${campaign.id}/edit`)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Campaign
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(campaign.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>

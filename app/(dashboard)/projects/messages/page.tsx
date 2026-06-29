@@ -27,30 +27,12 @@ export default async function ProjectMessagesPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: dbUser }, { data: roleRows }] = user
-    ? await Promise.all([
-        supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
-      ])
-    : [{ data: null }, { data: [] }];
+  const { data: dbUser } = user
+    ? await supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle()
+    : { data: null };
 
-  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
-  const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
-    if (Array.isArray(roleRow.role)) {
-      return String(roleRow.role[0]?.name || "").toLowerCase();
-    }
-    return String(roleRow.role?.name || "").toLowerCase();
-  });
-
-  const isAdmin = Boolean(
-    dbUser?.is_super_admin ||
-      user?.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
-  );
+  // Use DB as authoritative source for admin status (not JWT metadata)
+  const isAdmin = Boolean(dbUser?.is_super_admin);
 
   let query = supabase
     .from("requests")
@@ -71,32 +53,33 @@ export default async function ProjectMessagesPage() {
     client: { id: string; company_name: string } | { id: string; company_name: string }[] | null;
   }>;
 
-  const projects: ProjectWithMessages[] = [];
+  const projects: ProjectWithMessages[] = await Promise.all(
+    requests.map(async (row) => {
+      const [{ count }, { data: latest }] = await Promise.all([
+        supabase
+          .from("request_comments")
+          .select("id", { count: "exact", head: true })
+          .eq("request_id", row.id),
+        supabase
+          .from("request_comments")
+          .select("created_at")
+          .eq("request_id", row.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
-  for (const row of requests) {
-    const { count } = await supabase
-      .from("request_comments")
-      .select("id", { count: "exact", head: true })
-      .eq("request_id", row.id);
-
-    const { data: latest } = await supabase
-      .from("request_comments")
-      .select("created_at")
-      .eq("request_id", row.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    projects.push({
-      id: row.id,
-      title: row.title,
-      status: row.status,
-      created_at: row.created_at,
-      client: Array.isArray(row.client) ? row.client[0] || null : row.client,
-      messageCount: count || 0,
-      latestMessageAt: latest?.created_at || null,
-    });
-  }
+      return {
+        id: row.id,
+        title: row.title,
+        status: row.status,
+        created_at: row.created_at,
+        client: Array.isArray(row.client) ? row.client[0] || null : row.client,
+        messageCount: count || 0,
+        latestMessageAt: latest?.created_at || null,
+      };
+    }),
+  );
 
   const sorted = projects.sort((a, b) => {
     const aTime = a.latestMessageAt || a.created_at;

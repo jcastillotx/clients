@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,10 +9,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/utils/format";
-import { Facebook, Instagram, Linkedin, Twitter, Calendar as CalendarIcon, List } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Twitter, Calendar as CalendarIcon, List, Loader2 } from "lucide-react";
+import { fetchApi } from "@/lib/api/client";
 import type { ContentCalendarItem } from "@/lib/db/schema/marketing";
-
-const mockContent: ContentCalendarItem[] = [];
 
 const platformIcons = {
   facebook: Facebook,
@@ -22,9 +22,23 @@ const platformIcons = {
 };
 
 export function ContentCalendar() {
+  const router = useRouter();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedPlatform, setSelectedPlatform] = useState<string>("all");
-  const [content] = useState<ContentCalendarItem[]>(mockContent);
+  const [content, setContent] = useState<ContentCalendarItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchApi<ContentCalendarItem[]>(
+      "/api/marketing/content-calendar",
+      {},
+      { fallbackMessage: "Failed to load content calendar" },
+    )
+      .then((data) => setContent(Array.isArray(data) ? data : []))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load content calendar"))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -68,6 +82,27 @@ export function ContentCalendar() {
   };
 
   const filteredContent = content.filter((item) => selectedPlatform === "all" || item.platform === selectedPlatform);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Error Loading Content Calendar</CardTitle>
+          <CardDescription>{error}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   if (content.length === 0) {
     return (
@@ -197,7 +232,7 @@ export function ContentCalendar() {
                         )}
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => router.push(`/marketing/content-calendar/${item.id}/edit`)}>
                       Edit
                     </Button>
                   </div>

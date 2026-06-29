@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { FinancialStats } from "@/components/admin/financial/financial-stats";
@@ -36,31 +36,34 @@ export default async function FinancialDashboard() {
   const currentMonthStart = startOfMonth(today);
   const currentMonthEnd = endOfMonth(today);
 
+  // Use admin client so all clients' invoices are visible (bypasses RLS)
+  const invoiceClient = createAdminClientIfAvailable() ?? supabase;
+
   // Fetch financial stats
   const [
     { data: allInvoices },
-    { data: paidInvoices },
+    { data: invoiceRows },
     { data: pendingInvoices },
     { data: overdueInvoices },
     { data: monthlyInvoices },
     { data: last30DaysRevenue },
   ] = await Promise.all([
     // Total invoices
-    supabase.from("invoices").select("amount"),
-    // Paid invoices
-    supabase.from("invoices").select("amount, paid_at").eq("status", "paid"),
+    invoiceClient.from("invoices").select("amount"),
+    // Paid invoices — need created_at to compute payment days
+    invoiceClient.from("invoices").select("amount, created_at, paid_at").eq("status", "paid"),
     // Pending invoices
-    supabase.from("invoices").select("amount").eq("status", "sent"),
+    invoiceClient.from("invoices").select("amount").eq("status", "sent"),
     // Overdue invoices (sent but past due date)
-    supabase.from("invoices").select("amount, due_date").eq("status", "sent").lt("due_date", today.toISOString()),
+    invoiceClient.from("invoices").select("amount, due_date").eq("status", "sent").lt("due_date", today.toISOString()),
     // Current month invoices
-    supabase
+    invoiceClient
       .from("invoices")
       .select("amount, created_at")
       .gte("created_at", currentMonthStart.toISOString())
       .lte("created_at", currentMonthEnd.toISOString()),
     // Last 30 days revenue (grouped by day)
-    supabase
+    invoiceClient
       .from("invoices")
       .select("amount, paid_at, created_at")
       .eq("status", "paid")
@@ -69,20 +72,23 @@ export default async function FinancialDashboard() {
 
   // Calculate stats
   const totalRevenue = allInvoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
-  const paidRevenue = paidInvoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
+  const paidRevenue = invoiceRows?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
   const pendingRevenue = pendingInvoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
   const overdueRevenue = overdueInvoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
   const monthlyRevenue = monthlyInvoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
 
-  // Calculate average payment time
+  // Calculate average payment time: days between invoice creation and payment
+  const paidWithDates = (invoiceRows || []).filter((inv) => inv.paid_at && inv.created_at);
   const avgPaymentDays =
-    paidInvoices && paidInvoices.length > 0
-      ? paidInvoices.reduce((sum, inv) => {
-          const created = new Date(inv.paid_at || "");
-          const paid = new Date(inv.paid_at || "");
-          const days = Math.floor((paid.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-          return sum + days;
-        }, 0) / paidInvoices.length
+    paidWithDates.length > 0
+      ? Math.round(
+          paidWithDates.reduce((sum, inv) => {
+            const days =
+              (new Date(inv.paid_at!).getTime() - new Date(inv.created_at).getTime()) /
+              (1000 * 60 * 60 * 24);
+            return sum + days;
+          }, 0) / paidWithDates.length,
+        )
       : 0;
 
   const stats = {
@@ -92,10 +98,10 @@ export default async function FinancialDashboard() {
     overdueRevenue,
     monthlyRevenue,
     totalInvoices: allInvoices?.length || 0,
-    paidInvoices: paidInvoices?.length || 0,
+    paidInvoices: invoiceRows?.length || 0,
     pendingInvoices: pendingInvoices?.length || 0,
     overdueInvoices: overdueInvoices?.length || 0,
-    avgPaymentDays: Math.round(avgPaymentDays),
+    avgPaymentDays,
   };
 
   // Revenue over time data
