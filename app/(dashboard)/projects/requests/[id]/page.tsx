@@ -13,6 +13,7 @@ import { ProjectRequestMessaging } from "@/components/projects/project-request-m
 import { ProjectRequestFeedback } from "@/components/projects/project-request-feedback";
 import { ProjectRequestReviewPanel } from "@/components/projects/project-request-review-panel";
 import { DeleteProjectRequestButton } from "@/components/projects/delete-project-request-button";
+import { CreateProjectFromRequestButton } from "@/components/projects/create-project-from-request-button";
 
 interface RequestRow {
   id: string;
@@ -221,6 +222,17 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
           </p>
         </div>
         <div className="flex gap-2">
+          <CreateProjectFromRequestButton
+            requestId={id}
+            requestTitle={request.title}
+            requestStatus={request.status}
+            clientId={request.client?.id ?? ""}
+            estimateAmount={request.custom_fields?.review?.estimateAmount}
+            estimateCurrency={request.custom_fields?.review?.estimateCurrency}
+            estimatedStartDate={request.custom_fields?.review?.estimatedStartDate}
+            estimatedEndDate={request.custom_fields?.review?.estimatedEndDate}
+            executiveSummary={request.custom_fields?.executiveSummary}
+          />
           {isAdmin && <DeleteProjectRequestButton requestId={id} />}
           <Button asChild>
             <Link href="/projects/requests/new">New Request</Link>

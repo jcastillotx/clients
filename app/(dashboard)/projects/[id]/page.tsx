@@ -14,8 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MilestoneList } from "@/components/projects/milestone-list";
-import { DeliverableList } from "@/components/projects/deliverable-list";
+import { ProjectMilestonesSection } from "@/components/projects/project-milestones-section";
+import { ProjectDeliverablesSection } from "@/components/projects/project-deliverables-section";
 import { ProjectReviewPanel } from "@/components/projects/project-review-panel";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -24,12 +24,12 @@ import {
   Columns3,
   DollarSign,
   Edit,
+  ExternalLink,
   MessageCircleMore,
   MessageSquareText,
   Target,
   Timer,
   TrendingUp,
-  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -135,6 +135,15 @@ async function ProjectDetails({ id }: { id: string }) {
             <Badge className={statusColors[project.status]}>{statusLabels[project.status]}</Badge>
           </div>
           <p className="text-muted-foreground">{project.description}</p>
+          {project.metadata?.sourceProjectRequestId && (
+            <Link
+              href={`/projects/requests/${project.metadata.sourceProjectRequestId}`}
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mt-1"
+            >
+              <ExternalLink className="h-3 w-3" />
+              View original request
+            </Link>
+          )}
         </div>
         <div className="flex gap-2">
           <ApplyTemplateButton projectId={project.id} projectName={project.name} />
@@ -320,23 +329,15 @@ async function ProjectDetails({ id }: { id: string }) {
                 </div>
               </Link>
             </Button>
-            <Button variant="outline" asChild className="h-auto py-4">
-              <Link href={`/projects/${project.id}/team`}>
-                <div className="flex flex-col items-center gap-2">
-                  <Users className="h-6 w-6" />
-                  <span>Team Members</span>
-                </div>
-              </Link>
-            </Button>
           </div>
         </TabsContent>
 
         <TabsContent value="milestones" className="mt-6">
-          <MilestoneList milestones={project.milestones} />
+          <ProjectMilestonesSection projectId={project.id} initialMilestones={project.milestones} />
         </TabsContent>
 
         <TabsContent value="deliverables" className="mt-6">
-          <DeliverableList deliverables={project.deliverables} />
+          <ProjectDeliverablesSection projectId={project.id} initialDeliverables={project.deliverables} />
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-6">
