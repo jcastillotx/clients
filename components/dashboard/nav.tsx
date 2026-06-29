@@ -142,7 +142,7 @@ const navigationSections: NavSection[] = [
         icon: MessageSquareText,
       },
       {
-        name: "Project Feedback",
+        name: "Project Reviews",
         href: "/projects/feedback",
         icon: MessageCircleMore,
       },
@@ -473,7 +473,7 @@ function resolveProjectNavHref(item: NavItem, currentProjectId: string | null): 
       return `/projects/${currentProjectId}/timeline`;
     case "Project Messages":
       return `/projects/${currentProjectId}/messages`;
-    case "Project Feedback":
+    case "Project Reviews":
       return `/projects/${currentProjectId}/feedback`;
     case "Time Tracking":
       return `/time-tracking?projectId=${currentProjectId}`;

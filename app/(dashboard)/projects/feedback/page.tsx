@@ -1,49 +1,32 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminUser } from "@/lib/rbac/check";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, ArrowRight, Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ArrowRight, CheckCircle2, Clock, MessageSquare, Globe, ImageIcon } from "lucide-react";
 
 export const metadata = {
-  title: "Project Feedback",
-  description: "View feedback and reviews across all your project requests",
+  title: "Project Reviews",
+  description: "Design feedback and review activity across all your projects",
 };
 
-interface FeedbackEntry {
-  id: string;
-  content: string;
-  created_at: string;
-  request_id: string;
-  user: { id: string; name: string; avatar?: string | null } | null;
-}
+const statusColors: Record<string, string> = {
+  planning: "bg-blue-500",
+  active: "bg-green-500",
+  on_hold: "bg-yellow-500",
+  completed: "bg-gray-500",
+  cancelled: "bg-red-500",
+};
 
-interface ProjectFeedbackGroup {
-  requestId: string;
-  title: string;
-  status: string;
-  client: { id: string; company_name: string } | null;
-  entries: Array<{
-    id: string;
-    rating: number | null;
-    message: string;
-    createdAt: string;
-    user: { id: string; name: string; avatar?: string | null } | null;
-  }>;
-}
-
-function parseFeedback(content: string) {
-  const match = content.match(/^\[rating:(\d)\]\s*/i);
-  if (!match) {
-    return { rating: null as number | null, message: content };
-  }
-  return {
-    rating: Number(match[1]),
-    message: content.replace(/^\[rating:(\d)\]\s*/i, "").trim(),
-  };
-}
+const reviewStatusLabel: Record<string, string> = {
+  open: "Open",
+  in_review: "In Review",
+  resolved: "Resolved",
+  archived: "Archived",
+};
 
 export default async function ProjectFeedbackPage() {
   const supabase = await createClient();
@@ -58,152 +41,246 @@ export default async function ProjectFeedbackPage() {
       ])
     : [{ data: null }, { data: [] }];
 
-  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
-  const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
-    if (Array.isArray(roleRow.role)) {
-      return String(roleRow.role[0]?.name || "").toLowerCase();
-    }
-    return String(roleRow.role?.name || "").toLowerCase();
-  });
+  const isAdmin = user ? isAdminUser(user, dbUser, roleRows) : false;
 
-  const isAdmin = Boolean(
-    dbUser?.is_super_admin ||
-      user?.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
-  );
-
-  let query = supabase
-    .from("requests")
-    .select("id, title, status, client:clients(id, company_name)")
-    .contains("custom_fields", { type: "project" })
-    .order("created_at", { ascending: false });
+  // Get all project_review_items with project info
+  let itemQuery = supabase
+    .from("project_review_items")
+    .select("id, project_id, title, type, status, created_at, updated_at, project:projects!inner(id, name, status, client_id, deleted_at)")
+    .is("project.deleted_at", null)
+    .order("updated_at", { ascending: false });
 
   if (!isAdmin && dbUser?.client_id) {
-    query = query.eq("client_id", dbUser.client_id);
+    itemQuery = itemQuery.eq("project.client_id", dbUser.client_id);
   }
 
-  const { data: rows } = await query;
-  const requests = (rows || []) as unknown as Array<{
-    id: string;
-    title: string;
-    status: string;
-    client: { id: string; company_name: string } | { id: string; company_name: string }[] | null;
-  }>;
+  const { data: reviewItems } = await itemQuery;
 
-  const groups: ProjectFeedbackGroup[] = [];
+  // Get recent comments across all review items (batch, not N+1)
+  const allProjectIds = [...new Set((reviewItems || []).map((i) => i.project_id))];
 
-  for (const row of requests) {
-    const { data: comments } = await supabase
-      .from("request_comments")
-      .select("id, content, created_at, user:users(id, name, avatar)")
-      .eq("request_id", row.id)
-      .order("created_at", { ascending: false })
-      .limit(5);
+  const { data: recentComments } = allProjectIds.length > 0
+    ? await supabase
+        .from("project_review_comments")
+        .select("id, review_item_id, project_id, body, status, created_at, author:users(id, name, avatar)")
+        .in("project_id", allProjectIds)
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : { data: [] };
 
-    if (!comments || comments.length === 0) continue;
+  // Group by project
+  type ReviewItem = NonNullable<typeof reviewItems>[number];
+  type Comment = NonNullable<typeof recentComments>[number];
 
-    const entries = comments.map((comment) => {
-      const parsed = parseFeedback(comment.content || "");
-      const userRelation = comment.user as
-        | { id: string; name: string; avatar?: string | null }
-        | Array<{ id: string; name: string; avatar?: string | null }>;
-      const normalizedUser = Array.isArray(userRelation) ? userRelation[0] : userRelation;
-      return {
-        id: comment.id,
-        rating: parsed.rating,
-        message: parsed.message,
-        createdAt: comment.created_at,
-        user: normalizedUser || null,
-      };
-    });
+  const projectMap = new Map<string, {
+    project: { id: string; name: string; status: string };
+    items: ReviewItem[];
+    comments: Comment[];
+    latestAt: string;
+  }>();
 
-    groups.push({
-      requestId: row.id,
-      title: row.title,
-      status: row.status,
-      client: Array.isArray(row.client) ? row.client[0] || null : row.client,
-      entries,
-    });
+  for (const item of reviewItems || []) {
+    const proj = Array.isArray(item.project) ? item.project[0] : item.project;
+    if (!proj) continue;
+    if (!projectMap.has(item.project_id)) {
+      projectMap.set(item.project_id, {
+        project: { id: proj.id, name: proj.name, status: proj.status },
+        items: [],
+        comments: [],
+        latestAt: item.updated_at,
+      });
+    }
+    const entry = projectMap.get(item.project_id)!;
+    entry.items.push(item);
+    if (item.updated_at > entry.latestAt) entry.latestAt = item.updated_at;
   }
+
+  for (const comment of recentComments || []) {
+    const entry = projectMap.get(comment.project_id);
+    if (entry) entry.comments.push(comment);
+  }
+
+  const groups = [...projectMap.values()].sort(
+    (a, b) => new Date(b.latestAt).getTime() - new Date(a.latestAt).getTime(),
+  );
+
+  // Summary stats
+  const totalOpen = (reviewItems || []).filter((i) => i.status === "open" || i.status === "in_review").length;
+  const totalResolved = (reviewItems || []).filter((i) => i.status === "resolved").length;
+  const projectsWithOpen = groups.filter((g) => g.items.some((i) => i.status === "open" || i.status === "in_review")).length;
 
   return (
     <div className="container mx-auto space-y-6 py-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Project Feedback</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Project Reviews</h1>
         <p className="mt-1 text-muted-foreground">
-          Review notes, ratings, and feedback across all your project requests.
+          Design feedback and review activity across all your projects.
         </p>
       </div>
 
+      {/* Stats row */}
+      {groups.length > 0 && (
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Clock className="h-8 w-8 text-amber-500" />
+                <div>
+                  <div className="text-2xl font-bold">{totalOpen}</div>
+                  <div className="text-sm text-muted-foreground">Open items</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="h-8 w-8 text-blue-500" />
+                <div>
+                  <div className="text-2xl font-bold">{projectsWithOpen}</div>
+                  <div className="text-sm text-muted-foreground">Projects awaiting review</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+                <div>
+                  <div className="text-2xl font-bold">{totalResolved}</div>
+                  <div className="text-sm text-muted-foreground">Resolved items</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {groups.length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center">
-            <MessageCircle className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-            <h3 className="text-lg font-semibold">No feedback yet</h3>
+          <CardContent className="py-16 text-center">
+            <MessageSquare className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+            <h3 className="text-lg font-semibold">No reviews yet</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Feedback will appear here once reviews are posted on your project requests.
+              Design review activity will appear here once items are added on a project&apos;s Reviews tab.
             </p>
+            <Button variant="outline" className="mt-4" asChild>
+              <Link href="/projects">Go to Projects</Link>
+            </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          {groups.map((group) => (
-            <Card key={group.requestId}>
-              <CardHeader className="pb-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-lg">{group.title}</CardTitle>
-                    <CardDescription>{group.client?.company_name || "Unknown client"}</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">
-                      <MessageCircle className="mr-1 h-3 w-3" />
-                      {group.entries.length} {group.entries.length === 1 ? "entry" : "entries"}
-                    </Badge>
-                    <Badge variant="outline">{group.status.replace(/_/g, " ")}</Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {group.entries.slice(0, 3).map((entry) => (
-                  <div key={entry.id} className="rounded-md border p-3">
-                    <div className="mb-1 flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={entry.user?.avatar || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {entry.user?.name?.slice(0, 1).toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{entry.user?.name || "Unknown"}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
-                      </span>
-                      {entry.rating ? (
-                        <Badge variant="secondary" className="ml-auto text-xs">
-                          <Star className="mr-0.5 h-3 w-3 fill-current" />
-                          {entry.rating}/5
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{entry.message}</p>
-                  </div>
-                ))}
+        <div className="space-y-4">
+          {groups.map((group) => {
+            const openItems = group.items.filter((i) => i.status === "open" || i.status === "in_review");
+            const resolvedItems = group.items.filter((i) => i.status === "resolved");
+            const recentComments = group.comments.slice(0, 3);
 
-                <div className="flex justify-end">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/projects/requests/${group.requestId}?tab=feedback`}>
-                      View All Feedback
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+            return (
+              <Card key={group.project.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg">{group.project.name}</CardTitle>
+                        <span
+                          className={`inline-block h-2 w-2 rounded-full ${statusColors[group.project.status] ?? "bg-gray-400"}`}
+                        />
+                      </div>
+                      <CardDescription className="mt-0.5">
+                        {group.items.length} review {group.items.length === 1 ? "item" : "items"} &middot; last activity{" "}
+                        {formatDistanceToNow(new Date(group.latestAt), { addSuffix: true })}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {openItems.length > 0 && (
+                        <Badge variant="secondary" className="text-amber-700 bg-amber-100 border-amber-200">
+                          <Clock className="mr-1 h-3 w-3" />
+                          {openItems.length} open
+                        </Badge>
+                      )}
+                      {resolvedItems.length > 0 && (
+                        <Badge variant="secondary" className="text-green-700 bg-green-100 border-green-200">
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          {resolvedItems.length} resolved
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-3">
+                  {/* Review items summary */}
+                  <div className="flex flex-wrap gap-2">
+                    {group.items.slice(0, 5).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted-foreground"
+                      >
+                        {item.type === "website" ? (
+                          <Globe className="h-3 w-3 shrink-0" />
+                        ) : (
+                          <ImageIcon className="h-3 w-3 shrink-0" />
+                        )}
+                        <span className="max-w-[160px] truncate">{item.title}</span>
+                        <Badge
+                          variant="outline"
+                          className="ml-1 px-1 py-0 text-[10px] leading-4"
+                        >
+                          {reviewStatusLabel[item.status] ?? item.status}
+                        </Badge>
+                      </div>
+                    ))}
+                    {group.items.length > 5 && (
+                      <div className="flex items-center rounded-md border px-2 py-1 text-xs text-muted-foreground">
+                        +{group.items.length - 5} more
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recent comments */}
+                  {recentComments.length > 0 && (
+                    <div className="space-y-2 pt-1">
+                      {recentComments.map((comment) => {
+                        const author = Array.isArray(comment.author) ? comment.author[0] : comment.author;
+                        return (
+                          <div key={comment.id} className="flex items-start gap-2 rounded-md bg-muted/40 px-3 py-2">
+                            <Avatar className="mt-0.5 h-5 w-5 shrink-0">
+                              <AvatarImage src={(author as { avatar?: string | null } | null)?.avatar ?? undefined} />
+                              <AvatarFallback className="text-[10px]">
+                                {((author as { name?: string } | null)?.name ?? "U").slice(0, 1).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-medium">
+                                  {(author as { name?: string } | null)?.name ?? "Unknown"}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground">
+                                  {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                                </span>
+                              </div>
+                              <p className="line-clamp-1 text-xs text-muted-foreground">{comment.body}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-1">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/projects/${group.project.id}`}>
+                        Open Project
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
