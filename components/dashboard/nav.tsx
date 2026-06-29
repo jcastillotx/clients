@@ -135,7 +135,7 @@ const navigationSections: NavSection[] = [
         href: "/projects/requests",
         icon: ClipboardCheck,
       },
-      { name: "Project Timeline", href: "/projects", icon: CalendarRange, defaultWhenNoTab: true },
+      { name: "Projects", href: "/projects", icon: CalendarRange, defaultWhenNoTab: true },
       {
         name: "Project Messages",
         href: "/projects/messages",
@@ -469,7 +469,7 @@ function resolveProjectNavHref(item: NavItem, currentProjectId: string | null): 
   }
 
   switch (item.name) {
-    case "Project Timeline":
+    case "Projects":
       return `/projects/${currentProjectId}/timeline`;
     case "Project Messages":
       return `/projects/${currentProjectId}/messages`;

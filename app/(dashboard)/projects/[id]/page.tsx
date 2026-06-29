@@ -9,7 +9,7 @@ import {
   projectCostEntries,
 } from "@/lib/db/schema/projects";
 import { eq, and, isNull } from "drizzle-orm";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectMilestonesSection } from "@/components/projects/project-milestones-section";
 import { ProjectDeliverablesSection } from "@/components/projects/project-deliverables-section";
 import { ProjectReviewPanel } from "@/components/projects/project-review-panel";
+import { ProjectTeamSection } from "@/components/projects/project-team-section";
 import { formatCurrency } from "@/lib/utils";
 import {
   Calendar,
@@ -345,33 +346,11 @@ async function ProjectDetails({ id }: { id: string }) {
         </TabsContent>
 
         <TabsContent value="team" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Members</CardTitle>
-              <CardDescription>People working on this project</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {project.teamMembers && project.teamMembers.length > 0 ? (
-                <div className="space-y-3">
-                  {project.teamMembers.map((member) => (
-                    <div key={member.userId} className="flex items-center justify-between p-3 rounded-lg border">
-                      <div>
-                        <div className="font-medium">{member.name}</div>
-                        <div className="text-sm text-muted-foreground">{member.role}</div>
-                      </div>
-                      {member.hourlyRate && (
-                        <div className="text-sm text-muted-foreground">
-                          {formatCurrency(member.hourlyRate, project.currency)}/hr
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">No team members assigned yet</div>
-              )}
-            </CardContent>
-          </Card>
+          <ProjectTeamSection
+            projectId={project.id}
+            initialTeamMembers={project.teamMembers ?? []}
+            currency={project.currency}
+          />
         </TabsContent>
       </Tabs>
     </div>
