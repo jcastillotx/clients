@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { format, isPast } from "date-fns";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Search, DollarSign, TrendingUp, Clock, Plus, AlertCircle, FileText } from "lucide-react";
+import { Search, DollarSign, TrendingUp, Clock, Plus, AlertCircle, FileText, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { fetchApi } from "@/lib/api/client";
+import { toast } from "sonner";
 
 interface Invoice {
   id: string;
@@ -49,6 +52,9 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
   const debouncedSearch = useDebounce(search, 300);
+  const [invoices, setInvoices] = useState(initialData);
+  const [deleteTarget, setDeleteTarget] = useState<Invoice | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Update URL when search or status changes
   useEffect(() => {
@@ -71,6 +77,21 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
   }, [debouncedSearch, status]);
 
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await fetchApi(`/api/invoices/${deleteTarget.id}`, { method: "DELETE" });
+      setInvoices((prev) => prev.filter((inv) => inv.id !== deleteTarget.id));
+      toast.success(`Invoice ${deleteTarget.invoice_number} deleted`);
+    } catch {
+      toast.error("Failed to delete invoice");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -155,12 +176,13 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
               <TableHead>Status</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead className="w-[60px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {initialData.length === 0 ? (
+            {invoices.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="p-0">
+                <TableCell colSpan={7} className="p-0">
                   <EmptyState
                     icon={FileText}
                     title="No invoices found"
@@ -173,7 +195,7 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
                 </TableCell>
               </TableRow>
             ) : (
-              initialData.map((invoice) => {
+              invoices.map((invoice) => {
                 const isOverdue = invoice.due_date && isPast(new Date(invoice.due_date)) && invoice.status === "sent";
                 return (
                   <TableRow
@@ -205,6 +227,22 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
                     <TableCell className="text-muted-foreground">
                       {format(new Date(invoice.created_at), "MMM d, yyyy")}
                     </TableCell>
+                    <TableCell>
+                      {invoice.status !== "paid" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(invoice);
+                          }}
+                          aria-label={`Delete invoice ${invoice.invoice_number}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })
@@ -212,6 +250,17 @@ export function InvoiceList({ initialData, totalCount, currentPage, pageSize, st
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete Invoice"
+        description={`Are you sure you want to delete invoice ${deleteTarget?.invoice_number}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (

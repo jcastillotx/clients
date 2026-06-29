@@ -113,10 +113,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   // Calculate revenue stats
   const { data: allInvoices } = await supabase.from("invoices").select("amount, status");
 
+  const activeInvoices = allInvoices?.filter((inv) => inv.status !== "cancelled") || [];
   const stats = {
-    totalRevenue: allInvoices?.reduce((sum, inv) => sum + inv.amount, 0) || 0,
-    paidRevenue: allInvoices?.filter((inv) => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0) || 0,
-    pendingRevenue: allInvoices?.filter((inv) => inv.status === "sent").reduce((sum, inv) => sum + inv.amount, 0) || 0,
+    totalRevenue: activeInvoices.reduce((sum, inv) => sum + inv.amount, 0),
+    paidRevenue: activeInvoices.filter((inv) => inv.status === "paid").reduce((sum, inv) => sum + inv.amount, 0),
+    pendingRevenue: activeInvoices.filter((inv) => inv.status === "sent").reduce((sum, inv) => sum + inv.amount, 0),
   };
 
   return (
