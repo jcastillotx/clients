@@ -54,6 +54,7 @@ interface RequestRow {
       reviewNotes?: string | null;
     };
     clientDecision?: string;
+    taskBoardId?: string;
   } | null;
   client: {
     id: string;
@@ -173,6 +174,8 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
   const review = request.custom_fields?.review;
   const publicIntake = request.custom_fields?.publicIntake;
 
+  const taskBoardId = request.custom_fields?.taskBoardId;
+
   const [attachmentsResult, tasksCountResult, meetingsCountResult, feedbackCountResult] = await Promise.all([
     supabase
       .from("documents")
@@ -180,7 +183,9 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
       .eq("request_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
-    supabase.from("staff_tasks").select("id", { count: "exact", head: true }).eq("request_id", id),
+    taskBoardId
+      ? supabase.from("staff_tasks").select("id", { count: "exact", head: true }).eq("board_id", taskBoardId)
+      : supabase.from("staff_tasks").select("id", { count: "exact", head: true }).eq("request_id", id),
     supabase.from("meetings").select("id", { count: "exact", head: true }).eq("request_id", id),
     supabase.from("request_comments").select("id", { count: "exact", head: true }).eq("request_id", id),
   ]);

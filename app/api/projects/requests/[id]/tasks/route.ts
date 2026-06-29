@@ -61,7 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { data: requestRow, error: requestError } = await supabase
       .from("requests")
-      .select("id, client_id")
+      .select("id, client_id, custom_fields")
       .eq("id", id)
       .contains("custom_fields", { type: "project" })
       .single();
@@ -74,11 +74,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return apiForbidden(request);
     }
 
-    const { data: tasks, error: tasksError } = await supabase
+    // Tasks are linked to a request via the board created at approval time.
+    // Prefer querying by board_id (taskBoardId in custom_fields) so that tasks
+    // added directly to the board show up here. Fall back to request_id for
+    // any tasks created through older flows that set it directly.
+    const taskBoardId = (requestRow.custom_fields as Record<string, unknown> | null)?.taskBoardId as string | null | undefined;
+
+    const baseQuery = supabase
       .from("staff_tasks")
       .select("id, title, description, priority, due_date, progress, completed_at, column_id, created_at, updated_at")
-      .eq("request_id", id)
       .order("created_at", { ascending: false });
+
+    const { data: tasks, error: tasksError } = taskBoardId
+      ? await baseQuery.eq("board_id", taskBoardId)
+      : await baseQuery.eq("request_id", id);
 
     if (tasksError) {
       return apiInternalError(request, tasksError.message);
