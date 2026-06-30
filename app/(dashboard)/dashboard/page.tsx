@@ -5,7 +5,7 @@ import { SupportOverview } from "@/components/dashboard/support-overview";
 import { OperationsCalendar } from "@/components/dashboard/operations-calendar";
 import { LatestMessages } from "@/components/dashboard/latest-messages";
 import { LatestInvoices } from "@/components/dashboard/latest-invoices";
-import { db } from "@/lib/db";
+import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { conversations, conversationParticipants, messages, messageReads } from "@/lib/db/schema/messages";
 import { users } from "@/lib/db/schema/users";
 import { desc, eq, sql } from "drizzle-orm";
@@ -267,8 +267,19 @@ export default async function DashboardPage() {
       ]
     : [];
 
-  const latestConversations = isStaff || scopedClientId
-    ? await db
+  let latestConversations: Array<{
+    id: string;
+    title: string | null;
+    lastMessageAt: Date | null;
+    lastMessage: string | null;
+    lastMessageType: string | null;
+    unreadCount: number;
+    participants: Array<{ id: string; name: string; email: string }> | null;
+  }> = [];
+
+  if (isStaff || scopedClientId) {
+    try {
+      latestConversations = await db
         .select({
           id: conversations.id,
           title: conversations.title,
@@ -310,8 +321,13 @@ export default async function DashboardPage() {
         .innerJoin(conversationParticipants, eq(conversationParticipants.conversationId, conversations.id))
         .where(eq(conversationParticipants.userId, user.id))
         .orderBy(desc(conversations.lastMessageAt))
-        .limit(5)
-    : [];
+        .limit(5);
+    } catch (err) {
+      if (!isDatabaseConfigurationError(err)) {
+        console.error("[dashboard] conversations query failed:", err);
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col gap-8 p-5 md:p-8">
