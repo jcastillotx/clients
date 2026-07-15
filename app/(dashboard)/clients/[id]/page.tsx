@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import {
   hasAnyRole,
@@ -114,6 +114,11 @@ export default async function ClientDetailPage({
       canDeleteClients || hasManagementRoleDb || hasManagementMetadataRole;
   }
 
+  // Use admin client for internal lookups (primary contact, staff) to avoid
+  // RLS blocking the join to users when the logged-in user is an account_manager.
+  const adminClient = createAdminClientIfAvailable();
+  const lookupClient = adminClient ?? supabase;
+
   let primaryContact: {
     id: string;
     name: string;
@@ -126,7 +131,7 @@ export default async function ClientDetailPage({
     typeof client.primary_contact_id === "string" &&
     client.primary_contact_id.length > 0
   ) {
-    const { data: contact, error: contactError } = await supabase
+    const { data: contact, error: contactError } = await lookupClient
       .from("users")
       .select("id, name, email, phone, avatar")
       .eq("id", client.primary_contact_id)
@@ -182,7 +187,7 @@ export default async function ClientDetailPage({
       .eq("client_id", id)
       .order("created_at", { ascending: false })
       .limit(10),
-    supabase
+    lookupClient
       .from("staff_assignments")
       .select(
         `
