@@ -1,4 +1,7 @@
-import { createClient, createAdminClientIfAvailable } from "@/lib/supabase/server";
+import {
+  createClient,
+  createAdminClientIfAvailable,
+} from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import {
   hasAnyRole,
@@ -9,6 +12,7 @@ import {
 import { ClientDetail } from "@/components/clients/client-detail";
 import { ClientRequests } from "@/components/clients/client-requests";
 import { ClientInvoices } from "@/components/clients/client-invoices";
+import { ClientWorkspaceNav } from "@/components/clients/client-workspace-nav";
 
 interface ClientDetailPageProps {
   params: Promise<{
@@ -254,6 +258,8 @@ export default async function ClientDetailPage({
 
   return (
     <div className="flex flex-col gap-8 p-8">
+      <ClientWorkspaceNav clientId={id} companyName={client.company_name} />
+
       {/* Client details */}
       <ClientDetail
         canArchiveClient={canArchiveClient}

@@ -14,7 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchApi } from "@/lib/api/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Upload, X, FileIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { formatFileSize } from "@/lib/storage/utils";
@@ -30,14 +36,24 @@ interface UploadDialogProps {
   clients: Client[];
   onSuccess: (document: any) => void;
   defaultClientId?: string;
+  defaultTags?: string[];
+  hideClientField?: boolean;
 }
 
-export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultClientId }: UploadDialogProps) {
+export function UploadDialog({
+  open,
+  onOpenChange,
+  clients,
+  onSuccess,
+  defaultClientId,
+  defaultTags = [],
+  hideClientField = false,
+}: UploadDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [clientId, setClientId] = useState(defaultClientId || "");
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState(defaultTags.join(", "));
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -116,7 +132,7 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
       setFile(null);
       setName("");
       setDescription("");
-      setTags("");
+      setTags(defaultTags.join(", "));
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -124,7 +140,9 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
       onSuccess(document);
     } catch (error) {
       console.error("Upload error:", error);
-      setUploadError(error instanceof Error ? error.message : "Failed to upload document");
+      setUploadError(
+        error instanceof Error ? error.message : "Failed to upload document",
+      );
     } finally {
       clearInterval(progressInterval);
       setIsUploading(false);
@@ -139,7 +157,8 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
           <DialogHeader>
             <DialogTitle>Upload Document</DialogTitle>
             <DialogDescription>
-              Upload a new document to the library. Files up to 100MB are supported.
+              Upload a new document to the library. Files up to 100MB are
+              supported.
             </DialogDescription>
           </DialogHeader>
 
@@ -156,7 +175,9 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
               {!file ? (
                 <div
                   className={`flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
-                    isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
+                    isDragging
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/25"
                   }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -164,15 +185,20 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Upload className="mb-4 h-10 w-10 text-muted-foreground" />
-                  <p className="mb-2 text-sm font-medium">Drop your file here, or click to browse</p>
+                  <p className="mb-2 text-sm font-medium">
+                    Drop your file here, or click to browse
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Supported formats: PDF, Images, Documents, Archives (max 100MB)
+                    Supported formats: PDF, Images, Documents, Archives (max
+                    100MB)
                   </p>
                   <input
                     ref={fileInputRef}
                     type="file"
                     className="hidden"
-                    onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      handleFileChange(e.target.files?.[0] || null)
+                    }
                     disabled={isUploading}
                   />
                 </div>
@@ -182,7 +208,9 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
                     <FileIcon className="h-10 w-10 text-primary" />
                     <div>
                       <p className="font-medium">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatFileSize(file.size)}
+                      </p>
                     </div>
                   </div>
                   <Button
@@ -217,21 +245,28 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
             </div>
 
             {/* Client Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="client">Client *</Label>
-              <Select value={clientId} onValueChange={setClientId} disabled={isUploading} required>
-                <SelectTrigger id="client">
-                  <SelectValue placeholder="Select a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.company_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {!hideClientField ? (
+              <div className="space-y-2">
+                <Label htmlFor="client">Client *</Label>
+                <Select
+                  value={clientId}
+                  onValueChange={setClientId}
+                  disabled={isUploading}
+                  required
+                >
+                  <SelectTrigger id="client">
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.company_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
 
             {/* Description */}
             <div className="space-y-2">
@@ -256,7 +291,9 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
                 placeholder="contract, legal, signed (comma-separated)"
                 disabled={isUploading}
               />
-              <p className="text-xs text-muted-foreground">Separate multiple tags with commas</p>
+              <p className="text-xs text-muted-foreground">
+                Separate multiple tags with commas
+              </p>
             </div>
 
             {/* Upload Progress */}
@@ -272,10 +309,18 @@ export function UploadDialog({ open, onOpenChange, clients, onSuccess, defaultCl
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isUploading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isUploading}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={!file || !name || !clientId || isUploading}>
+            <Button
+              type="submit"
+              disabled={!file || !name || !clientId || isUploading}
+            >
               {isUploading ? "Uploading..." : "Upload"}
             </Button>
           </DialogFooter>

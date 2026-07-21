@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import {
   apiError,
   apiForbidden,
@@ -27,15 +30,16 @@ export async function POST(request: Request) {
       return apiUnauthorized(request);
     }
 
-    const canCreate = await hasPermission("documents.create", {
-      supabase,
-      userId: user.id,
-    });
+    const access = await resolveRouteAccess(supabase, user);
+    const canCreate =
+      access.isStaff ||
+      (await hasPermission("documents.create", {
+        supabase,
+        userId: user.id,
+      }));
     if (!canCreate) {
       return apiForbidden(request, "Permission denied");
     }
-
-    const access = await resolveRouteAccess(supabase, user);
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -88,7 +92,10 @@ export async function POST(request: Request) {
       return apiInternalError(request, uploadResult.error);
     }
 
-    const { data: document, error: dbError } = await supabase
+    const dbClient = access.isStaff
+      ? (createAdminClientIfAvailable() ?? supabase)
+      : supabase;
+    const { data: document, error: dbError } = await dbClient
       .from("documents")
       .insert({
         name,
@@ -107,7 +114,10 @@ export async function POST(request: Request) {
       .single();
 
     if (dbError) {
-      await deleteS3Object({ credentials: s3Credentials, key: uploadResult.key });
+      await deleteS3Object({
+        credentials: s3Credentials,
+        key: uploadResult.key,
+      });
       return apiInternalError(request, dbError.message);
     }
 

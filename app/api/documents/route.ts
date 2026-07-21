@@ -4,7 +4,10 @@ import {
 } from "@/lib/api/pagination";
 import { apiError, apiForbidden, apiSuccess } from "@/lib/api/response";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
@@ -29,7 +32,7 @@ export async function GET(request: Request) {
     }
 
     const access = await resolveRouteAccess(supabase, user);
-    const adminClient = access.isAdmin ? createAdminClientIfAvailable() : null;
+    const adminClient = access.isStaff ? createAdminClientIfAvailable() : null;
     const dbClient = adminClient ?? supabase;
 
     if (clientId && !canAccessClient(access, clientId)) {
@@ -50,15 +53,12 @@ export async function GET(request: Request) {
       .is("deleted_at", null)
       .eq("is_latest_version", true)
       .order("created_at", { ascending: false })
-      .range(
-        pagination.offset,
-        pagination.offset + pagination.limit - 1,
-      );
+      .range(pagination.offset, pagination.offset + pagination.limit - 1);
 
     // Filter by client if provided
     if (clientId) {
       query = query.eq("client_id", clientId);
-    } else if (!access.isAdmin && access.clientId) {
+    } else if (!access.isStaff && access.clientId) {
       query = query.eq("client_id", access.clientId);
     }
 

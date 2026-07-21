@@ -1,4 +1,7 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { hasPermission } from "@/lib/rbac/permissions";
 import { redirect } from "next/navigation";
 import { DocumentLibrary } from "@/components/documents/document-library";
@@ -22,7 +25,7 @@ export default async function DocumentsPage({
   }
 
   const access = await resolveRouteAccess(supabase, user);
-  const adminClient = access.isAdmin ? createAdminClientIfAvailable() : null;
+  const adminClient = access.isStaff ? createAdminClientIfAvailable() : null;
   const dbClient = adminClient ?? supabase;
 
   // Check permission (fallback to true if RBAC not set up)
@@ -48,7 +51,7 @@ export default async function DocumentsPage({
 
   if (resolvedSearchParams.clientId) {
     query = query.eq("client_id", resolvedSearchParams.clientId);
-  } else if (!access.isAdmin && access.clientId) {
+  } else if (!access.isStaff && access.clientId) {
     query = query.eq("client_id", access.clientId);
   }
 
@@ -62,14 +65,17 @@ export default async function DocumentsPage({
   let foldersQuery = dbClient.from("folders").select("*").order("name");
   if (resolvedSearchParams.clientId) {
     foldersQuery = foldersQuery.eq("client_id", resolvedSearchParams.clientId);
-  } else if (!access.isAdmin && access.clientId) {
+  } else if (!access.isStaff && access.clientId) {
     foldersQuery = foldersQuery.eq("client_id", access.clientId);
   }
   const { data: folders } = await foldersQuery;
 
   // Fetch clients for filter dropdown
-  let clientsQuery = dbClient.from("clients").select("id, company_name").order("company_name");
-  if (!access.isAdmin && access.clientId) {
+  let clientsQuery = dbClient
+    .from("clients")
+    .select("id, company_name")
+    .order("company_name");
+  if (!access.isStaff && access.clientId) {
     clientsQuery = clientsQuery.eq("id", access.clientId);
   }
   const { data: clients } = await clientsQuery;

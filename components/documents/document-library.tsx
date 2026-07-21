@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Search, Grid, List } from "lucide-react";
 import { DocumentGrid } from "./document-grid";
@@ -56,6 +62,9 @@ interface DocumentLibraryProps {
   canUpload: boolean;
   initialClientId?: string;
   initialRequestId?: string;
+  title?: string;
+  description?: string;
+  lockClient?: boolean;
 }
 
 export function DocumentLibrary({
@@ -64,11 +73,16 @@ export function DocumentLibrary({
   clients,
   canUpload,
   initialClientId,
+  title = "Documents",
+  description = "Manage and organize your documents and files",
+  lockClient = false,
 }: DocumentLibraryProps) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [folders] = useState(initialFolders);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedClient, setSelectedClient] = useState(initialClientId || "all");
+  const [selectedClient, setSelectedClient] = useState(
+    initialClientId || "all",
+  );
   const [selectedFolder, setSelectedFolder] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -79,10 +93,14 @@ export function DocumentLibrary({
     const matchesSearch =
       doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      doc.tags?.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
 
-    const matchesClient = selectedClient === "all" || doc.client_id === selectedClient;
-    const matchesFolder = selectedFolder === "all" || doc.folder_id === selectedFolder;
+    const matchesClient =
+      selectedClient === "all" || doc.client_id === selectedClient;
+    const matchesFolder =
+      selectedFolder === "all" || doc.folder_id === selectedFolder;
 
     return matchesSearch && matchesClient && matchesFolder;
   });
@@ -140,8 +158,8 @@ export function DocumentLibrary({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-          <p className="text-muted-foreground">Manage and organize your documents and files</p>
+          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+          <p className="text-muted-foreground">{description}</p>
         </div>
         {canUpload && (
           <Button onClick={() => setUploadDialogOpen(true)}>
@@ -162,22 +180,27 @@ export function DocumentLibrary({
             className="pl-9"
           />
         </div>
-        <Select value={selectedClient} onValueChange={(val) => {
-          setSelectedClient(val);
-          setSelectedFolder("all"); // Reset folder when client changes
-        }}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="All clients" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All clients</SelectItem>
-            {clients.map((client) => (
-              <SelectItem key={client.id} value={client.id}>
-                {client.company_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!lockClient ? (
+          <Select
+            value={selectedClient}
+            onValueChange={(val) => {
+              setSelectedClient(val);
+              setSelectedFolder("all"); // Reset folder when client changes
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="All clients" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All clients</SelectItem>
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.company_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
         <Select value={selectedFolder} onValueChange={setSelectedFolder}>
           <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="All folders" />
@@ -191,7 +214,10 @@ export function DocumentLibrary({
             ))}
           </SelectContent>
         </Select>
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "grid" | "list")}>
+        <Tabs
+          value={viewMode}
+          onValueChange={(v) => setViewMode(v as "grid" | "list")}
+        >
           <TabsList>
             <TabsTrigger value="grid">
               <Grid className="h-4 w-4" />
@@ -213,7 +239,7 @@ export function DocumentLibrary({
               ? "Try adjusting your filters"
               : "Upload your first document to get started"}
           </p>
-          {canUpload && !searchQuery && selectedClient === "all" && (
+          {canUpload && !searchQuery && (
             <Button onClick={() => setUploadDialogOpen(true)}>
               <Upload className="mr-2 h-4 w-4" />
               Upload Document

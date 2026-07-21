@@ -19,6 +19,7 @@ type DbUser = {
 export type RouteAccess = {
   clientId: string | null;
   isAdmin: boolean;
+  isStaff?: boolean;
 };
 
 export function normalizeRoleName(roleRow: RoleRow): string {
@@ -51,6 +52,23 @@ export function isAdminAccess(
   );
 }
 
+export function isStaffAccess(
+  user: AuthUser,
+  dbUser: DbUser | null,
+  roleRows: RoleRow[] | null | undefined,
+): boolean {
+  const metadataRole = String(
+    user.user_metadata?.role || user.user_metadata?.app_role || "",
+  ).toLowerCase();
+  const roleNames = (roleRows || []).map(normalizeRoleName);
+
+  return Boolean(
+    isAdminAccess(user, dbUser, roleRows) ||
+    metadataRole === "staff" ||
+    roleNames.includes("staff"),
+  );
+}
+
 export async function resolveRouteAccess(
   supabase: SupabaseClient,
   user: AuthUser,
@@ -67,13 +85,12 @@ export async function resolveRouteAccess(
       .eq("user_id", user.id),
   ]);
 
+  const normalizedRoleRows = roleRows as RoleRow[] | null | undefined;
+
   return {
     clientId: dbUser?.client_id || null,
-    isAdmin: isAdminAccess(
-      user,
-      dbUser,
-      roleRows as RoleRow[] | null | undefined,
-    ),
+    isAdmin: isAdminAccess(user, dbUser, normalizedRoleRows),
+    isStaff: isStaffAccess(user, dbUser, normalizedRoleRows),
   };
 }
 
@@ -81,5 +98,7 @@ export function canAccessClient(
   access: RouteAccess,
   requestedClientId: string,
 ): boolean {
-  return access.isAdmin || access.clientId === requestedClientId;
+  return (
+    access.isAdmin || access.isStaff || access.clientId === requestedClientId
+  );
 }

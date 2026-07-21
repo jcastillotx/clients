@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canAccessClient,
   isAdminAccess,
+  isStaffAccess,
   normalizeRoleName,
   resolveRouteAccess,
 } from "./route-access";
@@ -28,14 +29,30 @@ describe("route access helpers", () => {
   });
 
   it("enforces tenant access for non-admin users", () => {
-    expect(canAccessClient({ isAdmin: false, clientId: "c1" }, "c1")).toBe(
-      true,
-    );
-    expect(canAccessClient({ isAdmin: false, clientId: "c1" }, "c2")).toBe(
-      false,
-    );
     expect(
-      canAccessClient({ isAdmin: true, clientId: null }, "any-client"),
+      canAccessClient({ isAdmin: false, isStaff: false, clientId: "c1" }, "c1"),
+    ).toBe(true);
+    expect(
+      canAccessClient({ isAdmin: false, isStaff: false, clientId: "c1" }, "c2"),
+    ).toBe(false);
+    expect(
+      canAccessClient(
+        { isAdmin: true, isStaff: true, clientId: null },
+        "any-client",
+      ),
+    ).toBe(true);
+  });
+
+  it("allows platform staff to access client-scoped workspaces", () => {
+    const roleRows = [{ role: { name: "staff" } }];
+    expect(
+      isStaffAccess({ id: "u1" }, { is_super_admin: false }, roleRows),
+    ).toBe(true);
+    expect(
+      canAccessClient(
+        { isAdmin: false, isStaff: true, clientId: null },
+        "client-2",
+      ),
     ).toBe(true);
   });
 
@@ -77,6 +94,10 @@ describe("route access helpers", () => {
     >;
 
     const access = await resolveRouteAccess(supabaseMock, { id: "user-1" });
-    expect(access).toEqual({ clientId: "client-1", isAdmin: false });
+    expect(access).toEqual({
+      clientId: "client-1",
+      isAdmin: false,
+      isStaff: true,
+    });
   });
 });
