@@ -59,6 +59,15 @@ export interface ClientBackfillEvent {
   data: Record<string, never>;
 }
 
+export interface MarketingAgentRunRequestedEvent {
+  name: "marketing-agent/run.requested";
+  data: {
+    taskId: string;
+    clientId: string;
+    userId: string;
+  };
+}
+
 // Type union for all events
 export type Events =
   | InvoiceReminderEvent
@@ -67,4 +76,5 @@ export type Events =
   | BrandMonitoringEvent
   | AnalyticsReportEvent
   | ClientCreatedEvent
-  | ClientBackfillEvent;
+  | ClientBackfillEvent
+  | MarketingAgentRunRequestedEvent;

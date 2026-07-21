@@ -150,14 +150,14 @@ export const aiTasks = pgTable("ai_tasks", {
   input: jsonb("input")
     .$type<{
       prompt?: string;
-      parameters?: Record<string, any>;
+      parameters?: Record<string, unknown>;
       files?: string[];
     }>()
     .notNull(),
   output: jsonb("output").$type<{
-    result?: any;
+    result?: unknown;
     confidence?: number;
-    alternatives?: any[];
+    alternatives?: unknown[];
   }>(),
   status: aiTaskStatusEnum("status").default("pending").notNull(),
   startedAt: timestamp("started_at", { withTimezone: true }),
@@ -170,6 +170,17 @@ export const aiTasks = pgTable("ai_tasks", {
     retryCount?: number;
     priority?: number;
     webhookUrl?: string;
+    workflowId?: string;
+    approvalStatus?: "pending_approval";
+    provider?: string;
+    agentTrace?: Array<{
+      agentId: string;
+      agentName: string;
+      status: "completed" | "failed";
+      summary: string;
+      startedAt: string;
+      completedAt: string;
+    }>;
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -284,6 +295,7 @@ export const aiUsageTracking = pgTable("ai_usage_tracking", {
     promptTokens?: number;
     completionTokens?: number;
     cached?: boolean;
+    agentIds?: string[];
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });

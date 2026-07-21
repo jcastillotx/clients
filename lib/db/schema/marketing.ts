@@ -153,6 +153,9 @@ export const campaigns = pgTable("campaigns", {
     tags?: string[];
     notes?: string;
     externalId?: string;
+    aiTaskId?: string;
+    agentWorkflow?: string;
+    approvalStatus?: "pending_approval";
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -242,6 +245,9 @@ export const contentCalendarItems = pgTable("content_calendar_items", {
     mentions?: string[];
     characterLimit?: number;
     failureReason?: string;
+    aiTaskId?: string;
+    agentWorkflow?: string;
+    qualityDecision?: "PASS" | "WARN" | "BLOCKED";
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

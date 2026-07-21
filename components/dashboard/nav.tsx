@@ -192,6 +192,12 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Marketing Overview", href: "/marketing", icon: Megaphone },
       {
+        name: "Marketing Agents",
+        href: "/marketing/agents",
+        icon: Bot,
+        access: "staff",
+      },
+      {
         name: "Campaigns",
         href: "/marketing/campaigns",
         icon: Megaphone,
