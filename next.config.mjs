@@ -1,7 +1,16 @@
+import { readFileSync } from "node:fs";
 import { withSentryConfig } from "@sentry/nextjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
+  experimental: { cpus: 2 },
+  async headers() {
+    const vercelConfig = JSON.parse(
+      readFileSync(new URL("./vercel.json", import.meta.url), "utf8"),
+    );
+    return vercelConfig.headers;
+  },
   images: {
     remotePatterns: [
       {
