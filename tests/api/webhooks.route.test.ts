@@ -53,17 +53,48 @@ describe("/api/webhooks", () => {
     expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
-  it("GET returns 400 when clientId is missing", async () => {
+  it("GET returns 403 for non-admin users when clientId is missing", async () => {
     vi.mocked(createClient).mockResolvedValue(
       createMockSupabaseClient({ user: { id: "user-1" } }) as never,
     );
+    vi.mocked(routeAccess.resolveRouteAccess).mockResolvedValue({
+      clientId,
+      isAdmin: false,
+    });
 
     const response = await GET(new NextRequest("http://localhost/api/webhooks"));
     expect(response).toBeDefined();
     const body = await readJson<{ success: boolean; error: { code: string } }>(response!);
 
-    expect(response!.status).toBe(400);
-    expect(body.error.code).toBe("BAD_REQUEST");
+    expect(response!.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+    const { db } = await import("@/lib/db");
+    expect(db.select).not.toHaveBeenCalled();
+  });
+
+  it("GET lets admins list all webhooks without a clientId and hides secrets", async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      createMockSupabaseClient({ user: { id: "admin-1" } }) as never,
+    );
+    const { db } = await import("@/lib/db");
+    const orderBy = vi.fn().mockResolvedValue([
+      { id: webhookId, clientId, secret: "private-webhook-secret" },
+    ]);
+    vi.mocked(db.select).mockReturnValue({
+      from: vi.fn().mockReturnValue({ orderBy }),
+    } as never);
+
+    const response = await GET(new NextRequest("http://localhost/api/webhooks"));
+    const body = await readJson<{
+      success: boolean;
+      data: Array<{ id: string; secret?: string }>;
+    }>(response!);
+
+    expect(response!.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.data[0]?.id).toBe(webhookId);
+    expect(body.data[0]?.secret).toBeUndefined();
+    expect(orderBy).toHaveBeenCalledOnce();
   });
 
   it("GET returns webhook endpoints for authorized users", async () => {

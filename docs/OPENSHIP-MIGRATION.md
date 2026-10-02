@@ -116,6 +116,11 @@ No unrelated mail, verification, or other hostname records were changed.
   is missing”: expected 400, received 500 because the mocked database client is
   undefined. No application changes were made to address that existing issue.
 - Both the local production build and Linux candidate build passed.
+- For auto-deployment, the stale missing-client-ID test was updated to match the
+  existing admin-wide listing behavior and non-admin denial, with a secret
+  redaction assertion. Application behavior did not change. The current unit
+  suite passes all 201 tests across 48 files. The native Docker image builds
+  with public inputs only and passes its runtime operational health check.
 
 Evidence: `openship-origin-checks.json`, `openship-public-checks.json`, and
 `openship-clients-domain.png` in this directory.
