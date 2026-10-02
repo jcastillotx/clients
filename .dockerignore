@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.vercel
+.env*
+!.env.local.example
+!.env.example
+.swarm
+coverage
+test-results
+playwright-report
+.pnpm-store
+.claude
