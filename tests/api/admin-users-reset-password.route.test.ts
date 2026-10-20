@@ -37,6 +37,7 @@ vi.mock("@/lib/logger", () => ({
 function mockSessionUser(user: { id: string; user_metadata?: Record<string, unknown> } | null) {
   vi.mocked(createClient).mockResolvedValue({
     auth: {
+      resetPasswordForEmail: vi.fn().mockResolvedValue({ error: null }),
       getUser: vi.fn().mockResolvedValue({
         data: { user },
         error: null,
@@ -143,7 +144,7 @@ describe("POST /api/admin/users/[id]/reset-password", () => {
 
   it("sends a Supabase recovery email with the app reset-password redirect", async () => {
     mockSessionUser({ id: "admin-1", user_metadata: { role: "admin" } });
-    const { resetPasswordForEmail } = mockAdminClient({
+    mockAdminClient({
       id: "user-1",
       email: "client@example.com",
       deleted_at: null,
@@ -163,7 +164,8 @@ describe("POST /api/admin/users/[id]/reset-password", () => {
     expect(body.success).toBe(true);
     expect(body.data.sent).toBe(true);
     expect(body.message).toBe("Password reset email sent");
-    expect(resetPasswordForEmail).toHaveBeenCalledWith("client@example.com", {
+    const sessionClient = await createClient();
+    expect(sessionClient.auth.resetPasswordForEmail).toHaveBeenCalledWith("client@example.com", {
       redirectTo: "https://app.example.test/auth/confirm?next=%2Freset-password",
     });
     expect(auditLog).toHaveBeenCalledWith("admin.password_reset_sent", "admin-1", {

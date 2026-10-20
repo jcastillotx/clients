@@ -99,17 +99,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       });
     }
 
-    const authAdmin = createAdminClientIfAvailable();
-    if (!authAdmin) {
-      return apiError(request, {
-        status: 503,
-        code: "SERVICE_UNAVAILABLE",
-        message: "Email could not be sent: server mail configuration is incomplete.",
-      });
-    }
-
     const email = contact.email.trim();
-    const { error: resetError } = await authAdmin.auth.resetPasswordForEmail(email, {
+    // Send through the authenticated public client. The service-role client is
+    // only needed for the privileged lookup above; using it for GoTrue recovery
+    // can produce a generic 500 from the Auth API.
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: getAuthConfirmUrl("/reset-password"),
     });
 

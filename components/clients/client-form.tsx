@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -128,12 +129,19 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
 
         router.push(`/clients/${initialData.id}`);
       } else {
-        const client = await fetchApi<{ id: string }>("/api/clients", {
+        const client = await fetchApi<{ id: string; welcome_email_sent: boolean }>("/api/clients", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(clientData),
         }, { fallbackMessage: "Failed to create client" });
 
+        if (client.welcome_email_sent) {
+          toast.success("Client created and welcome email sent");
+        } else {
+          toast.warning("Client created, but the welcome email could not be sent", {
+            description: "Check the portal email settings before contacting the client.",
+          });
+        }
         router.push(`/clients/${client.id}`);
       }
     } catch (err) {

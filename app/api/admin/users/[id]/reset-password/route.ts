@@ -59,11 +59,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       });
     }
 
-    const { error: resetError } = await adminClient.auth.resetPasswordForEmail(targetUser.email, {
+    // Use the authenticated client for the recovery request. The service-role
+    // client is still used above for the admin-only user lookup, but GoTrue's
+    // recovery endpoint is intended to be called with the public auth client.
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(targetUser.email, {
       redirectTo: getAuthConfirmUrl("/reset-password"),
     });
 
-    if (resetError) throw resetError;
+    if (resetError) {
+      logger.error("Supabase rejected password reset email", resetError, { targetUserId: id });
+      return apiError(request, {
+        status: 502,
+        code: "INTERNAL_ERROR",
+        message: resetError.message || "Supabase could not send the password reset email.",
+      });
+    }
 
     auditLog("admin.password_reset_sent", currentUser.id, { targetUserId: id });
 
@@ -74,6 +84,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   } catch (error) {
     logger.error("Error sending password reset email", error, { targetUserId: id });
-    return apiInternalError(request, "An unexpected error occurred. Please try again.");
+    return apiInternalError(
+      request,
+      error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+    );
   }
 }

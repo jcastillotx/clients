@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Mail, Edit2, Trash2, Eye } from "lucide-react";
+import { Plus, Mail, Edit2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmailTemplateDialog } from "./email-template-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { fetchApi } from "@/lib/api/client";
+import { getEmailTemplateDefinition } from "@/lib/email/catalog";
 
 interface Template {
   id: string;
@@ -67,7 +68,16 @@ export function EmailTemplateList({ templates, onTemplatesChange }: EmailTemplat
     }
   };
 
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: {
+    name: string;
+    description: string | null;
+    type: string;
+    subject: string;
+    htmlContent: string;
+    textContent: string | null;
+    isDefault: boolean;
+    isActive: boolean;
+  }) => {
     try {
       const url = selectedTemplate ? `/api/admin/templates/email/${selectedTemplate.id}` : "/api/admin/templates/email";
 
@@ -101,14 +111,7 @@ export function EmailTemplateList({ templates, onTemplatesChange }: EmailTemplat
   };
 
   const getTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      invoice_sent: "Invoice Sent",
-      invoice_reminder: "Invoice Reminder",
-      payment_received: "Payment Received",
-      payment_failed: "Payment Failed",
-      invoice_overdue: "Invoice Overdue",
-    };
-    return labels[type] || type;
+    return getEmailTemplateDefinition(type)?.label || type;
   };
 
   return (

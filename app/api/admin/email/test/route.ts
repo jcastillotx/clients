@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isUserAdmin } from "@/lib/rbac/check";
 import { loadEmailConfig, sendViaConfiguredProvider } from "@/lib/email/providers";
+import { getEmailBrandContext, wrapBrandedEmail } from "@/lib/email/branding";
 import { z } from "zod";
 import {
   apiError,
@@ -52,11 +53,12 @@ export async function POST(req: NextRequest) {
   const provider = cfg.provider ?? "resend";
 
   try {
+    const brand = await getEmailBrandContext();
     await sendViaConfiguredProvider(
       {
         to: parsed.data.to,
-        subject: "Test email from KRE8IV",
-        html: testEmailHtml(),
+        subject: `Test email from ${brand.brand_name}`,
+        html: wrapBrandedEmail(testEmailHtml(), brand),
       },
       cfg,
     );
@@ -77,8 +79,8 @@ export async function POST(req: NextRequest) {
 
 function testEmailHtml(): string {
   return `
-    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
-      <h1 style="margin:0 0 12px;color:#111827;">KRE8IV test email</h1>
+    <div style="font-family:sans-serif;">
+      <h1 style="margin:0 0 12px;color:#111827;">Email provider test</h1>
       <p style="color:#374151;line-height:1.5;">
         This confirms the configured email provider can send messages from the client portal.
       </p>

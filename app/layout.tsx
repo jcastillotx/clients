@@ -16,6 +16,13 @@ const sora = Sora({
 export const metadata: Metadata = {
   title: "KRE8IV Clients",
   description: "Client management platform for KRE8IV",
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "451x451", type: "image/png" },
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48", type: "image/x-icon" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
 };
 
 export const viewport: Viewport = {

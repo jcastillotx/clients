@@ -12,6 +12,7 @@ type UserProfilePayload = {
   avatar?: string;
   client_id?: string;
   is_super_admin?: boolean;
+  last_login_at?: string | null;
   updated_at: string;
 };
 
@@ -62,6 +63,7 @@ function buildUserProfilePayload(authUser: SupabaseAuthUser): UserProfilePayload
     ...(avatar ? { avatar } : {}),
     ...(clientId ? { client_id: clientId } : {}),
     ...(isSuperAdmin ? { is_super_admin: true } : {}),
+    last_login_at: authUser.last_sign_in_at ?? null,
     updated_at: new Date().toISOString(),
   };
 }
@@ -133,6 +135,24 @@ export async function syncMissingAuthUsers(adminClient: SupabaseClient) {
 
   const existingIds = new Set(((existingRows ?? []) as Array<{ id: string }>).map((row) => row.id));
   const missingPayloads = payloads.filter((payload) => !existingIds.has(payload.id));
+
+  // `public.users.last_login_at` is an application projection of Supabase Auth's
+  // `last_sign_in_at`. The old sync only inserted missing profiles, so existing
+  // users stayed stuck at NULL/"Never" forever. Keep this projection current
+  // whenever an admin opens user management.
+  for (const payload of payloads) {
+    const { error: loginSyncError } = await adminClient
+      .from("users")
+      .update({
+        last_login_at: payload.last_login_at,
+        updated_at: payload.updated_at,
+      })
+      .eq("id", payload.id);
+
+    if (loginSyncError) {
+      console.error(`Failed to sync last login for auth user ${payload.id}:`, loginSyncError);
+    }
+  }
 
   if (missingPayloads.length === 0) {
     return;

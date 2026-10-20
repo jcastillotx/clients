@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EMAIL_TEMPLATE_CATALOG, getEmailTemplateDefinition } from "@/lib/email/catalog";
+import { fetchApi } from "@/lib/api/client";
 
 interface Template {
   id: string;
@@ -27,37 +29,30 @@ interface EmailTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   template: Template | null;
-  onSave: (data: any) => Promise<void>;
+  onSave: (data: {
+    name: string;
+    description: string | null;
+    type: string;
+    subject: string;
+    htmlContent: string;
+    textContent: string | null;
+    isDefault: boolean;
+    isActive: boolean;
+  }) => Promise<void>;
 }
-
-const EMAIL_TYPES = [
-  { value: "invoice_sent", label: "Invoice Sent" },
-  { value: "invoice_reminder", label: "Invoice Reminder" },
-  { value: "payment_received", label: "Payment Received" },
-  { value: "payment_failed", label: "Payment Failed" },
-  { value: "invoice_overdue", label: "Invoice Overdue" },
-  { value: "auth_signup", label: "Auth — Signup / verify email" },
-  { value: "auth_recovery", label: "Auth — Password reset" },
-  { value: "auth_magiclink", label: "Auth — Magic link" },
-  { value: "auth_invite", label: "Auth — Invite" },
-  { value: "auth_email_change", label: "Auth — Email change (single)" },
-  { value: "auth_email_change_current", label: "Auth — Email change (current inbox)" },
-  { value: "auth_email_change_new", label: "Auth — Email change (new inbox)" },
-  { value: "auth_generic", label: "Auth — Generic fallback" },
-  { value: "service_request_created", label: "Notification — New service request" },
-  { value: "staff_task_created", label: "Notification — New task" },
-];
 
 export function EmailTemplateDialog({ open, onOpenChange, template, onSave }: EmailTemplateDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("invoice_sent");
+  const [type, setType] = useState("auth_recovery");
   const [subject, setSubject] = useState("");
   const [htmlContent, setHtmlContent] = useState("");
   const [textContent, setTextContent] = useState("");
   const [isDefault, setIsDefault] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   useEffect(() => {
     if (template) {
@@ -69,31 +64,18 @@ export function EmailTemplateDialog({ open, onOpenChange, template, onSave }: Em
       setTextContent(template.text_content || "");
       setIsDefault(template.is_default);
       setIsActive(template.is_active);
+      setPreview(null);
     } else {
       setName("");
       setDescription("");
-      setType("invoice_sent");
-      setSubject("New Invoice {{invoice_number}}");
-      setHtmlContent(`<!DOCTYPE html>
-<html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <h2>Hello {{client_name}},</h2>
-    <p>Your invoice is ready.</p>
-    <p><strong>Invoice Number:</strong> {{invoice_number}}</p>
-    <p><strong>Amount:</strong> \${{ amount }}</p>
-    <p>Thank you for your business!</p>
-  </div>
-</body>
-</html>`);
-      setTextContent(`Hello {{client_name}},
-
-Your invoice is ready.
-
-Invoice Number: {{invoice_number}}
-Amount: \${{ amount }}
-
-Thank you for your business!`);
+      setType("auth_recovery");
+      setSubject("Reset your {{app_name}} password");
+      setHtmlContent(`<h1>Reset your password</h1>
+<p>We received a request to reset the password for <strong>{{email}}</strong>.</p>
+<p><a href="{{confirmation_url}}" style="display:inline-block;background:{{brand_primary_color}};color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px;">Set a new password</a></p>
+<p>Or enter this code: <strong>{{token}}</strong></p>
+<p style="color:#64748b;font-size:13px;">If you did not request this, you can ignore this email.</p>`);
+      setTextContent(`Reset your password: {{confirmation_url}}\n\nCode: {{token}}`);
       setIsDefault(false);
       setIsActive(true);
     }
@@ -119,21 +101,26 @@ Thank you for your business!`);
     }
   };
 
-  const getAvailableVariables = (emailType: string) => {
-    const common = ["client_name", "company_name"];
+  const availableVars = getEmailTemplateDefinition(type)?.variables ?? [];
+  const selectedDefinition = getEmailTemplateDefinition(type);
 
-    const typeVars: Record<string, string[]> = {
-      invoice_sent: [...common, "invoice_number", "invoice_date", "due_date", "amount", "invoice_url"],
-      invoice_reminder: [...common, "invoice_number", "due_date", "amount", "days_until_due", "invoice_url"],
-      payment_received: [...common, "invoice_number", "amount", "payment_date", "payment_method"],
-      payment_failed: [...common, "invoice_number", "amount", "error_message", "invoice_url"],
-      invoice_overdue: [...common, "invoice_number", "due_date", "amount", "days_overdue", "invoice_url"],
-    };
-
-    return typeVars[emailType] || common;
+  const handlePreview = async () => {
+    setIsPreviewing(true);
+    try {
+      const result = await fetchApi<{ subject: string; html: string }>(
+        "/api/admin/templates/email/preview",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type, subject, htmlContent, textContent: textContent || null }),
+        },
+        { fallbackMessage: "Failed to preview template" },
+      );
+      setPreview(result);
+    } finally {
+      setIsPreviewing(false);
+    }
   };
-
-  const availableVars = getAvailableVariables(type);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,10 +134,11 @@ Thank you for your business!`);
 
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="settings" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="settings">Settings</TabsTrigger>
               <TabsTrigger value="html">HTML</TabsTrigger>
               <TabsTrigger value="text">Plain Text</TabsTrigger>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
             </TabsList>
 
             <TabsContent value="settings" className="space-y-4 mt-4">
@@ -183,8 +171,8 @@ Thank you for your business!`);
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {EMAIL_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
+                    {EMAIL_TEMPLATE_CATALOG.map((t) => (
+                      <SelectItem key={t.type} value={t.type}>
                         {t.label}
                       </SelectItem>
                     ))}
@@ -221,7 +209,7 @@ Thank you for your business!`);
 
               <div className="rounded-lg bg-muted p-4">
                 <h4 className="font-medium mb-2">
-                  Available Variables for {EMAIL_TYPES.find((t) => t.value === type)?.label}:
+                  Available Variables for {selectedDefinition?.label ?? type}:
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                   {availableVars.map((v) => (
@@ -260,9 +248,26 @@ Thank you for your business!`);
                   />
                 </ScrollArea>
                 <p className="text-sm text-muted-foreground">
-                  Plain text version for email clients that don't support HTML
+                  Plain text version for email clients that do not support HTML
                 </p>
               </div>
+            </TabsContent>
+
+            <TabsContent value="preview" className="mt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">Preview uses safe sample data and the current portal branding.</p>
+                <Button type="button" variant="outline" onClick={handlePreview} disabled={isPreviewing}>
+                  {isPreviewing ? "Rendering…" : "Render preview"}
+                </Button>
+              </div>
+              {preview ? (
+                <div className="space-y-2">
+                  <p className="text-sm"><strong>Subject:</strong> {preview.subject}</p>
+                  <iframe title="Email preview" srcDoc={preview.html} sandbox="" className="h-[480px] w-full rounded-md border bg-white" />
+                </div>
+              ) : (
+                <div className="flex h-[480px] items-center justify-center rounded-md border bg-muted/30 text-sm text-muted-foreground">Render a preview to inspect the branded email.</div>
+              )}
             </TabsContent>
           </Tabs>
 
