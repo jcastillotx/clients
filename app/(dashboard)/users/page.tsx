@@ -9,6 +9,8 @@ export const metadata = {
   description: "Manage platform users and organization assignments",
 };
 
+export const dynamic = "force-dynamic";
+
 type UsersQueryStrategy = {
   includeDeletedFilter: boolean;
   orderByCreatedAt: boolean;

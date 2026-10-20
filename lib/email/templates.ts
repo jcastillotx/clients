@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
 import { renderTemplate, type TemplateContext } from "@/lib/templates/template-engine";
+import { getEmailBrandContext, wrapBrandedEmail } from "@/lib/email/branding";
 
 /**
  * Fetch and render an email template using a specific Supabase client (e.g. user session or service role).
@@ -25,9 +26,15 @@ export async function renderEmailTemplateWithClient(
     return null;
   }
 
-  const subject = renderTemplate(template.subject || "", data);
-  const html = renderTemplate(template.html_content, data);
-  const plainText = template.text_content ? renderTemplate(template.text_content, data) : stripHtml(html);
+  const brand = await getEmailBrandContext();
+  const context = {
+    ...brand,
+    ...data,
+  };
+  const subject = renderTemplate(template.subject || "", context);
+  const renderedHtml = renderTemplate(template.html_content, context);
+  const html = wrapBrandedEmail(renderedHtml, brand);
+  const plainText = template.text_content ? renderTemplate(template.text_content, context) : stripHtml(renderedHtml);
 
   return { subject, html, plainText };
 }

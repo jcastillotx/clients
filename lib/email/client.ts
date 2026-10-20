@@ -77,6 +77,10 @@ export async function sendEmail(options: EmailOptions) {
       attachments: options.attachments,
     });
 
+    if (result.error) {
+      console.error("Email provider rejected message:", result.error);
+      return { success: false, error: result.error.message };
+    }
     return { success: true, data: result };
   } catch (error) {
     console.error("Email send error:", error);

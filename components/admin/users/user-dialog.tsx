@@ -140,7 +140,7 @@ export function UserDialog({ open, onOpenChange, user, roles, clients, canAssign
       const url = user ? `/api/admin/users/${user.id}` : "/api/admin/users";
       const method = user ? "PATCH" : "POST";
 
-      const savedUser = await fetchApi<User>(url, {
+      const savedUser = await fetchApi<User & { welcome_email_sent?: boolean }>(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -149,6 +149,9 @@ export function UserDialog({ open, onOpenChange, user, roles, clients, canAssign
         throw new Error("User saved but response payload was invalid");
       }
       onSuccess(savedUser);
+      if (!user && savedUser.welcome_email_sent === false) {
+        alert("User created, but the welcome email could not be sent. Check email settings before resending portal access instructions.");
+      }
     } catch (error) {
       console.error("Error saving user:", error);
       alert(error instanceof Error ? error.message : "Failed to save user");

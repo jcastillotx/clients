@@ -86,12 +86,14 @@ async function main() {
     '006_create_announcements_table.sql',
     '010_feature_flags.sql',
     '013_add_client_logo_url.sql',
+    '013_email_auth_and_notification_templates.sql',
     '015_add_client_domain_and_contact_fields.sql',
     '016_create_encrypted_settings.sql',
     '017_support_tickets_admin_rls.sql',
     '018_create_maintenance_plan_templates.sql',
     '020_create_system_settings.sql',
-    '022_create_service_templates.sql'
+    '022_create_service_templates.sql',
+    '028_email_template_catalog.sql'
   ];
 
   console.log('📁 Checking for required migration files:\n');

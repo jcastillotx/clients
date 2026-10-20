@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { isUserAdmin } from "@/lib/rbac/check";
 import {
@@ -39,7 +39,8 @@ export default async function FormTemplatesSettingsPage() {
     redirect("/dashboard");
   }
 
-  const { data: templates } = await supabase
+  const adminClient = createAdminClient();
+  const { data: templates } = await adminClient
     .from("form_templates")
     .select("id, name, description, fields, updated_at")
     .order("updated_at", { ascending: false });

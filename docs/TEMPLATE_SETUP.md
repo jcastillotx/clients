@@ -298,8 +298,17 @@ Access the template editor at:
 
 ### Previewing a Template
 
-1. Click **Preview** on the template card (invoice templates)
-2. Template opens in new tab with sample data
+1. Open the **Preview** tab in the email editor
+2. Click **Render preview** to see the current portal logo, colors, footer, subject, and sample data
+
+Email templates are available for authentication (verification, password reset,
+invite, magic link, email changes), invoices, proposals, requests, support,
+tasks, SLA alerts, and contract alerts. The catalog and supported variables are
+defined in `lib/email/catalog.ts`.
+
+All rendered email HTML receives the current Portal Branding logo, brand name,
+primary color, support address, and footer automatically. Admins can still edit
+the full message HTML and plain-text fallback for each type.
 
 ### Deleting a Template
 
@@ -317,10 +326,12 @@ Access the template editor at:
 
 ## Database Migration
 
-Run the template migration:
+Run the template migrations:
 
 ```bash
 psql $DATABASE_URL < lib/db/migrations/002_create_template_tables.sql
+psql $DATABASE_URL < lib/db/migrations/013_email_auth_and_notification_templates.sql
+psql $DATABASE_URL < lib/db/migrations/028_email_template_catalog.sql
 ```
 
 This will:
@@ -330,6 +341,12 @@ This will:
 3. Insert default templates
 4. Enable RLS and create policies
 5. Add update triggers
+
+The Supabase Auth Send Email Hook must point to
+`/api/auth/hooks/send-email` and use the same
+`SUPABASE_AUTH_HOOK_SECRET` configured by the deployment. Without that hook,
+Supabase will continue sending its own default verification/reset/invite
+messages and portal edits will not affect those emails.
 
 ## Best Practices
 

@@ -2,6 +2,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email/client";
 import { renderEmailTemplateAsAdmin } from "@/lib/email/templates";
+import { getEmailBrandContext, wrapBrandedEmail } from "@/lib/email/branding";
 import {
   conversationParticipants,
   conversations,
@@ -213,10 +214,11 @@ export async function dispatchNotification(
         text: fromDb.plainText,
       });
     } else {
+      const brand = await getEmailBrandContext();
       await sendEmail({
         to: Array.from(recipientEmails),
         subject,
-        html,
+        html: wrapBrandedEmail(html, brand),
         text: message,
       });
     }

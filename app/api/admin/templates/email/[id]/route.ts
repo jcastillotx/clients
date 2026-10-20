@@ -1,11 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
 import { extractVariables } from "@/lib/templates/template-engine";
+import { EMAIL_TEMPLATE_TYPES } from "@/lib/email/catalog";
 import { requirePermission } from "@/lib/auth/route-guards";
+import { z } from "zod";
 import {
   apiInternalError,
   apiNotFound,
+  apiValidationError,
   apiSuccess,
 } from "@/lib/api/response";
+
+const updateSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+  description: z.string().max(500).nullable().optional(),
+  type: z.string().refine((value) => EMAIL_TEMPLATE_TYPES.includes(value), "Unsupported email template type").optional(),
+  subject: z.string().trim().min(1).max(300).optional(),
+  htmlContent: z.string().min(1).max(200_000).optional(),
+  textContent: z.string().max(100_000).nullable().optional(),
+  isDefault: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
 
 export async function GET(
   request: Request,
@@ -54,17 +68,9 @@ export async function PATCH(
       return guard.error;
     }
 
-    const body = await request.json();
-    const {
-      name,
-      description,
-      type,
-      subject,
-      htmlContent,
-      textContent,
-      isDefault,
-      isActive,
-    } = body;
+    const parsed = updateSchema.safeParse(await request.json());
+    if (!parsed.success) return apiValidationError(request, parsed.error);
+    const { name, description, type, subject, htmlContent, textContent, isDefault, isActive } = parsed.data;
 
     const supabase = await createClient();
 

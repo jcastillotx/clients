@@ -1,4 +1,5 @@
 import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 import {
   apiError,
   apiForbidden,
@@ -7,6 +8,17 @@ import {
   apiUnauthorized,
 } from "@/lib/api/response";
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import { sendWelcomeEmail } from "@/lib/email/send-welcome-email";
+
+const createUserSchema = z.object({
+  name: z.string().trim().min(1),
+  email: z.string().trim().email(),
+  phone: z.string().nullable().optional(),
+  password: z.string().min(8),
+  client_id: z.string().uuid().nullable().optional(),
+  is_active: z.boolean().optional(),
+  roles: z.array(z.string().uuid()).optional(),
+});
 
 async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
   type UserRow = {
@@ -136,16 +148,15 @@ export async function POST(request: Request) {
       return apiForbidden(request);
     }
 
-    const body = await request.json();
-    const { name, email, phone, password, client_id, is_active, roles } = body;
-
-    if (!name || !email || !password) {
+    const parsed = createUserSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return apiError(request, {
         status: 400,
         code: "BAD_REQUEST",
-        message: "Name, email, and password are required",
+        message: "Provide a name, valid email, password of at least 8 characters, and valid account fields",
       });
     }
+    const { name, email, phone, password, client_id, is_active, roles } = parsed.data;
 
     const adminClient = createAdminClient();
 
@@ -210,8 +221,9 @@ export async function POST(request: Request) {
     }
 
     const completeUser = await fetchCompleteUserForResponse(adminClient, userRecord.id);
+    const welcomeEmail = await sendWelcomeEmail({ name, email });
 
-    return apiSuccess(request, completeUser, {
+    return apiSuccess(request, { ...completeUser, welcome_email_sent: welcomeEmail.success }, {
       status: 201,
       extra: { user: completeUser },
     });
