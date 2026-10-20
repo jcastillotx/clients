@@ -1,3 +1,4 @@
+import { loadEmailConfig } from "@/lib/email/providers";
 import { getPortalBranding } from "@/lib/branding/get-branding";
 
 export type EmailBrandContext = {
@@ -15,13 +16,14 @@ const DEFAULT_LOGO = "https://www.kre8ivdesigns.com/wp-content/uploads/2020/02/l
 export async function getEmailBrandContext(): Promise<EmailBrandContext> {
   const branding = await getPortalBranding();
   const settings = branding.settings;
+  const emailConfig = await loadEmailConfig();
   return {
     app_name: settings.siteTitle || process.env.NEXT_PUBLIC_APP_NAME || "Kre8iv Clients",
     brand_name: settings.brandText || process.env.RESEND_FROM_NAME || "Kre8ivDesigns",
     brand_logo_url: branding.logoUrl || DEFAULT_LOGO,
     brand_primary_color: branding.primaryColor || "#7C3AED",
     brand_secondary_color: branding.secondaryColor || "#ffffff",
-    support_email: process.env.EMAIL_REPLY_TO || process.env.RESEND_REPLY_TO || "support@example.com",
+    support_email: process.env.EMAIL_REPLY_TO || process.env.RESEND_REPLY_TO || emailConfig?.from_email || "info@kre8ivdesigns.com",
     site_url: process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://clients.example.com",
   };
 }
