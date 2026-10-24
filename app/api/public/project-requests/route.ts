@@ -223,7 +223,8 @@ export async function POST(request: NextRequest) {
         subjectType: "request",
         subjectId: projectRequest.id,
         recipientUserIds: [intakeOwnerId],
-        extraEmails: await withPlatformNotificationEmails([intakePayload.contactEmail]),
+        // Public contact details are unverified and must never receive internal alerts.
+        extraEmails: await withPlatformNotificationEmails(),
         data: {
           requestTitle: intakePayload.title,
           companyName: intakePayload.companyName,

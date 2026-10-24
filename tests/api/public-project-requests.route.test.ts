@@ -191,9 +191,9 @@ describe("POST /api/public/project-requests", () => {
     expect(dispatchNotification).not.toHaveBeenCalled();
   });
 
-  it("creates intake records for valid submissions", async () => {
+  it.each(["jane@acme.com", "nazevedo@metrocompactor.com"])("keeps submitted contact %s out of internal notification recipients", async (contactEmail) => {
     const response = await POST(
-      jsonRequest("http://localhost/api/public/project-requests", validPayload) as NextRequest,
+      jsonRequest("http://localhost/api/public/project-requests", {...validPayload, contactEmail}) as NextRequest,
     );
     const body = await readJson<{ success: boolean; data: { requestId: string; clientId: string } }>(response);
 
@@ -204,7 +204,8 @@ describe("POST /api/public/project-requests", () => {
     expect(dispatchNotification).toHaveBeenCalledOnce();
     expect(dispatchNotification).toHaveBeenCalledWith(
       expect.objectContaining({
-        extraEmails: ["jane@acme.com", "platform@example.com"],
+        recipientUserIds: ["owner-1"],
+        extraEmails: ["platform@example.com"],
         data: expect.objectContaining({
           request_title: validPayload.title,
           request_description: validPayload.executiveSummary,
