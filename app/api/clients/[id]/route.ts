@@ -1,6 +1,9 @@
+import { updateClientFieldsSchema } from "@/lib/validations/client";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiForbidden,
+  apiValidationError,
   apiInternalError,
   apiNotFound,
   apiSuccess,
@@ -42,7 +45,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return apiForbidden(request);
     }
 
-    const body = await request.json();
+    const body = updateClientFieldsSchema.parse(await request.json());
 
     const updateData: Record<string, unknown> = {};
     if (body.company_name !== undefined) updateData.companyName = body.company_name;
@@ -74,6 +77,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     return apiSuccess(request, updatedClient, { extra: { client: updatedClient } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error updating client:", error);
     return apiInternalError(
       request,

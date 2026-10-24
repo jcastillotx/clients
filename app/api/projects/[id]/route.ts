@@ -1,3 +1,6 @@
+import { updateProjectSchema } from "@/lib/validations/project";
+import { z } from "zod";
+import { apiValidationError } from "@/lib/api/response";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import {
@@ -67,6 +70,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       costEntries,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching project:", error);
     return apiInternalError(request, "Failed to fetch project");
   }
@@ -91,7 +95,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return apiForbidden(request);
     }
 
-    const body = await request.json();
+    const body = updateProjectSchema.parse(await request.json());
 
     const [existingProject] = await db
       .select()
@@ -103,10 +107,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return apiNotFound(request, "Project not found");
     }
 
+    updateProjectSchema.parse({startDate: existingProject.startDate?.toISOString(), endDate: existingProject.endDate?.toISOString(), ...body});
+    const changes = body;
     const [updatedProject] = await db
       .update(projects)
       .set({
-        ...body,
+        ...changes,
+        estimatedHours: body.estimatedHours == null ? body.estimatedHours : String(body.estimatedHours),
+        actualHours: body.actualHours == null ? body.actualHours : String(body.actualHours),
+        budgetAmount: body.budgetAmount == null ? body.budgetAmount : String(body.budgetAmount),
+        spentAmount: body.spentAmount == null ? body.spentAmount : String(body.spentAmount),
         startDate: body.startDate ? new Date(body.startDate) : undefined,
         endDate: body.endDate ? new Date(body.endDate) : undefined,
         updatedAt: new Date(),
@@ -116,6 +126,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return apiSuccess(request, updatedProject);
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error updating project:", error);
     return apiInternalError(request, "Failed to update project");
   }
@@ -162,6 +173,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       extra: { message: "Project deleted successfully" },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error deleting project:", error);
     return apiInternalError(request, "Failed to delete project");
   }

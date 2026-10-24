@@ -1,3 +1,5 @@
+import { z } from "zod";
+import {createTimeEntrySchema, updateTimeEntrySchema} from "@/lib/validations/time-entry";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { timeEntries, timeEntryLocks, type TimeEntryStatus } from "@/lib/db/schema/time-tracking";
@@ -5,6 +7,7 @@ import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiError,
+  apiValidationError,
   apiInternalError,
   apiNotFound,
   apiSuccess,
@@ -62,6 +65,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess(request, entries, { extra: { entries } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching time entries:", error);
     return apiInternalError(request, "Failed to fetch time entries");
   }
@@ -77,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
     const userId = user.id;
 
-    const body = await request.json();
+    const body = createTimeEntrySchema.parse(await request.json());
     const {
       clientId,
       requestId,
@@ -105,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     let totalAmount = null;
     if (hourlyRate && durationMinutes) {
-      totalAmount = (parseFloat(hourlyRate) * durationMinutes) / 60;
+      totalAmount = (Number(hourlyRate) * durationMinutes) / 60;
     }
 
     const [entry] = await db
@@ -121,7 +125,7 @@ export async function POST(request: NextRequest) {
         endedAt: endedAt ? new Date(endedAt) : null,
         durationMinutes,
         isBillable: isBillable ?? true,
-        hourlyRate,
+        hourlyRate: hourlyRate == null ? null : String(hourlyRate),
         totalAmount: totalAmount?.toFixed(2),
         status: "pending",
       })
@@ -129,6 +133,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess(request, entry, { status: 201, extra: { entry } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error creating time entry:", error);
     return apiInternalError(request, "Failed to create time entry");
   }
@@ -145,7 +150,9 @@ export async function PATCH(request: NextRequest) {
     const userId = user.id;
 
     const body = await request.json();
-    const { id, ...updates } = body;
+    const id = z.string().uuid().parse(body.id);
+    const parsedUpdates = updateTimeEntrySchema.parse(body);
+    const updates: Record<string, unknown> = {...parsedUpdates};
 
     if (!id) {
       return apiError(request, {
@@ -164,6 +171,15 @@ export async function PATCH(request: NextRequest) {
     if (!existingEntry) {
       return apiNotFound(request, "Entry not found");
     }
+
+    updateTimeEntrySchema.parse({
+      startedAt: existingEntry.startedAt?.toISOString(),
+      endedAt: existingEntry.endedAt?.toISOString(),
+      ...updates,
+    });
+    if (updates.startedAt) updates.startedAt = new Date(String(updates.startedAt));
+    if (updates.endedAt) updates.endedAt = new Date(String(updates.endedAt));
+    if (updates.hourlyRate != null) updates.hourlyRate = String(updates.hourlyRate);
 
     if (existingEntry.lockedAt) {
       return apiError(request, {
@@ -188,7 +204,7 @@ export async function PATCH(request: NextRequest) {
       const rate = updates.hourlyRate ?? existingEntry.hourlyRate;
       const duration = updates.durationMinutes ?? existingEntry.durationMinutes;
       if (rate && duration) {
-        updates.totalAmount = ((parseFloat(rate) * duration) / 60).toFixed(2);
+        updates.totalAmount = ((Number(rate) * Number(duration)) / 60).toFixed(2);
       }
     }
 
@@ -200,6 +216,7 @@ export async function PATCH(request: NextRequest) {
 
     return apiSuccess(request, updatedEntry, { extra: { entry: updatedEntry } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error updating time entry:", error);
     return apiInternalError(request, "Failed to update time entry");
   }
@@ -259,6 +276,7 @@ export async function DELETE(request: NextRequest) {
 
     return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error deleting time entry:", error);
     return apiInternalError(request, "Failed to delete time entry");
   }

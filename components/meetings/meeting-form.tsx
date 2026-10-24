@@ -193,7 +193,7 @@ export function MeetingForm({ clients, users, preselectedClientId, preselectedRe
               <Label htmlFor="scheduledAt">
                 Date & Time <span className="text-destructive">*</span>
               </Label>
-              <Input id="scheduledAt" type="datetime-local" {...register("scheduledAt")} />
+              <Input id="scheduledAt" type="datetime-local" {...register("scheduledAt", {setValueAs: (value: string) => value && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : value})} />
               {errors.scheduledAt && <p className="text-sm text-destructive">{errors.scheduledAt.message}</p>}
             </div>
 

@@ -1,3 +1,6 @@
+import { apiValidationError } from "@/lib/api/response";
+import { z } from "zod";
+import { taskFormSchema } from "@/lib/validations/workspace";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
@@ -27,7 +30,7 @@ export async function POST(request: NextRequest) {
       return apiUnauthorized(request);
     }
 
-    const body = await request.json();
+    const body = taskFormSchema.parse(await request.json());
     const { boardId, columnId, title, description, priority, dueDate, estimatedHours, assignees, labels, parentId } =
       body;
 
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
         description,
         priority: priority || "normal",
         dueDate: dueDate ? new Date(dueDate) : null,
-        estimatedHours,
+        estimatedHours: estimatedHours == null ? null : String(estimatedHours),
         position,
         createdBy: user.id,
       })
@@ -136,6 +139,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess(request, completeTask, { status: 201, extra: { task: completeTask } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error creating task:", error);
     return apiInternalError(request, "Failed to create task");
   }

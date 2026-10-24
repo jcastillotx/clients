@@ -21,13 +21,13 @@ import { Loader2, Save, Eye, Upload } from "lucide-react";
 
 const brandGuideSchema = z.object({
   clientId: z.string().uuid().optional(),
-  slug: z.string().min(1, "Slug is required"),
+  slug: z.string().trim().min(1, "Slug is required"),
   status: z.enum(["draft", "published"]),
   coverImage: z.string().optional(),
   isPublic: z.boolean().default(false),
   passwordProtected: z.boolean().default(false),
   password: z.string().optional(),
-  version: z.number().default(1),
+  version: z.number().finite().default(1),
 });
 
 type BrandGuideFormValues = z.infer<typeof brandGuideSchema>;

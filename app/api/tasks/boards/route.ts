@@ -1,3 +1,6 @@
+import { apiValidationError } from "@/lib/api/response";
+import { z } from "zod";
+import { boardFormSchema } from "@/lib/validations/workspace";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -45,6 +48,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess(request, boards, { extra: { boards } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching boards:", error);
     return apiInternalError(request, "Failed to fetch boards");
   }
@@ -65,7 +69,7 @@ export async function POST(request: NextRequest) {
       return apiUnauthorized(request);
     }
 
-    const body = await request.json();
+    const body = boardFormSchema.parse(await request.json());
     const { name, description, color, teamId, isDefault } = body;
 
     if (!name) {
@@ -138,6 +142,7 @@ export async function POST(request: NextRequest) {
       extra: { board: payload },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error creating board:", error);
     return apiInternalError(request, "Failed to create board");
   }

@@ -1,5 +1,5 @@
+import { userCreateSchema } from "@/lib/validations/workspace";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { z } from "zod";
 import {
   apiError,
   apiForbidden,
@@ -10,15 +10,7 @@ import {
 import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
 import { sendWelcomeEmail } from "@/lib/email/send-welcome-email";
 
-const createUserSchema = z.object({
-  name: z.string().trim().min(1),
-  email: z.string().trim().email(),
-  phone: z.string().nullable().optional(),
-  password: z.string().min(8),
-  client_id: z.string().uuid().nullable().optional(),
-  is_active: z.boolean().optional(),
-  roles: z.array(z.string().uuid()).optional(),
-});
+const createUserSchema = userCreateSchema;
 
 async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
   type UserRow = {

@@ -12,7 +12,7 @@ import {
 } from "@/lib/api/response";
 
 const createCompetitorSchema = z.object({
-  competitor_name: z.string().min(1, "Competitor name is required"),
+  competitor_name: z.string().trim().min(1, "Competitor name is required"),
   website_url: z.string().url().optional().nullable(),
   positioning: z.string().optional().nullable(),
   target_audience: z.string().optional().nullable(),
@@ -30,7 +30,7 @@ const createCompetitorSchema = z.object({
         .optional(),
       strengths: z.array(z.string()).optional(),
       weaknesses: z.array(z.string()).optional(),
-      marketShare: z.number().optional(),
+      marketShare: z.number().finite().optional(),
     })
     .optional()
     .nullable(),

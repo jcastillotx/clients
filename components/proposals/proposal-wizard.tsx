@@ -20,7 +20,7 @@ import { fetchApi } from "@/lib/api/client";
 
 const proposalSchema = z.object({
   clientId: z.string().uuid("Please select a client"),
-  title: z.string().min(1, "Title is required"),
+  title: z.string().trim().min(1, "Title is required"),
   description: z.string().optional(),
   validUntil: z.string().optional(),
   currency: z.enum(["USD", "EUR", "GBP", "CAD"]).default("USD"),
@@ -28,9 +28,9 @@ const proposalSchema = z.object({
   lineItems: z
     .array(
       z.object({
-        description: z.string().min(1, "Description is required"),
-        quantity: z.coerce.number().min(0.01, "Quantity must be positive"),
-        unitPrice: z.coerce.number().min(0, "Unit price must be positive"),
+        description: z.string().trim().min(1, "Description is required"),
+        quantity: z.coerce.number().finite().min(0.01, "Quantity must be positive"),
+        unitPrice: z.coerce.number().finite().min(0, "Unit price must be positive"),
         category: z.string().optional(),
       }),
     )

@@ -1,17 +1,18 @@
+import { cleanTextSchema } from "./fields";
 import { z } from "zod";
 
 export const projectReviewItemTypeSchema = z.enum(["website", "image"]);
 
 export const createWebsiteReviewSchema = z.object({
   type: z.literal("website"),
-  title: z.string().min(1, "Title is required").max(180),
-  websiteUrl: z.string().url("Enter a valid website URL").max(2048),
+  title: cleanTextSchema.min(1, "Title is required").max(180),
+  websiteUrl: cleanTextSchema.url("Enter a valid website URL").regex(/^https?:\/\/[^\s\/@]+(?:[\/?#][^\s]*)?$/i, "Use an HTTP or HTTPS URL without login credentials.").max(2048),
 });
 
 export const createReviewCommentSchema = z.object({
-  body: z.string().min(1, "Comment is required").max(2000),
-  xPercent: z.coerce.number().min(0).max(100).optional().nullable(),
-  yPercent: z.coerce.number().min(0).max(100).optional().nullable(),
+  body: cleanTextSchema.min(1, "Comment is required").max(2000),
+  xPercent: z.coerce.number().finite().min(0).max(100).optional().nullable(),
+  yPercent: z.coerce.number().finite().min(0).max(100).optional().nullable(),
 }).refine(
   (value) =>
     (value.xPercent == null && value.yPercent == null) ||

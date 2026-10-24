@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import {emailSchema as emailAddressSchema} from "@/lib/validations/fields";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { Loader2, User, Lock, Mail } from "lucide-react";
 
 const emailSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: emailAddressSchema,
 });
 
 const loginSchema = emailSchema.extend({

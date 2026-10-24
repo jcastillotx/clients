@@ -13,6 +13,7 @@ import {
   isTurnstileWidgetEnabled,
   TurnstileWidget,
 } from "@/components/shared/turnstile-widget";
+import {countryOptions} from "@/lib/validations/fields";
 import { fetchApi } from "@/lib/api/client";
 
 export function PublicProjectRequestForm() {
@@ -119,6 +120,7 @@ export function PublicProjectRequestForm() {
         <input id="contact-fax" name="contactFax" autoComplete="off" tabIndex={-1}
           value={contactFax} onChange={(event) => setContactFax(event.target.value)} />
       </div>
+      <datalist id="country-options">{countryOptions.map(country => <option key={country} value={country} />)}</datalist>
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Request a New Project</h1>
@@ -206,7 +208,7 @@ export function PublicProjectRequestForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
-              <Input id="country" value={country} onChange={(event) => setCountry(event.target.value)} />
+              <Input id="country" list="country-options" value={country} onChange={(event) => setCountry(event.target.value)} />
             </div>
           </div>
         </CardContent>
@@ -268,11 +270,11 @@ export function PublicProjectRequestForm() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="requested-start">Requested Start Date</Label>
-              <Input id="requested-start" type="date" value={requestedStartDate} onChange={(event) => setRequestedStartDate(event.target.value)} />
+              <Input id="requested-start" type="date" min={new Date().toISOString().slice(0, 10)} value={requestedStartDate} onChange={(event) => setRequestedStartDate(event.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="requested-launch">Requested Due / Launch Date</Label>
-              <Input id="requested-launch" type="date" value={requestedLaunchDate} onChange={(event) => setRequestedLaunchDate(event.target.value)} />
+              <Input id="requested-launch" type="date" min={requestedStartDate || new Date().toISOString().slice(0, 10)} value={requestedLaunchDate} onChange={(event) => setRequestedLaunchDate(event.target.value)} />
             </div>
           </div>
         </CardContent>

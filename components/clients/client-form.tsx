@@ -13,14 +13,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import {emailSchema, phoneSchema, websiteSchema, countrySchema} from "@/lib/validations/fields";
 import { fetchApi } from "@/lib/api/client";
 
 const CLIENT_STATUS_VALUES = ["active", "inactive", "pending", "suspended"] as const;
 
 const clientSchema = z.object({
-  companyName: z.string().min(2, "Company name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  domain: z.string().optional(),
+  companyName: z.string().trim().max(255).min(2, "Company name must be at least 2 characters"),
+  email: emailSchema,
+  domain: websiteSchema.optional(),
   industry: z.string().optional(),
   logoUrl: z.string().url("Please enter a valid logo URL").optional().or(z.literal("")),
   status: z.enum(CLIENT_STATUS_VALUES).default("active"),
@@ -28,12 +29,12 @@ const clientSchema = z.object({
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
     z.string().uuid().optional(),
   ),
-  phone: z.string().optional(),
+  phone: phoneSchema.optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   zipCode: z.string().optional(),
-  country: z.string().optional(),
+  country: countrySchema.optional(),
 });
 
 type ClientFormInput = z.infer<typeof clientSchema>;

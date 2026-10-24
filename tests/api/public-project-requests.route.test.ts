@@ -182,6 +182,15 @@ describe("POST /api/public/project-requests", () => {
     expect(dispatchNotification).not.toHaveBeenCalled();
   });
 
+  it.each([{title:"   "},{executiveSummary:"                         "},{website:"javascript:alert(1)"},{contactPhone:"abc"},{requestedStartDate:"1970-05-31"},{requestedLaunchDate:"2026-02-30"},{country:"Hrqgqnijq"}])("rejects invalid field data before writes or notifications: %j", async patch => {
+    const response = await POST(jsonRequest("http://localhost/api/public/project-requests", {...validPayload,...patch}) as NextRequest);
+    expect(response.status).toBe(400);
+    const admin = vi.mocked(createAdminClientIfAvailable).mock.results[0].value;
+    expect(admin.from).not.toHaveBeenCalledWith("clients");
+    expect(admin.from).not.toHaveBeenCalledWith("requests");
+    expect(dispatchNotification).not.toHaveBeenCalled();
+  });
+
   it("creates intake records for valid submissions", async () => {
     const response = await POST(
       jsonRequest("http://localhost/api/public/project-requests", validPayload) as NextRequest,

@@ -1,3 +1,6 @@
+import { apiValidationError } from "@/lib/api/response";
+import { z } from "zod";
+import { maintenanceUsageSchema } from "@/lib/validations/workspace";
 import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import {
@@ -67,10 +70,10 @@ export async function POST(
     }
 
     const { user } = guard;
-    const body = await request.json();
+    const body = maintenanceUsageSchema.parse(await request.json());
 
     // Validate required fields
-    const requiredFields = ["hoursUsed", "description"];
+    const requiredFields = ["hoursUsed", "description"] as const;
     for (const field of requiredFields) {
       if (!body[field]) {
         return apiError(request, {
@@ -93,7 +96,7 @@ export async function POST(
     }
 
     // Calculate hours and check for overage
-    const hoursUsed = parseFloat(body.hoursUsed);
+    const hoursUsed = Number(body.hoursUsed);
     const currentUsedHours = parseFloat(plan.usedHours);
     const includedHours = parseFloat(plan.includedHours);
     const rolloverHours = parseFloat(plan.rolloverHoursAvailable);
@@ -122,13 +125,13 @@ export async function POST(
         planId,
         supportTicketId: body.supportTicketId,
         loggedBy: user.id,
-        hoursUsed: body.hoursUsed,
+        hoursUsed: String(body.hoursUsed),
         description: body.description,
         taskCategory: body.taskCategory,
         isOverage,
         overageAmount: isOverage ? overageAmount.toString() : null,
         isBillable: body.isBillable !== false,
-        billedAmount: body.billedAmount,
+        billedAmount: body.billedAmount == null ? null : String(body.billedAmount),
         invoiceId: body.invoiceId,
         loggedAt: new Date(),
         workPerformedAt: body.workPerformedAt
@@ -181,6 +184,7 @@ export async function POST(
       },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error logging maintenance plan usage:", error);
     if (isDatabaseConfigurationError(error)) {
       return apiError(request, {
@@ -280,6 +284,7 @@ export async function GET(
 
     return apiSuccess(request, payload);
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching maintenance plan usage:", error);
     if (isDatabaseConfigurationError(error)) {
       return apiError(request, {

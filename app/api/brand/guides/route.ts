@@ -12,7 +12,7 @@ import {
 } from "@/lib/api/response";
 
 const createGuideSchema = z.object({
-  slug: z.string().min(1, "Slug is required"),
+  slug: z.string().trim().min(1, "Slug is required"),
   status: z.enum(["draft", "published"]).optional().default("draft"),
   cover_image: z.string().optional().nullable(),
   is_public: z.boolean().optional().default(false),

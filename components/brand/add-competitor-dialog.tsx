@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 const competitorSchema = z.object({
-  competitorName: z.string().min(1, "Competitor name is required"),
+  competitorName: z.string().trim().min(1, "Competitor name is required"),
   websiteUrl: z.string().url().optional().or(z.literal("")),
   positioning: z.string().optional(),
   targetAudience: z.string().optional(),

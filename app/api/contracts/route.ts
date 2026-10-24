@@ -1,3 +1,4 @@
+import { contractFormSchema } from "@/lib/validations/workspace";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiError,
@@ -74,6 +75,7 @@ export async function GET(request: Request) {
     const list = contracts || [];
     return apiSuccess(request, list, { extra: { contracts: list } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching contracts:", error);
     return apiInternalError(
       request,
@@ -101,7 +103,7 @@ export async function POST(request: Request) {
       return apiForbidden(request, "Permission denied");
     }
 
-    const body = await request.json();
+    const body = contractFormSchema.parse(await request.json());
     const {
       title,
       description,
@@ -161,6 +163,7 @@ export async function POST(request: Request) {
 
     return apiSuccess(request, contract, { status: 201, extra: { contract } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error creating contract:", error);
     return apiInternalError(
       request,
