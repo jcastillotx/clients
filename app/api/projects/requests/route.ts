@@ -212,6 +212,11 @@ export async function POST(request: NextRequest) {
             requestTitle: data.title,
             requestPriority: data.priority,
             requestUrl: `${base}/projects/requests/${data.id}`,
+            request_title: data.title,
+            request_description: validated.description || validated.executiveSummary,
+            request_url: `${base}/projects/requests/${data.id}`,
+            company_name: "",
+            created_by_name: user.email || "",
           },
         });
       } catch (notifyErr) {

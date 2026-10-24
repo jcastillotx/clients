@@ -43,7 +43,7 @@ export type TurnstileAssertionResult =
   | { ok: false; error: string; status: 400 | 503 };
 
 /**
- * Validates Turnstile when configured. Skips when keys are absent (local dev).
+ * Validates Turnstile. Missing production configuration fails closed.
  */
 export async function assertTurnstileToken(
   token: string | undefined | null,
@@ -51,6 +51,10 @@ export async function assertTurnstileToken(
 ): Promise<TurnstileAssertionResult> {
   if (!isTurnstileEnforced()) {
     return { ok: true };
+  }
+
+  if (!process.env.TURNSTILE_SECRET_KEY?.trim() || !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim()) {
+    return { ok: false, error: "CAPTCHA verification is temporarily unavailable.", status: 503 };
   }
 
   if (!token?.trim()) {

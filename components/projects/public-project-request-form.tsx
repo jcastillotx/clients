@@ -39,6 +39,7 @@ export function PublicProjectRequestForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [contactFax, setContactFax] = useState("");
   const [submittedReference, setSubmittedReference] = useState<string | null>(null);
 
   const turnstileRequired = isTurnstileWidgetEnabled();
@@ -77,6 +78,7 @@ export function PublicProjectRequestForm() {
             dueDate: requestedLaunchDate || null,
             budgetRange: budgetRange || null,
             turnstileToken: turnstileToken || null,
+            contactFax,
           }),
         },
         { fallbackMessage: "Failed to submit project request" },
@@ -112,6 +114,11 @@ export function PublicProjectRequestForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+        <label htmlFor="contact-fax">Leave this field empty</label>
+        <input id="contact-fax" name="contactFax" autoComplete="off" tabIndex={-1}
+          value={contactFax} onChange={(event) => setContactFax(event.target.value)} />
+      </div>
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Request a New Project</h1>

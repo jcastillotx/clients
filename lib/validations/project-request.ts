@@ -54,7 +54,8 @@ export const createPublicProjectRequestSchema = createProjectRequestSchema.exten
   zipCode: z.string().max(50, "ZIP/Postal code is too long").optional().nullable(),
   country: z.string().max(255, "Country is too long").optional().nullable(),
   businessOverview: z.string().max(4000, "Business overview is too long").optional().nullable(),
-  turnstileToken: z.string().min(1).optional().nullable(),
+  turnstileToken: z.string().min(1).max(2048).optional().nullable(),
+  contactFax: z.string().max(500).optional(),
 });
 
 export const updateProjectRequestSchema = z.object({
