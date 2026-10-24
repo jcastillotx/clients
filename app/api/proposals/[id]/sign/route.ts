@@ -16,9 +16,9 @@ import { z } from "zod";
 
 const signSchema = z.object({
   action: z.enum(["accept", "reject"]),
-  signatureData: z.string().optional(),
-  signerName: z.string().optional(),
-  signerEmail: z.string().email().optional(),
+  signatureData: z.string().min(1).max(2 * 1024 * 1024).optional(),
+  signerName: z.string().trim().min(1).max(255).optional(),
+  signerEmail: z.string().trim().max(254).email().optional(),
   token: z.string().optional(),
 });
 

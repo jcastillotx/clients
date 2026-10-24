@@ -27,6 +27,10 @@ vi.mock("@/lib/notifications/service", () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/supabase/redirect-url", () => ({
+  getAuthBaseUrl: () => "https://clients.kre8ivdesigns.com",
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
   createAdminClientIfAvailable: vi.fn(),
 }));
@@ -161,11 +165,35 @@ describe("POST /api/public/project-requests", () => {
 
     expect(response.status).toBe(400);
     expect(extractApiErrorMessage(body)).toContain("CAPTCHA");
+    const admin = vi.mocked(createAdminClientIfAvailable).mock.results[0].value;
+    expect(admin.from).not.toHaveBeenCalledWith("clients");
+    expect(admin.from).not.toHaveBeenCalledWith("requests");
+    expect(dispatchNotification).not.toHaveBeenCalled();
   });
 
-  it("creates intake records for valid submissions", async () => {
+  it("rejects a filled honeypot before any intake records or mail are created", async () => {
+    const response = await POST(jsonRequest("http://localhost/api/public/project-requests", {
+      ...validPayload, contactFax: "bot-filled-field",
+    }) as NextRequest);
+    expect(response.status).toBe(400);
+    const admin = vi.mocked(createAdminClientIfAvailable).mock.results[0].value;
+    expect(admin.from).not.toHaveBeenCalledWith("clients");
+    expect(admin.from).not.toHaveBeenCalledWith("requests");
+    expect(dispatchNotification).not.toHaveBeenCalled();
+  });
+
+  it.each([{title:"   "},{executiveSummary:"                         "},{website:"javascript:alert(1)"},{contactPhone:"abc"},{requestedStartDate:"1970-05-31"},{requestedLaunchDate:"2026-02-30"},{country:"Hrqgqnijq"}])("rejects invalid field data before writes or notifications: %j", async patch => {
+    const response = await POST(jsonRequest("http://localhost/api/public/project-requests", {...validPayload,...patch}) as NextRequest);
+    expect(response.status).toBe(400);
+    const admin = vi.mocked(createAdminClientIfAvailable).mock.results[0].value;
+    expect(admin.from).not.toHaveBeenCalledWith("clients");
+    expect(admin.from).not.toHaveBeenCalledWith("requests");
+    expect(dispatchNotification).not.toHaveBeenCalled();
+  });
+
+  it.each(["jane@acme.com", "nazevedo@metrocompactor.com"])("keeps submitted contact %s out of internal notification recipients", async (contactEmail) => {
     const response = await POST(
-      jsonRequest("http://localhost/api/public/project-requests", validPayload) as NextRequest,
+      jsonRequest("http://localhost/api/public/project-requests", {...validPayload, contactEmail}) as NextRequest,
     );
     const body = await readJson<{ success: boolean; data: { requestId: string; clientId: string } }>(response);
 
@@ -176,7 +204,15 @@ describe("POST /api/public/project-requests", () => {
     expect(dispatchNotification).toHaveBeenCalledOnce();
     expect(dispatchNotification).toHaveBeenCalledWith(
       expect.objectContaining({
-        extraEmails: ["jane@acme.com", "platform@example.com"],
+        recipientUserIds: ["owner-1"],
+        extraEmails: ["platform@example.com"],
+        data: expect.objectContaining({
+          request_title: validPayload.title,
+          request_description: validPayload.executiveSummary,
+          request_url: "https://clients.kre8ivdesigns.com/projects/requests/request-1",
+          company_name: validPayload.companyName,
+          created_by_name: validPayload.contactName,
+        }),
       }),
     );
   });

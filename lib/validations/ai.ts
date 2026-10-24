@@ -1,3 +1,4 @@
+import { cleanTextSchema } from "./fields";
 import { z } from "zod";
 
 /**
@@ -6,10 +7,10 @@ import { z } from "zod";
 export const generateEmailSchema = z.object({
   purpose: z.enum(["introduction", "follow-up", "update", "proposal", "support", "thank-you", "custom"]),
   tone: z.enum(["professional", "friendly", "formal", "casual"]),
-  recipient: z.string().max(255).optional(),
-  subject: z.string().max(255).optional(),
-  keyPoints: z.string().min(1, "Key points are required").or(z.literal("")),
-  customInstructions: z.string().optional(),
+  recipient: cleanTextSchema.max(255).optional(),
+  subject: cleanTextSchema.max(255).optional(),
+  keyPoints: cleanTextSchema.min(1, "Key points are required").or(z.literal("")),
+  customInstructions: cleanTextSchema.max(100000).optional(),
 }).refine(
   (data) => data.keyPoints.trim() || data.customInstructions?.trim(),
   {

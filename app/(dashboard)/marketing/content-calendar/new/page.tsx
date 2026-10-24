@@ -20,8 +20,8 @@ import { toast } from "sonner";
 import Link from "next/link";
 
 const contentSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  content: z.string().min(1, "Content is required"),
+  title: z.string().trim().min(1, "Title is required"),
+  content: z.string().trim().min(1, "Content is required"),
   type: z.enum(["post", "story", "reel", "video", "article", "blog", "tweet", "other"]),
   platform: z.enum(["facebook", "instagram", "linkedin", "twitter", "x", "tiktok", "pinterest", "youtube", "other"]),
   status: z.enum(["draft", "pending_approval", "approved", "needs_revision", "scheduled", "published", "failed"]).default("draft"),

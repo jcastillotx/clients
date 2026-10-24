@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import {emailSchema} from "@/lib/validations/fields";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { Loader2 } from "lucide-react";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: emailSchema,
 });
 
 type ForgotPasswordFormInput = z.infer<typeof forgotPasswordSchema>;

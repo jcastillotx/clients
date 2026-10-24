@@ -16,7 +16,7 @@ import { fetchApi } from "@/lib/api/client";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().trim().min(2, "Name must be at least 2 characters"),
   phone: z.string().optional(),
 });
 

@@ -389,6 +389,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const updatePayload: Record<string, unknown> = {};
     const currentCustomFields = ((existingRequest.custom_fields || {}) as ProjectCustomFields) || {};
+    if (validated.requestedStartDate !== undefined || validated.requestedLaunchDate !== undefined || validated.dueDate !== undefined || validated.review !== undefined) {
+      updateProjectRequestSchema.parse({
+        requestedStartDate: currentCustomFields.requestedStartDate,
+        requestedLaunchDate: currentCustomFields.requestedLaunchDate,
+        dueDate: existingRequest.due_date,
+        ...validated,
+        review: validated.review ? {...currentCustomFields.review, ...validated.review} : undefined,
+      });
+    }
     const updatedCustomFields: ProjectCustomFields = { ...currentCustomFields, type: "project" };
 
     if (validated.title !== undefined) {

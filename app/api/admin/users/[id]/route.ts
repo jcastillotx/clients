@@ -1,3 +1,6 @@
+import { apiValidationError } from "@/lib/api/response";
+import { z } from "zod";
+import { userEditSchema } from "@/lib/validations/workspace";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import {
   apiForbidden,
@@ -134,7 +137,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return apiForbidden(request);
     }
 
-    const body = await request.json();
+    const body = userEditSchema.parse(await request.json());
     const { name, email, phone, password, client_id, is_active, roles } = body;
     const adminClient = createAdminClient();
 
@@ -190,6 +193,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     return apiSuccess(request, completeUser, { extra: { user: completeUser } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error updating user:", error);
     return apiInternalError(request, "An unexpected error occurred. Please try again.");
   }
@@ -261,6 +265,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error deleting user:", error);
     return apiInternalError(request, "An unexpected error occurred. Please try again.");
   }

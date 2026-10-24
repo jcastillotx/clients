@@ -1,3 +1,6 @@
+import { z } from "zod";
+import {uploadFormFieldsSchema} from "@/lib/validations/workspace";
+import { apiValidationError } from "@/lib/api/response";
 import {
   createAdminClientIfAvailable,
   createClient,
@@ -43,13 +46,14 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const clientId = formData.get("clientId") as string;
-    const requestId = formData.get("requestId") as string | null;
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string | null;
-    const tags = formData.get("tags") as string | null;
+    const tags = formData.get("tags");
+    const {clientId, requestId, name, description} = uploadFormFieldsSchema.parse({
+      clientId: formData.get("clientId"), requestId: formData.get("requestId"),
+      name: formData.get("name"), description: formData.get("description"),
+      tags: typeof tags === "string" && tags ? JSON.parse(tags) : [],
+    });
 
-    if (!file || !clientId || !name) {
+    if (!(file instanceof File) || file.size < 1 || !clientId || !name) {
       return apiError(request, {
         status: 400,
         code: "BAD_REQUEST",
@@ -108,7 +112,7 @@ export async function POST(request: Request) {
         client_id: clientId,
         request_id: requestId,
         uploaded_by: user.id,
-        tags: tags ? JSON.parse(tags) : null,
+        tags: typeof tags === "string" && tags ? JSON.parse(tags) : null,
       })
       .select()
       .single();
@@ -123,6 +127,8 @@ export async function POST(request: Request) {
 
     return apiSuccess(request, document, { status: 201, extra: { document } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
+    if (error instanceof SyntaxError) return apiError(request, {status:400,code:"BAD_REQUEST",message:"Send valid file details."});
     console.error("Error uploading document:", error);
     return apiInternalError(
       request,

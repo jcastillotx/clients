@@ -21,11 +21,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 const adCampaignSchema = z.object({
-  name: z.string().min(1, "Campaign name is required"),
-  adAccountId: z.string().min(1, "Ad account is required"),
-  objective: z.string().min(1, "Campaign objective is required"),
+  name: z.string().trim().min(1, "Campaign name is required"),
+  adAccountId: z.string().trim().min(1, "Ad account is required"),
+  objective: z.string().trim().min(1, "Campaign objective is required"),
   status: z.enum(["draft", "active", "paused", "completed"]).default("draft"),
-  budget: z.string().optional(),
+  budget: z.string().trim().refine(value => !value || /^\d+(?:\.\d{1,2})?$/.test(value) && Number(value) > 0, "Enter a positive budget with at most two decimal places.").optional(),
   budgetType: z.enum(["daily", "lifetime"]).default("daily"),
   startDate: z.date().optional(),
   endDate: z.date().optional(),

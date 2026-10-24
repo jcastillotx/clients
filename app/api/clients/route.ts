@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { clientFieldsSchema } from "@/lib/validations/client";
 import { sendClientWelcomeEmail } from "@/lib/email/send-welcome-email";
 import {
   buildPaginationMeta,
@@ -104,27 +104,13 @@ export async function POST(request: Request) {
       return apiForbidden(request);
     }
 
-    const parsed = z.object({
-      company_name: z.string().trim().min(1),
-      email: z.string().trim().email(),
-      status: z.enum(["active", "inactive", "pending", "suspended"]).optional(),
-      primary_contact_id: z.string().uuid().nullable().optional(),
-      domain: z.string().nullable().optional(),
-      industry: z.string().nullable().optional(),
-      logo_url: z.string().nullable().optional(),
-      phone: z.string().nullable().optional(),
-      address: z.string().nullable().optional(),
-      city: z.string().nullable().optional(),
-      state: z.string().nullable().optional(),
-      zip_code: z.string().nullable().optional(),
-      country: z.string().nullable().optional(),
-      website: z.string().nullable().optional(),
-    }).safeParse(await request.json());
+    const parsed = clientFieldsSchema.safeParse(await request.json());
     if (!parsed.success) {
       return apiError(request, {
         status: 400,
         code: "BAD_REQUEST",
-        message: "Provide a company name, valid email address, and valid client fields",
+        message: parsed.error.issues[0]?.message || "Check the client fields.",
+        details: parsed.error.issues,
       });
     }
     const body = parsed.data;

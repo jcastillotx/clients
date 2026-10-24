@@ -1,3 +1,6 @@
+import { apiValidationError } from "@/lib/api/response";
+import { z } from "zod";
+import { messageFormSchema } from "@/lib/validations/workspace";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { messages, conversations, messageAttachments, conversationParticipants, users } from "@/lib/db/schema";
@@ -107,6 +110,7 @@ export async function GET(request: NextRequest) {
       extra: { messages: conversationMessages },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching messages:", error);
     return apiInternalError(request, "Failed to fetch messages");
   }
@@ -127,7 +131,7 @@ export async function POST(request: NextRequest) {
       return apiUnauthorized(request);
     }
 
-    const body = await request.json();
+    const body = messageFormSchema.parse(await request.json());
     const { conversationId, messageBody, type = "text", attachments = [] } = body;
 
     if (!conversationId || (!messageBody && attachments.length === 0)) {
@@ -179,6 +183,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess(request, message, { status: 201, extra: { message } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error sending message:", error);
     return apiInternalError(request, "Failed to send message");
   }
