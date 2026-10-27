@@ -40,16 +40,14 @@ describe("client-owned Google marketing tokens", () => {
         },
       ])
       .mockResolvedValue([]);
-    const fetch = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          access_token: "new",
-          refresh_token: "rotated",
-          expires_in: 3600,
-        }),
-      });
+    const fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        access_token: "new",
+        refresh_token: "rotated",
+        expires_in: 3600,
+      }),
+    });
     vi.stubGlobal("fetch", fetch);
     expect(
       (await googleMarketingToken("client", "user", "google_analytics")).token,
@@ -102,11 +100,15 @@ describe("client-owned Google marketing tokens", () => {
   it("uses only the accessible Ads endpoint and filters malformed resources", async () => {
     const fetch = vi
       .fn()
-      .mockResolvedValue({
+      .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           resourceNames: ["customers/123", "https://attacker.invalid"],
         }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ results: [{ customer: { manager: false } }] }),
       });
     vi.stubGlobal("fetch", fetch);
     expect(await googleMarketingResources("token", "google_ads")).toEqual([
@@ -115,5 +117,42 @@ describe("client-owned Google marketing tokens", () => {
     expect(fetch.mock.calls[0][0]).toMatch(
       /^https:\/\/googleads.googleapis.com\/v\d+\/customers:listAccessibleCustomers$/,
     );
+  });
+  it("discovers manager children and retains only links owned by that manager", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ resourceNames: ["customers/123"] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ results: [{ customer: { manager: true } }] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          results: [
+            {
+              customerClient: {
+                resourceName: "customers/123/customerClients/456",
+                descriptiveName: "Own advertiser",
+                manager: false,
+              },
+            },
+            {
+              customerClient: {
+                resourceName: "customers/999/customerClients/456",
+                manager: false,
+              },
+            },
+          ],
+        }),
+      });
+    vi.stubGlobal("fetch", fetch);
+    expect(await googleMarketingResources("token", "google_ads")).toEqual([
+      { id: "customers/123/customerClients/456", name: "Own advertiser" },
+    ]);
+    expect(fetch.mock.calls[2][1].headers["login-customer-id"]).toBe("123");
   });
 });

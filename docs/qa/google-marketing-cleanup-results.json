@@ -1,0 +1,6 @@
+[
+  {
+    "name": "Client disconnect removes both encrypted test connections",
+    "passed": true
+  }
+]

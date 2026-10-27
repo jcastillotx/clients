@@ -12,6 +12,7 @@ type Item = {
 };
 export function MarketingConnections() {
   const query = useSearchParams();
+  const [reportEmpty, setReportEmpty] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [items, setItems] = useState<Item[]>([]),
     [configured, setConfigured] = useState(false),
@@ -39,6 +40,10 @@ export function MarketingConnections() {
   ) {
     setBusy(true);
     setError("");
+    if (["select", "disconnect", "connect"].includes(kind)) {
+      setReport("");
+      setReportEmpty(false);
+    }
     try {
       const path =
         "/api/marketing/connections" +
@@ -51,8 +56,10 @@ export function MarketingConnections() {
       const b = await r.json();
       if (!r.ok) throw Error(b.error?.message || "Request failed");
       if (b.data.url) window.location.assign(b.data.url);
-      else if (kind === "report") setReport(JSON.stringify(b.data, null, 2));
-      else {
+      else if (kind === "report") {
+        setReport(JSON.stringify(b.data, null, 2));
+        setReportEmpty(b.data.dataStatus === "empty");
+      } else {
         if (b.data.resources)
           setResources((x) => ({ ...x, [provider]: b.data.resources }));
         await load();
@@ -83,7 +90,9 @@ export function MarketingConnections() {
           expired. Choose Connect Google account to start again.
         </p>
       )}
-      {items.some((item) => item.provider === query.get("connected") && item.connection) && (
+      {items.some(
+        (item) => item.provider === query.get("connected") && item.connection,
+      ) && (
         <p role="status">
           Google authorization completed. Choose an account or property below.
         </p>
@@ -194,6 +203,12 @@ export function MarketingConnections() {
       {report && (
         <section className="space-y-2">
           <h2 className="text-xl font-semibold">Performance summary</h2>
+          {reportEmpty && (
+            <p role="status">
+              Google returned no report rows for this period. Check the selected
+              account or property and its tracking setup.
+            </p>
+          )}
           <p>
             Review these aggregate metrics before copying them into a marketing
             tool&apos;s supporting data. Draft creation sends supplied data to

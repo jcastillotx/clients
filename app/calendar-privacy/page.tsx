@@ -96,11 +96,11 @@ export default function CalendarPrivacyPage() {
         </p>
         <p>
           Marketing tools create drafts from the brief, supporting data and
-          client brand context. If you choose to copy a connected performance
-          summary into a draft&apos;s supporting data, that supplied data is
-          sent to the configured AI service (OpenRouter and its selected model
-          provider, or a client-configured OpenAI provider). Reports are not
-          automatically forwarded to an AI provider. Review the disclosure
+          client brand context. If you choose to attach or copy a connected
+          performance summary into a draft&apos;s supporting data, that supplied
+          data is sent to the configured AI service (OpenRouter and its selected
+          model provider, or a client-configured OpenAI provider). Reports are
+          not automatically forwarded to an AI provider. Review the disclosure
           beside the draft form before submitting, and do not include sensitive
           personal information. Drafts and usage records are saved within your
           client account for review.

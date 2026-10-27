@@ -22,7 +22,7 @@ OpenRouter is the user-selected platform AI provider. Tenant-owned OpenAI keys s
 
 ## Verification
 
-- 396 unit tests across 73 files passed before final release checks; type-check passed; lint completed with baseline warnings.
+- 409 unit tests across 75 files passed before final release checks; type-check passed; lint completed with baseline warnings.
 - 59 client-authenticated marketing HTTP checks passed: every tool, methodology, draft persistence, history, tenant forgery, validation, provider failure, invalid model output, and feature disable.
 - 48 existing isolated workflow checks passed after the JSON and avatar fixes, covering core auth, storage, billing, projects, messaging, proposals, MFA and background handlers.
 - Chrome sign-in used the actual synthetic client role, not an administrator. 18 client pages were inspected, including services, projects, billing, documents, messaging, marketing, profile, security, contracts and meetings. Tool search, selection, generation and reopening a saved draft were exercised in the browser.
@@ -33,8 +33,10 @@ Machine-readable tool coverage is in `marketing-tool-matrix.json`; client screen
 
 ## Remaining acceptance
 
-OpenRouter setup and real provider acceptance passed. Paid plan/access and initial Google marketing connection implementation are described in MARKETING-PLANS-AND-CONNECTIONS.md. Live plan prices remain unpublished drafts. Production background event/signing credentials are absent, so automation is the next core integration to configure. Existing client-owned AI keys have not been borrowed as platform defaults. Google OAuth is In production with the owner's approval and has been reauthorized, but Google still requires verification and applies its unverified-app warning/user cap. None of these results constitutes 100% platform acceptance.
+OpenRouter setup and real provider acceptance passed. Paid plan/access and Google marketing connection implementation are described in MARKETING-PLANS-AND-CONNECTIONS.md. Live plan prices remain unpublished drafts. Production background event/signing credentials are absent, so automation is the next core integration to configure. Existing client-owned AI keys have not been borrowed as platform defaults. Google OAuth is In production with the owner's approval and has been reauthorized, but Google still requires verification and applies its unverified-app warning/user cap. None of these results constitutes 100% platform acceptance.
 
 A separate real-OpenRouter acceptance launcher was added on localhost:3101. It refuses production database/auth/app endpoints, unrelated external credentials, live payments, and use together with isolated simulator mode. Production ignores this mode unless explicitly configured, and its safety tests reject nonlocal settings. Normal production retains the 12-runs-per-client hourly limit; only the guarded local acceptance environment uses the higher test limit. The production candidate image built and passed private health verification before credential setup; no marketing production promotion has occurred yet.
 
 Paid-plan access now filters the client menu, methodology, execution and saved history. Google Ads and GA4 have separate client-owned OAuth connection routes and fixed read-only report operations. Provider grants, production API access and actual Google reporting still require acceptance; existing calendar consent is not reused as authorization for marketing data.
+
+Real Google marketing acceptance passed: nine GA4 checks and nine direct Google Ads checks, covering encrypted token storage, property/account discovery, membership rejection, actual reporting, forced token refresh, tenant isolation and plan expiry. Both disconnect controls passed and the synthetic connections were removed. A real GA4 report was attached to a brief and cleared without AI submission. Empty-data guidance and manager-account target handling have tests; manager-hierarchy live acceptance remains unverified because the available Ads account is a direct advertiser. Google app verification and owner approval of live plan prices remain outstanding.

@@ -60,6 +60,7 @@ export function MarketingSkillTools({
   const [evidence, setEvidence] = useState("");
   const [artifact, setArtifact] = useState<SkillArtifact | null>(null);
   const [artifactSimulated, setArtifactSimulated] = useState(false);
+  const [attaching, setAttaching] = useState(false);
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -116,7 +117,7 @@ export function MarketingSkillTools({
     };
   }, [selected, clientId]);
   async function run() {
-    if (!selected || running) return;
+    if (!selected || running || attaching) return;
     setRunning(true);
     setError("");
     setArtifact(null);
@@ -144,6 +145,48 @@ export function MarketingSkillTools({
       setError(e instanceof Error ? e.message : "Unable to complete draft.");
     } finally {
       setRunning(false);
+    }
+  }
+  async function attachReport(provider: "google_analytics" | "google_ads") {
+    if (isStaff || running || attaching) return;
+    setAttaching(true);
+    setError("");
+    try {
+      const response = await fetch("/api/marketing/connections/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
+      const body = (await response.json()) as Envelope<{
+        dataStatus: string;
+        resource: string;
+        period: string;
+        fetchedAt: string;
+        data: unknown;
+      }>;
+      if (!response.ok || !body.data)
+        throw new Error(
+          body.error?.message || "Unable to load connected report.",
+        );
+      if (body.data.dataStatus === "empty")
+        throw new Error(
+          "Google returned no report rows for this period. Check your selected account or property in Connections.",
+        );
+      const next = [
+        evidence,
+        `Connected ${provider === "google_ads" ? "Google Ads" : "GA4"} report:\n${JSON.stringify(body.data, null, 2)}`,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+      if (next.length > 40000)
+        throw new Error(
+          "The supporting data is too long. Shorten it before attaching a report.",
+        );
+      setEvidence(next);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to attach report.");
+    } finally {
+      setAttaching(false);
     }
   }
   function download() {
@@ -183,9 +226,9 @@ export function MarketingSkillTools({
             : "Marketing tools included in your client plan."}
         </p>
         <p className="text-sm text-muted-foreground">
-          Use your brief and supplied data to create reviewable drafts. Tools do
-          not connect accounts, crawl websites, publish content, send email or
-          spend money.
+          Use your brief and supplied data to create reviewable drafts. You can
+          attach reports from your connected Google accounts. Draft tools do not
+          publish content, send email or spend money.
         </p>
       </header>
       <div className="flex gap-4 text-sm">
@@ -203,7 +246,7 @@ export function MarketingSkillTools({
             id="skill-client"
             className="ml-3 rounded border bg-background p-2"
             value={clientId}
-            disabled={running}
+            disabled={running || attaching}
             onChange={(e) => {
               setLibrary(null);
               setClientId(e.target.value);
@@ -275,7 +318,7 @@ export function MarketingSkillTools({
                   </p>
                   <Button
                     variant={selected?.id === tool.id ? "default" : "outline"}
-                    disabled={running}
+                    disabled={running || attaching}
                     onClick={() => {
                       setSelected(tool);
                       setArtifact(null);
@@ -320,7 +363,7 @@ export function MarketingSkillTools({
                     id="skill-brief"
                     value={brief}
                     maxLength={8000}
-                    disabled={running}
+                    disabled={running || attaching}
                     onChange={(e) => setBrief(e.target.value)}
                     placeholder="Describe your objective and audience (at least 20 characters)"
                   />
@@ -333,14 +376,58 @@ export function MarketingSkillTools({
                     id="skill-evidence"
                     value={evidence}
                     maxLength={40000}
-                    disabled={running}
+                    disabled={running || attaching}
                     onChange={(e) => setEvidence(e.target.value)}
                     placeholder="Paste relevant exports, page text, metrics and source dates. Live account access is not automatic."
                   />
                 </div>
+                {!isStaff &&
+                  (library.plan.groups.includes("analytics") ||
+                    library.plan.groups.includes("paid-media")) && (
+                    <div className="space-y-2 rounded border p-3">
+                      <p className="text-sm">
+                        Attach a report from the account selected in
+                        Connections. It is added to supporting data below and
+                        sent to your AI provider only when you choose Create
+                        draft.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {library.plan.groups.includes("analytics") && (
+                          <Button
+                            variant="outline"
+                            disabled={running || attaching}
+                            onClick={() =>
+                              void attachReport("google_analytics")
+                            }
+                          >
+                            Attach GA4 report
+                          </Button>
+                        )}
+                        {library.plan.groups.includes("paid-media") && (
+                          <Button
+                            variant="outline"
+                            disabled={running || attaching}
+                            onClick={() => void attachReport("google_ads")}
+                          >
+                            Attach Google Ads report
+                          </Button>
+                        )}
+                        <Link
+                          href="/marketing/connections"
+                          className="self-center text-sm underline"
+                        >
+                          Choose connected account
+                        </Link>
+                      </div>
+                      {attaching && (
+                        <p role="status">Loading connected report…</p>
+                      )}
+                    </div>
+                  )}
                 <Button
                   disabled={
                     running ||
+                    attaching ||
                     !library.providerReady ||
                     brief.trim().length < 20
                   }
@@ -421,7 +508,7 @@ export function MarketingSkillTools({
                       {r.output?.result && (
                         <Button
                           variant="outline"
-                          disabled={running}
+                          disabled={running || attaching}
                           onClick={() => {
                             setSelected(
                               tools.find((tool) => tool.id === r.skillId) ??

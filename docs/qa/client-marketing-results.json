@@ -27,11 +27,24 @@
     "data": "synthetic client briefs only"
   },
   "sourceArchive": "user-supplied claude-marketing.zip",
-  "unitTests": 396,
-  "unitTestFiles": 73,
-  "releaseStatus": "production324fb00 healthy; plans unpublished; Google report acceptance awaits owner consent",
+  "unitTests": 409,
+  "unitTestFiles": 75,
+  "releaseStatus": "production324fb00 healthy; final provider UX fixes preparing; plans unpublished",
   "planAccessChecks": {
     "passed": 12,
     "total": 12
-  }
+  },
+  "googleAnalyticsChecks": {
+    "passed": 9,
+    "total": 9
+  },
+  "googleAdsChecks": {
+    "passed": 9,
+    "total": 9
+  },
+  "googleDisconnectChecks": {
+    "passed": 1,
+    "total": 1
+  },
+  "connectedReportAttachment": "verified in browser, then cleared; no live metrics submitted to AI"
 }

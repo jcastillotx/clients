@@ -1,3 +1,5 @@
+import { googleAdsResourceTarget } from "@/lib/marketing/google-ads-resources";
+import { marketingReportStatus } from "@/lib/marketing/report";
 import { resolveStaffAccess } from "@/lib/api/resolve-staff-access";
 import { z } from "zod";
 import {
@@ -45,13 +47,15 @@ export async function POST(request: Request) {
         ],
       };
     } else {
-      if (!/^customers\/\d+$/.test(resource))
-        return apiForbidden(request, "Select an Ads account first.");
+      const target = googleAdsResourceTarget(resource);
+      if (!target) return apiForbidden(request, "Select an Ads account first.");
       if (process.env.GOOGLE_ADS_DEVELOPER_TOKEN)
         headers["developer-token"] = process.env.GOOGLE_ADS_DEVELOPER_TOKEN;
       const version = process.env.GOOGLE_ADS_API_VERSION || "v26";
       if (!/^v\d+$/.test(version)) throw Error("version");
-      url = `https://googleads.googleapis.com/${version}/${resource}/googleAds:search`;
+      if (target.loginCustomerId)
+        headers["login-customer-id"] = target.loginCustomerId;
+      url = `https://googleads.googleapis.com/${version}/customers/${target.customerId}/googleAds:search`;
       body = {
         query:
           "SELECT customer.id, customer.currency_code, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions FROM customer WHERE segments.date DURING LAST_7_DAYS LIMIT 1",
@@ -73,6 +77,7 @@ export async function POST(request: Request) {
           ? "Last 7 complete days"
           : "Google Ads LAST_7_DAYS",
       fetchedAt: new Date().toISOString(),
+      dataStatus: marketingReportStatus(p.data.provider, data),
       data,
     });
   } catch {
