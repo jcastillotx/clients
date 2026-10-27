@@ -4,7 +4,7 @@
   "project": "clients-498402",
   "source": "3811111",
   "calendarApiEnabled": true,
-  "oauthPublishingStatus": "Testing",
+  "oauthPublishingStatus": "In production",
   "ownerCreatedCredential": true,
   "canonicalCalendarCallbackSaved": true,
   "managedRuntimeMatches": true,
@@ -31,5 +31,9 @@
   "publicCalendarPrivacy": "https://clients.kre8ivdesigns.com/calendar-privacy",
   "publicNoticeAnonymousAccess": "passed",
   "googleBrandingPrivacyUrl": "saved",
-  "googleBrandingTermsUrl": "saved"
+  "googleBrandingTermsUrl": "saved",
+  "publishingApprovedByOwner": true,
+  "verification": "required; not submitted",
+  "productionModeReauthorization": "passed; refreshed consent displays live privacy and terms links",
+  "postPublishingAvailability": "passed"
 }
