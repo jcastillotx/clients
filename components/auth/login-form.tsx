@@ -150,13 +150,7 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
         <p className="text-sm text-muted-foreground">
-          {"Don't have an account? "}
-          <Link
-            href="/register"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Sign up
-          </Link>
+          Access is by invitation only. Contact the KRE8IV team to request access.
         </p>
       </div>
 

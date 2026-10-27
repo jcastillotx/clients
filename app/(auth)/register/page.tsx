@@ -1,25 +1,33 @@
-import { RegisterForm } from "@/components/auth/register-form";
+import Link from "next/link";
+
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Register | KRE8IV",
-  description: "Create your account",
+  title: "Invitation Only | KRE8IV",
+  description: "Access to the KRE8IV client portal is by invitation only.",
 };
 
-// Middleware handles redirecting authenticated users from "/register" to "/dashboard".
-export default async function RegisterPage() {
-
+// Middleware redirects authenticated users from "/register" to "/dashboard".
+export default function RegisterPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40">
-      <div className="w-full max-w-md space-y-8 px-4">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Create an account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Get started with your free account</p>
-        </div>
-
-        <RegisterForm />
-      </div>
-    </div>
+    <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
+      <Card className="w-full max-w-md text-center">
+        <CardHeader>
+          <CardTitle className="text-2xl">Access by invitation only</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            Client portal accounts are created by the KRE8IV team. Contact your
+            account manager to request access or receive your login instructions.
+          </p>
+          <Link href="/login" className={buttonVariants()}>
+            Return to sign in
+          </Link>
+        </CardContent>
+      </Card>
+    </main>
   );
 }
