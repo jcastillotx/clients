@@ -1,3 +1,4 @@
+import { PortalLegalLinks } from "@/components/auth/portal-legal-links";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
@@ -30,6 +31,7 @@ export default async function HomePage() {
         </div>
         <div className="mx-auto w-full max-w-md relative">
           <LoginForm logoUrl={branding.logoUrl} />
+          <PortalLegalLinks />
           <div className="mt-6 rounded-2xl border border-border/60 bg-card/70 p-4 backdrop-blur">
             <p className="text-sm font-medium">New organization?</p>
             <p className="mt-1 text-sm text-muted-foreground">

@@ -11,6 +11,7 @@ export type ApiErrorCode =
   | "RATE_LIMITED"
   | "FEATURE_NOT_ENABLED"
   | "BAD_REQUEST"
+  | "CONFLICT"
   | "INTERNAL_ERROR"
   | "SERVICE_UNAVAILABLE";
 

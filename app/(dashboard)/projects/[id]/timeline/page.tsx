@@ -1,19 +1,19 @@
+import { getAuthorizedProject } from "@/lib/projects/page-access";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { projects, projectMilestones, projectDeliverables } from "@/lib/db/schema/projects";
-import { eq, and, isNull } from "drizzle-orm";
+import {
+  projectMilestones,
+  projectDeliverables,
+} from "@/lib/db/schema/projects";
+import { eq } from "drizzle-orm";
 import { ProjectTimeline } from "@/components/projects/project-timeline";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 async function getProjectTimeline(id: string) {
-  const [project] = await db
-    .select()
-    .from(projects)
-    .where(and(eq(projects.id, id), isNull(projects.deletedAt)))
-    .limit(1);
+  const project = await getAuthorizedProject(id);
 
   if (!project) {
     return null;
@@ -83,7 +83,11 @@ async function TimelineContent({ id }: { id: string }) {
   );
 }
 
-export default function ProjectTimelinePage({ params }: { params: Promise<{ id: string }> }) {
+export default function ProjectTimelinePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   return (
     <div className="container mx-auto py-8 px-4">
       <Suspense fallback={<TimelineLoading />}>
@@ -93,7 +97,11 @@ export default function ProjectTimelinePage({ params }: { params: Promise<{ id: 
   );
 }
 
-async function AsyncTimelineContent({ params }: { params: Promise<{ id: string }> }) {
+async function AsyncTimelineContent({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   return <TimelineContent id={id} />;
 }
