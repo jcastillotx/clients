@@ -1,5 +1,7 @@
 # Clients OpenShip migration — October 2, 2026
 
+> Current status (October 27, 2026): OpenShip is the active host. The retired Vercel Clients project is paused, its Git link and domain assignment are removed, and its Clients-only GitHub installation is suspended. Historical release/image/fallback references below record the original migration and are not an active deployment path. Current instructions are in `docs/DEPLOYMENT.md` and `docs/qa/VERCEL-REMOVAL.md`.
+
 Status: deployed on self-hosted OpenShip; public DNS and HTTPS cutover verified.
 
 Public app: https://clients.kre8ivdesigns.com/

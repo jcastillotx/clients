@@ -6,7 +6,10 @@
     "deliveryConfirmed": true,
     "attachmentConfirmed": "provider-verification.txt",
     "forcedRefreshAccepted": true,
-    "rotatedRefreshTokenSaved": true
+    "rotatedRefreshTokenSaved": true,
+    "adminUiSendTestPassed": true,
+    "adminUiDeliveryReceivedUtc": "2026-10-27T15:21:13Z",
+    "rotatedCredentialPersistedUtc": "2026-10-27T15:21:09Z"
   },
   "calendar": {
     "account": "j.castillo@castillocollective.com",
@@ -19,5 +22,6 @@
     "reconnectSucceeded": true,
     "eventsCreated": 0
   },
-  "tests": 332
+  "tests": 332,
+  "source": "61fa8d8"
 }
