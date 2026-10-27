@@ -120,7 +120,7 @@ export async function POST(request: Request) {
               const { data: payable, error: payableError } = await supabase
                 .from("invoices")
                 .select(
-                  "id, client_id, amount, status, stripe_payment_intent_id",
+                  "id, client_id, amount, status, stripe_payment_intent_id, stripe_checkout_session_id",
                 )
                 .eq("id", invoiceId)
                 .single();
@@ -135,6 +135,30 @@ export async function POST(request: Request) {
                 throw new Error(
                   "Webhook does not belong to the invoice payment account",
                 );
+              }
+              // Hosted Checkout creates its intent only after the session starts.
+              // Bind it to the saved session in the same verified Stripe account.
+              if (
+                !payable.stripe_payment_intent_id &&
+                payable.stripe_checkout_session_id
+              ) {
+                const checkout = await createStripeClient(
+                  expectedCredentials.secret_key!,
+                ).checkout.sessions.retrieve(
+                  payable.stripe_checkout_session_id,
+                );
+                if (
+                  checkout.payment_intent !== paymentIntent.id ||
+                  checkout.metadata?.invoice_id !== payable.id ||
+                  checkout.amount_total !==
+                    Math.round(Number(payable.amount) * 100) ||
+                  checkout.currency !== "usd"
+                ) {
+                  throw new Error(
+                    "Checkout does not match the invoice payment",
+                  );
+                }
+                payable.stripe_payment_intent_id = paymentIntent.id;
               }
               if (
                 Math.round(Number(payable.amount) * 100) !==

@@ -91,7 +91,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invoiceError || !invoice) {
-      return apiNotFound(request, "Invoice not found. Please verify the invoice number.");
+      return apiNotFound(
+        request,
+        "Invoice not found. Please verify the invoice number.",
+      );
     }
 
     if (invoice.status === "paid") {
@@ -129,22 +132,30 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const stripeCredentials = await resolveStripeCredentialsForClient(invoice.client_id);
+    const stripeCredentials = await resolveStripeCredentialsForClient(
+      invoice.client_id,
+    );
     if (!stripeCredentials.secret_key) {
       return apiError(request, {
         status: 503,
         code: "SERVICE_UNAVAILABLE",
-        message: "Online payments are not configured yet. Please contact support to pay this invoice.",
+        message:
+          "Online payments are not configured yet. Please contact support to pay this invoice.",
       });
     }
 
     if (invoice.status === "draft") {
-      await adminClient.from("invoices").update({ status: "sent" }).eq("id", invoice.id);
+      await adminClient
+        .from("invoices")
+        .update({ status: "sent" })
+        .eq("id", invoice.id);
     }
 
     const stripe = getStripe(stripeCredentials.secret_key);
     const origin = resolveOrigin(request);
-    const clientRecord = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+    const clientRecord = Array.isArray(invoice.client)
+      ? invoice.client[0]
+      : invoice.client;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -195,8 +206,20 @@ export async function POST(request: NextRequest) {
       cancel_url: `${origin}/pay-invoice?status=cancelled&invoice=${encodeURIComponent(invoice.invoice_number)}`,
     });
 
+    const { error: persistenceError } = await adminClient
+      .from("invoices")
+      .update({ stripe_checkout_session_id: session.id, status: "sent" })
+      .eq("id", invoice.id);
+    if (persistenceError) {
+      await stripe.checkout.sessions.expire(session.id);
+      throw persistenceError;
+    }
+
     if (!session.url) {
-      return apiInternalError(request, "Unable to initialize checkout session.");
+      return apiInternalError(
+        request,
+        "Unable to initialize checkout session.",
+      );
     }
 
     const checkout = {
@@ -213,7 +236,9 @@ export async function POST(request: NextRequest) {
     console.error("Error creating public invoice checkout session:", error);
     return apiInternalError(
       request,
-      error instanceof Error ? error.message : "Failed to create checkout session",
+      error instanceof Error
+        ? error.message
+        : "Failed to create checkout session",
     );
   }
 }

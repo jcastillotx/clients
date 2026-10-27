@@ -112,14 +112,17 @@ export async function POST(request: Request) {
     let customerId = client.stripe_customer_id;
 
     if (!customerId && primaryContact?.email) {
-      const customer = await stripe.customers.create({
-        email: primaryContact.email,
-        name: client.company_name,
-        metadata: {
-          client_id: client.id,
-          supabase_user_id: primaryContact.id,
+      const customer = await stripe.customers.create(
+        {
+          email: primaryContact.email,
+          name: client.company_name,
+          metadata: {
+            client_id: client.id,
+            supabase_user_id: primaryContact.id,
+          },
         },
-      });
+        { idempotencyKey: `client-customer-${client.id}` },
+      );
 
       customerId = customer.id;
 
@@ -130,20 +133,25 @@ export async function POST(request: Request) {
       if (customerError) throw customerError;
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(invoice.amount * 100),
-      currency: "usd",
-      customer: customerId || undefined,
-      metadata: {
-        invoice_id: invoice.id,
-        invoice_number: invoice.invoice_number,
-        client_id: invoice.client_id,
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: Math.round(invoice.amount * 100),
+        currency: "usd",
+        customer: customerId || undefined,
+        metadata: {
+          invoice_id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          client_id: invoice.client_id,
+        },
+        description: `Payment for Invoice ${invoice.invoice_number}`,
+        automatic_payment_methods: {
+          enabled: true,
+        },
       },
-      description: `Payment for Invoice ${invoice.invoice_number}`,
-      automatic_payment_methods: {
-        enabled: true,
+      {
+        idempotencyKey: `invoice-payment-${invoice.id}-${Math.round(invoice.amount * 100)}`,
       },
-    });
+    );
 
     const { error: persistError } = await writeClient
       .from("invoices")
@@ -158,6 +166,7 @@ export async function POST(request: Request) {
     const payload = {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      publishableKey: stripeCredentials.publishable_key,
     };
 
     return apiSuccess(request, payload, { extra: payload });

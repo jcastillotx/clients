@@ -44,6 +44,7 @@ export const invoices = pgTable("invoices", {
     .notNull(),
   dueDate: timestamp("due_date", { withTimezone: true }),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
   paymentMethod: text("payment_method"),
   refundedAt: timestamp("refunded_at", { withTimezone: true }),
   remindedDue7At: timestamp("reminded_due_7_at", { withTimezone: true }),
