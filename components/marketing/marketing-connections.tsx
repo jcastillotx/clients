@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 type Provider = "google_analytics" | "google_ads";
@@ -10,6 +11,7 @@ type Item = {
   connection: { resource_id: string | null } | null;
 };
 export function MarketingConnections() {
+  const query = useSearchParams();
   const [loaded, setLoaded] = useState(false);
   const [items, setItems] = useState<Item[]>([]),
     [configured, setConfigured] = useState(false),
@@ -75,6 +77,17 @@ export function MarketingConnections() {
         change campaigns or spend money. You can remove this app&apos;s grant in
         your Google account at any time.
       </p>
+      {query.get("error") === "connection_failed" && (
+        <p role="alert">
+          Google connection was not completed or the authorization session
+          expired. Choose Connect Google account to start again.
+        </p>
+      )}
+      {items.some((item) => item.provider === query.get("connected") && item.connection) && (
+        <p role="status">
+          Google authorization completed. Choose an account or property below.
+        </p>
+      )}
       {error && (
         <p role="alert">
           {error}{" "}
