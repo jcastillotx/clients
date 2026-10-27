@@ -208,7 +208,7 @@ export function MarketingSkillTools({
         <>
           <p role="status" className="rounded border p-3 text-sm">
             {library.simulated
-              ? "Isolated simulator: outputs are test fixtures, not real AI analysis."
+              ? "Isolated simulator: new drafts use test fixtures, not real AI analysis."
               : library.providerReady
                 ? "AI provider configured. Outputs require review and evidence checks."
                 : "AI drafting needs an account provider. You can still open every tool and read its methodology."}

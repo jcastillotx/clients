@@ -22,7 +22,7 @@ OpenRouter is the user-selected platform AI provider. Tenant-owned OpenAI keys s
 
 ## Verification
 
-- 352 unit tests across 67 files passed before final release checks; type-check passed; lint completed with baseline warnings.
+- 361 unit tests across 68 files passed before final release checks; type-check passed; lint completed with baseline warnings.
 - 59 client-authenticated marketing HTTP checks passed: every tool, methodology, draft persistence, history, tenant forgery, validation, provider failure, invalid model output, and feature disable.
 - 48 existing isolated workflow checks passed after the JSON and avatar fixes, covering core auth, storage, billing, projects, messaging, proposals, MFA and background handlers.
 - Chrome sign-in used the actual synthetic client role, not an administrator. 18 client pages were inspected, including services, projects, billing, documents, messaging, marketing, profile, security, contracts and meetings. Tool search, selection, generation and reopening a saved draft were exercised in the browser.
@@ -34,3 +34,5 @@ Machine-readable tool coverage is in `marketing-tool-matrix.json`; client screen
 ## Remaining acceptance
 
 OpenRouter account/key setup and real provider acceptance are pending. Production background event/signing credentials are absent, so automation is the next core integration to configure. Existing client-owned AI keys have not been borrowed as platform defaults. Google OAuth is In production with the owner's approval and has been reauthorized, but Google still requires verification and applies its unverified-app warning/user cap. None of these results constitutes 100% platform acceptance.
+
+A separate real-OpenRouter acceptance launcher was added on localhost:3101. It refuses production database/auth/app endpoints, unrelated external credentials, live payments, and use together with isolated simulator mode. Production ignores this mode unless explicitly configured, and its safety tests reject nonlocal settings. Normal production retains the 12-runs-per-client hourly limit; only the guarded local acceptance environment uses the higher test limit. The production candidate image built and passed private health verification before credential setup; no marketing production promotion has occurred yet.

@@ -29,6 +29,7 @@ import { db } from "@/lib/db";
 import { aiTasks, aiUsageTracking } from "@/lib/db/schema/ai-features";
 import { rateLimit } from "@/lib/rate-limit";
 import { resolveStaffAccess } from "@/lib/api/resolve-staff-access";
+import { isLocalOpenRouterAcceptance } from "@/lib/staging/provider-acceptance.mjs";
 
 export const maxDuration = 120;
 function accessError(request: Request, error: string) {
@@ -133,7 +134,10 @@ export async function POST(request: Request) {
     if (!parsed.success) return apiValidationError(request, parsed.error);
     const scope = await resolveMarketingToolAccess(parsed.data.clientId);
     if (scope.error) return accessError(request, scope.error);
-    const limit = process.env.STAGING_ISOLATED === "1" ? 120 : 12;
+    const limit =
+      process.env.STAGING_ISOLATED === "1" || isLocalOpenRouterAcceptance()
+        ? 120
+        : 12;
     const allowed = await rateLimit(
       scope.clientId,
       { limit, windowMs: 3600000 },

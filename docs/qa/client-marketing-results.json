@@ -21,7 +21,7 @@
   },
   "realProviderAcceptance": "pending OpenRouter credential",
   "sourceArchive": "user-supplied claude-marketing.zip",
-  "unitTests": 352,
-  "unitTestFiles": 67,
+  "unitTests": 361,
+  "unitTestFiles": 68,
   "releaseStatus": "verified locally; production candidate pending OpenRouter acceptance"
 }
