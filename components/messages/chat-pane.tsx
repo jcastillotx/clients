@@ -25,8 +25,8 @@ interface Message {
   id: string;
   body: string | null;
   type: string;
-  senderId: string;
-  sender: Sender;
+  senderId: string | null;
+  sender: Sender | null;
   createdAt: string;
   updatedAt: string;
   isPinned: boolean;
