@@ -73,7 +73,8 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
         throw signInError;
       }
 
-      router.push("/dashboard");
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next && /^\/marketing\/plans(?:\?plan=[\da-f-]{36})?$/.test(next) ? next : "/dashboard");
       router.refresh();
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "Failed to sign in");
