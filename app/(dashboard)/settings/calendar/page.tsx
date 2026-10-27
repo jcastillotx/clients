@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { calendarConnections } from "@/lib/db/schema/calendar-integrations";
@@ -263,8 +264,13 @@ export default async function CalendarSettingsPage({
               <li>We never read event titles, descriptions, attendees, or locations</li>
               <li>Your access token is encrypted at rest using AES-256-GCM</li>
               <li>Tokens are automatically refreshed — you only need to connect once</li>
-              <li>You can disconnect at any time and your tokens are immediately deleted</li>
+              <li>You can disconnect at any time and your stored connection tokens are deleted</li>
             </ul>
+            <p>
+              <Link className="underline" href="/calendar-privacy">
+                Connected calendar privacy notice
+              </Link>
+            </p>
           </div>
         </CardContent>
       </Card>

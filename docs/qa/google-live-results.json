@@ -20,5 +20,12 @@
   "lint": "passed with baseline warnings",
   "linuxAmd64Build": "passed",
   "productionHealth": "operational",
-  "liveCalendarConsent": "awaiting owner approval"
+  "liveCalendarConsent": "approved account only; connected",
+  "liveAvailability": "passed",
+  "forcedExpiryRefresh": "passed; expiry renewed and refresh token retained",
+  "disconnect": "passed; active database record count zero",
+  "reconnect": "passed; same account and scopes restored",
+  "calendarEventsCreated": 0,
+  "calendarEventsEdited": 0,
+  "productionRelease": "3811111"
 }
