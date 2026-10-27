@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { collectRoleNames } from "@/lib/rbac/role-row-utils";
+import { resolveMarketingToolAccess } from "@/lib/ai/marketing-skills/access";
 import {
   apiInternalError,
   apiSuccess,
@@ -35,7 +36,10 @@ export async function GET(req: NextRequest) {
 
     const roleNames = collectRoleNames(roleRows);
 
-    const isAdmin = Boolean(userData?.is_super_admin) || roleNames.has("admin") || roleNames.has("super_admin");
+    const isAdmin =
+      Boolean(userData?.is_super_admin) ||
+      roleNames.has("admin") ||
+      roleNames.has("super_admin");
     const isAccountManager = roleNames.has("account_manager");
     const isStaff = isAdmin || isAccountManager || roleNames.has("staff");
 
@@ -50,7 +54,9 @@ export async function GET(req: NextRequest) {
 
     const { data: allFeatures, error: featuresError } = await supabase
       .from("features")
-      .select("id, name, display_name, description, category, is_enabled_by_default")
+      .select(
+        "id, name, display_name, description, category, is_enabled_by_default",
+      )
       .eq("category", "marketing")
       .order("display_name");
 
@@ -66,7 +72,12 @@ export async function GET(req: NextRequest) {
         itemCount: 0,
         config: null,
       }));
-      const payload = { clientId: null, features, isStaff, noClientContext: true };
+      const payload = {
+        clientId: null,
+        features,
+        isStaff,
+        noClientContext: true,
+      };
       return apiSuccess(req, payload, { extra: payload });
     }
 
@@ -86,9 +97,18 @@ export async function GET(req: NextRequest) {
       { count: leadCount },
       { count: contentCount },
     ] = await Promise.all([
-      supabase.from("campaigns").select("id", { count: "exact", head: true }).eq("client_id", clientId),
-      supabase.from("leads").select("id", { count: "exact", head: true }).eq("client_id", clientId),
-      supabase.from("content_calendar_items").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+      supabase
+        .from("campaigns")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", clientId),
+      supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", clientId),
+      supabase
+        .from("content_calendar_items")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", clientId),
     ]);
 
     const itemCounts: Record<string, number> = {
@@ -97,9 +117,19 @@ export async function GET(req: NextRequest) {
       content_calendar: contentCount || 0,
     };
 
+    const skillAccess = (allFeatures || []).some(
+      (f) => f.name === "marketing_skill_tools",
+    )
+      ? await resolveMarketingToolAccess(clientId)
+      : null;
     const features = (allFeatures || []).map((f) => {
       const override = overrideMap.get(f.id);
-      const isEnabled = override ? override.is_enabled : f.is_enabled_by_default;
+      const isEnabled =
+        f.name === "marketing_skill_tools"
+          ? Boolean(skillAccess && !skillAccess.error)
+          : override
+            ? override.is_enabled
+            : f.is_enabled_by_default;
       return {
         name: f.name,
         displayName: f.display_name,

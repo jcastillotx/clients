@@ -36,6 +36,7 @@ interface MarketingFeaturesResponse {
 
 const featureIcons: Record<string, ComponentType<{ className?: string }>> = {
   marketing_tools: Megaphone,
+  marketing_skill_tools: Megaphone,
   lead_management: Users,
   content_calendar: CalendarDays,
   social_media: Share2,
@@ -45,6 +46,7 @@ const featureIcons: Record<string, ComponentType<{ className?: string }>> = {
 
 const featureLinks: Record<string, string> = {
   marketing_tools: "/marketing/campaigns",
+  marketing_skill_tools: "/marketing/tools",
   lead_management: "/marketing/leads",
   content_calendar: "/marketing/content-calendar",
   social_media: "/social-media",
@@ -144,10 +146,10 @@ export function MarketingOverview({ clientId }: MarketingOverviewProps) {
                         {feature.itemCount} {feature.itemCount === 1 ? "item" : "items"}
                       </p>
                     )}
-                    {data.isStaff && href && (
+                    {(data.isStaff || feature.name === "marketing_skill_tools") && href && (
                       <Link href={href}>
                         <Button variant="outline" size="sm" className="w-full">
-                          Manage
+                          {feature.name === "marketing_skill_tools" ? "Open tools" : "Manage"}
                           <ArrowRight className="ml-2 h-3 w-3" />
                         </Button>
                       </Link>

@@ -191,6 +191,7 @@ const navigationSections: NavSection[] = [
     title: "Marketing",
     items: [
       { name: "Marketing Overview", href: "/marketing", icon: Megaphone },
+      { name: "Marketing Tools", href: "/marketing/tools", icon: Bot },
       {
         name: "Marketing Agents",
         href: "/marketing/agents",

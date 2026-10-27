@@ -1,0 +1,27 @@
+{
+  "role": "client",
+  "environment": "isolated local staging",
+  "tools": 48,
+  "marketingChecks": {
+    "passed": 59,
+    "total": 59
+  },
+  "coreWorkflowChecks": 48,
+  "clientScreens": 18,
+  "categories": {
+    "Paid Media": 9,
+    "SEO & AI Search": 6,
+    "Content": 6,
+    "Growth & Conversion": 4,
+    "Strategy & Research": 8,
+    "Email & Lifecycle": 3,
+    "Analytics": 5,
+    "Creative & Design": 3,
+    "Reporting & Deliverables": 4
+  },
+  "realProviderAcceptance": "pending OpenRouter credential",
+  "sourceArchive": "user-supplied claude-marketing.zip",
+  "unitTests": 352,
+  "unitTestFiles": 67,
+  "releaseStatus": "verified locally; production candidate pending OpenRouter acceptance"
+}

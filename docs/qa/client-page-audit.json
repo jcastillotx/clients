@@ -1,0 +1,184 @@
+[
+  {
+    "path": "/dashboard",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Dashboard\" [level=1]",
+      "    - heading \"QA new project\" [level=4]",
+      "    - heading \"QA service request\" [level=4]",
+      "    - heading \"QA new project\" [level=4]",
+      "    - heading \"QA service request\" [level=4]",
+      "    - heading \"QA new project\" [level=4]",
+      "    - heading \"QA support ticket\" [level=4]",
+      "    - heading \"QA support ticket\" [level=4]",
+      "    - heading \"QA support ticket\" [level=4]",
+      "    - heading \"QA support ticket\" [level=4]",
+      "    - heading \"QA support ticket\" [level=4]",
+      "    - heading \"System Notifications\" [level=4]",
+      "    - heading \"QA conversation\" [level=4]",
+      "    - heading \"QA conversation\" [level=4]",
+      "    - heading \"QA conversation\" [level=4]",
+      "    - heading \"QA conversation\" [level=4]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/requests",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Service Requests\" [level=1]",
+      "- alert"
+    ],
+    "login": false
+  },
+  {
+    "path": "/support",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Support Tickets\" [level=1]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/maintenance-plans",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Maintenance Plans\" [level=1]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/documents",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Documents\" [level=1]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document version 2\" [level=3]",
+      "  - heading \"QA document\" [level=3]",
+      "  - heading \"QA document\" [level=3]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/proposals",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Proposals\" [level=1]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/projects/requests",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Project Requests\" [level=1]",
+      "- alert"
+    ],
+    "login": false
+  },
+  {
+    "path": "/projects",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Projects\" [level=1]",
+      "- alert"
+    ],
+    "login": false
+  },
+  {
+    "path": "/projects/messages",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Project Messages\" [level=1]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/projects/feedback",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Project Reviews\" [level=1]",
+      "  - heading \"No reviews yet\" [level=3]",
+      "- alert"
+    ],
+    "login": false
+  },
+  {
+    "path": "/messages",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Messages\" [level=1]",
+      "  - heading \"Welcome to Messages\" [level=2]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/invoices",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Invoices\" [level=1]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/marketing",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Marketing\" [level=1]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/marketing/tools",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Marketing Tools\" [level=1]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/settings/profile",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Profile\" [level=1]"
+    ],
+    "login": false
+  },
+  {
+    "path": "/settings/security",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Security\" [level=1]",
+      "  - heading \"Configured factors\" [level=3]",
+      "- alert"
+    ],
+    "login": false
+  },
+  {
+    "path": "/contracts",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Contracts\" [level=1]",
+      "- alert"
+    ],
+    "login": false
+  },
+  {
+    "path": "/meetings",
+    "headings": [
+      "  - heading \"KRE8IV\" [level=1]",
+      "  - heading \"Meetings\" [level=1]",
+      "- alert"
+    ],
+    "login": false
+  }
+]

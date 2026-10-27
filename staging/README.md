@@ -51,3 +51,9 @@ The runtime refuses external database/auth endpoints, live Stripe credentials, a
 ## Evidence and limits
 
 The persisted matrix covers authorization forgery, tenant isolation, account lifecycle boundaries, request/support/project workflows, storage bytes and versions, messaging, welcome mail, proposal signatures, subscriptions, payments/webhook replay, password recovery, MFA and profile images. Simulator results prove application behavior against controlled protocols. They do not prove settlement, real provider deliverability, or Google/Microsoft OAuth consent and integration behavior; dedicated provider sandbox accounts are required for those acceptance gates.
+
+## Client marketing tools
+
+The client tool library includes 48 marketing skills from the supplied MIT-licensed archive; eight repository administration skills are excluded. Start `node staging/scripts/marketing-ai-simulator.mjs` and set `MARKETING_AI_SIMULATOR_URL=http://127.0.0.1:3102/v1/chat/completions` in the ignored staging environment, then restart the app. This endpoint is accepted only in isolated mode and must use localhost; production ignores it. Never put real AI credentials into isolated staging.
+
+Run `node staging/scripts/marketing-tools.mjs` for 59 checks: all 48 tools through client-authenticated HTTP calls, persisted structured drafts, history, tenant forgery, disabled-feature enforcement, validation, malformed AI output, and provider failure. It applies migrations 039/040 only to the dedicated local staging database. Simulator outputs are labeled fixtures and do not prove live model quality or provider-account access. The original `workflows.mjs` also verifies avatar removal clears auth metadata.

@@ -198,8 +198,8 @@ export async function DELETE(request: Request) {
     }
 
     // Clear avatar in auth metadata
-    const metaWithoutAvatar = { ...asRecord(user.user_metadata) };
-    delete metaWithoutAvatar.avatar;
+    // GoTrue merges metadata updates; omitting the key preserves the old image.
+    const metaWithoutAvatar = { ...asRecord(user.user_metadata), avatar: null };
     if (adminClient) {
       const { error } = await adminClient.auth.admin.updateUserById(user.id, {
         user_metadata: metaWithoutAvatar,

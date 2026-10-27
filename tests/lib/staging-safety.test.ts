@@ -17,6 +17,7 @@ describe("isolated staging configuration", () => {
     "NEXT_PUBLIC_SUPABASE_URL",
     "AWS_S3_ENDPOINT",
     "STRIPE_API_BASE_URL",
+    "MARKETING_AI_SIMULATOR_URL",
   ])("rejects an external %s", (key) => {
     expect(() =>
       assertIsolatedStaging({
@@ -29,8 +30,8 @@ describe("isolated staging configuration", () => {
     expect(() =>
       assertIsolatedStaging({ ...local, STRIPE_SECRET_KEY: "sk_live_fixture" }),
     ).toThrow());
-  it("rejects external email and AI credentials", () =>
+  it.each(["RESEND_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"])("rejects external credential %s", (key) =>
     expect(() =>
-      assertIsolatedStaging({ ...local, RESEND_API_KEY: "fixture" }),
+      assertIsolatedStaging({ ...local, [key]: "fixture" }),
     ).toThrow());
 });

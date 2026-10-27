@@ -1,0 +1,434 @@
+[
+  {
+    "id": "google-ads",
+    "name": "Google Ads",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "facebook-ads",
+    "name": "Meta Ads",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "microsoft-ads",
+    "name": "Microsoft Ads",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "linkedin-ads",
+    "name": "LinkedIn Ads",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "tiktok-ads",
+    "name": "TikTok Ads",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "cross-platform-audit",
+    "name": "Cross-Platform Audit",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "account-structure-review",
+    "name": "Account Structure Review",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "competitor-ads-analyst",
+    "name": "Competitor Ads Analyst",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "wasted-spend-finder",
+    "name": "Wasted Spend Finder",
+    "category": "Paid Media",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "aeo-geo-optimizer",
+    "name": "AEO/GEO Optimizer",
+    "category": "SEO & AI Search",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "technical-seo-audit",
+    "name": "Technical SEO Audit",
+    "category": "SEO & AI Search",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "schema-markup-generator",
+    "name": "Schema Markup Generator",
+    "category": "SEO & AI Search",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "programmatic-seo",
+    "name": "Programmatic SEO",
+    "category": "SEO & AI Search",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "seo-content-writer",
+    "name": "SEO Content Writer",
+    "category": "SEO & AI Search",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "llms-txt",
+    "name": "llms.txt",
+    "category": "SEO & AI Search",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "content-creator",
+    "name": "Content Creator",
+    "category": "Content",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "copywriting-frameworks",
+    "name": "Copywriting Frameworks",
+    "category": "Content",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "social-media-strategy",
+    "name": "Social Media Strategy",
+    "category": "Content",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "email-composer",
+    "name": "Email Composer",
+    "category": "Content",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "content-pipeline",
+    "name": "Content Pipeline",
+    "category": "Content",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "content-workflow",
+    "name": "Content Workflow",
+    "category": "Content",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "cro-auditor",
+    "name": "CRO Auditor",
+    "category": "Growth & Conversion",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "landing-page-optimizer",
+    "name": "Landing Page Optimizer",
+    "category": "Growth & Conversion",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "ab-testing-framework",
+    "name": "A/B Testing Framework",
+    "category": "Growth & Conversion",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "retention-churn-prevention",
+    "name": "Retention & Churn Prevention",
+    "category": "Growth & Conversion",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "brand-dna",
+    "name": "Brand DNA",
+    "category": "Strategy & Research",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "brand-voice-guidelines",
+    "name": "Brand Voice & Guidelines",
+    "category": "Strategy & Research",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "market-research",
+    "name": "Market Research",
+    "category": "Strategy & Research",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "icp-research",
+    "name": "ICP Research",
+    "category": "Strategy & Research",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "customer-journey-mapping",
+    "name": "Customer Journey Mapping",
+    "category": "Strategy & Research",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "pricing-strategy",
+    "name": "Pricing Strategy",
+    "category": "Strategy & Research",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "research-digest",
+    "name": "Research Digest",
+    "category": "Strategy & Research",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "cold-email-outreach",
+    "name": "Cold Email & Outreach",
+    "category": "Strategy & Research",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "klaviyo-analyst",
+    "name": "Klaviyo Analyst",
+    "category": "Email & Lifecycle",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "klaviyo-developer",
+    "name": "Klaviyo Developer",
+    "category": "Email & Lifecycle",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "braze",
+    "name": "Braze",
+    "category": "Email & Lifecycle",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "google-analytics",
+    "name": "Google Analytics",
+    "category": "Analytics",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "google-tag-manager",
+    "name": "Google Tag Manager",
+    "category": "Analytics",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "looker-studio",
+    "name": "Looker Studio",
+    "category": "Analytics",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "shopify",
+    "name": "Shopify",
+    "category": "Analytics",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "utm-attribution-strategy",
+    "name": "UTM & Attribution Strategy",
+    "category": "Analytics",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "frontend-design",
+    "name": "Frontend Design",
+    "category": "Creative & Design",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "tech-diagram",
+    "name": "Tech Diagram",
+    "category": "Creative & Design",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "remotion-video",
+    "name": "Remotion Video",
+    "category": "Creative & Design",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "pro-deck-builder",
+    "name": "Pro Deck Builder",
+    "category": "Reporting & Deliverables",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "pro-report-builder",
+    "name": "Pro Report Builder",
+    "category": "Reporting & Deliverables",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "html-report-builder",
+    "name": "HTML Report Builder",
+    "category": "Reporting & Deliverables",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  },
+  {
+    "id": "data-viz-deck",
+    "name": "Data Viz Deck",
+    "category": "Reporting & Deliverables",
+    "methodologyAvailable": true,
+    "clientSimulatorRun": true,
+    "realProviderAcceptance": "pending OpenRouter credential",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+  }
+]

@@ -19,6 +19,7 @@ export function assertIsolatedStaging(
     "AWS_S3_ENDPOINT",
     "STRIPE_API_BASE_URL",
     "INNGEST_BASE_URL",
+    "MARKETING_AI_SIMULATOR_URL",
   ]) {
     if (env[key] && !LOCAL_HOSTS.has(new URL(env[key]!).hostname)) {
       throw new Error(`Isolated staging refuses external ${key}`);
@@ -30,6 +31,7 @@ export function assertIsolatedStaging(
   for (const key of [
     "RESEND_API_KEY",
     "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY",
     "ANTHROPIC_API_KEY",
     "SENTRY_DSN",
     "INNGEST_EVENT_KEY",

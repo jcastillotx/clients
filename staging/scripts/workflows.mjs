@@ -102,6 +102,7 @@ await test('Profile image upload, proxy download and removal work',async()=>{
  const form=new FormData();form.set('file',new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jbxkAAAAASUVORK5CYII=','base64')],{type:'image/png'}),'qa.png');
  const x=await call('alpha','/api/settings/profile-image',form);status(x,200);const r=await fetch(env.NEXT_PUBLIC_APP_URL+x.value.avatarUrl,{headers:{cookie:clients.alpha.cookie()}});expect(r.status===200,'avatar proxy failed');
  status(await call('alpha','/api/settings/profile-image',null,'DELETE'),200);
+ const freshProfile=await clients.alpha.auth.auth.getUser();expect(!freshProfile.data.user?.user_metadata?.avatar,'deleted avatar remains in auth metadata');
 });
 await test('Inactive accounts are blocked by both RLS and application APIs',async()=>{
  await sql`update users set is_active=false where id=${clients.beta.account.id}`;

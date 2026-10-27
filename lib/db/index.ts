@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
+import { drizzleJsonTypes } from "./json-serialization";
 
 // OpenShip supplies the dedicated PostgreSQL connection through DATABASE_URL.
 // The generic Postgres aliases remain supported for local tooling.
@@ -96,12 +97,13 @@ function resolvePostgresPoolMax(): number {
 
 const configuredDb = connectionString
   ? drizzle(
-      postgres(connectionString, {
+      postgres<Record<string, postgres.PostgresType>>(connectionString, {
         // Required for Supabase pooler transaction mode; also see POSTGRES_MAX_CONNECTIONS.
         prepare: false,
         max: resolvePostgresPoolMax(),
         idle_timeout: 20,
         connect_timeout: 30,
+        types: drizzleJsonTypes,
       }),
       { schema },
     )
