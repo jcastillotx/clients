@@ -42,12 +42,14 @@ interface ProjectTeamSectionProps {
   projectId: string;
   initialTeamMembers: Array<{ userId: string; name: string; role: string; hourlyRate?: number }>;
   currency: string;
+  canManage?: boolean;
 }
 
 export function ProjectTeamSection({
   projectId,
   initialTeamMembers,
   currency,
+  canManage = false,
 }: ProjectTeamSectionProps) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
   const [saving, setSaving] = useState(false);
@@ -185,16 +187,18 @@ export function ProjectTeamSection({
             <CardTitle>Team Members</CardTitle>
             <CardDescription>People working on this project</CardDescription>
           </div>
-          <Button
-            size="sm"
-            onClick={() => {
-              resetForm();
-              setDialogOpen(true);
-            }}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Member
-          </Button>
+          {canManage && (
+            <Button
+              size="sm"
+              onClick={() => {
+                resetForm();
+                setDialogOpen(true);
+              }}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Member
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {teamMembers.length > 0 ? (
@@ -215,15 +219,17 @@ export function ProjectTeamSection({
                         {formatCurrency(member.hourlyRate, currency)}/hr
                       </div>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveMember(member.userId)}
-                      disabled={saving}
-                      aria-label={`Remove ${member.name}`}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    {canManage && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveMember(member.userId)}
+                        disabled={saving}
+                        aria-label={`Remove ${member.name}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

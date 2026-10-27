@@ -1,19 +1,16 @@
+import { getAuthorizedProject } from "@/lib/projects/page-access";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { projects, projectBudgets, projectCostEntries } from "@/lib/db/schema/projects";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { projectBudgets, projectCostEntries } from "@/lib/db/schema/projects";
+import { eq, sql } from "drizzle-orm";
 import { BudgetTracker } from "@/components/projects/budget-tracker";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 async function getProjectBudget(id: string) {
-  const [project] = await db
-    .select()
-    .from(projects)
-    .where(and(eq(projects.id, id), isNull(projects.deletedAt)))
-    .limit(1);
+  const project = await getAuthorizedProject(id);
 
   if (!project) {
     return null;
@@ -27,7 +24,10 @@ async function getProjectBudget(id: string) {
       entriesCount: sql<number>`COUNT(${projectCostEntries.id})`,
     })
     .from(projectBudgets)
-    .leftJoin(projectCostEntries, eq(projectBudgets.id, projectCostEntries.budgetId))
+    .leftJoin(
+      projectCostEntries,
+      eq(projectBudgets.id, projectCostEntries.budgetId),
+    )
     .where(eq(projectBudgets.projectId, id))
     .groupBy(projectBudgets.id);
 
@@ -80,12 +80,20 @@ async function BudgetContent({ id }: { id: string }) {
         <p className="text-muted-foreground mt-1">Budget Tracking</p>
       </div>
 
-      <BudgetTracker budgets={data.budgets} costEntries={data.costEntries} currency={data.project.currency} />
+      <BudgetTracker
+        budgets={data.budgets}
+        costEntries={data.costEntries}
+        currency={data.project.currency}
+      />
     </div>
   );
 }
 
-export default function ProjectBudgetPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ProjectBudgetPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   return (
     <div className="container mx-auto py-8 px-4">
       <Suspense fallback={<BudgetLoading />}>
@@ -95,7 +103,11 @@ export default function ProjectBudgetPage({ params }: { params: Promise<{ id: st
   );
 }
 
-async function AsyncBudgetContent({ params }: { params: Promise<{ id: string }> }) {
+async function AsyncBudgetContent({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   return <BudgetContent id={id} />;
 }

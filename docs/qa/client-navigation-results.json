@@ -1,0 +1,343 @@
+{
+  "menuChecks": [
+    {
+      "name": "Service Requests",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Service Requests"
+      ],
+      "path": "/requests",
+      "title": "KRE8IV Clients"
+    },
+    {
+      "name": "Support Tickets",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Support Tickets"
+      ],
+      "path": "/support",
+      "title": "KRE8IV Clients"
+    },
+    {
+      "name": "Maintenance Plans",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Maintenance Plans"
+      ],
+      "path": "/maintenance-plans",
+      "title": "KRE8IV Clients"
+    },
+    {
+      "name": "File Storage",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Documents"
+      ],
+      "path": "/documents",
+      "title": "KRE8IV Clients"
+    },
+    {
+      "name": "Proposals",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Proposals"
+      ],
+      "path": "/proposals",
+      "title": "KRE8IV Clients"
+    },
+    {
+      "name": "Project Requests",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Project Requests"
+      ],
+      "path": "/projects/requests",
+      "title": "Project Requests"
+    },
+    {
+      "name": "Projects",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Projects"
+      ],
+      "path": "/projects",
+      "title": "KRE8IV Clients"
+    },
+    {
+      "name": "Project Messages",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Project Messages"
+      ],
+      "path": "/projects/messages",
+      "title": "Project Messages"
+    },
+    {
+      "name": "Project Reviews",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Project Reviews"
+      ],
+      "path": "/projects/feedback",
+      "title": "Project Reviews"
+    },
+    {
+      "name": "Messages",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Messages"
+      ],
+      "path": "/messages",
+      "title": "KRE8IV Clients"
+    },
+    {
+      "name": "Marketing Overview",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing"
+      ],
+      "path": "/marketing",
+      "title": "Marketing | Overview"
+    },
+    {
+      "name": "Marketing Plans",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Plans"
+      ],
+      "path": "/marketing/plans",
+      "search": ""
+    },
+    {
+      "name": "Marketing Tools",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": ""
+    },
+    {
+      "name": "Paid Media",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=paid-media"
+    },
+    {
+      "name": "SEO & AI Search",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=seo"
+    },
+    {
+      "name": "Content & Social",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=content"
+    },
+    {
+      "name": "Growth & Conversion",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=conversion"
+    },
+    {
+      "name": "Strategy & Research",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=strategy"
+    },
+    {
+      "name": "Email & Lifecycle",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=email"
+    },
+    {
+      "name": "Analytics",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=analytics"
+    },
+    {
+      "name": "Creative & Design",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=creative"
+    },
+    {
+      "name": "Reports & Deliverables",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Tools"
+      ],
+      "path": "/marketing/tools",
+      "search": "?group=reporting"
+    },
+    {
+      "name": "Connections",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Marketing Connections"
+      ],
+      "path": "/marketing/connections",
+      "search": ""
+    },
+    {
+      "name": "Profile",
+      "alerts": [],
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Profile"
+      ],
+      "path": "/settings/profile",
+      "search": ""
+    },
+    {
+      "name": "Dashboard",
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Dashboard"
+      ],
+      "path": "/dashboard"
+    },
+    {
+      "name": "Security",
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Security"
+      ],
+      "path": "/settings/security"
+    }
+  ],
+  "projectActionsBeforeFix": [
+    {
+      "name": "View Timeline",
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "QA alpha project"
+      ],
+      "path": "/projects/3103f7ed-a7c2-4ed1-8a80-648bbc59379f/timeline"
+    },
+    {
+      "name": "Budget Details",
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "QA alpha project"
+      ],
+      "path": "/projects/3103f7ed-a7c2-4ed1-8a80-648bbc59379f/budget"
+    },
+    {
+      "name": "Messages",
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "QA alpha project"
+      ],
+      "path": "/projects/3103f7ed-a7c2-4ed1-8a80-648bbc59379f"
+    },
+    {
+      "name": "Feedback",
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Project Feedback"
+      ],
+      "path": "/projects/3103f7ed-a7c2-4ed1-8a80-648bbc59379f/feedback"
+    },
+    {
+      "name": "Time Tracking",
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Time Tracking"
+      ],
+      "path": "/time-tracking"
+    },
+    {
+      "name": "Task Board",
+      "failed": false,
+      "headings": [
+        "KRE8IV",
+        "Task Boards"
+      ],
+      "path": "/tasks"
+    }
+  ],
+  "themeHydrationErrorAfterFix": false
+}

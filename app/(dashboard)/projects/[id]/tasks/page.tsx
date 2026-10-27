@@ -1,15 +1,15 @@
+import { requireStaffPageAccess } from "@/lib/auth/staff-page-access";
+import { getAuthorizedProject } from "@/lib/projects/page-access";
 import { notFound, redirect } from "next/navigation";
-import { and, eq, isNull } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { projects } from "@/lib/db/schema/projects";
 
-export default async function ProjectTasksPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectTasksPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  await requireStaffPageAccess();
   const { id } = await params;
-  const [project] = await db
-    .select({ metadata: projects.metadata })
-    .from(projects)
-    .where(and(eq(projects.id, id), isNull(projects.deletedAt)))
-    .limit(1);
+  const project = await getAuthorizedProject(id);
 
   if (!project) {
     notFound();

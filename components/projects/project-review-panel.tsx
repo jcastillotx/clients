@@ -492,6 +492,7 @@ export function ProjectReviewPanel({ projectId }: { projectId: string }) {
               <CardContent>
                 <form onSubmit={handleSaveComment} className="space-y-3">
                   <Textarea
+                    aria-label="Review comment"
                     value={commentBody}
                     onChange={(event) => setCommentBody(event.target.value)}
                     placeholder="Requested change..."
