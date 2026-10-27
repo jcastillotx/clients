@@ -27,5 +27,9 @@
   "reconnect": "passed; same account and scopes restored",
   "calendarEventsCreated": 0,
   "calendarEventsEdited": 0,
-  "productionRelease": "3811111"
+  "productionRelease": "13a7a98",
+  "publicCalendarPrivacy": "https://clients.kre8ivdesigns.com/calendar-privacy",
+  "publicNoticeAnonymousAccess": "passed",
+  "googleBrandingPrivacyUrl": "saved",
+  "googleBrandingTermsUrl": "saved"
 }
