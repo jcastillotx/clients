@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import {emailSchema as emailAddressSchema} from "@/lib/validations/fields";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { Loader2, User, Lock, Mail } from "lucide-react";
 
 const emailSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: emailAddressSchema,
 });
 
 const loginSchema = emailSchema.extend({
@@ -149,13 +150,7 @@ export function LoginForm({ logoUrl }: LoginFormProps) {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
         <p className="text-sm text-muted-foreground">
-          {"Don't have an account? "}
-          <Link
-            href="/register"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Sign up
-          </Link>
+          Access is by invitation only. Contact the KRE8IV team to request access.
         </p>
       </div>
 

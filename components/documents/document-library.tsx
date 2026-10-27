@@ -41,6 +41,7 @@ interface Document {
   client_id: string;
   folder_id: string | null;
   version: number;
+  parent_document_id?: string | null;
   is_latest_version: boolean;
   tags: string[] | null;
   created_at: string;
@@ -86,6 +87,7 @@ export function DocumentLibrary({
   const [selectedFolder, setSelectedFolder] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [versionDocument, setVersionDocument] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Filter documents based on search, client, and folder
@@ -110,7 +112,11 @@ export function DocumentLibrary({
   });
 
   const handleUploadSuccess = (newDocument: Document) => {
-    setDocuments((prev) => [newDocument, ...prev]);
+    setDocuments((prev) => [
+      newDocument,
+      ...prev.filter((doc) => doc.id !== versionDocument?.id),
+    ]);
+    setVersionDocument(null);
     setUploadDialogOpen(false);
   };
 
@@ -162,7 +168,12 @@ export function DocumentLibrary({
           <p className="text-muted-foreground">{description}</p>
         </div>
         {canUpload && (
-          <Button onClick={() => setUploadDialogOpen(true)}>
+          <Button
+            onClick={() => {
+              setVersionDocument(null);
+              setUploadDialogOpen(true);
+            }}
+          >
             <Upload className="mr-2 h-4 w-4" />
             Upload Document
           </Button>
@@ -219,10 +230,10 @@ export function DocumentLibrary({
           onValueChange={(v) => setViewMode(v as "grid" | "list")}
         >
           <TabsList>
-            <TabsTrigger value="grid">
+            <TabsTrigger value="grid" aria-label="Grid view">
               <Grid className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="list">
+            <TabsTrigger value="list" aria-label="List view">
               <List className="h-4 w-4" />
             </TabsTrigger>
           </TabsList>
@@ -240,7 +251,12 @@ export function DocumentLibrary({
               : "Upload your first document to get started"}
           </p>
           {canUpload && !searchQuery && (
-            <Button onClick={() => setUploadDialogOpen(true)}>
+            <Button
+              onClick={() => {
+                setVersionDocument(null);
+                setUploadDialogOpen(true);
+              }}
+            >
               <Upload className="mr-2 h-4 w-4" />
               Upload Document
             </Button>
@@ -251,6 +267,16 @@ export function DocumentLibrary({
           documents={filteredDocuments}
           onDelete={handleDelete}
           onDownload={handleDownload}
+          onUploadVersion={
+            canUpload
+              ? (id) => {
+                  setVersionDocument(
+                    documents.find((doc) => doc.id === id) ?? null,
+                  );
+                  setUploadDialogOpen(true);
+                }
+              : undefined
+          }
           isLoading={isLoading}
         />
       ) : (
@@ -258,6 +284,16 @@ export function DocumentLibrary({
           documents={filteredDocuments}
           onDelete={handleDelete}
           onDownload={handleDownload}
+          onUploadVersion={
+            canUpload
+              ? (id) => {
+                  setVersionDocument(
+                    documents.find((doc) => doc.id === id) ?? null,
+                  );
+                  setUploadDialogOpen(true);
+                }
+              : undefined
+          }
           isLoading={isLoading}
         />
       )}
@@ -268,6 +304,7 @@ export function DocumentLibrary({
         onOpenChange={setUploadDialogOpen}
         clients={clients}
         onSuccess={handleUploadSuccess}
+        versionOf={versionDocument ?? undefined}
         defaultClientId={selectedClient !== "all" ? selectedClient : undefined}
       />
     </div>

@@ -64,9 +64,9 @@ This is a **Laravel 11 to Next.js 15 migration project** for a comprehensive cli
 
 ### DevOps & Monitoring
 
-- **Deployment**: Vercel (Edge runtime)
+- **Deployment**: self-hosted OpenShip (standalone Docker)
 - **Error Tracking**: Sentry
-- **Analytics**: Vercel Analytics
+- **Analytics**: optional Sentry monitoring
 - **Testing**: Vitest + Playwright
 
 ---
@@ -238,7 +238,7 @@ This is a **Laravel 11 to Next.js 15 migration project** for a comprehensive cli
 │
 ├── .env.local.example            # Environment variables template
 ├── package.json                  # Dependencies and scripts
-├── vercel.json                   # Vercel deployment config
+├── config/security-headers.json  # Runtime response headers
 ├── drizzle.config.ts             # Drizzle ORM config
 ├── tailwind.config.ts            # Tailwind CSS config
 ├── tsconfig.json                 # TypeScript config
@@ -1072,7 +1072,7 @@ LINKEDIN_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
 - Node.js 20.x
 - pnpm 9+ (or npm/yarn)
 - Supabase account
-- Vercel account (for deployment)
+- OpenShip access (for deployment)
 
 ### Step 1: Clone and Install
 
@@ -1306,68 +1306,9 @@ pnpm test:e2e
 
 ## Deployment Guide
 
-### Vercel Deployment (Recommended)
+### OpenShip deployment
 
-**Option 1: CLI Deployment**
-
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Login to Vercel
-vercel login
-
-# Deploy to production
-vercel --prod
-
-# Set environment variables
-vercel env add NEXT_PUBLIC_SUPABASE_URL
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
-vercel env add SUPABASE_SERVICE_KEY
-vercel env add DATABASE_URL
-vercel env add STRIPE_SECRET_KEY
-vercel env add RESEND_API_KEY
-vercel env add INNGEST_EVENT_KEY
-vercel env add INNGEST_SIGNING_KEY
-```
-
-**Option 2: GitHub Integration**
-
-1. Push code to GitHub
-
-   ```bash
-   git add .
-   git commit -m "Ready for deployment"
-   git push origin main
-   ```
-
-2. Go to https://vercel.com/new
-3. Import repository
-4. Configure environment variables (all from `.env.local`)
-5. Click "Deploy"
-
-### Environment Variables in Vercel
-
-Go to Project Settings → Environment Variables and add:
-
-**Required**:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_KEY`
-- `DATABASE_URL`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `RESEND_API_KEY`
-- `INNGEST_EVENT_KEY`
-- `INNGEST_SIGNING_KEY`
-
-**Optional** (based on enabled features):
-
-- AI provider keys
-- Social media OAuth credentials
-- Cloud storage credentials
+Production runs on self-hosted OpenShip on AWS. Follow `docs/DEPLOYMENT.md` and `docs/OPENSHIP-MIGRATION.md`. Build the Linux amd64 standalone Docker image off-host, test a private candidate, and retain the old container for rollback. Private credentials belong in protected OpenShip service runtime configuration; only public settings enter image build arguments. Response headers are owned by `config/security-headers.json` and applied by Next.js.
 
 ### Post-Deployment Checklist
 
@@ -1658,7 +1599,7 @@ All tables have RLS policies enforcing:
 
 - HTTPS enforced
 - Webhook signature verification (Stripe, Inngest)
-- Rate limiting (Vercel built-in)
+- Rate limiting (application / Upstash Redis)
 - CORS configuration
 - Secure headers configured
 
@@ -1686,7 +1627,7 @@ All tables have RLS policies enforcing:
 - Image optimization (Next.js Image)
 - Code splitting (automatic)
 - Database query optimization
-- Edge runtime (Vercel)
+- Standalone Node.js runtime (OpenShip)
 - CDN for static assets
 - Lazy loading for heavy components
 
@@ -1833,7 +1774,7 @@ Comprehensive documentation available in `/docs`:
 - [Stripe API Docs](https://stripe.com/docs/api)
 - [Inngest Docs](https://www.inngest.com/docs)
 - [Resend Docs](https://resend.com/docs)
-- [Vercel Docs](https://vercel.com/docs)
+- [OpenShip deployment guide](docs/DEPLOYMENT.md)
 
 ### Project Resources
 
@@ -1887,7 +1828,7 @@ Comprehensive documentation available in `/docs`:
    - Security audit
 
 7. **Deploy to Staging** (2 hours)
-   - Deploy to Vercel
+   - Deploy to OpenShip
    - Configure webhooks
    - End-to-end testing
 
@@ -1947,7 +1888,7 @@ This migration project was built using:
 - [Stripe](https://stripe.com) - Payment processing
 - [Inngest](https://inngest.com) - Background jobs
 - [Resend](https://resend.com) - Email delivery
-- [Vercel](https://vercel.com) - Hosting and deployment
+- OpenShip - Hosting and deployment
 - [TypeScript](https://www.typescriptlang.org) - Type safety
 - [Tailwind CSS](https://tailwindcss.com) - Styling
 

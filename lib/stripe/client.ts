@@ -3,7 +3,21 @@ import Stripe from "stripe";
 let _stripe: Stripe | null = null;
 
 export function createStripeClient(secretKey: string): Stripe {
+  const endpoint =
+    process.env.STAGING_ISOLATED === "1" && process.env.STRIPE_API_BASE_URL
+      ? new URL(process.env.STRIPE_API_BASE_URL)
+      : null;
+  if (endpoint && !["localhost", "127.0.0.1"].includes(endpoint.hostname)) {
+    throw new Error("Stripe staging endpoint must be local");
+  }
   return new Stripe(secretKey, {
+    ...(endpoint
+      ? {
+          host: endpoint.hostname,
+          port: Number(endpoint.port),
+          protocol: "http" as const,
+        }
+      : {}),
     apiVersion: "2024-12-18.acacia" as any,
     typescript: true,
   });

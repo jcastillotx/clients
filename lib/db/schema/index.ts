@@ -28,3 +28,5 @@ export * from "./calendar-integrations";
 // Explicitly export from users to avoid conflicts with rbac
 export { users, usersRelations, userStatusEnum } from "./users";
 export type { User, UserStatus, NewUser } from "./users";
+
+export * from "./marketing-plans";

@@ -1,0 +1,37 @@
+{
+  "role": "client",
+  "environment": "isolated local staging",
+  "tools": 48,
+  "marketingChecks": {
+    "passed": 59,
+    "total": 59
+  },
+  "coreWorkflowChecks": 48,
+  "clientScreens": 18,
+  "categories": {
+    "Paid Media": 9,
+    "SEO & AI Search": 6,
+    "Content": 6,
+    "Growth & Conversion": 4,
+    "Strategy & Research": 8,
+    "Email & Lifecycle": 3,
+    "Analytics": 5,
+    "Creative & Design": 3,
+    "Reporting & Deliverables": 4
+  },
+  "realProviderAcceptance": {
+    "provider": "OpenRouter",
+    "passed": 57,
+    "total": 57,
+    "tools": 48,
+    "data": "synthetic client briefs only"
+  },
+  "sourceArchive": "user-supplied claude-marketing.zip",
+  "unitTests": 392,
+  "unitTestFiles": 72,
+  "releaseStatus": "plans and Google marketing connections added; production promotion pending final provider configuration",
+  "planAccessChecks": {
+    "passed": 12,
+    "total": 12
+  }
+}

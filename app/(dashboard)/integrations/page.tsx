@@ -21,10 +21,13 @@ export default async function IntegrationsPage() {
 
   if (!user) return null;
 
-  const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
   const clientId = userData?.client_id ?? null;
 
-  const userRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const { data: roleData } = await supabase
     .from("user_roles")
     .select("role:roles(name)")
@@ -32,12 +35,14 @@ export default async function IntegrationsPage() {
 
   const hasAdminRole = (roleData || []).some((row: RoleDataRow) => {
     const roleValue = row?.role;
-    const roleName = Array.isArray(roleValue) ? roleValue[0]?.name : roleValue?.name;
+    const roleName = Array.isArray(roleValue)
+      ? roleValue[0]?.name
+      : roleValue?.name;
     return roleName === "admin" || roleName === "super_admin";
   });
 
   const canManageIntegrations = Boolean(
-    userData?.is_super_admin || userRole === "admin" || userRole === "super_admin" || hasAdminRole,
+    userData?.is_super_admin || hasAdminRole,
   );
 
   if (!canManageIntegrations) {
@@ -55,7 +60,9 @@ export default async function IntegrationsPage() {
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  const parentCompanyNames = (process.env.PARENT_COMPANY_NAMES ?? DEFAULT_PARENT_COMPANY_NAMES.join(","))
+  const parentCompanyNames = (
+    process.env.PARENT_COMPANY_NAMES ?? DEFAULT_PARENT_COMPANY_NAMES.join(",")
+  )
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
@@ -124,7 +131,10 @@ export default async function IntegrationsPage() {
     <div className="flex flex-col gap-8 p-8 max-w-6xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
-        <p className="text-muted-foreground">Manage billing, AI, automation, analytics, branding, and email integrations</p>
+        <p className="text-muted-foreground">
+          Manage billing, AI, automation, analytics, branding, and email
+          integrations
+        </p>
       </div>
 
       <IntegrationSettings clientId={settingsScopeClientId} />

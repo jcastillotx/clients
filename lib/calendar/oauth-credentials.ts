@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { encryptedSettings } from "@/lib/db/schema/encrypted-settings";
@@ -9,7 +9,9 @@ export type CalendarOAuthProvider = "google" | "microsoft";
 
 type CalendarCredentialKey = "client_id" | "client_secret" | "tenant_id";
 
-export type CalendarOAuthCredentials = Partial<Record<CalendarCredentialKey, string>> & {
+export type CalendarOAuthCredentials = Partial<
+  Record<CalendarCredentialKey, string>
+> & {
   source: "saved" | "env" | "none";
   clientScopeId: string | null;
 };
@@ -102,42 +104,9 @@ async function getSavedCalendarCredentials(
   return credentialsFromRows(rows, clientId);
 }
 
-async function getLatestSavedCalendarCredentials(
+function getEnvCalendarCredentials(
   provider: CalendarOAuthProvider,
-): Promise<CalendarOAuthCredentials | null> {
-  const rows: CalendarCredentialRow[] = await db
-    .select({
-      clientId: encryptedSettings.clientId,
-      settingKey: encryptedSettings.settingKey,
-      encryptedValue: encryptedSettings.encryptedValue,
-    })
-    .from(encryptedSettings)
-    .where(
-      and(
-        eq(encryptedSettings.provider, getSettingsProvider(provider)),
-        eq(encryptedSettings.isActive, true),
-      ),
-    )
-    .orderBy(desc(encryptedSettings.updatedAt));
-
-  const rowsByClient = new Map<string, CalendarCredentialRow[]>();
-  for (const row of rows) {
-    const clientRows = rowsByClient.get(row.clientId) ?? [];
-    clientRows.push(row);
-    rowsByClient.set(row.clientId, clientRows);
-  }
-
-  for (const [clientId, clientRows] of rowsByClient) {
-    const credentials = credentialsFromRows(clientRows, clientId);
-    if (credentials.client_id && credentials.client_secret) {
-      return credentials;
-    }
-  }
-
-  return null;
-}
-
-function getEnvCalendarCredentials(provider: CalendarOAuthProvider): CalendarOAuthCredentials {
+): CalendarOAuthCredentials {
   if (provider === "google") {
     return {
       client_id: normalizeCredential(
@@ -187,23 +156,16 @@ export async function resolveCalendarOAuthCredentialsForUser(
   provider: CalendarOAuthProvider,
   preferredClientId?: string | null,
 ): Promise<CalendarOAuthCredentials> {
-  const savedForPreferredClient = await getSavedCalendarCredentials(
-    provider,
-    preferredClientId ?? null,
-  );
-  if (savedForPreferredClient?.client_id && savedForPreferredClient.client_secret) {
-    return savedForPreferredClient;
-  }
-
   const userClientId = await getUserClientId(userId);
-  const savedForUserClient = await getSavedCalendarCredentials(provider, userClientId);
+  if (preferredClientId && preferredClientId !== userClientId) {
+    return { source: "none", clientScopeId: null };
+  }
+  const savedForUserClient = await getSavedCalendarCredentials(
+    provider,
+    userClientId,
+  );
   if (savedForUserClient?.client_id && savedForUserClient.client_secret) {
     return savedForUserClient;
-  }
-
-  const latestSaved = await getLatestSavedCalendarCredentials(provider);
-  if (latestSaved?.client_id && latestSaved.client_secret) {
-    return latestSaved;
   }
 
   const envCredentials = getEnvCalendarCredentials(provider);
@@ -217,6 +179,8 @@ export async function resolveCalendarOAuthCredentialsForUser(
   };
 }
 
-export function getMicrosoftCalendarTenant(credentials: CalendarOAuthCredentials): string {
+export function getMicrosoftCalendarTenant(
+  credentials: CalendarOAuthCredentials,
+): string {
   return encodeURIComponent(credentials.tenant_id?.trim() || "common");
 }

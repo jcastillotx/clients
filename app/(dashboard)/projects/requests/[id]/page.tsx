@@ -1,11 +1,25 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, CalendarClock, FileText, MessageCircle, ClipboardList, CalendarDays, CircleDollarSign } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarClock,
+  FileText,
+  MessageCircle,
+  ClipboardList,
+  CalendarDays,
+  CircleDollarSign,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectRequestTasks } from "@/components/projects/project-request-tasks";
 import { ProjectRequestCalendar } from "@/components/projects/project-request-calendar";
@@ -86,7 +100,9 @@ interface AttachmentRow {
   created_at: string;
 }
 
-const statusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+const statusVariant = (
+  status: string,
+): "default" | "secondary" | "destructive" | "outline" => {
   if (status === "approved" || status === "completed") {
     return "outline";
   }
@@ -110,7 +126,11 @@ const formatDate = (value?: string | null) => {
   return format(date, "MMM d, yyyy");
 };
 
-export default async function ProjectRequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectRequestDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const supabase = await createClient();
   const {
@@ -119,14 +139,22 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
 
   const [{ data: dbUser }, { data: roleRows }] = user
     ? await Promise.all([
-        supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+        supabase
+          .from("users")
+          .select("id, client_id, is_super_admin")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("user_roles")
+          .select("role:roles(name)")
+          .eq("user_id", user.id),
       ])
     : [{ data: null }, { data: [] }];
 
-  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
   const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
+    const roleRow = row as {
+      role?: { name?: string } | Array<{ name?: string }>;
+    };
     if (Array.isArray(roleRow.role)) {
       return String(roleRow.role[0]?.name || "").toLowerCase();
     }
@@ -135,18 +163,13 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
 
   const isAdmin = Boolean(
     dbUser?.is_super_admin ||
-      user?.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
+    roleNames.includes("admin") ||
+    roleNames.includes("super_admin"),
   );
   const canReview = Boolean(
     isAdmin ||
-      metadataRole === "staff" ||
-      metadataRole === "account_manager" ||
-      roleNames.includes("staff") ||
-      roleNames.includes("account_manager"),
+    roleNames.includes("staff") ||
+    roleNames.includes("account_manager"),
   );
 
   const { data: requestRow, error } = await supabase
@@ -167,7 +190,11 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
     notFound();
   }
 
-  if (!canReview && dbUser?.client_id && dbUser.client_id !== requestRow.client_id) {
+  if (
+    !canReview &&
+    dbUser?.client_id &&
+    dbUser.client_id !== requestRow.client_id
+  ) {
     notFound();
   }
 
@@ -177,18 +204,37 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
 
   const taskBoardId = request.custom_fields?.taskBoardId;
 
-  const [attachmentsResult, tasksCountResult, meetingsCountResult, feedbackCountResult] = await Promise.all([
+  const [
+    attachmentsResult,
+    tasksCountResult,
+    meetingsCountResult,
+    feedbackCountResult,
+  ] = await Promise.all([
     supabase
       .from("documents")
-      .select("id, name, file_name, file_size, mime_type, storage_url, storage_path, created_at")
+      .select(
+        "id, name, file_name, file_size, mime_type, storage_url, storage_path, created_at",
+      )
       .eq("request_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     taskBoardId
-      ? supabase.from("staff_tasks").select("id", { count: "exact", head: true }).eq("board_id", taskBoardId)
-      : supabase.from("staff_tasks").select("id", { count: "exact", head: true }).eq("request_id", id),
-    supabase.from("meetings").select("id", { count: "exact", head: true }).eq("request_id", id),
-    supabase.from("request_comments").select("id", { count: "exact", head: true }).eq("request_id", id),
+      ? supabase
+          .from("staff_tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("board_id", taskBoardId)
+      : supabase
+          .from("staff_tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("request_id", id),
+    supabase
+      .from("meetings")
+      .select("id", { count: "exact", head: true })
+      .eq("request_id", id),
+    supabase
+      .from("request_comments")
+      .select("id", { count: "exact", head: true })
+      .eq("request_id", id),
   ]);
 
   const attachments = (attachmentsResult.data || []) as AttachmentRow[];
@@ -196,9 +242,13 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
   const meetingsCount = meetingsCountResult.count || 0;
   const feedbackCount = feedbackCountResult.count || 0;
 
-  const estimateAmount = review?.estimateAmount ? Number(review.estimateAmount) : null;
+  const estimateAmount = review?.estimateAmount
+    ? Number(review.estimateAmount)
+    : null;
   const estimateCurrency = review?.estimateCurrency || "USD";
-  const estimatedHours = review?.estimatedHours ? Number(review.estimatedHours) : null;
+  const estimatedHours = review?.estimatedHours
+    ? Number(review.estimatedHours)
+    : null;
 
   return (
     <div className="container mx-auto space-y-6 py-8">
@@ -211,13 +261,22 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
             </Link>
           </Button>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">{request.title}</h1>
-            <Badge variant={statusVariant(request.status)}>{request.status.replace(/_/g, " ")}</Badge>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {request.title}
+            </h1>
+            <Badge variant={statusVariant(request.status)}>
+              {request.status.replace(/_/g, " ")}
+            </Badge>
             <Badge variant="secondary">{request.priority}</Badge>
-            {review?.status ? <Badge variant="outline">Review: {String(review.status).replace(/_/g, " ")}</Badge> : null}
+            {review?.status ? (
+              <Badge variant="outline">
+                Review: {String(review.status).replace(/_/g, " ")}
+              </Badge>
+            ) : null}
           </div>
           <p className="text-muted-foreground">
-            Client: {request.client?.company_name || "Unknown"} • Submitted by {request.creator?.name || "Unknown"} •{" "}
+            Client: {request.client?.company_name || "Unknown"} • Submitted by{" "}
+            {request.creator?.name || "Unknown"} •{" "}
             {formatDate(request.created_at)}
           </p>
         </div>
@@ -229,7 +288,9 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
             clientId={request.client?.id ?? ""}
             estimateAmount={request.custom_fields?.review?.estimateAmount}
             estimateCurrency={request.custom_fields?.review?.estimateCurrency}
-            estimatedStartDate={request.custom_fields?.review?.estimatedStartDate}
+            estimatedStartDate={
+              request.custom_fields?.review?.estimatedStartDate
+            }
             estimatedEndDate={request.custom_fields?.review?.estimatedEndDate}
             executiveSummary={request.custom_fields?.executiveSummary}
           />
@@ -275,10 +336,14 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
               Estimate
             </div>
             <p className="mt-2 text-lg font-semibold">
-              {estimateAmount ? `${estimateCurrency} ${estimateAmount.toLocaleString()}` : "Pending"}
+              {estimateAmount
+                ? `${estimateCurrency} ${estimateAmount.toLocaleString()}`
+                : "Pending"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {estimatedHours ? `${estimatedHours.toLocaleString()} hrs` : "Hours not set"}
+              {estimatedHours
+                ? `${estimatedHours.toLocaleString()} hrs`
+                : "Hours not set"}
             </p>
           </CardContent>
         </Card>
@@ -298,28 +363,46 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
           <Card>
             <CardHeader>
               <CardTitle>Executive Summary</CardTitle>
-              <CardDescription>Business objective and project intent.</CardDescription>
+              <CardDescription>
+                Business objective and project intent.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                {request.custom_fields?.executiveSummary || "No executive summary provided."}
+                {request.custom_fields?.executiveSummary ||
+                  "No executive summary provided."}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border p-3">
                   <p className="text-sm font-medium">Requested Start Date</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{formatDate(request.custom_fields?.requestedStartDate || null)}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {formatDate(
+                      request.custom_fields?.requestedStartDate || null,
+                    )}
+                  </p>
                 </div>
                 <div className="rounded-md border p-3">
-                  <p className="text-sm font-medium">Requested Due / Launch Date</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{formatDate(request.custom_fields?.requestedLaunchDate || request.due_date)}</p>
+                  <p className="text-sm font-medium">
+                    Requested Due / Launch Date
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {formatDate(
+                      request.custom_fields?.requestedLaunchDate ||
+                        request.due_date,
+                    )}
+                  </p>
                 </div>
                 <div className="rounded-md border p-3">
                   <p className="text-sm font-medium">Budget Context</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{request.custom_fields?.budgetRange || "Not provided"}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {request.custom_fields?.budgetRange || "Not provided"}
+                  </p>
                 </div>
                 <div className="rounded-md border p-3">
                   <p className="text-sm font-medium">Assigned Reviewer</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{request.assigned_user?.name || "Unassigned"}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {request.assigned_user?.name || "Unassigned"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -328,7 +411,9 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
           <Card>
             <CardHeader>
               <CardTitle>Detailed Scope</CardTitle>
-              <CardDescription>Requirements, notes, and expected outcomes.</CardDescription>
+              <CardDescription>
+                Requirements, notes, and expected outcomes.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -340,7 +425,8 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
               <div>
                 <p className="text-sm font-medium">Desired Outcome / KPIs</p>
                 <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
-                  {request.custom_fields?.desiredOutcome || "No desired outcome provided."}
+                  {request.custom_fields?.desiredOutcome ||
+                    "No desired outcome provided."}
                 </p>
               </div>
             </CardContent>
@@ -350,33 +436,48 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
             <Card>
               <CardHeader>
                 <CardTitle>Organization Intake</CardTitle>
-                <CardDescription>Business information submitted from the public project request form.</CardDescription>
+                <CardDescription>
+                  Business information submitted from the public project request
+                  form.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-md border p-3">
                     <p className="text-sm font-medium">Primary Contact</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.contactName || "Not provided"}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {publicIntake.contactName || "Not provided"}
+                    </p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm font-medium">Contact Email</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.contactEmail || "Not provided"}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {publicIntake.contactEmail || "Not provided"}
+                    </p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm font-medium">Phone</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.contactPhone || "Not provided"}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {publicIntake.contactPhone || "Not provided"}
+                    </p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm font-medium">Website</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.website || "Not provided"}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {publicIntake.website || "Not provided"}
+                    </p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm font-medium">Industry</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{publicIntake.industry || "Not provided"}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {publicIntake.industry || "Not provided"}
+                    </p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm font-medium">Submitted Via</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{request.custom_fields?.source || "Public intake"}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {request.custom_fields?.source || "Public intake"}
+                    </p>
                   </div>
                 </div>
                 <div className="rounded-md border p-3">
@@ -388,7 +489,13 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
                 <div className="rounded-md border p-3">
                   <p className="text-sm font-medium">Address</p>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
-                    {[publicIntake.address, publicIntake.city, publicIntake.state, publicIntake.zipCode, publicIntake.country]
+                    {[
+                      publicIntake.address,
+                      publicIntake.city,
+                      publicIntake.state,
+                      publicIntake.zipCode,
+                      publicIntake.country,
+                    ]
                       .filter(Boolean)
                       .join(", ") || "Not provided"}
                   </p>
@@ -400,7 +507,9 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
           <Card>
             <CardHeader>
               <CardTitle>Project Files</CardTitle>
-              <CardDescription>Uploaded source files, briefs, and supporting documents.</CardDescription>
+              <CardDescription>
+                Uploaded source files, briefs, and supporting documents.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {attachments.length === 0 ? (
@@ -410,13 +519,19 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
               ) : (
                 <div className="space-y-2">
                   {attachments.map((attachment) => (
-                    <div key={attachment.id} className="flex items-center justify-between rounded-md border p-3">
+                    <div
+                      key={attachment.id}
+                      className="flex items-center justify-between rounded-md border p-3"
+                    >
                       <div className="flex min-w-0 items-center gap-2">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{attachment.name || attachment.file_name}</p>
+                          <p className="truncate text-sm font-medium">
+                            {attachment.name || attachment.file_name}
+                          </p>
                           <p className="text-xs text-muted-foreground">
-                            {attachment.mime_type || "Unknown type"} • {formatDate(attachment.created_at)}
+                            {attachment.mime_type || "Unknown type"} •{" "}
+                            {formatDate(attachment.created_at)}
                           </p>
                         </div>
                       </div>
@@ -454,34 +569,52 @@ export default async function ProjectRequestDetailPage({ params }: { params: Pro
         </TabsContent>
 
         <TabsContent value="review">
-          <ProjectRequestReviewPanel requestId={id} currentStatus={request.status} review={review || null} canReview={canReview} />
+          <ProjectRequestReviewPanel
+            requestId={id}
+            currentStatus={request.status}
+            review={review || null}
+            canReview={canReview}
+          />
           <Card className="mt-4">
             <CardHeader>
               <CardTitle>Estimate Snapshot</CardTitle>
-              <CardDescription>Shared estimate details currently visible in this request.</CardDescription>
+              <CardDescription>
+                Shared estimate details currently visible in this request.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2">
               <div className="rounded-md border p-3">
                 <p className="text-sm font-medium">Estimated Amount</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {estimateAmount ? `${estimateCurrency} ${estimateAmount.toLocaleString()}` : "Not provided"}
+                  {estimateAmount
+                    ? `${estimateCurrency} ${estimateAmount.toLocaleString()}`
+                    : "Not provided"}
                 </p>
               </div>
               <div className="rounded-md border p-3">
                 <p className="text-sm font-medium">Estimated Hours</p>
-                <p className="mt-1 text-sm text-muted-foreground">{estimatedHours ? `${estimatedHours} hrs` : "Not provided"}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {estimatedHours ? `${estimatedHours} hrs` : "Not provided"}
+                </p>
               </div>
               <div className="rounded-md border p-3">
                 <p className="text-sm font-medium">Estimated Start</p>
-                <p className="mt-1 text-sm text-muted-foreground">{formatDate(review?.estimatedStartDate || null)}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formatDate(review?.estimatedStartDate || null)}
+                </p>
               </div>
               <div className="rounded-md border p-3">
                 <p className="text-sm font-medium">Estimated End</p>
-                <p className="mt-1 text-sm text-muted-foreground">{formatDate(review?.estimatedEndDate || null)}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formatDate(review?.estimatedEndDate || null)}
+                </p>
               </div>
               <div className="rounded-md border p-3 md:col-span-2">
                 <p className="text-sm font-medium">Response Summary</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{review?.responseSummary || "No estimate response shared yet."}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {review?.responseSummary ||
+                    "No estimate response shared yet."}
+                </p>
               </div>
               <div className="rounded-md border p-3 md:col-span-2">
                 <p className="text-sm font-medium">Request Due Date</p>

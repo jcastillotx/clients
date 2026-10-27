@@ -11,6 +11,7 @@ import { dispatchNotification } from "@/lib/notifications/service";
 import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import { getClientIp, limiters, rateLimitLimits } from "@/lib/rate-limit";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
+import { getAuthBaseUrl } from "@/lib/supabase/redirect-url";
 import { assertTurnstileToken } from "@/lib/turnstile/verify";
 import { createPublicProjectRequestSchema } from "@/lib/validations/project-request";
 
@@ -109,6 +110,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = createPublicProjectRequestSchema.parse(body);
 
+    if (validated.contactFax?.trim()) {
+      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Unable to submit this request." });
+    }
+
     const captcha = await assertTurnstileToken(
       validated.turnstileToken,
       getClientIp(request),
@@ -121,8 +126,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { turnstileToken, ...intakePayload } = validated;
+    const { turnstileToken, contactFax, ...intakePayload } = validated;
     void turnstileToken;
+    void contactFax;
 
     const { data: client, error: clientError } = await adminClient
       .from("clients")
@@ -217,10 +223,16 @@ export async function POST(request: NextRequest) {
         subjectType: "request",
         subjectId: projectRequest.id,
         recipientUserIds: [intakeOwnerId],
-        extraEmails: await withPlatformNotificationEmails([intakePayload.contactEmail]),
+        // Public contact details are unverified and must never receive internal alerts.
+        extraEmails: await withPlatformNotificationEmails(),
         data: {
           requestTitle: intakePayload.title,
           companyName: intakePayload.companyName,
+          request_title: intakePayload.title,
+          request_description: intakePayload.description || intakePayload.executiveSummary,
+          request_url: `${getAuthBaseUrl()}/projects/requests/${projectRequest.id}`,
+          company_name: intakePayload.companyName,
+          created_by_name: intakePayload.contactName,
         },
       });
     } catch (notifyErr) {

@@ -18,7 +18,7 @@ describe("sentry config", () => {
 
   it("getSentryEnvironment prefers NEXT_PUBLIC_SENTRY_ENVIRONMENT", () => {
     vi.stubEnv("NEXT_PUBLIC_SENTRY_ENVIRONMENT", "staging");
-    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("NODE_ENV", "production");
     expect(getSentryEnvironment()).toBe("staging");
   });
 });

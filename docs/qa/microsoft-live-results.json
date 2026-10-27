@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-27",
+  "email": {
+    "sender": "info@kre8ivdesigns.com",
+    "recipient": "info@kre8ivdesigns.com",
+    "deliveryConfirmed": true,
+    "attachmentConfirmed": "provider-verification.txt",
+    "forcedRefreshAccepted": true,
+    "rotatedRefreshTokenSaved": true,
+    "adminUiSendTestPassed": true,
+    "adminUiDeliveryReceivedUtc": "2026-10-27T15:21:13Z",
+    "rotatedCredentialPersistedUtc": "2026-10-27T15:21:09Z"
+  },
+  "calendar": {
+    "account": "j.castillo@castillocollective.com",
+    "scope": "Calendars.ReadBasic",
+    "organizationWideConsent": false,
+    "connected": true,
+    "availabilitySucceeded": true,
+    "forcedRefreshPersisted": true,
+    "disconnectSucceeded": true,
+    "reconnectSucceeded": true,
+    "eventsCreated": 0
+  },
+  "tests": 332,
+  "source": "61fa8d8"
+}

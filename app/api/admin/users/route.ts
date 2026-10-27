@@ -1,5 +1,6 @@
+import { canAssignRequestedRoles } from "@/lib/auth/user-management";
+import { userCreateSchema } from "@/lib/validations/workspace";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { z } from "zod";
 import {
   apiError,
   apiForbidden,
@@ -7,20 +8,20 @@ import {
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
-import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import {
+  hasAnyRole,
+  hasPermission,
+  Permissions,
+  Roles,
+} from "@/lib/rbac/permissions";
 import { sendWelcomeEmail } from "@/lib/email/send-welcome-email";
 
-const createUserSchema = z.object({
-  name: z.string().trim().min(1),
-  email: z.string().trim().email(),
-  phone: z.string().nullable().optional(),
-  password: z.string().min(8),
-  client_id: z.string().uuid().nullable().optional(),
-  is_active: z.boolean().optional(),
-  roles: z.array(z.string().uuid()).optional(),
-});
+const createUserSchema = userCreateSchema;
 
-async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
+async function fetchCompleteUserForResponse(
+  adminClient: ReturnType<typeof createAdminClient>,
+  userId: string,
+) {
   type UserRow = {
     id: string;
     client_id?: string | null;
@@ -38,7 +39,11 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
     role_id: string;
   };
 
-  const userResult = await adminClient.from("users").select("*").eq("id", userId).maybeSingle();
+  const userResult = await adminClient
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
   if (userResult.error) {
     throw userResult.error;
   }
@@ -56,7 +61,10 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
       .eq("id", userRow.client_id)
       .maybeSingle();
     if (clientResult.error) {
-      console.warn("Failed to hydrate user client in response", clientResult.error);
+      console.warn(
+        "Failed to hydrate user client in response",
+        clientResult.error,
+      );
     } else {
       client = clientResult.data ?? null;
     }
@@ -71,7 +79,11 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
   if (!joinedRolesResult.error) {
     for (const row of (joinedRolesResult.data || []) as JoinedRoleRow[]) {
       const roleValue = Array.isArray(row.role) ? row.role[0] : row.role;
-      if (roleValue && typeof roleValue.id === "string" && typeof roleValue.name === "string") {
+      if (
+        roleValue &&
+        typeof roleValue.id === "string" &&
+        typeof roleValue.name === "string"
+      ) {
         userRoles.push({
           role: {
             id: roleValue.id,
@@ -82,23 +94,41 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
       }
     }
   } else {
-    console.warn("Failed to join user roles in response; falling back to manual role hydration", joinedRolesResult.error);
+    console.warn(
+      "Failed to join user roles in response; falling back to manual role hydration",
+      joinedRolesResult.error,
+    );
 
-    const plainRolesResult = await adminClient.from("user_roles").select("role_id").eq("user_id", userId);
+    const plainRolesResult = await adminClient
+      .from("user_roles")
+      .select("role_id")
+      .eq("user_id", userId);
     if (plainRolesResult.error) {
-      console.warn("Failed to load role IDs in response fallback", plainRolesResult.error);
+      console.warn(
+        "Failed to load role IDs in response fallback",
+        plainRolesResult.error,
+      );
     } else {
       const roleIds = Array.from(
         new Set(
           ((plainRolesResult.data || []) as PlainRoleRow[])
             .map((row) => row.role_id)
-            .filter((roleId): roleId is string => typeof roleId === "string" && roleId.length > 0),
+            .filter(
+              (roleId): roleId is string =>
+                typeof roleId === "string" && roleId.length > 0,
+            ),
         ),
       );
       if (roleIds.length > 0) {
-        const rolesResult = await adminClient.from("roles").select("id, name, description").in("id", roleIds);
+        const rolesResult = await adminClient
+          .from("roles")
+          .select("id, name, description")
+          .in("id", roleIds);
         if (rolesResult.error) {
-          console.warn("Failed to load roles in response fallback", rolesResult.error);
+          console.warn(
+            "Failed to load roles in response fallback",
+            rolesResult.error,
+          );
         } else {
           for (const role of (rolesResult.data || []) as RoleRow[]) {
             userRoles.push({ role });
@@ -128,21 +158,27 @@ export async function POST(request: Request) {
       return apiUnauthorized(request, "Authentication required");
     }
 
-    const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
-    const isAdminMetadataRole =
-      currentUser.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN;
-    const hasManagementMetadataRole = isAdminMetadataRole || metadataRole === Roles.ACCOUNT_MANAGER;
+    const hasAdminRoleDb = await hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN], {
+      supabase,
+      userId: currentUser.id,
+    });
 
     const accessOptions = { supabase, userId: currentUser.id };
-    const [canManageUsers, canCreateUsers, canAssignRoles, hasManagementRoleDb] = await Promise.all([
+    const [
+      canManageUsers,
+      canCreateUsers,
+      canAssignRoles,
+      hasManagementRoleDb,
+    ] = await Promise.all([
       hasPermission(Permissions.USERS_MANAGE, accessOptions),
       hasPermission(Permissions.USERS_CREATE, accessOptions),
       hasPermission(Permissions.USERS_ASSIGN_ROLES, accessOptions),
-      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+      hasAnyRole(
+        [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+        accessOptions,
+      ),
     ]);
-    const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+    const hasManagementRole = hasManagementRoleDb;
 
     if (!(canManageUsers || canCreateUsers || hasManagementRole)) {
       return apiForbidden(request);
@@ -153,24 +189,37 @@ export async function POST(request: Request) {
       return apiError(request, {
         status: 400,
         code: "BAD_REQUEST",
-        message: "Provide a name, valid email, password of at least 8 characters, and valid account fields",
+        message:
+          "Provide a name, valid email, password of at least 8 characters, and valid account fields",
       });
     }
-    const { name, email, phone, password, client_id, is_active, roles } = parsed.data;
+    const { name, email, phone, password, client_id, is_active, roles } =
+      parsed.data;
 
     const adminClient = createAdminClient();
+    if (
+      canAssignRoles &&
+      roles &&
+      !(await canAssignRequestedRoles(adminClient, roles, hasAdminRoleDb))
+    ) {
+      return apiForbidden(
+        request,
+        "Only administrators can assign management roles",
+      );
+    }
 
     // Create user in Supabase Auth
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        name,
-        phone,
-        client_id,
-      },
-    });
+    const { data: authData, error: authError } =
+      await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          name,
+          phone,
+          client_id,
+        },
+      });
 
     if (authError) throw authError;
     createdAuthUserId = authData.user.id;
@@ -178,37 +227,54 @@ export async function POST(request: Request) {
     // Sync user record in database (trigger may already create the row)
     const { data: userRecord, error: dbError } = await adminClient
       .from("users")
-      .upsert({
-        id: authData.user.id,
-        name,
-        email,
-        phone: phone || null,
-        client_id: client_id || null,
-        is_active: is_active !== false,
-        status: is_active === false ? "inactive" : "active",
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" })
+      .upsert(
+        {
+          id: authData.user.id,
+          name,
+          email,
+          phone: phone || null,
+          client_id: client_id || null,
+          is_active: is_active !== false,
+          status: is_active === false ? "inactive" : "active",
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" },
+      )
       .select()
       .single();
 
     if (dbError) throw dbError;
 
-    const canWriteRoles = canAssignRoles || canManageUsers || isAdminMetadataRole;
+    const canWriteRoles = canAssignRoles || hasAdminRoleDb;
     const requestedRoleIds =
       Array.isArray(roles) && canWriteRoles
-        ? Array.from(new Set(roles.filter((roleId: unknown): roleId is string => typeof roleId === "string")))
+        ? Array.from(
+            new Set(
+              roles.filter(
+                (roleId: unknown): roleId is string =>
+                  typeof roleId === "string",
+              ),
+            ),
+          )
         : [];
 
     let roleIdsToAssign = requestedRoleIds;
     if (!canWriteRoles) {
       // Account managers can create users, but role assignment stays constrained.
-      const { data: defaultRole } = await adminClient.from("roles").select("id").eq("name", "client").maybeSingle();
+      const { data: defaultRole } = await adminClient
+        .from("roles")
+        .select("id")
+        .eq("name", "client")
+        .maybeSingle();
       roleIdsToAssign = defaultRole?.id ? [defaultRole.id] : [];
     }
 
     // Ensure deterministic role state for newly created users
     if (roleIdsToAssign.length > 0) {
-      await adminClient.from("user_roles").delete().eq("user_id", userRecord.id);
+      await adminClient
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userRecord.id);
       const { error: rolesError } = await adminClient.from("user_roles").insert(
         roleIdsToAssign.map((role_id: string) => ({
           user_id: userRecord.id,
@@ -220,20 +286,29 @@ export async function POST(request: Request) {
       if (rolesError) throw rolesError;
     }
 
-    const completeUser = await fetchCompleteUserForResponse(adminClient, userRecord.id);
+    const completeUser = await fetchCompleteUserForResponse(
+      adminClient,
+      userRecord.id,
+    );
     const welcomeEmail = await sendWelcomeEmail({ name, email });
 
-    return apiSuccess(request, { ...completeUser, welcome_email_sent: welcomeEmail.success }, {
-      status: 201,
-      extra: { user: completeUser },
-    });
+    return apiSuccess(
+      request,
+      { ...completeUser, welcome_email_sent: welcomeEmail.success },
+      {
+        status: 201,
+        extra: { user: completeUser },
+      },
+    );
   } catch (error) {
     console.error("Error creating user:", error);
 
     // Roll back auth user if we failed after creation
     if (createdAuthUserId) {
       const adminClient = createAdminClient();
-      await adminClient.auth.admin.deleteUser(createdAuthUserId).catch(() => undefined);
+      await adminClient.auth.admin
+        .deleteUser(createdAuthUserId)
+        .catch(() => undefined);
     }
 
     return apiInternalError(

@@ -8,6 +8,7 @@ export interface S3Credentials {
   secretAccessKey: string;
   bucket: string;
   region: string;
+  endpoint?: string;
 }
 
 function extractCreds(
@@ -70,7 +71,13 @@ export async function getS3Credentials(
   const region = process.env.AWS_REGION ?? "us-east-1";
 
   if (accessKeyId && secretAccessKey && bucket) {
-    return { accessKeyId, secretAccessKey, bucket, region };
+    return {
+      accessKeyId,
+      secretAccessKey,
+      bucket,
+      region,
+      endpoint: process.env.AWS_S3_ENDPOINT,
+    };
   }
 
   return null;

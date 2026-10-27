@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-27",
+  "provider": "Stripe",
+  "account": "Kre8ivDesigns Marketing, LLC",
+  "mode": "sandbox",
+  "automatedChecks": [
+    {
+      "name": "Sandbox authenticates to the KRE8IV account",
+      "passed": true
+    },
+    {
+      "name": "Portal creates a real test intent and returns its account publishable key",
+      "passed": true
+    },
+    {
+      "name": "Repeated initialization does not create another payment intent",
+      "passed": true
+    },
+    {
+      "name": "Foreign tenant cannot create a payment intent",
+      "passed": true
+    },
+    {
+      "name": "Real successful payment and Stripe-signed delivery settle the invoice",
+      "passed": true
+    },
+    {
+      "name": "Paid invoices cannot initialize another payment",
+      "passed": true
+    },
+    {
+      "name": "Real Stripe decline leaves invoice unpaid and records failure",
+      "passed": true
+    },
+    {
+      "name": "Retrying a declined payment succeeds and reconciles",
+      "passed": true
+    },
+    {
+      "name": "3D Secure challenge is required without premature settlement",
+      "passed": true
+    },
+    {
+      "name": "Full sandbox refund is reconciled through signed Stripe event",
+      "passed": true
+    },
+    {
+      "name": "Replaying a real success event does not duplicate settlement",
+      "passed": true
+    },
+    {
+      "name": "Real sandbox subscription creation is received and tenant-scoped",
+      "passed": true
+    },
+    {
+      "name": "Subscription update and cancellation are received",
+      "passed": true
+    },
+    {
+      "name": "Public checkout persists its real Stripe session",
+      "passed": true
+    }
+  ],
+  "browserChecks": [
+    {
+      "name": "Embedded payment form and 3D Secure 2 completion settle invoice",
+      "passed": true
+    },
+    {
+      "name": "Hosted Checkout payment returns success and reconciles persisted session",
+      "passed": true
+    }
+  ],
+  "realMoneyMoved": false
+}

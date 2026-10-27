@@ -1,17 +1,28 @@
+import { updateClientFieldsSchema } from "@/lib/validations/client";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiForbidden,
+  apiValidationError,
   apiInternalError,
   apiNotFound,
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
-import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import {
+  hasAnyRole,
+  hasPermission,
+  Permissions,
+  Roles,
+} from "@/lib/rbac/permissions";
 import { db } from "@/lib/db";
 import { clients } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
 
   try {
@@ -24,34 +35,32 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return apiUnauthorized(request, "Authentication required");
     }
 
-    const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
-    const hasManagementMetadataRole =
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN ||
-      metadataRole === Roles.ACCOUNT_MANAGER;
-
     const accessOptions = { supabase, userId: user.id };
     const [canUpdateClients, hasManagementRoleDb] = await Promise.all([
       hasPermission(Permissions.CLIENTS_UPDATE, accessOptions),
-      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+      hasAnyRole(
+        [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+        accessOptions,
+      ),
     ]);
-    const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+    const hasManagementRole = hasManagementRoleDb;
 
     if (!(canUpdateClients || hasManagementRole)) {
       return apiForbidden(request);
     }
 
-    const body = await request.json();
+    const body = updateClientFieldsSchema.parse(await request.json());
 
     const updateData: Record<string, unknown> = {};
-    if (body.company_name !== undefined) updateData.companyName = body.company_name;
+    if (body.company_name !== undefined)
+      updateData.companyName = body.company_name;
     if (body.email !== undefined) updateData.email = body.email;
     if (body.domain !== undefined) updateData.domain = body.domain;
     if (body.industry !== undefined) updateData.industry = body.industry;
     if (body.logo_url !== undefined) updateData.logoUrl = body.logo_url;
     if (body.status !== undefined) updateData.status = body.status;
-    if (body.primary_contact_id !== undefined) updateData.primaryContactId = body.primary_contact_id;
+    if (body.primary_contact_id !== undefined)
+      updateData.primaryContactId = body.primary_contact_id;
     if (body.phone !== undefined) updateData.phone = body.phone;
     if (body.address !== undefined) updateData.address = body.address;
     if (body.city !== undefined) updateData.city = body.city;
@@ -72,8 +81,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return apiNotFound(request, "Client not found");
     }
 
-    return apiSuccess(request, updatedClient, { extra: { client: updatedClient } });
+    return apiSuccess(request, updatedClient, {
+      extra: { client: updatedClient },
+    });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error updating client:", error);
     return apiInternalError(
       request,

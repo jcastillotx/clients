@@ -17,14 +17,22 @@ export default async function NewSurveyPage() {
 
   const [{ data: dbUser }, { data: roleRows }] = user
     ? await Promise.all([
-        supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+        supabase
+          .from("users")
+          .select("id, client_id, is_super_admin")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("user_roles")
+          .select("role:roles(name)")
+          .eq("user_id", user.id),
       ])
     : [{ data: null }, { data: [] }];
 
-  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
   const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
+    const roleRow = row as {
+      role?: { name?: string } | Array<{ name?: string }>;
+    };
     if (Array.isArray(roleRow.role)) {
       return String(roleRow.role[0]?.name || "").toLowerCase();
     }
@@ -33,16 +41,17 @@ export default async function NewSurveyPage() {
 
   const isAdmin = Boolean(
     dbUser?.is_super_admin ||
-      user?.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
+    roleNames.includes("admin") ||
+    roleNames.includes("super_admin"),
   );
 
   const canSelectClient = isAdmin;
   const { data: clients } = canSelectClient
-    ? await supabase.from("clients").select("id, company_name").is("deleted_at", null).order("company_name")
+    ? await supabase
+        .from("clients")
+        .select("id, company_name")
+        .is("deleted_at", null)
+        .order("company_name")
     : { data: [] };
 
   return (
@@ -50,7 +59,9 @@ export default async function NewSurveyPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Create Survey</h1>
-          <p className="text-muted-foreground mt-1">Build a feedback survey and publish it for responses.</p>
+          <p className="text-muted-foreground mt-1">
+            Build a feedback survey and publish it for responses.
+          </p>
         </div>
         <Button variant="outline" asChild>
           <Link href="/surveys">

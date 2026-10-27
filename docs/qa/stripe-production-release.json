@@ -1,0 +1,29 @@
+{
+  "account": "acct_19EQ4jJboZZQxmLk",
+  "chargesEnabled": true,
+  "payoutsEnabled": true,
+  "liveWebhookSignatureProbe": 200,
+  "unauthenticatedIntent": 401,
+  "liveTransactionsCreated": 0,
+  "source": "6494970",
+  "date": "2026-10-27",
+  "sandboxApiChecks": 14,
+  "sandboxBrowserChecks": 2,
+  "unitTests": 319,
+  "webhook": {
+    "id": "we_1TmSYWJboZZQxmLkf4fy7xHW",
+    "url": "https://clients.kre8ivdesigns.com/api/webhooks/stripe",
+    "status": "enabled",
+    "events": [
+      "payment_intent.succeeded",
+      "payment_intent.payment_failed",
+      "charge.refunded",
+      "customer.subscription.created",
+      "customer.subscription.updated",
+      "customer.subscription.deleted"
+    ],
+    "apiVersion": "2016-07-06",
+    "livemode": true
+  },
+  "rollbackContainer": "clients-before-stripe-20261027"
+}

@@ -56,6 +56,14 @@ describe("route access helpers", () => {
     ).toBe(true);
   });
 
+  it("ignores client-controlled role and super-admin metadata", () => {
+    for (const role of ["admin", "super_admin", "account_manager", "staff"]) {
+      const user = { id: "client", user_metadata: { role, is_super_admin: true } };
+      expect(isAdminAccess(user, { is_super_admin: false }, [])).toBe(false);
+      expect(isStaffAccess(user, { is_super_admin: false }, [])).toBe(false);
+    }
+  });
+
   it("resolves access from db user row and role rows", async () => {
     const supabaseMock = {
       from(table: string) {

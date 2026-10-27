@@ -1,6 +1,9 @@
+import { z } from "zod";
 import { NextRequest } from "next/server";
 import {
   apiError,
+  apiForbidden,
+  apiInternalError,
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
@@ -47,32 +50,61 @@ export async function GET(request: NextRequest) {
 
   const startDate = new Date(start);
   const endDate = new Date(end);
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate >= endDate) {
-    return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Invalid time range" });
+  if (
+    isNaN(startDate.getTime()) ||
+    isNaN(endDate.getTime()) ||
+    startDate >= endDate
+  ) {
+    return apiError(request, {
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Invalid time range",
+    });
   }
 
-  const userIds = userIdsParam
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean)
-    .slice(0, 20); // cap at 20 users
+  const userIds = [
+    ...new Set(
+      userIdsParam
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean),
+    ),
+  ];
+  if (
+    !z.array(z.string().uuid()).max(20).safeParse(userIds).success ||
+    endDate.getTime() - startDate.getTime() > 31 * 24 * 60 * 60 * 1000
+  ) {
+    return apiError(request, {
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Use at most 20 valid users and a time range of up to 31 days",
+    });
+  }
 
   if (userIds.length === 0) {
     return apiSuccess(request, [], { extra: { availability: [] } });
   }
 
-  // Fetch calendar connections for all requested users
-  const connections = await db
-    .select()
-    .from(calendarConnections)
-    .where(and(inArray(calendarConnections.userId, userIds), eq(calendarConnections.isActive, true)));
-
-  // Fetch user names from DB
-  const { data: userRows } = await supabase
+  // Apply the authenticated user's RLS visibility before reading privileged tokens.
+  const { data: userRows, error: usersError } = await supabase
     .from("users")
     .select("id, name")
     .in("id", userIds)
-    .is("deleted_at", null);
+    .is("deleted_at", null)
+    .eq("is_active", true);
+  if (usersError)
+    return apiInternalError(request, "Unable to check user access");
+  if (userRows?.length !== userIds.length) return apiForbidden(request);
+
+  const connections = await db
+    .select()
+    .from(calendarConnections)
+    .where(
+      and(
+        inArray(calendarConnections.userId, userIds),
+        eq(calendarConnections.isActive, true),
+      ),
+    );
 
   const userNameMap = new Map<string, string>(
     (userRows ?? []).map((u: { id: string; name: string }) => [u.id, u.name]),
@@ -81,7 +113,8 @@ export async function GET(request: NextRequest) {
   // Build a map of userId → connections
   const connectionsByUser = new Map<string, typeof connections>();
   for (const conn of connections) {
-    if (!connectionsByUser.has(conn.userId)) connectionsByUser.set(conn.userId, []);
+    if (!connectionsByUser.has(conn.userId))
+      connectionsByUser.set(conn.userId, []);
     connectionsByUser.get(conn.userId)!.push(conn);
   }
 
@@ -96,11 +129,15 @@ export async function GET(request: NextRequest) {
 
       // Check each connection; return busy if any shows busy
       const busyBlocks: Array<{ start: string; end: string }> = [];
+      let providerUnavailable = false;
 
       for (const conn of userConnections) {
         try {
           const accessToken = await getValidAccessToken(conn, appUrl);
-          if (!accessToken) continue;
+          if (!accessToken) {
+            providerUnavailable = true;
+            continue;
+          }
 
           if (conn.provider === "google") {
             const blocks = await fetchGoogleBusy(accessToken, start, end);
@@ -110,7 +147,11 @@ export async function GET(request: NextRequest) {
             busyBlocks.push(...blocks);
           }
         } catch (err) {
-          console.error(`[calendar/availability] Error checking ${conn.provider} for user ${uid}:`, err);
+          providerUnavailable = true;
+          console.error(
+            `[calendar/availability] Error checking ${conn.provider} for user ${uid}:`,
+            err,
+          );
         }
       }
 
@@ -118,7 +159,13 @@ export async function GET(request: NextRequest) {
         return { userId: uid, name, status: "busy" as const, busyBlocks };
       }
 
-      return { userId: uid, name, status: "free" as const };
+      return {
+        userId: uid,
+        name,
+        status: providerUnavailable
+          ? ("unavailable" as const)
+          : ("free" as const),
+      };
     }),
   );
 
@@ -133,7 +180,9 @@ async function getValidAccessToken(
   conn: typeof calendarConnections.$inferSelect,
   appUrl: string,
 ): Promise<string | null> {
-  const isExpired = conn.tokenExpiry ? conn.tokenExpiry <= new Date(Date.now() + 60_000) : false;
+  const isExpired = conn.tokenExpiry
+    ? conn.tokenExpiry <= new Date(Date.now() + 60_000)
+    : false;
 
   if (!isExpired) {
     try {
@@ -180,7 +229,10 @@ async function getValidAccessToken(
 }
 
 async function refreshGoogleToken(refreshToken: string, userId: string) {
-  const credentials = await resolveCalendarOAuthCredentialsForUser(userId, "google");
+  const credentials = await resolveCalendarOAuthCredentialsForUser(
+    userId,
+    "google",
+  );
   if (!hasCompleteCalendarOAuthCredentials(credentials)) {
     return null;
   }
@@ -198,24 +250,34 @@ async function refreshGoogleToken(refreshToken: string, userId: string) {
   return res.json();
 }
 
-async function refreshMicrosoftToken(refreshToken: string, userId: string, appUrl: string) {
-  const credentials = await resolveCalendarOAuthCredentialsForUser(userId, "microsoft");
+async function refreshMicrosoftToken(
+  refreshToken: string,
+  userId: string,
+  appUrl: string,
+) {
+  const credentials = await resolveCalendarOAuthCredentialsForUser(
+    userId,
+    "microsoft",
+  );
   if (!hasCompleteCalendarOAuthCredentials(credentials)) {
     return null;
   }
 
-  const res = await fetch(`https://login.microsoftonline.com/${getMicrosoftCalendarTenant(credentials)}/oauth2/v2.0/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: credentials.client_id ?? "",
-      client_secret: credentials.client_secret ?? "",
-      redirect_uri: `${appUrl}/api/calendar/callback/microsoft`,
-      refresh_token: refreshToken,
-      grant_type: "refresh_token",
-      scope: "Calendars.Read offline_access User.Read",
-    }),
-  });
+  const res = await fetch(
+    `https://login.microsoftonline.com/${getMicrosoftCalendarTenant(credentials)}/oauth2/v2.0/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: credentials.client_id ?? "",
+        client_secret: credentials.client_secret ?? "",
+        redirect_uri: `${appUrl}/api/calendar/callback/microsoft`,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+        scope: "Calendars.ReadBasic offline_access User.Read",
+      }),
+    },
+  );
   return res.json();
 }
 
@@ -241,10 +303,13 @@ async function fetchGoogleBusy(
     }),
   });
 
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error("Calendar provider is unavailable");
 
   const data = await res.json();
-  const busy: Array<{ start: string; end: string }> = data?.calendars?.primary?.busy ?? [];
+  if (data?.calendars?.primary?.errors?.length)
+    throw new Error("Calendar provider denied availability access");
+  const busy: Array<{ start: string; end: string }> =
+    data?.calendars?.primary?.busy ?? [];
   return busy;
 }
 
@@ -257,23 +322,30 @@ async function fetchMicrosoftBusy(
   const endEncoded = encodeURIComponent(end);
 
   const res = await fetch(
-    `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startEncoded}&endDateTime=${endEncoded}&$select=subject,start,end,showAs&$filter=showAs ne 'free'`,
+    `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startEncoded}&endDateTime=${endEncoded}&$select=start,end,showAs&$filter=showAs ne 'free'`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+        Prefer: 'outlook.timezone="UTC"',
         "Content-Type": "application/json",
       },
     },
   );
 
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error("Calendar provider is unavailable");
 
   const data = await res.json();
-  const events: Array<{ start: { dateTime: string }; end: { dateTime: string } }> =
-    data?.value ?? [];
+  const events: Array<{
+    start: { dateTime: string };
+    end: { dateTime: string };
+  }> = data?.value ?? [];
 
   return events.map((e) => ({
-    start: e.start.dateTime,
-    end: e.end.dateTime,
+    start: /(?:Z|[+-]\d{2}:\d{2})$/.test(e.start.dateTime)
+      ? e.start.dateTime
+      : e.start.dateTime + "Z",
+    end: /(?:Z|[+-]\d{2}:\d{2})$/.test(e.end.dateTime)
+      ? e.end.dateTime
+      : e.end.dateTime + "Z",
   }));
 }

@@ -129,7 +129,7 @@ export default function MaintenancePlansPage() {
               fallbackMessage: "Failed to load maintenance plans",
             })
           : Promise.resolve({ data: [] as ActivePlan[] }),
-        fetchApi<{ data: PlanTemplate[] }>("/api/admin/maintenance-plan-templates", undefined, {
+        fetchApi<{ data: PlanTemplate[] }>("/api/maintenance-plan-templates", undefined, {
           raw: true,
           fallbackMessage: "Failed to load plan templates",
         }),

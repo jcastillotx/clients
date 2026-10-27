@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 import { ApiClientError, fetchApi } from "@/lib/api/client";
 
 const roleSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().trim().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
 });
 

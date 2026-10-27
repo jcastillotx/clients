@@ -1,0 +1,302 @@
+{
+  "source": "5f6ac2a",
+  "date": "2026-10-27",
+  "unitTests": 318,
+  "simulatorWorkflows": 48,
+  "apiChecks": [
+    {
+      "target": "stage",
+      "passed": 20,
+      "checks": [
+        {
+          "path": "/api/projects",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/projects/a5406c1a-17c0-4027-8146-4ee0f4a0e34a",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/projects?clientId=a9c41562-2b73-4c41-a8b0-2a496f1aad81",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/documents",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/contracts",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/service-templates",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/maintenance-plan-templates",
+          "status": 200,
+          "expected": 200,
+          "items": 4,
+          "passed": true
+        },
+        {
+          "path": "/api/admin/service-templates",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/admin/maintenance-plan-templates",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/clients",
+          "status": 200,
+          "expected": 200,
+          "items": 1,
+          "passed": true
+        },
+        {
+          "path": "/api/requests",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/support",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/messages/conversations",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/projects/requests",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/proposals",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/maintenance-plans",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/projects/templates",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/avatar?key=documents/private.pdf",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/admin/users",
+          "method": "POST",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/tasks",
+          "method": "POST",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "target": "production",
+      "passed": 20,
+      "checks": [
+        {
+          "path": "/api/projects",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/projects/a5406c1a-17c0-4027-8146-4ee0f4a0e34a",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/projects?clientId=a9c41562-2b73-4c41-a8b0-2a496f1aad81",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/documents",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/contracts",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/service-templates",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/maintenance-plan-templates",
+          "status": 200,
+          "expected": 200,
+          "items": 4,
+          "passed": true
+        },
+        {
+          "path": "/api/admin/service-templates",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/admin/maintenance-plan-templates",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/clients",
+          "status": 200,
+          "expected": 200,
+          "items": 1,
+          "passed": true
+        },
+        {
+          "path": "/api/requests",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/support",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/messages/conversations",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/projects/requests",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/proposals",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/maintenance-plans",
+          "status": 200,
+          "expected": 200,
+          "items": 0,
+          "passed": true
+        },
+        {
+          "path": "/api/projects/templates",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/avatar?key=documents/private.pdf",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/admin/users",
+          "method": "POST",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        },
+        {
+          "path": "/api/tasks",
+          "method": "POST",
+          "status": 403,
+          "expected": 403,
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "migrations": [
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37
+  ],
+  "signupDisabled": true,
+  "mfaTotpEnabled": true,
+  "rollbackContainer": "clients-before-security-20261027",
+  "platformStripeConfigured": false
+}

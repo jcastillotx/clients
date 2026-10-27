@@ -145,7 +145,10 @@ export async function sendViaConfiguredProvider(
 // Provider implementations
 // ---------------------------------------------------------------------------
 
-export async function sendViaResend(cfg: EmailConfig, options: EmailOptions): Promise<void> {
+export async function sendViaResend(
+  cfg: EmailConfig,
+  options: EmailOptions,
+): Promise<void> {
   const apiKey = cfg.api_key;
   if (!apiKey) throw new Error("Resend API key is not configured.");
 
@@ -169,11 +172,17 @@ export async function sendViaResend(cfg: EmailConfig, options: EmailOptions): Pr
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error((data as { message?: string }).message ?? `Resend API error ${res.status}`);
+    throw new Error(
+      (data as { message?: string }).message ??
+        `Resend API error ${res.status}`,
+    );
   }
 }
 
-export async function sendViaSendGrid(cfg: EmailConfig, options: EmailOptions): Promise<void> {
+export async function sendViaSendGrid(
+  cfg: EmailConfig,
+  options: EmailOptions,
+): Promise<void> {
   const apiKey = cfg.api_key;
   if (!apiKey) throw new Error("SendGrid API key is not configured.");
 
@@ -186,15 +195,22 @@ export async function sendViaSendGrid(cfg: EmailConfig, options: EmailOptions): 
     body: JSON.stringify({
       personalizations: [
         {
-          to: (Array.isArray(options.to) ? options.to : [options.to]).map((e) => ({ email: e })),
+          to: (Array.isArray(options.to) ? options.to : [options.to]).map(
+            (e) => ({ email: e }),
+          ),
           cc: options.cc?.map((e) => ({ email: e })),
           bcc: options.bcc?.map((e) => ({ email: e })),
         },
       ],
-      from: { email: cfg.from_email ?? "noreply@example.com", name: cfg.from_name ?? "KRE8IV" },
+      from: {
+        email: cfg.from_email ?? "noreply@example.com",
+        name: cfg.from_name ?? "KRE8IV",
+      },
       reply_to: options.replyTo ? { email: options.replyTo } : undefined,
       subject: options.subject,
-      content: [{ type: "text/html", value: options.html ?? options.text ?? "" }],
+      content: [
+        { type: "text/html", value: options.html ?? options.text ?? "" },
+      ],
     }),
   });
 
@@ -203,10 +219,14 @@ export async function sendViaSendGrid(cfg: EmailConfig, options: EmailOptions): 
   }
 }
 
-export async function sendViaMailgun(cfg: EmailConfig, options: EmailOptions): Promise<void> {
+export async function sendViaMailgun(
+  cfg: EmailConfig,
+  options: EmailOptions,
+): Promise<void> {
   const apiKey = cfg.api_key;
   const domain = cfg.mailgun_domain;
-  if (!apiKey || !domain) throw new Error("Mailgun API key and domain are required.");
+  if (!apiKey || !domain)
+    throw new Error("Mailgun API key and domain are required.");
 
   const to = Array.isArray(options.to) ? options.to.join(",") : options.to;
   const form = new URLSearchParams({
@@ -229,11 +249,17 @@ export async function sendViaMailgun(cfg: EmailConfig, options: EmailOptions): P
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error((data as { message?: string }).message ?? `Mailgun API error ${res.status}`);
+    throw new Error(
+      (data as { message?: string }).message ??
+        `Mailgun API error ${res.status}`,
+    );
   }
 }
 
-export async function sendViaSMTP(cfg: EmailConfig, options: EmailOptions): Promise<void> {
+export async function sendViaSMTP(
+  cfg: EmailConfig,
+  options: EmailOptions,
+): Promise<void> {
   const nodemailer = await import("nodemailer");
 
   const host = cfg.smtp_host;
@@ -269,18 +295,24 @@ export async function sendViaSMTP(cfg: EmailConfig, options: EmailOptions): Prom
   });
 }
 
-export async function sendViaGmailApi(cfg: EmailConfig, options: EmailOptions): Promise<void> {
+export async function sendViaGmailApi(
+  cfg: EmailConfig,
+  options: EmailOptions,
+): Promise<void> {
   const accessToken = await getGoogleAccessToken(cfg);
   const raw = buildRawMimeMessage(cfg, options);
 
-  const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+  const res = await fetch(
+    "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ raw }),
     },
-    body: JSON.stringify({ raw }),
-  });
+  );
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -288,7 +320,10 @@ export async function sendViaGmailApi(cfg: EmailConfig, options: EmailOptions): 
   }
 }
 
-export async function sendViaMicrosoftGraph(cfg: EmailConfig, options: EmailOptions): Promise<void> {
+export async function sendViaMicrosoftGraph(
+  cfg: EmailConfig,
+  options: EmailOptions,
+): Promise<void> {
   const accessToken = await getMicrosoftAccessToken(cfg);
 
   const res = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
@@ -307,7 +342,8 @@ export async function sendViaMicrosoftGraph(cfg: EmailConfig, options: EmailOpti
     const data = await res.json().catch(() => ({}));
     const providerError = readProviderError(data);
     throw new Error(
-      formatMicrosoftGraphError(providerError, cfg) ?? `Microsoft Graph error ${res.status}`,
+      formatMicrosoftGraphError(providerError, cfg) ??
+        `Microsoft Graph error ${res.status}`,
     );
   }
 }
@@ -348,10 +384,14 @@ async function getGoogleAccessToken(cfg: EmailConfig): Promise<string> {
     throw new Error("Google OAuth access token is not configured.");
   }
 
-  const clientId = process.env.GOOGLE_EMAIL_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_EMAIL_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+  const clientId =
+    process.env.GOOGLE_EMAIL_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+  const clientSecret =
+    process.env.GOOGLE_EMAIL_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    throw new Error("Google email OAuth client credentials are not configured.");
+    throw new Error(
+      "Google email OAuth client credentials are not configured.",
+    );
   }
 
   const token = await refreshOAuthToken("https://oauth2.googleapis.com/token", {
@@ -362,6 +402,9 @@ async function getGoogleAccessToken(cfg: EmailConfig): Promise<string> {
   });
 
   await persistRefreshedOAuthToken(token);
+  cfg.oauth_access_token = token.accessToken;
+  cfg.oauth_token_expiry = token.expiresAt;
+  if (token.refreshToken) cfg.oauth_refresh_token = token.refreshToken;
 
   return token.accessToken;
 }
@@ -379,10 +422,15 @@ async function getMicrosoftAccessToken(cfg: EmailConfig): Promise<string> {
     throw new Error("Microsoft OAuth access token is not configured.");
   }
 
-  const clientId = process.env.MICROSOFT_EMAIL_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID;
-  const clientSecret = process.env.MICROSOFT_EMAIL_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET;
+  const clientId =
+    process.env.MICROSOFT_EMAIL_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID;
+  const clientSecret =
+    process.env.MICROSOFT_EMAIL_CLIENT_SECRET ||
+    process.env.MICROSOFT_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    throw new Error("Microsoft email OAuth client credentials are not configured.");
+    throw new Error(
+      "Microsoft email OAuth client credentials are not configured.",
+    );
   }
 
   const token = await refreshOAuthToken(getMicrosoftEmailTokenUrl(), {
@@ -390,10 +438,14 @@ async function getMicrosoftAccessToken(cfg: EmailConfig): Promise<string> {
     client_secret: clientSecret,
     refresh_token: cfg.oauth_refresh_token,
     grant_type: "refresh_token",
-    scope: "openid email profile offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Mail.Send.Shared https://graph.microsoft.com/User.Read",
+    scope:
+      "openid email profile offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Mail.Send.Shared https://graph.microsoft.com/User.Read",
   });
 
   await persistRefreshedOAuthToken(token);
+  cfg.oauth_access_token = token.accessToken;
+  cfg.oauth_token_expiry = token.expiresAt;
+  if (token.refreshToken) cfg.oauth_refresh_token = token.refreshToken;
 
   return token.accessToken;
 }
@@ -401,6 +453,7 @@ async function getMicrosoftAccessToken(cfg: EmailConfig): Promise<string> {
 interface RefreshedOAuthToken {
   accessToken: string;
   expiresAt: string;
+  refreshToken?: string;
 }
 
 async function refreshOAuthToken(
@@ -414,19 +467,32 @@ async function refreshOAuthToken(
   });
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || !isObjectRecord(data) || typeof data.access_token !== "string") {
-    throw new Error(readProviderError(data) ?? `OAuth token refresh failed with status ${res.status}`);
+  if (
+    !res.ok ||
+    !isObjectRecord(data) ||
+    typeof data.access_token !== "string"
+  ) {
+    throw new Error(
+      readProviderError(data) ??
+        `OAuth token refresh failed with status ${res.status}`,
+    );
   }
 
-  const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 3600;
+  const expiresIn =
+    typeof data.expires_in === "number" ? data.expires_in : 3600;
 
   return {
     accessToken: data.access_token,
+    ...(typeof data.refresh_token === "string" && data.refresh_token
+      ? { refreshToken: data.refresh_token }
+      : {}),
     expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
   };
 }
 
-async function persistRefreshedOAuthToken(token: RefreshedOAuthToken): Promise<void> {
+async function persistRefreshedOAuthToken(
+  token: RefreshedOAuthToken,
+): Promise<void> {
   const adminClient = createAdminClientIfAvailable();
   if (!adminClient) {
     return;
@@ -434,12 +500,23 @@ async function persistRefreshedOAuthToken(token: RefreshedOAuthToken): Promise<v
 
   const now = new Date().toISOString();
   const writes = [
-    { key: "oauth_access_token", value: encrypt(token.accessToken), encrypted: true },
+    {
+      key: "oauth_access_token",
+      value: encrypt(token.accessToken),
+      encrypted: true,
+    },
     { key: "oauth_token_expiry", value: token.expiresAt, encrypted: false },
   ];
 
+  if (token.refreshToken)
+    writes.push({
+      key: "oauth_refresh_token",
+      value: encrypt(token.refreshToken),
+      encrypted: true,
+    });
+
   for (const { key, value, encrypted } of writes) {
-    await adminClient.from("system_settings").upsert(
+    const { error } = await adminClient.from("system_settings").upsert(
       {
         category: "email",
         key,
@@ -449,6 +526,7 @@ async function persistRefreshedOAuthToken(token: RefreshedOAuthToken): Promise<v
       },
       { onConflict: "category,key" },
     );
+    if (error) throw new Error("Unable to save refreshed email credentials.");
   }
 }
 
@@ -470,12 +548,19 @@ function buildRawMimeMessage(cfg: EmailConfig, options: EmailOptions): string {
     lines.push(`Reply-To: ${options.replyTo}`);
   }
 
-  lines.push(`Subject: ${encodeMimeHeader(options.subject)}`, "MIME-Version: 1.0");
+  lines.push(
+    `Subject: ${encodeMimeHeader(options.subject)}`,
+    "MIME-Version: 1.0",
+  );
 
   const attachments = options.attachments ?? [];
   if (attachments.length === 0) {
     const contentType = options.html ? "text/html" : "text/plain";
-    lines.push(`Content-Type: ${contentType}; charset="UTF-8"`, "", options.html ?? options.text ?? "");
+    lines.push(
+      `Content-Type: ${contentType}; charset="UTF-8"`,
+      "",
+      options.html ?? options.text ?? "",
+    );
 
     return base64UrlEncode(lines.join("\r\n"));
   }
@@ -483,14 +568,20 @@ function buildRawMimeMessage(cfg: EmailConfig, options: EmailOptions): string {
   const boundary = `kre8iv-${crypto.randomUUID()}`;
   lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`, "");
   lines.push(`--${boundary}`);
-  lines.push(`Content-Type: ${options.html ? "text/html" : "text/plain"}; charset="UTF-8"`, "");
+  lines.push(
+    `Content-Type: ${options.html ? "text/html" : "text/plain"}; charset="UTF-8"`,
+    "",
+  );
   lines.push(options.html ?? options.text ?? "");
 
   for (const attachment of attachments) {
     lines.push(`--${boundary}`);
     lines.push("Content-Type: application/octet-stream");
     lines.push("Content-Transfer-Encoding: base64");
-    lines.push(`Content-Disposition: attachment; filename="${escapeHeaderValue(attachment.filename)}"`, "");
+    lines.push(
+      `Content-Disposition: attachment; filename="${escapeHeaderValue(attachment.filename)}"`,
+      "",
+    );
     lines.push(toBase64(attachment.content));
   }
 
@@ -520,7 +611,9 @@ function buildGraphMessage(cfg: EmailConfig, options: EmailOptions) {
     toRecipients: buildGraphRecipients(options.to),
     ccRecipients: options.cc ? buildGraphRecipients(options.cc) : undefined,
     bccRecipients: options.bcc ? buildGraphRecipients(options.bcc) : undefined,
-    replyTo: options.replyTo ? buildGraphRecipients(options.replyTo) : undefined,
+    replyTo: options.replyTo
+      ? buildGraphRecipients(options.replyTo)
+      : undefined,
     attachments: options.attachments?.map((attachment) => ({
       "@odata.type": "#microsoft.graph.fileAttachment",
       name: attachment.filename,
@@ -530,9 +623,11 @@ function buildGraphMessage(cfg: EmailConfig, options: EmailOptions) {
 }
 
 function buildGraphRecipients(recipients: string | string[]) {
-  return (Array.isArray(recipients) ? recipients : [recipients]).map((address) => ({
-    emailAddress: { address },
-  }));
+  return (Array.isArray(recipients) ? recipients : [recipients]).map(
+    (address) => ({
+      emailAddress: { address },
+    }),
+  );
 }
 
 function formatAddressList(recipients: string | string[]): string {
@@ -552,7 +647,10 @@ function toBase64(value: Buffer | string): string {
 }
 
 function base64UrlEncode(value: string): string {
-  return toBase64(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "");
+  return toBase64(value)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/u, "");
 }
 
 function readProviderError(data: unknown): string | null {
@@ -577,7 +675,10 @@ function readProviderError(data: unknown): string | null {
   return null;
 }
 
-function formatMicrosoftGraphError(message: string | null, cfg: EmailConfig): string | null {
+function formatMicrosoftGraphError(
+  message: string | null,
+  cfg: EmailConfig,
+): string | null {
   if (!message) {
     return null;
   }
@@ -591,7 +692,9 @@ function formatMicrosoftGraphError(message: string | null, cfg: EmailConfig): st
     normalized.includes("cannot submit message")
   ) {
     const senderLabel = fromAddress ? ` as ${fromAddress}` : "";
-    const accountLabel = connectedAccount ? `Connected account ${connectedAccount}` : "The connected Microsoft account";
+    const accountLabel = connectedAccount
+      ? `Connected account ${connectedAccount}`
+      : "The connected Microsoft account";
 
     return `${accountLabel} is not allowed to send${senderLabel}. In Microsoft 365, enable send from aliases for this mailbox or grant Send As / Send on Behalf permission for the sender address, then reconnect Microsoft and send the test again.`;
   }

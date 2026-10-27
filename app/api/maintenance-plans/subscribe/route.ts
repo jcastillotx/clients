@@ -1,10 +1,15 @@
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
-import { maintenancePlans, maintenancePlanTemplates } from "@/lib/db/schema/maintenance-plans";
+import {
+  maintenancePlans,
+  maintenancePlanTemplates,
+} from "@/lib/db/schema/maintenance-plans";
 import { eq } from "drizzle-orm";
 import { requireAuthenticatedUser } from "@/lib/auth/route-guards";
 import {
   apiError,
+  apiForbidden,
   apiInternalError,
   apiNotFound,
   apiSuccess,
@@ -36,6 +41,9 @@ export async function POST(request: NextRequest) {
         message: "Missing required field: clientId",
       });
     }
+
+    const access = await resolveRouteAccess(guard.supabase, guard.user);
+    if (!canAccessClient(access, body.clientId)) return apiForbidden(request);
 
     const [template] = await db
       .select()

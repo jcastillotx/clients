@@ -37,6 +37,8 @@ export default function NewProjectPage() {
     setLoading(true);
 
     try {
+      if (budgets.some(row => Boolean(row.category) !== Boolean(row.allocatedAmount))) throw new Error("Complete the category and amount for each budget row.");
+      if (milestones.some(row => !row.title.trim() && (row.description.trim() || row.dueDate))) throw new Error("Enter a title for each milestone.");
       const project = await fetchApi<{ id: string }>(
         "/api/projects",
         {

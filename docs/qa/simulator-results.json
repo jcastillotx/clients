@@ -1,0 +1,199 @@
+{
+  "date": "2026-10-27",
+  "passed": 48,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "Public signup remains disabled",
+      "passed": true
+    },
+    {
+      "name": "Editable metadata cannot create administrator accounts",
+      "passed": true
+    },
+    {
+      "name": "Direct profile privilege and tenant changes are denied",
+      "passed": true
+    },
+    {
+      "name": "Ordinary profile edits still persist",
+      "passed": true
+    },
+    {
+      "name": "Client project list contains only its tenant",
+      "passed": true
+    },
+    {
+      "name": "Foreign project lookup is denied",
+      "passed": true
+    },
+    {
+      "name": "Client can create a service request",
+      "passed": true
+    },
+    {
+      "name": "Cross-client service creation is denied",
+      "passed": true
+    },
+    {
+      "name": "Support ticket and comment workflow",
+      "passed": true
+    },
+    {
+      "name": "Project request workflow",
+      "passed": true
+    },
+    {
+      "name": "Document upload and signed download preserve bytes",
+      "passed": true
+    },
+    {
+      "name": "Tenant conversation and message receipt",
+      "passed": true
+    },
+    {
+      "name": "Foreign conversation creation is denied",
+      "passed": true
+    },
+    {
+      "name": "Admin can create client accounts and welcome mail",
+      "passed": true
+    },
+    {
+      "name": "Proposal signature persists acceptance",
+      "passed": true
+    },
+    {
+      "name": "Captured notifications are delivered to local mailbox",
+      "passed": true
+    },
+    {
+      "name": "Document versions preserve history and latest flags",
+      "passed": true
+    },
+    {
+      "name": "Clients cannot create internal support notes",
+      "passed": true
+    },
+    {
+      "name": "Staff-only APIs reject forged client metadata",
+      "passed": true
+    },
+    {
+      "name": "Maintenance subscription persists for the correct tenant",
+      "passed": true
+    },
+    {
+      "name": "Foreign maintenance subscription is denied",
+      "passed": true
+    },
+    {
+      "name": "Client feedback persists and foreign proposal mutations are denied",
+      "passed": true
+    },
+    {
+      "name": "Invoice payment intent is created and persisted using the local Stripe simulator",
+      "passed": true
+    },
+    {
+      "name": "Payment webhook rejects mismatched amounts before updating invoices",
+      "passed": true
+    },
+    {
+      "name": "Payment success webhook persists and duplicate replay is idempotent",
+      "passed": true
+    },
+    {
+      "name": "Invalid payment webhook signatures are denied",
+      "passed": true
+    },
+    {
+      "name": "Password recovery email and reset permit a fresh login",
+      "passed": true
+    },
+    {
+      "name": "Authenticator enrollment, challenge, verification and removal work",
+      "passed": true
+    },
+    {
+      "name": "Avatar proxy cannot be used to read private documents",
+      "passed": true
+    },
+    {
+      "name": "Profile image upload, proxy download and removal work",
+      "passed": true
+    },
+    {
+      "name": "Inactive accounts are blocked by both RLS and application APIs",
+      "passed": true
+    },
+    {
+      "name": "Soft-deleted accounts cannot access the application",
+      "passed": true
+    },
+    {
+      "name": "Administrator account creation ignores forged authority metadata",
+      "passed": true
+    },
+    {
+      "name": "Client contract signature fields persist for its own agreement",
+      "passed": true
+    },
+    {
+      "name": "Admin custom task-template creation and listing work",
+      "passed": true
+    },
+    {
+      "name": "Staff internal comments are invisible to clients through API and direct RLS",
+      "passed": true
+    },
+    {
+      "name": "Marketing overview respects disabled integrations",
+      "passed": true
+    },
+    {
+      "name": "Administrator company creation persists and captures its welcome email",
+      "passed": true
+    },
+    {
+      "name": "Legitimate admin still creates users after forged client claims are denied",
+      "passed": true
+    },
+    {
+      "name": "Avatar traversal and private object keys are denied",
+      "passed": true
+    },
+    {
+      "name": "Forged client cannot manage platform storage connections",
+      "passed": true
+    },
+    {
+      "name": "Other-tenant Stripe keys are never used as a platform fallback",
+      "passed": true
+    },
+    {
+      "name": "Background backfill executes successfully and creates tenant folders",
+      "passed": true
+    },
+    {
+      "name": "Invoice PDF download and email attachment work end to end",
+      "passed": true
+    },
+    {
+      "name": "Scheduled invoice reminder job sends mail and persists reminder state",
+      "passed": true
+    },
+    {
+      "name": "Concurrent duplicate payment events produce only one settlement record",
+      "passed": true
+    },
+    {
+      "name": "A valid webhook for another tenant cannot settle this tenant invoice",
+      "passed": true
+    },
+    {
+      "name": "Account managers can provision clients without assigning administrator roles",
+      "passed": true
+    }
+  ]
+}

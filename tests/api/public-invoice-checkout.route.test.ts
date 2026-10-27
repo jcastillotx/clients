@@ -105,7 +105,11 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
             client_id: "client-1",
             amount: 2000,
             status: "sent",
-            client: { id: "client-1", company_name: "Acme", email: "billing@acme.com" },
+            client: {
+              id: "client-1",
+              company_name: "Acme",
+              email: "billing@acme.com",
+            },
           },
           error: null,
         }),
@@ -139,7 +143,11 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
             client_id: "client-1",
             amount: 1500,
             status: "sent",
-            client: { id: "client-1", company_name: "Acme", email: "billing@acme.com" },
+            client: {
+              id: "client-1",
+              company_name: "Acme",
+              email: "billing@acme.com",
+            },
           },
           error: null,
         }),
@@ -155,7 +163,9 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
     const body = await readJson<Record<string, unknown>>(response);
 
     expect(response.status).toBe(503);
-    expect(extractApiErrorMessage(body)).toContain("Online payments are not configured");
+    expect(extractApiErrorMessage(body)).toContain(
+      "Online payments are not configured",
+    );
     expect(getStripe).not.toHaveBeenCalled();
   });
 
@@ -174,7 +184,11 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
             client_id: "client-1",
             amount: 1500,
             status: "sent",
-            client: { id: "client-1", company_name: "Acme", email: "billing@acme.com" },
+            client: {
+              id: "client-1",
+              company_name: "Acme",
+              email: "billing@acme.com",
+            },
           },
           error: null,
         }),
@@ -209,8 +223,66 @@ describe("POST /api/public/invoices/create-checkout-session", () => {
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data.sessionId).toBe("cs_test_123");
+    const client = vi.mocked(createAdminClientIfAvailable).mock.results[0]
+      .value;
+    expect(client.from("invoices").update).toHaveBeenCalledWith({
+      stripe_checkout_session_id: "cs_test_123",
+      status: "sent",
+    });
     expect(body.data.checkoutUrl).toContain("checkout.stripe.test");
     expect(body.checkoutUrl).toContain("checkout.stripe.test");
     expect(getStripe).toHaveBeenCalledWith("sk_test_saved");
+  });
+  it("expires checkout when its database binding cannot be saved", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+    const read = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      single: vi
+        .fn()
+        .mockResolvedValue({
+          data: {
+            id: "inv-1",
+            invoice_number: "INV-1001",
+            client_id: "client-1",
+            amount: 1500,
+            status: "sent",
+            client: null,
+          },
+          error: null,
+        }),
+    };
+    const write = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi
+        .fn()
+        .mockResolvedValue({ error: { message: "database unavailable" } }),
+    };
+    vi.mocked(createAdminClientIfAvailable).mockReturnValue({
+      from: vi.fn().mockReturnValueOnce(read).mockReturnValue(write),
+    } as never);
+    const expire = vi.fn().mockResolvedValue({});
+    vi.mocked(getStripe).mockReturnValue({
+      checkout: {
+        sessions: {
+          create: vi
+            .fn()
+            .mockResolvedValue({
+              id: "cs_test_binding",
+              url: "https://checkout.stripe.test/session",
+            }),
+          expire,
+        },
+      },
+    } as never);
+    const response = await POST(
+      jsonRequest(
+        "http://localhost/api/public/invoices/create-checkout-session",
+        validPayload,
+      ) as NextRequest,
+    );
+    expect(response.status).toBe(500);
+    expect(expire).toHaveBeenCalledWith("cs_test_binding");
   });
 });

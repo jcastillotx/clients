@@ -1,11 +1,17 @@
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { conversations, conversationParticipants, messages } from "@/lib/db/schema/messages";
+import {
+  conversations,
+  conversationParticipants,
+  messages,
+} from "@/lib/db/schema/messages";
 import { users } from "@/lib/db/schema/users";
 import { eq, desc, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiError,
+  apiForbidden,
   apiInternalError,
   apiSuccess,
   apiUnauthorized,
@@ -60,7 +66,14 @@ export async function GET(request: NextRequest) {
           AND m.sender_id != ${user.id}
           AND mr.id IS NULL
         )`,
-        participants: sql<Array<{ id: string; name: string; email: string; avatar: string | null }>>`(
+        participants: sql<
+          Array<{
+            id: string;
+            name: string;
+            email: string;
+            avatar: string | null;
+          }>
+        >`(
           SELECT json_agg(json_build_object(
             'id', u.id,
             'name', u.name,
@@ -73,7 +86,10 @@ export async function GET(request: NextRequest) {
         )`,
       })
       .from(conversations)
-      .innerJoin(conversationParticipants, eq(conversationParticipants.conversationId, conversations.id))
+      .innerJoin(
+        conversationParticipants,
+        eq(conversationParticipants.conversationId, conversations.id),
+      )
       .where(eq(conversationParticipants.userId, user.id))
       .orderBy(desc(conversations.lastMessageAt))
       .execute();
@@ -114,6 +130,31 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const access = await resolveRouteAccess(supabase, user);
+    if (!canAccessClient(access, clientId)) return apiForbidden(request);
+    // Client callers may invite their own tenant or persisted platform staff only.
+    const participantRoles = new Map<string, "staff" | "client">();
+    participantRoles.set(user.id, access.isStaff ? "staff" : "client");
+    for (const participantId of participantIds as string[]) {
+      const { data: participant } = await supabase
+        .from("users")
+        .select("id, client_id, is_super_admin")
+        .eq("id", participantId)
+        .maybeSingle();
+      if (!participant)
+        return apiForbidden(request, "Participant is unavailable");
+      const participantAccess = await resolveRouteAccess(supabase, {
+        id: participant.id,
+      });
+      participantRoles.set(
+        participantId,
+        participantAccess.isStaff ? "staff" : "client",
+      );
+      if (!participantAccess.isStaff && participant.client_id !== clientId) {
+        return apiForbidden(request, "Participant belongs to another client");
+      }
+    }
+
     const allParticipants = Array.from(new Set([...participantIds, user.id]));
 
     const [conversation] = await db
@@ -131,7 +172,7 @@ export async function POST(request: NextRequest) {
       allParticipants.map((userId) => ({
         conversationId: conversation.id,
         userId,
-        role: (userId === user.id ? "staff" : "client") as "staff" | "client",
+        role: participantRoles.get(userId) ?? "client",
       })),
     );
 

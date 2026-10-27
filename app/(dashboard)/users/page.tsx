@@ -1,5 +1,13 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
-import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
+import {
+  hasAnyRole,
+  hasPermission,
+  Permissions,
+  Roles,
+} from "@/lib/rbac/permissions";
 import { redirect } from "next/navigation";
 import { UserManagement } from "@/components/admin/users/user-management";
 import { syncMissingAuthUsers } from "@/lib/supabase/user-profile-sync";
@@ -73,21 +81,26 @@ export default async function UsersPage() {
     redirect("/login");
   }
 
-  const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
-  const isAdminMetadataRole =
-    user.user_metadata?.is_super_admin === true || metadataRole === Roles.SUPER_ADMIN || metadataRole === Roles.ADMIN;
-  const hasManagementMetadataRole = isAdminMetadataRole || metadataRole === Roles.ACCOUNT_MANAGER;
+  const hasAdminRoleDb = await hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN], {
+    supabase,
+    userId: user.id,
+  });
 
   const accessOptions = { supabase, userId: user.id };
-  const [canManageUsers, canCreateUsers, canAssignRoles, isManagementRole] = await Promise.all([
-    hasPermission(Permissions.USERS_MANAGE, accessOptions),
-    hasPermission(Permissions.USERS_CREATE, accessOptions),
-    hasPermission(Permissions.USERS_ASSIGN_ROLES, accessOptions),
-    hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
-  ]);
+  const [canManageUsers, canCreateUsers, canAssignRoles, isManagementRole] =
+    await Promise.all([
+      hasPermission(Permissions.USERS_MANAGE, accessOptions),
+      hasPermission(Permissions.USERS_CREATE, accessOptions),
+      hasPermission(Permissions.USERS_ASSIGN_ROLES, accessOptions),
+      hasAnyRole(
+        [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+        accessOptions,
+      ),
+    ]);
 
-  const hasManagementAccess = isManagementRole || hasManagementMetadataRole;
-  const canAccessUserManagement = canManageUsers || canCreateUsers || hasManagementAccess;
+  const hasManagementAccess = isManagementRole;
+  const canAccessUserManagement =
+    canManageUsers || canCreateUsers || hasManagementAccess;
   if (!canAccessUserManagement) {
     redirect("/dashboard");
   }
@@ -100,7 +113,9 @@ export default async function UsersPage() {
   if (adminClient) {
     await syncMissingAuthUsers(adminClient);
   } else {
-    console.warn("Service-role Supabase key missing; using session client for /users");
+    console.warn(
+      "Service-role Supabase key missing; using session client for /users",
+    );
   }
 
   const runUsersQuery = async (strategy: UsersQueryStrategy) => {
@@ -137,16 +152,22 @@ export default async function UsersPage() {
   for (const strategy of userQueryStrategies) {
     const result = await runUsersQuery(strategy);
     if (!result.error) {
-      users = ((result.data || []) as unknown) as UserManagementUser[];
+      users = (result.data || []) as unknown as UserManagementUser[];
       usersError = null;
       break;
     }
     usersError = result.error;
-    console.warn(`Users query strategy failed (${strategy.label}); trying fallback`, result.error);
+    console.warn(
+      `Users query strategy failed (${strategy.label}); trying fallback`,
+      result.error,
+    );
   }
 
   if (usersError) {
-    console.error("Unable to load users after all fallback strategies", usersError);
+    console.error(
+      "Unable to load users after all fallback strategies",
+      usersError,
+    );
   }
 
   const [rolesResult, clientsResult] = await Promise.all([
@@ -155,10 +176,16 @@ export default async function UsersPage() {
   ]);
 
   if (rolesResult.error) {
-    console.warn("Failed to load roles for user management; continuing with empty roles", rolesResult.error);
+    console.warn(
+      "Failed to load roles for user management; continuing with empty roles",
+      rolesResult.error,
+    );
   }
   if (clientsResult.error) {
-    console.warn("Failed to load clients for user management; continuing with empty clients", clientsResult.error);
+    console.warn(
+      "Failed to load clients for user management; continuing with empty clients",
+      clientsResult.error,
+    );
   }
 
   const roles: RoleOption[] = (rolesResult.data || []) as RoleOption[];
@@ -182,14 +209,21 @@ export default async function UsersPage() {
   if (userIds.length > 0) {
     const joinedUserRolesResult = await dbClient
       .from("user_roles")
-      .select("user_id, role:roles!user_roles_role_id_fkey(id, name, description)")
+      .select(
+        "user_id, role:roles!user_roles_role_id_fkey(id, name, description)",
+      )
       .in("user_id", userIds);
 
     if (!joinedUserRolesResult.error) {
-      const joinedRows = (joinedUserRolesResult.data || []) as UserRoleJoinRow[];
+      const joinedRows = (joinedUserRolesResult.data ||
+        []) as UserRoleJoinRow[];
       for (const row of joinedRows) {
         const roleValue = Array.isArray(row.role) ? row.role[0] : row.role;
-        if (roleValue && typeof roleValue.id === "string" && typeof roleValue.name === "string") {
+        if (
+          roleValue &&
+          typeof roleValue.id === "string" &&
+          typeof roleValue.name === "string"
+        ) {
           addRoleToUser(row.user_id, {
             id: roleValue.id,
             name: roleValue.name,
@@ -198,15 +232,31 @@ export default async function UsersPage() {
         }
       }
     } else {
-      console.warn("Failed to join roles in users page; falling back to manual role hydration", joinedUserRolesResult.error);
+      console.warn(
+        "Failed to join roles in users page; falling back to manual role hydration",
+        joinedUserRolesResult.error,
+      );
 
-      const plainUserRolesResult = await dbClient.from("user_roles").select("user_id, role_id").in("user_id", userIds);
+      const plainUserRolesResult = await dbClient
+        .from("user_roles")
+        .select("user_id, role_id")
+        .in("user_id", userIds);
       if (plainUserRolesResult.error) {
-        console.warn("Failed to load user_roles in users page fallback", plainUserRolesResult.error);
+        console.warn(
+          "Failed to load user_roles in users page fallback",
+          plainUserRolesResult.error,
+        );
       } else {
         const plainRows = (plainUserRolesResult.data || []) as UserRoleRow[];
         const missingRoleIds = Array.from(
-          new Set(plainRows.map((row) => row.role_id).filter((roleId) => typeof roleId === "string" && !rolesById.has(roleId))),
+          new Set(
+            plainRows
+              .map((row) => row.role_id)
+              .filter(
+                (roleId) =>
+                  typeof roleId === "string" && !rolesById.has(roleId),
+              ),
+          ),
         );
 
         if (missingRoleIds.length > 0) {
@@ -215,9 +265,13 @@ export default async function UsersPage() {
             .select("id, name, description")
             .in("id", missingRoleIds);
           if (missingRolesResult.error) {
-            console.warn("Failed to hydrate missing roles in users page fallback", missingRolesResult.error);
+            console.warn(
+              "Failed to hydrate missing roles in users page fallback",
+              missingRolesResult.error,
+            );
           } else {
-            for (const role of (missingRolesResult.data || []) as RoleOption[]) {
+            for (const role of (missingRolesResult.data ||
+              []) as RoleOption[]) {
               rolesById.set(role.id, role);
             }
           }
@@ -235,7 +289,9 @@ export default async function UsersPage() {
 
   const enrichedUsers: UserManagementUser[] = users.map((userRow) => {
     const client =
-      typeof userRow.client_id === "string" && userRow.client_id.length > 0 ? (clientsById.get(userRow.client_id) ?? null) : null;
+      typeof userRow.client_id === "string" && userRow.client_id.length > 0
+        ? (clientsById.get(userRow.client_id) ?? null)
+        : null;
     const userRoles = userRolesByUserId.get(userRow.id) ?? [];
     return {
       ...userRow,
@@ -250,8 +306,8 @@ export default async function UsersPage() {
         initialUsers={enrichedUsers}
         roles={roles}
         clients={clients}
-        canAssignRoles={canAssignRoles || canManageUsers || isAdminMetadataRole}
-        canSendPasswordResets={canManageUsers || isAdminMetadataRole}
+        canAssignRoles={canAssignRoles || hasAdminRoleDb}
+        canSendPasswordResets={canManageUsers || hasAdminRoleDb}
       />
     </div>
   );

@@ -1,8 +1,23 @@
-import { pgTable, uuid, text, decimal, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  text,
+  decimal,
+  timestamp,
+  boolean,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { clients } from "./clients";
 import { users } from "./users";
 
-export const invoiceStatusEnum = ["draft", "sent", "paid", "overdue", "cancelled"] as const;
+export const invoiceStatusEnum = [
+  "draft",
+  "sent",
+  "paid",
+  "overdue",
+  "cancelled",
+  "refunded",
+] as const;
 
 export const invoices = pgTable("invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -14,16 +29,33 @@ export const invoices = pgTable("invoices", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }),
   taxRate: decimal("tax_rate", { precision: 5, scale: 3 }).default("0"),
   taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
-  discountType: text("discount_type", { enum: ["none", "percentage", "fixed"] }).default("none"),
-  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).default("0"),
-  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
-  status: text("status", { enum: invoiceStatusEnum }).default("draft").notNull(),
+  discountType: text("discount_type", {
+    enum: ["none", "percentage", "fixed"],
+  }).default("none"),
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).default(
+    "0",
+  ),
+  discountAmount: decimal("discount_amount", {
+    precision: 10,
+    scale: 2,
+  }).default("0"),
+  status: text("status", { enum: invoiceStatusEnum })
+    .default("draft")
+    .notNull(),
   dueDate: timestamp("due_date", { withTimezone: true }),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  paymentMethod: text("payment_method"),
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
+  remindedDue7At: timestamp("reminded_due_7_at", { withTimezone: true }),
+  remindedOverdueAt: timestamp("reminded_overdue_at", { withTimezone: true }),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   notes: text("notes"),
   items: jsonb("items").$type<any[]>(),
   isRecurring: boolean("is_recurring").default(false),
-  recurringInterval: text("recurring_interval", { enum: ["weekly", "monthly", "quarterly", "yearly"] }),
+  recurringInterval: text("recurring_interval", {
+    enum: ["weekly", "monthly", "quarterly", "yearly"],
+  }),
   nextRecurringDate: timestamp("next_recurring_date", { withTimezone: true }),
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -38,7 +70,9 @@ export const invoiceItems = pgTable("invoice_items", {
     .notNull(),
   description: text("description").notNull(),
   details: text("details"),
-  quantity: decimal("quantity", { precision: 10, scale: 2 }).default("1").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 })
+    .default("1")
+    .notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),

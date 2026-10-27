@@ -1,15 +1,37 @@
 import { readFileSync } from "node:fs";
 import { withSentryConfig } from "@sentry/nextjs";
+import { isLocalProviderAcceptance } from "./lib/staging/provider-acceptance.mjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
   experimental: { cpus: 2 },
   async headers() {
-    const vercelConfig = JSON.parse(
-      readFileSync(new URL("./vercel.json", import.meta.url), "utf8"),
+    const securityHeaders = JSON.parse(
+      readFileSync(
+        new URL("./config/security-headers.json", import.meta.url),
+        "utf8",
+      ),
     );
-    return vercelConfig.headers;
+    if (process.env.STAGING_ISOLATED === "1" || isLocalProviderAcceptance()) {
+      for (const route of securityHeaders) {
+        for (const header of route.headers) {
+          if (header.key.toLowerCase() === "content-security-policy") {
+            header.value = header.value
+              .replace(/upgrade-insecure-requests;?/g, "")
+              .replace(
+                "connect-src ",
+                "connect-src http://127.0.0.1:55321 ws://127.0.0.1:55321 ",
+              )
+              .replace(
+                "img-src ",
+                "img-src http://127.0.0.1:55321 http://127.0.0.1:59000 ",
+              );
+          }
+        }
+      }
+    }
+    return securityHeaders;
   },
   images: {
     remotePatterns: [

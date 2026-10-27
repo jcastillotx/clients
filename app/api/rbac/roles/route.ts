@@ -1,3 +1,6 @@
+import { apiValidationError } from "@/lib/api/response";
+import { z } from "zod";
+import { roleFormSchema } from "@/lib/validations/workspace";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiError,
@@ -47,6 +50,7 @@ export async function GET(request: Request) {
 
     return apiSuccess(request, roles ?? [], { extra: { roles: roles ?? [] } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching roles:", error);
     return apiInternalError(
       request,
@@ -64,7 +68,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient();
-    const body = await request.json();
+    const body = roleFormSchema.parse(await request.json());
 
     const { name, description, permissionIds } = body;
 
@@ -105,6 +109,7 @@ export async function POST(request: Request) {
 
     return apiSuccess(request, role, { status: 201, extra: { role } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error creating role:", error);
     return apiInternalError(
       request,

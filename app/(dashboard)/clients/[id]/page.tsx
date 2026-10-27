@@ -93,16 +93,6 @@ export default async function ClientDetailPage({
   let canResendLogin = false;
   if (currentUser) {
     const accessOptions = { supabase, userId: currentUser.id };
-    const metadataRole = String(
-      currentUser.user_metadata?.role ??
-        currentUser.user_metadata?.app_role ??
-        "",
-    ).toLowerCase();
-    const hasManagementMetadataRole =
-      currentUser.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN ||
-      metadataRole === Roles.ACCOUNT_MANAGER;
     const [canUpdateClients, canDeleteClients, hasManagementRoleDb] =
       await Promise.all([
         hasPermission(Permissions.CLIENTS_UPDATE, accessOptions),
@@ -112,10 +102,8 @@ export default async function ClientDetailPage({
           accessOptions,
         ),
       ]);
-    canResendLogin =
-      canUpdateClients || hasManagementRoleDb || hasManagementMetadataRole;
-    canArchiveClient =
-      canDeleteClients || hasManagementRoleDb || hasManagementMetadataRole;
+    canResendLogin = canUpdateClients || hasManagementRoleDb;
+    canArchiveClient = canDeleteClients || hasManagementRoleDb;
   }
 
   // Use admin client for internal lookups (primary contact, staff) to avoid

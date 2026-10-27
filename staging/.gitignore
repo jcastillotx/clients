@@ -1,0 +1,13 @@
+.env*
+!.env.example
+.supabase/
+supabase/.temp/
+artifacts/
+
+.accounts*.json
+
+.venv/
+
+__pycache__/
+*.pyc
+supabase/.branches/

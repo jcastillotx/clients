@@ -1,7 +1,6 @@
 export function getSentryEnvironment(): string {
   return (
     process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT?.trim() ||
-    process.env.VERCEL_ENV ||
     process.env.NODE_ENV ||
     "development"
   );

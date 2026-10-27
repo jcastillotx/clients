@@ -20,11 +20,11 @@ import { toast } from "sonner";
 import Link from "next/link";
 
 const campaignSchema = z.object({
-  name: z.string().min(1, "Campaign name is required"),
+  name: z.string().trim().min(1, "Campaign name is required"),
   description: z.string().optional(),
   type: z.enum(["email", "social", "content", "paid_ads", "seo", "multi_channel"]),
   status: z.enum(["draft", "scheduled", "active", "paused", "completed", "cancelled"]).default("draft"),
-  budget: z.string().optional(),
+  budget: z.string().trim().refine(value => !value || /^\d+(?:\.\d{1,2})?$/.test(value) && Number(value) > 0, "Enter a positive budget with at most two decimal places.").optional(),
   currency: z.string().default("USD"),
   startDate: z.date().optional(),
   endDate: z.date().optional(),

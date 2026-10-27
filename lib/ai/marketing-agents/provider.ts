@@ -1,11 +1,15 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { z } from "zod";
 import { db } from "@/lib/db";
 import { encryptedSettings } from "@/lib/db/schema/encrypted-settings";
 import { decrypt } from "@/lib/encryption";
 import type { MarketingAgentDefinition } from "./catalog";
 
-const DEFAULT_MODEL = "gpt-4o-mini";
+import {
+  selectMarketingProvider,
+  type MarketingProviderCredentials,
+  type MarketingProviderName,
+} from "./provider-config";
 const REQUEST_TIMEOUT_MS = 90_000;
 
 interface OpenAiChatResponse {
@@ -18,6 +22,7 @@ interface OpenAiChatResponse {
     prompt_tokens?: number;
     completion_tokens?: number;
     total_tokens?: number;
+    cost?: number;
   };
   error?: {
     message?: string;
@@ -25,7 +30,7 @@ interface OpenAiChatResponse {
 }
 
 export interface MarketingAgentCallUsage {
-  provider: "openai";
+  provider: MarketingProviderName;
   model: string;
   promptTokens: number;
   completionTokens: number;
@@ -45,34 +50,84 @@ export class MarketingAgentProviderError extends Error {
   }
 }
 
-async function resolveOpenAiApiKey(clientId: string): Promise<string | null> {
-  try {
-    const rows = await db
-      .select({ encryptedValue: encryptedSettings.encryptedValue })
-      .from(encryptedSettings)
-      .where(
-        and(
-          eq(encryptedSettings.clientId, clientId),
-          eq(encryptedSettings.provider, "openai"),
-          eq(encryptedSettings.settingKey, "api_key"),
-          eq(encryptedSettings.isActive, true),
-        ),
-      )
-      .limit(1);
-
-    const encryptedValue = rows[0]?.encryptedValue;
-    if (encryptedValue) {
-      const decryptedValue = decrypt(encryptedValue).trim();
-      if (decryptedValue) return decryptedValue;
-    }
-  } catch {
-    // Fall back to the platform key when local encryption is unavailable.
-  }
-
-  return process.env.OPENAI_API_KEY?.trim() || null;
+export async function hasMarketingAiProvider(
+  clientId: string,
+): Promise<boolean> {
+  return (await getMarketingAiProviderStatus(clientId)).ready;
 }
 
-export function parseJsonAgentResponse<T>(content: string, schema: z.ZodType<T>): T {
+export async function getMarketingAiProviderStatus(clientId: string) {
+  if (process.env.STAGING_ISOLATED === "1") {
+    return {
+      ready: Boolean(getMarketingSimulatorUrl()),
+      provider: "local_simulator" as const,
+    };
+  }
+  try {
+    const credentials = await resolveMarketingProvider(clientId);
+    return {
+      ready: Boolean(credentials),
+      provider: credentials?.provider ?? null,
+    };
+  } catch {
+    return { ready: false, provider: null };
+  }
+}
+
+export function getMarketingSimulatorUrl(): string | null {
+  if (
+    process.env.STAGING_ISOLATED !== "1" ||
+    !process.env.MARKETING_AI_SIMULATOR_URL
+  )
+    return null;
+  const url = new URL(process.env.MARKETING_AI_SIMULATOR_URL);
+  if (
+    url.protocol !== "http:" ||
+    !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
+  ) {
+    throw new MarketingAgentProviderError(
+      "The isolated AI simulator must use localhost.",
+    );
+  }
+  return url.toString();
+}
+
+async function resolveMarketingProvider(
+  clientId: string,
+): Promise<MarketingProviderCredentials | null> {
+  const rows = await db
+    .select({
+      provider: encryptedSettings.provider,
+      encryptedValue: encryptedSettings.encryptedValue,
+    })
+    .from(encryptedSettings)
+    .where(
+      and(
+        eq(encryptedSettings.clientId, clientId),
+        inArray(encryptedSettings.provider, ["openai", "openrouter"]),
+        eq(encryptedSettings.settingKey, "api_key"),
+        eq(encryptedSettings.isActive, true),
+      ),
+    );
+  const own: { clientOpenAi?: string; clientOpenRouter?: string } = {};
+  for (const row of rows) {
+    // A corrupt client credential is a setup error, not permission to borrow another tenant's key.
+    const value = decrypt(row.encryptedValue).trim();
+    if (row.provider === "openrouter") own.clientOpenRouter = value;
+    if (row.provider === "openai") own.clientOpenAi = value;
+  }
+  return selectMarketingProvider({
+    ...own,
+    platformOpenRouter: process.env.OPENROUTER_API_KEY,
+    platformOpenAi: process.env.OPENAI_API_KEY,
+    preferredPlatform: process.env.MARKETING_AGENT_PROVIDER,
+  });
+}
+
+export function parseJsonAgentResponse<T>(
+  content: string,
+  schema: z.ZodType<T>,
+): T {
   const withoutFence = content
     .trim()
     .replace(/^```(?:json)?\s*/i, "")
@@ -126,23 +181,51 @@ export async function runJsonMarketingAgent<T>({
   userPrompt: string;
   schema: z.ZodType<T>;
 }): Promise<MarketingAgentCallResult<T>> {
-  const apiKey = await resolveOpenAiApiKey(clientId);
+  const simulatorUrl = getMarketingSimulatorUrl();
+  if (process.env.STAGING_ISOLATED === "1" && !simulatorUrl) {
+    throw new MarketingAgentProviderError(
+      "Configure the local AI simulator for isolated testing.",
+    );
+  }
+  const credentials = simulatorUrl
+    ? null
+    : await resolveMarketingProvider(clientId);
+  const apiKey = simulatorUrl ? "isolated-simulator" : credentials?.apiKey;
   if (!apiKey) {
     throw new MarketingAgentProviderError(
-      "No OpenAI provider is configured for this client or the portal.",
+      "No OpenRouter or OpenAI provider is configured for this client or the portal.",
     );
   }
 
-  const model = process.env.MARKETING_AGENT_MODEL?.trim() || DEFAULT_MODEL;
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const model =
+    credentials?.provider === "openrouter"
+      ? process.env.MARKETING_AGENT_OPENROUTER_MODEL?.trim() ||
+        process.env.OPENROUTER_MODEL?.trim() ||
+        credentials.defaultModel
+      : process.env.MARKETING_AGENT_MODEL?.trim() ||
+        credentials?.defaultModel ||
+        "gpt-4o-mini";
+  const response = await fetch(simulatorUrl || credentials!.endpoint, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      ...(credentials?.provider === "openrouter"
+        ? {
+            "HTTP-Referer":
+              process.env.NEXT_PUBLIC_APP_URL ||
+              "https://clients.kre8ivdesigns.com",
+            "X-Title": "KRE8IV Client Portal",
+          }
+        : {}),
     },
     body: JSON.stringify({
       model,
       temperature: 0.35,
+      max_tokens: 6000,
+      ...(credentials?.provider === "openrouter"
+        ? { provider: { data_collection: "deny", require_parameters: true } }
+        : {}),
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: agent.systemPrompt },
@@ -155,7 +238,7 @@ export async function runJsonMarketingAgent<T>({
   const payload = (await response.json()) as OpenAiChatResponse;
   if (!response.ok) {
     throw new MarketingAgentProviderError(
-      payload.error?.message || "The AI provider could not complete the marketing agent run.",
+      "The AI provider rejected the request. Check its configuration and usage limits.",
     );
   }
 
@@ -172,13 +255,16 @@ export async function runJsonMarketingAgent<T>({
   return {
     value: parseJsonAgentResponse(content, schema),
     usage: {
-      provider: "openai",
+      provider: credentials?.provider || "openai",
       model,
       promptTokens,
       completionTokens,
       totalTokens:
         payload.usage?.total_tokens ?? promptTokens + completionTokens,
-      estimatedCost: estimateCost(promptTokens, completionTokens),
+      estimatedCost:
+        typeof payload.usage?.cost === "number"
+          ? payload.usage.cost
+          : estimateCost(promptTokens, completionTokens),
     },
   };
 }

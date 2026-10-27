@@ -1,11 +1,16 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    await import("./sentry.server.config");
+    const { assertIsolatedStaging } = await import("@/lib/staging/safety");
+    assertIsolatedStaging();
+    const { isLocalProviderAcceptance } =
+      await import("@/lib/staging/provider-acceptance.mjs");
+    isLocalProviderAcceptance();
+    if (process.env.SENTRY_DSN?.trim()) await import("./sentry.server.config");
     const { validateEnvAtStartup } = await import("@/lib/env");
     validateEnvAtStartup();
   }
 
-  if (process.env.NEXT_RUNTIME === "edge") {
+  if (process.env.NEXT_RUNTIME === "edge" && process.env.SENTRY_DSN?.trim()) {
     await import("./sentry.edge.config");
   }
 }

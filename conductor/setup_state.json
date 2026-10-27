@@ -24,7 +24,7 @@
       "email": "Resend 3 (primary transactional) + Microsoft 365 connector + Google Workspace connector",
       "testing": "Vitest + Playwright",
       "monitoring": "Sentry",
-      "infrastructure": "Vercel (current); AWS (planned future migration)"
+      "infrastructure": "OpenShip on AWS (current)"
     },
     "tdd_strictness": "Strict — tests required before implementation (red → green → refactor)",
     "commit_strategy": "Conventional Commits (feat:, fix:, refactor:, chore:, perf:, docs:, test:, ci:)",

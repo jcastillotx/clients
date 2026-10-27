@@ -1,3 +1,7 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
+import { apiValidationError } from "@/lib/api/response";
+import { z } from "zod";
+import { boardFormSchema } from "@/lib/validations/workspace";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -7,13 +11,20 @@ import {
   apiUnauthorized,
 } from "@/lib/api/response";
 import { db } from "@/lib/db";
-import { staffTaskBoards, staffTaskColumns, NewStaffTaskColumn } from "@/lib/db/schema/staff-tasks";
+import {
+  staffTaskBoards,
+  staffTaskColumns,
+  NewStaffTaskColumn,
+} from "@/lib/db/schema/staff-tasks";
 import { eq, desc } from "drizzle-orm";
 
 /**
  * GET /api/tasks/boards
  */
 export async function GET(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
     const {
@@ -27,7 +38,10 @@ export async function GET(request: NextRequest) {
 
     const boards = await db.query.staffTaskBoards.findMany({
       where: eq(staffTaskBoards.isArchived, false),
-      orderBy: [desc(staffTaskBoards.isDefault), desc(staffTaskBoards.sortOrder)],
+      orderBy: [
+        desc(staffTaskBoards.isDefault),
+        desc(staffTaskBoards.sortOrder),
+      ],
       with: {
         columns: {
           orderBy: (columns, { asc }) => [asc(columns.position)],
@@ -45,6 +59,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess(request, boards, { extra: { boards } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching boards:", error);
     return apiInternalError(request, "Failed to fetch boards");
   }
@@ -54,6 +69,9 @@ export async function GET(request: NextRequest) {
  * POST /api/tasks/boards
  */
 export async function POST(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
     const {
@@ -65,7 +83,7 @@ export async function POST(request: NextRequest) {
       return apiUnauthorized(request);
     }
 
-    const body = await request.json();
+    const body = boardFormSchema.parse(await request.json());
     const { name, description, color, teamId, isDefault } = body;
 
     if (!name) {
@@ -77,7 +95,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (isDefault) {
-      await db.update(staffTaskBoards).set({ isDefault: false }).where(eq(staffTaskBoards.isDefault, true));
+      await db
+        .update(staffTaskBoards)
+        .set({ isDefault: false })
+        .where(eq(staffTaskBoards.isDefault, true));
     }
 
     const [board] = await db
@@ -124,7 +145,10 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    const columns = await db.insert(staffTaskColumns).values(defaultColumns).returning();
+    const columns = await db
+      .insert(staffTaskColumns)
+      .values(defaultColumns)
+      .returning();
 
     await db
       .update(staffTaskBoards)
@@ -138,6 +162,7 @@ export async function POST(request: NextRequest) {
       extra: { board: payload },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error creating board:", error);
     return apiInternalError(request, "Failed to create board");
   }

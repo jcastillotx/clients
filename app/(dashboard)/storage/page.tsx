@@ -17,10 +17,13 @@ export default async function StoragePage() {
 
   if (!user) return null;
 
-  const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
   const clientId = userData?.client_id ?? null;
 
-  const userRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const { data: roleData } = await supabase
     .from("user_roles")
     .select("role:roles(name)")
@@ -32,13 +35,13 @@ export default async function StoragePage() {
 
   const hasAdminRole = (roleData || []).some((row: RoleDataRow) => {
     const roleValue = row?.role;
-    const roleName = Array.isArray(roleValue) ? roleValue[0]?.name : roleValue?.name;
+    const roleName = Array.isArray(roleValue)
+      ? roleValue[0]?.name
+      : roleValue?.name;
     return roleName === "admin" || roleName === "super_admin";
   });
 
-  const isAdmin = Boolean(
-    userData?.is_super_admin || userRole === "admin" || userRole === "super_admin" || hasAdminRole,
-  );
+  const isAdmin = Boolean(userData?.is_super_admin || hasAdminRole);
 
   // Resolve the backing client record used for platform-level connections.
   let companyClientId: string | null = clientId;
@@ -48,7 +51,9 @@ export default async function StoragePage() {
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean);
-    const parentCompanyNames = (process.env.PARENT_COMPANY_NAMES ?? DEFAULT_PARENT_COMPANY_NAMES.join(","))
+    const parentCompanyNames = (
+      process.env.PARENT_COMPANY_NAMES ?? DEFAULT_PARENT_COMPANY_NAMES.join(",")
+    )
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean);
@@ -103,8 +108,12 @@ export default async function StoragePage() {
     return (
       <div className="flex flex-col gap-8 p-8 max-w-5xl mx-auto">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Storage Management</h1>
-          <p className="text-muted-foreground">No company account found. Please contact your administrator.</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Storage Management
+          </h1>
+          <p className="text-muted-foreground">
+            No company account found. Please contact your administrator.
+          </p>
         </div>
       </div>
     );
@@ -113,7 +122,9 @@ export default async function StoragePage() {
   return (
     <div className="flex flex-col gap-8 p-8 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Storage Management</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Storage Management
+        </h1>
         <p className="text-muted-foreground">
           Manage platform storage and client-owned storage access
         </p>

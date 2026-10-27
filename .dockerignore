@@ -11,3 +11,7 @@ test-results
 playwright-report
 .pnpm-store
 .claude
+
+# Local QA databases, signing material, fixtures and captured messages never enter images.
+staging
+docs/qa

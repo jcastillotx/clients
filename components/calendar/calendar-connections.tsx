@@ -11,7 +11,6 @@ import {
   XCircle,
   Loader2,
   Calendar,
-  AlertCircle,
   RefreshCw,
 } from "lucide-react";
 
@@ -91,9 +90,9 @@ function ConnectionStatusBadge({
 
   if (isExpired) {
     return (
-      <Badge variant="destructive" className="gap-1 text-xs">
-        <AlertCircle className="h-3 w-3" />
-        Token expired
+      <Badge variant="outline" className="gap-1 text-xs">
+        <RefreshCw className="h-3 w-3" />
+        Refresh pending
       </Badge>
     );
   }
@@ -252,7 +251,7 @@ export function CalendarConnections({
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Token expires:{" "}
                       {new Date(conn.tokenExpiry) < new Date()
-                        ? "Expired — reconnect to refresh"
+                        ? "Refreshes automatically on the next availability check"
                         : new Date(conn.tokenExpiry).toLocaleDateString()}
                     </p>
                   )}

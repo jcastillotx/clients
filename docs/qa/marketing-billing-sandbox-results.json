@@ -1,0 +1,12 @@
+{
+  "environment": "Stripe sandbox with synthetic local clients only",
+  "checkoutBrowser": "passed; Essentials USD49/month test subscription completed",
+  "activation": "passed; signed webhook activated only 17 included tools",
+  "billingPortal": "passed; client-owned session opened",
+  "cancelAtPeriodEnd": "passed; Stripe and local assignment retained active access and cancellation flag",
+  "failedRenewal": "passed; real declined recurring payment produced past_due and local paused, tool API403",
+  "recovery": "passed; paying failed invoice restored active Essentials and 17 tools",
+  "immediateCancellation": "passed; real subscription cancelled and local tools denied",
+  "liveCharges": false,
+  "livePlansPublished": false
+}

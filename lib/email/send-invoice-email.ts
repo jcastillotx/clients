@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmail } from "@/lib/email/client";
-import { renderEmailTemplate } from "@/lib/email/templates";
+import { renderEmailTemplateAsAdmin } from "@/lib/email/templates";
 import { generateInvoicePdfBuffer } from "@/lib/invoices/generate-invoice-pdf-buffer";
 import {
   buildPublicPayInvoiceUrl,
@@ -31,7 +31,11 @@ async function loadInvoiceForEmail(
 ): Promise<{
   invoice: InvoiceRow;
   client: ClientRow;
-  primaryContact: { id: string; name: string | null; email: string | null } | null;
+  primaryContact: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  } | null;
 } | null> {
   const { data: invoice, error } = await supabase
     .from("invoices")
@@ -58,11 +62,20 @@ async function loadInvoiceForEmail(
     return null;
   }
 
-  const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+  const client = Array.isArray(invoice.client)
+    ? invoice.client[0]
+    : invoice.client;
   if (!client) return null;
 
-  let primaryContact: { id: string; name: string | null; email: string | null } | null = null;
-  if (typeof client.primary_contact_id === "string" && client.primary_contact_id.length > 0) {
+  let primaryContact: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  } | null = null;
+  if (
+    typeof client.primary_contact_id === "string" &&
+    client.primary_contact_id.length > 0
+  ) {
     const { data: contact } = await supabase
       .from("users")
       .select("id, name, email")
@@ -116,7 +129,7 @@ export async function sendInvoiceEmailWithPdf(
     ...(args.extraTemplateData ?? {}),
   };
 
-  const rendered = await renderEmailTemplate(args.templateType, data);
+  const rendered = await renderEmailTemplateAsAdmin(args.templateType, data);
   if (!rendered) {
     return {
       success: false,

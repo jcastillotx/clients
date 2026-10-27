@@ -9,15 +9,26 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 
-async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
+async function resolveAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: { id: string; user_metadata?: Record<string, unknown> },
+) {
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-    supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    supabase
+      .from("users")
+      .select("id, client_id, is_super_admin")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id),
   ]);
 
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
+    const roleRow = row as {
+      role?: { name?: string } | Array<{ name?: string }>;
+    };
     if (Array.isArray(roleRow.role)) {
       return String(roleRow.role[0]?.name || "").toLowerCase();
     }
@@ -26,11 +37,8 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
 
   const isAdmin = Boolean(
     dbUser?.is_super_admin ||
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
+    roleNames.includes("admin") ||
+    roleNames.includes("super_admin"),
   );
 
   return {
@@ -44,7 +52,10 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
  *
  * AJAX feed for project-request-related tasks.
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -78,11 +89,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Prefer querying by board_id (taskBoardId in custom_fields) so that tasks
     // added directly to the board show up here. Fall back to request_id for
     // any tasks created through older flows that set it directly.
-    const taskBoardId = (requestRow.custom_fields as Record<string, unknown> | null)?.taskBoardId as string | null | undefined;
+    const taskBoardId = (
+      requestRow.custom_fields as Record<string, unknown> | null
+    )?.taskBoardId as string | null | undefined;
 
     const baseQuery = supabase
       .from("staff_tasks")
-      .select("id, title, description, priority, due_date, progress, completed_at, column_id, created_at, updated_at")
+      .select(
+        "id, title, description, priority, due_date, progress, completed_at, column_id, created_at, updated_at",
+      )
       .order("created_at", { ascending: false });
 
     const { data: tasks, error: tasksError } = taskBoardId
@@ -93,12 +108,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return apiInternalError(request, tasksError.message);
     }
 
-    const columnIds = Array.from(new Set((tasks || []).map((task) => task.column_id).filter(Boolean)));
+    const columnIds = Array.from(
+      new Set((tasks || []).map((task) => task.column_id).filter(Boolean)),
+    );
     const taskIds = (tasks || []).map((task) => task.id);
 
     const [columnsResult, assigneesResult] = await Promise.all([
       columnIds.length > 0
-        ? supabase.from("staff_task_columns").select("id, name").in("id", columnIds)
+        ? supabase
+            .from("staff_task_columns")
+            .select("id, name")
+            .in("id", columnIds)
         : Promise.resolve({ data: [], error: null }),
       taskIds.length > 0
         ? supabase
@@ -115,8 +135,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return apiInternalError(request, assigneesResult.error.message);
     }
 
-    const columnNameById = new Map((columnsResult.data || []).map((column) => [column.id, column.name]));
-    const assigneesByTaskId = new Map<string, Array<{ id: string; name: string; avatar?: string | null }>>();
+    const columnNameById = new Map(
+      (columnsResult.data || []).map((column) => [column.id, column.name]),
+    );
+    const assigneesByTaskId = new Map<
+      string,
+      Array<{ id: string; name: string; avatar?: string | null }>
+    >();
 
     for (const row of assigneesResult.data || []) {
       const taskId = row.task_id as string;
@@ -124,7 +149,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         | { id: string; name: string; avatar?: string | null }
         | Array<{ id: string; name: string; avatar?: string | null }>
         | null;
-      const userRow = Array.isArray(userRelation) ? userRelation[0] : userRelation;
+      const userRow = Array.isArray(userRelation)
+        ? userRelation[0]
+        : userRelation;
       if (!userRow) {
         continue;
       }
@@ -135,7 +162,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const payload = (tasks || []).map((task) => ({
       ...task,
-      columnName: task.column_id ? columnNameById.get(task.column_id) || "Unassigned" : "Unassigned",
+      columnName: task.column_id
+        ? columnNameById.get(task.column_id) || "Unassigned"
+        : "Unassigned",
       assignees: assigneesByTaskId.get(task.id) || [],
     }));
 

@@ -1,8 +1,10 @@
-import type { SupabaseClient, User as SupabaseAuthUser } from "@supabase/supabase-js";
+import type {
+  SupabaseClient,
+  User as SupabaseAuthUser,
+} from "@supabase/supabase-js";
 
 const AUTH_USERS_PAGE_SIZE = 200;
 const AUTH_USERS_MAX_PAGES = 50;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type UserProfilePayload = {
   id: string;
@@ -10,8 +12,6 @@ type UserProfilePayload = {
   email: string;
   phone?: string;
   avatar?: string;
-  client_id?: string;
-  is_super_admin?: boolean;
   last_login_at?: string | null;
   updated_at: string;
 };
@@ -33,16 +33,9 @@ function asNonEmptyString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function asUuid(value: unknown): string | null {
-  const stringValue = asNonEmptyString(value);
-  if (!stringValue) {
-    return null;
-  }
-
-  return UUID_PATTERN.test(stringValue) ? stringValue : null;
-}
-
-function buildUserProfilePayload(authUser: SupabaseAuthUser): UserProfilePayload | null {
+function buildUserProfilePayload(
+  authUser: SupabaseAuthUser,
+): UserProfilePayload | null {
   const email = asNonEmptyString(authUser.email);
   if (!email) {
     return null;
@@ -52,8 +45,6 @@ function buildUserProfilePayload(authUser: SupabaseAuthUser): UserProfilePayload
   const name = asNonEmptyString(metadata.name) ?? email;
   const phone = asNonEmptyString(metadata.phone);
   const avatar = asNonEmptyString(metadata.avatar);
-  const clientId = asUuid(metadata.client_id);
-  const isSuperAdmin = metadata.is_super_admin === true;
 
   return {
     id: authUser.id,
@@ -61,14 +52,14 @@ function buildUserProfilePayload(authUser: SupabaseAuthUser): UserProfilePayload
     email,
     ...(phone ? { phone } : {}),
     ...(avatar ? { avatar } : {}),
-    ...(clientId ? { client_id: clientId } : {}),
-    ...(isSuperAdmin ? { is_super_admin: true } : {}),
     last_login_at: authUser.last_sign_in_at ?? null,
     updated_at: new Date().toISOString(),
   };
 }
 
-async function listAllAuthUsers(adminClient: SupabaseClient): Promise<SupabaseAuthUser[]> {
+async function listAllAuthUsers(
+  adminClient: SupabaseClient,
+): Promise<SupabaseAuthUser[]> {
   const users: SupabaseAuthUser[] = [];
   let page = 1;
 
@@ -96,7 +87,10 @@ async function listAllAuthUsers(adminClient: SupabaseClient): Promise<SupabaseAu
   return users;
 }
 
-export async function ensureAuthUserProfile(adminClient: SupabaseClient, authUser: SupabaseAuthUser) {
+export async function ensureAuthUserProfile(
+  adminClient: SupabaseClient,
+  authUser: SupabaseAuthUser,
+) {
   const payload = buildUserProfilePayload(authUser);
   if (!payload) {
     return;
@@ -107,7 +101,10 @@ export async function ensureAuthUserProfile(adminClient: SupabaseClient, authUse
     .upsert(payload, { onConflict: "id", ignoreDuplicates: true });
 
   if (error) {
-    console.error(`Failed to ensure profile for auth user ${authUser.id}:`, error);
+    console.error(
+      `Failed to ensure profile for auth user ${authUser.id}:`,
+      error,
+    );
   }
 }
 
@@ -126,15 +123,25 @@ export async function syncMissingAuthUsers(adminClient: SupabaseClient) {
   }
 
   const authUserIds = payloads.map((payload) => payload.id);
-  const { data: existingRows, error: existingRowsError } = await adminClient.from("users").select("id").in("id", authUserIds);
+  const { data: existingRows, error: existingRowsError } = await adminClient
+    .from("users")
+    .select("id")
+    .in("id", authUserIds);
 
   if (existingRowsError) {
-    console.error("Failed to load existing user IDs during auth profile sync:", existingRowsError);
+    console.error(
+      "Failed to load existing user IDs during auth profile sync:",
+      existingRowsError,
+    );
     return;
   }
 
-  const existingIds = new Set(((existingRows ?? []) as Array<{ id: string }>).map((row) => row.id));
-  const missingPayloads = payloads.filter((payload) => !existingIds.has(payload.id));
+  const existingIds = new Set(
+    ((existingRows ?? []) as Array<{ id: string }>).map((row) => row.id),
+  );
+  const missingPayloads = payloads.filter(
+    (payload) => !existingIds.has(payload.id),
+  );
 
   // `public.users.last_login_at` is an application projection of Supabase Auth's
   // `last_sign_in_at`. The old sync only inserted missing profiles, so existing
@@ -150,7 +157,10 @@ export async function syncMissingAuthUsers(adminClient: SupabaseClient) {
       .eq("id", payload.id);
 
     if (loginSyncError) {
-      console.error(`Failed to sync last login for auth user ${payload.id}:`, loginSyncError);
+      console.error(
+        `Failed to sync last login for auth user ${payload.id}:`,
+        loginSyncError,
+      );
     }
   }
 
@@ -158,12 +168,17 @@ export async function syncMissingAuthUsers(adminClient: SupabaseClient) {
     return;
   }
 
-  const { error: insertError } = await adminClient.from("users").insert(missingPayloads);
+  const { error: insertError } = await adminClient
+    .from("users")
+    .insert(missingPayloads);
   if (!insertError) {
     return;
   }
 
-  console.warn("Bulk user profile sync failed; retrying users one by one:", insertError);
+  console.warn(
+    "Bulk user profile sync failed; retrying users one by one:",
+    insertError,
+  );
 
   for (const payload of missingPayloads) {
     const { error } = await adminClient
@@ -171,7 +186,10 @@ export async function syncMissingAuthUsers(adminClient: SupabaseClient) {
       .upsert(payload, { onConflict: "id", ignoreDuplicates: true });
 
     if (error) {
-      console.error(`Failed to backfill auth user ${payload.id} in public.users:`, error);
+      console.error(
+        `Failed to backfill auth user ${payload.id} in public.users:`,
+        error,
+      );
     }
   }
 }

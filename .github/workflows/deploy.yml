@@ -53,8 +53,8 @@ jobs:
         run: |
           echo "Environment: ${{ inputs.environment }}"
           echo ""
-          echo "This Next.js app deploys via Vercel (see vercel.json and docs/DEPLOYMENT.md)."
-          echo "Promote the latest green preview deployment, or run: vercel --prod"
+          echo "This application deploys as a standalone Docker container on OpenShip (see docs/OPENSHIP-MIGRATION.md)."
+          echo "Build Linux amd64 off-host, verify the private candidate, then promote it with a retained rollback container."
           echo ""
           echo "Before promoting:"
           echo "  1. Confirm Supabase migrations are applied"

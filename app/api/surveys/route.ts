@@ -16,15 +16,26 @@ type UserAccess = {
   isAdmin: boolean;
 };
 
-async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
+async function resolveAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: { id: string; user_metadata?: Record<string, unknown> },
+) {
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-    supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    supabase
+      .from("users")
+      .select("id, client_id, is_super_admin")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id),
   ]);
 
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
+    const roleRow = row as {
+      role?: { name?: string } | Array<{ name?: string }>;
+    };
     if (Array.isArray(roleRow.role)) {
       return String(roleRow.role[0]?.name || "").toLowerCase();
     }
@@ -33,11 +44,8 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
 
   const isAdmin = Boolean(
     dbUser?.is_super_admin ||
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
+    roleNames.includes("admin") ||
+    roleNames.includes("super_admin"),
   );
 
   return {
@@ -62,7 +70,9 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("surveys")
-      .select("id, title, description, is_active, response_count, created_at, client:clients(company_name)")
+      .select(
+        "id, title, description, is_active, response_count, created_at, client:clients(company_name)",
+      )
       .order("created_at", { ascending: false });
 
     if (!access.isAdmin && access.clientId) {
@@ -98,7 +108,9 @@ export async function POST(request: NextRequest) {
     const validated = createSurveySchema.parse(body);
     const access = await resolveAccess(supabase, user);
 
-    const effectiveClientId = access.isAdmin ? validated.clientId || null : access.clientId;
+    const effectiveClientId = access.isAdmin
+      ? validated.clientId || null
+      : access.clientId;
     if (!access.isAdmin && !effectiveClientId) {
       return apiError(request, {
         status: 400,
@@ -107,7 +119,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (!access.isAdmin && validated.clientId && validated.clientId !== access.clientId) {
+    if (
+      !access.isAdmin &&
+      validated.clientId &&
+      validated.clientId !== access.clientId
+    ) {
       return apiForbidden(request);
     }
 
@@ -125,19 +141,27 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (surveyError || !survey) {
-      return apiInternalError(request, surveyError?.message || "Failed to create survey");
+      return apiInternalError(
+        request,
+        surveyError?.message || "Failed to create survey",
+      );
     }
 
     const questionRows = validated.questions.map((question, index) => ({
       survey_id: survey.id,
       type: question.type,
       prompt: question.prompt,
-      options: question.options && question.options.length > 0 ? question.options : null,
+      options:
+        question.options && question.options.length > 0
+          ? question.options
+          : null,
       is_required: question.isRequired,
       sort_order: index,
     }));
 
-    const { error: questionsError } = await supabase.from("survey_questions").insert(questionRows);
+    const { error: questionsError } = await supabase
+      .from("survey_questions")
+      .insert(questionRows);
     if (questionsError) {
       return apiInternalError(request, questionsError.message);
     }

@@ -22,7 +22,7 @@ There's no single platform built specifically for web/digital agencies that hand
 
 1. **Complete Laravel → Next.js migration** — deliver full feature parity across 55+ features migrated from the legacy Laravel 11 platform
 2. **Unified client lifecycle** — eliminate the need for fragmented third-party tools (ClickUp, FreshBooks, HubSpot, DocuSign) with one platform
-3. **Production deployment** — complete environment setup, data migration, and go-live on Vercel with a path to AWS
+3. **Production deployment** — complete environment setup, data migration, and go-live on OpenShip on AWS
 
 ## Context
 

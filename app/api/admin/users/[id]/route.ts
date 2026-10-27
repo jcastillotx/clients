@@ -1,3 +1,10 @@
+import {
+  canManageUserTarget,
+  canAssignRequestedRoles,
+} from "@/lib/auth/user-management";
+import { apiValidationError } from "@/lib/api/response";
+import { z } from "zod";
+import { userEditSchema } from "@/lib/validations/workspace";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import {
   apiForbidden,
@@ -5,9 +12,17 @@ import {
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
-import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import {
+  hasAnyRole,
+  hasPermission,
+  Permissions,
+  Roles,
+} from "@/lib/rbac/permissions";
 
-async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
+async function fetchCompleteUserForResponse(
+  adminClient: ReturnType<typeof createAdminClient>,
+  userId: string,
+) {
   type UserRow = {
     id: string;
     client_id?: string | null;
@@ -25,7 +40,11 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
     role_id: string;
   };
 
-  const userResult = await adminClient.from("users").select("*").eq("id", userId).maybeSingle();
+  const userResult = await adminClient
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
   if (userResult.error) {
     throw userResult.error;
   }
@@ -43,7 +62,10 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
       .eq("id", userRow.client_id)
       .maybeSingle();
     if (clientResult.error) {
-      console.warn("Failed to hydrate user client in response", clientResult.error);
+      console.warn(
+        "Failed to hydrate user client in response",
+        clientResult.error,
+      );
     } else {
       client = clientResult.data ?? null;
     }
@@ -58,7 +80,11 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
   if (!joinedRolesResult.error) {
     for (const row of (joinedRolesResult.data || []) as JoinedRoleRow[]) {
       const roleValue = Array.isArray(row.role) ? row.role[0] : row.role;
-      if (roleValue && typeof roleValue.id === "string" && typeof roleValue.name === "string") {
+      if (
+        roleValue &&
+        typeof roleValue.id === "string" &&
+        typeof roleValue.name === "string"
+      ) {
         userRoles.push({
           role: {
             id: roleValue.id,
@@ -69,23 +95,41 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
       }
     }
   } else {
-    console.warn("Failed to join user roles in response; falling back to manual role hydration", joinedRolesResult.error);
+    console.warn(
+      "Failed to join user roles in response; falling back to manual role hydration",
+      joinedRolesResult.error,
+    );
 
-    const plainRolesResult = await adminClient.from("user_roles").select("role_id").eq("user_id", userId);
+    const plainRolesResult = await adminClient
+      .from("user_roles")
+      .select("role_id")
+      .eq("user_id", userId);
     if (plainRolesResult.error) {
-      console.warn("Failed to load role IDs in response fallback", plainRolesResult.error);
+      console.warn(
+        "Failed to load role IDs in response fallback",
+        plainRolesResult.error,
+      );
     } else {
       const roleIds = Array.from(
         new Set(
           ((plainRolesResult.data || []) as PlainRoleRow[])
             .map((row) => row.role_id)
-            .filter((roleId): roleId is string => typeof roleId === "string" && roleId.length > 0),
+            .filter(
+              (roleId): roleId is string =>
+                typeof roleId === "string" && roleId.length > 0,
+            ),
         ),
       );
       if (roleIds.length > 0) {
-        const rolesResult = await adminClient.from("roles").select("id, name, description").in("id", roleIds);
+        const rolesResult = await adminClient
+          .from("roles")
+          .select("id, name, description")
+          .in("id", roleIds);
         if (rolesResult.error) {
-          console.warn("Failed to load roles in response fallback", rolesResult.error);
+          console.warn(
+            "Failed to load roles in response fallback",
+            rolesResult.error,
+          );
         } else {
           for (const role of (rolesResult.data || []) as RoleRow[]) {
             userRoles.push({ role });
@@ -102,7 +146,10 @@ async function fetchCompleteUserForResponse(adminClient: ReturnType<typeof creat
   };
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -114,37 +161,58 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return apiUnauthorized(request, "Authentication required");
     }
 
-    const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
-    const isAdminMetadataRole =
-      currentUser.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN;
-    const hasManagementMetadataRole = isAdminMetadataRole || metadataRole === Roles.ACCOUNT_MANAGER;
+    const hasAdminRoleDb = await hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN], {
+      supabase,
+      userId: currentUser.id,
+    });
 
     const accessOptions = { supabase, userId: currentUser.id };
-    const [canManageUsers, canUpdateUsers, canAssignRoles, hasManagementRoleDb] = await Promise.all([
+    const [
+      canManageUsers,
+      canUpdateUsers,
+      canAssignRoles,
+      hasManagementRoleDb,
+    ] = await Promise.all([
       hasPermission(Permissions.USERS_MANAGE, accessOptions),
       hasPermission(Permissions.USERS_UPDATE, accessOptions),
       hasPermission(Permissions.USERS_ASSIGN_ROLES, accessOptions),
-      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+      hasAnyRole(
+        [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+        accessOptions,
+      ),
     ]);
-    const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+    const hasManagementRole = hasManagementRoleDb;
 
     if (!(canManageUsers || canUpdateUsers || hasManagementRole)) {
       return apiForbidden(request);
     }
 
-    const body = await request.json();
+    const body = userEditSchema.parse(await request.json());
     const { name, email, phone, password, client_id, is_active, roles } = body;
     const adminClient = createAdminClient();
+    if (!(await canManageUserTarget(adminClient, id, hasAdminRoleDb)))
+      return apiForbidden(request);
+    if (
+      Array.isArray(roles) &&
+      canAssignRoles &&
+      !(await canAssignRequestedRoles(adminClient, roles, hasAdminRoleDb))
+    ) {
+      return apiForbidden(
+        request,
+        "Only administrators can assign management roles",
+      );
+    }
 
     // Keep auth profile aligned with app profile changes
     if (password || email || name || phone || client_id !== undefined) {
-      const { error: authError } = await adminClient.auth.admin.updateUserById(id, {
-        ...(password ? { password } : {}),
-        ...(email ? { email } : {}),
-        user_metadata: { name, phone, client_id },
-      });
+      const { error: authError } = await adminClient.auth.admin.updateUserById(
+        id,
+        {
+          ...(password ? { password } : {}),
+          ...(email ? { email } : {}),
+          user_metadata: { name, phone, client_id },
+        },
+      );
 
       if (authError) throw authError;
     }
@@ -155,32 +223,41 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .update({
         name,
         email,
-        phone: phone || null,
-        client_id: client_id || null,
-        is_active: is_active !== false,
-        status: is_active === false ? "inactive" : "active",
+        ...(phone !== undefined ? { phone: phone || null } : {}),
+        ...(client_id !== undefined ? { client_id: client_id || null } : {}),
+        ...(is_active !== undefined
+          ? { is_active, status: is_active ? "active" : "inactive" }
+          : {}),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", id)
+      .eq("id", id);
 
     if (error) throw error;
 
     // Update roles
-    if (Array.isArray(roles) && (canAssignRoles || canManageUsers || isAdminMetadataRole)) {
-      const roleIds = Array.from(new Set(roles.filter((roleId: unknown): roleId is string => typeof roleId === "string")));
+    if (Array.isArray(roles) && (canAssignRoles || hasAdminRoleDb)) {
+      const roleIds = Array.from(
+        new Set(
+          roles.filter(
+            (roleId: unknown): roleId is string => typeof roleId === "string",
+          ),
+        ),
+      );
 
       // Remove existing roles
       await adminClient.from("user_roles").delete().eq("user_id", id);
 
       // Add new roles
       if (roleIds.length > 0) {
-        const { error: rolesError } = await adminClient.from("user_roles").insert(
-          roleIds.map((role_id: string) => ({
-            user_id: id,
-            role_id,
-            assigned_by: currentUser.id,
-          })),
-        );
+        const { error: rolesError } = await adminClient
+          .from("user_roles")
+          .insert(
+            roleIds.map((role_id: string) => ({
+              user_id: id,
+              role_id,
+              assigned_by: currentUser.id,
+            })),
+          );
 
         if (rolesError) throw rolesError;
       }
@@ -190,12 +267,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     return apiSuccess(request, completeUser, { extra: { user: completeUser } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error updating user:", error);
-    return apiInternalError(request, "An unexpected error occurred. Please try again.");
+    return apiInternalError(
+      request,
+      "An unexpected error occurred. Please try again.",
+    );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -207,11 +291,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return apiUnauthorized(request, "Authentication required");
     }
 
-    const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
-    const isAdminMetadataRole =
-      currentUser.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN;
+    const hasAdminRoleDb = await hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN], {
+      supabase,
+      userId: currentUser.id,
+    });
 
     const accessOptions = { supabase, userId: currentUser.id };
     const [canManageUsers, canDeleteUsers] = await Promise.all([
@@ -219,7 +302,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       hasPermission(Permissions.USERS_DELETE, accessOptions),
     ]);
 
-    if (!(canManageUsers || canDeleteUsers || isAdminMetadataRole)) {
+    if (!(canManageUsers || canDeleteUsers || hasAdminRoleDb)) {
       return apiForbidden(request);
     }
 
@@ -237,12 +320,21 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       .select("role:roles(name)")
       .eq("user_id", id);
 
-    const targetIsAdmin = Boolean(targetUser?.is_super_admin) ||
-      (targetRoles || []).some((row: { role?: { name?: string } | Array<{ name?: string }> | null }) => {
-        const rv = row?.role;
-        const name = String(Array.isArray(rv) ? rv[0]?.name : (rv as { name?: string } | null)?.name ?? "").toLowerCase();
-        return name === "admin" || name === "super_admin";
-      });
+    const targetIsAdmin =
+      Boolean(targetUser?.is_super_admin) ||
+      (targetRoles || []).some(
+        (row: {
+          role?: { name?: string } | Array<{ name?: string }> | null;
+        }) => {
+          const rv = row?.role;
+          const name = String(
+            Array.isArray(rv)
+              ? rv[0]?.name
+              : ((rv as { name?: string } | null)?.name ?? ""),
+          ).toLowerCase();
+          return name === "admin" || name === "super_admin";
+        },
+      );
 
     if (targetIsAdmin) {
       return apiForbidden(request, "Cannot delete admin or super admin users");
@@ -261,7 +353,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     return apiSuccess(request, { deleted: true }, { extra: { success: true } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error deleting user:", error);
-    return apiInternalError(request, "An unexpected error occurred. Please try again.");
+    return apiInternalError(
+      request,
+      "An unexpected error occurred. Please try again.",
+    );
   }
 }

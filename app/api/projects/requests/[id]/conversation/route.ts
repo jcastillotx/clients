@@ -11,15 +11,26 @@ import { createClient } from "@/lib/supabase/server";
 
 type ParticipantRole = "client" | "staff";
 
-async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
+async function resolveAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: { id: string; user_metadata?: Record<string, unknown> },
+) {
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-    supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    supabase
+      .from("users")
+      .select("id, client_id, is_super_admin")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id),
   ]);
 
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
+    const roleRow = row as {
+      role?: { name?: string } | Array<{ name?: string }>;
+    };
     if (Array.isArray(roleRow.role)) {
       return String(roleRow.role[0]?.name || "").toLowerCase();
     }
@@ -28,11 +39,8 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
 
   const isAdmin = Boolean(
     dbUser?.is_super_admin ||
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
+    roleNames.includes("admin") ||
+    roleNames.includes("super_admin"),
   );
 
   return {
@@ -46,7 +54,10 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
  *
  * Finds or creates a conversation linked to the request for real-time messaging.
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -77,7 +88,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const conversationLookup = await supabase
       .from("conversations")
-      .select("id, title, context_type, context_id, client_id, is_closed, last_message_at")
+      .select(
+        "id, title, context_type, context_id, client_id, is_closed, last_message_at",
+      )
       .eq("client_id", requestRow.client_id)
       .eq("context_type", "request")
       .eq("context_id", id)
@@ -101,39 +114,57 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           context_id: id,
           last_message_at: new Date().toISOString(),
         })
-        .select("id, title, context_type, context_id, client_id, is_closed, last_message_at")
+        .select(
+          "id, title, context_type, context_id, client_id, is_closed, last_message_at",
+        )
         .single();
 
       if (createError || !createdConversation) {
-        return apiInternalError(request, createError?.message || "Failed to create conversation");
+        return apiInternalError(
+          request,
+          createError?.message || "Failed to create conversation",
+        );
       }
       conversation = createdConversation;
     }
 
     const participantIds = Array.from(
-      new Set([user.id, requestRow.created_by, requestRow.assigned_to].filter((value): value is string => Boolean(value))),
+      new Set(
+        [user.id, requestRow.created_by, requestRow.assigned_to].filter(
+          (value): value is string => Boolean(value),
+        ),
+      ),
     );
 
-    const { data: existingParticipants, error: participantsError } = await supabase
-      .from("conversation_participants")
-      .select("user_id")
-      .eq("conversation_id", conversation.id)
-      .in("user_id", participantIds);
+    const { data: existingParticipants, error: participantsError } =
+      await supabase
+        .from("conversation_participants")
+        .select("user_id")
+        .eq("conversation_id", conversation.id)
+        .in("user_id", participantIds);
 
     if (participantsError) {
       return apiInternalError(request, participantsError.message);
     }
 
-    const existingIds = new Set((existingParticipants || []).map((participant) => participant.user_id));
-    const missingParticipantIds = participantIds.filter((participantId) => !existingIds.has(participantId));
+    const existingIds = new Set(
+      (existingParticipants || []).map((participant) => participant.user_id),
+    );
+    const missingParticipantIds = participantIds.filter(
+      (participantId) => !existingIds.has(participantId),
+    );
 
     if (missingParticipantIds.length > 0) {
       const records = missingParticipantIds.map((participantId) => ({
         conversation_id: conversation.id,
         user_id: participantId,
-        role: (participantId === requestRow.created_by ? "client" : "staff") as ParticipantRole,
+        role: (participantId === requestRow.created_by
+          ? "client"
+          : "staff") as ParticipantRole,
       }));
-      const { error: insertParticipantsError } = await supabase.from("conversation_participants").insert(records);
+      const { error: insertParticipantsError } = await supabase
+        .from("conversation_participants")
+        .insert(records);
       if (insertParticipantsError) {
         return apiInternalError(request, insertParticipantsError.message);
       }

@@ -1,6 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
 import { createClient } from "@/lib/supabase/server";
-import { Roles } from "@/lib/rbac/permissions";
+import { hasAnyRole, Roles } from "@/lib/rbac/permissions";
 import {
   apiForbidden,
   apiInternalError,
@@ -11,14 +11,20 @@ import {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);
     }
 
-    const role = user.user_metadata?.role || user.user_metadata?.app_role;
-    if (role !== Roles.SUPER_ADMIN && role !== Roles.ADMIN && !user.user_metadata?.is_super_admin) {
+    if (
+      !(await hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN], {
+        supabase,
+        userId: user.id,
+      }))
+    ) {
       return apiForbidden(request);
     }
 

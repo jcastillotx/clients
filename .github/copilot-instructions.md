@@ -17,7 +17,7 @@
 - **Drizzle ORM**: Schemas live in `lib/db/schema/**` and drive types; SQL migrations in `lib/db/migrations/**` and seeds in `lib/db/seeds/**`.
 - **RBAC + feature flags**: Permissions in `lib/rbac/*`; feature flag system spans `features`, `client_features`, `role_features`, `user_features` with priority User > Role > Client > Global.
 - **Background jobs**: Inngest functions in `lib/inngest/functions/**` with API entry at `app/api/inngest`.
-- **Integrations**: Stripe (payments/webhooks), Resend (email), Vercel Analytics/Sentry.
+- **Integrations**: Stripe (payments/webhooks), Resend (email), Sentry (optional).
 
 ## Key conventions
 - **Server Components first**: Prefer server components and only opt into client components when interactivity is required.

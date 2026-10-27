@@ -1,8 +1,12 @@
+import { createProjectSchema } from "@/lib/validations/project";
+import { z } from "zod";
+import { apiValidationError } from "@/lib/api/response";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { projects, projectBudgets, projectMilestones, projectDeliverables } from "@/lib/db/schema/projects";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { isAdminUser } from "@/lib/rbac/check";
 import {
   apiError,
@@ -28,9 +32,20 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const includeDeleted = searchParams.get("includeDeleted") === "true";
 
-    const conditions = [];
+    const access = await resolveRouteAccess(supabase, user);
+    if (clientId && !canAccessClient(access, clientId)) {
+      return apiForbidden(request);
+    }
+    if (!access.isStaff && !access.clientId) {
+      return apiForbidden(request, "A client account is required");
+    }
 
-    if (!includeDeleted) {
+    const conditions = [];
+    if (!access.isStaff) {
+      conditions.push(eq(projects.clientId, access.clientId!));
+    }
+
+    if (!includeDeleted || !access.isStaff) {
       conditions.push(isNull(projects.deletedAt));
     }
 
@@ -67,6 +82,7 @@ export async function GET(request: NextRequest) {
 
     return apiSuccess(request, result);
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error fetching projects:", error);
     return apiInternalError(request, "Failed to fetch projects");
   }
@@ -90,7 +106,7 @@ export async function POST(request: NextRequest) {
       return apiForbidden(request);
     }
 
-    const body = await request.json();
+    const body = createProjectSchema.parse(await request.json());
 
     const {
       clientId,
@@ -126,8 +142,8 @@ export async function POST(request: NextRequest) {
         status,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
-        estimatedHours,
-        budgetAmount,
+        estimatedHours: estimatedHours == null ? null : String(estimatedHours),
+        budgetAmount: budgetAmount == null ? null : String(budgetAmount),
         currency,
         projectManagerId,
         teamMembers,
@@ -137,15 +153,10 @@ export async function POST(request: NextRequest) {
 
     if (budgets && Array.isArray(budgets) && budgets.length > 0) {
       await db.insert(projectBudgets).values(
-        budgets.map((budget: {
-          category: "development" | "design" | "marketing" | "infrastructure" | "other";
-          allocatedAmount: string;
-          currency?: string;
-          notes?: string;
-        }) => ({
+        budgets.map((budget) => ({
           projectId: project.id,
           category: budget.category,
-          allocatedAmount: budget.allocatedAmount,
+          allocatedAmount: String(budget.allocatedAmount),
           currency: budget.currency || currency,
           notes: budget.notes,
         })),
@@ -170,6 +181,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess(request, project, { status: 201 });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error creating project:", error);
     return apiInternalError(request, "Failed to create project");
   }

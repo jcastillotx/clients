@@ -1,19 +1,15 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
+import { drizzleJsonTypes } from "./json-serialization";
 
-/**
- * Env lookup order:
- * - On Vercel, prefer `POSTGRES_URL` first — integrations often supply the Supabase
- *   Transaction pooler here, while `DATABASE_URL` is sometimes pasted as Session mode
- *   (port 5432) and exhausts MaxClientsInSessionMode under serverless concurrency.
- * - Locally, `DATABASE_URL` first is the common DX.
- */
-const DATABASE_CONNECTION_ENV_KEYS = (
-  process.env.VERCEL
-    ? (["POSTGRES_URL", "DATABASE_URL", "POSTGRES_URL_NON_POOLING"] as const)
-    : (["DATABASE_URL", "POSTGRES_URL", "POSTGRES_URL_NON_POOLING"] as const)
-) satisfies readonly string[];
+// OpenShip supplies the dedicated PostgreSQL connection through DATABASE_URL.
+// The generic Postgres aliases remain supported for local tooling.
+const DATABASE_CONNECTION_ENV_KEYS = [
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "POSTGRES_URL_NON_POOLING",
+] as const;
 
 export class DatabaseConfigurationError extends Error {
   constructor(message?: string) {
@@ -27,7 +23,7 @@ export class DatabaseConfigurationError extends Error {
 
 /**
  * Supabase shared pooler: Session mode is typically port 5432; Transaction mode is 6543.
- * Session pooler + many Vercel lambdas → XX000 MaxClientsInSessionMode.
+ * Session pooler + many application instances → XX000 MaxClientsInSessionMode.
  */
 function assertNotSupabaseSessionPooler(connectionString: string): void {
   try {
@@ -43,7 +39,7 @@ function assertNotSupabaseSessionPooler(connectionString: string): void {
     throw new DatabaseConfigurationError(
       `Supabase connection uses the pooler on port ${port} (Session-style). ` +
         `Use Transaction pooler on port 6543 instead: Supabase Dashboard → Database → ` +
-        `Connection string → Transaction. On Vercel, set POSTGRES_URL from the Supabase integration ` +
+        `Connection string → Transaction. Set POSTGRES_URL from the Supabase integration ` +
         `or point DATABASE_URL at the :6543 URI.`,
     );
   } catch (e) {
@@ -62,7 +58,11 @@ const resolveConnectionString = (): string | null => {
     }
 
     const normalizedValue = value.trim();
-    if (!normalizedValue || normalizedValue === "undefined" || normalizedValue === "null") {
+    if (
+      !normalizedValue ||
+      normalizedValue === "undefined" ||
+      normalizedValue === "null"
+    ) {
       continue;
     }
 
@@ -78,7 +78,7 @@ if (connectionString) {
 }
 
 /**
- * Pool size for postgres.js. On Vercel/serverless, keep this low (default 1): each
+ * Pool size for postgres.js. Keep this low (default 1): each
  * concurrent function instance can open its own pool, and Supabase Session pooler
  * mode enforces a small max clients → "MaxClientsInSessionMode" if you exhaust it.
  * Prefer Supabase's Transaction pooler (port 6543) for DATABASE_URL in production.
@@ -97,12 +97,13 @@ function resolvePostgresPoolMax(): number {
 
 const configuredDb = connectionString
   ? drizzle(
-      postgres(connectionString, {
+      postgres<Record<string, postgres.PostgresType>>(connectionString, {
         // Required for Supabase pooler transaction mode; also see POSTGRES_MAX_CONNECTIONS.
         prepare: false,
         max: resolvePostgresPoolMax(),
         idle_timeout: 20,
         connect_timeout: 30,
+        types: drizzleJsonTypes,
       }),
       { schema },
     )
@@ -117,7 +118,11 @@ const missingConfigDbProxy = new Proxy(
   },
 );
 
-export const db = (configuredDb ?? missingConfigDbProxy) as NonNullable<typeof configuredDb>;
+export const db = (configuredDb ?? missingConfigDbProxy) as NonNullable<
+  typeof configuredDb
+>;
 
-export const isDatabaseConfigurationError = (error: unknown): error is DatabaseConfigurationError =>
+export const isDatabaseConfigurationError = (
+  error: unknown,
+): error is DatabaseConfigurationError =>
   error instanceof DatabaseConfigurationError;

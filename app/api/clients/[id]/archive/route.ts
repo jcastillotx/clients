@@ -28,15 +28,6 @@ async function requireArchiveAccess(request: Request) {
     return { error: apiUnauthorized(request, "Authentication required") };
   }
 
-  const metadataRole = String(
-    user.user_metadata?.role ?? user.user_metadata?.app_role ?? "",
-  ).toLowerCase();
-  const hasManagementMetadataRole =
-    user.user_metadata?.is_super_admin === true ||
-    metadataRole === Roles.SUPER_ADMIN ||
-    metadataRole === Roles.ADMIN ||
-    metadataRole === Roles.ACCOUNT_MANAGER;
-
   const accessOptions = { supabase, userId: user.id };
   const [canArchiveClients, hasManagementRoleDb] = await Promise.all([
     hasPermission(Permissions.CLIENTS_DELETE, accessOptions),
@@ -46,9 +37,7 @@ async function requireArchiveAccess(request: Request) {
     ),
   ]);
 
-  if (
-    !(canArchiveClients || hasManagementRoleDb || hasManagementMetadataRole)
-  ) {
+  if (!(canArchiveClients || hasManagementRoleDb)) {
     return { error: apiForbidden(request) };
   }
 

@@ -1,0 +1,230 @@
+[
+  {
+    "name": "Anonymous marketing catalog denied",
+    "passed": true
+  },
+  {
+    "name": "Client gets all 48 tools with a real OpenRouter provider",
+    "passed": true
+  },
+  {
+    "name": "Client cannot select another tenant catalog",
+    "passed": true
+  },
+  {
+    "name": "Client cannot forge another tenant run",
+    "passed": true
+  },
+  {
+    "name": "Unknown tool and invalid brief rejected",
+    "passed": true
+  },
+  {
+    "name": "Client draft: google-ads",
+    "passed": true
+  },
+  {
+    "name": "Client draft: facebook-ads",
+    "passed": true
+  },
+  {
+    "name": "Client draft: microsoft-ads",
+    "passed": true
+  },
+  {
+    "name": "Client draft: linkedin-ads",
+    "passed": true
+  },
+  {
+    "name": "Client draft: tiktok-ads",
+    "passed": true
+  },
+  {
+    "name": "Client draft: cross-platform-audit",
+    "passed": true
+  },
+  {
+    "name": "Client draft: account-structure-review",
+    "passed": true
+  },
+  {
+    "name": "Client draft: competitor-ads-analyst",
+    "passed": true
+  },
+  {
+    "name": "Client draft: wasted-spend-finder",
+    "passed": true
+  },
+  {
+    "name": "Client draft: aeo-geo-optimizer",
+    "passed": true
+  },
+  {
+    "name": "Client draft: technical-seo-audit",
+    "passed": true
+  },
+  {
+    "name": "Client draft: schema-markup-generator",
+    "passed": true
+  },
+  {
+    "name": "Client draft: programmatic-seo",
+    "passed": true
+  },
+  {
+    "name": "Client draft: seo-content-writer",
+    "passed": true
+  },
+  {
+    "name": "Client draft: llms-txt",
+    "passed": true
+  },
+  {
+    "name": "Client draft: content-creator",
+    "passed": true
+  },
+  {
+    "name": "Client draft: copywriting-frameworks",
+    "passed": true
+  },
+  {
+    "name": "Client draft: social-media-strategy",
+    "passed": true
+  },
+  {
+    "name": "Client draft: email-composer",
+    "passed": true
+  },
+  {
+    "name": "Client draft: content-pipeline",
+    "passed": true
+  },
+  {
+    "name": "Client draft: content-workflow",
+    "passed": true
+  },
+  {
+    "name": "Client draft: cro-auditor",
+    "passed": true
+  },
+  {
+    "name": "Client draft: landing-page-optimizer",
+    "passed": true
+  },
+  {
+    "name": "Client draft: ab-testing-framework",
+    "passed": true
+  },
+  {
+    "name": "Client draft: retention-churn-prevention",
+    "passed": true
+  },
+  {
+    "name": "Client draft: brand-dna",
+    "passed": true
+  },
+  {
+    "name": "Client draft: brand-voice-guidelines",
+    "passed": true
+  },
+  {
+    "name": "Client draft: market-research",
+    "passed": true
+  },
+  {
+    "name": "Client draft: icp-research",
+    "passed": true
+  },
+  {
+    "name": "Client draft: customer-journey-mapping",
+    "passed": true
+  },
+  {
+    "name": "Client draft: pricing-strategy",
+    "passed": true
+  },
+  {
+    "name": "Client draft: research-digest",
+    "passed": true
+  },
+  {
+    "name": "Client draft: cold-email-outreach",
+    "passed": true
+  },
+  {
+    "name": "Client draft: klaviyo-analyst",
+    "passed": true
+  },
+  {
+    "name": "Client draft: klaviyo-developer",
+    "passed": true
+  },
+  {
+    "name": "Client draft: braze",
+    "passed": true
+  },
+  {
+    "name": "Client draft: google-analytics",
+    "passed": true
+  },
+  {
+    "name": "Client draft: google-tag-manager",
+    "passed": true
+  },
+  {
+    "name": "Client draft: looker-studio",
+    "passed": true
+  },
+  {
+    "name": "Client draft: shopify",
+    "passed": true
+  },
+  {
+    "name": "Client draft: utm-attribution-strategy",
+    "passed": true
+  },
+  {
+    "name": "Client draft: frontend-design",
+    "passed": true
+  },
+  {
+    "name": "Client draft: tech-diagram",
+    "passed": true
+  },
+  {
+    "name": "Client draft: remotion-video",
+    "passed": true
+  },
+  {
+    "name": "Client draft: pro-deck-builder",
+    "passed": true
+  },
+  {
+    "name": "Client draft: pro-report-builder",
+    "passed": true
+  },
+  {
+    "name": "Client draft: html-report-builder",
+    "passed": true
+  },
+  {
+    "name": "Client draft: data-viz-deck",
+    "passed": true
+  },
+  {
+    "name": "Other client history excludes these drafts",
+    "passed": true
+  },
+  {
+    "name": "Client can reload its saved drafts",
+    "passed": true
+  },
+  {
+    "name": "Client feature disable blocks catalog and run",
+    "passed": true
+  },
+  {
+    "name": "Feature priority and overview agree for user, role and client overrides",
+    "passed": true
+  }
+]

@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { uploadFormFieldsSchema } from "@/lib/validations/workspace";
+import { apiValidationError } from "@/lib/api/response";
 import {
   createAdminClientIfAvailable,
   createClient,
@@ -43,13 +46,18 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const clientId = formData.get("clientId") as string;
-    const requestId = formData.get("requestId") as string | null;
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string | null;
-    const tags = formData.get("tags") as string | null;
+    const tags = formData.get("tags");
+    const { clientId, requestId, parentDocumentId, name, description } =
+      uploadFormFieldsSchema.parse({
+        parentDocumentId: formData.get("parentDocumentId"),
+        clientId: formData.get("clientId"),
+        requestId: formData.get("requestId"),
+        name: formData.get("name"),
+        description: formData.get("description"),
+        tags: typeof tags === "string" && tags ? JSON.parse(tags) : [],
+      });
 
-    if (!file || !clientId || !name) {
+    if (!(file instanceof File) || file.size < 1 || !clientId || !name) {
       return apiError(request, {
         status: 400,
         code: "BAD_REQUEST",
@@ -67,6 +75,26 @@ export async function POST(request: Request) {
 
     if (!canAccessClient(access, clientId)) {
       return apiForbidden(request, "Access denied");
+    }
+
+    if (requestId) {
+      const { data: parentRequest } = await supabase
+        .from("requests")
+        .select("id, client_id")
+        .eq("id", requestId)
+        .maybeSingle();
+      if (!parentRequest || parentRequest.client_id !== clientId)
+        return apiForbidden(request, "Invalid document request");
+    }
+    if (parentDocumentId) {
+      const { data: parent } = await supabase
+        .from("documents")
+        .select("id, client_id")
+        .eq("id", parentDocumentId)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (!parent || parent.client_id !== clientId)
+        return apiForbidden(request, "Invalid document version parent");
     }
 
     const filePath = generateFilePath(clientId, "documents", file.name);
@@ -105,10 +133,11 @@ export async function POST(request: Request) {
         mime_type: file.type,
         storage_path: uploadResult.key,
         storage_url: null,
+        parent_document_id: parentDocumentId ?? null,
         client_id: clientId,
         request_id: requestId,
         uploaded_by: user.id,
-        tags: tags ? JSON.parse(tags) : null,
+        tags: typeof tags === "string" && tags ? JSON.parse(tags) : null,
       })
       .select()
       .single();
@@ -123,6 +152,13 @@ export async function POST(request: Request) {
 
     return apiSuccess(request, document, { status: 201, extra: { document } });
   } catch (error) {
+    if (error instanceof z.ZodError) return apiValidationError(request, error);
+    if (error instanceof SyntaxError)
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Send valid file details.",
+      });
     console.error("Error uploading document:", error);
     return apiInternalError(
       request,
