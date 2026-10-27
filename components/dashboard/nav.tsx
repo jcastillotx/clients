@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  marketingToolGroups,
+  type MarketingToolGroupId,
+} from "@/lib/ai/marketing-skills/menu";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -56,6 +60,7 @@ import {
 import { ComponentType } from "react";
 
 interface DashboardNavProps {
+  marketingGroups?: MarketingToolGroupId[];
   user: {
     id: string;
     email?: string;
@@ -80,6 +85,8 @@ interface NavItem {
   href: string;
   icon: ComponentType<{ className?: string }>;
   access?: AccessLevel;
+  marketingGroup?: MarketingToolGroupId;
+  requiresMarketingPlan?: boolean;
   /** Match `?tab=` query param; use `defaultWhenNoTab` when href has no tab. */
   matchesTab?: string;
   /** Highlight when pathname matches and no `tab` query is present. */
@@ -117,7 +124,12 @@ const navigationSections: NavSection[] = [
         icon: ShieldCheck,
       },
       { name: "File Storage", href: "/documents", icon: FolderOpen },
-      { name: "Contracts", href: "/contracts", icon: FileSignature, access: "staff" },
+      {
+        name: "Contracts",
+        href: "/contracts",
+        icon: FileSignature,
+        access: "staff",
+      },
       { name: "Proposals", href: "/proposals", icon: FileText },
       {
         name: "Invoices & Payments",
@@ -135,7 +147,12 @@ const navigationSections: NavSection[] = [
         href: "/projects/requests",
         icon: ClipboardCheck,
       },
-      { name: "Projects", href: "/projects", icon: CalendarRange, defaultWhenNoTab: true },
+      {
+        name: "Projects",
+        href: "/projects",
+        icon: CalendarRange,
+        defaultWhenNoTab: true,
+      },
       {
         name: "Project Messages",
         href: "/projects/messages",
@@ -191,7 +208,25 @@ const navigationSections: NavSection[] = [
     title: "Marketing",
     items: [
       { name: "Marketing Overview", href: "/marketing", icon: Megaphone },
-      { name: "Marketing Tools", href: "/marketing/tools", icon: Bot },
+      { name: "Marketing Plans", href: "/marketing/plans", icon: Receipt },
+      {
+        name: "Marketing Tools",
+        href: "/marketing/tools",
+        icon: Bot,
+        requiresMarketingPlan: true,
+      },
+      ...marketingToolGroups.map((g) => ({
+        name: g.name,
+        href: `/marketing/tools?group=${g.id}`,
+        icon: Bot,
+        marketingGroup: g.id,
+        requiresMarketingPlan: true,
+      })),
+      {
+        name: "Connections",
+        href: "/marketing/connections",
+        icon: LinkIcon,
+      },
       {
         name: "Marketing Agents",
         href: "/marketing/agents",
@@ -349,12 +384,43 @@ const navigationSections: NavSection[] = [
   {
     title: "Administration",
     items: [
-      { name: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, access: "admin", exactMatch: true },
-      { name: "Roles & Permissions", href: "/admin/roles", icon: Shield, access: "admin" },
-      { name: "Feature Flags", href: "/admin/features", icon: Sparkles, access: "admin" },
-      { name: "Financial Overview", href: "/admin/financial", icon: DollarSign, access: "admin" },
-      { name: "All Support Tickets", href: "/admin/tickets", icon: HelpCircle, access: "admin" },
-      { name: "Project Task Lists", href: "/admin/project-task-templates", icon: ListChecks, access: "admin" },
+      {
+        name: "Admin Dashboard",
+        href: "/admin",
+        icon: LayoutDashboard,
+        access: "admin",
+        exactMatch: true,
+      },
+      {
+        name: "Roles & Permissions",
+        href: "/admin/roles",
+        icon: Shield,
+        access: "admin",
+      },
+      {
+        name: "Feature Flags",
+        href: "/admin/features",
+        icon: Sparkles,
+        access: "admin",
+      },
+      {
+        name: "Financial Overview",
+        href: "/admin/financial",
+        icon: DollarSign,
+        access: "admin",
+      },
+      {
+        name: "All Support Tickets",
+        href: "/admin/tickets",
+        icon: HelpCircle,
+        access: "admin",
+      },
+      {
+        name: "Project Task Lists",
+        href: "/admin/project-task-templates",
+        icon: ListChecks,
+        access: "admin",
+      },
       {
         name: "Invoice & Email Templates",
         href: "/admin/settings/templates",
@@ -460,7 +526,14 @@ const sidebarWidthClass: Record<string, string> = {
 };
 
 const ADMIN_NAV_SECTIONS_KEY = "kre8iv-admin-nav-sections";
-const RESERVED_PROJECT_PATHS = new Set(["requests", "messages", "feedback", "budgets", "templates", "new"]);
+const RESERVED_PROJECT_PATHS = new Set([
+  "requests",
+  "messages",
+  "feedback",
+  "budgets",
+  "templates",
+  "new",
+]);
 
 function getCurrentProjectId(pathname: string): string | null {
   const match = pathname.match(/^\/projects\/([^/?#]+)(?:\/|$)/);
@@ -470,7 +543,10 @@ function getCurrentProjectId(pathname: string): string | null {
   return match[1];
 }
 
-function resolveProjectNavHref(item: NavItem, currentProjectId: string | null): string {
+function resolveProjectNavHref(
+  item: NavItem,
+  currentProjectId: string | null,
+): string {
   if (!currentProjectId) {
     return item.href;
   }
@@ -499,7 +575,9 @@ function isNavItemActive(
   item: NavItem,
 ): boolean {
   const [itemPathname, itemSearch] = item.href.split("?");
-  const hrefTab = itemSearch ? new URLSearchParams(itemSearch).get("tab") : null;
+  const hrefTab = itemSearch
+    ? new URLSearchParams(itemSearch).get("tab")
+    : null;
   const tabFromItem = item.matchesTab ?? hrefTab;
   const currentTab = searchParams.get("tab");
 
@@ -510,6 +588,11 @@ function isNavItemActive(
   if (!pathnameMatch) {
     return false;
   }
+
+  if (item.marketingGroup)
+    return searchParams.get("group") === item.marketingGroup;
+  if (itemPathname === "/marketing/tools" && searchParams.get("group"))
+    return false;
 
   if (tabFromItem) {
     return currentTab === tabFromItem;
@@ -524,6 +607,7 @@ function isNavItemActive(
 
 export function DashboardNav({
   user,
+  marketingGroups = [],
   isStaff,
   isAdmin,
   isAccountManager,
@@ -697,8 +781,20 @@ export function DashboardNav({
           </Link>
 
           {navigationSections.map((section) => {
-            const visibleItems = section.items.filter((item) =>
-              canAccessItem(item.access, isStaff, isAdmin, isAccountManager),
+            const visibleItems = section.items.filter(
+              (item) =>
+                canAccessItem(
+                  item.access,
+                  isStaff,
+                  isAdmin,
+                  isAccountManager,
+                ) &&
+                (isStaff ||
+                  !item.requiresMarketingPlan ||
+                  marketingGroups.length > 0) &&
+                (isStaff ||
+                  !item.marketingGroup ||
+                  marketingGroups.includes(item.marketingGroup)),
             );
             if (visibleItems.length === 0) return null;
 

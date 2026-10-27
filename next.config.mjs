@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { withSentryConfig } from "@sentry/nextjs";
-import { isLocalOpenRouterAcceptance } from "./lib/staging/provider-acceptance.mjs";
+import { isLocalProviderAcceptance } from "./lib/staging/provider-acceptance.mjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -13,7 +13,7 @@ const nextConfig = {
         "utf8",
       ),
     );
-    if (process.env.STAGING_ISOLATED === "1" || isLocalOpenRouterAcceptance()) {
+    if (process.env.STAGING_ISOLATED === "1" || isLocalProviderAcceptance()) {
       for (const route of securityHeaders) {
         for (const header of route.headers) {
           if (header.key.toLowerCase() === "content-security-policy") {

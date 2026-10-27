@@ -158,3 +158,15 @@ export async function resolveStripeWebhookSecrets(): Promise<string[]> {
 
   return [...secrets];
 }
+
+/** Platform subscriptions always bill KRE8IV's account, never a tenant's keys. */
+export async function resolvePlatformStripeCredentials(): Promise<StripeCredentials> {
+  const saved = await getLatestSavedStripeCredentials();
+  return {
+    secret_key:
+      normalizeCredential(process.env.STRIPE_SECRET_KEY) ?? saved.secret_key,
+    webhook_secret:
+      normalizeCredential(process.env.STRIPE_WEBHOOK_SECRET) ??
+      saved.webhook_secret,
+  };
+}

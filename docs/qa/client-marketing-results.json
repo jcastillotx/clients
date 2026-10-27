@@ -19,9 +19,19 @@
     "Creative & Design": 3,
     "Reporting & Deliverables": 4
   },
-  "realProviderAcceptance": "pending OpenRouter credential",
+  "realProviderAcceptance": {
+    "provider": "OpenRouter",
+    "passed": 57,
+    "total": 57,
+    "tools": 48,
+    "data": "synthetic client briefs only"
+  },
   "sourceArchive": "user-supplied claude-marketing.zip",
-  "unitTests": 361,
-  "unitTestFiles": 68,
-  "releaseStatus": "verified locally; production candidate pending OpenRouter acceptance"
+  "unitTests": 392,
+  "unitTestFiles": 72,
+  "releaseStatus": "plans and Google marketing connections added; production promotion pending final provider configuration",
+  "planAccessChecks": {
+    "passed": 12,
+    "total": 12
+  }
 }

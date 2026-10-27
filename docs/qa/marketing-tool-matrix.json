@@ -5,8 +5,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "facebook-ads",
@@ -14,8 +15,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "microsoft-ads",
@@ -23,8 +25,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "linkedin-ads",
@@ -32,8 +35,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "tiktok-ads",
@@ -41,8 +45,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "cross-platform-audit",
@@ -50,8 +55,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "account-structure-review",
@@ -59,8 +65,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "competitor-ads-analyst",
@@ -68,8 +75,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "wasted-spend-finder",
@@ -77,8 +85,9 @@
     "category": "Paid Media",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "aeo-geo-optimizer",
@@ -86,8 +95,9 @@
     "category": "SEO & AI Search",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "technical-seo-audit",
@@ -95,8 +105,9 @@
     "category": "SEO & AI Search",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "schema-markup-generator",
@@ -104,8 +115,9 @@
     "category": "SEO & AI Search",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "programmatic-seo",
@@ -113,8 +125,9 @@
     "category": "SEO & AI Search",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "seo-content-writer",
@@ -122,8 +135,9 @@
     "category": "SEO & AI Search",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "llms-txt",
@@ -131,8 +145,9 @@
     "category": "SEO & AI Search",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "content-creator",
@@ -140,8 +155,9 @@
     "category": "Content",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "copywriting-frameworks",
@@ -149,8 +165,9 @@
     "category": "Content",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "social-media-strategy",
@@ -158,8 +175,9 @@
     "category": "Content",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "email-composer",
@@ -167,8 +185,9 @@
     "category": "Content",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "content-pipeline",
@@ -176,8 +195,9 @@
     "category": "Content",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "content-workflow",
@@ -185,8 +205,9 @@
     "category": "Content",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "cro-auditor",
@@ -194,8 +215,9 @@
     "category": "Growth & Conversion",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "landing-page-optimizer",
@@ -203,8 +225,9 @@
     "category": "Growth & Conversion",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "ab-testing-framework",
@@ -212,8 +235,9 @@
     "category": "Growth & Conversion",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "retention-churn-prevention",
@@ -221,8 +245,9 @@
     "category": "Growth & Conversion",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "brand-dna",
@@ -230,8 +255,9 @@
     "category": "Strategy & Research",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "brand-voice-guidelines",
@@ -239,8 +265,9 @@
     "category": "Strategy & Research",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "market-research",
@@ -248,8 +275,9 @@
     "category": "Strategy & Research",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "icp-research",
@@ -257,8 +285,9 @@
     "category": "Strategy & Research",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "customer-journey-mapping",
@@ -266,8 +295,9 @@
     "category": "Strategy & Research",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "pricing-strategy",
@@ -275,8 +305,9 @@
     "category": "Strategy & Research",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "research-digest",
@@ -284,8 +315,9 @@
     "category": "Strategy & Research",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "cold-email-outreach",
@@ -293,8 +325,9 @@
     "category": "Strategy & Research",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "klaviyo-analyst",
@@ -302,8 +335,9 @@
     "category": "Email & Lifecycle",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "klaviyo-developer",
@@ -311,8 +345,9 @@
     "category": "Email & Lifecycle",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "braze",
@@ -320,8 +355,9 @@
     "category": "Email & Lifecycle",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "google-analytics",
@@ -329,8 +365,9 @@
     "category": "Analytics",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "google-tag-manager",
@@ -338,8 +375,9 @@
     "category": "Analytics",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "looker-studio",
@@ -347,8 +385,9 @@
     "category": "Analytics",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "shopify",
@@ -356,8 +395,9 @@
     "category": "Analytics",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "utm-attribution-strategy",
@@ -365,8 +405,9 @@
     "category": "Analytics",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "frontend-design",
@@ -374,8 +415,9 @@
     "category": "Creative & Design",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "tech-diagram",
@@ -383,8 +425,9 @@
     "category": "Creative & Design",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "remotion-video",
@@ -392,8 +435,9 @@
     "category": "Creative & Design",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "pro-deck-builder",
@@ -401,8 +445,9 @@
     "category": "Reporting & Deliverables",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "pro-report-builder",
@@ -410,8 +455,9 @@
     "category": "Reporting & Deliverables",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "html-report-builder",
@@ -419,8 +465,9 @@
     "category": "Reporting & Deliverables",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   },
   {
     "id": "data-viz-deck",
@@ -428,7 +475,8 @@
     "category": "Reporting & Deliverables",
     "methodologyAvailable": true,
     "clientSimulatorRun": true,
-    "realProviderAcceptance": "pending OpenRouter credential",
-    "executionScope": "analysis and drafts from supplied data; no live provider actions"
+    "realProviderAcceptance": "passed OpenRouter structured draft and persistence",
+    "executionScope": "analysis and drafts from supplied data; no live provider actions",
+    "access": "requires active marketing plan containing the tool group"
   }
 ]

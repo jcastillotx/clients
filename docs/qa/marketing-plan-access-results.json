@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Clients cannot see unpublished draft plans",
+    "passed": true
+  },
+  {
+    "name": "Clients cannot buy an unpublished plan",
+    "passed": true
+  },
+  {
+    "name": "Essentials filters tool catalog and denies paid media methodology and execution",
+    "passed": true
+  },
+  {
+    "name": "Plan changes filter previously saved paid-media history",
+    "passed": true
+  },
+  {
+    "name": "Plan controls Google connection availability",
+    "passed": true
+  },
+  {
+    "name": "paused plan denies all tool access",
+    "passed": true
+  },
+  {
+    "name": "cancelled plan denies all tool access",
+    "passed": true
+  },
+  {
+    "name": "expired plan denies all tool access",
+    "passed": true
+  },
+  {
+    "name": "No assigned plan fails closed",
+    "passed": true
+  },
+  {
+    "name": "Complete plan restores all 48 tools and both Google providers",
+    "passed": true
+  },
+  {
+    "name": "Client cannot inject resource selection without its own OAuth grant",
+    "passed": true
+  },
+  {
+    "name": "Other client cannot forge target tenant catalog",
+    "passed": true
+  }
+]

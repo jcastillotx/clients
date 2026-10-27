@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isLocalOpenRouterAcceptance } from "@/lib/staging/provider-acceptance.mjs";
+import {
+  isLocalOpenRouterAcceptance,
+  isLocalProviderAcceptance,
+} from "@/lib/staging/provider-acceptance.mjs";
 const local = {
   STAGING_PROVIDER_ACCEPTANCE: "openrouter",
   NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3101",
@@ -8,6 +11,31 @@ const local = {
   DATABASE_URL: "postgres://fixture@127.0.0.1:55322/postgres",
 };
 describe("real provider acceptance boundary", () => {
+  it("permits Stripe sandbox with synthetic local services only", () =>
+    expect(
+      isLocalProviderAcceptance({
+        ...local,
+        STAGING_PROVIDER_ACCEPTANCE: "stripe_sandbox",
+        STRIPE_SECRET_KEY: "sk_test_fixture",
+      }),
+    ).toBe(true));
+  it("refuses a live Stripe key in provider acceptance", () =>
+    expect(() =>
+      isLocalProviderAcceptance({
+        ...local,
+        STAGING_PROVIDER_ACCEPTANCE: "stripe_sandbox",
+        STRIPE_SECRET_KEY: "sk_live_fixture",
+      }),
+    ).toThrow());
+  it("refuses mixing AI credentials into Stripe acceptance", () =>
+    expect(() =>
+      isLocalProviderAcceptance({
+        ...local,
+        STAGING_PROVIDER_ACCEPTANCE: "stripe_sandbox",
+        STRIPE_SECRET_KEY: "sk_test_fixture",
+        OPENROUTER_API_KEY: "fixture",
+      }),
+    ).toThrow());
   it("does not activate in normal production", () =>
     expect(isLocalOpenRouterAcceptance({})).toBe(false));
   it("permits the separately configured synthetic local environment", () =>

@@ -2,9 +2,9 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { assertIsolatedStaging } = await import("@/lib/staging/safety");
     assertIsolatedStaging();
-    const { isLocalOpenRouterAcceptance } =
+    const { isLocalProviderAcceptance } =
       await import("@/lib/staging/provider-acceptance.mjs");
-    isLocalOpenRouterAcceptance();
+    isLocalProviderAcceptance();
     if (process.env.SENTRY_DSN?.trim()) await import("./sentry.server.config");
     const { validateEnvAtStartup } = await import("@/lib/env");
     validateEnvAtStartup();

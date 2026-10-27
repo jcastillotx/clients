@@ -29,6 +29,8 @@ export function assertIsolatedStaging(
     throw new Error("Isolated staging refuses live Stripe credentials");
   }
   for (const key of [
+    "GOOGLE_MARKETING_CLIENT_SECRET",
+    "GOOGLE_CALENDAR_CLIENT_SECRET",
     "RESEND_API_KEY",
     "OPENAI_API_KEY",
     "OPENROUTER_API_KEY",

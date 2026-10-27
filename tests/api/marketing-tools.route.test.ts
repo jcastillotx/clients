@@ -30,7 +30,11 @@ const clientId = "11111111-1111-4111-8111-111111111111";
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.auth.mockResolvedValue({ userId: "owner", clientId, isStaff: false });
-  mocks.scope.mockResolvedValue({ clientId, access: { userId: "owner" } });
+  mocks.scope.mockResolvedValue({
+    clientId,
+    access: { userId: "owner" },
+    plan: { groups: ["paid-media"] },
+  });
   mocks.ready.mockResolvedValue(false);
 });
 function request(body: unknown) {
@@ -73,6 +77,13 @@ describe("marketing tool failure boundaries", () => {
     );
     expect(response.status).toBe(503);
     expect((await response.json()).message).toContain("not configured");
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+  it("rejects tools outside the purchased plan before invoking a provider", async () => {
+    mocks.scope.mockResolvedValue({clientId, access:{userId:"owner"}, plan:{groups:["content"]}});
+    const response=await POST(request({skillId:"google-ads",brief:"Prepare an evidence-based campaign analysis."}));
+    expect(response.status).toBe(403);
+    expect(mocks.ready).not.toHaveBeenCalled();
     expect(mocks.insert).not.toHaveBeenCalled();
   });
   it("rejects unknown tools before creating a task", async () => {

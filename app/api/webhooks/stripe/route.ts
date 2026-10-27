@@ -1,3 +1,4 @@
+import { syncMarketingSubscription } from "@/lib/ai/marketing-skills/subscriptions";
 import { headers } from "next/headers";
 import type Stripe from "stripe";
 
@@ -83,6 +84,8 @@ export async function POST(request: Request) {
       onEvent: async (event) => {
         const supabase =
           createAdminClientIfAvailable() ?? (await createClient());
+
+        if (await syncMarketingSubscription(event, matchedSecret)) return;
 
         const assertPaymentAccount = async (clientId: string) => {
           const expected = await resolveStripeCredentialsForClient(clientId);

@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { marketingToolGroups } from "@/lib/ai/marketing-skills/menu";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +30,7 @@ type Run = {
 };
 type Library = {
   clientId: string;
+  plan: { name: string; groups: string[] };
   tools: Tool[];
   providerReady: boolean;
   providerName: "openai" | "openrouter" | "local_simulator" | null;
@@ -42,6 +46,10 @@ export function MarketingSkillTools({
   clients: Array<{ id: string; companyName: string }>;
   isStaff: boolean;
 }) {
+  const query = useSearchParams();
+  const requestedGroup = marketingToolGroups.find(
+    (g) => g.id === query.get("group"),
+  );
   const [clientId, setClientId] = useState(clients[0]?.id ?? "");
   const [library, setLibrary] = useState<Library | null>(null);
   const [search, setSearch] = useState("");
@@ -74,6 +82,11 @@ export function MarketingSkillTools({
       setLoading(false);
     }
   }, [clientId]);
+  useEffect(() => {
+    setCategory(requestedGroup?.category ?? "All");
+    setSelected(null);
+    setArtifact(null);
+  }, [requestedGroup]);
   useEffect(() => {
     setSelected(null);
     setArtifact(null);
@@ -165,8 +178,9 @@ export function MarketingSkillTools({
       <header className="space-y-2">
         <h1 className="text-3xl font-bold">Marketing Tools</h1>
         <p className="text-muted-foreground">
-          48 tools for strategy, research, content, paid media, conversion,
-          analytics and reporting.
+          {library
+            ? `${library.tools.length} tools included in ${library.plan.name}.`
+            : "Marketing tools included in your client plan."}
         </p>
         <p className="text-sm text-muted-foreground">
           Use your brief and supplied data to create reviewable drafts. Tools do
@@ -174,6 +188,14 @@ export function MarketingSkillTools({
           spend money.
         </p>
       </header>
+      <div className="flex gap-4 text-sm">
+        <Link className="underline" href="/marketing/plans">
+          Marketing Plans
+        </Link>
+        <Link className="underline" href="/marketing/connections">
+          Connect accounts
+        </Link>
+      </div>
       {isStaff && (
         <div>
           <Label htmlFor="skill-client">Client account</Label>

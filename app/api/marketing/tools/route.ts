@@ -1,3 +1,4 @@
+import { marketingToolGroup } from "@/lib/ai/marketing-skills/menu";
 import { and, desc, eq, sql } from "drizzle-orm";
 import {
   apiError,
@@ -38,7 +39,9 @@ function accessError(request: Request, error: string) {
     request,
     error === "disabled"
       ? "Marketing tools are disabled for this account."
-      : "Client is unavailable.",
+      : error === "plan_required"
+        ? "An active marketing plan with included tools is required. View Marketing Plans or contact your account manager."
+        : "Client is unavailable.",
   );
 }
 export async function GET(request: Request) {
@@ -57,6 +60,11 @@ export async function GET(request: Request) {
           code: "NOT_FOUND",
           message: "Marketing tool not found.",
         });
+      if (!scope.plan.groups.includes(marketingToolGroup(skill.category)!.id))
+        return apiForbidden(
+          request,
+          "This tool is not included in your marketing plan.",
+        );
       return apiSuccess(request, { ...skill, reference: undefined });
     }
     const history = await db
@@ -82,13 +90,22 @@ export async function GET(request: Request) {
     const providerStatus = await getMarketingAiProviderStatus(scope.clientId);
     return apiSuccess(request, {
       clientId: scope.clientId,
-      tools: marketingSkillSummaries(),
+      plan: scope.plan,
+      tools: marketingSkillSummaries().filter((tool) =>
+        scope.plan.groups.includes(marketingToolGroup(tool.category)!.id),
+      ),
       providerReady: providerStatus.ready,
       providerName: providerStatus.provider,
       simulated: Boolean(getMarketingSimulatorUrl()),
       history: history.flatMap(({ input, output, ...run }) => {
         const skillId = input.parameters?.skillId;
-        if (typeof skillId !== "string" || !getMarketingSkill(skillId))
+        if (
+          typeof skillId !== "string" ||
+          !getMarketingSkill(skillId) ||
+          !scope.plan.groups.includes(
+            marketingToolGroup(getMarketingSkill(skillId)!.category)!.id,
+          )
+        )
           return [];
         const artifact = skillArtifactSchema.safeParse(output?.result);
         return [
@@ -134,6 +151,16 @@ export async function POST(request: Request) {
     if (!parsed.success) return apiValidationError(request, parsed.error);
     const scope = await resolveMarketingToolAccess(parsed.data.clientId);
     if (scope.error) return accessError(request, scope.error);
+    const includedSkill = getMarketingSkill(parsed.data.skillId)!;
+    if (
+      !scope.plan.groups.includes(
+        marketingToolGroup(includedSkill.category)!.id,
+      )
+    )
+      return apiForbidden(
+        request,
+        "This tool is not included in your marketing plan.",
+      );
     const limit =
       process.env.STAGING_ISOLATED === "1" || isLocalOpenRouterAcceptance()
         ? 120

@@ -9,6 +9,7 @@ import {
   userFeatures,
 } from "@/lib/db/schema/feature-flags";
 import { userRoles } from "@/lib/db/schema/rbac";
+import { getClientMarketingPlan } from "./plans";
 import { z } from "zod";
 
 export function canAccessMarketingClient(
@@ -88,5 +89,8 @@ export async function resolveMarketingToolAccess(
     clientOverride?.isEnabled ??
     feature.isEnabledByDefault;
   if (!enabled) return { error: "disabled" as const };
-  return { access, clientId };
+  const plan = await getClientMarketingPlan(clientId);
+  if (!plan || plan.groups.length === 0)
+    return { error: "plan_required" as const };
+  return { access, clientId, plan };
 }

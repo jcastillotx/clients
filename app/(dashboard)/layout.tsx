@@ -2,6 +2,7 @@ import {
   createAdminClientIfAvailable,
   createClient,
 } from "@/lib/supabase/server";
+import { resolveMarketingToolAccess } from "@/lib/ai/marketing-skills/access";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { DashboardNav } from "@/components/dashboard/nav";
@@ -70,6 +71,15 @@ export default async function DashboardLayout({
     .eq("id", user.id)
     .single();
 
+  const marketingAccess =
+    !isStaff && userData?.client_id
+      ? await resolveMarketingToolAccess(userData.client_id)
+      : null;
+  const marketingGroups =
+    marketingAccess && !marketingAccess.error
+      ? marketingAccess.plan.groups
+      : [];
+
   // Load portal branding and read padding preference from cookie
   const [branding, cookieStore] = await Promise.all([
     getPortalBranding(),
@@ -123,6 +133,7 @@ export default async function DashboardLayout({
         {/* Sidebar Navigation */}
         <DashboardNav
           user={user}
+          marketingGroups={marketingGroups}
           isStaff={isStaff}
           isAdmin={isAdmin}
           isAccountManager={isAccountManager}
