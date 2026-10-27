@@ -27,9 +27,9 @@
     "data": "synthetic client briefs only"
   },
   "sourceArchive": "user-supplied claude-marketing.zip",
-  "unitTests": 392,
-  "unitTestFiles": 72,
-  "releaseStatus": "plans and Google marketing connections added; production promotion pending final provider configuration",
+  "unitTests": 396,
+  "unitTestFiles": 73,
+  "releaseStatus": "production324fb00 healthy; plans unpublished; Google report acceptance awaits owner consent",
   "planAccessChecks": {
     "passed": 12,
     "total": 12

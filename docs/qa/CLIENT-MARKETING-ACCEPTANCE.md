@@ -22,12 +22,12 @@ OpenRouter is the user-selected platform AI provider. Tenant-owned OpenAI keys s
 
 ## Verification
 
-- 392 unit tests across 72 files passed before final release checks; type-check passed; lint completed with baseline warnings.
+- 396 unit tests across 73 files passed before final release checks; type-check passed; lint completed with baseline warnings.
 - 59 client-authenticated marketing HTTP checks passed: every tool, methodology, draft persistence, history, tenant forgery, validation, provider failure, invalid model output, and feature disable.
 - 48 existing isolated workflow checks passed after the JSON and avatar fixes, covering core auth, storage, billing, projects, messaging, proposals, MFA and background handlers.
 - Chrome sign-in used the actual synthetic client role, not an administrator. 18 client pages were inspected, including services, projects, billing, documents, messaging, marketing, profile, security, contracts and meetings. Tool search, selection, generation and reopening a saved draft were exercised in the browser.
 
-**Release status:** isolated staging and real OpenRouter acceptance passed; production promotion is pending the expanded paid-plan and Google marketing connection release.
+**Release status:** production image `324fb00` deployed to OpenShip after PR #232 merged and both GitHub checks passed. All three plan prices remain unpublished, with no real client assignments. A follow-up normalizes anonymous Connections responses from denied403 to401 and authenticates disconnect before parsing its body.
 
 Machine-readable tool coverage is in `marketing-tool-matrix.json`; client screen observations are in `client-page-audit.json`. No real campaign was sent or published, and no ad spend was initiated.
 

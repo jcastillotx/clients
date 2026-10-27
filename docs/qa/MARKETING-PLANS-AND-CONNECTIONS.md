@@ -1,6 +1,6 @@
 # Marketing plans and client connections
 
-Work in progress, not deployed. Prices remain unpublished drafts in production.
+Initial production release324fb00 is deployed on OpenShip. Prices remain unpublished drafts. Google reporting acceptance awaits owner consent.
 
 Draft monthly USD software tiers:
 
@@ -18,9 +18,9 @@ Google Ads and GA4 connections belong to a user within their client tenant. OAut
 
 GA4: analytics.readonly, Admin API discovery, Data API report of sessions, activeUsers and keyEvents for seven complete days. Google Ads: adwords scope (Google does not provide a narrower read-only scope), accessible direct accounts and seven-day aggregate impressions, clicks, cost_micros, conversions/currency. This implementation has no campaign mutation or ad-spend endpoints. Manager-only child-account discovery is not yet implemented.
 
-Cloud setup: Analytics Admin API, Analytics Data API and Google Ads API enabled with owner approval. Google Ads Explorer application submitted with owner approval and is under review. Production and temporary loopback callbacks saved.
+Cloud setup: Analytics Admin API, Analytics Data API and Google Ads API enabled with owner approval. Google Ads Explorer application submitted with owner approval and approved by Google (2,880 production operations/day). Production and temporary loopback callbacks saved.
 
-Provider configuration still required: Google OAuth callback `/api/marketing/connections/callback`, correct app credentials, Analytics Admin/Data API and Ads API enabled, project Ads access level for production data, OAuth scope disclosure and consent/verification. Existing calendar consent does not authorize marketing data. Real Google acceptance remains outstanding.
+Configured: OAuth callback `/api/marketing/connections/callback`, existing platform Google OAuth credentials, enabled Analytics Admin/Data and Ads APIs, and Explorer production access. Remaining: per-account marketing consent, actual property/account report acceptance, and Google's verification of the new scopes. Existing calendar consent does not authorize marketing data. Real Google report acceptance remains outstanding.
 
 Sources: https://developers.google.com/analytics/devguides/config/admin/v1/rest/v1alpha/accountSummaries/list ; https://developers.google.com/google-ads/api/rest/auth ; https://developers.google.com/google-ads/api/docs/api-policy/access-levels . Google Ads API access is now controlled per Cloud project; legacy developer-token configuration is optional compatibility only.
 
