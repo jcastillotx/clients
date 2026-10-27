@@ -89,6 +89,8 @@ export function MarketingPlans() {
         Monthly access to marketing software and AI draft tools. Agency
         services, advertising spend and third-party subscriptions are separate.
       </p>
+      {query.get("checkout") === "cancelled" && <p role="status">Checkout was cancelled. No new subscription was activated. You can resume checkout below.</p>}
+      {query.get("checkout") === "complete" && !current && <p role="status">Confirming your payment. Tools unlock after Stripe verifies your subscription; this may take a moment.</p>}
       {billingMode === "test" && (
         <p role="status" className="rounded border p-3">
           Stripe sandbox: test payments only. No real charges.
@@ -135,7 +137,7 @@ export function MarketingPlans() {
       )}
       <div className="grid gap-4 lg:grid-cols-3">
         {plans.map((p) => (
-          <Card key={p.id}>
+          <Card key={p.id} className={query.get("plan") === p.id ? "ring-2 ring-primary" : undefined}>
             <CardHeader>
               <CardTitle>{p.name}</CardTitle>
             </CardHeader>

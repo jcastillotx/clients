@@ -23,8 +23,8 @@ interface Message {
   id: string;
   body: string | null;
   type: string;
-  senderId: string;
-  sender: Sender;
+  senderId: string | null;
+  sender: Sender | null;
   createdAt: string;
   updatedAt: string;
   isPinned: boolean;
@@ -40,6 +40,7 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, isOwnMessage, showSender = true, onMarkRead }: MessageBubbleProps) {
+  const senderName = message.sender?.name || (message.type === "system" ? "System" : "Unknown sender");
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -51,11 +52,11 @@ export function MessageBubble({ message, isOwnMessage, showSender = true, onMark
       {/* Avatar */}
       {!isOwnMessage && (
         <div className="flex-shrink-0">
-          {message.sender.avatar ? (
-            <img src={message.sender.avatar} alt={message.sender.name} className="w-8 h-8 rounded-full" />
+          {message.sender?.avatar ? (
+            <img src={message.sender.avatar} alt={senderName} className="w-8 h-8 rounded-full" />
           ) : (
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-xs font-semibold text-primary">{message.sender.name.charAt(0).toUpperCase()}</span>
+              <span className="text-xs font-semibold text-primary">{senderName.charAt(0).toUpperCase()}</span>
             </div>
           )}
         </div>
@@ -65,7 +66,7 @@ export function MessageBubble({ message, isOwnMessage, showSender = true, onMark
       <div className={cn("flex flex-col max-w-[70%]", isOwnMessage ? "items-end" : "items-start")}>
         {/* Sender Name */}
         {showSender && !isOwnMessage && (
-          <span className="text-xs font-medium text-muted-foreground mb-1 px-1">{message.sender.name}</span>
+          <span className="text-xs font-medium text-muted-foreground mb-1 px-1">{senderName}</span>
         )}
 
         {/* Pinned Indicator */}

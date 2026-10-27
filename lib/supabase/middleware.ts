@@ -259,6 +259,8 @@ export async function updateSession(request: NextRequest) {
       return supabaseResponse;
     }
     const url = request.nextUrl.clone();
+    const purchaseNext = request.nextUrl.searchParams.get("next");
+    if (purchaseNext && /^\/marketing\/plans(?:\?plan=[\da-f-]{36})?$/.test(purchaseNext)) return NextResponse.redirect(new URL(purchaseNext, request.url));
     url.pathname = "/dashboard";
     url.search = "";
     return NextResponse.redirect(url);
