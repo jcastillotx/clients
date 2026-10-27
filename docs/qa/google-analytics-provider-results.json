@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Real Google OAuth tokens are encrypted and absent from API responses",
+    "passed": true
+  },
+  {
+    "name": "Another client cannot see the owner Google connection",
+    "passed": true
+  },
+  {
+    "name": "Selected Analytics property is available from the actual Google account",
+    "passed": true
+  },
+  {
+    "name": "Forged property selection is rejected against Google resource membership",
+    "passed": true
+  },
+  {
+    "name": "Actual GA4 aggregate report succeeds for the selected owner property",
+    "passed": true
+  },
+  {
+    "name": "Expired Google access token refreshes and persists securely",
+    "passed": true
+  },
+  {
+    "name": "Foreign client cannot use the owner Analytics token",
+    "passed": true
+  },
+  {
+    "name": "Expired plan blocks reporting but preserves disconnect access",
+    "passed": true
+  },
+  {
+    "name": "Invalid OAuth state fails safely without changing saved connections",
+    "passed": true
+  }
+]

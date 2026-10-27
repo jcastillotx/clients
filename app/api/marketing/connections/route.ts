@@ -20,7 +20,8 @@ import {
 export async function GET(request: Request) {
   try {
     const access = await resolveStaffAccess();
-    if (!access?.clientId) return apiForbidden(request);
+    if (!access) return apiUnauthorized(request);
+    if (!access.clientId) return apiForbidden(request);
     const entitled = await marketingConnectionAccess();
     const rows = await db.execute(
       sql`SELECT provider,resource_id,updated_at FROM marketing_connections WHERE client_id=${access.clientId}::uuid AND user_id=${access.userId}::uuid`,
@@ -82,12 +83,13 @@ export async function POST(request: Request) {
   }
 }
 export async function DELETE(request: Request) {
+  const access = await resolveStaffAccess();
+  if (!access) return apiUnauthorized(request);
   try {
     const p = schema.safeParse(await request.json());
     if (!p.success) return apiValidationError(request, p.error);
     // Disconnect remains available after a plan expires.
-    const access = await resolveStaffAccess();
-    if (!access?.clientId) return apiForbidden(request);
+    if (!access.clientId) return apiForbidden(request);
     await db.execute(
       sql`DELETE FROM marketing_connections WHERE client_id=${access.clientId}::uuid AND user_id=${access.userId}::uuid AND provider=${p.data.provider}`,
     );

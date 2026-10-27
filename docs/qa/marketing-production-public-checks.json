@@ -1,0 +1,44 @@
+[
+  {
+    "path": "/login",
+    "status": 200,
+    "invitationOnly": true,
+    "marketingPrivacy": null,
+    "vercelHeader": false
+  },
+  {
+    "path": "/register",
+    "status": 200,
+    "invitationOnly": true,
+    "marketingPrivacy": null,
+    "vercelHeader": false
+  },
+  {
+    "path": "/calendar-privacy",
+    "status": 200,
+    "invitationOnly": null,
+    "marketingPrivacy": true,
+    "vercelHeader": false
+  },
+  {
+    "path": "/api/marketing/tools",
+    "status": 401,
+    "invitationOnly": null,
+    "marketingPrivacy": null,
+    "vercelHeader": false
+  },
+  {
+    "path": "/api/marketing/plans",
+    "status": 401,
+    "invitationOnly": null,
+    "marketingPrivacy": null,
+    "vercelHeader": false
+  },
+  {
+    "path": "/api/marketing/connections",
+    "status": 403,
+    "invitationOnly": null,
+    "marketingPrivacy": null,
+    "vercelHeader": false
+  }
+]

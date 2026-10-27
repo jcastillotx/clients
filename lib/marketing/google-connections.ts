@@ -86,9 +86,91 @@ export async function googleMarketingResources(
         "Google Ads accounts unavailable. Check API access and account permissions.",
       );
     const b = await r.json();
-    for (const id of b.resourceNames || [])
-      if (/^customers\/\d+$/.test(id))
-        resources.push({ id, name: "Google Ads " + id.split("/")[1] });
+    const roots: string[] = (b.resourceNames || []).filter(
+      (id: unknown) => typeof id === "string" && /^customers\/\d+$/.test(id),
+    );
+    if (roots.length > 25)
+      throw Error(
+        "Connect an account with no more than 25 directly accessible Ads accounts.",
+      );
+    type AdsRow = {
+      customer?: { descriptiveName?: string; manager?: boolean };
+      customerClient?: {
+        resourceName?: string;
+        descriptiveName?: string;
+        manager?: boolean;
+      };
+    };
+    async function query(
+      customer: string,
+      query: string,
+      login?: string,
+    ): Promise<AdsRow[]> {
+      const response = await fetch(
+        `https://googleads.googleapis.com/${version}/${customer}/googleAds:search`,
+        {
+          method: "POST",
+          headers: {
+            ...headers,
+            "Content-Type": "application/json",
+            ...(login ? { "login-customer-id": login } : {}),
+          },
+          body: JSON.stringify({ query }),
+          signal: AbortSignal.timeout(20000),
+        },
+      );
+      if (!response.ok) throw Error("Google Ads account metadata unavailable.");
+      const body = (await response.json()) as { results?: AdsRow[] };
+      if (body.results && !Array.isArray(body.results))
+        throw Error("Google Ads response invalid.");
+      return body.results || [];
+    }
+    const groups = await Promise.all(
+      roots.map(async (id) => {
+        const [row] = await query(
+          id,
+          "SELECT customer.id, customer.descriptive_name, customer.manager FROM customer LIMIT 1",
+        );
+        if (!row?.customer) throw Error("Google Ads account unavailable.");
+        if (row.customer.manager !== true)
+          return [
+            {
+              id,
+              name:
+                row.customer.descriptiveName ||
+                "Google Ads " + id.split("/")[1],
+            },
+          ];
+        const rows = await query(
+          id,
+          "SELECT customer_client.resource_name, customer_client.descriptive_name, customer_client.manager FROM customer_client WHERE customer_client.manager = FALSE LIMIT 1001",
+          id.split("/")[1],
+        );
+        if (rows.length > 1000)
+          throw Error(
+            "Select a manager with no more than 1000 advertising accounts.",
+          );
+        return rows.flatMap(({ customerClient: c }) =>
+          c?.resourceName?.startsWith(id + "/customerClients/") &&
+          /^customers\/\d+\/customerClients\/\d+$/.test(c.resourceName) &&
+          c.manager !== true
+            ? [
+                {
+                  id: c.resourceName,
+                  name:
+                    c.descriptiveName ||
+                    "Google Ads " + c.resourceName.split("/").pop(),
+                },
+              ]
+            : [],
+        );
+      }),
+    );
+    for (const group of groups) resources.push(...group);
+    if (resources.length > 1000)
+      throw Error(
+        "Too many Ads accounts. Connect a more focused Google account.",
+      );
   } else {
     let pageToken = "";
     for (let page = 0; page < 20; page++) {
