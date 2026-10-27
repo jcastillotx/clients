@@ -1,11 +1,18 @@
 # Google marketing verification packet
 
-The Clients project (clients-498402) has Analytics Admin, Analytics Data and Google Ads APIs enabled. Ads Explorer production access is approved. Real owner-account GA4 and direct Ads acceptance passed, and all test tokens were removed from the isolated database through the client Disconnect controls.
+The Clients project (clients-498402) has Analytics Admin, Analytics Data, Google Ads and Search Console APIs enabled. Ads Explorer production access is approved. Real owner-account GA4 and direct Ads acceptance passed, and all test tokens were removed from the isolated database through the client Disconnect controls.
 
 The OAuth app is In production but Google still labels its sensitive scopes unverified. A scope verification request has not been submitted. This is a remaining public-client acceptance gate; do not describe the entire platform as100% accepted.
 
+## October 27 verification preflight
+
+Branding verification was run against the actual app. Google rejected the homepage because https://clients.kre8ivdesigns.com is not registered as owned by the app owner. The existing www URL-prefix property does not establish ownership of the portal subdomain. A separate portal URL-prefix property has been prepared under kre8ivdesigns@gmail.com and its HTML proof was downloaded to public/googled5c247da2c7824b1.html. Publishing and the final ownership claim await owner approval. Do not describe this property as verified yet. Google instructs waiting 24 hours after successful ownership verification before retrying branding. Sensitive-scope submission is disabled until branding is verified and published.
+
+Public homepage and login now have local changes adding the exact application purpose, operator, connected-account privacy, terms and support links. These changes are tested but not deployed.
+
 ## Scope explanation draft
 
+- webmasters.readonly: lets a consenting client select an accessible Search Console property and read finalized aggregate web-search clicks, impressions, CTR and average position. No site-management, sitemap submission or URL mutation is exposed.
 - analytics.readonly: lets an explicitly consenting client select a GA4 property and retrieve aggregate sessions, active users and key events. No Analytics changes are made.
 - adwords: Google offers no narrower read-only Ads scope. The application lists authorized advertiser accounts (including verified manager-to-client relationships) and reads seven-day aggregate reporting. The application exposes no campaign mutation, publishing, billing setup or ad-spend operation.
 - calendar.calendars.readonly and calendar.freebusy remain separate scheduling grants. Marketing consent is not inferred from calendar consent.
