@@ -24,3 +24,9 @@ Audited the live portal using a temporary client-role user linked to a separate 
 Empty-state and authorization tests do not establish successful end-to-end record creation, file uploads/downloads/versioning, message sending/receipt, notifications/email delivery, payment processing, agreement signing, MFA enrollment/recovery, enabled marketing integrations, or complete responsive/accessibility behavior. These require representative fixtures and an isolated environment, with external actions explicitly controlled. No visual baseline was available for regression comparison.
 
 Source review also found legacy metadata-based authorization fallbacks outside the shared route-access helper. Those call sites need a dedicated review; this audit does not certify every authorization path.
+
+## Live repair verification
+
+Release `e3479c9` was built off-host, passed all 16 staged client API checks, and was promoted with runtime settings and rollback retained. All 16 checks also passed against the public production hostname. The live container was healthy with zero restarts, and public signup remained disabled.
+
+Live browser retests confirmed that the synthetic client sees zero projects; project management URLs redirect back to Projects; Proposals loads without its prior error; and Maintenance Plans renders four active plans. See `docs/qa/client-api-verification.json` and the client screenshots for evidence. No subscriptions, messages, requests, payments, or signatures were submitted.
