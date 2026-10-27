@@ -16,6 +16,15 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/lib/auth/route-access", async (original) => ({
+  ...(await original<typeof import("@/lib/auth/route-access")>()),
+  resolveRouteAccess: vi.fn(async () => ({
+    clientId: "11111111-1111-1111-1111-111111111111",
+    isAdmin: false,
+    isStaff: false,
+  })),
+}));
+
 const clientId = "11111111-1111-1111-1111-111111111111";
 const templateId = "22222222-2222-2222-2222-222222222222";
 
@@ -50,9 +59,10 @@ describe("POST /api/maintenance-plans/subscribe", () => {
         clientId,
       }) as NextRequest,
     );
-    const body = await readJson<{ success: boolean; error: { code: string; message: string } }>(
-      response,
-    );
+    const body = await readJson<{
+      success: boolean;
+      error: { code: string; message: string };
+    }>(response);
 
     expect(response.status).toBe(400);
     expect(body.error.code).toBe("BAD_REQUEST");
@@ -80,7 +90,9 @@ describe("POST /api/maintenance-plans/subscribe", () => {
         clientId,
       }) as NextRequest,
     );
-    const body = await readJson<{ success: boolean; error: { code: string } }>(response);
+    const body = await readJson<{ success: boolean; error: { code: string } }>(
+      response,
+    );
 
     expect(response.status).toBe(404);
     expect(body.error.code).toBe("NOT_FOUND");
@@ -142,9 +154,11 @@ describe("POST /api/maintenance-plans/subscribe", () => {
         clientId,
       }) as NextRequest,
     );
-    const body = await readJson<{ success: boolean; data: { id: string }; message?: string }>(
-      response,
-    );
+    const body = await readJson<{
+      success: boolean;
+      data: { id: string };
+      message?: string;
+    }>(response);
 
     expect(response.status).toBe(201);
     expect(body.success).toBe(true);

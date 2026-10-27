@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +36,12 @@ interface UploadDialogProps {
   clients: Client[];
   onSuccess: (document: any) => void;
   defaultClientId?: string;
+  versionOf?: {
+    id: string;
+    name: string;
+    client_id: string;
+    parent_document_id?: string | null;
+  };
   defaultTags?: string[];
   hideClientField?: boolean;
 }
@@ -46,6 +52,7 @@ export function UploadDialog({
   clients,
   onSuccess,
   defaultClientId,
+  versionOf,
   defaultTags = [],
   hideClientField = false,
 }: UploadDialogProps) {
@@ -59,6 +66,14 @@ export function UploadDialog({
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setFile(null);
+    setName(versionOf?.name ?? "");
+    setClientId(versionOf?.client_id ?? defaultClientId ?? "");
+    setUploadError(null);
+  }, [open, versionOf, defaultClientId]);
 
   const handleFileChange = (selectedFile: File | null) => {
     if (selectedFile) {
@@ -111,6 +126,11 @@ export function UploadDialog({
       formData.append("file", file);
       formData.append("name", name);
       formData.append("clientId", clientId);
+      if (versionOf)
+        formData.append(
+          "parentDocumentId",
+          versionOf.parent_document_id ?? versionOf.id,
+        );
       if (description) formData.append("description", description);
       if (tags) {
         const tagArray = tags.split(",").map((tag) => tag.trim());
@@ -155,7 +175,9 @@ export function UploadDialog({
       <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Upload Document</DialogTitle>
+            <DialogTitle>
+              {versionOf ? "Upload new version" : "Upload Document"}
+            </DialogTitle>
             <DialogDescription>
               Upload a new document to the library. Files up to 100MB are
               supported.

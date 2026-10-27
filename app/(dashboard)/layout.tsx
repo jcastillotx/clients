@@ -1,4 +1,7 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { DashboardNav } from "@/components/dashboard/nav";
@@ -15,7 +18,11 @@ export const dynamic = "force-dynamic";
  *
  * Wraps all dashboard pages with navigation and authentication check.
  */
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const supabase = await createClient();
 
   // Check authentication
@@ -32,27 +39,36 @@ export default async function DashboardLayout({ children }: { children: React.Re
     await ensureAuthUserProfile(adminClient, user);
   }
 
-  const { data: dbUser } = await supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle();
+  const { data: dbUser } = await supabase
+    .from("users")
+    .select("is_super_admin")
+    .eq("id", user.id)
+    .maybeSingle();
   const { data: roleRows } = await supabase
     .from("user_roles")
     .select("role:roles(name)")
     .eq("user_id", user.id);
 
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const roleNames = new Set<string>();
-  if (metadataRole) roleNames.add(metadataRole);
   for (const row of roleRows || []) {
-    const roleName = String((row as any)?.role?.name || (row as any)?.role?.[0]?.name || "").toLowerCase();
+    const roleName = String(
+      (row as any)?.role?.name || (row as any)?.role?.[0]?.name || "",
+    ).toLowerCase();
     if (roleName) roleNames.add(roleName);
   }
 
-  const isSuperAdmin = Boolean(dbUser?.is_super_admin || user.user_metadata?.is_super_admin === true);
-  const isAdmin = isSuperAdmin || roleNames.has("admin") || roleNames.has("super_admin");
+  const isSuperAdmin = Boolean(dbUser?.is_super_admin);
+  const isAdmin =
+    isSuperAdmin || roleNames.has("admin") || roleNames.has("super_admin");
   const isAccountManager = roleNames.has("account_manager");
   const isStaff = isAdmin || isAccountManager || roleNames.has("staff");
 
   const userRole = isAdmin ? "admin" : isStaff ? "staff" : "client";
-  const { data: userData } = await supabase.from("users").select("name, email, client_id").eq("id", user.id).single();
+  const { data: userData } = await supabase
+    .from("users")
+    .select("name, email, client_id")
+    .eq("id", user.id)
+    .single();
 
   // Load portal branding and read padding preference from cookie
   const [branding, cookieStore] = await Promise.all([
@@ -61,7 +77,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ]);
 
   const cookiePadding = cookieStore.get("x-padding-size")?.value;
-  const paddingSize = (cookiePadding as "compact" | "standard" | "spacious" | undefined) ?? branding.settings.paddingSize;
+  const paddingSize =
+    (cookiePadding as "compact" | "standard" | "spacious" | undefined) ??
+    branding.settings.paddingSize;
 
   const paddingMap: Record<string, string> = {
     compact: "1rem",
@@ -125,7 +143,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
           />
 
           {/* Page Content with consistent spacing */}
-          <div className="dashboard-page-content relative" style={{ padding: "var(--content-pad, 1.5rem)" }}>
+          <div
+            className="dashboard-page-content relative"
+            style={{ padding: "var(--content-pad, 1.5rem)" }}
+          >
             {children}
           </div>
         </main>

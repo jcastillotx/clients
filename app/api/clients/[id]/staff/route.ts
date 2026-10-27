@@ -1,4 +1,7 @@
-import { createClient, createAdminClientIfAvailable } from "@/lib/supabase/server";
+import {
+  createClient,
+  createAdminClientIfAvailable,
+} from "@/lib/supabase/server";
 import {
   apiError,
   apiForbidden,
@@ -6,7 +9,12 @@ import {
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
-import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import {
+  hasAnyRole,
+  hasPermission,
+  Permissions,
+  Roles,
+} from "@/lib/rbac/permissions";
 import { db } from "@/lib/db";
 import { staffAssignments } from "@/lib/db/schema/activity-logs";
 import { eq, and } from "drizzle-orm";
@@ -33,21 +41,16 @@ export async function GET(
     }
 
     const accessOptions = { supabase, userId: user.id };
-    const metadataRole = String(
-      user.user_metadata?.role ?? user.user_metadata?.app_role ?? "",
-    ).toLowerCase();
-    const hasManagementMetadataRole =
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN ||
-      metadataRole === Roles.ACCOUNT_MANAGER;
 
     const [canReadClients, hasManagementRoleDb] = await Promise.all([
       hasPermission(Permissions.CLIENTS_READ, accessOptions),
-      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+      hasAnyRole(
+        [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+        accessOptions,
+      ),
     ]);
 
-    if (!(canReadClients || hasManagementRoleDb || hasManagementMetadataRole)) {
+    if (!(canReadClients || hasManagementRoleDb)) {
       return apiForbidden(request);
     }
 
@@ -57,12 +60,14 @@ export async function GET(
 
     const { data: assignments, error } = await lookupClient
       .from("staff_assignments")
-      .select(`
+      .select(
+        `
         id,
         role,
         created_at,
         user:users(id, name, email, avatar)
-      `)
+      `,
+      )
       .eq("client_id", id);
 
     if (error) {
@@ -78,12 +83,14 @@ export async function GET(
 
       if (!user) return [];
 
-      return [{
-        id: assignment.id,
-        role: assignment.role,
-        created_at: assignment.created_at,
-        user,
-      }];
+      return [
+        {
+          id: assignment.id,
+          role: assignment.role,
+          created_at: assignment.created_at,
+          user,
+        },
+      ];
     });
 
     return apiSuccess(request, normalized);
@@ -91,7 +98,9 @@ export async function GET(
     console.error("Error in GET /api/clients/[id]/staff:", error);
     return apiInternalError(
       request,
-      error instanceof Error ? error.message : "Failed to fetch staff assignments",
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch staff assignments",
     );
   }
 }
@@ -119,21 +128,16 @@ export async function POST(
     }
 
     const accessOptions = { supabase, userId: user.id };
-    const metadataRole = String(
-      user.user_metadata?.role ?? user.user_metadata?.app_role ?? "",
-    ).toLowerCase();
-    const hasManagementMetadataRole =
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN ||
-      metadataRole === Roles.ACCOUNT_MANAGER;
 
     const [canUpdateClients, hasManagementRoleDb] = await Promise.all([
       hasPermission(Permissions.CLIENTS_UPDATE, accessOptions),
-      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+      hasAnyRole(
+        [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+        accessOptions,
+      ),
     ]);
 
-    if (!(canUpdateClients || hasManagementRoleDb || hasManagementMetadataRole)) {
+    if (!(canUpdateClients || hasManagementRoleDb)) {
       return apiForbidden(request);
     }
 
@@ -141,10 +145,15 @@ export async function POST(
     const { userId, role } = body;
 
     if (!userId || typeof userId !== "string") {
-      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "userId is required" });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "userId is required",
+      });
     }
 
-    const assignmentRole = typeof role === "string" && role.trim() ? role.trim() : "member";
+    const assignmentRole =
+      typeof role === "string" && role.trim() ? role.trim() : "member";
 
     const [assignment] = await db
       .insert(staffAssignments)
@@ -192,21 +201,16 @@ export async function DELETE(
     }
 
     const accessOptions = { supabase, userId: user.id };
-    const metadataRole = String(
-      user.user_metadata?.role ?? user.user_metadata?.app_role ?? "",
-    ).toLowerCase();
-    const hasManagementMetadataRole =
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN ||
-      metadataRole === Roles.ACCOUNT_MANAGER;
 
     const [canUpdateClients, hasManagementRoleDb] = await Promise.all([
       hasPermission(Permissions.CLIENTS_UPDATE, accessOptions),
-      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+      hasAnyRole(
+        [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+        accessOptions,
+      ),
     ]);
 
-    if (!(canUpdateClients || hasManagementRoleDb || hasManagementMetadataRole)) {
+    if (!(canUpdateClients || hasManagementRoleDb)) {
       return apiForbidden(request);
     }
 
@@ -214,7 +218,11 @@ export async function DELETE(
     const { userId } = body;
 
     if (!userId || typeof userId !== "string") {
-      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "userId is required" });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "userId is required",
+      });
     }
 
     const [deleted] = await db
@@ -228,7 +236,11 @@ export async function DELETE(
       .returning();
 
     if (!deleted) {
-      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Staff assignment not found" });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Staff assignment not found",
+      });
     }
 
     return apiSuccess(request, { removed: true });
@@ -236,7 +248,9 @@ export async function DELETE(
     console.error("Error in DELETE /api/clients/[id]/staff:", error);
     return apiInternalError(
       request,
-      error instanceof Error ? error.message : "Failed to remove staff assignment",
+      error instanceof Error
+        ? error.message
+        : "Failed to remove staff assignment",
     );
   }
 }

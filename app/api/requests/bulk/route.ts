@@ -33,15 +33,26 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Invalid JSON" });
+    return apiError(request, {
+      status: 400,
+      code: "BAD_REQUEST",
+      message: "Invalid JSON",
+    });
   }
 
   try {
     const validated = bulkRequestsSchema.parse(body);
 
     const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-      supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-      supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+      supabase
+        .from("users")
+        .select("id, client_id, is_super_admin")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("user_roles")
+        .select("role:roles(name)")
+        .eq("user_id", user.id),
     ]);
 
     if (!dbUser) {
@@ -49,12 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isAdmin = isAdminUser(user, dbUser, roleRows);
-    const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
-    const isAdminByMetadata =
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin";
-    const canDelete = isAdmin || isAdminByMetadata;
+    const canDelete = isAdmin;
 
     const { data: rows, error: fetchError } = await supabase
       .from("requests")
@@ -68,7 +74,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!rows || rows.length !== validated.ids.length) {
-      return apiNotFound(request, "One or more requests were not found or are unavailable");
+      return apiNotFound(
+        request,
+        "One or more requests were not found or are unavailable",
+      );
     }
 
     for (const row of rows) {
@@ -110,7 +119,11 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return apiSuccess(request, { affected: validated.ids.length }, { extra: { success: true, affected: validated.ids.length } });
+      return apiSuccess(
+        request,
+        { affected: validated.ids.length },
+        { extra: { success: true, affected: validated.ids.length } },
+      );
     }
 
     const { error } = await supabase
@@ -136,7 +149,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return apiSuccess(request, { affected: validated.ids.length }, { extra: { success: true, affected: validated.ids.length } });
+    return apiSuccess(
+      request,
+      { affected: validated.ids.length },
+      { extra: { success: true, affected: validated.ids.length } },
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return apiValidationError(request, error);

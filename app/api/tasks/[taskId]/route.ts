@@ -1,3 +1,4 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -21,7 +22,13 @@ import { eq, sql } from "drizzle-orm";
 /**
  * GET /api/tasks/[taskId]
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ taskId: string }> },
+) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   const { taskId } = await params;
   try {
     const supabase = await createClient();
@@ -100,7 +107,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 /**
  * PATCH /api/tasks/[taskId]
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ taskId: string }> },
+) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   const { taskId } = await params;
   try {
     const supabase = await createClient();
@@ -148,7 +161,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     if (assignees !== undefined) {
-      await db.delete(staffTaskAssignees).where(eq(staffTaskAssignees.taskId, taskId));
+      await db
+        .delete(staffTaskAssignees)
+        .where(eq(staffTaskAssignees.taskId, taskId));
 
       if (assignees.length > 0) {
         await db.insert(staffTaskAssignees).values(
@@ -168,7 +183,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     if (labels !== undefined) {
-      await db.delete(staffTaskLabelRelations).where(eq(staffTaskLabelRelations.taskId, taskId));
+      await db
+        .delete(staffTaskLabelRelations)
+        .where(eq(staffTaskLabelRelations.taskId, taskId));
 
       if (labels.length > 0) {
         await db.insert(staffTaskLabelRelations).values(
@@ -214,7 +231,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 /**
  * DELETE /api/tasks/[taskId]
  */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ taskId: string }> },
+) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   const { taskId } = await params;
   try {
     const supabase = await createClient();
@@ -248,8 +271,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-      supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
-      supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+      supabase
+        .from("users")
+        .select("is_super_admin")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("user_roles")
+        .select("role:roles(name)")
+        .eq("user_id", user.id),
     ]);
 
     const [linkedProject] = await db
@@ -262,10 +292,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       .limit(1);
 
     const isTaskOwner = task.createdBy === user.id;
-    const isAssignee = task.assignees.some((assignee) => assignee.userId === user.id);
+    const isAssignee = task.assignees.some(
+      (assignee) => assignee.userId === user.id,
+    );
     const isProjectManager = linkedProject?.projectManagerId === user.id;
     const isProjectTeamMember =
-      linkedProject?.teamMembers?.some((member) => member.userId === user.id) ?? false;
+      linkedProject?.teamMembers?.some((member) => member.userId === user.id) ??
+      false;
     const canManageProjectTasks =
       isAdminUser(user, dbUser, roleRows, ["staff", "account_manager"]) ||
       isTaskOwner ||
@@ -274,7 +307,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       isProjectTeamMember;
 
     if (!canManageProjectTasks) {
-      return apiForbidden(request, "You do not have permission to delete this task");
+      return apiForbidden(
+        request,
+        "You do not have permission to delete this task",
+      );
     }
 
     await db

@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { NextRequest } from "next/server";
 import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { dispatchNotification } from "@/lib/notifications/service";
@@ -16,7 +19,11 @@ import { z } from "zod";
 
 const signSchema = z.object({
   action: z.enum(["accept", "reject"]),
-  signatureData: z.string().min(1).max(2 * 1024 * 1024).optional(),
+  signatureData: z
+    .string()
+    .min(1)
+    .max(2 * 1024 * 1024)
+    .optional(),
   signerName: z.string().trim().min(1).max(255).optional(),
   signerEmail: z.string().trim().max(254).email().optional(),
   token: z.string().optional(),
@@ -63,9 +70,17 @@ export async function POST(
       return apiValidationError(req, parsed.error);
     }
 
-    const { action, signatureData, signerName, signerEmail, token } = parsed.data;
+    const { action, signatureData, signerName, signerEmail, token } =
+      parsed.data;
 
-    const { data: proposal, error: fetchError } = await supabase
+    const {
+      data: { user: signingUser },
+    } = await supabase.auth.getUser();
+    if (!signingUser && !verifyProposalAccessToken(id, token))
+      return apiUnauthorized(req);
+    const writeClient = createAdminClientIfAvailable() ?? supabase;
+
+    const { data: proposal, error: fetchError } = await writeClient
       .from("proposals")
       .select("*")
       .eq("id", id)
@@ -144,10 +159,12 @@ export async function POST(
       });
     }
 
-    const { data: updatedProposal, error: updateError } = await supabase
+    const { data: updatedProposal, error: updateError } = await writeClient
       .from("proposals")
       .update(updates)
       .eq("id", id)
+      .eq("client_id", proposal.client_id)
+      .in("status", ["sent", "viewed"])
       .select()
       .single();
 
@@ -165,15 +182,22 @@ export async function POST(
         subjectType: "proposal",
         subjectId: proposal.id,
         actorUserId: actorUser?.id,
-        recipientUserIds: proposal.created_by ? [proposal.created_by] : undefined,
-        extraEmails: await withPlatformNotificationEmails(signerEmail ? [signerEmail] : []),
+        recipientUserIds: proposal.created_by
+          ? [proposal.created_by]
+          : undefined,
+        extraEmails: await withPlatformNotificationEmails(
+          signerEmail ? [signerEmail] : [],
+        ),
         data: {
           proposalTitle: proposal.title,
           signerName,
         },
       });
     } catch (notifyErr) {
-      console.error("[POST /api/proposals/:id/sign] notification dispatch:", notifyErr);
+      console.error(
+        "[POST /api/proposals/:id/sign] notification dispatch:",
+        notifyErr,
+      );
     }
 
     const message =

@@ -1,3 +1,4 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { timeEntries } from "@/lib/db/schema/time-tracking";
@@ -14,9 +15,14 @@ import {
  * POST /api/time-tracking/start
  */
 export async function POST(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);
@@ -39,7 +45,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientId, requestId, taskId, projectId, description, isBillable, hourlyRate } = body;
+    const {
+      clientId,
+      requestId,
+      taskId,
+      projectId,
+      description,
+      isBillable,
+      hourlyRate,
+    } = body;
 
     const [entry] = await db
       .insert(timeEntries)
@@ -59,7 +73,10 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return apiSuccess(request, entry, { status: 201, extra: entry as Record<string, unknown> });
+    return apiSuccess(request, entry, {
+      status: 201,
+      extra: entry as Record<string, unknown>,
+    });
   } catch (error) {
     console.error("Error starting timer:", error);
     return apiInternalError(request, "Failed to start timer");
@@ -70,9 +87,14 @@ export async function POST(request: NextRequest) {
  * GET /api/time-tracking/start
  */
 export async function GET(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);

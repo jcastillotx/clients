@@ -1,3 +1,4 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -14,7 +15,13 @@ import { eq, and, gte, lte, sql } from "drizzle-orm";
 /**
  * POST /api/tasks/[taskId]/move
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ taskId: string }> },
+) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   const { taskId } = await params;
   try {
     const supabase = await createClient();
@@ -62,7 +69,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           position: sql`position - 1`,
           updatedAt: new Date(),
         })
-        .where(and(eq(staffTasks.columnId, oldColumnId), gte(staffTasks.position, oldPosition)));
+        .where(
+          and(
+            eq(staffTasks.columnId, oldColumnId),
+            gte(staffTasks.position, oldPosition),
+          ),
+        );
 
       await db
         .update(staffTasks)
@@ -70,7 +82,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           position: sql`position + 1`,
           updatedAt: new Date(),
         })
-        .where(and(eq(staffTasks.columnId, columnId), gte(staffTasks.position, position)));
+        .where(
+          and(
+            eq(staffTasks.columnId, columnId),
+            gte(staffTasks.position, position),
+          ),
+        );
 
       const [updatedTask] = await db
         .update(staffTasks)

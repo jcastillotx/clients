@@ -43,10 +43,7 @@ export async function GET(request: Request) {
       .select("id, company_name, status", { count: "exact" })
       .is("deleted_at", null)
       .order("company_name")
-      .range(
-        pagination.offset,
-        pagination.offset + pagination.limit - 1,
-      );
+      .range(pagination.offset, pagination.offset + pagination.limit - 1);
     if (!includeInactive) {
       query = query.eq("status", "active");
     }
@@ -81,15 +78,6 @@ export async function POST(request: Request) {
       return apiUnauthorized(request, "Authentication required");
     }
 
-    const metadataRole = String(
-      user.user_metadata?.role ?? user.user_metadata?.app_role ?? "",
-    ).toLowerCase();
-    const hasManagementMetadataRole =
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN ||
-      metadataRole === Roles.ACCOUNT_MANAGER;
-
     const accessOptions = { supabase, userId: user.id };
     const [canCreateClients, hasManagementRoleDb] = await Promise.all([
       hasPermission(Permissions.CLIENTS_CREATE, accessOptions),
@@ -98,7 +86,7 @@ export async function POST(request: Request) {
         accessOptions,
       ),
     ]);
-    const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+    const hasManagementRole = hasManagementRoleDb;
 
     if (!(canCreateClients || hasManagementRole)) {
       return apiForbidden(request);
@@ -167,10 +155,14 @@ export async function POST(request: Request) {
     }
 
     const welcomeEmail = await sendClientWelcomeEmail(newClient);
-    return apiSuccess(request, { ...newClient, welcome_email_sent: welcomeEmail.success }, {
-      status: 201,
-      extra: { client: newClient },
-    });
+    return apiSuccess(
+      request,
+      { ...newClient, welcome_email_sent: welcomeEmail.success },
+      {
+        status: 201,
+        extra: { client: newClient },
+      },
+    );
   } catch (error) {
     console.error("Error creating client:", error);
     return apiInternalError(

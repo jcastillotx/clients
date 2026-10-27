@@ -1,4 +1,7 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { RequestForm } from "@/components/requests/request-form";
 import { collectRoleNames } from "@/lib/rbac/role-row-utils";
 import { getAssignableUsersForClient } from "@/lib/users/assignable-users";
@@ -18,7 +21,11 @@ interface SearchParams {
  *
  * Fetches clients for the dropdown and pre-selects if client_id provided.
  */
-export default async function NewRequestPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function NewRequestPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
@@ -30,14 +37,12 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
     redirect("/login");
   }
 
-  const { data: dbUser } = await supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle();
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
-  let canAssignUsers = Boolean(
-    dbUser?.is_super_admin ||
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin",
-  );
+  const { data: dbUser } = await supabase
+    .from("users")
+    .select("id, client_id, is_super_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+  let canAssignUsers = Boolean(dbUser?.is_super_admin);
 
   if (!canAssignUsers) {
     const { data: roleRows } = await supabase
@@ -53,13 +58,21 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
     : dbUser?.client_id || undefined;
 
   // Fetch clients for dropdown
-  const clientsQuery = supabase.from("clients").select("id, company_name").eq("status", "active").order("company_name");
+  const clientsQuery = supabase
+    .from("clients")
+    .select("id, company_name")
+    .eq("status", "active")
+    .order("company_name");
   const { data: clients } = canAssignUsers
     ? await clientsQuery
-    : await clientsQuery.eq("id", dbUser?.client_id || "00000000-0000-0000-0000-000000000000");
+    : await clientsQuery.eq(
+        "id",
+        dbUser?.client_id || "00000000-0000-0000-0000-000000000000",
+      );
 
-  const assignableDbClient =
-    canAssignUsers ? (createAdminClientIfAvailable() ?? supabase) : supabase;
+  const assignableDbClient = canAssignUsers
+    ? (createAdminClientIfAvailable() ?? supabase)
+    : supabase;
   const assignableUsers = canAssignUsers
     ? [
         ...new Map(
@@ -71,7 +84,9 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
             )
           )
             .flat()
-            .map((assignableUser) => [assignableUser.id, assignableUser] as const),
+            .map(
+              (assignableUser) => [assignableUser.id, assignableUser] as const,
+            ),
         ).values(),
       ]
     : [];

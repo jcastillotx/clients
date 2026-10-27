@@ -1,3 +1,4 @@
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { proposals } from "@/lib/db/schema/proposals";
@@ -5,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiError,
+  apiForbidden,
   apiNotFound,
   apiSuccess,
   apiUnauthorized,
@@ -14,7 +16,10 @@ import {
  * POST /api/proposals/[id]/cancel
  * Client cancels a proposal
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -27,7 +32,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return apiUnauthorized(request, "Authentication required");
     }
 
-    const [existing] = await db.select().from(proposals).where(eq(proposals.id, id)).limit(1);
+    const [existing] = await db
+      .select()
+      .from(proposals)
+      .where(eq(proposals.id, id))
+      .limit(1);
 
     if (!existing) {
       return apiNotFound(request, "Proposal not found");
@@ -40,6 +49,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         message: "Cannot cancel an accepted proposal",
       });
     }
+
+    const access = await resolveRouteAccess(supabase, user);
+    if (!canAccessClient(access, existing.clientId))
+      return apiForbidden(request);
 
     const [updated] = await db
       .update(proposals)
@@ -60,7 +73,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return apiError(request, {
       status,
       code: status === 503 ? "SERVICE_UNAVAILABLE" : "INTERNAL_ERROR",
-      message: error instanceof Error ? error.message : "Failed to cancel proposal",
+      message:
+        error instanceof Error ? error.message : "Failed to cancel proposal",
     });
   }
 }

@@ -1,3 +1,4 @@
+import { resolveRouteAccess } from "@/lib/auth/route-access";
 import { NextResponse } from "next/server";
 import { apiError } from "@/lib/api/response";
 import { hasPermission } from "@/lib/rbac/permissions";
@@ -90,5 +91,22 @@ export async function requirePermission(
     };
   }
 
+  return auth;
+}
+
+export async function requireStaffUser(
+  request?: Request,
+): Promise<GuardSuccess | GuardFailure> {
+  const auth = await requireAuthenticatedUser(request);
+  if ("error" in auth) return auth;
+  const access = await resolveRouteAccess(auth.supabase, auth.user);
+  if (!access.isStaff)
+    return {
+      error: apiError(guardRequest(request), {
+        status: 403,
+        code: "FORBIDDEN",
+        message: "Staff access required",
+      }),
+    };
   return auth;
 }

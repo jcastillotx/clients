@@ -1,3 +1,4 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -13,7 +14,13 @@ import { eq } from "drizzle-orm";
 /**
  * GET /api/tasks/boards/[boardId]
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ boardId: string }> },
+) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   const { boardId } = await params;
   try {
     const supabase = await createClient();
@@ -85,7 +92,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 /**
  * PATCH /api/tasks/boards/[boardId]
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ boardId: string }> },
+) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   const { boardId } = await params;
   try {
     const supabase = await createClient();
@@ -102,7 +115,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { name, description, color, isDefault, isArchived } = body;
 
     if (isDefault) {
-      await db.update(staffTaskBoards).set({ isDefault: false }).where(eq(staffTaskBoards.isDefault, true));
+      await db
+        .update(staffTaskBoards)
+        .set({ isDefault: false })
+        .where(eq(staffTaskBoards.isDefault, true));
     }
 
     const [board] = await db
@@ -132,7 +148,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 /**
  * DELETE /api/tasks/boards/[boardId]
  */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ boardId: string }> },
+) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   const { boardId } = await params;
   try {
     const supabase = await createClient();

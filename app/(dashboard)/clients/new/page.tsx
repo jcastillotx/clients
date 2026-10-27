@@ -1,7 +1,15 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { ClientForm } from "@/components/clients/client-form";
 import { redirect } from "next/navigation";
-import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import {
+  hasAnyRole,
+  hasPermission,
+  Permissions,
+  Roles,
+} from "@/lib/rbac/permissions";
 import { syncMissingAuthUsers } from "@/lib/supabase/user-profile-sync";
 
 export const metadata = {
@@ -25,19 +33,15 @@ export default async function NewClientPage() {
     redirect("/login");
   }
 
-  const metadataRole = String(user.user_metadata?.role ?? user.user_metadata?.app_role ?? "").toLowerCase();
-  const hasManagementMetadataRole =
-    user.user_metadata?.is_super_admin === true ||
-    metadataRole === Roles.SUPER_ADMIN ||
-    metadataRole === Roles.ADMIN ||
-    metadataRole === Roles.ACCOUNT_MANAGER;
-
   const accessOptions = { supabase, userId: user.id };
   const [canCreateClient, hasManagementRoleDb] = await Promise.all([
     hasPermission(Permissions.CLIENTS_CREATE, accessOptions),
-    hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+    hasAnyRole(
+      [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+      accessOptions,
+    ),
   ]);
-  const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+  const hasManagementRole = hasManagementRoleDb;
 
   if (!(canCreateClient || hasManagementRole)) {
     redirect("/clients");
@@ -51,11 +55,16 @@ export default async function NewClientPage() {
   }
 
   if (hasManagementRole && !adminClient) {
-    console.warn("Service-role Supabase key missing; falling back to session client for /clients/new");
+    console.warn(
+      "Service-role Supabase key missing; falling back to session client for /clients/new",
+    );
   }
 
   // Fetch users for primary contact selection
-  const { data: users, error: usersError } = await dbClient.from("users").select("id, name, email").order("name");
+  const { data: users, error: usersError } = await dbClient
+    .from("users")
+    .select("id, name, email")
+    .order("name");
 
   if (usersError) {
     console.error("Error fetching users for client creation:", usersError);

@@ -11,7 +11,11 @@ import {
 
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { projectBudgets, projects, type Currency } from "@/lib/db/schema/projects";
+import {
+  projectBudgets,
+  projects,
+  type Currency,
+} from "@/lib/db/schema/projects";
 import { staffTaskBoards, staffTaskColumns } from "@/lib/db/schema/staff-tasks";
 import { createClient } from "@/lib/supabase/server";
 import { updateProjectRequestSchema } from "@/lib/validations/project-request";
@@ -69,7 +73,9 @@ const parseDate = (value?: string | null) => {
 
 const normalizeCurrency = (value: unknown): Currency => {
   const currency = String(value || "USD").toUpperCase();
-  return ["USD", "EUR", "GBP", "CAD", "AUD"].includes(currency) ? (currency as Currency) : "USD";
+  return ["USD", "EUR", "GBP", "CAD", "AUD"].includes(currency)
+    ? (currency as Currency)
+    : "USD";
 };
 
 const numberString = (value: unknown) => {
@@ -81,15 +87,22 @@ const numberString = (value: unknown) => {
 };
 
 const asProjectMetadata = (value: unknown): ProjectMetadata => {
-  return value && typeof value === "object" && !Array.isArray(value) ? (value as ProjectMetadata) : {};
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as ProjectMetadata)
+    : {};
 };
 
-async function createDefaultTaskBoard(projectId: string, projectName: string, userId: string) {
+async function createDefaultTaskBoard(
+  projectId: string,
+  projectName: string,
+  userId: string,
+) {
   const [board] = await db
     .insert(staffTaskBoards)
     .values({
       name: `${projectName} Board`,
-      description: "Default task board created when the project request was approved.",
+      description:
+        "Default task board created when the project request was approved.",
       createdBy: userId,
       isDefault: false,
       color: "#5b5a88",
@@ -100,10 +113,35 @@ async function createDefaultTaskBoard(projectId: string, projectName: string, us
   const columns = await db
     .insert(staffTaskColumns)
     .values([
-      { boardId: board.id, name: "To Do", position: 0, color: "#94a3b8", icon: "list" },
-      { boardId: board.id, name: "In Progress", position: 1, color: "#3b82f6", icon: "loader" },
-      { boardId: board.id, name: "Review", position: 2, color: "#f59e0b", icon: "eye" },
-      { boardId: board.id, name: "Done", position: 3, color: "#10b981", icon: "check", isDoneColumn: true },
+      {
+        boardId: board.id,
+        name: "To Do",
+        position: 0,
+        color: "#94a3b8",
+        icon: "list",
+      },
+      {
+        boardId: board.id,
+        name: "In Progress",
+        position: 1,
+        color: "#3b82f6",
+        icon: "loader",
+      },
+      {
+        boardId: board.id,
+        name: "Review",
+        position: 2,
+        color: "#f59e0b",
+        icon: "eye",
+      },
+      {
+        boardId: board.id,
+        name: "Done",
+        position: 3,
+        color: "#10b981",
+        icon: "check",
+        isDoneColumn: true,
+      },
     ])
     .returning({ id: staffTaskColumns.id });
 
@@ -161,7 +199,11 @@ async function ensureApprovedProject(
   if (linkedProject) {
     const taskBoardId = linkedProject.metadata?.taskBoardId
       ? linkedProject.metadata.taskBoardId
-      : await createDefaultTaskBoard(linkedProject.id, linkedProject.name, userId);
+      : await createDefaultTaskBoard(
+          linkedProject.id,
+          linkedProject.name,
+          userId,
+        );
 
     return {
       projectId: linkedProject.id,
@@ -172,7 +214,9 @@ async function ensureApprovedProject(
 
   const review = (customFields.review || {}) as Record<string, unknown>;
   const startDate = parseDate(
-    typeof review.estimatedStartDate === "string" ? review.estimatedStartDate : customFields.requestedStartDate,
+    typeof review.estimatedStartDate === "string"
+      ? review.estimatedStartDate
+      : customFields.requestedStartDate,
   );
   const endDate = parseDate(
     typeof review.estimatedEndDate === "string"
@@ -205,8 +249,12 @@ async function ensureApprovedProject(
         sourceProjectRequestId: requestRow.id,
         projectRequestId: requestRow.id,
         projectConvertedAt: convertedAt,
-        priority: requestRow.priority === "urgent" ? "critical" : requestRow.priority ?? undefined,
-        reviewStatus: typeof review.status === "string" ? review.status : undefined,
+        priority:
+          requestRow.priority === "urgent"
+            ? "critical"
+            : (requestRow.priority ?? undefined),
+        reviewStatus:
+          typeof review.status === "string" ? review.status : undefined,
       },
     })
     .returning();
@@ -217,11 +265,16 @@ async function ensureApprovedProject(
       category: "other",
       allocatedAmount: estimateAmount,
       currency,
-      notes: "Initial budget created from the approved project request estimate.",
+      notes:
+        "Initial budget created from the approved project request estimate.",
     });
   }
 
-  const taskBoardId = await createDefaultTaskBoard(project.id, project.name, userId);
+  const taskBoardId = await createDefaultTaskBoard(
+    project.id,
+    project.name,
+    userId,
+  );
 
   return {
     projectId: project.id,
@@ -230,15 +283,26 @@ async function ensureApprovedProject(
   };
 }
 
-async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
+async function resolveAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: { id: string; user_metadata?: Record<string, unknown> },
+) {
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-    supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    supabase
+      .from("users")
+      .select("id, client_id, is_super_admin")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id),
   ]);
 
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
+    const roleRow = row as {
+      role?: { name?: string } | Array<{ name?: string }>;
+    };
     if (Array.isArray(roleRow.role)) {
       return String(roleRow.role[0]?.name || "").toLowerCase();
     }
@@ -247,19 +311,14 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
 
   const isAdmin = Boolean(
     dbUser?.is_super_admin ||
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
+    roleNames.includes("admin") ||
+    roleNames.includes("super_admin"),
   );
 
   const isStaff = Boolean(
     isAdmin ||
-      metadataRole === "staff" ||
-      metadataRole === "account_manager" ||
-      roleNames.includes("staff") ||
-      roleNames.includes("account_manager"),
+    roleNames.includes("staff") ||
+    roleNames.includes("account_manager"),
   );
 
   return {
@@ -269,7 +328,10 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
   } satisfies UserAccess;
 }
 
-async function getProjectRequest(supabase: Awaited<ReturnType<typeof createClient>>, id: string) {
+async function getProjectRequest(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  id: string,
+) {
   return supabase
     .from("requests")
     .select(
@@ -290,7 +352,10 @@ async function getProjectRequest(supabase: Awaited<ReturnType<typeof createClien
  *
  * Returns a project request with attachments and related summary metrics.
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -314,16 +379,32 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return apiForbidden(request);
     }
 
-    const [documentsResult, tasksCountResult, meetingsCountResult, feedbackCountResult] = await Promise.all([
+    const [
+      documentsResult,
+      tasksCountResult,
+      meetingsCountResult,
+      feedbackCountResult,
+    ] = await Promise.all([
       supabase
         .from("documents")
-        .select("id, name, file_name, file_size, mime_type, storage_url, storage_path, created_at, uploaded_by")
+        .select(
+          "id, name, file_name, file_size, mime_type, storage_url, storage_path, created_at, uploaded_by",
+        )
         .eq("request_id", id)
         .is("deleted_at", null)
         .order("created_at", { ascending: false }),
-      supabase.from("staff_tasks").select("id", { count: "exact", head: true }).eq("request_id", id),
-      supabase.from("meetings").select("id", { count: "exact", head: true }).eq("request_id", id),
-      supabase.from("request_comments").select("id", { count: "exact", head: true }).eq("request_id", id),
+      supabase
+        .from("staff_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", id),
+      supabase
+        .from("meetings")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", id),
+      supabase
+        .from("request_comments")
+        .select("id", { count: "exact", head: true })
+        .eq("request_id", id),
     ]);
 
     const payload = {
@@ -355,7 +436,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  *
  * Updates project request details, review metadata and estimate response.
  */
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -374,7 +458,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const access = await resolveAccess(supabase, user);
     const { data: existingRequest, error: existingError } = await supabase
       .from("requests")
-      .select("id, client_id, title, description, priority, status, due_date, assigned_to, custom_fields")
+      .select(
+        "id, client_id, title, description, priority, status, due_date, assigned_to, custom_fields",
+      )
       .eq("id", id)
       .contains("custom_fields", { type: "project" })
       .single<ExistingProjectRequest>();
@@ -388,17 +474,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const updatePayload: Record<string, unknown> = {};
-    const currentCustomFields = ((existingRequest.custom_fields || {}) as ProjectCustomFields) || {};
-    if (validated.requestedStartDate !== undefined || validated.requestedLaunchDate !== undefined || validated.dueDate !== undefined || validated.review !== undefined) {
+    const currentCustomFields =
+      ((existingRequest.custom_fields || {}) as ProjectCustomFields) || {};
+    if (
+      validated.requestedStartDate !== undefined ||
+      validated.requestedLaunchDate !== undefined ||
+      validated.dueDate !== undefined ||
+      validated.review !== undefined
+    ) {
       updateProjectRequestSchema.parse({
         requestedStartDate: currentCustomFields.requestedStartDate,
         requestedLaunchDate: currentCustomFields.requestedLaunchDate,
         dueDate: existingRequest.due_date,
         ...validated,
-        review: validated.review ? {...currentCustomFields.review, ...validated.review} : undefined,
+        review: validated.review
+          ? { ...currentCustomFields.review, ...validated.review }
+          : undefined,
       });
     }
-    const updatedCustomFields: ProjectCustomFields = { ...currentCustomFields, type: "project" };
+    const updatedCustomFields: ProjectCustomFields = {
+      ...currentCustomFields,
+      type: "project",
+    };
 
     if (validated.title !== undefined) {
       updatePayload.title = validated.title;
@@ -426,10 +523,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updatedCustomFields.budgetRange = validated.budgetRange;
     }
     if (validated.requestedStartDate !== undefined) {
-      updatedCustomFields.requestedStartDate = normalizeDate(validated.requestedStartDate);
+      updatedCustomFields.requestedStartDate = normalizeDate(
+        validated.requestedStartDate,
+      );
     }
     if (validated.requestedLaunchDate !== undefined) {
-      updatedCustomFields.requestedLaunchDate = normalizeDate(validated.requestedLaunchDate);
+      updatedCustomFields.requestedLaunchDate = normalizeDate(
+        validated.requestedLaunchDate,
+      );
     }
 
     if (validated.assignedTo !== undefined) {
@@ -441,9 +542,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (validated.review) {
       if (!access.isStaff) {
-        return apiForbidden(request, "Only staff can submit a project estimate");
+        return apiForbidden(
+          request,
+          "Only staff can submit a project estimate",
+        );
       }
-      const currentReview = (currentCustomFields.review as Record<string, unknown>) || {};
+      const currentReview =
+        (currentCustomFields.review as Record<string, unknown>) || {};
       updatedCustomFields.review = {
         ...currentReview,
         ...validated.review,
@@ -487,8 +592,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       Object.assign(updatedCustomFields, validated.metadata);
     }
 
-    if (updatePayload.status === "approved" || (!updatePayload.status && existingRequest.status === "approved")) {
-      const projectLink = await ensureApprovedProject(existingRequest, updatedCustomFields, user.id);
+    if (
+      updatePayload.status === "approved" ||
+      (!updatePayload.status && existingRequest.status === "approved")
+    ) {
+      const projectLink = await ensureApprovedProject(
+        existingRequest,
+        updatedCustomFields,
+        user.id,
+      );
       updatedCustomFields.projectId = projectLink.projectId;
       updatedCustomFields.convertedProjectId = projectLink.projectId;
       updatedCustomFields.projectConvertedAt = projectLink.convertedAt;
@@ -525,7 +637,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   const supabase = await createClient();
 

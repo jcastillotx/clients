@@ -1,4 +1,7 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import {
   apiError,
   apiForbidden,
@@ -7,7 +10,12 @@ import {
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
-import { hasAnyRole, hasPermission, Permissions, Roles } from "@/lib/rbac/permissions";
+import {
+  hasAnyRole,
+  hasPermission,
+  Permissions,
+  Roles,
+} from "@/lib/rbac/permissions";
 import { getAuthConfirmUrl } from "@/lib/supabase/redirect-url";
 import { auditLog, logger } from "@/lib/logger";
 
@@ -17,7 +25,10 @@ import { auditLog, logger } from "@/lib/logger";
  * Sends the primary contact a password recovery email (Supabase) so they can set/reset
  * their password and sign in — same mechanism as "Forgot password".
  */
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id: clientId } = await params;
 
   try {
@@ -30,25 +41,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return apiUnauthorized(request, "Authentication required");
     }
 
-    const metadataRole = String(currentUser.user_metadata?.role ?? currentUser.user_metadata?.app_role ?? "").toLowerCase();
-    const hasManagementMetadataRole =
-      currentUser.user_metadata?.is_super_admin === true ||
-      metadataRole === Roles.SUPER_ADMIN ||
-      metadataRole === Roles.ADMIN ||
-      metadataRole === Roles.ACCOUNT_MANAGER;
-
     const accessOptions = { supabase, userId: currentUser.id };
     const [canUpdateClients, hasManagementRoleDb] = await Promise.all([
       hasPermission(Permissions.CLIENTS_UPDATE, accessOptions),
-      hasAnyRole([Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER], accessOptions),
+      hasAnyRole(
+        [Roles.SUPER_ADMIN, Roles.ADMIN, Roles.ACCOUNT_MANAGER],
+        accessOptions,
+      ),
     ]);
-    const hasManagementRole = hasManagementRoleDb || hasManagementMetadataRole;
+    const hasManagementRole = hasManagementRoleDb;
 
     if (!(canUpdateClients || hasManagementRole)) {
       return apiForbidden(request, "Permission denied");
     }
 
-    const adminForDb = hasManagementRole ? createAdminClientIfAvailable() : null;
+    const adminForDb = hasManagementRole
+      ? createAdminClientIfAvailable()
+      : null;
     const dbClient = adminForDb ?? supabase;
 
     if (hasManagementRole && !adminForDb) {
@@ -69,7 +78,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return apiNotFound(request, "Client not found");
     }
 
-    if (typeof client.primary_contact_id !== "string" || !client.primary_contact_id.length) {
+    if (
+      typeof client.primary_contact_id !== "string" ||
+      !client.primary_contact_id.length
+    ) {
       return apiError(request, {
         status: 400,
         code: "BAD_REQUEST",
@@ -103,9 +115,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // Send through the authenticated public client. The service-role client is
     // only needed for the privileged lookup above; using it for GoTrue recovery
     // can produce a generic 500 from the Auth API.
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: getAuthConfirmUrl("/reset-password"),
-    });
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      email,
+      {
+        redirectTo: getAuthConfirmUrl("/reset-password"),
+      },
+    );
 
     if (resetError) {
       logger.error("resend-login: resetPasswordForEmail failed", resetError, {

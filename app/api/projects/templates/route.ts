@@ -1,15 +1,14 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
-import { projectTaskTemplates, templateCategoryEnum } from "@/lib/db/schema/project-templates";
-import { eq, isNull, desc, and } from "drizzle-orm";
-import { requireAdminUser, requireAuthenticatedUser } from "@/lib/auth/route-guards";
-import { builtInProjectTemplates } from "@/lib/templates/project-templates";
 import {
-  apiError,
-  apiInternalError,
-  apiSuccess,
-} from "@/lib/api/response";
+  projectTaskTemplates,
+  templateCategoryEnum,
+} from "@/lib/db/schema/project-templates";
+import { eq, isNull, desc, and } from "drizzle-orm";
+import { requireAdminUser, requireStaffUser } from "@/lib/auth/route-guards";
+import { builtInProjectTemplates } from "@/lib/templates/project-templates";
+import { apiError, apiInternalError, apiSuccess } from "@/lib/api/response";
 
 const templateTaskSchema = z.object({
   title: z.string().trim().min(1),
@@ -59,7 +58,7 @@ const createProjectTaskTemplateSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
-    const guard = await requireAuthenticatedUser(request);
+    const guard = await requireStaffUser(request);
     if ("error" in guard) {
       return guard.error;
     }
@@ -68,10 +67,18 @@ export async function GET(request: NextRequest) {
 
     let dbTemplates: (typeof projectTaskTemplates.$inferSelect)[] = [];
     try {
-      const conditions = [isNull(projectTaskTemplates.deletedAt), eq(projectTaskTemplates.isActive, true)];
+      const conditions = [
+        isNull(projectTaskTemplates.deletedAt),
+        eq(projectTaskTemplates.isActive, true),
+      ];
 
       if (category) {
-        conditions.push(eq(projectTaskTemplates.category, category as (typeof projectTaskTemplates.category.enumValues)[number]));
+        conditions.push(
+          eq(
+            projectTaskTemplates.category,
+            category as (typeof projectTaskTemplates.category.enumValues)[number],
+          ),
+        );
       }
 
       dbTemplates = await db
@@ -80,7 +87,10 @@ export async function GET(request: NextRequest) {
         .where(and(...conditions))
         .orderBy(desc(projectTaskTemplates.createdAt));
     } catch (dbError) {
-      console.error("Error fetching custom project templates from DB (built-in templates still available):", dbError);
+      console.error(
+        "Error fetching custom project templates from DB (built-in templates still available):",
+        dbError,
+      );
     }
 
     const dbNames = new Set(dbTemplates.map((t) => t.name));
@@ -125,7 +135,9 @@ export async function POST(request: NextRequest) {
       return guard.error;
     }
 
-    const parsed = createProjectTaskTemplateSchema.safeParse(await request.json());
+    const parsed = createProjectTaskTemplateSchema.safeParse(
+      await request.json(),
+    );
     if (!parsed.success) {
       return apiError(request, {
         status: 400,
@@ -134,7 +146,16 @@ export async function POST(request: NextRequest) {
         details: parsed.error.flatten(),
       });
     }
-    const { name, description, category, icon, color, estimatedHours, phases, metadata } = parsed.data;
+    const {
+      name,
+      description,
+      category,
+      icon,
+      color,
+      estimatedHours,
+      phases,
+      metadata,
+    } = parsed.data;
 
     const [template] = await db
       .insert(projectTaskTemplates)

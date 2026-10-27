@@ -30,3 +30,7 @@ Source review also found legacy metadata-based authorization fallbacks outside t
 Release `e3479c9` was built off-host, passed all 16 staged client API checks, and was promoted with runtime settings and rollback retained. All 16 checks also passed against the public production hostname. The live container was healthy with zero restarts, and public signup remained disabled.
 
 Live browser retests confirmed that the synthetic client sees zero projects; project management URLs redirect back to Projects; Proposals loads without its prior error; and Maintenance Plans renders four active plans. See `docs/qa/client-api-verification.json` and the client screenshots for evidence. No subscriptions, messages, requests, payments, or signatures were submitted.
+
+## Superseding authorization and workflow verification
+
+The remaining metadata authorization fallbacks and workflow failures were addressed in the follow-up described in `docs/qa/AUTHORIZATION-AND-STAGING.md`. Isolated staging now exercises persisted, synthetic business workflows rather than only empty-state reads. Real provider acceptance remains separate, as requested by the user.

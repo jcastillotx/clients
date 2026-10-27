@@ -1,3 +1,4 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { timeEntries } from "@/lib/db/schema/time-tracking";
@@ -15,9 +16,14 @@ import {
  * POST /api/time-tracking/stop
  */
 export async function POST(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);
@@ -42,7 +48,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const [runningTimer] = await db.select().from(timeEntries).where(query).limit(1);
+    const [runningTimer] = await db
+      .select()
+      .from(timeEntries)
+      .where(query)
+      .limit(1);
 
     if (!runningTimer) {
       return apiNotFound(request, "No running timer found");
@@ -55,7 +65,8 @@ export async function POST(request: NextRequest) {
 
     let totalAmount = null;
     if (runningTimer.hourlyRate) {
-      totalAmount = (parseFloat(runningTimer.hourlyRate) * durationMinutes) / 60;
+      totalAmount =
+        (parseFloat(runningTimer.hourlyRate) * durationMinutes) / 60;
     }
 
     const [stoppedEntry] = await db
@@ -69,7 +80,9 @@ export async function POST(request: NextRequest) {
       .where(eq(timeEntries.id, runningTimer.id))
       .returning();
 
-    return apiSuccess(request, stoppedEntry, { extra: stoppedEntry as Record<string, unknown> });
+    return apiSuccess(request, stoppedEntry, {
+      extra: stoppedEntry as Record<string, unknown>,
+    });
   } catch (error) {
     console.error("Error stopping timer:", error);
     return apiInternalError(request, "Failed to stop timer");

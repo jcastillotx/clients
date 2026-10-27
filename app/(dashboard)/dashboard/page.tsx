@@ -1,4 +1,7 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { SupportOverview } from "@/components/dashboard/support-overview";
@@ -6,7 +9,12 @@ import { OperationsCalendar } from "@/components/dashboard/operations-calendar";
 import { LatestMessages } from "@/components/dashboard/latest-messages";
 import { LatestInvoices } from "@/components/dashboard/latest-invoices";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
-import { conversations, conversationParticipants, messages, messageReads } from "@/lib/db/schema/messages";
+import {
+  conversations,
+  conversationParticipants,
+  messages,
+  messageReads,
+} from "@/lib/db/schema/messages";
 import { users } from "@/lib/db/schema/users";
 import { desc, eq, sql } from "drizzle-orm";
 
@@ -22,7 +30,12 @@ const priorityWeight: Record<string, number> = {
 };
 
 const OPEN_REQUEST_STATUSES = ["pending", "in_progress"] as const;
-const OPEN_TICKET_STATUSES = ["open", "in_progress", "waiting_on_client", "waiting_on_vendor"] as const;
+const OPEN_TICKET_STATUSES = [
+  "open",
+  "in_progress",
+  "waiting_on_client",
+  "waiting_on_vendor",
+] as const;
 
 function normalizeClient<T extends { client?: unknown }>(row: T) {
   return {
@@ -31,14 +44,21 @@ function normalizeClient<T extends { client?: unknown }>(row: T) {
   };
 }
 
-function sortByPriorityThenDate<T extends { priority?: string | null; created_at?: string | null }>(items: T[]) {
+function sortByPriorityThenDate<
+  T extends { priority?: string | null; created_at?: string | null },
+>(items: T[]) {
   return [...items].sort((a, b) => {
-    const priorityDelta = (priorityWeight[b.priority || "low"] || 0) - (priorityWeight[a.priority || "low"] || 0);
+    const priorityDelta =
+      (priorityWeight[b.priority || "low"] || 0) -
+      (priorityWeight[a.priority || "low"] || 0);
     if (priorityDelta !== 0) {
       return priorityDelta;
     }
 
-    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    return (
+      new Date(b.created_at || 0).getTime() -
+      new Date(a.created_at || 0).getTime()
+    );
   });
 }
 
@@ -64,20 +84,28 @@ export default async function DashboardPage() {
   if (!user) return null; // Type narrowing only; layout already guards auth
 
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-    supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    supabase
+      .from("users")
+      .select("id, client_id, is_super_admin")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id),
   ]);
 
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const roleNames = new Set<string>();
-  if (metadataRole) roleNames.add(metadataRole);
   for (const row of roleRows || []) {
-    const roleName = String((row as any)?.role?.name || (row as any)?.role?.[0]?.name || "").toLowerCase();
+    const roleName = String(
+      (row as any)?.role?.name || (row as any)?.role?.[0]?.name || "",
+    ).toLowerCase();
     if (roleName) roleNames.add(roleName);
   }
 
-  const isSuperAdmin = Boolean(dbUser?.is_super_admin || user.user_metadata?.is_super_admin === true);
-  const isAdmin = isSuperAdmin || roleNames.has("admin") || roleNames.has("super_admin");
+  const isSuperAdmin = Boolean(dbUser?.is_super_admin);
+  const isAdmin =
+    isSuperAdmin || roleNames.has("admin") || roleNames.has("super_admin");
   const isAccountManager = roleNames.has("account_manager");
   const isStaff = isAdmin || isAccountManager || roleNames.has("staff");
 
@@ -97,7 +125,10 @@ export default async function DashboardPage() {
     { data: campaigns },
     { data: invoiceRows },
   ] = await Promise.all([
-    dbClient.from("requests").select("*", { count: "exact", head: true }).is("deleted_at", null),
+    dbClient
+      .from("requests")
+      .select("*", { count: "exact", head: true })
+      .is("deleted_at", null),
     dbClient
       .from("requests")
       .select("*", { count: "exact", head: true })
@@ -153,7 +184,14 @@ export default async function DashboardPage() {
             client:clients(company_name)
           `,
           )
-          .gte("scheduled_at", new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString())
+          .gte(
+            "scheduled_at",
+            new Date(
+              new Date().getFullYear(),
+              new Date().getMonth() - 1,
+              1,
+            ).toISOString(),
+          )
           .limit(50)
       : { data: [] },
     isStaff
@@ -206,9 +244,16 @@ export default async function DashboardPage() {
       : { data: [] },
   ]);
 
-  const normalizedRequests = ((recentRequests || []) as RowWithClient<any>[]).map((request) => normalizeClient(request));
-  const normalizedTickets = ((recentTickets || []) as RowWithClient<any>[]).map((ticket) => normalizeClient(ticket));
-  const priorityRequests = sortByPriorityThenDate(normalizedRequests).slice(0, 5);
+  const normalizedRequests = (
+    (recentRequests || []) as RowWithClient<any>[]
+  ).map((request) => normalizeClient(request));
+  const normalizedTickets = ((recentTickets || []) as RowWithClient<any>[]).map(
+    (ticket) => normalizeClient(ticket),
+  );
+  const priorityRequests = sortByPriorityThenDate(normalizedRequests).slice(
+    0,
+    5,
+  );
   const priorityTickets = sortByPriorityThenDate(normalizedTickets).slice(0, 5);
 
   const calendarItems = isStaff
@@ -244,7 +289,10 @@ export default async function DashboardPage() {
             subtitle: request.client?.company_name || null,
           })),
         ...priorityTickets
-          .filter((ticket) => ticket.sla_resolution_due_at || ticket.sla_response_due_at)
+          .filter(
+            (ticket) =>
+              ticket.sla_resolution_due_at || ticket.sla_response_due_at,
+          )
           .map((ticket) => ({
             id: `ticket-${ticket.id}`,
             title: ticket.subject,
@@ -306,7 +354,9 @@ export default async function DashboardPage() {
             AND m.sender_id != ${user.id}
             AND mr.id IS NULL
           )`,
-          participants: sql<Array<{ id: string; name: string; email: string }>>`(
+          participants: sql<
+            Array<{ id: string; name: string; email: string }>
+          >`(
             SELECT json_agg(json_build_object(
               'id', u.id,
               'name', u.name,
@@ -318,7 +368,10 @@ export default async function DashboardPage() {
           )`,
         })
         .from(conversations)
-        .innerJoin(conversationParticipants, eq(conversationParticipants.conversationId, conversations.id))
+        .innerJoin(
+          conversationParticipants,
+          eq(conversationParticipants.conversationId, conversations.id),
+        )
         .where(eq(conversationParticipants.userId, user.id))
         .orderBy(desc(conversations.lastMessageAt))
         .limit(5);
@@ -332,9 +385,15 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-8 p-5 md:p-8">
       <div className="rounded-2xl border border-border/70 bg-card/70 p-6 shadow-sm backdrop-blur">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Overview</p>
-        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Dashboard</h1>
-        <p className="mt-2 text-muted-foreground">Welcome back, {user.user_metadata?.name || "User"}!</p>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+          Overview
+        </p>
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+          Dashboard
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          Welcome back, {user.user_metadata?.name || "User"}!
+        </p>
       </div>
 
       {/* Stats Overview */}
@@ -359,9 +418,19 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className={`grid gap-6 ${isAdmin || isAccountManager ? "xl:grid-cols-2" : "xl:grid-cols-1"}`}>
+      <div
+        className={`grid gap-6 ${isAdmin || isAccountManager ? "xl:grid-cols-2" : "xl:grid-cols-1"}`}
+      >
         <LatestMessages conversations={latestConversations as any} />
-        {isAdmin || isAccountManager ? <LatestInvoices invoices={((invoiceRows || []) as RowWithClient<any>[]).map((invoice) => normalizeClient(invoice)) as any} /> : null}
+        {isAdmin || isAccountManager ? (
+          <LatestInvoices
+            invoices={
+              ((invoiceRows || []) as RowWithClient<any>[]).map((invoice) =>
+                normalizeClient(invoice),
+              ) as any
+            }
+          />
+        ) : null}
       </div>
     </div>
   );

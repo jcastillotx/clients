@@ -32,29 +32,25 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookieOptions: getSupabaseCookieOptions(),
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookieOptions: getSupabaseCookieOptions(),
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
       },
-    }
-  );
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value),
+        );
+        supabaseResponse = NextResponse.next({
+          request,
+        });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options),
+        );
+      },
+    },
+  });
 
   // Rate limit auth-related paths (SOC2 CC6.1 — brute-force protection)
   const isAuthPath =
@@ -73,7 +69,9 @@ export async function updateSession(request: NextRequest) {
       return new NextResponse("Too Many Requests", {
         status: 429,
         headers: {
-          "Retry-After": String(Math.ceil((result.resetAt - Date.now()) / 1000)),
+          "Retry-After": String(
+            Math.ceil((result.resetAt - Date.now()) / 1000),
+          ),
           "X-RateLimit-Limit": String(rateLimitLimits.auth),
           "X-RateLimit-Remaining": "0",
           "X-RateLimit-Reset": String(result.resetAt),
@@ -102,7 +100,9 @@ export async function updateSession(request: NextRequest) {
           status: 429,
           headers: {
             "Content-Type": "application/json",
-            "Retry-After": String(Math.ceil((result.resetAt - Date.now()) / 1000)),
+            "Retry-After": String(
+              Math.ceil((result.resetAt - Date.now()) / 1000),
+            ),
             "X-RateLimit-Limit": String(limit),
             "X-RateLimit-Remaining": "0",
             "X-RateLimit-Reset": String(result.resetAt),
@@ -114,10 +114,18 @@ export async function updateSession(request: NextRequest) {
 
   // If a Supabase email auth token is present, route to /auth/confirm first
   // so the token can be exchanged/verified before we check the session.
-  if (shouldRouteToAuthConfirm(request.nextUrl.pathname, request.nextUrl.searchParams)) {
+  if (
+    shouldRouteToAuthConfirm(
+      request.nextUrl.pathname,
+      request.nextUrl.searchParams,
+    )
+  ) {
     const confirmUrl = request.nextUrl.clone();
     confirmUrl.pathname = "/auth/confirm";
-    if (!confirmUrl.searchParams.has("next") && request.nextUrl.searchParams.get("type") === "recovery") {
+    if (
+      !confirmUrl.searchParams.has("next") &&
+      request.nextUrl.searchParams.get("type") === "recovery"
+    ) {
       confirmUrl.searchParams.set("next", "/reset-password");
     }
     return NextResponse.redirect(confirmUrl);
@@ -130,6 +138,37 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("id, is_active, status, deleted_at")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (
+      profileError ||
+      !profile ||
+      profile.is_active === false ||
+      profile.deleted_at ||
+      profile.status === "inactive"
+    ) {
+      await supabase.auth.signOut();
+      const denied = request.nextUrl.pathname.startsWith("/api/")
+        ? NextResponse.json(
+            {
+              success: false,
+              error: { code: "FORBIDDEN", message: "Account is unavailable" },
+            },
+            { status: 403 },
+          )
+        : NextResponse.redirect(
+            new URL("/login?error=account_unavailable", request.url),
+          );
+      for (const cookie of supabaseResponse.cookies.getAll())
+        denied.cookies.set(cookie);
+      return denied;
+    }
+  }
 
   // Protect dashboard routes
   if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
@@ -180,20 +219,28 @@ export async function updateSession(request: NextRequest) {
 
     // MFA enforcement for /admin panel routes (SOC2 CC6.1, CC6.3)
     // Skip when already on settings/security to avoid a redirect loop.
-    const isOnSecuritySettings = request.nextUrl.pathname.startsWith("/settings/security");
+    const isOnSecuritySettings =
+      request.nextUrl.pathname.startsWith("/settings/security");
 
     if (requiresMfa && !isOnSecuritySettings) {
       try {
-        const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        if (aalData && aalData.currentLevel !== "aal2") {
+        const { data: aalData } =
+          await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (!aalData || aalData.currentLevel !== "aal2") {
           const url = request.nextUrl.clone();
           url.pathname = "/settings/security";
           url.searchParams.set("mfa_required", "1");
-          url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+          url.searchParams.set(
+            "next",
+            `${request.nextUrl.pathname}${request.nextUrl.search}`,
+          );
           return NextResponse.redirect(url);
         }
       } catch {
-        // If AAL check fails (e.g. during initial setup), allow through
+        const url = request.nextUrl.clone();
+        url.pathname = "/settings/security";
+        url.searchParams.set("mfa_required", "1");
+        return NextResponse.redirect(url);
       }
     }
   }
@@ -205,7 +252,9 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname === "/register") &&
     user
   ) {
-    const hasAuthMessage = request.nextUrl.searchParams.has("error") || request.nextUrl.searchParams.has("message");
+    const hasAuthMessage =
+      request.nextUrl.searchParams.has("error") ||
+      request.nextUrl.searchParams.has("message");
     if (hasAuthMessage) {
       return supabaseResponse;
     }

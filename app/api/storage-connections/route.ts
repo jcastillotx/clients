@@ -1,3 +1,4 @@
+import { isUserAdmin } from "@/lib/rbac/check";
 import { NextRequest } from "next/server";
 import {
   apiError,
@@ -14,19 +15,11 @@ import { createClient } from "@/lib/supabase/server";
 import { users } from "@/lib/db/schema/users";
 import { encrypt } from "@/lib/encryption";
 
-function isAdminUser(
-  user: { user_metadata?: Record<string, unknown> },
+async function isAdminUser(
+  user: { id: string },
   dbUser: { isSuperAdmin?: boolean | null },
 ) {
-  const metadataRole = String(
-    user?.user_metadata?.role || user?.user_metadata?.app_role || "",
-  ).toLowerCase();
-  return Boolean(
-    dbUser?.isSuperAdmin ||
-    user?.user_metadata?.is_super_admin === true ||
-    metadataRole === "admin" ||
-    metadataRole === "super_admin",
-  );
+  return dbUser.isSuperAdmin === true || (await isUserAdmin(user.id));
 }
 
 export async function GET(request: NextRequest) {
@@ -60,7 +53,7 @@ export async function GET(request: NextRequest) {
       return apiNotFound(request, "User not found");
     }
 
-    const isAdmin = isAdminUser(user, dbUser);
+    const isAdmin = await isAdminUser(user, dbUser);
     if (!isAdmin && dbUser.clientId !== clientId) {
       return apiForbidden(request);
     }
@@ -125,7 +118,7 @@ export async function POST(request: NextRequest) {
       return apiNotFound(request, "User not found");
     }
 
-    const isAdmin = isAdminUser(user, dbUser);
+    const isAdmin = await isAdminUser(user, dbUser);
 
     if (ownerType === "company" && !isAdmin) {
       return apiForbidden(request, "Only admins can manage platform storage");
@@ -202,7 +195,7 @@ export async function DELETE(request: NextRequest) {
       return apiNotFound(request, "Connection not found");
     }
 
-    const isAdmin = isAdminUser(user, dbUser);
+    const isAdmin = await isAdminUser(user, dbUser);
 
     if (connection.ownerType === "company" && !isAdmin) {
       return apiForbidden(request, "Only admins can manage platform storage");

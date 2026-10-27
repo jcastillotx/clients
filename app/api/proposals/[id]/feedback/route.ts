@@ -1,3 +1,4 @@
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { proposals } from "@/lib/db/schema/proposals";
@@ -7,6 +8,7 @@ import { dispatchNotification } from "@/lib/notifications/service";
 import { withPlatformNotificationEmails } from "@/lib/notifications/platform-email";
 import {
   apiError,
+  apiForbidden,
   apiNotFound,
   apiSuccess,
   apiUnauthorized,
@@ -16,7 +18,10 @@ import {
  * POST /api/proposals/[id]/feedback
  * Client sends feedback on a proposal
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   try {
     const supabase = await createClient();
@@ -39,11 +44,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
     }
 
-    const [existing] = await db.select().from(proposals).where(eq(proposals.id, id)).limit(1);
+    const [existing] = await db
+      .select()
+      .from(proposals)
+      .where(eq(proposals.id, id))
+      .limit(1);
 
     if (!existing) {
       return apiNotFound(request, "Proposal not found");
     }
+
+    const access = await resolveRouteAccess(supabase, user);
+    if (!canAccessClient(access, existing.clientId))
+      return apiForbidden(request);
 
     const [updated] = await db
       .update(proposals)
@@ -69,7 +82,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         },
       });
     } catch (notifyErr) {
-      console.error("[POST /api/proposals/:id/feedback] notification dispatch:", notifyErr);
+      console.error(
+        "[POST /api/proposals/:id/feedback] notification dispatch:",
+        notifyErr,
+      );
     }
 
     return apiSuccess(request, updated, {
@@ -81,7 +97,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return apiError(request, {
       status,
       code: status === 503 ? "SERVICE_UNAVAILABLE" : "INTERNAL_ERROR",
-      message: error instanceof Error ? error.message : "Failed to submit feedback",
+      message:
+        error instanceof Error ? error.message : "Failed to submit feedback",
     });
   }
 }

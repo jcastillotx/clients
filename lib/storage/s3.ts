@@ -34,7 +34,9 @@ async function hmacSha256(
 
 async function sha256Hex(data: string | ArrayBuffer): Promise<string> {
   const input =
-    typeof data === "string" ? toArrayBuffer(new TextEncoder().encode(data)) : data;
+    typeof data === "string"
+      ? toArrayBuffer(new TextEncoder().encode(data))
+      : data;
 
   return toHex(await crypto.subtle.digest("SHA-256", input));
 }
@@ -61,7 +63,17 @@ function createSigningContext(credentials: S3Credentials) {
   const host = `${credentials.bucket}.s3.${credentials.region}.amazonaws.com`;
   const credentialScope = `${dateStr}/${credentials.region}/s3/aws4_request`;
 
-  return { credentialScope, dateStr, datetimeStr, host };
+  const endpoint = credentials.endpoint ? new URL(credentials.endpoint) : null;
+  return {
+    credentialScope,
+    dateStr,
+    datetimeStr,
+    host: endpoint?.host ?? host,
+    protocol: endpoint?.protocol ?? "https:",
+    basePath: endpoint
+      ? `${endpoint.pathname.replace(/\/$/, "")}/${encodeURIComponent(credentials.bucket)}`
+      : "",
+  };
 }
 
 function encodeObjectKey(objectKey: string): string {
@@ -76,10 +88,10 @@ export async function putS3Object(options: {
 }): Promise<{ key: string; error?: string }> {
   const { credentials, key, body, contentType } = options;
   const { accessKeyId, secretAccessKey } = credentials;
-  const { credentialScope, dateStr, datetimeStr, host } =
+  const { credentialScope, dateStr, datetimeStr, host, protocol, basePath } =
     createSigningContext(credentials);
-  const encodedKey = encodeObjectKey(key);
-  const url = `https://${host}/${encodedKey}`;
+  const encodedKey = `${basePath}/${encodeObjectKey(key)}`.replace(/^\//, "");
+  const url = `${protocol}//${host}/${encodedKey}`;
   const payloadHash = await sha256Hex(body);
 
   const canonicalRequest = [
@@ -130,10 +142,10 @@ export async function deleteS3Object(options: {
 }): Promise<{ error?: string }> {
   const { credentials, key } = options;
   const { accessKeyId, secretAccessKey } = credentials;
-  const { credentialScope, dateStr, datetimeStr, host } =
+  const { credentialScope, dateStr, datetimeStr, host, protocol, basePath } =
     createSigningContext(credentials);
-  const encodedKey = encodeObjectKey(key);
-  const url = `https://${host}/${encodedKey}`;
+  const encodedKey = `${basePath}/${encodeObjectKey(key)}`.replace(/^\//, "");
+  const url = `${protocol}//${host}/${encodedKey}`;
   const payloadHash =
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
@@ -184,9 +196,9 @@ export async function createS3SignedGetUrl(options: {
 }): Promise<string> {
   const { credentials, key, expiresInSeconds = 3600 } = options;
   const { accessKeyId, secretAccessKey } = credentials;
-  const { credentialScope, dateStr, datetimeStr, host } =
+  const { credentialScope, dateStr, datetimeStr, host, protocol, basePath } =
     createSigningContext(credentials);
-  const encodedKey = encodeObjectKey(key);
+  const encodedKey = `${basePath}/${encodeObjectKey(key)}`.replace(/^\//, "");
   const credential = `${accessKeyId}/${credentialScope}`;
 
   const queryParams = new URLSearchParams({
@@ -225,5 +237,5 @@ export async function createS3SignedGetUrl(options: {
   );
   const signature = toHex(await hmacSha256(signingKey, stringToSign));
 
-  return `https://${host}/${encodedKey}?${sortedQuery}&X-Amz-Signature=${signature}`;
+  return `${protocol}//${host}/${encodedKey}?${sortedQuery}&X-Amz-Signature=${signature}`;
 }

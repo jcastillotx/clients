@@ -1,4 +1,7 @@
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { BrandingSettings } from "@/components/settings/branding-settings";
 import type { BrandingSettings as BrandingSettingsType } from "@/lib/branding/get-branding";
 
@@ -22,10 +25,13 @@ export default async function BrandingPage() {
 
   if (!user) return null;
 
-  const { data: userData } = await supabase.from("users").select("*").eq("id", user.id).single();
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
   const clientId = userData?.client_id ?? null;
 
-  const userRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const { data: roleData } = await supabase
     .from("user_roles")
     .select("role:roles(name)")
@@ -33,13 +39,13 @@ export default async function BrandingPage() {
 
   const hasAdminRole = (roleData || []).some((row: RoleDataRow) => {
     const roleValue = row?.role;
-    const roleName = Array.isArray(roleValue) ? roleValue[0]?.name : roleValue?.name;
+    const roleName = Array.isArray(roleValue)
+      ? roleValue[0]?.name
+      : roleValue?.name;
     return roleName === "admin" || roleName === "super_admin";
   });
 
-  const canManageBranding = Boolean(
-    userData?.is_super_admin || userRole === "admin" || userRole === "super_admin" || hasAdminRole,
-  );
+  const canManageBranding = Boolean(userData?.is_super_admin || hasAdminRole);
 
   if (!canManageBranding) {
     return (
@@ -56,7 +62,9 @@ export default async function BrandingPage() {
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  const parentCompanyNames = (process.env.PARENT_COMPANY_NAMES ?? DEFAULT_PARENT_COMPANY_NAMES.join(","))
+  const parentCompanyNames = (
+    process.env.PARENT_COMPANY_NAMES ?? DEFAULT_PARENT_COMPANY_NAMES.join(",")
+  )
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
@@ -115,14 +123,20 @@ export default async function BrandingPage() {
   }
 
   const { data: brandingConfig } = brandingClientId
-    ? await lookupClient.from("white_label_configs").select("*").eq("client_id", brandingClientId).maybeSingle()
+    ? await lookupClient
+        .from("white_label_configs")
+        .select("*")
+        .eq("client_id", brandingClientId)
+        .maybeSingle()
     : { data: null };
 
   // Parse extended settings from custom_css column
   let initialSettings: Partial<BrandingSettingsType> = {};
   if (brandingConfig?.custom_css) {
     try {
-      initialSettings = JSON.parse(brandingConfig.custom_css) as Partial<BrandingSettingsType>;
+      initialSettings = JSON.parse(
+        brandingConfig.custom_css,
+      ) as Partial<BrandingSettingsType>;
     } catch {
       // ignore parse errors
     }
@@ -132,7 +146,9 @@ export default async function BrandingPage() {
     <div className="flex flex-col gap-8 p-8 max-w-5xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Branding</h1>
-        <p className="text-muted-foreground">Manage portal branding, logo, and white-label configuration</p>
+        <p className="text-muted-foreground">
+          Manage portal branding, logo, and white-label configuration
+        </p>
       </div>
 
       <BrandingSettings

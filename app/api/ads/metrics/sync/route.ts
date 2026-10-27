@@ -1,3 +1,4 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import {
   apiError,
   apiInternalError,
@@ -12,9 +13,14 @@ import { isAdsPlatformSyncEnabled } from "@/lib/features/incomplete-features";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return apiUnauthorized(request);
     }
@@ -35,7 +41,11 @@ export async function POST(request: Request) {
       });
     }
 
-    const existingMetrics = await db.select().from(adMetrics).where(eq(adMetrics.adId, adId)).limit(1);
+    const existingMetrics = await db
+      .select()
+      .from(adMetrics)
+      .where(eq(adMetrics.adId, adId))
+      .limit(1);
 
     const metricData = {
       adId,
@@ -74,7 +84,10 @@ export async function POST(request: Request) {
       return apiSuccess(request, updatedMetrics);
     }
 
-    const [newMetrics] = await db.insert(adMetrics).values(metricData).returning();
+    const [newMetrics] = await db
+      .insert(adMetrics)
+      .values(metricData)
+      .returning();
     return apiSuccess(request, newMetrics, { status: 201 });
   } catch (error) {
     console.error("Error syncing ad metrics:", error);
@@ -83,9 +96,14 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return apiUnauthorized(request);
     }
@@ -115,7 +133,13 @@ export async function GET(request: Request) {
     return apiSuccess(
       request,
       { clientId, status: "processing" },
-      { extra: { message: "Metrics sync initiated", clientId, status: "processing" } },
+      {
+        extra: {
+          message: "Metrics sync initiated",
+          clientId,
+          status: "processing",
+        },
+      },
     );
   } catch (error) {
     console.error("Error initiating metrics sync:", error);

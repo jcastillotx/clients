@@ -57,9 +57,6 @@ export default async function ClientsPage({
 
   if (!user) return null; // Type narrowing only; layout already guards auth
 
-  const metadataRole = String(
-    user.user_metadata?.role ?? user.user_metadata?.app_role ?? "",
-  ).toLowerCase();
   const [userRowRes, userRolesRes] = await Promise.all([
     supabase
       .from("users")
@@ -84,10 +81,6 @@ export default async function ClientsPage({
 
   const isAdminUser =
     Boolean(userRow?.is_super_admin) ||
-    user.user_metadata?.is_super_admin === true ||
-    metadataRole === "admin" ||
-    metadataRole === "super_admin" ||
-    metadataRole === "account_manager" ||
     roleNames.has("admin") ||
     roleNames.has("super_admin") ||
     roleNames.has("account_manager");

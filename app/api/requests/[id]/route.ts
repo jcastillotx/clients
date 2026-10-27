@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import {
   apiError,
   apiForbidden,
@@ -20,7 +23,10 @@ function getClientIp(req: NextRequest): string | null {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   const supabase = await createClient();
 
@@ -36,11 +42,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const validated = updateRequestSchema.parse(body);
 
-    const [{ data: request }, { data: dbUser }, { data: roleRows }] = await Promise.all([
-      supabase.from("requests").select("id, client_id, custom_fields, status, assigned_to").eq("id", id).single(),
-      supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-      supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
-    ]);
+    const [{ data: request }, { data: dbUser }, { data: roleRows }] =
+      await Promise.all([
+        supabase
+          .from("requests")
+          .select("id, client_id, custom_fields, status, assigned_to")
+          .eq("id", id)
+          .single(),
+        supabase
+          .from("users")
+          .select("id, client_id, is_super_admin")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("user_roles")
+          .select("role:roles(name)")
+          .eq("user_id", user.id),
+      ]);
 
     if (!request) {
       return apiNotFound(req, "Not found");
@@ -50,7 +68,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     const isAdmin = isAdminUser(user, dbUser, roleRows);
-    const isSameClient = dbUser.client_id && request.client_id === dbUser.client_id;
+    const isSameClient =
+      dbUser.client_id && request.client_id === dbUser.client_id;
 
     if (!isAdmin && !isSameClient) {
       console.warn("[PATCH /api/requests/:id] Forbidden attempt", {
@@ -70,13 +89,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const updatePayload: Record<string, unknown> = {};
     if (validated.title !== undefined) updatePayload.title = validated.title;
-    if (validated.description !== undefined) updatePayload.description = validated.description;
-    if (validated.priority !== undefined) updatePayload.priority = validated.priority;
+    if (validated.description !== undefined)
+      updatePayload.description = validated.description;
+    if (validated.priority !== undefined)
+      updatePayload.priority = validated.priority;
     if (validated.status !== undefined) updatePayload.status = validated.status;
-    if (validated.dueDate !== undefined) updatePayload.due_date = validated.dueDate || null;
+    if (validated.dueDate !== undefined)
+      updatePayload.due_date = validated.dueDate || null;
 
     const currentCustomFields =
-      ((request as Record<string, unknown>).custom_fields as Record<string, unknown>) || {};
+      ((request as Record<string, unknown>).custom_fields as Record<
+        string,
+        unknown
+      >) || {};
     if (validated.type !== undefined || validated.customFields !== undefined) {
       updatePayload.custom_fields = {
         ...currentCustomFields,
@@ -87,17 +112,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     if (validated.assignedTo !== undefined) {
       if (!isAdmin) {
-        console.warn("[PATCH /api/requests/:id] Non-admin assignee change attempt", {
-          userId: user.id,
-          requestId: id,
-          ip: getClientIp(req),
-        });
+        console.warn(
+          "[PATCH /api/requests/:id] Non-admin assignee change attempt",
+          {
+            userId: user.id,
+            requestId: id,
+            ip: getClientIp(req),
+          },
+        );
         await supabase.from("activity_logs").insert({
           user_id: user.id,
           action: "request.update_denied",
           resource_type: "request",
           resource_id: id,
-          metadata: { reason: "assignee_change_not_admin", ip: getClientIp(req) },
+          metadata: {
+            reason: "assignee_change_not_admin",
+            ip: getClientIp(req),
+          },
         });
         return apiForbidden(req);
       }
@@ -132,7 +163,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .from("requests")
       .update(updatePayload)
       .eq("id", id)
-      .select("*, client:clients(company_name), assigned_user:users!requests_assigned_to_fkey(name, avatar)")
+      .select(
+        "*, client:clients(company_name), assigned_user:users!requests_assigned_to_fkey(name, avatar)",
+      )
       .single();
 
     if (error) {
@@ -152,7 +185,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           ? { old_status: request.status, new_status: validated.status }
           : {}),
         ...(validated.assignedTo !== undefined
-          ? { old_assigned_to: request.assigned_to, new_assigned_to: validated.assignedTo }
+          ? {
+              old_assigned_to: request.assigned_to,
+              new_assigned_to: validated.assignedTo,
+            }
           : {}),
       },
     });
@@ -167,7 +203,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   const supabase = await createClient();
 
@@ -179,17 +218,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
 
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-    supabase.from("users").select("id, is_super_admin").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    supabase
+      .from("users")
+      .select("id, is_super_admin")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id),
   ]);
 
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
-  const isAdminByMetadata =
-    user.user_metadata?.is_super_admin === true ||
-    metadataRole === "admin" ||
-    metadataRole === "super_admin";
-
-  if (!isAdminUser(user, dbUser, roleRows) && !isAdminByMetadata) {
+  if (!isAdminUser(user, dbUser, roleRows)) {
     return apiForbidden(req);
   }
 
@@ -200,7 +240,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     .maybeSingle();
 
   const deletedAt = new Date().toISOString();
-  const customFields = (requestRow?.custom_fields as Record<string, unknown> | null) ?? {};
+  const customFields =
+    (requestRow?.custom_fields as Record<string, unknown> | null) ?? {};
   const linkedTicketId =
     typeof customFields.support_ticket_id === "string"
       ? customFields.support_ticket_id
@@ -234,7 +275,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     action: "request.deleted",
     resource_type: "request",
     resource_id: id,
-    metadata: { ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null },
+    metadata: {
+      ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+    },
   });
 
   return apiSuccess(req, { deleted: true });

@@ -9,9 +9,15 @@ import {
 } from "@/lib/api/response";
 import { inngest } from "@/lib/inngest/client";
 import { dispatchNotification } from "@/lib/notifications/service";
-import { createAdminClientIfAvailable, createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { createStripeClient } from "@/lib/stripe/client";
-import { resolveStripeWebhookSecrets } from "@/lib/stripe/settings";
+import {
+  resolveStripeCredentialsForClient,
+  resolveStripeWebhookSecrets,
+} from "@/lib/stripe/settings";
 import { processStripeWebhookRequest } from "@/lib/webhooks/stripe-webhook-request";
 
 async function hasProcessedEvent(eventId: string) {
@@ -59,15 +65,51 @@ export async function POST(request: Request) {
     const headersList = await headers();
     const signature = headersList.get("stripe-signature");
 
+    let matchedSecret: string | null = null;
     const result = await processStripeWebhookRequest({
       body,
       signature,
       webhookSecrets,
-      constructEvent: (rawBody, rawSignature, secret) =>
-        stripe.webhooks.constructEvent(rawBody, rawSignature, secret),
+      constructEvent: (rawBody, rawSignature, secret) => {
+        const event = stripe.webhooks.constructEvent(
+          rawBody,
+          rawSignature,
+          secret,
+        );
+        matchedSecret = secret;
+        return event;
+      },
       hasProcessedEvent,
       onEvent: async (event) => {
-        const supabase = createAdminClientIfAvailable() ?? (await createClient());
+        const supabase =
+          createAdminClientIfAvailable() ?? (await createClient());
+
+        const assertPaymentAccount = async (clientId: string) => {
+          const expected = await resolveStripeCredentialsForClient(clientId);
+          if (!matchedSecret || matchedSecret !== expected.webhook_secret) {
+            throw new Error(
+              "Webhook does not belong to this client payment account",
+            );
+          }
+        };
+        if (event.type === "payment_intent.payment_failed") {
+          const intent = event.data.object as Stripe.PaymentIntent;
+          if (intent.metadata.invoice_id) {
+            const { data: invoice } = await supabase
+              .from("invoices")
+              .select("client_id, stripe_payment_intent_id")
+              .eq("id", intent.metadata.invoice_id)
+              .single();
+            if (!invoice || invoice.stripe_payment_intent_id !== intent.id)
+              throw new Error("Payment invoice mismatch");
+            await assertPaymentAccount(invoice.client_id);
+          }
+        }
+        if (event.type.startsWith("customer.subscription.")) {
+          const subscription = event.data.object as Stripe.Subscription;
+          if (subscription.metadata.client_id)
+            await assertPaymentAccount(subscription.metadata.client_id);
+        }
 
         switch (event.type) {
           case "payment_intent.succeeded": {
@@ -75,7 +117,36 @@ export async function POST(request: Request) {
             const invoiceId = paymentIntent.metadata.invoice_id;
 
             if (invoiceId) {
-              await supabase
+              const { data: payable, error: payableError } = await supabase
+                .from("invoices")
+                .select(
+                  "id, client_id, amount, status, stripe_payment_intent_id",
+                )
+                .eq("id", invoiceId)
+                .single();
+              if (payableError || !payable)
+                throw new Error("Payment invoice is unavailable");
+              const expectedCredentials =
+                await resolveStripeCredentialsForClient(payable.client_id);
+              if (
+                !matchedSecret ||
+                matchedSecret !== expectedCredentials.webhook_secret
+              ) {
+                throw new Error(
+                  "Webhook does not belong to the invoice payment account",
+                );
+              }
+              if (
+                Math.round(Number(payable.amount) * 100) !==
+                  paymentIntent.amount ||
+                paymentIntent.currency !== "usd" ||
+                !payable.stripe_payment_intent_id ||
+                payable.stripe_payment_intent_id !== paymentIntent.id ||
+                payable.status === "cancelled"
+              ) {
+                throw new Error("Payment does not match the invoice");
+              }
+              const { data: paidInvoice, error: paymentError } = await supabase
                 .from("invoices")
                 .update({
                   status: "paid",
@@ -84,7 +155,11 @@ export async function POST(request: Request) {
                   stripe_payment_intent_id: paymentIntent.id,
                 })
                 .eq("id", invoiceId)
-                .neq("status", "paid");
+                .neq("status", "paid")
+                .select("id")
+                .maybeSingle();
+              if (paymentError) throw paymentError;
+              if (!paidInvoice) break;
 
               await logActivity({
                 subjectType: "invoice",
@@ -184,7 +259,8 @@ export async function POST(request: Request) {
                 .single();
 
               if (invoice) {
-                await supabase
+                await assertPaymentAccount(invoice.client_id);
+                const { error: refundError } = await supabase
                   .from("invoices")
                   .update({
                     status: "refunded",
@@ -192,6 +268,7 @@ export async function POST(request: Request) {
                   })
                   .eq("id", invoice.id)
                   .neq("status", "refunded");
+                if (refundError) throw refundError;
 
                 await logActivity({
                   subjectType: "invoice",
@@ -272,7 +349,10 @@ export async function POST(request: Request) {
       });
     }
 
-    return apiSuccess(request, result.payload, { extra: result.payload, status: result.status });
+    return apiSuccess(request, result.payload, {
+      extra: result.payload,
+      status: result.status,
+    });
   } catch (error) {
     console.error("Webhook error:", error);
     return apiInternalError(

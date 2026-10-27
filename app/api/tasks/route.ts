@@ -1,3 +1,4 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import { apiValidationError } from "@/lib/api/response";
 import { z } from "zod";
 import { taskFormSchema } from "@/lib/validations/workspace";
@@ -12,13 +13,20 @@ import {
   apiUnauthorized,
 } from "@/lib/api/response";
 import { db } from "@/lib/db";
-import { staffTasks, staffTaskAssignees, staffTaskLabelRelations } from "@/lib/db/schema/staff-tasks";
+import {
+  staffTasks,
+  staffTaskAssignees,
+  staffTaskLabelRelations,
+} from "@/lib/db/schema/staff-tasks";
 import { eq } from "drizzle-orm";
 
 /**
  * POST /api/tasks
  */
 export async function POST(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
     const {
@@ -31,8 +39,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = taskFormSchema.parse(await request.json());
-    const { boardId, columnId, title, description, priority, dueDate, estimatedHours, assignees, labels, parentId } =
-      body;
+    const {
+      boardId,
+      columnId,
+      title,
+      description,
+      priority,
+      dueDate,
+      estimatedHours,
+      assignees,
+      labels,
+      parentId,
+    } = body;
 
     if (!boardId || !columnId || !title) {
       return apiError(request, {
@@ -48,7 +66,8 @@ export async function POST(request: NextRequest) {
       limit: 1,
     });
 
-    const position = existingTasks.length > 0 ? (existingTasks[0].position || 0) + 1 : 0;
+    const position =
+      existingTasks.length > 0 ? (existingTasks[0].position || 0) + 1 : 0;
 
     const [task] = await db
       .insert(staffTasks)
@@ -117,7 +136,8 @@ export async function POST(request: NextRequest) {
     if (profile?.client_id && completeTask) {
       try {
         const base = getAuthBaseUrl();
-        const assigneeIds = (assignees as string[] | undefined)?.filter(Boolean) ?? [];
+        const assigneeIds =
+          (assignees as string[] | undefined)?.filter(Boolean) ?? [];
         await dispatchNotification({
           eventType: "staff_task_created",
           clientId: profile.client_id,
@@ -137,7 +157,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return apiSuccess(request, completeTask, { status: 201, extra: { task: completeTask } });
+    return apiSuccess(request, completeTask, {
+      status: 201,
+      extra: { task: completeTask },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error creating task:", error);

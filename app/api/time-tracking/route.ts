@@ -1,8 +1,16 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import { z } from "zod";
-import {createTimeEntrySchema, updateTimeEntrySchema} from "@/lib/validations/time-entry";
+import {
+  createTimeEntrySchema,
+  updateTimeEntrySchema,
+} from "@/lib/validations/time-entry";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { timeEntries, timeEntryLocks, type TimeEntryStatus } from "@/lib/db/schema/time-tracking";
+import {
+  timeEntries,
+  timeEntryLocks,
+  type TimeEntryStatus,
+} from "@/lib/db/schema/time-tracking";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -15,9 +23,14 @@ import {
 } from "@/lib/api/response";
 
 export async function GET(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);
@@ -72,9 +85,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);
@@ -140,9 +158,14 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);
@@ -152,7 +175,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const id = z.string().uuid().parse(body.id);
     const parsedUpdates = updateTimeEntrySchema.parse(body);
-    const updates: Record<string, unknown> = {...parsedUpdates};
+    const updates: Record<string, unknown> = { ...parsedUpdates };
 
     if (!id) {
       return apiError(request, {
@@ -177,9 +200,11 @@ export async function PATCH(request: NextRequest) {
       endedAt: existingEntry.endedAt?.toISOString(),
       ...updates,
     });
-    if (updates.startedAt) updates.startedAt = new Date(String(updates.startedAt));
+    if (updates.startedAt)
+      updates.startedAt = new Date(String(updates.startedAt));
     if (updates.endedAt) updates.endedAt = new Date(String(updates.endedAt));
-    if (updates.hourlyRate != null) updates.hourlyRate = String(updates.hourlyRate);
+    if (updates.hourlyRate != null)
+      updates.hourlyRate = String(updates.hourlyRate);
 
     if (existingEntry.lockedAt) {
       return apiError(request, {
@@ -204,7 +229,9 @@ export async function PATCH(request: NextRequest) {
       const rate = updates.hourlyRate ?? existingEntry.hourlyRate;
       const duration = updates.durationMinutes ?? existingEntry.durationMinutes;
       if (rate && duration) {
-        updates.totalAmount = ((Number(rate) * Number(duration)) / 60).toFixed(2);
+        updates.totalAmount = ((Number(rate) * Number(duration)) / 60).toFixed(
+          2,
+        );
       }
     }
 
@@ -214,7 +241,9 @@ export async function PATCH(request: NextRequest) {
       .where(eq(timeEntries.id, id))
       .returning();
 
-    return apiSuccess(request, updatedEntry, { extra: { entry: updatedEntry } });
+    return apiSuccess(request, updatedEntry, {
+      extra: { entry: updatedEntry },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) return apiValidationError(request, error);
     console.error("Error updating time entry:", error);
@@ -223,9 +252,14 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);

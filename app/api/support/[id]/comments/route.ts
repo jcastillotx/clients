@@ -1,6 +1,8 @@
+import { resolveRouteAccess } from "@/lib/auth/route-access";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiInternalError,
+  apiForbidden,
   apiNotFound,
   apiSuccess,
   apiUnauthorized,
@@ -13,7 +15,10 @@ import { z } from "zod";
 /**
  * GET /api/support/[id]/comments
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   const supabase = await createClient();
 
@@ -25,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return apiUnauthorized(req);
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("support_ticket_comments")
     .select(
       `
@@ -35,6 +40,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     )
     .eq("support_ticket_id", id)
     .order("created_at", { ascending: true });
+  const access = await resolveRouteAccess(supabase, user);
+  if (!access.isStaff) query = query.eq("is_internal", false);
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching comments:", error);
@@ -47,7 +55,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 /**
  * POST /api/support/[id]/comments
  */
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
   const supabase = await createClient();
 
@@ -63,6 +74,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const validatedData = createTicketCommentSchema.parse(body);
+    const access = await resolveRouteAccess(supabase, user);
+    if (validatedData.isInternal && !access.isStaff) return apiForbidden(req);
 
     const { data: ticket, error: ticketError } = await supabase
       .from("support_tickets")
@@ -96,7 +109,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return apiInternalError(req, error.message);
     }
 
-    if (!ticket.first_response_at && !validatedData.isInternal) {
+    if (
+      access.isStaff &&
+      !ticket.first_response_at &&
+      !validatedData.isInternal
+    ) {
       await supabase
         .from("support_tickets")
         .update({
@@ -105,7 +122,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         .eq("id", id);
     }
 
-    if (ticket.status === "waiting_on_client" && user.user_metadata?.role === "staff") {
+    if (
+      ticket.status === "waiting_on_client" &&
+      (await resolveRouteAccess(supabase, user)).isStaff
+    ) {
       await supabase
         .from("support_tickets")
         .update({

@@ -30,15 +30,26 @@ const normalizeDate = (value?: string | null) => {
   return parsed.toISOString();
 };
 
-async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>, user: { id: string; user_metadata?: Record<string, unknown> }) {
+async function resolveAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: { id: string; user_metadata?: Record<string, unknown> },
+) {
   const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
-    supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    supabase
+      .from("users")
+      .select("id, client_id, is_super_admin")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_roles")
+      .select("role:roles(name)")
+      .eq("user_id", user.id),
   ]);
 
-  const metadataRole = String(user.user_metadata?.role || user.user_metadata?.app_role || "").toLowerCase();
   const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
+    const roleRow = row as {
+      role?: { name?: string } | Array<{ name?: string }>;
+    };
     if (Array.isArray(roleRow.role)) {
       return String(roleRow.role[0]?.name || "").toLowerCase();
     }
@@ -47,19 +58,14 @@ async function resolveAccess(supabase: Awaited<ReturnType<typeof createClient>>,
 
   const isAdmin = Boolean(
     dbUser?.is_super_admin ||
-      user.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
+    roleNames.includes("admin") ||
+    roleNames.includes("super_admin"),
   );
 
   const isStaff = Boolean(
     isAdmin ||
-      metadataRole === "staff" ||
-      metadataRole === "account_manager" ||
-      roleNames.includes("staff") ||
-      roleNames.includes("account_manager"),
+    roleNames.includes("staff") ||
+    roleNames.includes("account_manager"),
   );
 
   return {
@@ -140,7 +146,10 @@ export async function POST(request: NextRequest) {
     const validated = createProjectRequestSchema.parse(body);
     const access = await resolveAccess(supabase, user);
 
-    const effectiveClientId = access.isStaff && validated.clientId ? validated.clientId : access.clientId;
+    const effectiveClientId =
+      access.isStaff && validated.clientId
+        ? validated.clientId
+        : access.clientId;
     if (!effectiveClientId) {
       return apiError(request, {
         status: 400,
@@ -149,7 +158,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const dueDate = normalizeDate(validated.dueDate) ?? normalizeDate(validated.requestedLaunchDate);
+    const dueDate =
+      normalizeDate(validated.dueDate) ??
+      normalizeDate(validated.requestedLaunchDate);
 
     const customFields = {
       ...(validated.metadata || {}),
@@ -213,14 +224,18 @@ export async function POST(request: NextRequest) {
             requestPriority: data.priority,
             requestUrl: `${base}/projects/requests/${data.id}`,
             request_title: data.title,
-            request_description: validated.description || validated.executiveSummary,
+            request_description:
+              validated.description || validated.executiveSummary,
             request_url: `${base}/projects/requests/${data.id}`,
             company_name: "",
             created_by_name: user.email || "",
           },
         });
       } catch (notifyErr) {
-        console.error("[POST /api/projects/requests] notification dispatch:", notifyErr);
+        console.error(
+          "[POST /api/projects/requests] notification dispatch:",
+          notifyErr,
+        );
       }
     }
 

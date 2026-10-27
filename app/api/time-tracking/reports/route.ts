@@ -1,3 +1,4 @@
+import { requireStaffUser } from "@/lib/auth/route-guards";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { timeEntries } from "@/lib/db/schema/time-tracking";
@@ -16,9 +17,14 @@ import {
  * Generate time tracking reports
  */
 export async function GET(request: NextRequest) {
+  const staffGuard = await requireStaffUser(request);
+  if ("error" in staffGuard) return staffGuard.error;
+
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return apiUnauthorized(request);
@@ -43,7 +49,11 @@ export async function GET(request: NextRequest) {
 
     // Fetch all entries in the date range
     const entries = await db.query.timeEntries.findMany({
-      where: and(eq(timeEntries.userId, userId), gte(timeEntries.startedAt, start), lte(timeEntries.startedAt, end)),
+      where: and(
+        eq(timeEntries.userId, userId),
+        gte(timeEntries.startedAt, start),
+        lte(timeEntries.startedAt, end),
+      ),
       with: {
         client: true,
         request: true,
@@ -51,12 +61,18 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate summary statistics
-    const totalMinutes = entries.reduce((sum, entry) => sum + (entry.durationMinutes || 0), 0);
+    const totalMinutes = entries.reduce(
+      (sum, entry) => sum + (entry.durationMinutes || 0),
+      0,
+    );
     const billableMinutes = entries.reduce(
       (sum, entry) => sum + (entry.isBillable ? entry.durationMinutes || 0 : 0),
       0,
     );
-    const totalAmount = entries.reduce((sum, entry) => sum + parseFloat(entry.totalAmount || "0"), 0);
+    const totalAmount = entries.reduce(
+      (sum, entry) => sum + parseFloat(entry.totalAmount || "0"),
+      0,
+    );
 
     // Group data based on groupBy parameter
     let groupedData: TimeReportBucket[] = [];
@@ -159,7 +175,9 @@ export async function GET(request: NextRequest) {
         clientData.totalAmount += parseFloat(entry.totalAmount || "0");
         clientData.entries += 1;
       });
-      groupedData = Array.from(clientMap.values()).sort((a, b) => b.totalMinutes - a.totalMinutes);
+      groupedData = Array.from(clientMap.values()).sort(
+        (a, b) => b.totalMinutes - a.totalMinutes,
+      );
     } else if (groupBy === "request") {
       const requestMap = new Map<string, TimeReportBucket>();
       entries.forEach((entry) => {
@@ -183,7 +201,9 @@ export async function GET(request: NextRequest) {
         requestData.totalAmount += parseFloat(entry.totalAmount || "0");
         requestData.entries += 1;
       });
-      groupedData = Array.from(requestMap.values()).sort((a, b) => b.totalMinutes - a.totalMinutes);
+      groupedData = Array.from(requestMap.values()).sort(
+        (a, b) => b.totalMinutes - a.totalMinutes,
+      );
     }
 
     const payload = {
@@ -193,7 +213,8 @@ export async function GET(request: NextRequest) {
         billableMinutes,
         billableHours: Math.round((billableMinutes / 60) * 100) / 100,
         nonBillableMinutes: totalMinutes - billableMinutes,
-        nonBillableHours: Math.round(((totalMinutes - billableMinutes) / 60) * 100) / 100,
+        nonBillableHours:
+          Math.round(((totalMinutes - billableMinutes) / 60) * 100) / 100,
         totalAmount: Math.round(totalAmount * 100) / 100,
         entriesCount: entries.length,
       },

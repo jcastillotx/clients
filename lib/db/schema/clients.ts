@@ -9,7 +9,12 @@ import { projects } from "./projects";
 /**
  * Client status enum
  */
-export const clientStatusEnum = ["active", "inactive", "pending", "suspended"] as const;
+export const clientStatusEnum = [
+  "active",
+  "inactive",
+  "pending",
+  "suspended",
+] as const;
 export type ClientStatus = (typeof clientStatusEnum)[number];
 
 /**
@@ -20,10 +25,12 @@ export type ClientStatus = (typeof clientStatusEnum)[number];
 export const clients = pgTable("clients", {
   id: uuid("id").primaryKey().defaultRandom(),
   companyName: text("company_name").notNull(),
+  contactName: text("contact_name"),
   domain: text("domain"),
   industry: text("industry"),
   logoUrl: text("logo_url"),
   email: text("email").notNull(),
+  stripeCustomerId: text("stripe_customer_id"),
   phone: text("phone"),
   website: text("website"),
   primaryContactId: uuid("primary_contact_id"),
@@ -32,7 +39,9 @@ export const clients = pgTable("clients", {
   state: text("state"),
   zipCode: text("zip_code"),
   country: text("country").default("US"),
-  status: text("status", { enum: clientStatusEnum }).default("active").notNull(),
+  status: text("status", { enum: clientStatusEnum })
+    .default("active")
+    .notNull(),
   enabledFeatures: jsonb("enabled_features").$type<{
     invoicing?: boolean;
     contracts?: boolean;
@@ -50,8 +59,12 @@ export const clients = pgTable("clients", {
     channels?: string[];
     budget?: number;
   }>(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 

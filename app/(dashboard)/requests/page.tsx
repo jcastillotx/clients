@@ -28,7 +28,11 @@ interface SearchParams {
  * Fetches requests on the server for better performance and SEO.
  * RLS automatically filters to only show requests for user's client.
  */
-export default async function RequestsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function RequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
@@ -38,14 +42,22 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
 
   const [{ data: dbUser }, { data: roleRows }] = user
     ? await Promise.all([
-        supabase.from("users").select("id, client_id, is_super_admin").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+        supabase
+          .from("users")
+          .select("id, client_id, is_super_admin")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("user_roles")
+          .select("role:roles(name)")
+          .eq("user_id", user.id),
       ])
     : [{ data: null }, { data: [] }];
 
-  const metadataRole = String(user?.user_metadata?.role || user?.user_metadata?.app_role || "").toLowerCase();
   const roleNames = (roleRows || []).map((row: unknown) => {
-    const roleRow = row as { role?: { name?: string } | Array<{ name?: string }> };
+    const roleRow = row as {
+      role?: { name?: string } | Array<{ name?: string }>;
+    };
     if (Array.isArray(roleRow.role)) {
       return String(roleRow.role[0]?.name || "").toLowerCase();
     }
@@ -54,11 +66,8 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
 
   const isAdmin = Boolean(
     dbUser?.is_super_admin ||
-      user?.user_metadata?.is_super_admin === true ||
-      metadataRole === "admin" ||
-      metadataRole === "super_admin" ||
-      roleNames.includes("admin") ||
-      roleNames.includes("super_admin"),
+    roleNames.includes("admin") ||
+    roleNames.includes("super_admin"),
   );
 
   const adminClient = isAdmin ? createAdminClientIfAvailable() : null;
@@ -67,7 +76,8 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
   // Authentication is handled by the dashboard layout - no redundant check needed.
   // Server-side data fetching (no loading state needed!)
   const sortColumn =
-    resolvedSearchParams.sortBy && ALLOWED_SORT_COLUMNS.has(resolvedSearchParams.sortBy)
+    resolvedSearchParams.sortBy &&
+    ALLOWED_SORT_COLUMNS.has(resolvedSearchParams.sortBy)
       ? resolvedSearchParams.sortBy
       : "created_at";
 
@@ -101,7 +111,10 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
     query = query.eq("status", resolvedSearchParams.status);
   }
 
-  if (resolvedSearchParams.priority && ["low", "medium", "high"].includes(resolvedSearchParams.priority)) {
+  if (
+    resolvedSearchParams.priority &&
+    ["low", "medium", "high"].includes(resolvedSearchParams.priority)
+  ) {
     query = query.eq("priority", resolvedSearchParams.priority);
   }
 
@@ -112,7 +125,9 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
     return (
       <div className="container mx-auto py-8">
         <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <div className="text-destructive font-semibold text-lg">Error Loading Requests</div>
+          <div className="text-destructive font-semibold text-lg">
+            Error Loading Requests
+          </div>
           <div className="text-sm text-muted-foreground max-w-md text-center">
             {error.message || "An unexpected error occurred"}
           </div>
@@ -120,7 +135,8 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
             {JSON.stringify(error, null, 2)}
           </pre>
           <p className="text-xs text-muted-foreground mt-4">
-            This might be an RLS policy issue. Check the server logs for details.
+            This might be an RLS policy issue. Check the server logs for
+            details.
           </p>
         </div>
       </div>
@@ -131,8 +147,12 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Service Requests</h1>
-          <p className="text-muted-foreground mt-1">Manage and track client service requests</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Service Requests
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage and track client service requests
+          </p>
         </div>
         <Button asChild>
           <Link href="/requests/new">

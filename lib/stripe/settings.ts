@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { encryptedSettings } from "@/lib/db/schema/encrypted-settings";
@@ -46,7 +46,9 @@ function credentialsFromRows(rows: StripeCredentialRow[]): StripeCredentials {
   return credentials;
 }
 
-async function getSavedStripeCredentials(clientId: string): Promise<StripeCredentials> {
+async function getSavedStripeCredentials(
+  clientId: string,
+): Promise<StripeCredentials> {
   const rows: StripeCredentialRow[] = await db
     .select({
       clientId: encryptedSettings.clientId,
@@ -66,6 +68,12 @@ async function getSavedStripeCredentials(clientId: string): Promise<StripeCreden
 }
 
 async function getLatestSavedStripeCredentials(): Promise<StripeCredentials> {
+  const platformClientIds = (process.env.PLATFORM_STRIPE_CLIENT_IDS ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  if (platformClientIds.length === 0) return {};
+
   const rows: StripeCredentialRow[] = await db
     .select({
       clientId: encryptedSettings.clientId,
@@ -76,6 +84,7 @@ async function getLatestSavedStripeCredentials(): Promise<StripeCredentials> {
     .where(
       and(
         eq(encryptedSettings.provider, "stripe"),
+        inArray(encryptedSettings.clientId, platformClientIds),
         eq(encryptedSettings.isActive, true),
       ),
     )
@@ -98,18 +107,24 @@ async function getLatestSavedStripeCredentials(): Promise<StripeCredentials> {
   return {};
 }
 
-export async function resolveStripeCredentialsForClient(clientId: string): Promise<StripeCredentials> {
+export async function resolveStripeCredentialsForClient(
+  clientId: string,
+): Promise<StripeCredentials> {
   const saved = await getSavedStripeCredentials(clientId);
-  const fallback = saved.secret_key ? {} : await getLatestSavedStripeCredentials();
+  const fallback = saved.secret_key
+    ? {}
+    : await getLatestSavedStripeCredentials();
   const selected = saved.secret_key ? saved : fallback;
 
   return {
     publishable_key:
       selected.publishable_key ??
       normalizeCredential(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
-    secret_key: selected.secret_key ?? normalizeCredential(process.env.STRIPE_SECRET_KEY),
+    secret_key:
+      selected.secret_key ?? normalizeCredential(process.env.STRIPE_SECRET_KEY),
     webhook_secret:
-      selected.webhook_secret ?? normalizeCredential(process.env.STRIPE_WEBHOOK_SECRET),
+      selected.webhook_secret ??
+      normalizeCredential(process.env.STRIPE_WEBHOOK_SECRET),
   };
 }
 

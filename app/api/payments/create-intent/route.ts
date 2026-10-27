@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  createAdminClientIfAvailable,
+  createClient,
+} from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
 import { resolveStripeCredentialsForClient } from "@/lib/stripe/settings";
 import {
@@ -48,15 +51,21 @@ export async function POST(request: Request) {
       return apiNotFound(request, "Invoice not found");
     }
 
-    const client = Array.isArray(invoice.client) ? invoice.client[0] : invoice.client;
+    const client = Array.isArray(invoice.client)
+      ? invoice.client[0]
+      : invoice.client;
 
     if (!client) {
       return apiNotFound(request, "Invoice client not found");
     }
 
-    let primaryContact: { id: string; name: string; email: string } | null = null;
+    let primaryContact: { id: string; name: string; email: string } | null =
+      null;
 
-    if (typeof client.primary_contact_id === "string" && client.primary_contact_id.length > 0) {
+    if (
+      typeof client.primary_contact_id === "string" &&
+      client.primary_contact_id.length > 0
+    ) {
       const { data: contact, error: contactError } = await supabase
         .from("users")
         .select("id, name, email")
@@ -86,15 +95,19 @@ export async function POST(request: Request) {
       });
     }
 
-    const stripeCredentials = await resolveStripeCredentialsForClient(invoice.client_id);
+    const stripeCredentials = await resolveStripeCredentialsForClient(
+      invoice.client_id,
+    );
     if (!stripeCredentials.secret_key) {
       return apiError(request, {
         status: 503,
         code: "SERVICE_UNAVAILABLE",
-        message: "Online payments are not configured yet. Please contact support to pay this invoice.",
+        message:
+          "Online payments are not configured yet. Please contact support to pay this invoice.",
       });
     }
 
+    const writeClient = createAdminClientIfAvailable() ?? supabase;
     const stripe = getStripe(stripeCredentials.secret_key);
     let customerId = client.stripe_customer_id;
 
@@ -110,7 +123,11 @@ export async function POST(request: Request) {
 
       customerId = customer.id;
 
-      await supabase.from("clients").update({ stripe_customer_id: customerId }).eq("id", client.id);
+      const { error: customerError } = await writeClient
+        .from("clients")
+        .update({ stripe_customer_id: customerId })
+        .eq("id", client.id);
+      if (customerError) throw customerError;
     }
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -128,13 +145,15 @@ export async function POST(request: Request) {
       },
     });
 
-    await supabase
+    const { error: persistError } = await writeClient
       .from("invoices")
       .update({
         stripe_payment_intent_id: paymentIntent.id,
         status: "sent",
       })
       .eq("id", invoice.id);
+
+    if (persistError) throw persistError;
 
     const payload = {
       clientSecret: paymentIntent.client_secret,
@@ -146,7 +165,9 @@ export async function POST(request: Request) {
     console.error("Error creating payment intent:", error);
     return apiInternalError(
       request,
-      error instanceof Error ? error.message : "Failed to create payment intent",
+      error instanceof Error
+        ? error.message
+        : "Failed to create payment intent",
     );
   }
 }
