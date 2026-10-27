@@ -38,12 +38,16 @@ function StatusBadge({ status }: { status: UserAvailability["status"] }) {
   return (
     <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
       <HelpCircle className="h-3 w-3" />
-      No calendar
+      {status === "unavailable" ? "Unavailable" : "No calendar"}
     </Badge>
   );
 }
 
-export function StaffAvailability({ userIds, start, end }: StaffAvailabilityProps) {
+export function StaffAvailability({
+  userIds,
+  start,
+  end,
+}: StaffAvailabilityProps) {
   const [availability, setAvailability] = useState<UserAvailability[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -117,8 +121,8 @@ export function StaffAvailability({ userIds, start, end }: StaffAvailabilityProp
 
       {!loading && availability.length > 0 && (
         <p className="text-[11px] text-muted-foreground">
-          {availability.filter((a) => a.status === "free").length} of {availability.length} staff
-          available
+          {availability.filter((a) => a.status === "free").length} of{" "}
+          {availability.length} staff available
         </p>
       )}
     </div>

@@ -2,7 +2,7 @@
  * Rate limiting with optional Upstash Redis for distributed/serverless deploys.
  *
  * When UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set, limits are
- * enforced globally across all Vercel instances. Otherwise falls back to an
+ * enforced globally across all application instances. Otherwise falls back to an
  * in-memory sliding window (single-process only).
  */
 

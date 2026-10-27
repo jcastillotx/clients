@@ -27,14 +27,14 @@ Modern client management platform built with Next.js 15, Supabase, and TypeScrip
 - **Background Jobs**: Inngest
 - **Email**: Resend
 - **Payments**: Stripe
-- **Analytics**: Vercel Analytics + Sentry
+- **Analytics**: Sentry (optional)
 
 ### Core Architecture Notes
 
 - **Auth**: Supabase Auth (email/password + magic link + password recovery), SSR session refresh in middleware
 - **Authorization**: RBAC via `roles`, `user_roles`, and permission checks; admin/super_admin support
 - **Data Layer**: Supabase Postgres + Drizzle schema/migrations
-- **Deployment**: Vercel (Next.js build/runtime)
+- **Deployment**: OpenShip (standalone Docker runtime)
 - **Integrations**: Stripe, Resend, Inngest, AWS S3, Google Cloud Storage
 
 ## Features
@@ -96,7 +96,7 @@ Modern client management platform built with Next.js 15, Supabase, and TypeScrip
 - Node.js 20+
 - pnpm 9+
 - Supabase account
-- Vercel account (for deployment)
+- OpenShip access (for deployment)
 
 ### Installation
 
@@ -267,10 +267,8 @@ pnpm lint
 ### Deployment
 
 ```bash
-# Deploy to production
-vercel --prod
-
-# Or push to main branch for automatic deployment
+# Build the Linux image off-host, verify a private candidate, then promote on OpenShip.
+# See docs/DEPLOYMENT.md for runtime configuration and rollback.
 ```
 
 ## Key Design Decisions
@@ -331,4 +329,4 @@ Built with modern web technologies:
 - [Supabase](https://supabase.com)
 - [shadcn/ui](https://ui.shadcn.com)
 - [Inngest](https://inngest.com)
-- [Vercel](https://vercel.com)
+- [OpenShip deployment guide](docs/DEPLOYMENT.md)

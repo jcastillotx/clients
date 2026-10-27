@@ -19,7 +19,7 @@ export async function completeSupabaseAuthFromUrl(request: Request) {
   const isRecoveryFlow = type === "recovery" || next === "/reset-password";
 
   // Use the canonical base URL (custom domain) instead of request.url which
-  // may resolve to an internal *.vercel.app hostname on Vercel deployments.
+  // may resolve to an internal container hostname behind the OpenShip proxy.
   const baseUrl = getAuthBaseUrl();
   const redirectTarget = new URL(next, baseUrl);
 

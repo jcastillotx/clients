@@ -6,11 +6,14 @@ const nextConfig = {
   output: "standalone",
   experimental: { cpus: 2 },
   async headers() {
-    const vercelConfig = JSON.parse(
-      readFileSync(new URL("./vercel.json", import.meta.url), "utf8"),
+    const securityHeaders = JSON.parse(
+      readFileSync(
+        new URL("./config/security-headers.json", import.meta.url),
+        "utf8",
+      ),
     );
     if (process.env.STAGING_ISOLATED === "1") {
-      for (const route of vercelConfig.headers) {
+      for (const route of securityHeaders) {
         for (const header of route.headers) {
           if (header.key.toLowerCase() === "content-security-policy") {
             header.value = header.value
@@ -27,7 +30,7 @@ const nextConfig = {
         }
       }
     }
-    return vercelConfig.headers;
+    return securityHeaders;
   },
   images: {
     remotePatterns: [

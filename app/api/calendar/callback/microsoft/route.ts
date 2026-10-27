@@ -1,3 +1,4 @@
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { calendarConnections } from "@/lib/db/schema/calendar-integrations";
@@ -57,6 +58,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${redirectBase}?error=invalid_state`);
   }
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || user.id !== userId) {
+    return NextResponse.redirect(`${redirectBase}?error=session_mismatch`);
+  }
+
   const credentials = await resolveCalendarOAuthCredentialsForUser(
     userId,
     "microsoft",
@@ -83,7 +92,7 @@ export async function GET(req: NextRequest) {
           client_secret: credentials.client_secret ?? "",
           redirect_uri: redirectUri,
           grant_type: "authorization_code",
-          scope: "Calendars.Read offline_access User.Read",
+          scope: "Calendars.ReadBasic offline_access User.Read",
         }),
       },
     );
@@ -103,6 +112,11 @@ export async function GET(req: NextRequest) {
     const calRes = await fetch("https://graph.microsoft.com/v1.0/me/calendar", {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     });
+    if (!calRes.ok) {
+      return NextResponse.redirect(
+        `${redirectBase}?error=calendar_access_denied`,
+      );
+    }
     const calData = await calRes.json();
     const calendarName = calData.name ?? "Microsoft Calendar";
 

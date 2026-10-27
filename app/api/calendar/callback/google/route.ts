@@ -1,3 +1,4 @@
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { calendarConnections } from "@/lib/db/schema/calendar-integrations";
@@ -54,6 +55,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${redirectBase}?error=invalid_state`);
   }
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || user.id !== userId) {
+    return NextResponse.redirect(`${redirectBase}?error=session_mismatch`);
+  }
+
   const credentials = await resolveCalendarOAuthCredentialsForUser(
     userId,
     "google",
@@ -97,6 +106,11 @@ export async function GET(req: NextRequest) {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       },
     );
+    if (!calRes.ok) {
+      return NextResponse.redirect(
+        `${redirectBase}?error=calendar_access_denied`,
+      );
+    }
     const calData = await calRes.json();
     const calendarName = calData.summary ?? "Google Calendar";
 

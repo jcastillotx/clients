@@ -90,7 +90,7 @@ const RECOMMENDED_PRODUCTION_ENV: RecommendedEnvVar[] = [
 
 /**
  * Log non-fatal warnings for recommended production integrations.
- * Does not block startup — use before go-live to confirm Vercel env is complete.
+ * Does not block startup — use before go-live to confirm OpenShip environment is complete.
  */
 export function warnRecommendedProductionEnv(): void {
   if (process.env.NODE_ENV !== "production") {

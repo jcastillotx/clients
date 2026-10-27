@@ -63,13 +63,11 @@
 ## Monitoring & Observability
 
 - **Sentry** (`@sentry/nextjs`) — error tracking and performance monitoring
-- **Vercel Analytics** — web vitals
 
 ## Infrastructure
 
-- **Current**: Vercel (Edge runtime, serverless functions)
-- **Planned**: AWS (future migration)
-- **Config**: `vercel.json` in project root
+- **Current**: self-hosted OpenShip on AWS, standalone Node.js Docker container
+- **Config**: `Dockerfile`, `compose.yaml`, `next.config.mjs`, `config/security-headers.json`
 
 ## Key Scripts
 

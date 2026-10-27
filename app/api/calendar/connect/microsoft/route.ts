@@ -12,9 +12,11 @@ import {
   resolveCalendarOAuthCredentialsForUser,
 } from "@/lib/calendar/oauth-credentials";
 
-const MICROSOFT_SCOPES = ["Calendars.Read", "offline_access", "User.Read"].join(
-  " ",
-);
+const MICROSOFT_SCOPES = [
+  "Calendars.ReadBasic",
+  "offline_access",
+  "User.Read",
+].join(" ");
 
 /**
  * GET /api/calendar/connect/microsoft
@@ -36,7 +38,10 @@ export async function GET(request: NextRequest) {
     return redirectToLogin();
   }
 
-  const credentials = await resolveCalendarOAuthCredentialsForUser(user.id, "microsoft");
+  const credentials = await resolveCalendarOAuthCredentialsForUser(
+    user.id,
+    "microsoft",
+  );
   if (!hasCompleteCalendarOAuthCredentials(credentials)) {
     return redirectToCalendarSettings("microsoft_not_configured");
   }

@@ -18,7 +18,7 @@ import { isAdminUser } from "@/lib/rbac/check";
 import { isUserAssignableToClient } from "@/lib/users/assignable-users";
 import { z } from "zod";
 
-/** Best-effort client IP for audit logs (Vercel sets x-forwarded-for). */
+/** Best-effort client IP for audit logs (the OpenShip proxy sets x-forwarded-for). */
 function getClientIp(req: NextRequest): string | null {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
 }
