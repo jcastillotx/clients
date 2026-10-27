@@ -1,14 +1,21 @@
 import { Suspense } from "react";
 import { db } from "@/lib/db";
 import { projects, projectBudgets, projectMilestones, projectDeliverables } from "@/lib/db/schema/projects";
-import { isNull, desc, sql, eq } from "drizzle-orm";
+import { isNull, desc, sql, eq, and } from "drizzle-orm";
 import { ProjectCard } from "@/components/projects/project-card";
 import { Button } from "@/components/ui/button";
 import { Plus, ClipboardList, ListChecks } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-async function getProjects() {
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { resolveRouteAccess, type RouteAccess } from "@/lib/auth/route-access";
+
+async function getProjects(access: RouteAccess) {
+  if (!access.isStaff && !access.clientId) return [];
+  const conditions = [isNull(projects.deletedAt)];
+  if (!access.isStaff) conditions.push(eq(projects.clientId, access.clientId!));
   const result = await db
     .select({
       project: projects,
@@ -20,7 +27,7 @@ async function getProjects() {
     .leftJoin(projectBudgets, eq(projects.id, projectBudgets.projectId))
     .leftJoin(projectMilestones, eq(projects.id, projectMilestones.projectId))
     .leftJoin(projectDeliverables, eq(projects.id, projectDeliverables.projectId))
-    .where(isNull(projects.deletedAt))
+    .where(and(...conditions))
     .groupBy(projects.id)
     .orderBy(desc(projects.createdAt));
 
@@ -42,8 +49,8 @@ function ProjectsLoading() {
   );
 }
 
-async function ProjectsList() {
-  const allProjects = await getProjects();
+async function ProjectsList({ access }: { access: RouteAccess }) {
+  const allProjects = await getProjects(access);
 
   const projectsByStatus = {
     planning: allProjects.filter((p) => p.status === "planning"),
@@ -67,13 +74,13 @@ async function ProjectsList() {
         {allProjects.length === 0 ? (
           <div className="text-center py-12 border rounded-lg">
             <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first project to get started</p>
-            <Button asChild>
+            <p className="text-muted-foreground mb-4">Your projects will appear here when the KRE8IV team creates them</p>
+            {access.isAdmin && <Button asChild>
               <Link href="/projects/new">
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
               </Link>
-            </Button>
+            </Button>}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -119,7 +126,11 @@ async function ProjectsList() {
   );
 }
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const access = await resolveRouteAccess(supabase, user);
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
@@ -130,29 +141,29 @@ export default function ProjectsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" asChild>
+          {access.isAdmin && <Button variant="outline" asChild>
             <Link href="/projects/templates">
               <ListChecks className="h-4 w-4 mr-2" />
               Task Templates
             </Link>
-          </Button>
+          </Button>}
           <Button variant="outline" asChild>
             <Link href="/projects/requests">
               <ClipboardList className="h-4 w-4 mr-2" />
               Project Requests
             </Link>
           </Button>
-          <Button asChild>
+          {access.isAdmin && <Button asChild>
             <Link href="/projects/new">
               <Plus className="h-4 w-4 mr-2" />
               New Project
             </Link>
-          </Button>
+          </Button>}
         </div>
       </div>
 
       <Suspense fallback={<ProjectsLoading />}>
-        <ProjectsList />
+        <ProjectsList access={access} />
       </Suspense>
     </div>
   );

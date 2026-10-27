@@ -31,21 +31,14 @@ export function normalizeRoleName(roleRow: RoleRow): string {
 }
 
 export function isAdminAccess(
-  user: AuthUser,
+  _user: AuthUser,
   dbUser: DbUser | null,
   roleRows: RoleRow[] | null | undefined,
 ): boolean {
-  const metadataRole = String(
-    user.user_metadata?.role || user.user_metadata?.app_role || "",
-  ).toLowerCase();
   const roleNames = (roleRows || []).map(normalizeRoleName);
 
   return Boolean(
     dbUser?.is_super_admin ||
-    user.user_metadata?.is_super_admin === true ||
-    metadataRole === "admin" ||
-    metadataRole === "super_admin" ||
-    metadataRole === "account_manager" ||
     roleNames.includes("admin") ||
     roleNames.includes("super_admin") ||
     roleNames.includes("account_manager"),
@@ -53,18 +46,14 @@ export function isAdminAccess(
 }
 
 export function isStaffAccess(
-  user: AuthUser,
+  _user: AuthUser,
   dbUser: DbUser | null,
   roleRows: RoleRow[] | null | undefined,
 ): boolean {
-  const metadataRole = String(
-    user.user_metadata?.role || user.user_metadata?.app_role || "",
-  ).toLowerCase();
   const roleNames = (roleRows || []).map(normalizeRoleName);
 
   return Boolean(
-    isAdminAccess(user, dbUser, roleRows) ||
-    metadataRole === "staff" ||
+    isAdminAccess(_user, dbUser, roleRows) ||
     roleNames.includes("staff"),
   );
 }

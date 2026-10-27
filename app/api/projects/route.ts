@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { projects, projectBudgets, projectMilestones, projectDeliverables } from "@/lib/db/schema/projects";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { isAdminUser } from "@/lib/rbac/check";
 import {
   apiError,
@@ -31,9 +32,20 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const includeDeleted = searchParams.get("includeDeleted") === "true";
 
-    const conditions = [];
+    const access = await resolveRouteAccess(supabase, user);
+    if (clientId && !canAccessClient(access, clientId)) {
+      return apiForbidden(request);
+    }
+    if (!access.isStaff && !access.clientId) {
+      return apiForbidden(request, "A client account is required");
+    }
 
-    if (!includeDeleted) {
+    const conditions = [];
+    if (!access.isStaff) {
+      conditions.push(eq(projects.clientId, access.clientId!));
+    }
+
+    if (!includeDeleted || !access.isStaff) {
       conditions.push(isNull(projects.deletedAt));
     }
 

@@ -114,7 +114,7 @@ export default function ProposalsPage() {
           raw: true,
           fallbackMessage: "Failed to load proposals",
         }),
-        fetchApi<{ data: ServiceTemplate[] }>("/api/admin/service-templates", undefined, {
+        fetchApi<{ data: ServiceTemplate[] }>("/api/service-templates", undefined, {
           raw: true,
           fallbackMessage: "Failed to load service templates",
         }),

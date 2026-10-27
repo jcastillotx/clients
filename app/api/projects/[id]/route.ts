@@ -12,6 +12,7 @@ import {
 } from "@/lib/db/schema/projects";
 import { eq, and, isNull } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { isAdminUser } from "@/lib/rbac/check";
 import {
   apiForbidden,
@@ -41,6 +42,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!project) {
       return apiNotFound(request, "Project not found");
+    }
+
+    const access = await resolveRouteAccess(supabase, user);
+    if (!canAccessClient(access, project.clientId)) {
+      return apiForbidden(request);
     }
 
     const [budgets, milestones, deliverables, costEntries] = await Promise.all([

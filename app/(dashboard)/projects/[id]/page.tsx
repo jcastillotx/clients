@@ -35,18 +35,18 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
-import { isAdminUser } from "@/lib/rbac/check";
+import { canAccessClient, resolveRouteAccess, type RouteAccess } from "@/lib/auth/route-access";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import { ApplyTemplateButton } from "@/components/projects/apply-template-button";
 
-async function getProject(id: string) {
+async function getProject(id: string, access: RouteAccess) {
   const [project] = await db
     .select()
     .from(projects)
     .where(and(eq(projects.id, id), isNull(projects.deletedAt)))
     .limit(1);
 
-  if (!project) {
+  if (!project || !canAccessClient(access, project.clientId)) {
     return null;
   }
 
@@ -99,21 +99,13 @@ function ProjectLoading() {
 }
 
 async function ProjectDetails({ id }: { id: string }) {
-  const project = await getProject(id);
-
-  if (!project) {
-    notFound();
-  }
-
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const [{ data: dbUser }, { data: roleRows }] = user
-    ? await Promise.all([
-        supabase.from("users").select("is_super_admin").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
-      ])
-    : [{ data: null }, { data: [] }];
-  const isAdmin = user ? isAdminUser(user, dbUser, roleRows) : false;
+  if (!user) notFound();
+  const access = await resolveRouteAccess(supabase, user);
+  const project = await getProject(id, access);
+  if (!project) notFound();
+  const isAdmin = access.isAdmin;
 
   const budgetAmount = parseFloat(project.budgetAmount || "0");
   const spentAmount = parseFloat(project.spentAmount || "0");
@@ -147,13 +139,13 @@ async function ProjectDetails({ id }: { id: string }) {
           )}
         </div>
         <div className="flex gap-2">
-          <ApplyTemplateButton projectId={project.id} projectName={project.name} />
-          <Button variant="outline" size="sm" asChild>
+          {isAdmin && <ApplyTemplateButton projectId={project.id} projectName={project.name} />}
+          {isAdmin && <Button variant="outline" size="sm" asChild>
             <Link href={`/projects/${project.id}/edit`}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Link>
-          </Button>
+          </Button>}
           {isAdmin && <DeleteProjectButton projectId={project.id} />}
         </div>
       </div>
