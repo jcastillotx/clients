@@ -9,3 +9,11 @@ Provider testing found and repaired payment-dialog initialization on controlled 
 Evidence: `stripe-provider-results.json`, `stripe-3ds-sandbox.png`, `stripe-invoice-paid.png`, `stripe-checkout-success.png`. Test credentials and listener secrets remain outside the repository in protected local files. The original simulator environment file is preserved separately from the provider-test configuration.
 
 Google, Microsoft, marketing integrations, and real recipient email delivery remain outside this Stripe-only acceptance phase. Live account configuration and deployment details are recorded below when completed.
+
+## Production release
+
+Source `6494970` is live as `clients:stripe-6494970`. Migration 038 was applied after a protected full database backup. Existing KRE8IV production API credentials and the existing live webhook (`we_1TmSYWJboZZQxmLkf4fy7xHW`) were installed in protected runtime configuration. No duplicate endpoint was created and no key was rotated. Client-specific Stripe overrides remain intact. The webhook listens for payment success/failure, refunds, and subscription creation/update/deletion. Its existing `2016-07-06` snapshot fields were checked against real sandbox objects and retained.
+
+The production container is healthy with zero restarts. A read-only live API request confirms the correct KRE8IV account with charges and payouts enabled. A signed invoice-free configuration probe passed through the public webhook (200); unauthenticated payment-intent creation returned 401. No live transaction was created. A real live-sale settlement/delivery is not claimed by these sandbox checks.
+
+The protected runtime environment and prior container/database snapshots are retained for rollback (`clients-before-stripe-20261027`). TypeScript passed; 319 tests passed in 58 files; lint completed with existing repository warnings; the Linux amd64 production build passed. Details are in `stripe-production-release.json`.
