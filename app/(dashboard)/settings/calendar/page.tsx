@@ -259,7 +259,7 @@ export default async function CalendarSettingsPage({
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">Privacy & security</p>
             <ul className="space-y-1 list-disc list-inside">
-              <li>We request read-only access to your calendar free/busy information only</li>
+              <li>We request read-only access to availability and calendar names, never event contents</li>
               <li>We never read event titles, descriptions, attendees, or locations</li>
               <li>Your access token is encrypted at rest using AES-256-GCM</li>
               <li>Tokens are automatically refreshed — you only need to connect once</li>

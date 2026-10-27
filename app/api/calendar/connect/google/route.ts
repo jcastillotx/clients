@@ -12,7 +12,8 @@ import {
 } from "@/lib/calendar/oauth-credentials";
 
 const GOOGLE_SCOPES = [
-  "https://www.googleapis.com/auth/calendar.readonly",
+  // Calendar metadata names the connection; event contents are not needed.
+  "https://www.googleapis.com/auth/calendar.calendars.readonly",
   "https://www.googleapis.com/auth/calendar.freebusy",
 ].join(" ");
 
