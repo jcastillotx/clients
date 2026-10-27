@@ -2,7 +2,7 @@ import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { proposals } from "@/lib/db/schema/proposals";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import {
   apiError,
@@ -42,6 +42,10 @@ export async function POST(
       return apiNotFound(request, "Proposal not found");
     }
 
+    const access = await resolveRouteAccess(supabase, user);
+    if (!canAccessClient(access, existing.clientId))
+      return apiForbidden(request);
+
     if (existing.status === "accepted") {
       return apiError(request, {
         status: 400,
@@ -50,10 +54,6 @@ export async function POST(
       });
     }
 
-    const access = await resolveRouteAccess(supabase, user);
-    if (!canAccessClient(access, existing.clientId))
-      return apiForbidden(request);
-
     const [updated] = await db
       .update(proposals)
       .set({
@@ -61,8 +61,17 @@ export async function POST(
         cancelledAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(proposals.id, id))
+      .where(and(eq(proposals.id, id), ne(proposals.status, "accepted")))
       .returning();
+
+    if (!updated) {
+      return apiError(request, {
+        status: 409,
+        code: "CONFLICT",
+        message:
+          "The proposal changed before cancellation. Refresh and try again.",
+      });
+    }
 
     return apiSuccess(request, updated, {
       extra: { proposal: updated, message: "Proposal cancelled successfully" },

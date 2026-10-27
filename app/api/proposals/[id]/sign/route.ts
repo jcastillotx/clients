@@ -166,9 +166,16 @@ export async function POST(
       .eq("client_id", proposal.client_id)
       .in("status", ["sent", "viewed"])
       .select()
-      .single();
+      .maybeSingle();
 
     if (updateError) throw updateError;
+    if (!updatedProposal) {
+      return apiError(req, {
+        status: 409,
+        code: "CONFLICT",
+        message: "The proposal changed before signing. Refresh and try again.",
+      });
+    }
 
     const {
       data: { user: actorUser },

@@ -34,8 +34,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { createClient } from "@/lib/supabase/server";
-import { canAccessClient, resolveRouteAccess, type RouteAccess } from "@/lib/auth/route-access";
+import { resolveStaffAccess } from "@/lib/api/resolve-staff-access";
+import { canAccessClient, type RouteAccess } from "@/lib/auth/route-access";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import { ApplyTemplateButton } from "@/components/projects/apply-template-button";
 
@@ -99,10 +99,8 @@ function ProjectLoading() {
 }
 
 async function ProjectDetails({ id }: { id: string }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) notFound();
-  const access = await resolveRouteAccess(supabase, user);
+  const access = await resolveStaffAccess();
+  if (!access) notFound();
   const project = await getProject(id, access);
   if (!project) notFound();
   const isAdmin = access.isAdmin;
@@ -306,22 +304,26 @@ async function ProjectDetails({ id }: { id: string }) {
                 </div>
               </Link>
             </Button>
-            <Button variant="outline" asChild className="h-auto py-4">
-              <Link href={`/time-tracking?projectId=${project.id}`}>
-                <div className="flex flex-col items-center gap-2">
-                  <Timer className="h-6 w-6" />
-                  <span>Time Tracking</span>
-                </div>
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="h-auto py-4">
-              <Link href={`/projects/${project.id}/tasks`}>
-                <div className="flex flex-col items-center gap-2">
-                  <Columns3 className="h-6 w-6" />
-                  <span>Task Board</span>
-                </div>
-              </Link>
-            </Button>
+            {access.isStaff && (
+              <>
+                <Button variant="outline" asChild className="h-auto py-4">
+                  <Link href={`/time-tracking?projectId=${project.id}`}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Timer className="h-6 w-6" />
+                      <span>Time Tracking</span>
+                    </div>
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="h-auto py-4">
+                  <Link href={`/projects/${project.id}/tasks`}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Columns3 className="h-6 w-6" />
+                      <span>Task Board</span>
+                    </div>
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </TabsContent>
 
@@ -341,6 +343,7 @@ async function ProjectDetails({ id }: { id: string }) {
           <ProjectTeamSection
             projectId={project.id}
             initialTeamMembers={project.teamMembers ?? []}
+            canManage={isAdmin}
             currency={project.currency}
           />
         </TabsContent>

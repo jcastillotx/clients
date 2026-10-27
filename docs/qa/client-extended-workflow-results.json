@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Project feedback saves a rating and rejects invalid input",
+    "passed": true
+  },
+  {
+    "name": "Proposal cancellation authorizes tenant before revealing accepted status",
+    "passed": true
+  },
+  {
+    "name": "A client can cancel its sent proposal but cannot cancel an accepted proposal",
+    "passed": true
+  },
+  {
+    "name": "Concurrent message read receipts remain idempotent",
+    "passed": true
+  },
+  {
+    "name": "Notification preferences persist independently for each client",
+    "passed": true
+  },
+  {
+    "name": "Concurrent mark-all notifications read is idempotent",
+    "passed": true
+  },
+  {
+    "name": "Concurrent proposal acceptance and cancellation preserve one legal state",
+    "passed": true
+  },
+  {
+    "name": "Design-review website comments persist and stay tenant-scoped",
+    "passed": true
+  },
+  {
+    "name": "Design-review image upload and authorized download preserve bytes",
+    "passed": true
+  },
+  {
+    "name": "Nested project pages do not expose another tenant's project",
+    "passed": true
+  },
+  {
+    "name": "Staff task pages block clients while preserving staff access",
+    "passed": true
+  },
+  {
+    "name": "Client project actions show working destinations and omit staff-only tools",
+    "passed": true
+  }
+]

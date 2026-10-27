@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { messageReads, messages, conversationParticipants } from "@/lib/db/schema/messages";
+import {
+  messageReads,
+  messages,
+  conversationParticipants,
+} from "@/lib/db/schema/messages";
 import { eq, and } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -15,7 +19,10 @@ import {
  * POST /api/messages/[id]/read
  * Mark a message as read
  */
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const supabase = await createClient();
     const {
@@ -29,7 +36,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id: messageId } = await params;
 
-    const [message] = await db.select().from(messages).where(eq(messages.id, messageId)).limit(1);
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, messageId))
+      .limit(1);
 
     if (!message) {
       return apiNotFound(request, "Message not found");
@@ -53,7 +64,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const [existingRead] = await db
       .select()
       .from(messageReads)
-      .where(and(eq(messageReads.messageId, messageId), eq(messageReads.userId, user.id)))
+      .where(
+        and(
+          eq(messageReads.messageId, messageId),
+          eq(messageReads.userId, user.id),
+        ),
+      )
       .limit(1);
 
     if (existingRead) {
@@ -69,6 +85,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         userId: user.id,
         readAt: new Date(),
       })
+      .onConflictDoUpdate({
+        target: [messageReads.messageId, messageReads.userId],
+        set: { readAt: new Date() },
+      })
       .returning();
 
     return apiSuccess(request, read, { extra: { read } });
@@ -82,7 +102,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
  * DELETE /api/messages/[id]/read
  * Unmark a message as read (for testing/undo)
  */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const supabase = await createClient();
     const {
@@ -96,11 +119,22 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const { id: messageId } = await params;
 
-    await db.delete(messageReads).where(and(eq(messageReads.messageId, messageId), eq(messageReads.userId, user.id)));
+    await db
+      .delete(messageReads)
+      .where(
+        and(
+          eq(messageReads.messageId, messageId),
+          eq(messageReads.userId, user.id),
+        ),
+      );
 
-    return apiSuccess(request, { removed: true }, {
-      extra: { message: "Read status removed" },
-    });
+    return apiSuccess(
+      request,
+      { removed: true },
+      {
+        extra: { message: "Read status removed" },
+      },
+    );
   } catch (error) {
     console.error("Error removing read status:", error);
     return apiInternalError(request, "Failed to remove read status");

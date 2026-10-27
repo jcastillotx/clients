@@ -70,13 +70,16 @@ export async function GET(request: Request) {
         body: messages.body,
         meta: messages.meta,
         createdAt: messages.createdAt,
-        isRead: sql<boolean>`EXISTS(
-          SELECT 1 FROM ${messageReads}
-          WHERE ${messageReads.messageId} = ${messages.id}
-          AND ${messageReads.userId} = ${user.id}
-        )`,
+        isRead: sql<boolean>`${messageReads.id} IS NOT NULL`,
       })
       .from(messages)
+      .leftJoin(
+        messageReads,
+        and(
+          eq(messageReads.messageId, messages.id),
+          eq(messageReads.userId, user.id),
+        ),
+      )
       .where(
         and(
           eq(messages.conversationId, conversation.id),
@@ -155,15 +158,21 @@ export async function POST(request: Request) {
       return apiSuccess(request, { marked: 0 }, { extra: { marked: 0 } });
     }
 
-    await db.insert(messageReads).values(
-      unread.map((row) => ({
-        messageId: row.id,
-        userId: user.id,
-        readAt: new Date(),
-      })),
-    );
+    const inserted = await db
+      .insert(messageReads)
+      .values(
+        unread.map((row) => ({
+          messageId: row.id,
+          userId: user.id,
+          readAt: new Date(),
+        })),
+      )
+      .onConflictDoNothing({
+        target: [messageReads.messageId, messageReads.userId],
+      })
+      .returning({ id: messageReads.id });
 
-    const payload = { marked: unread.length };
+    const payload = { marked: inserted.length };
 
     return apiSuccess(request, payload, { extra: payload });
   } catch (error) {

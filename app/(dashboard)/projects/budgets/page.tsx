@@ -1,3 +1,4 @@
+import { requireStaffPageAccess } from "@/lib/auth/staff-page-access";
 import { Suspense } from "react";
 import Link from "next/link";
 import { desc, eq, isNull, sql } from "drizzle-orm";
@@ -101,7 +102,8 @@ async function BudgetsTable() {
   );
 }
 
-export default function ProjectBudgetsPage() {
+export default async function ProjectBudgetsPage() {
+  await requireStaffPageAccess();
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8 flex items-center justify-between">
