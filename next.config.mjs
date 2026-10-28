@@ -38,6 +38,16 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "www.kre8ivdesigns.com",
+        pathname: "/assets/logo-mark.png",
+      },
+      {
+        protocol: "https",
+        hostname: "www.kre8ivdesigns.com",
+        pathname: "/assets/logo.png",
+      },
+      {
+        protocol: "https",
+        hostname: "www.kre8ivdesigns.com",
         pathname: "/wp-content/**",
       },
     ],
