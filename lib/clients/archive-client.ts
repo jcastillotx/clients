@@ -128,7 +128,7 @@ async function archiveAssociatedTable(
   const result = await tx.execute<{ count: number }>(sql`
     WITH updated AS (
       UPDATE ${quotedPublicTable(tableName)}
-      SET deleted_at = ${archivedAt}
+      SET deleted_at = ${archivedAt.toISOString()}
       WHERE deleted_at IS NULL
         AND ${clientPredicate}
       RETURNING 1
@@ -149,7 +149,7 @@ async function restoreAssociatedTable(
     WITH updated AS (
       UPDATE ${quotedPublicTable(tableName)}
       SET deleted_at = NULL
-      WHERE deleted_at = ${archivedAt}
+      WHERE deleted_at = ${archivedAt.toISOString()}
         AND ${clientPredicate}
       RETURNING 1
     )

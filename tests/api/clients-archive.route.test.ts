@@ -150,4 +150,20 @@ describe("/api/clients/[id]/archive", () => {
     expect(body.data.restoredRecords).toHaveLength(1);
     expect(body.restoredRecords?.[0]?.updated).toBe(2);
   });
+  it.each(["archive", "restore"])("keeps database error details out of the %s response", async operation => {
+    vi.mocked(createClient).mockResolvedValue(createMockSupabaseClient({ user: { id: "admin-1" } }) as never);
+    vi.mocked(hasPermission).mockResolvedValue(true);
+    vi.mocked(hasAnyRole).mockResolvedValue(true);
+    const failure = new Error("SELECT internal_table: private database details");
+    if (operation === "archive") vi.mocked(archiveClientWithRecords).mockRejectedValueOnce(failure);
+    else vi.mocked(restoreClientWithRecords).mockRejectedValueOnce(failure);
+    const handler = operation === "archive" ? POST : DELETE;
+    const response = await handler(new Request(`http://localhost/api/clients/${clientId}/archive`), { params });
+    if (!response) throw new Error("Archive response was missing");
+    expect(response.status).toBe(500);
+    const body = await response.text();
+    expect(body).toContain(operation === "archive" ? "Failed to archive client" : "Failed to restore client");
+    expect(body).not.toContain("internal_table");
+  });
+
 });

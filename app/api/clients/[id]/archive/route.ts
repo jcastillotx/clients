@@ -72,7 +72,7 @@ export async function POST(
     console.error("Error archiving client:", error);
     return apiInternalError(
       request,
-      error instanceof Error ? error.message : "Failed to archive client",
+      "Failed to archive client",
     );
   }
 }
@@ -105,7 +105,7 @@ export async function DELETE(
     console.error("Error restoring client:", error);
     return apiInternalError(
       request,
-      error instanceof Error ? error.message : "Failed to restore client",
+      "Failed to restore client",
     );
   }
 }
