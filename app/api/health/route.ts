@@ -33,6 +33,7 @@ export async function GET(request: Request) {
 
     return apiSuccess(request, {
       status: "operational",
+      release: process.env.BUILD_COMMIT || null,
       timestamp: new Date().toISOString(),
       services: {
         database: "ok",

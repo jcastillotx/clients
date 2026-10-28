@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, HEAD } from "@/app/api/health/route";
 import { createClient } from "@/lib/supabase/server";
 import { readJson } from "../helpers/http";
@@ -9,8 +9,10 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 describe("GET /api/health", () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("BUILD_COMMIT", "release-under-test");
   });
 
   it("returns operational when database query succeeds", async () => {
@@ -25,13 +27,14 @@ describe("GET /api/health", () => {
     const response = await GET(new Request("http://localhost/api/health"));
     const body = await readJson<{
       success: boolean;
-      data?: { status: string; services: { database: string } };
+      data?: { status: string; release: string; services: { database: string } };
       status?: string;
       services?: { database: string };
     }>(response);
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
+    expect(body.data?.release).toBe("release-under-test");
     expect(body.data?.status ?? body.status).toBe("operational");
     expect(body.data?.services?.database ?? body.services?.database).toBe("ok");
   });

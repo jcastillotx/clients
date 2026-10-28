@@ -1,62 +1,88 @@
-name: Deploy readiness (manual)
+name: Release production (off-host)
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Target environment label"
-        required: true
-        default: production
-        type: choice
-        options:
-          - production
-          - staging
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clients-production-release
+  cancel-in-progress: false
 
 jobs:
-  verify:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    timeout-minutes: 30
+    env:
+      PUBLIC_BUILD_ARGS_JSON: ${{ vars.CLIENTS_PUBLIC_BUILD_ARGS_JSON }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Require main
+        run: test "$GITHUB_REF" = refs/heads/main
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.30.3
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Type check
-        run: pnpm type-check
-
-      - name: Unit tests
-        run: pnpm test:run
-
-      - name: Production build
-        run: pnpm build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
-          SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
-
-      - name: Deploy instructions
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check
+      - run: pnpm lint
+      - run: pnpm test -- --run
+      - name: Test release safety
+        run: python3 -m unittest discover -s tests/release -v
+      - name: Build Linux image off-host
+        run: python3 scripts/release/build.py
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Browser smoke test the built image
+        run: python3 scripts/release/smoke.py
+      - name: Package image
         run: |
-          echo "Environment: ${{ inputs.environment }}"
-          echo ""
-          echo "This application deploys as a standalone Docker container on OpenShip (see docs/OPENSHIP-MIGRATION.md)."
-          echo "Build Linux amd64 off-host, verify the private candidate, then promote it with a retained rollback container."
-          echo ""
-          echo "Before promoting:"
-          echo "  1. Confirm Supabase migrations are applied"
-          echo "  2. Confirm RLS policies from scripts/rls-policies.sql"
-          echo "  3. Confirm Stripe/Inngest/Resend webhooks point to production URL"
+          mkdir -p release
+          docker save "clients-release:$GITHUB_SHA" | gzip > release/image.tar.gz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: production-image
+          path: release/image.tar.gz
+          compression-level: 0
+          retention-days: 2
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: production-image
+          path: release
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ vars.CLIENTS_RELEASE_ROLE_ARN }}
+          aws-region: us-west-2
+          role-session-name: clients-release-${{ github.run_id }}
+      - name: Verify candidate, promote, and check public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_DOCUMENT_HASH: ${{ vars.CLIENTS_RELEASE_DOCUMENT_HASH }}
+          RELEASE_DOCUMENT_VERSION: ${{ vars.CLIENTS_RELEASE_DOCUMENT_VERSION }}
+          RELEASE_DEPLOYER_SHA256: ${{ vars.CLIENTS_RELEASE_DEPLOYER_SHA256 }}
+        run: python3 scripts/release/dispatch.py
+      - name: Save release receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: production-release-receipt
+          path: release/receipt.json
+          if-no-files-found: ignore
+          retention-days: 90

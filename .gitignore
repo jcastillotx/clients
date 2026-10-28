@@ -96,3 +96,8 @@ logs/
 *.bak
 id-mappings.json
 .aider*
+
+# Release build outputs and Python test caches
+.release-public.json
+/release/
+__pycache__/
