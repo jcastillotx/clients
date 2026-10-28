@@ -1,4 +1,9 @@
-export const recurringIntervals = ["weekly", "monthly", "quarterly", "yearly"] as const;
+export const recurringIntervals = [
+  "weekly",
+  "monthly",
+  "quarterly",
+  "yearly",
+] as const;
 
 export type RecurringInterval = (typeof recurringIntervals)[number];
 
@@ -7,6 +12,9 @@ export function calculateNextRecurringDate(
   interval: RecurringInterval,
 ): Date {
   const nextDate = new Date(from);
+
+  const day = nextDate.getUTCDate();
+  if (interval !== "weekly") nextDate.setUTCDate(1);
 
   switch (interval) {
     case "weekly":
@@ -23,5 +31,11 @@ export function calculateNextRecurringDate(
       break;
   }
 
+  if (interval !== "weekly") {
+    const lastDay = new Date(
+      Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth() + 1, 0),
+    ).getUTCDate();
+    nextDate.setUTCDate(Math.min(day, lastDay));
+  }
   return nextDate;
 }

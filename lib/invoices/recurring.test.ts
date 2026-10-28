@@ -17,3 +17,18 @@ describe("calculateNextRecurringDate", () => {
     expect(nextDate.toISOString()).toBe(expected);
   });
 });
+
+describe("recurring month boundaries", () => {
+  it.each([
+    ["2026-01-31T12:00:00.000Z", "monthly", "2026-02-28T12:00:00.000Z"],
+    ["2028-02-29T12:00:00.000Z", "yearly", "2029-02-28T12:00:00.000Z"],
+    ["2026-01-31T12:00:00.000Z", "quarterly", "2026-04-30T12:00:00.000Z"],
+  ] as const)(
+    "clamps %s + %s to the target month",
+    (from, interval, expected) => {
+      expect(
+        calculateNextRecurringDate(new Date(from), interval).toISOString(),
+      ).toBe(expected);
+    },
+  );
+});
