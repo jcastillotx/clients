@@ -17,7 +17,7 @@ const proposalLineItemSchema = z.object({
  * Proposal Creation Schema
  */
 export const createProposalSchema = z.object({
-  clientId: cleanTextSchema.uuid("Invalid client ID"),
+  clientId: cleanTextSchema.guid("Invalid client ID"),
   title: cleanTextSchema.min(1, "Title is required").max(255),
   description: cleanTextSchema.max(100000).optional().nullable(),
   totalAmount: z.number().finite().positive("Total amount must be positive"),

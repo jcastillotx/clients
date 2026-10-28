@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema/projects";
 
 export async function getAuthorizedProject(projectId: string) {
-  if (!z.string().uuid().safeParse(projectId).success) return null;
+  if (!z.string().guid().safeParse(projectId).success) return null;
   const access = await resolveStaffAccess();
   if (!access) return null;
   const [project] = await db

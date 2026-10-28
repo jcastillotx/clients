@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     ),
   ];
   if (
-    !z.array(z.string().uuid()).max(20).safeParse(userIds).success ||
+    !z.array(z.string().guid()).max(20).safeParse(userIds).success ||
     endDate.getTime() - startDate.getTime() > 31 * 24 * 60 * 60 * 1000
   ) {
     return apiError(request, {

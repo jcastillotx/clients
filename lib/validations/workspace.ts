@@ -8,7 +8,7 @@ import {
 } from "./fields";
 const name = cleanTextSchema.min(1, "Enter a name or title.").max(255);
 const notes = cleanTextSchema.max(20000).nullable().optional();
-const id = z.string().uuid();
+const id = z.string().guid();
 const date = calendarDateSchema.or(z.literal("")).nullable().optional();
 const money = z.coerce.number().finite().nonnegative().max(100000000);
 export const taskFormSchema = z.object({
@@ -56,7 +56,7 @@ export const maintenanceUsageSchema = z.object({
   billedAmount: money.nullable().optional(),
   invoiceId: id.nullable().optional(),
   workPerformedAt: date,
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 export const messageFormSchema = z
   .object({
@@ -110,7 +110,7 @@ export const contractFormSchema = z
       .nullable()
       .optional(),
     tags: z.array(cleanTextSchema.max(100)).max(100).optional(),
-    customFields: z.record(z.unknown()).optional(),
+    customFields: z.record(z.string(), z.unknown()).optional(),
   })
   .superRefine((data, context) =>
     checkDateOrder(data.startDate, data.endDate, "endDate", context),

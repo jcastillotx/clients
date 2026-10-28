@@ -20,15 +20,15 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 const listSchema = z.object({
-  accountId: z.string().uuid().optional(),
-  clientId: z.string().uuid().optional(),
+  accountId: z.string().guid().optional(),
+  clientId: z.string().guid().optional(),
   status: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 });
 
 const createSchema = z.object({
-  accountId: z.string().uuid(),
+  accountId: z.string().guid(),
   content: z.string().min(1),
   scheduledFor: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
@@ -36,7 +36,7 @@ const createSchema = z.object({
 });
 
 const patchSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
   content: z.string().optional(),
   scheduledFor: z.string().optional(),
   status: z.enum(postStatusEnum).optional(),
@@ -46,7 +46,7 @@ const patchSchema = z.object({
 });
 
 const deleteSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
 });
 
 async function requireUserAccess(request: Request) {

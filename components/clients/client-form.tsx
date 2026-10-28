@@ -27,7 +27,7 @@ const clientSchema = z.object({
   status: z.enum(CLIENT_STATUS_VALUES).default("active"),
   primaryContactId: z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
-    z.string().uuid().optional(),
+    z.string().guid().optional(),
   ),
   phone: phoneSchema.optional(),
   address: z.string().optional(),
@@ -76,7 +76,7 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
     formState: { errors },
     setValue,
     watch,
-  } = useForm<ClientFormInput>({
+  } = useForm<z.input<typeof clientSchema>, unknown, z.output<typeof clientSchema>>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       companyName: initialData?.company_name || "",
@@ -228,7 +228,7 @@ export function ClientForm({ users, initialData }: ClientFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="primaryContactId">Primary Contact</Label>
-            <Select value={primaryContactId || undefined} onValueChange={(value) => setValue("primaryContactId", value)}>
+            <Select value={typeof primaryContactId === "string" ? primaryContactId : undefined} onValueChange={(value) => setValue("primaryContactId", value)}>
               <SelectTrigger id="primaryContactId">
                 <SelectValue placeholder="Select a contact" />
               </SelectTrigger>

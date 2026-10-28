@@ -21,7 +21,7 @@ const updateGuideSchema = z.object({
   password_protected: z.boolean().optional(),
   password: z.string().optional().nullable(),
   published_at: z.string().datetime().optional().nullable(),
-  meta: z.record(z.unknown()).optional().nullable(),
+  meta: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 export async function GET(request: NextRequest, context: RouteContext) {

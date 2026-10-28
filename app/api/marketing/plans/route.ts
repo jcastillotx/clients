@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   }
 }
 const updateSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
   name: z.string().trim().min(1).max(100),
   monthlyPriceCents: z.number().int().min(100).max(1000000),
   groups: z

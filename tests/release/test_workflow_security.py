@@ -15,6 +15,15 @@ class WorkflowSecurityTests(unittest.TestCase):
                 for action in actions:
                     self.assertRegex(action, r'^[^@\s]+@[a-f0-9]{40}$')
 
+    def test_container_build_inputs_are_immutable(self):
+        text = (ROOT / 'Dockerfile').read_text()
+        images = re.findall(r'^FROM\s+(\S+)', text, re.M)
+        self.assertEqual(len(images), 2)
+        self.assertEqual(images[0], images[1])
+        for image in images:
+            self.assertRegex(image, r'^node:22-bookworm-slim@sha256:[a-f0-9]{64}$')
+        self.assertRegex(text.splitlines()[0], r'^# syntax=docker/dockerfile:1@sha256:[a-f0-9]{64}$')
+
     def test_checkout_does_not_leave_push_credentials(self):
         for path in (ROOT / '.github/workflows').glob('*.yml'):
             text = path.read_text()

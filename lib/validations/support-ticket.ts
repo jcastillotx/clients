@@ -51,12 +51,12 @@ export const createSupportTicketSchema = z.object({
   description: cleanTextSchema.min(10, "Description must be at least 10 characters").max(20000),
   category: z.enum(["technical", "billing", "general", "feature_request", "bug_report", "security", "performance"]),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
-  assignedTo: cleanTextSchema.uuid().optional(),
+  assignedTo: cleanTextSchema.guid().optional(),
   metadata: z
     .object({
       tags: z.array(cleanTextSchema).optional(),
       customFields: z
-        .record(z.any())
+        .record(z.string(), z.unknown())
         .and(
           z.object({
             websiteSupport: websiteSupportIntakeSchema.optional(),
@@ -88,13 +88,13 @@ export const updateSupportTicketSchema = z.object({
     .optional(),
   status: z.enum(["open", "in_progress", "waiting_on_client", "waiting_on_vendor", "resolved", "closed"]).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
-  assignedTo: cleanTextSchema.uuid().nullable().optional(),
+  assignedTo: cleanTextSchema.guid().nullable().optional(),
   estimatedHours: z.number().finite().min(0).optional(),
   actualHours: z.number().finite().min(0).optional(),
   metadata: z
     .object({
       tags: z.array(cleanTextSchema).optional(),
-      customFields: z.record(z.any()).optional(),
+      customFields: z.record(z.string(), z.unknown()).optional(),
       attachments: z
         .array(
           z.object({

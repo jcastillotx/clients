@@ -5,7 +5,7 @@ import { calendarDateSchema, checkDateOrder, cleanTextSchema } from "./fields";
  * Project Creation Schema
  */
 export const createProjectSchema = z.object({
-  clientId: cleanTextSchema.uuid("Invalid client ID"),
+  clientId: cleanTextSchema.guid("Invalid client ID"),
   name: cleanTextSchema.min(1, "Project name is required").max(255),
   description: cleanTextSchema.max(100000).optional().nullable(),
   status: z.enum(["planning", "active", "on_hold", "completed", "cancelled"]).default("planning"),
@@ -14,9 +14,9 @@ export const createProjectSchema = z.object({
   estimatedHours: z.number().finite().positive().optional().nullable(),
   budgetAmount: z.number().finite().nonnegative().optional().nullable(),
   currency: z.enum(["USD", "EUR", "GBP", "CAD", "AUD"]).default("USD"),
-  projectManagerId: cleanTextSchema.uuid().or(z.literal("")).optional().nullable().transform(value => value || null),
+  projectManagerId: cleanTextSchema.guid().or(z.literal("")).optional().nullable().transform(value => value || null),
   teamMembers: z.array(z.object({
-    userId: cleanTextSchema.uuid(),
+    userId: cleanTextSchema.guid(),
     name: cleanTextSchema,
     role: cleanTextSchema,
     hourlyRate: z.number().finite().positive().optional(),
@@ -48,10 +48,10 @@ export const updateProjectSchema = z.object({
   budgetAmount: z.number().finite().nonnegative().optional().nullable(),
   spentAmount: z.number().finite().nonnegative().optional().nullable(),
   currency: z.enum(["USD", "EUR", "GBP", "CAD", "AUD"]).optional(),
-  projectManagerId: cleanTextSchema.uuid().or(z.literal("")).optional().nullable().transform(value => value || null),
+  projectManagerId: cleanTextSchema.guid().or(z.literal("")).optional().nullable().transform(value => value || null),
   progressPercent: z.number().finite().min(0).max(100).optional(),
   teamMembers: z.array(z.object({
-    userId: cleanTextSchema.uuid(),
+    userId: cleanTextSchema.guid(),
     name: cleanTextSchema,
     role: cleanTextSchema,
     hourlyRate: z.number().finite().positive().optional(),
@@ -83,7 +83,7 @@ export const createProjectMilestoneSchema = z.object({
   sortOrder: z.number().finite().int().nonnegative().default(0),
   metadata: z.object({
     dependencies: z.array(cleanTextSchema).optional(),
-    assignedTo: z.array(cleanTextSchema.uuid()).optional(),
+    assignedTo: z.array(cleanTextSchema.guid()).optional(),
     notes: cleanTextSchema.max(100000).optional(),
   }).optional(),
 });

@@ -5,7 +5,7 @@ import { checkDateOrder, cleanTextSchema } from "./fields";
  * Ad Campaign Creation Schema
  */
 export const createAdCampaignSchema = z.object({
-  ad_account_id: cleanTextSchema.uuid("Invalid ad account ID"),
+  ad_account_id: cleanTextSchema.guid("Invalid ad account ID"),
   name: cleanTextSchema.min(1, "Campaign name is required").max(255),
   objective: cleanTextSchema.min(1, "Objective is required"),
   status: z.enum(["draft", "active", "paused", "completed"]).default("draft"),

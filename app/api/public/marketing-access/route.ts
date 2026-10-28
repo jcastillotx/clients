@@ -8,7 +8,7 @@ import { inviteMarketingBuyer } from "@/lib/marketing/purchase-access";
 import { apiError, apiSuccess, apiValidationError, apiInternalError } from "@/lib/api/response";
 
 const schema = z.object({
-  planId: z.string().uuid(), name: z.string().trim().min(2).max(100),
+  planId: z.string().guid(), name: z.string().trim().min(2).max(100),
   company: z.string().trim().min(2).max(150), email: z.string().trim().email().max(254).transform(value => value.toLowerCase()),
   contactFax: z.string().max(200).optional(), turnstileToken: z.string().max(4096).optional(),
 });

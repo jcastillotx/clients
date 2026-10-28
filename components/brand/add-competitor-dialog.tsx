@@ -46,7 +46,7 @@ export function AddCompetitorDialog({ children }: AddCompetitorDialogProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<CompetitorFormValues>({
+  const form = useForm<z.input<typeof competitorSchema>, unknown, z.output<typeof competitorSchema>>({
     resolver: zodResolver(competitorSchema),
     defaultValues: {
       isActive: true,

@@ -101,7 +101,7 @@ export function ClientBrandGuideWorkspace({
     const parsed = clientBrandGuideContentSchema.safeParse(content);
     if (!parsed.success) {
       toast.error("Check the brand guide fields", {
-        description: parsed.error.errors[0]?.message,
+        description: parsed.error.issues[0]?.message,
       });
       return;
     }

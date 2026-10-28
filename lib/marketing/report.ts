@@ -7,7 +7,7 @@ const analyticsReport = z
     metricHeaders: z
       .array(z.object({ name: z.string() }).passthrough())
       .optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .passthrough();
 const adsReport = z

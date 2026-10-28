@@ -31,7 +31,7 @@ export const generateRecurringInvoices = inngest.createFunction(
       assertJobResult(error, "Read recurring invoices");
       return z
         .array(
-          z.object({ id: z.string().uuid(), next_recurring_date: z.string() }),
+          z.object({ id: z.string().guid(), next_recurring_date: z.string() }),
         )
         .parse(data ?? []);
     });

@@ -34,7 +34,7 @@ const updateRuleSchema = z.object({
     .array(
       z.object({
         type: z.enum(["send_email", "create_task", "update_status", "send_notification", "webhook"]),
-        config: z.record(z.any()),
+        config: z.record(z.string(), z.unknown()),
       }),
     )
     .optional(),

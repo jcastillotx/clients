@@ -12,7 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 const requestSchema = z.object({
-  conversationId: z.string().uuid().optional(),
+  conversationId: z.string().guid().optional(),
   messages: z
     .array(
       z.object({

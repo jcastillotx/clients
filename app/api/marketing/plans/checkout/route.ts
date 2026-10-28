@@ -14,7 +14,7 @@ import {
 import { resolvePlatformStripeCredentials } from "@/lib/stripe/settings";
 import { createStripeClient } from "@/lib/stripe/client";
 import { rateLimit } from "@/lib/rate-limit";
-const schema = z.object({ planId: z.string().uuid() });
+const schema = z.object({ planId: z.string().guid() });
 export async function POST(request: Request) {
   const access = await resolveStaffAccess();
   if (!access) return apiUnauthorized(request);

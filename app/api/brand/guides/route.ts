@@ -18,7 +18,7 @@ const createGuideSchema = z.object({
   is_public: z.boolean().optional().default(false),
   password_protected: z.boolean().optional().default(false),
   password: z.string().optional().nullable(),
-  meta: z.record(z.unknown()).optional().nullable(),
+  meta: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {

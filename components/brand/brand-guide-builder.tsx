@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { Loader2, Save, Eye, Upload } from "lucide-react";
 
 const brandGuideSchema = z.object({
-  clientId: z.string().uuid().optional(),
+  clientId: z.string().guid().optional(),
   slug: z.string().trim().min(1, "Slug is required"),
   status: z.enum(["draft", "published"]),
   coverImage: z.string().optional(),
@@ -39,7 +39,7 @@ export function BrandGuideBuilder() {
   const [fonts, setFonts] = useState<any[]>([]);
   const [sections, setSections] = useState<any[]>([]);
 
-  const form = useForm<BrandGuideFormValues>({
+  const form = useForm<z.input<typeof brandGuideSchema>, unknown, z.output<typeof brandGuideSchema>>({
     resolver: zodResolver(brandGuideSchema),
     defaultValues: {
       status: "draft",

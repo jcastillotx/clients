@@ -15,8 +15,8 @@ import {
 } from "@/lib/api/response";
 
 const requestSchema = z.object({
-  clientId: z.string().uuid(),
-  serviceTemplateId: z.string().uuid().optional(),
+  clientId: z.string().guid(),
+  serviceTemplateId: z.string().guid().optional(),
   title: z.string().trim().min(1).max(200).optional(),
   description: z.string().trim().min(1).max(10000).optional(),
   notes: z.string().trim().max(5000).optional(),

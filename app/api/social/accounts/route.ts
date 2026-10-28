@@ -27,11 +27,11 @@ const socialPlatformSchema = z.enum([
 ]);
 
 const listSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
 });
 
 const createSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
   platform: socialPlatformSchema,
   accountName: z.string().min(1),
   accountId: z.string().min(1),
@@ -42,13 +42,13 @@ const createSchema = z.object({
 });
 
 const patchSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
   isActive: z.boolean().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const deleteSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
 });
 
 /**

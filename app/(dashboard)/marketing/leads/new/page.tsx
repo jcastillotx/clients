@@ -34,7 +34,7 @@ export default function NewLeadPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<LeadFormData>({
+  const form = useForm<z.input<typeof leadSchema>, unknown, z.output<typeof leadSchema>>({
     resolver: zodResolver(leadSchema),
     defaultValues: {
       name: "",

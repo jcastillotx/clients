@@ -40,7 +40,7 @@ export default function NewAdCampaignPage() {
   const [adAccounts, setAdAccounts] = useState<Array<{ id: string; platform: string; account_name: string }>>([]);
   const supabase = createClient();
 
-  const form = useForm<AdCampaignFormData>({
+  const form = useForm<z.input<typeof adCampaignSchema>, unknown, z.output<typeof adCampaignSchema>>({
     resolver: zodResolver(adCampaignSchema),
     defaultValues: {
       name: "",

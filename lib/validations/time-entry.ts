@@ -5,11 +5,11 @@ import { checkDateOrder, cleanTextSchema } from "./fields";
  * Time Entry Creation Schema
  */
 export const createTimeEntrySchema = z.object({
-  userId: cleanTextSchema.uuid("Invalid user ID").optional(), // Optional if auto-set from auth
-  clientId: cleanTextSchema.uuid("Invalid client ID").optional().nullable(),
-  requestId: cleanTextSchema.uuid("Invalid request ID").optional().nullable(),
-  projectId: cleanTextSchema.uuid("Invalid project ID").optional().nullable(),
-  taskId: cleanTextSchema.uuid("Invalid task ID").optional().nullable(),
+  userId: cleanTextSchema.guid("Invalid user ID").optional(), // Optional if auto-set from auth
+  clientId: cleanTextSchema.guid("Invalid client ID").optional().nullable(),
+  requestId: cleanTextSchema.guid("Invalid request ID").optional().nullable(),
+  projectId: cleanTextSchema.guid("Invalid project ID").optional().nullable(),
+  taskId: cleanTextSchema.guid("Invalid task ID").optional().nullable(),
   description: cleanTextSchema.max(1000).optional().nullable(),
   startedAt: cleanTextSchema.datetime("Invalid start time"),
   endedAt: cleanTextSchema.datetime("Invalid end time").optional().nullable(),
@@ -52,7 +52,7 @@ export type UpdateTimeEntryInput = z.infer<typeof updateTimeEntrySchema>;
  * Request Time Entry Schema (Simplified)
  */
 export const createRequestTimeEntrySchema = z.object({
-  requestId: cleanTextSchema.uuid("Invalid request ID"),
+  requestId: cleanTextSchema.guid("Invalid request ID"),
   hours: z.number().finite().positive("Hours must be positive").max(24, "Hours cannot exceed 24"),
   note: cleanTextSchema.max(500).optional().nullable(),
   loggedAt: cleanTextSchema.datetime("Invalid logged time"),
