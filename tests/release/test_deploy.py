@@ -44,9 +44,19 @@ class ReleaseSafetyTests(unittest.TestCase):
                 patch.object(deploy, "docker"), patch.object(deploy, "run_container"), \
                 patch.object(deploy, "wait_ready", side_effect=[{}, deploy.ReleaseError("public failure")]), \
                 patch.object(deploy, "restore_previous") as restore:
-            with self.assertRaisesRegex(deploy.ReleaseError, "public failure"):
+            with self.assertRaisesRegex(deploy.PromotionError, "public failure") as result:
                 deploy.promote(PREVIOUS, "candidate", "image", Path("runtime.env"), COMMIT, RELEASE)
+            self.assertEqual(result.exception.rollback, "restored")
             restore.assert_called_once_with(PREVIOUS, "clients-rollback-" + RELEASE, COMMIT)
+
+    def test_failed_rollback_is_reported_as_requiring_operator_recovery(self):
+        with patch.object(deploy, "inspect", return_value=PREVIOUS), \
+                patch.object(deploy, "docker"), patch.object(deploy, "run_container"), \
+                patch.object(deploy, "wait_ready", side_effect=deploy.ReleaseError("not ready")), \
+                patch.object(deploy, "restore_previous", side_effect=deploy.ReleaseError("missing")):
+            with self.assertRaises(deploy.PromotionError) as result:
+                deploy.promote(PREVIOUS, "candidate", "image", Path("runtime.env"), COMMIT, RELEASE)
+            self.assertEqual(result.exception.rollback, "failed")
 
     def test_success_retains_previous_container_without_rollback(self):
         with patch.object(deploy, "inspect", return_value=PREVIOUS), \

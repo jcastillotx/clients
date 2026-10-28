@@ -32,6 +32,12 @@ class ReleaseError(Exception):
     pass
 
 
+class PromotionError(ReleaseError):
+    def __init__(self, reason, rollback):
+        super().__init__(reason)
+        self.rollback = rollback
+
+
 def validate_release(release_id, commit, digest, url):
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ReleaseError("Invalid commit")
@@ -154,9 +160,13 @@ def promote(previous, candidate, image, env_file, commit, release_id):
         wait_ready("http://127.0.0.1:20004", commit)
         # Public checks run inside the rollback boundary, not as an unrelated later job.
         wait_ready(PUBLIC, commit, attempts=6)
-    except BaseException:
-        restore_previous(previous, rollback, commit)
-        raise
+    except BaseException as error:
+        try:
+            restore_previous(previous, rollback, commit)
+        except BaseException:
+            raise PromotionError("Promotion failed; automatic rollback needs operator recovery", "failed") from None
+        reason = str(error) if isinstance(error, ReleaseError) else type(error).__name__
+        raise PromotionError("Promotion failed; previous release restored: " + reason, "restored") from None
     return rollback
 
 
@@ -252,5 +262,5 @@ if __name__ == "__main__":
     except Exception as error:
         # Do not expose an artifact URL, subprocess stderr, or private runtime config in SSM logs.
         print(json.dumps({"status": "failed", "reason": str(error) if isinstance(error, ReleaseError)
-                          else type(error).__name__}))
+                          else type(error).__name__, "rollback": getattr(error, "rollback", "not-required")}))
         raise SystemExit(1)

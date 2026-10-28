@@ -63,3 +63,7 @@ stale-container rejection, release identity, artifact scope, and document safety
 ```sh
 python3 -m unittest discover -s tests/release -v
 ```
+
+The access configuration follows the official
+[GitHub AWS OIDC guidance](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws)
+and [SSM parameter interpolation guidance](https://docs.aws.amazon.com/systems-manager/latest/userguide/documents-creating-content.html).
