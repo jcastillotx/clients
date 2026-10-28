@@ -1,3 +1,4 @@
+import { publicPackageSchema } from "@/lib/catalog/schema";
 import { NextRequest } from "next/server";
 import { desc } from "drizzle-orm";
 import { z } from "zod";
@@ -29,6 +30,7 @@ const createServiceTemplateSchema = z.object({
   terms: z.string().trim().optional(),
   metadata: z
     .object({
+      publicPackages: z.array(publicPackageSchema).max(30).optional(),
       pricingMode: z.enum(["fixed", "quote"]).optional(),
       features: z.array(z.string()).optional(),
       deliverables: z.array(z.string()).optional(),
