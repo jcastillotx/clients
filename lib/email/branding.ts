@@ -11,7 +11,7 @@ export type EmailBrandContext = {
   site_url: string;
 };
 
-const DEFAULT_LOGO = "https://www.kre8ivdesigns.com/wp-content/uploads/2020/02/logo-copy-2-300x57.png";
+const DEFAULT_LOGO = "https://www.kre8ivdesigns.com/assets/logo.png";
 
 export async function getEmailBrandContext(): Promise<EmailBrandContext> {
   const branding = await getPortalBranding();
