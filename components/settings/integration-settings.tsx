@@ -125,7 +125,7 @@ export function IntegrationSettings({ clientId }: IntegrationSettingsProps) {
         <CardHeader>
           <CardTitle>Integrations & API Keys</CardTitle>
           <CardDescription>
-            Configure third-party service credentials. All values are encrypted at rest using AES-256-GCM.
+            Saved credentials and live connections are different. Verified means the last read-only provider check passed; sending, generation, sync, and webhooks require separate tests.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -193,7 +193,7 @@ function ProviderCard({ config, clientId, savedSettings, status, onSaved }: Prov
 
   const statusBadge = {
     verified: {
-      label: "Verified",
+      label: "Credential check passed",
       variant: "default" as const,
       icon: <CheckCircle2 className="h-3 w-3" />,
     },
