@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { sendServiceRequestConfirmation } from "@/lib/email/service-request-confirmation";
 import { rateLimitExceededResponse } from "@/lib/api/rate-limit-response";
 import {
   apiError,
@@ -239,9 +240,20 @@ export async function POST(request: NextRequest) {
       console.error("[POST /api/public/project-requests] notification dispatch:", notifyErr);
     }
 
+    let confirmationEmailSent = false;
+    try {
+      confirmationEmailSent = await sendServiceRequestConfirmation({
+        email: intakePayload.contactEmail,
+        requestId: projectRequest.id,
+      });
+    } catch (confirmationError) {
+      console.error("[POST /api/public/project-requests] confirmation email:", confirmationError);
+    }
+
     const result = {
       requestId: projectRequest.id,
       clientId: projectRequest.client_id,
+      confirmationEmailSent,
     };
 
     return apiSuccess(request, result, { status: 201 });
