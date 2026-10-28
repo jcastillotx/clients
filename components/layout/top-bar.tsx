@@ -352,7 +352,7 @@ function StaffTopBar({ userRole, userName, userEmail }: { userRole: "admin" | "s
   };
 
   const statusConfig = {
-    operational: { label: "All Systems Operational", icon: CheckCircle2, color: "text-green-500" },
+    operational: { label: "Portal online", icon: CheckCircle2, color: "text-green-500" },
     degraded: { label: "Performance Degraded", icon: AlertCircle, color: "text-yellow-500" },
     down: { label: "System Issues", icon: AlertCircle, color: "text-red-500" },
   };

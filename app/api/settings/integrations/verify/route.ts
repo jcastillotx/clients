@@ -1,3 +1,4 @@
+import { LIVE_CHECK_PROVIDERS, verifyReadOnlyProvider } from "@/lib/settings/verify-provider";
 import Stripe from "stripe";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -62,6 +63,9 @@ export async function POST(request: Request) {
     }
 
     const { provider } = providerValidation;
+    if (!LIVE_CHECK_PROVIDERS.includes(provider)) {
+      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Live verification is not available for this provider. Use its connection workflow; saved credentials alone do not establish connectivity." });
+    }
     const credentials: SavedCredential[] = await db
       .select({
         id: encryptedSettings.id,
@@ -126,15 +130,8 @@ async function verifyProvider(provider: string, credentials: Record<string, stri
       await verifyStripe(credentials);
       return;
     default:
-      validateCredentialPresence(credentials);
+      await verifyReadOnlyProvider(provider, credentials);
       return;
-  }
-}
-
-function validateCredentialPresence(credentials: Record<string, string>) {
-  const hasAnyValue = Object.values(credentials).some((value) => value.trim().length > 0);
-  if (!hasAnyValue) {
-    throw new Error("No credentials available to verify.");
   }
 }
 
@@ -172,6 +169,6 @@ function getSuccessMessage(provider: string) {
     case "stripe":
       return "Stripe credentials verified successfully.";
     default:
-      return "Credentials verified successfully.";
+      return "Live read-only credential check passed. Delivery, generation, and synchronization must be tested separately.";
   }
 }

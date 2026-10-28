@@ -1,3 +1,4 @@
+import { trustedVerification } from "@/lib/settings/verify-provider";
 import { and, eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
@@ -98,7 +99,7 @@ export async function GET(request: Request) {
         isActive: s.isActive,
         label: s.label,
         lastRotatedAt: s.lastRotatedAt,
-        lastVerifiedAt: s.lastVerifiedAt,
+        lastVerifiedAt: trustedVerification(s.provider, s.lastVerifiedAt),
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
       };
