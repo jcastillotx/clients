@@ -55,6 +55,7 @@ export const serviceTemplates = pgTable("service_templates", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   terms: text("terms"),
   metadata: jsonb("metadata").$type<{
+    pricingMode?: "fixed" | "quote";
     features?: string[];
     deliverables?: string[];
     estimatedTimeline?: string;

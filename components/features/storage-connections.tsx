@@ -366,11 +366,11 @@ function validateCredentials(provider: Provider, formData: typeof DEFAULT_FORM):
   return null;
 }
 
-type ConnectionStatus = "healthy" | "warning" | "broken";
+type ConnectionStatus = "healthy" | "warning" | "broken" | "unverified";
 
 function getConnectionStatus(connection: StorageConnection): ConnectionStatus {
   if (!connection.syncEnabled) return "broken";
-  if (!connection.lastSyncAt) return "healthy"; // never synced yet — connection is new
+  if (!connection.lastSyncAt) return "unverified";
   const hoursSinceSync = (Date.now() - new Date(connection.lastSyncAt).getTime()) / 36e5;
   if (hoursSinceSync > 24) return "warning";
   return "healthy";
@@ -382,20 +382,26 @@ const STATUS_META: Record<ConnectionStatus, {
   borderClass: string;
   badgeClass: string;
 }> = {
+  unverified: {
+    label: "Not tested",
+    icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
+    borderClass: "border-l-4 border-l-yellow-500",
+    badgeClass: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  },
   healthy: {
-    label: "Healthy",
+    label: "Recent sync recorded",
     icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
     borderClass: "border-l-4 border-l-green-500",
     badgeClass: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
   },
   warning: {
-    label: "Issues",
+    label: "Sync overdue",
     icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
     borderClass: "border-l-4 border-l-yellow-500",
     badgeClass: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
   },
   broken: {
-    label: "Broken",
+    label: "Sync disabled",
     icon: <XCircle className="h-4 w-4 text-red-500" />,
     borderClass: "border-l-4 border-l-red-500",
     badgeClass: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
@@ -468,14 +474,14 @@ function ConnectionCard({
           )}
           {status === "broken" && (
             <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-              Sync is disabled. Enable sync to restore this connection.
+              Sync is disabled. Saved connection details do not establish provider access.
             </p>
           )}
         </div>
         <div className="flex gap-2 mt-4">
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.info("Sync initiated")}>
+          <Button size="sm" variant="outline" className="flex-1" disabled title="Manual synchronization is not implemented for saved storage connections.">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Sync Now
+            Sync unavailable
           </Button>
           <Button size="sm" variant="destructive" onClick={() => onDelete(connection.id)}>
             <Trash2 className="h-4 w-4" />

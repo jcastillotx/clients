@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { proposals, serviceTemplates } from "@/lib/db/schema/proposals";
@@ -6,9 +8,22 @@ import { createClient } from "@/lib/supabase/server";
 import {
   apiError,
   apiNotFound,
+  apiForbidden,
+  apiValidationError,
   apiSuccess,
   apiUnauthorized,
 } from "@/lib/api/response";
+
+const requestSchema = z.object({
+  clientId: z.string().uuid(),
+  serviceTemplateId: z.string().uuid().optional(),
+  title: z.string().trim().min(1).max(200).optional(),
+  description: z.string().trim().min(1).max(10000).optional(),
+  notes: z.string().trim().max(5000).optional(),
+  currency: z.enum(["USD", "EUR", "GBP", "CAD"]).default("USD"),
+}).refine((value) => value.serviceTemplateId || (value.title && value.description), {
+  message: "Choose a service or describe your request.",
+});
 
 /**
  * POST /api/proposals/request
@@ -26,15 +41,11 @@ export async function POST(request: NextRequest) {
       return apiUnauthorized(request, "Authentication required");
     }
 
-    const body = await request.json();
-
-    if (!body.clientId) {
-      return apiError(request, {
-        status: 400,
-        code: "BAD_REQUEST",
-        message: "Client ID is required",
-      });
-    }
+    const parsed = requestSchema.safeParse(await request.json());
+    if (!parsed.success) return apiValidationError(request, parsed.error);
+    const body = parsed.data;
+    const access = await resolveRouteAccess(supabase, user);
+    if (!canAccessClient(access, body.clientId)) return apiForbidden(request);
 
     if (body.serviceTemplateId) {
       const [template] = await db
@@ -55,6 +66,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      const quoteRequired = template.metadata?.pricingMode === "quote" || Number(template.totalAmount) <= 0;
       const [proposal] = await db
         .insert(proposals)
         .values({
@@ -62,15 +74,16 @@ export async function POST(request: NextRequest) {
           serviceTemplateId: template.id,
           title: template.name,
           description: template.description,
-          status: "sent",
+          status: quoteRequired ? "draft" : "sent",
           totalAmount: template.totalAmount,
           currency: template.currency,
           terms: template.terms,
           lineItems: template.lineItems,
-          sentAt: new Date(),
+          sentAt: quoteRequired ? null : new Date(),
           createdBy: user.id,
           metadata: {
-            notes: body.notes || null,
+            isCustomRequest: quoteRequired,
+            notes: body.notes || undefined,
           },
         })
         .returning();
@@ -79,8 +92,9 @@ export async function POST(request: NextRequest) {
         status: 201,
         extra: {
           proposal,
-          message:
-            "Service requested successfully. A proposal has been created for your review.",
+          message: quoteRequired
+            ? "Request received. We will scope the work and prepare a written quote."
+            : "Service requested successfully. A proposal has been created for your review.",
         },
       });
     }
@@ -104,7 +118,7 @@ export async function POST(request: NextRequest) {
       .insert(proposals)
       .values({
         clientId: body.clientId,
-        title: body.title,
+        title: body.title!,
         description: body.description,
         status: "draft",
         totalAmount: "0",
@@ -114,7 +128,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           isCustomRequest: true,
           customRequestDescription: body.description,
-          notes: body.notes || null,
+          notes: body.notes || undefined,
         },
       })
       .returning();
@@ -133,7 +147,7 @@ export async function POST(request: NextRequest) {
     return apiError(request, {
       status,
       code: status === 503 ? "SERVICE_UNAVAILABLE" : "INTERNAL_ERROR",
-      message: error instanceof Error ? error.message : "Failed to submit request",
+      message: "Unable to submit your request. Please try again.",
     });
   }
 }

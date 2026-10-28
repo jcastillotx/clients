@@ -44,7 +44,7 @@ interface ServiceTemplate {
   totalAmount: string;
   isActive: boolean;
   lineItems: Array<{ description: string; quantity: number; unitPrice: number; amount: number }>;
-  metadata: { features?: string[]; deliverables?: string[]; estimatedTimeline?: string } | null;
+  metadata: { pricingMode?: "fixed" | "quote"; features?: string[]; deliverables?: string[]; estimatedTimeline?: string } | null;
 }
 
 interface Proposal {
@@ -87,6 +87,7 @@ export default function ProposalsPage() {
 
   // Custom request dialog
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
+  const [serviceNotes, setServiceNotes] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [customDescription, setCustomDescription] = useState("");
 
@@ -161,7 +162,7 @@ export default function ProposalsPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clientId, serviceTemplateId: requestTemplate.id }),
+          body: JSON.stringify({ clientId, serviceTemplateId: requestTemplate.id, notes: serviceNotes }),
         },
         { fallbackMessage: "Failed to request service" },
       );
@@ -431,7 +432,7 @@ export default function ProposalsPage() {
         {/* Available Services Tab */}
         <TabsContent value="services" className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">Choose a service to generate a proposal, or request a custom service.</p>
+            <p className="text-muted-foreground">Choose a service and tell us what your organization needs. We will prepare a written scope and quote.</p>
             <Button variant="outline" onClick={() => setCustomDialogOpen(true)}>
               <Send className="mr-2 h-4 w-4" />
               Request Custom Service
@@ -463,10 +464,10 @@ export default function ProposalsPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-muted-foreground">
                         <DollarSign className="h-3.5 w-3.5" />
-                        <span className="text-xs">Starting at</span>
+                        <span className="text-xs">Pricing</span>
                       </div>
                       <p className="text-2xl font-bold">
-                        ${parseFloat(service.totalAmount).toLocaleString()}
+                        {service.metadata?.pricingMode === "quote" || Number(service.totalAmount) <= 0 ? "Custom quote" : `$${Number(service.totalAmount).toLocaleString()}`}
                       </p>
                     </div>
 
@@ -487,7 +488,7 @@ export default function ProposalsPage() {
                       </div>
                     )}
 
-                    <Button className="w-full" onClick={() => setRequestTemplate(service)}>
+                    <Button className="w-full" onClick={() => { setServiceNotes(""); setRequestTemplate(service); }}>
                       Request This Service
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -505,7 +506,7 @@ export default function ProposalsPage() {
           <DialogHeader>
             <DialogTitle>Request: {requestTemplate?.name}</DialogTitle>
             <DialogDescription>
-              A proposal will be created for your review with the following details.
+              We will review your needs and prepare a written proposal before work begins.
             </DialogDescription>
           </DialogHeader>
           {requestTemplate && (
@@ -518,7 +519,7 @@ export default function ProposalsPage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Price</span>
                   <span className="font-medium">
-                    ${parseFloat(requestTemplate.totalAmount).toLocaleString()} {requestTemplate.currency}
+                    {requestTemplate.metadata?.pricingMode === "quote" || Number(requestTemplate.totalAmount) <= 0 ? "Quoted after review" : `$${Number(requestTemplate.totalAmount).toLocaleString()} ${requestTemplate.currency}`}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -526,8 +527,12 @@ export default function ProposalsPage() {
                   <span className="font-medium">{requestTemplate.lineItems.length} deliverables</span>
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="service-needs">What does your organization need?</Label>
+                <Textarea id="service-needs" value={serviceNotes} onChange={(event) => setServiceNotes(event.target.value)} maxLength={5000} placeholder="Share your goals, current website or tools, timeline, and any constraints." />
+              </div>
               <p className="text-sm text-muted-foreground">
-                After requesting, you can review the full proposal, accept it, provide feedback, or cancel.
+                Submitting a request does not authorize charges or start work. Your team will receive a proposal to review.
               </p>
             </div>
           )}

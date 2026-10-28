@@ -245,7 +245,7 @@ export function ServiceTemplatesManager() {
                     <span className="text-xs">Total Price</span>
                   </div>
                   <p className="text-2xl font-bold">
-                    ${parseFloat(template.totalAmount).toLocaleString()} {template.currency}
+                    {Number(template.totalAmount) <= 0 ? "Custom quote" : `$${Number(template.totalAmount).toLocaleString()} ${template.currency}`}
                   </p>
                 </div>
 

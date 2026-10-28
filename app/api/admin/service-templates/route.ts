@@ -29,6 +29,7 @@ const createServiceTemplateSchema = z.object({
   terms: z.string().trim().optional(),
   metadata: z
     .object({
+      pricingMode: z.enum(["fixed", "quote"]).optional(),
       features: z.array(z.string()).optional(),
       deliverables: z.array(z.string()).optional(),
       estimatedTimeline: z.string().optional(),
