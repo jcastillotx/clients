@@ -1,5 +1,9 @@
 import { inngest } from "../client";
-import { createAdminClientIfAvailable } from "@/lib/supabase/server";
+import {
+  createJobClient,
+  scheduledJobsEnabled,
+  assertJobResult,
+} from "../job-runtime";
 import { sendInvoiceEmailWithPdf } from "@/lib/email/send-invoice-email";
 import { resolveInvoiceRecipientEmail } from "@/lib/email/invoice-email-context";
 
@@ -8,16 +12,13 @@ export const sendInvoiceReminders = inngest.createFunction(
   {
     id: "send-invoice-reminders",
     name: "Send Invoice Reminders",
+    concurrency: 1,
   },
   { cron: "TZ=America/Los_Angeles 0 9 * * *" }, // Daily at 9am PST
   async ({ step }) => {
-    const admin = createAdminClientIfAvailable();
-    if (!admin) {
-      console.error(
-        "sendInvoiceReminders: SUPABASE_SERVICE_KEY not configured; skipping.",
-      );
-      return { skipped: true, reason: "no_admin_client" };
-    }
+    if (!scheduledJobsEnabled())
+      return { skipped: true, reason: "schedules_disabled" };
+    const admin = createJobClient();
 
     // Step 1: Find invoices due in 7 days
     const dueSoonInvoices = await step.run(
@@ -35,6 +36,7 @@ export const sendInvoiceReminders = inngest.createFunction(
         `,
           )
           .eq("status", "sent")
+          .is("deleted_at", null)
           .gte("due_date", new Date().toISOString())
           .lte("due_date", targetDate.toISOString())
           .is("reminded_due_7_at", null);
@@ -51,7 +53,7 @@ export const sendInvoiceReminders = inngest.createFunction(
         const client = Array.isArray(invoice.client)
           ? invoice.client[0]
           : invoice.client;
-        if (!client) return;
+        if (!client) throw new Error("Invoice reminder client unavailable");
 
         let primaryContact: {
           id: string;
@@ -62,16 +64,17 @@ export const sendInvoiceReminders = inngest.createFunction(
           typeof client.primary_contact_id === "string" &&
           client.primary_contact_id.length > 0
         ) {
-          const { data: contact } = await admin
+          const { data: contact, error: contactError } = await admin
             .from("users")
             .select("id, name, email")
             .eq("id", client.primary_contact_id)
             .maybeSingle();
+          assertJobResult(contactError, "Read invoice primary contact");
           primaryContact = contact;
         }
 
         const to = resolveInvoiceRecipientEmail(client, primaryContact);
-        if (!to) return;
+        if (!to) throw new Error("Invoice reminder recipient unavailable");
 
         const sent = await sendInvoiceEmailWithPdf(admin, {
           invoiceId: invoice.id,
@@ -84,17 +87,14 @@ export const sendInvoiceReminders = inngest.createFunction(
         });
 
         if (!sent.success) {
-          console.error(
-            `Due-soon reminder failed for ${invoice.id}:`,
-            sent.error,
-          );
-          return;
+          throw new Error("Due-soon invoice reminder delivery failed");
         }
 
-        await admin
+        const { error: updateError } = await admin
           .from("invoices")
           .update({ reminded_due_7_at: new Date().toISOString() })
           .eq("id", invoice.id);
+        assertJobResult(updateError, "Save invoice reminder state");
       });
     }
 
@@ -111,6 +111,7 @@ export const sendInvoiceReminders = inngest.createFunction(
         `,
           )
           .eq("status", "sent")
+          .is("deleted_at", null)
           .lt("due_date", new Date().toISOString())
           .is("reminded_overdue_at", null);
 
@@ -126,7 +127,7 @@ export const sendInvoiceReminders = inngest.createFunction(
         const client = Array.isArray(invoice.client)
           ? invoice.client[0]
           : invoice.client;
-        if (!client) return;
+        if (!client) throw new Error("Invoice reminder client unavailable");
 
         let primaryContact: {
           id: string;
@@ -137,16 +138,17 @@ export const sendInvoiceReminders = inngest.createFunction(
           typeof client.primary_contact_id === "string" &&
           client.primary_contact_id.length > 0
         ) {
-          const { data: contact } = await admin
+          const { data: contact, error: contactError } = await admin
             .from("users")
             .select("id, name, email")
             .eq("id", client.primary_contact_id)
             .maybeSingle();
+          assertJobResult(contactError, "Read invoice primary contact");
           primaryContact = contact;
         }
 
         const to = resolveInvoiceRecipientEmail(client, primaryContact);
-        if (!to) return;
+        if (!to) throw new Error("Invoice reminder recipient unavailable");
 
         const daysOverdue = Math.max(
           1,
@@ -167,20 +169,17 @@ export const sendInvoiceReminders = inngest.createFunction(
         });
 
         if (!sent.success) {
-          console.error(
-            `Overdue reminder failed for ${invoice.id}:`,
-            sent.error,
-          );
-          return;
+          throw new Error("Overdue invoice reminder delivery failed");
         }
 
-        await admin
+        const { error: updateError } = await admin
           .from("invoices")
           .update({
             reminded_overdue_at: new Date().toISOString(),
             status: "overdue",
           })
           .eq("id", invoice.id);
+        assertJobResult(updateError, "Save invoice reminder state");
       });
     }
 
