@@ -20,6 +20,17 @@ if sys.platform != "linux":
     raise SystemExit("Provision only on the OpenShip Linux host")
 if shutil.disk_usage("/").free < 3 * 1024**3:
     raise SystemExit("At least 3 GiB free root storage is required before provisioning")
+# Refuse to create persistent job state on the OS disk if a mount is missing.
+data_root = Path("/srv/kre8iv-data")
+expected_uuid = "70b0504e-aa41-42c4-a956-400d19cede3e"
+for storage_path in [str(args.directory.parent), "/var/lib/docker", "/var/lib/containerd"]:
+    observed_uuid = subprocess.check_output(
+        ["findmnt", "-rn", "-o", "UUID", "--target", storage_path], text=True
+    ).strip()
+    if observed_uuid != expected_uuid:
+        raise SystemExit("Job storage must be mounted on the attached site-data drive")
+if shutil.disk_usage(data_root).free < 10 * 1024**3:
+    raise SystemExit("At least 10 GiB free site-data storage is required before provisioning")
 subprocess.run(["docker", "network", "inspect", "openship-kre8ivdesigns-clients"], check=True, capture_output=True)
 root = args.directory
 root.mkdir(parents=True, exist_ok=True, mode=0o700)
