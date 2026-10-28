@@ -23,3 +23,7 @@ Neither is a launch requirement at this time. Confirm client demand and existing
 ## Validation and cleanup
 
 424 unit tests across 78 files passed, including OAuth state/user/tenant/plan binding and scope rejection tests. Type-check passed and lint completed with existing warnings. Real Search Console and Meta provider acceptance each passed 9 checks. Search Console temporary connection was removed after testing. Meta temporary connection was removed after testing; local database verification found zero remaining Search Console or Meta connections. Dedicated Meta credentials are held in protected server configuration for a future release, separate from the running production environment. Production remains unchanged pending release and provider eligibility review.
+
+## Deployment baseline after background-job repairs
+
+PR #239 is deployed as `clients:background-70b0e91`; migration 045 is applied. The four scheduled jobs remain paused with `BACKGROUND_SCHEDULES_ENABLED=false` pending owner Inngest sign-in, keys, production acceptance and explicit schedule activation. Preserve this setting during provider deployment. The production OpenShip active release is `dep_clients_background_70b0e91`; off-host promotions must also record the actual new container/image/source in OpenShip's deployment and service-deployment records and update its active-release pointer, retaining prior releases and rollback containers. Verify the dashboard resolves the running container rather than a stopped historical one.
