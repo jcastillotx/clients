@@ -30,6 +30,8 @@ jobs:
           node-version: "22"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Block critical production dependency advisories
+        run: pnpm audit --prod --audit-level critical
       - run: pnpm type-check
       - run: pnpm lint
       - run: pnpm test -- --run

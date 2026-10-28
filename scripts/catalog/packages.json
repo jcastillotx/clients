@@ -1,0 +1,170 @@
+[
+  {
+    "id": "business-website",
+    "name": "Business Website",
+    "group": "Website projects",
+    "service": "WordPress Design",
+    "fit": "A clear, editable website for a small organization, typically up to five pages.",
+    "includes": [
+      "Page plan and responsive design",
+      "Standard inquiry form and search foundations",
+      "Launch checks and team handover"
+    ]
+  },
+  {
+    "id": "growth-website",
+    "name": "Growth Website",
+    "group": "Website projects",
+    "service": "WordPress Design",
+    "fit": "A growing organization with more services, content and conversion paths, typically up to ten pages.",
+    "includes": [
+      "Content structure and CMS configuration",
+      "Agreed forms and measurement setup",
+      "Staged reviews, launch and handover"
+    ]
+  },
+  {
+    "id": "commerce-launch",
+    "name": "Commerce Launch",
+    "group": "Website projects",
+    "service": "E-Commerce",
+    "fit": "A standard Shopify or WooCommerce store with a clearly defined initial catalog.",
+    "includes": [
+      "Storefront and catalog structure",
+      "Approved payment and shipping setup",
+      "Checkout testing and team handover"
+    ]
+  },
+  {
+    "id": "care-essential",
+    "name": "Care Essential",
+    "group": "Website care",
+    "service": "WordPress Design",
+    "fit": "A simple business website that needs routine technical care and occasional small changes.",
+    "includes": [
+      "Update, backup and security review",
+      "Uptime checks",
+      "A defined allowance of minor content changes"
+    ]
+  },
+  {
+    "id": "care-growth",
+    "name": "Care Growth",
+    "group": "Website care",
+    "service": "WordPress Design",
+    "fit": "An active website with regular content changes and a need for ongoing oversight.",
+    "includes": [
+      "Routine website care",
+      "Agreed monthly edit allowance",
+      "Form and performance review with a report"
+    ]
+  },
+  {
+    "id": "care-commerce",
+    "name": "Care Commerce",
+    "group": "Website care",
+    "service": "E-Commerce",
+    "fit": "An online store that needs more careful update reviews and checkout checks.",
+    "includes": [
+      "Store maintenance scope agreed after review",
+      "Staging review and checkout smoke tests",
+      "Defined support and edit allowance"
+    ]
+  },
+  {
+    "id": "local-visibility",
+    "name": "Local Visibility",
+    "group": "Marketing support",
+    "service": "SEO Services",
+    "fit": "A local organization that needs stronger search foundations and a practical monthly improvement plan.",
+    "includes": [
+      "Business profile and on-page priorities",
+      "Scoped content improvements",
+      "Monthly performance review"
+    ]
+  },
+  {
+    "id": "search-growth",
+    "name": "Search Growth",
+    "group": "Marketing support",
+    "service": "SEO Services",
+    "fit": "A team investing in ongoing technical search work, useful content and AI search visibility.",
+    "includes": [
+      "Technical and content priorities",
+      "Agreed content deliverables",
+      "Evidence-based search reporting"
+    ]
+  },
+  {
+    "id": "paid-media",
+    "name": "Paid Media Management",
+    "group": "Marketing support",
+    "service": "Online Advertising",
+    "fit": "An organization ready to run agreed campaigns on Google, Meta or both.",
+    "includes": [
+      "Account, tracking and campaign review",
+      "Scoped campaign management and optimization",
+      "Reporting; advertising spend paid separately"
+    ]
+  },
+  {
+    "id": "creative-production",
+    "name": "Creative Production",
+    "group": "Marketing support",
+    "service": "Creative Design",
+    "fit": "A team that needs consistent campaign artwork and reusable digital assets.",
+    "includes": [
+      "Agreed asset quantities and formats",
+      "Defined review and revision rounds",
+      "Editable source-file handover"
+    ]
+  },
+  {
+    "id": "brand-foundation",
+    "name": "Brand Foundation",
+    "group": "Discovery & specialist work",
+    "service": "Branding",
+    "fit": "An organization establishing or refreshing a consistent visual identity.",
+    "includes": [
+      "Brand discovery and visual direction",
+      "Logo, color and typography system",
+      "Brand guidelines and source files"
+    ]
+  },
+  {
+    "id": "strategy-sprint",
+    "name": "Strategy Sprint",
+    "group": "Discovery & specialist work",
+    "service": "Digital Strategy",
+    "fit": "A leadership team deciding which digital work matters most and what to do first.",
+    "includes": [
+      "Goals and audience workshop",
+      "Channel and measurement priorities",
+      "A practical 90-day roadmap"
+    ]
+  },
+  {
+    "id": "website-assessment",
+    "name": "Website Assessment",
+    "group": "Discovery & specialist work",
+    "service": "Website Audit",
+    "fit": "An organization that wants a prioritized view of website issues before committing to improvements.",
+    "includes": [
+      "Usability, performance and search review",
+      "Inquiry-path and accessibility issue review",
+      "Prioritized findings; no compliance certification"
+    ]
+  },
+  {
+    "id": "custom-discovery",
+    "name": "Custom Development Discovery",
+    "group": "Discovery & specialist work",
+    "service": "Custom Web Design",
+    "fit": "A workflow, portal or integration that needs technical scoping before implementation can be priced.",
+    "includes": [
+      "Requirements and feasibility review",
+      "Access, data and integration considerations",
+      "Implementation scope and milestone estimate"
+    ]
+  }
+]

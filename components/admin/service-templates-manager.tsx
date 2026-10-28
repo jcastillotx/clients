@@ -1,12 +1,26 @@
 "use client";
 
+import { PublicPackageEditor } from "@/components/admin/public-package-editor";
+import type { PublicPackage } from "@/lib/catalog/schema";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -18,8 +32,22 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, AlertCircle, DollarSign, FileText } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  AlertCircle,
+  DollarSign,
+  FileText,
+} from "lucide-react";
 import { fetchApi } from "@/lib/api/client";
 
 interface ServiceTemplate {
@@ -29,10 +57,23 @@ interface ServiceTemplate {
   category: string | null;
   isActive: boolean;
   currency: string;
-  lineItems: Array<{ id: string; description: string; quantity: number; unitPrice: number; amount: number; category?: string }>;
+  lineItems: Array<{
+    id: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    amount: number;
+    category?: string;
+  }>;
   totalAmount: string;
   terms: string | null;
-  metadata: { features?: string[]; deliverables?: string[]; estimatedTimeline?: string; notes?: string } | null;
+  metadata: {
+    publicPackages?: PublicPackage[];
+    features?: string[];
+    deliverables?: string[];
+    estimatedTimeline?: string;
+    notes?: string;
+  } | null;
   createdAt: string;
 }
 
@@ -53,6 +94,9 @@ const emptyForm = {
 };
 
 export function ServiceTemplatesManager() {
+  const [publicPackages, setPublicPackages] = useState<PublicPackage[]>([]);
+  const [templateMetadata, setTemplateMetadata] =
+    useState<ServiceTemplate["metadata"]>(null);
   const [templates, setTemplates] = useState<ServiceTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,13 +116,21 @@ export function ServiceTemplatesManager() {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const data = await fetchApi<ServiceTemplate[]>("/api/admin/service-templates", undefined, {
-        fallbackMessage: "Failed to load templates",
-      });
+      const data = await fetchApi<ServiceTemplate[]>(
+        "/api/admin/service-templates",
+        undefined,
+        {
+          fallbackMessage: "Failed to load templates",
+        },
+      );
       setTemplates(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load service templates.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load service templates.",
+      );
     } finally {
       setLoading(false);
     }
@@ -86,13 +138,19 @@ export function ServiceTemplatesManager() {
 
   const openCreateDialog = () => {
     setEditingId(null);
+    setPublicPackages([]);
+    setTemplateMetadata(null);
     setFormData(emptyForm);
-    setLineItems([{ description: "", quantity: 1, unitPrice: 0, category: "" }]);
+    setLineItems([
+      { description: "", quantity: 1, unitPrice: 0, category: "" },
+    ]);
     setDialogOpen(true);
   };
 
   const openEditDialog = (template: ServiceTemplate) => {
     setEditingId(template.id);
+    setPublicPackages(template.metadata?.publicPackages ?? []);
+    setTemplateMetadata(template.metadata);
     setFormData({
       name: template.name,
       description: template.description || "",
@@ -113,7 +171,10 @@ export function ServiceTemplatesManager() {
   };
 
   const addLineItem = () => {
-    setLineItems([...lineItems, { description: "", quantity: 1, unitPrice: 0, category: "" }]);
+    setLineItems([
+      ...lineItems,
+      { description: "", quantity: 1, unitPrice: 0, category: "" },
+    ]);
   };
 
   const removeLineItem = (index: number) => {
@@ -122,13 +183,21 @@ export function ServiceTemplatesManager() {
     }
   };
 
-  const updateLineItem = (index: number, field: keyof LineItemInput, value: string | number) => {
+  const updateLineItem = (
+    index: number,
+    field: keyof LineItemInput,
+    value: string | number,
+  ) => {
     const updated = [...lineItems];
-    (updated[index] as Record<keyof LineItemInput, string | number>)[field] = value;
+    (updated[index] as Record<keyof LineItemInput, string | number>)[field] =
+      value;
     setLineItems(updated);
   };
 
-  const totalAmount = lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const totalAmount = lineItems.reduce(
+    (sum, item) => sum + item.quantity * item.unitPrice,
+    0,
+  );
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -153,7 +222,11 @@ export function ServiceTemplatesManager() {
         {
           method: editingId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...formData, lineItems }),
+          body: JSON.stringify({
+            ...formData,
+            lineItems,
+            metadata: { ...templateMetadata, publicPackages },
+          }),
         },
         { fallbackMessage: "Failed to save template" },
       );
@@ -169,9 +242,13 @@ export function ServiceTemplatesManager() {
 
   const handleDelete = async (id: string) => {
     try {
-      await fetchApi(`/api/admin/service-templates/${id}`, { method: "DELETE" }, {
-        fallbackMessage: "Failed to delete template",
-      });
+      await fetchApi(
+        `/api/admin/service-templates/${id}`,
+        { method: "DELETE" },
+        {
+          fallbackMessage: "Failed to delete template",
+        },
+      );
       setDeleteConfirmId(null);
       fetchTemplates();
     } catch (err) {
@@ -186,7 +263,8 @@ export function ServiceTemplatesManager() {
         <div>
           <h1 className="text-3xl font-bold">Service Templates</h1>
           <p className="text-muted-foreground mt-1">
-            Create service offerings that clients can choose from to generate proposals
+            Create service offerings that clients can choose from to generate
+            proposals
           </p>
         </div>
         <Button onClick={openCreateDialog}>
@@ -211,8 +289,12 @@ export function ServiceTemplatesManager() {
       ) : templates.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold">No service templates yet</h3>
-          <p className="text-muted-foreground mt-1">Create service templates for clients to request.</p>
+          <h3 className="mt-4 text-lg font-semibold">
+            No service templates yet
+          </h3>
+          <p className="text-muted-foreground mt-1">
+            Create service templates for clients to request.
+          </p>
           <Button className="mt-4" onClick={openCreateDialog}>
             <Plus className="mr-2 h-4 w-4" />
             Create Service
@@ -225,17 +307,26 @@ export function ServiceTemplatesManager() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg truncate">{template.name}</CardTitle>
+                    <CardTitle className="text-lg truncate">
+                      {template.name}
+                    </CardTitle>
                     {template.description && (
-                      <CardDescription className="mt-1 line-clamp-2">{template.description}</CardDescription>
+                      <CardDescription className="mt-1 line-clamp-2">
+                        {template.description}
+                      </CardDescription>
                     )}
                   </div>
-                  <Badge variant={template.isActive ? "default" : "secondary"} className="ml-2 flex-shrink-0">
+                  <Badge
+                    variant={template.isActive ? "default" : "secondary"}
+                    className="ml-2 flex-shrink-0"
+                  >
                     {template.isActive ? "Active" : "Inactive"}
                   </Badge>
                 </div>
                 {template.category && (
-                  <Badge variant="outline" className="w-fit mt-2">{template.category}</Badge>
+                  <Badge variant="outline" className="w-fit mt-2">
+                    {template.category}
+                  </Badge>
                 )}
               </CardHeader>
               <CardContent className="space-y-4">
@@ -245,16 +336,24 @@ export function ServiceTemplatesManager() {
                     <span className="text-xs">Total Price</span>
                   </div>
                   <p className="text-2xl font-bold">
-                    {Number(template.totalAmount) <= 0 ? "Custom quote" : `$${Number(template.totalAmount).toLocaleString()} ${template.currency}`}
+                    {Number(template.totalAmount) <= 0
+                      ? "Custom quote"
+                      : `$${Number(template.totalAmount).toLocaleString()} ${template.currency}`}
                   </p>
                 </div>
 
                 <div className="text-sm text-muted-foreground">
-                  {template.lineItems.length} line item{template.lineItems.length !== 1 ? "s" : ""}
+                  {template.lineItems.length} line item
+                  {template.lineItems.length !== 1 ? "s" : ""}
                 </div>
 
                 <div className="flex gap-2 pt-2 border-t">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(template)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => openEditDialog(template)}
+                  >
                     <Pencil className="mr-1.5 h-3.5 w-3.5" />
                     Edit
                   </Button>
@@ -277,9 +376,13 @@ export function ServiceTemplatesManager() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Service Template" : "Create Service Template"}</DialogTitle>
+            <DialogTitle>
+              {editingId ? "Edit Service Template" : "Create Service Template"}
+            </DialogTitle>
             <DialogDescription>
-              {editingId ? "Update the service details." : "Create a new service offering for clients."}
+              {editingId
+                ? "Update the service details."
+                : "Create a new service offering for clients."}
             </DialogDescription>
           </DialogHeader>
 
@@ -290,7 +393,9 @@ export function ServiceTemplatesManager() {
                 <Input
                   placeholder="Website Redesign"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -298,7 +403,9 @@ export function ServiceTemplatesManager() {
                 <Input
                   placeholder="e.g., Design, Development, Marketing"
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -309,14 +416,21 @@ export function ServiceTemplatesManager() {
                 placeholder="Describe what this service includes..."
                 rows={3}
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               />
             </div>
 
             <div className="space-y-2">
               <Label>Currency</Label>
-              <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
-                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <Select
+                value={formData.currency}
+                onValueChange={(v) => setFormData({ ...formData, currency: v })}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USD">USD ($)</SelectItem>
                   <SelectItem value="EUR">EUR</SelectItem>
@@ -330,7 +444,12 @@ export function ServiceTemplatesManager() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Line Items</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addLineItem}
+                >
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
                   Add Item
                 </Button>
@@ -353,7 +472,13 @@ export function ServiceTemplatesManager() {
                           <Input
                             placeholder="Service description"
                             value={item.description}
-                            onChange={(e) => updateLineItem(index, "description", e.target.value)}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "description",
+                                e.target.value,
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell>
@@ -362,7 +487,13 @@ export function ServiceTemplatesManager() {
                             min="1"
                             step="1"
                             value={item.quantity}
-                            onChange={(e) => updateLineItem(index, "quantity", parseInt(e.target.value) || 1)}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "quantity",
+                                parseInt(e.target.value) || 1,
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell>
@@ -371,7 +502,13 @@ export function ServiceTemplatesManager() {
                             min="0"
                             step="0.01"
                             value={item.unitPrice}
-                            onChange={(e) => updateLineItem(index, "unitPrice", parseFloat(e.target.value) || 0)}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "unitPrice",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
                           />
                         </TableCell>
                         <TableCell className="font-medium">
@@ -379,7 +516,11 @@ export function ServiceTemplatesManager() {
                         </TableCell>
                         <TableCell>
                           {lineItems.length > 1 && (
-                            <Button variant="ghost" size="sm" onClick={() => removeLineItem(index)}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeLineItem(index)}
+                            >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
@@ -400,43 +541,75 @@ export function ServiceTemplatesManager() {
                 placeholder="Terms and conditions for this service..."
                 rows={3}
                 value={formData.terms}
-                onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, terms: e.target.value })
+                }
               />
             </div>
+
+            <PublicPackageEditor
+              value={publicPackages}
+              onChange={setPublicPackages}
+            />
 
             <div className="flex items-center justify-between">
               <div>
                 <Label>Active</Label>
-                <p className="text-sm text-muted-foreground">Make this service available to clients</p>
+                <p className="text-sm text-muted-foreground">
+                  Make this service available to clients
+                </p>
               </div>
               <Switch
                 checked={formData.isActive}
-                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isActive: checked })
+                }
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
             <Button onClick={handleSubmit} disabled={saving}>
-              {saving ? "Saving..." : editingId ? "Update Service" : "Create Service"}
+              {saving
+                ? "Saving..."
+                : editingId
+                  ? "Update Service"
+                  : "Create Service"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
+      <Dialog
+        open={!!deleteConfirmId}
+        onOpenChange={() => setDeleteConfirmId(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Service Template</DialogTitle>
             <DialogDescription>
-              Are you sure? This action cannot be undone. Existing proposals created from this template will not be affected.
+              Are you sure? This action cannot be undone. Existing proposals
+              created from this template will not be affected.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}>Delete</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+            >
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

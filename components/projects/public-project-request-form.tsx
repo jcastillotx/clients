@@ -3,20 +3,36 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import {
   isTurnstileWidgetEnabled,
   TurnstileWidget,
 } from "@/components/shared/turnstile-widget";
-import {countryOptions} from "@/lib/validations/fields";
+import { countryOptions } from "@/lib/validations/fields";
 import { fetchApi } from "@/lib/api/client";
 
-export function PublicProjectRequestForm() {
+export function PublicProjectRequestForm({
+  selectedPackage,
+}: {
+  selectedPackage?: { id: string; name: string };
+}) {
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -29,7 +45,9 @@ export function PublicProjectRequestForm() {
   const [zipCode, setZipCode] = useState("");
   const [country, setCountry] = useState("United States");
   const [businessOverview, setBusinessOverview] = useState("");
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(
+    selectedPackage ? `Quote request: ${selectedPackage.name}` : "",
+  );
   const [executiveSummary, setExecutiveSummary] = useState("");
   const [description, setDescription] = useState("");
   const [desiredOutcome, setDesiredOutcome] = useState("");
@@ -41,8 +59,12 @@ export function PublicProjectRequestForm() {
   const [error, setError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [contactFax, setContactFax] = useState("");
-  const [submittedReference, setSubmittedReference] = useState<string | null>(null);
-  const [confirmationEmailSent, setConfirmationEmailSent] = useState<boolean | null>(null);
+  const [submittedReference, setSubmittedReference] = useState<string | null>(
+    null,
+  );
+  const [confirmationEmailSent, setConfirmationEmailSent] = useState<
+    boolean | null
+  >(null);
 
   const turnstileRequired = isTurnstileWidgetEnabled();
 
@@ -52,7 +74,10 @@ export function PublicProjectRequestForm() {
     setError(null);
 
     try {
-      const data = await fetchApi<{ requestId?: string; confirmationEmailSent?: boolean }>(
+      const data = await fetchApi<{
+        requestId?: string;
+        confirmationEmailSent?: boolean;
+      }>(
         "/api/public/project-requests",
         {
           method: "POST",
@@ -81,6 +106,9 @@ export function PublicProjectRequestForm() {
             budgetRange: budgetRange || null,
             turnstileToken: turnstileToken || null,
             contactFax,
+            metadata: selectedPackage
+              ? { packageId: selectedPackage.id }
+              : undefined,
           }),
         },
         { fallbackMessage: "Failed to submit project request" },
@@ -89,7 +117,11 @@ export function PublicProjectRequestForm() {
       setConfirmationEmailSent(data?.confirmationEmailSent ?? null);
       setSubmittedReference(data?.requestId || "submitted");
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to submit project request");
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to submit project request",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -103,13 +135,24 @@ export function PublicProjectRequestForm() {
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold">Request submitted</h2>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Your organization and project details have been received. Our team will review the submission and follow up using the contact information you provided.
+              Your organization and project details have been received. Our team
+              will review the submission and follow up using the contact
+              information you provided.
             </p>
-            <p className="text-xs text-muted-foreground">Reference: {submittedReference}</p>
+            <p className="text-xs text-muted-foreground">
+              Reference: {submittedReference}
+            </p>
             {confirmationEmailSent === true ? (
-              <p className="text-sm text-muted-foreground">A confirmation email has been sent to the email address you provided.</p>
+              <p className="text-sm text-muted-foreground">
+                A confirmation email has been sent to the email address you
+                provided.
+              </p>
             ) : confirmationEmailSent === false ? (
-              <p role="status" className="text-sm text-muted-foreground">Your request is saved, but we could not send the confirmation email. Please keep this reference. Our team will still review your request and follow up.</p>
+              <p role="status" className="text-sm text-muted-foreground">
+                Your request is saved, but we could not send the confirmation
+                email. Please keep this reference. Our team will still review
+                your request and follow up.
+              </p>
             ) : null}
           </div>
           <Button asChild variant="outline">
@@ -122,17 +165,33 @@ export function PublicProjectRequestForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="absolute -left-[10000px] h-px w-px overflow-hidden"
+      >
         <label htmlFor="contact-fax">Leave this field empty</label>
-        <input id="contact-fax" name="contactFax" autoComplete="off" tabIndex={-1}
-          value={contactFax} onChange={(event) => setContactFax(event.target.value)} />
+        <input
+          id="contact-fax"
+          name="contactFax"
+          autoComplete="off"
+          tabIndex={-1}
+          value={contactFax}
+          onChange={(event) => setContactFax(event.target.value)}
+        />
       </div>
-      <datalist id="country-options">{countryOptions.map(country => <option key={country} value={country} />)}</datalist>
+      <datalist id="country-options">
+        {countryOptions.map((country) => (
+          <option key={country} value={country} />
+        ))}
+      </datalist>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Request a New Project</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Request a New Project
+          </h1>
           <p className="mt-1 text-muted-foreground">
-            Share your business details and project goals so our team can review and follow up with the right next steps.
+            Share your business details and project goals so our team can review
+            and follow up with the right next steps.
           </p>
         </div>
         <Button variant="outline" asChild>
@@ -143,44 +202,93 @@ export function PublicProjectRequestForm() {
         </Button>
       </div>
 
-      {error ? <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div> : null}
+      {selectedPackage ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="font-semibold">
+              Selected package: {selectedPackage.name}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Share your goals below. Scope, timeline and price will be
+              confirmed in a written proposal.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {error ? (
+        <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader>
           <CardTitle>Organization Information</CardTitle>
-          <CardDescription>Tell us about your organization and primary point of contact.</CardDescription>
+          <CardDescription>
+            Tell us about your organization and primary point of contact.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="company-name">Company Name</Label>
-              <Input id="company-name" required value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
+              <Input
+                id="company-name"
+                required
+                value={companyName}
+                onChange={(event) => setCompanyName(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
-              <Input id="industry" value={industry} onChange={(event) => setIndustry(event.target.value)} />
+              <Input
+                id="industry"
+                value={industry}
+                onChange={(event) => setIndustry(event.target.value)}
+              />
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="contact-name">Primary Contact</Label>
-              <Input id="contact-name" required value={contactName} onChange={(event) => setContactName(event.target.value)} />
+              <Input
+                id="contact-name"
+                required
+                value={contactName}
+                onChange={(event) => setContactName(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="contact-email">Contact Email</Label>
-              <Input id="contact-email" type="email" required value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} />
+              <Input
+                id="contact-email"
+                type="email"
+                required
+                value={contactEmail}
+                onChange={(event) => setContactEmail(event.target.value)}
+              />
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="contact-phone">Phone</Label>
-              <Input id="contact-phone" value={contactPhone} onChange={(event) => setContactPhone(event.target.value)} />
+              <Input
+                id="contact-phone"
+                value={contactPhone}
+                onChange={(event) => setContactPhone(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="website">Website</Label>
-              <Input id="website" value={website} onChange={(event) => setWebsite(event.target.value)} placeholder="https://example.com" />
+              <Input
+                id="website"
+                value={website}
+                onChange={(event) => setWebsite(event.target.value)}
+                placeholder="https://example.com"
+              />
             </div>
           </div>
 
@@ -197,25 +305,47 @@ export function PublicProjectRequestForm() {
 
           <div className="space-y-2">
             <Label htmlFor="address">Street Address</Label>
-            <Textarea id="address" rows={2} value={address} onChange={(event) => setAddress(event.target.value)} />
+            <Textarea
+              id="address"
+              rows={2}
+              value={address}
+              onChange={(event) => setAddress(event.target.value)}
+            />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="city">City</Label>
-              <Input id="city" value={city} onChange={(event) => setCity(event.target.value)} />
+              <Input
+                id="city"
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
-              <Input id="state" value={state} onChange={(event) => setState(event.target.value)} />
+              <Input
+                id="state"
+                value={state}
+                onChange={(event) => setState(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="zip-code">ZIP / Postal Code</Label>
-              <Input id="zip-code" value={zipCode} onChange={(event) => setZipCode(event.target.value)} />
+              <Input
+                id="zip-code"
+                value={zipCode}
+                onChange={(event) => setZipCode(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
-              <Input id="country" list="country-options" value={country} onChange={(event) => setCountry(event.target.value)} />
+              <Input
+                id="country"
+                list="country-options"
+                value={country}
+                onChange={(event) => setCountry(event.target.value)}
+              />
             </div>
           </div>
         </CardContent>
@@ -224,12 +354,19 @@ export function PublicProjectRequestForm() {
       <Card>
         <CardHeader>
           <CardTitle>Project Intake</CardTitle>
-          <CardDescription>Capture the business need, goals, and timing for the new engagement.</CardDescription>
+          <CardDescription>
+            Capture the business need, goals, and timing for the new engagement.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Project Title</Label>
-            <Input id="title" required value={title} onChange={(event) => setTitle(event.target.value)} />
+            <Input
+              id="title"
+              required
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
@@ -246,18 +383,33 @@ export function PublicProjectRequestForm() {
 
           <div className="space-y-2">
             <Label htmlFor="description">Detailed Scope</Label>
-            <Textarea id="description" rows={6} value={description} onChange={(event) => setDescription(event.target.value)} />
+            <Textarea
+              id="description"
+              rows={6}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="desired-outcome">Desired Outcome / KPIs</Label>
-            <Textarea id="desired-outcome" rows={4} value={desiredOutcome} onChange={(event) => setDesiredOutcome(event.target.value)} />
+            <Textarea
+              id="desired-outcome"
+              rows={4}
+              value={desiredOutcome}
+              onChange={(event) => setDesiredOutcome(event.target.value)}
+            />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select value={priority} onValueChange={(value: "low" | "medium" | "high") => setPriority(value)}>
+              <Select
+                value={priority}
+                onValueChange={(value: "low" | "medium" | "high") =>
+                  setPriority(value)
+                }
+              >
                 <SelectTrigger id="priority">
                   <SelectValue />
                 </SelectTrigger>
@@ -270,18 +422,39 @@ export function PublicProjectRequestForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="budget-range">Budget Range</Label>
-              <Input id="budget-range" value={budgetRange} onChange={(event) => setBudgetRange(event.target.value)} placeholder="Example: $15,000 - $25,000" />
+              <Input
+                id="budget-range"
+                value={budgetRange}
+                onChange={(event) => setBudgetRange(event.target.value)}
+                placeholder="Example: $15,000 - $25,000"
+              />
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="requested-start">Requested Start Date</Label>
-              <Input id="requested-start" type="date" min={new Date().toISOString().slice(0, 10)} value={requestedStartDate} onChange={(event) => setRequestedStartDate(event.target.value)} />
+              <Input
+                id="requested-start"
+                type="date"
+                min={new Date().toISOString().slice(0, 10)}
+                value={requestedStartDate}
+                onChange={(event) => setRequestedStartDate(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="requested-launch">Requested Due / Launch Date</Label>
-              <Input id="requested-launch" type="date" min={requestedStartDate || new Date().toISOString().slice(0, 10)} value={requestedLaunchDate} onChange={(event) => setRequestedLaunchDate(event.target.value)} />
+              <Label htmlFor="requested-launch">
+                Requested Due / Launch Date
+              </Label>
+              <Input
+                id="requested-launch"
+                type="date"
+                min={
+                  requestedStartDate || new Date().toISOString().slice(0, 10)
+                }
+                value={requestedLaunchDate}
+                onChange={(event) => setRequestedLaunchDate(event.target.value)}
+              />
             </div>
           </div>
         </CardContent>

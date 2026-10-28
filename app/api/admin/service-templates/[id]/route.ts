@@ -1,9 +1,12 @@
+import { z } from "zod";
+import { publicPackageSchema } from "@/lib/catalog/schema";
 import { NextRequest } from "next/server";
 import { db, isDatabaseConfigurationError } from "@/lib/db";
 import { serviceTemplates } from "@/lib/db/schema/proposals";
 import { eq } from "drizzle-orm";
 import { requireAdminUser } from "@/lib/auth/route-guards";
 import {
+  apiValidationError,
   apiError,
   apiInternalError,
   apiNotFound,
@@ -66,6 +69,11 @@ export async function PATCH(
     }
 
     const body = await request.json();
+    if (body.metadata?.publicPackages !== undefined) {
+      const parsed = z.array(publicPackageSchema).max(30).safeParse(body.metadata.publicPackages);
+      if (!parsed.success) return apiValidationError(request, parsed.error);
+      body.metadata.publicPackages = parsed.data;
+    }
 
     const [existing] = await db
       .select()

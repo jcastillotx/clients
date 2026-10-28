@@ -38,6 +38,7 @@ interface RequestRow {
   due_date: string | null;
   created_at: string;
   custom_fields: {
+    selectedPackage?: { id: string; name: string; serviceId: string } | null;
     executiveSummary?: string;
     desiredOutcome?: string | null;
     budgetRange?: string | null;
@@ -360,6 +361,9 @@ export default async function ProjectRequestDetailPage({
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          {request.custom_fields?.selectedPackage ? (
+            <Card><CardHeader><CardTitle>Requested package</CardTitle></CardHeader><CardContent><p>{request.custom_fields.selectedPackage.name}</p><p className="text-sm text-muted-foreground">Scope and price require review and a written proposal.</p></CardContent></Card>
+          ) : null}
           <Card>
             <CardHeader>
               <CardTitle>Executive Summary</CardTitle>

@@ -1,3 +1,4 @@
+import { getPublicServiceCatalog } from "@/lib/catalog/public-catalog";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/public/project-requests/route";
@@ -7,6 +8,8 @@ import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { dispatchNotification } from "@/lib/notifications/service";
 import { sendServiceRequestConfirmation } from "@/lib/email/service-request-confirmation";
 import { jsonRequest, readJson } from "../helpers/http";
+
+vi.mock("@/lib/catalog/public-catalog", () => ({ getPublicServiceCatalog: vi.fn() }));
 
 vi.mock("@/lib/rate-limit", () => ({
   limiters: {
@@ -229,6 +232,26 @@ describe("POST /api/public/project-requests", () => {
         }),
       }),
     );
+  });
+
+  it("rejects unpublished packages before creating an organization or request", async () => {
+    vi.mocked(getPublicServiceCatalog).mockResolvedValue({ schemaVersion: 1, services: [], packages: [], version: "test" });
+    const response = await POST(jsonRequest("http://localhost/api/public/project-requests", { ...validPayload, metadata: { packageId: "retired-package" } }) as NextRequest);
+    expect(response.status).toBe(400);
+    const admin = vi.mocked(createAdminClientIfAvailable).mock.results[0].value;
+    expect(admin.from).not.toHaveBeenCalledWith("clients");
+    expect(admin.from).not.toHaveBeenCalledWith("requests");
+    expect(dispatchNotification).not.toHaveBeenCalled();
+  });
+
+  it("saves canonical package context rather than caller-supplied package details", async () => {
+    const canonical = { id: "care-growth", name: "Care Growth", serviceId: "service-id" };
+    vi.mocked(getPublicServiceCatalog).mockResolvedValue({ schemaVersion: 1, services: [], packages: [{ ...canonical, group: "Website care", fit: "Scoped ongoing care", includes: ["Agreed support"], service: "Website care" }], version: "test" });
+    const response = await POST(jsonRequest("http://localhost/api/public/project-requests", { ...validPayload, metadata: { packageId: canonical.id, selectedPackage: { name: "FORGED", serviceId: "another-tenant" } } }) as NextRequest);
+    expect(response.status).toBe(201);
+    const admin = vi.mocked(createAdminClientIfAvailable).mock.results[0].value;
+    const index = admin.from.mock.calls.findIndex(([table]: [string]) => table === "requests");
+    expect(admin.from.mock.results[index].value.insert).toHaveBeenCalledWith(expect.objectContaining({ custom_fields: expect.objectContaining({ selectedPackage: canonical, source: "public_project_request" }) }));
   });
 
   it("does not acknowledge a request that failed to persist", async () => {
