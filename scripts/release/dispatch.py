@@ -16,7 +16,14 @@ def aws(*args):
     return command("aws", *args, "--region", "us-west-2")
 
 
+def require_installed_deployer(expected):
+    actual = hashlib.sha256(Path(__file__).with_name("deploy.py").read_bytes()).hexdigest()
+    if actual != expected:
+        raise SystemExit("Host deployer differs from source; run operator setup before releasing")
+
+
 if __name__ == "__main__":
+    require_installed_deployer(os.environ["RELEASE_DEPLOYER_SHA256"])
     commit = os.environ["GITHUB_SHA"]
     release_id = commit + "-" + os.environ["GITHUB_RUN_ID"] + "-" + os.environ["GITHUB_RUN_ATTEMPT"]
     # Do not deploy a checked but superseded main revision.

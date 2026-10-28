@@ -1,4 +1,5 @@
 import importlib.util
+import hashlib
 from pathlib import Path
 import unittest
 
@@ -31,3 +32,13 @@ class ReleaseAccessTests(unittest.TestCase):
         self.assertIn("sha256sum -c", commands[1])
         self.assertIn('"$SSM_downloadUrl"', commands[2])
         self.assertNotIn("{{", "\n".join(commands))
+
+    def test_dispatch_rejects_source_that_does_not_match_installed_deployer(self):
+        path = Path(__file__).parents[2] / "scripts/release/dispatch.py"
+        spec = importlib.util.spec_from_file_location("release_dispatch", path)
+        dispatch = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(dispatch)
+        with self.assertRaisesRegex(SystemExit, "Host deployer differs"):
+            dispatch.require_installed_deployer("0" * 64)
+        digest = hashlib.sha256(path.with_name("deploy.py").read_bytes()).hexdigest()
+        dispatch.require_installed_deployer(digest)

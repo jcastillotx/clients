@@ -76,6 +76,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_DOCUMENT_HASH: ${{ vars.CLIENTS_RELEASE_DOCUMENT_HASH }}
           RELEASE_DOCUMENT_VERSION: ${{ vars.CLIENTS_RELEASE_DOCUMENT_VERSION }}
+          RELEASE_DEPLOYER_SHA256: ${{ vars.CLIENTS_RELEASE_DEPLOYER_SHA256 }}
         run: python3 scripts/release/dispatch.py
       - name: Save release receipt
         if: always()

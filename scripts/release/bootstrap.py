@@ -132,6 +132,7 @@ print(json.dumps({k:value for k,value in (e.split('=',1) for e in v['Config']['E
 """ % (module.ACTIVE, repr(sorted(module.PUBLIC_KEYS)))
     public = json.loads(run_ssm(["python3 - <<'PY'\n" + public_script + "PY"]))
     variables = {"CLIENTS_PUBLIC_BUILD_ARGS_JSON": json.dumps(public), "CLIENTS_RELEASE_ROLE_ARN": role["Role"]["Arn"],
+                 "CLIENTS_RELEASE_DEPLOYER_SHA256": digest,
                  "CLIENTS_RELEASE_DOCUMENT_HASH": document["Hash"], "CLIENTS_RELEASE_DOCUMENT_VERSION": version}
     for key, value in variables.items():
         subprocess.run(["gh", "variable", "set", key, "--repo", REPO, "--body", value], check=True)
