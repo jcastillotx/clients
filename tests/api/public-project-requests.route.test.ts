@@ -5,6 +5,7 @@ import { extractApiErrorMessage } from "@/lib/api/response";
 import { assertTurnstileToken } from "@/lib/turnstile/verify";
 import { createAdminClientIfAvailable } from "@/lib/supabase/server";
 import { dispatchNotification } from "@/lib/notifications/service";
+import { sendServiceRequestConfirmation } from "@/lib/email/service-request-confirmation";
 import { jsonRequest, readJson } from "../helpers/http";
 
 vi.mock("@/lib/rate-limit", () => ({
@@ -25,6 +26,10 @@ vi.mock("@/lib/turnstile/verify", () => ({
 
 vi.mock("@/lib/notifications/service", () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/email/service-request-confirmation", () => ({
+  sendServiceRequestConfirmation: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/redirect-url", () => ({
@@ -53,7 +58,7 @@ const validPayload = {
   priority: "medium" as const,
 };
 
-function createAdminMock() {
+function createAdminMock(requestFails = false) {
   const usersChain = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -97,8 +102,8 @@ function createAdminMock() {
           insert: vi.fn().mockReturnThis(),
           select: vi.fn().mockReturnThis(),
           single: vi.fn().mockResolvedValue({
-            data: { id: "request-1", client_id: "client-1" },
-            error: null,
+            data: requestFails ? null : { id: "request-1", client_id: "client-1" },
+            error: requestFails ? { message: "Insert failed" } : null,
           }),
         };
       }
@@ -113,6 +118,8 @@ describe("POST /api/public/project-requests", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(dispatchNotification).mockResolvedValue(undefined);
+    vi.mocked(sendServiceRequestConfirmation).mockResolvedValue(true);
     process.env.PLATFORM_NOTIFICATION_EMAIL = "platform@example.com";
     vi.mocked(assertTurnstileToken).mockResolvedValue({ ok: true });
     vi.mocked(createAdminClientIfAvailable).mockReturnValue(createAdminMock() as never);
@@ -146,6 +153,7 @@ describe("POST /api/public/project-requests", () => {
     );
 
     expect(response.status).toBe(400);
+    expect(sendServiceRequestConfirmation).not.toHaveBeenCalled();
   });
 
   it("returns 400 when captcha verification fails", async () => {
@@ -169,6 +177,7 @@ describe("POST /api/public/project-requests", () => {
     expect(admin.from).not.toHaveBeenCalledWith("clients");
     expect(admin.from).not.toHaveBeenCalledWith("requests");
     expect(dispatchNotification).not.toHaveBeenCalled();
+    expect(sendServiceRequestConfirmation).not.toHaveBeenCalled();
   });
 
   it("rejects a filled honeypot before any intake records or mail are created", async () => {
@@ -180,6 +189,7 @@ describe("POST /api/public/project-requests", () => {
     expect(admin.from).not.toHaveBeenCalledWith("clients");
     expect(admin.from).not.toHaveBeenCalledWith("requests");
     expect(dispatchNotification).not.toHaveBeenCalled();
+    expect(sendServiceRequestConfirmation).not.toHaveBeenCalled();
   });
 
   it.each([{title:"   "},{executiveSummary:"                         "},{website:"javascript:alert(1)"},{contactPhone:"abc"},{requestedStartDate:"1970-05-31"},{requestedLaunchDate:"2026-02-30"},{country:"Hrqgqnijq"}])("rejects invalid field data before writes or notifications: %j", async patch => {
@@ -189,18 +199,22 @@ describe("POST /api/public/project-requests", () => {
     expect(admin.from).not.toHaveBeenCalledWith("clients");
     expect(admin.from).not.toHaveBeenCalledWith("requests");
     expect(dispatchNotification).not.toHaveBeenCalled();
+    expect(sendServiceRequestConfirmation).not.toHaveBeenCalled();
   });
 
   it.each(["jane@acme.com", "nazevedo@metrocompactor.com"])("keeps submitted contact %s out of internal notification recipients", async (contactEmail) => {
     const response = await POST(
       jsonRequest("http://localhost/api/public/project-requests", {...validPayload, contactEmail}) as NextRequest,
     );
-    const body = await readJson<{ success: boolean; data: { requestId: string; clientId: string } }>(response);
+    const body = await readJson<{ success: boolean; data: { requestId: string; clientId: string; confirmationEmailSent: boolean } }>(response);
 
     expect(response.status).toBe(201);
     expect(body.success).toBe(true);
     expect(body.data.requestId).toBe("request-1");
     expect(body.data.clientId).toBe("client-1");
+    expect(body.data.confirmationEmailSent).toBe(true);
+    expect(sendServiceRequestConfirmation).toHaveBeenCalledOnce();
+    expect(sendServiceRequestConfirmation).toHaveBeenCalledWith({ email: contactEmail, requestId: "request-1" });
     expect(dispatchNotification).toHaveBeenCalledOnce();
     expect(dispatchNotification).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -215,5 +229,34 @@ describe("POST /api/public/project-requests", () => {
         }),
       }),
     );
+  });
+
+  it("does not acknowledge a request that failed to persist", async () => {
+    vi.mocked(createAdminClientIfAvailable).mockReturnValue(createAdminMock(true) as never);
+    const response = await POST(jsonRequest("http://localhost/api/public/project-requests", validPayload) as NextRequest);
+    expect(response.status).toBe(500);
+    expect(sendServiceRequestConfirmation).not.toHaveBeenCalled();
+    expect(dispatchNotification).not.toHaveBeenCalled();
+  });
+
+  it("sends the receipt even when internal notification dispatch fails", async () => {
+    vi.mocked(dispatchNotification).mockRejectedValueOnce(new Error("Internal alert failed"));
+    const response = await POST(jsonRequest("http://localhost/api/public/project-requests", validPayload) as NextRequest);
+    expect(response.status).toBe(201);
+    expect(sendServiceRequestConfirmation).toHaveBeenCalledOnce();
+  });
+
+  it.each([false, "throws"])("preserves the saved request when confirmation delivery %s", async (mode) => {
+    if (mode === "throws") {
+      vi.mocked(sendServiceRequestConfirmation).mockRejectedValueOnce(new Error("Mail unavailable"));
+    } else {
+      vi.mocked(sendServiceRequestConfirmation).mockResolvedValueOnce(false);
+    }
+    const response = await POST(jsonRequest("http://localhost/api/public/project-requests", validPayload) as NextRequest);
+    const body = await readJson<{data: {requestId: string; confirmationEmailSent: boolean}}>(response);
+    expect(response.status).toBe(201);
+    expect(body.data.requestId).toBe("request-1");
+    expect(body.data.confirmationEmailSent).toBe(false);
+    expect(dispatchNotification).toHaveBeenCalledOnce();
   });
 });

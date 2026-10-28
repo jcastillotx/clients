@@ -42,6 +42,7 @@ export function PublicProjectRequestForm() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [contactFax, setContactFax] = useState("");
   const [submittedReference, setSubmittedReference] = useState<string | null>(null);
+  const [confirmationEmailSent, setConfirmationEmailSent] = useState<boolean | null>(null);
 
   const turnstileRequired = isTurnstileWidgetEnabled();
 
@@ -51,7 +52,7 @@ export function PublicProjectRequestForm() {
     setError(null);
 
     try {
-      const data = await fetchApi<{ requestId?: string }>(
+      const data = await fetchApi<{ requestId?: string; confirmationEmailSent?: boolean }>(
         "/api/public/project-requests",
         {
           method: "POST",
@@ -85,6 +86,7 @@ export function PublicProjectRequestForm() {
         { fallbackMessage: "Failed to submit project request" },
       );
 
+      setConfirmationEmailSent(data?.confirmationEmailSent ?? null);
       setSubmittedReference(data?.requestId || "submitted");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Failed to submit project request");
@@ -104,6 +106,11 @@ export function PublicProjectRequestForm() {
               Your organization and project details have been received. Our team will review the submission and follow up using the contact information you provided.
             </p>
             <p className="text-xs text-muted-foreground">Reference: {submittedReference}</p>
+            {confirmationEmailSent === true ? (
+              <p className="text-sm text-muted-foreground">A confirmation email has been sent to the email address you provided.</p>
+            ) : confirmationEmailSent === false ? (
+              <p role="status" className="text-sm text-muted-foreground">Your request is saved, but we could not send the confirmation email. Please keep this reference. Our team will still review your request and follow up.</p>
+            ) : null}
           </div>
           <Button asChild variant="outline">
             <Link href="/">Return to sign in</Link>
