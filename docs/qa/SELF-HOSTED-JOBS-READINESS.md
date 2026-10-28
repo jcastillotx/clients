@@ -14,9 +14,7 @@ Structured evidence: `selfhost-background-workflows.json`, `selfhost-job-events.
 
 ## Production gate
 
-Production installation has not been performed. The OpenShip host has adequate memory but its existing 100 GiB root volume is essentially full. Approximately 334 MiB of redundant generated deployment downloads were removed after verifying that their Docker images remained available. Rollback images, containers and platform/database backups were preserved. The remaining headroom is insufficient for a durable service installation.
-
-Approval to expand the existing root volume to 150 GiB is pending because it changes recurring storage charges. The intended filesystem operation preserves the existing root data and does not change provisioned IOPS/throughput. Do not pull or start new services on the full root volume. The provisioner enforces a 3 GiB minimum free-space guard.
+Production job installation has not been performed. The previous full-root blocker was addressed on October 28 by moving site data, Docker/containerd storage and OpenShip state to a separate 250 GiB drive, then replacing the 100 GiB OS root with an 80 GiB root. The proposed expansion to 150 GiB was superseded by the owner’s storage-layout instruction. Preserve rollback storage and verify both filesystems before provisioning; see `ops/OPENSHIP-STORAGE.md`.
 
 ## Prepared deployment
 
