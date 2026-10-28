@@ -6,6 +6,7 @@ export const runMarketingAgent = inngest.createFunction(
     id: "marketing-agent-run",
     name: "Run Marketing Agent Workflow",
     retries: 2,
+    concurrency: { limit: 1, key: "event.data.taskId" },
   },
   { event: "marketing-agent/run.requested" },
   async ({ event, step }) => {

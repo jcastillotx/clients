@@ -1,0 +1,12 @@
+{
+  "postgresRestored": true,
+  "redisRestored": true,
+  "restoredRegistry": {
+    "apps": 2,
+    "functions": 7,
+    "runs": 36
+  },
+  "restoredRedisKeys": 306,
+  "isolatedNetwork": true,
+  "temporaryRestoreContainersRemoved": true
+}

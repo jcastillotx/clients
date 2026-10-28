@@ -1,0 +1,13 @@
+[Unit]
+Description=Back up private client job stores and verify off-host retrieval
+After=docker.service network-online.target
+Wants=network-online.target
+RequiresMountsFor=/srv/kre8iv-data /opt /var/lib/docker /var/lib/containerd
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/usr/bin/flock -n /run/clients-jobs-backup.lock /usr/bin/python3 /opt/clients-jobs/backup-offhost.py
+TimeoutStartSec=600
+Nice=10

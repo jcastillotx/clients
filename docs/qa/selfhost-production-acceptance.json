@@ -1,0 +1,206 @@
+{
+  "candidate": {
+    "results": [
+      {
+        "name": "Seven production functions registered",
+        "passed": true
+      },
+      {
+        "name": "Invalid event key rejected",
+        "passed": true
+      },
+      {
+        "name": "Signed disabled-schedule guard: send-invoice-reminders",
+        "passed": true
+      },
+      {
+        "name": "Signed disabled-schedule guard: generate-recurring-invoices",
+        "passed": true
+      },
+      {
+        "name": "Signed disabled-schedule guard: check-contract-expirations",
+        "passed": true
+      },
+      {
+        "name": "Signed disabled-schedule guard: check-sla-compliance",
+        "passed": true
+      },
+      {
+        "name": "Real signed event persists one synthetic tenant folder",
+        "passed": true
+      },
+      {
+        "name": "Production engine restart preserves registry and history",
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  "production": {
+    "results": [
+      {
+        "name": "Seven production functions registered",
+        "passed": true
+      },
+      {
+        "name": "Invalid event key rejected",
+        "passed": true
+      },
+      {
+        "name": "Signed disabled-schedule guard: send-invoice-reminders",
+        "passed": true
+      },
+      {
+        "name": "Signed disabled-schedule guard: generate-recurring-invoices",
+        "passed": true
+      },
+      {
+        "name": "Signed disabled-schedule guard: check-contract-expirations",
+        "passed": true
+      },
+      {
+        "name": "Signed disabled-schedule guard: check-sla-compliance",
+        "passed": true
+      },
+      {
+        "name": "Real signed event persists one synthetic tenant folder",
+        "passed": true
+      },
+      {
+        "name": "Production engine restart preserves registry and history",
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  "enabledSchedules": [
+    {
+      "name": "send-invoice-reminders",
+      "passed": true,
+      "result": {
+        "dueSoon": 0,
+        "overdue": 0
+      }
+    },
+    {
+      "name": "generate-recurring-invoices",
+      "passed": true,
+      "result": {
+        "generated": 0,
+        "templates": 0
+      }
+    },
+    {
+      "name": "check-contract-expirations",
+      "passed": true,
+      "result": {
+        "expired": 0,
+        "expiringSoon": 0,
+        "expiringVeryLate": 0,
+        "renewed": 0
+      }
+    },
+    {
+      "name": "check-sla-compliance",
+      "passed": true,
+      "result": {
+        "breaches": 0,
+        "checked": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "restore": {
+    "postgresRestored": true,
+    "redisRestored": true,
+    "restoredRegistry": {
+      "apps": 3,
+      "functions": 7,
+      "runs": 7
+    },
+    "restoredRedisKeys": 60,
+    "isolatedNetwork": true,
+    "temporaryRestoreContainersRemoved": true
+  },
+  "backup": {
+    "createdAt": "20261028T175134Z",
+    "bucket": "kre8iv-clients-backups-556348027172-us-west-2",
+    "key": "clients/jobs/20261028T175134Z/clients-jobs.tar.gz",
+    "bytes": 85290,
+    "retrievalVerified": true,
+    "serverSideEncryption": "AES256",
+    "quiesced": false
+  },
+  "workload": {
+    "recurringDue": 0,
+    "remindersDue": 0,
+    "contractsInWindow": 0,
+    "activeSLATickets": 0
+  },
+  "activation": {
+    "enabled": true,
+    "source": "8412f182650fc6a7b405e418878c9247f3bb92f4",
+    "enabledAt": 1793209551.2849712,
+    "container": "80a976f4c54666b1085e1abfdb774b9139f2a9ebbd98b96a674a75a2280732e3",
+    "rollback": "clients-before-schedule-enable-8412f18"
+  },
+  "automaticCron": [
+    {
+      "cron": "*/5 * * * *",
+      "started": "2026-10-28T17:49:59.981",
+      "output": "{\"breaches\":0,\"checked\":0,\"warnings\":0}"
+    }
+  ],
+  "runtime": {
+    "managedEnvironmentMatchesRuntime": true,
+    "unsignedJobRequestRejected": true,
+    "schedulesEnabled": true,
+    "release": "8412f182650fc6a7b405e418878c9247f3bb92f4"
+  },
+  "services": [
+    {
+      "name": "clients-jobs-inngest-1",
+      "healthy": true,
+      "ownership": {
+        "openship.deployment": "dep_clients_selfhost_8412f18",
+        "openship.project": "proj_AritosaAhSrWyqXb",
+        "openship.service": "clients-jobs"
+      },
+      "memoryLimit": 805306368,
+      "ports": {
+        "8288/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "20035"
+          }
+        ]
+      },
+      "storageOnDataDrive": true
+    },
+    {
+      "name": "clients-jobs-postgres-1",
+      "healthy": true,
+      "ownership": {
+        "openship.deployment": "dep_clients_selfhost_8412f18",
+        "openship.project": "proj_AritosaAhSrWyqXb",
+        "openship.service": "postgres"
+      },
+      "memoryLimit": 402653184,
+      "ports": {},
+      "storageOnDataDrive": true
+    },
+    {
+      "name": "clients-jobs-redis-1",
+      "healthy": true,
+      "ownership": {
+        "openship.deployment": "dep_clients_selfhost_8412f18",
+        "openship.project": "proj_AritosaAhSrWyqXb",
+        "openship.service": "redis"
+      },
+      "memoryLimit": 268435456,
+      "ports": {},
+      "storageOnDataDrive": true
+    }
+  ],
+  "backupTimerActive": true
+}
