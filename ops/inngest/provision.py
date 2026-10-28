@@ -52,21 +52,28 @@ if not env_file.exists():
     env_file.write_text("".join(k + "=" + v + "\n" for k, v in values.items()))
 os.chmod(env_file, 0o600)
 values = dict(line.split("=", 1) for line in env_file.read_text().splitlines() if line and not line.startswith("#"))
+path = root / "portal-env.json"
+existing_portal = json.loads(path.read_text()) if path.exists() else {}
+if existing_portal.get("BACKGROUND_SCHEDULES_ENABLED", "false") not in ["true", "false"]:
+    raise SystemExit("Invalid saved schedule setting")
 portal = {
+    **existing_portal,
     "INNGEST_EVENT_KEY": values["INNGEST_EVENT_KEY"],
     "INNGEST_SIGNING_KEY": values["INNGEST_SIGNING_KEY"],
     "INNGEST_BASE_URL": "http://clients-jobs:8288",
     "INNGEST_DEV": "0",
-    "BACKGROUND_SCHEDULES_ENABLED": "false",
+    "BACKGROUND_SCHEDULES_ENABLED": existing_portal.get("BACKGROUND_SCHEDULES_ENABLED", "false"),
 }
-path = root / "portal-env.json"
 path.write_text(json.dumps(portal))
 os.chmod(path, 0o600)
 command = ["docker", "compose", "--project-name", "clients-jobs", "--env-file", str(env_file), "-f", str(root / "compose.yml")]
+managed_override = root / "managed.override.yml"
+if managed_override.exists():
+    command += ["-f", str(managed_override)]
 result = subprocess.run(command + ["up", "-d", "--wait", "--wait-timeout", "120"], capture_output=True, text=True)
 log = root / "provision.log"
 log.write_text(result.stdout + result.stderr)
 os.chmod(log, 0o600)
 if result.returncode:
     raise SystemExit("Job infrastructure failed readiness; inspect the protected provision log")
-print(json.dumps({"infrastructure": "ready", "portalModified": False, "schedulesEnabled": False, "dashboard": "loopback port 20035"}))
+print(json.dumps({"infrastructure": "ready", "portalModified": False, "savedScheduleSetting": portal["BACKGROUND_SCHEDULES_ENABLED"], "dashboard": "loopback port 20035"}))
