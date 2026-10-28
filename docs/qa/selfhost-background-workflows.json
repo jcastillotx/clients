@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Concurrent recurring generation commits one invoice and one item",
+    "passed": true
+  },
+  {
+    "name": "A line-item failure rolls back invoice and schedule advancement",
+    "passed": true
+  },
+  {
+    "name": "Inngest recurring job creates, emails and records a sent invoice",
+    "passed": true
+  },
+  {
+    "name": "Contract expiry windows notify once and persist without a user session",
+    "passed": true
+  },
+  {
+    "name": "Contract expiration and auto-renewal persist valid new periods",
+    "passed": true
+  },
+  {
+    "name": "Support SLA warnings and breaches use persisted ticket deadlines",
+    "passed": true
+  }
+]

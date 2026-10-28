@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Unsigned portal requests and invalid event keys are rejected",
+    "passed": true
+  },
+  {
+    "name": "Signed client-created events create exactly one tenant folder",
+    "passed": true
+  },
+  {
+    "name": "Backfill executes through signed self-hosted orchestration",
+    "passed": true
+  },
+  {
+    "name": "Invoice reminder job delivers a PDF to local capture and records state",
+    "passed": true
+  },
+  {
+    "name": "Queued campaign and calendar agents persist drafts for approval",
+    "passed": true
+  },
+  {
+    "name": "Redelivering a completed marketing task does not duplicate its draft",
+    "passed": true
+  },
+  {
+    "name": "Queued quality-check agent finishes without external AI",
+    "passed": true
+  },
+  {
+    "name": "A failed provider attempt is retried and completes the same task",
+    "passed": true
+  },
+  {
+    "name": "Queued work and history survive an Inngest/Redis/Postgres restart",
+    "passed": true
+  }
+]

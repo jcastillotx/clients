@@ -28,6 +28,19 @@ export function assertIsolatedStaging(
   if (env.STRIPE_SECRET_KEY && !env.STRIPE_SECRET_KEY.startsWith("sk_test_")) {
     throw new Error("Isolated staging refuses live Stripe credentials");
   }
+  const selfHostedJobs = env.STAGING_SELF_HOSTED_JOBS === "1";
+  if (selfHostedJobs) {
+    if (
+      env.INNGEST_BASE_URL !== "http://127.0.0.1:8488" ||
+      env.INNGEST_DEV !== "0" ||
+      !/^deadbeef[a-f0-9]{56}$/.test(env.INNGEST_EVENT_KEY ?? "") ||
+      !/^deadbeef[a-f0-9]{56}$/.test(env.INNGEST_SIGNING_KEY ?? "")
+    ) {
+      throw new Error(
+        "Self-hosted job acceptance requires local-only test keys and production signing mode",
+      );
+    }
+  }
   for (const key of [
     "GOOGLE_MARKETING_CLIENT_SECRET",
     "GOOGLE_CALENDAR_CLIENT_SECRET",
@@ -38,6 +51,7 @@ export function assertIsolatedStaging(
     "SENTRY_DSN",
     "INNGEST_EVENT_KEY",
   ]) {
+    if (key === "INNGEST_EVENT_KEY" && selfHostedJobs) continue;
     if (env[key]) throw new Error(`Isolated staging refuses external ${key}`);
   }
 }

@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-28",
+  "instance": "i-03631eb1405b01b8e",
+  "rootGiB": 80,
+  "siteDataGiB": 250,
+  "rootVolume": "vol-0b9a187eb6c156ae1",
+  "siteDataVolume": "vol-09dcc5071eb8b4b1c",
+  "bothEncrypted": true,
+  "oldRootRetainedDetached": "vol-038831ff358186e5b",
+  "rootFilesystemUsed": "5.8G",
+  "rootFilesystemAvailable": "71G",
+  "siteDataFilesystemUsed": "88G",
+  "siteDataFilesystemAvailable": "158G",
+  "publicEndpointsMatched": 11,
+  "expectedContainers": 51,
+  "runningContainers": 51,
+  "unhealthyContainers": 0,
+  "startingContainers": 0,
+  "databaseReadinessPassed": [
+    "clients-supabase-db",
+    "kre8ivlabs-supabase-db"
+  ],
+  "portalHealthPassed": true,
+  "allRecordedAutomationRestored": true,
+  "swapGiB": 2,
+  "allSixDataMountsVerified": true,
+  "actualImageBuildAndReadbackPassed": true,
+  "newNamedVolumeWritePassed": true,
+  "snapshotStateAtLastCheck": {
+    "preMigrationRoot": "completed",
+    "siteData": "pending",
+    "replacementRoot": "pending"
+  },
+  "inngestProductionInstalled": false,
+  "notes": [
+    "First root-swap attempt rolled back after controller tried to parse an empty successful AWS response. Corrected controller, repeated final OS sync, and completed replacement boot.",
+    "Infrastructure-only migration; no portal source release performed.",
+    "Existing DLM retention preserved."
+  ]
+}

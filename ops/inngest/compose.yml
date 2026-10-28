@@ -1,0 +1,101 @@
+name: clients-jobs
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "3" }
+    environment:
+      POSTGRES_DB: inngest
+      POSTGRES_USER: inngest
+      POSTGRES_PASSWORD: ${JOBS_POSTGRES_PASSWORD:?required}
+    volumes:
+      - jobs-postgres:/var/lib/postgresql/data
+    networks: [jobs-private]
+    mem_limit: 384m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U inngest -d inngest"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "3" }
+    command:
+      [
+        redis-server,
+        --appendonly,
+        "yes",
+        --appendfsync,
+        everysec,
+        --maxmemory,
+        192mb,
+        --maxmemory-policy,
+        noeviction,
+      ]
+    volumes:
+      - jobs-redis:/data
+    networks: [jobs-private]
+    mem_limit: 256m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+  inngest:
+    image: inngest/inngest:v1.49.0
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: "3" }
+    command:
+      [
+        inngest,
+        start,
+        --host,
+        "0.0.0.0",
+        --queue-workers,
+        "10",
+        --postgres-max-open-conns,
+        "10",
+        --postgres-max-idle-conns,
+        "3",
+      ]
+    environment:
+      INNGEST_EVENT_KEY: ${INNGEST_EVENT_KEY:?required}
+      INNGEST_SIGNING_KEY: ${INNGEST_SIGNING_KEY:?required}
+      INNGEST_POSTGRES_URI: postgres://inngest:${JOBS_POSTGRES_PASSWORD:?required}@postgres:5432/inngest?sslmode=disable
+      INNGEST_REDIS_URI: redis://redis:6379
+      INNGEST_SDK_URL: ${JOBS_SDK_URL:?required}
+      INNGEST_POLL_INTERVAL: "60"
+    ports: ["127.0.0.1:${JOBS_HOST_PORT:-20035}:8288"]
+    networks:
+      jobs-private: {}
+      portal:
+        aliases: [clients-jobs]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    mem_limit: 768m
+    cpus: 1.0
+    healthcheck:
+      test: [CMD, inngest, alpha, doctor, healthcheck]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
+networks:
+  jobs-private:
+    internal: true
+  portal:
+    external: true
+    name: ${JOBS_PORTAL_NETWORK:-openship-kre8ivdesigns-clients}
+volumes:
+  jobs-postgres:
+  jobs-redis:
