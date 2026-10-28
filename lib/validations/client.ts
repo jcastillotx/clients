@@ -6,7 +6,7 @@ export const clientFieldsSchema = z.object({
   company_name: cleanTextSchema.min(2, "Enter a company name with at least 2 characters.").max(255),
   email: emailSchema,
   status: z.enum(["active", "inactive", "pending", "suspended"]).optional(),
-  primary_contact_id: z.string().uuid().nullable().optional(),
+  primary_contact_id: z.string().guid().nullable().optional(),
   domain: websiteSchema.nullable().optional(),
   industry: cleanTextSchema.max(255).nullable().optional(),
   logo_url: cleanTextSchema.max(2048).refine(value => !value || /^https?:\/\/[^\s/@]+(?:[/?#][^\s]*)?$/i.test(value) && URL.canParse(value), "Enter an HTTP or HTTPS logo URL.").nullable().optional(),

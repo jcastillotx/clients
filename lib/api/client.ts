@@ -61,7 +61,7 @@ export async function fetchApi<T>(
     const result = validateFormRequest(input, init.method!.toUpperCase(), data);
     if (result && !result.success) {
       const issue = result.error.issues[0];
-      const field = issue.path.map(part => typeof part === "number" ? String(part + 1) : part.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/_/g, " ").toLowerCase()).join(" → ");
+      const field = issue.path.map(part => typeof part === "number" ? String(part + 1) : String(part).replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/_/g, " ").toLowerCase()).join(" → ");
       throw new ApiClientError(`${field ? field + ": " : ""}${issue.message}`, 400, {error: {details: result.error.issues}});
     }
   }

@@ -28,7 +28,7 @@ export const createPartnerSchema = z.object({
 export const updatePartnerSchema = createPartnerSchema.partial();
 
 export const createReferralSchema = z.object({
-  partnerId: cleanTextSchema.uuid(),
+  partnerId: cleanTextSchema.guid(),
   referredName: cleanTextSchema.min(1, "Name is required"),
   referredEmail: cleanTextSchema.max(254).email().optional().nullable().or(z.literal("")),
   referredPhone: phoneSchema.optional().nullable(),
@@ -49,13 +49,13 @@ export const kbCategorySchema = z.object({
   name: cleanTextSchema.min(1, "Name is required"),
   slug: cleanTextSchema.min(1).optional(),
   description: cleanTextSchema.max(100000).optional().nullable(),
-  parentId: cleanTextSchema.uuid().optional().nullable(),
+  parentId: cleanTextSchema.guid().optional().nullable(),
   icon: cleanTextSchema.max(100000).optional().nullable(),
   position: z.coerce.number().finite().int().min(0).optional(),
 });
 
 export const kbArticleSchema = z.object({
-  categoryId: cleanTextSchema.uuid(),
+  categoryId: cleanTextSchema.guid(),
   title: cleanTextSchema.min(1, "Title is required"),
   slug: cleanTextSchema.min(1).optional(),
   excerpt: cleanTextSchema.max(100000).optional().nullable(),
@@ -73,7 +73,7 @@ export const staffGuideCategorySchema = z.object({
 });
 
 export const staffGuideSchema = z.object({
-  categoryId: cleanTextSchema.uuid(),
+  categoryId: cleanTextSchema.guid(),
   title: cleanTextSchema.min(1, "Title is required"),
   slug: cleanTextSchema.min(1).optional(),
   summary: cleanTextSchema.max(100000).optional().nullable(),

@@ -19,7 +19,7 @@ import { Loader2, Plus, Trash2, ChevronLeft, ChevronRight, FileText, Sparkles } 
 import { fetchApi } from "@/lib/api/client";
 
 const proposalSchema = z.object({
-  clientId: z.string().uuid("Please select a client"),
+  clientId: z.string().guid("Please select a client"),
   title: z.string().trim().min(1, "Title is required"),
   description: z.string().optional(),
   validUntil: z.string().optional(),
@@ -79,7 +79,7 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
     watch,
     setValue,
     formState: { errors },
-  } = useForm<ProposalFormInput>({
+  } = useForm<z.input<typeof proposalSchema>, unknown, z.output<typeof proposalSchema>>({
     resolver: zodResolver(proposalSchema),
     defaultValues: {
       clientId: preselectedClientId || "",
@@ -588,7 +588,7 @@ export function ProposalWizard({ clients, preselectedClientId }: ProposalWizardP
                     {lineItems.map((item, index) => (
                       <TableRow key={index}>
                         <TableCell>{item.description}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>{Number(item.quantity) || 0}</TableCell>
                         <TableCell>${Number(item.unitPrice).toFixed(2)}</TableCell>
                         <TableCell>${(Number(item.quantity) * Number(item.unitPrice)).toFixed(2)}</TableCell>
                       </TableRow>

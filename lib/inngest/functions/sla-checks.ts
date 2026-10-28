@@ -9,7 +9,7 @@ import { sendEmail } from "@/lib/email/client";
 import { renderEmailTemplateWithClient } from "@/lib/email/templates";
 
 const ticketSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
   subject: z.string(),
   ticket_number: z.string(),
   priority: z.string(),

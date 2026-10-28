@@ -13,7 +13,7 @@ import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { z } from "zod";
 
 const querySchema = z.object({
-  clientId: z.string().uuid().optional(),
+  clientId: z.string().guid().optional(),
   status: z.string().optional(),
 });
 

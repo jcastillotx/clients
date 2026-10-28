@@ -19,7 +19,7 @@ import {
 } from "@/lib/api/response";
 
 const verifySchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
   provider: z.string().min(1),
 });
 

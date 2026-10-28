@@ -34,7 +34,7 @@ export default function NewContentPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<ContentFormData>({
+  const form = useForm<z.input<typeof contentSchema>, unknown, z.output<typeof contentSchema>>({
     resolver: zodResolver(contentSchema),
     defaultValues: {
       title: "",

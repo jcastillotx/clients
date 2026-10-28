@@ -12,7 +12,7 @@ export const skillRunSchema = z.object({
     .min(1)
     .max(100)
     .refine((id) => Boolean(getMarketingSkill(id)), "Unknown marketing tool"),
-  clientId: z.string().uuid().optional(),
+  clientId: z.string().guid().optional(),
   brief: z.string().trim().min(20).max(8000),
   evidence: z.string().trim().max(40000).default(""),
 });

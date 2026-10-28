@@ -22,7 +22,7 @@ import {
 } from "@/lib/api/response";
 
 const querySchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
   provider: z.string().optional(),
   category: z.string().optional(),
 });
@@ -113,7 +113,7 @@ export async function GET(request: Request) {
 }
 
 const upsertSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
   provider: z.string(),
   category: z.string(),
   settings: z.array(

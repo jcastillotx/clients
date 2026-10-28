@@ -22,14 +22,14 @@ const updateSchema = z.object({
   value: z.number().int().nullable().optional(),
   currency: z.string().optional(),
   billingCycle: z.string().nullable().optional(),
-  documentId: z.string().uuid().nullable().optional(),
+  documentId: z.string().guid().nullable().optional(),
   clientSignedBy: z.string().nullable().optional(),
   clientSignedAt: z.string().nullable().optional(),
-  terms: z.record(z.unknown()).nullable().optional(),
+  terms: z.record(z.string(), z.unknown()).nullable().optional(),
   autoRenew: z.boolean().optional(),
   noticeRequired: z.number().int().nullable().optional(),
   tags: z.array(z.string()).nullable().optional(),
-  customFields: z.record(z.unknown()).nullable().optional(),
+  customFields: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 interface RouteContext {

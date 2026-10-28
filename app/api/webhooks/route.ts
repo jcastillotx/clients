@@ -17,7 +17,7 @@ import {
 } from "@/lib/api/response";
 
 const querySchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
 });
 
 const webhookEventSchema = z.enum([
@@ -32,7 +32,7 @@ const webhookEventSchema = z.enum([
 ]);
 
 const createSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
   url: z.string().url(),
   events: z.array(webhookEventSchema).min(1),
   isActive: z.boolean().optional(),
@@ -46,7 +46,7 @@ const createSchema = z.object({
 });
 
 const updateSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
   url: z.string().url().optional(),
   events: z.array(webhookEventSchema).optional(),
   isActive: z.boolean().optional(),
@@ -60,7 +60,7 @@ const updateSchema = z.object({
 });
 
 const deleteSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().guid(),
 });
 
 async function requireUserAccess(request: Request) {

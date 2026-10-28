@@ -1,4 +1,5 @@
 "use client";
+import type { z } from "zod";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -73,7 +74,7 @@ export function SupportTicketForm({ staffUsers, ticket }: SupportTicketFormProps
   const [isUploading, setIsUploading] = useState(false);
   const supabase = createClient();
 
-  const form = useForm<CreateSupportTicketInput>({
+  const form = useForm<z.input<typeof createSupportTicketSchema>, unknown, z.output<typeof createSupportTicketSchema>>({
     resolver: zodResolver(createSupportTicketSchema),
     defaultValues: {
       subject: ticket?.subject || "",

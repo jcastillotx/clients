@@ -27,7 +27,7 @@ export async function resolveMarketingToolAccess(
   const clientId = requestedClientId || access.clientId;
   if (
     !clientId ||
-    !z.string().uuid().safeParse(clientId).success ||
+    !z.string().guid().safeParse(clientId).success ||
     !canAccessMarketingClient(access, clientId)
   )
     return { error: "forbidden" as const };

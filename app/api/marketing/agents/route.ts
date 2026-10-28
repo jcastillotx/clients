@@ -25,7 +25,7 @@ const MARKETING_AGENT_RUN_LIMIT = 12;
 const MARKETING_AGENT_RUN_WINDOW_MS = 60 * 60 * 1000;
 
 const listSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
 });
 
 async function requireStaff(request: Request) {

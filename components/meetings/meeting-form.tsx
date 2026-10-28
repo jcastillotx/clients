@@ -1,4 +1,5 @@
 "use client";
+import type { z } from "zod";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -55,7 +56,7 @@ export function MeetingForm({ clients, users, preselectedClientId, preselectedRe
     formState: { errors },
     setValue,
     watch,
-  } = useForm<CreateMeetingInput>({
+  } = useForm<z.input<typeof createMeetingSchema>, unknown, z.output<typeof createMeetingSchema>>({
     resolver: zodResolver(createMeetingSchema),
     defaultValues: {
       clientId: preselectedClientId || "",

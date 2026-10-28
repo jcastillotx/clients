@@ -21,7 +21,7 @@ export async function GET(request: Request, context: RouteContext) {
     if (!access.isStaff) return apiForbidden(request);
 
     const { id } = await context.params;
-    if (!z.string().uuid().safeParse(id).success) {
+    if (!z.string().guid().safeParse(id).success) {
       return apiNotFound(request, "Marketing agent run not found");
     }
 

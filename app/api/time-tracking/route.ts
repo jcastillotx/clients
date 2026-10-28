@@ -173,7 +173,7 @@ export async function PATCH(request: NextRequest) {
     const userId = user.id;
 
     const body = await request.json();
-    const id = z.string().uuid().parse(body.id);
+    const id = z.string().guid().parse(body.id);
     const parsedUpdates = updateTimeEntrySchema.parse(body);
     const updates: Record<string, unknown> = { ...parsedUpdates };
 

@@ -1,4 +1,5 @@
 "use client";
+import type { z } from "zod";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -65,7 +66,7 @@ export function RequestForm({
     formState: { errors },
     setValue,
     watch,
-  } = useForm<CreateRequestInput>({
+  } = useForm<z.input<typeof createRequestSchema>, unknown, z.output<typeof createRequestSchema>>({
     resolver: zodResolver(createRequestSchema),
     defaultValues: {
       clientId: preselectedClientId || "",

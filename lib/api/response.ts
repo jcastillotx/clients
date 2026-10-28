@@ -210,7 +210,7 @@ export function apiValidationError(
     status: 400,
     code: "VALIDATION_ERROR",
     message: "Validation error",
-    details: zodError.errors,
+    details: zodError.issues,
   });
 }
 

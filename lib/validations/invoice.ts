@@ -16,7 +16,7 @@ export const invoiceLineItemSchema = z.object({
 
 export const createInvoiceSchema = z
   .object({
-    clientId: cleanTextSchema.uuid("Please select a client"),
+    clientId: cleanTextSchema.guid("Please select a client"),
     invoiceNumber: cleanTextSchema.min(1, "Invoice number is required"),
     dueDate: calendarDateSchema.or(z.literal("")).optional(),
     notes: cleanTextSchema.max(100000).optional(),

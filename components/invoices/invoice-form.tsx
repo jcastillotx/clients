@@ -1,4 +1,5 @@
 "use client";
+import type { z } from "zod";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -67,7 +68,7 @@ export function InvoiceForm({ clients, preselectedClientId }: InvoiceFormProps) 
     setValue,
     watch,
     control,
-  } = useForm<CreateInvoiceInput>({
+  } = useForm<z.input<typeof createInvoiceSchema>, unknown, z.output<typeof createInvoiceSchema>>({
     resolver: zodResolver(createInvoiceSchema),
     defaultValues: {
       clientId: preselectedClientId || "",

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const commonFields = {
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
   instructions: z.string().trim().max(4000).default(""),
   createDrafts: z.boolean().default(true),
 };

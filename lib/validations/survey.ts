@@ -26,7 +26,7 @@ export const createSurveyQuestionSchema = z
 export const createSurveySchema = z.object({
   title: cleanTextSchema.min(3, "Title must be at least 3 characters").max(255),
   description: cleanTextSchema.max(2000).optional().nullable(),
-  clientId: cleanTextSchema.uuid().optional().nullable(),
+  clientId: cleanTextSchema.guid().optional().nullable(),
   isActive: z.boolean().default(true),
   anonymousAllowed: z.boolean().default(true),
   questions: z.array(createSurveyQuestionSchema).min(1, "Add at least one question"),

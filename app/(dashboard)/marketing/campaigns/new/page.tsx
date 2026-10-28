@@ -38,7 +38,7 @@ export default function NewCampaignPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<CampaignFormData>({
+  const form = useForm<z.input<typeof campaignSchema>, unknown, z.output<typeof campaignSchema>>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
       name: "",

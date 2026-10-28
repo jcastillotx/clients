@@ -5,8 +5,8 @@ import { calendarDateSchema, cleanTextSchema } from "./fields";
  * Validation schema for creating a meeting
  */
 export const createMeetingSchema = z.object({
-  clientId: cleanTextSchema.uuid("Invalid client ID"),
-  requestId: cleanTextSchema.uuid("Invalid request ID").optional().nullable(),
+  clientId: cleanTextSchema.guid("Invalid client ID"),
+  requestId: cleanTextSchema.guid("Invalid request ID").optional().nullable(),
   title: cleanTextSchema.min(1, "Title is required").max(255),
   description: cleanTextSchema.max(100000).optional(),
   meetingType: z.enum(["discovery", "planning", "review", "qbr", "standup", "demo", "training", "support", "other"]),
@@ -17,7 +17,7 @@ export const createMeetingSchema = z.object({
   attendees: z
     .array(
       z.object({
-        userId: cleanTextSchema.uuid().optional(),
+        userId: cleanTextSchema.guid().optional(),
         name: cleanTextSchema.min(1),
         email: cleanTextSchema.max(254).email(),
         role: cleanTextSchema.max(100000).optional(),
@@ -56,7 +56,7 @@ export type UpdateMeetingInput = z.infer<typeof updateMeetingSchema>;
  * Validation schema for meeting notes
  */
 export const createMeetingNoteSchema = z.object({
-  meetingId: cleanTextSchema.uuid("Invalid meeting ID"),
+  meetingId: cleanTextSchema.guid("Invalid meeting ID"),
   section: cleanTextSchema.min(1, "Section name is required"),
   content: cleanTextSchema.min(1, "Content is required"),
   orderIndex: z.number().finite().int().min(0).optional(),

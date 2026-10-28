@@ -26,7 +26,7 @@ export const estimateCurrencyEnum = ["USD", "EUR", "GBP", "CAD", "AUD"] as const
 const isoDateField = calendarDateSchema.optional().nullable();
 
 const projectRequestFields = z.object({
-  clientId: cleanTextSchema.uuid().optional(),
+  clientId: cleanTextSchema.guid().optional(),
   title: cleanTextSchema.min(3, "Title must be at least 3 characters").max(200, "Title is too long"),
   executiveSummary: z
     .string()
@@ -70,7 +70,7 @@ export const updateProjectRequestSchema = z.object({
   desiredOutcome: cleanTextSchema.max(2000).optional().nullable(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   status: z.enum(projectRequestLifecycleStatusEnum).optional(),
-  assignedTo: cleanTextSchema.uuid().nullable().optional(),
+  assignedTo: cleanTextSchema.guid().nullable().optional(),
   dueDate: isoDateField,
   requestedStartDate: isoDateField,
   requestedLaunchDate: isoDateField,

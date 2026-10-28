@@ -16,11 +16,11 @@ import { canAccessClient, resolveRouteAccess } from "@/lib/auth/route-access";
 import { z } from "zod";
 
 const querySchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
 });
 
 const upsertSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().guid(),
   domain: z.string().nullable().optional(),
   logoUrl: z.string().nullable().optional(),
   faviconUrl: z.string().nullable().optional(),
