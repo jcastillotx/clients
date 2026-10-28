@@ -1,1 +1,1 @@
-export { default, metadata } from "@/app/request-project/page";
+export { default, metadata, dynamic } from "@/app/request-project/page";

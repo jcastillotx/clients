@@ -1,3 +1,4 @@
+import { getPublicServiceCatalog } from "@/lib/catalog/public-catalog";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { sendServiceRequestConfirmation } from "@/lib/email/service-request-confirmation";
@@ -112,7 +113,11 @@ export async function POST(request: NextRequest) {
     const validated = createPublicProjectRequestSchema.parse(body);
 
     if (validated.contactFax?.trim()) {
-      return apiError(request, { status: 400, code: "BAD_REQUEST", message: "Unable to submit this request." });
+      return apiError(request, {
+        status: 400,
+        code: "BAD_REQUEST",
+        message: "Unable to submit this request.",
+      });
     }
 
     const captcha = await assertTurnstileToken(
@@ -130,6 +135,40 @@ export async function POST(request: NextRequest) {
     const { turnstileToken, contactFax, ...intakePayload } = validated;
     void turnstileToken;
     void contactFax;
+
+    const packageId = intakePayload.metadata?.packageId;
+    let selectedPackage: {
+      id: string;
+      name: string;
+      serviceId: string;
+    } | null = null;
+    if (packageId !== undefined) {
+      if (
+        typeof packageId !== "string" ||
+        !/^[a-zA-Z0-9-]{1,100}$/.test(packageId)
+      ) {
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message: "Please select a current package.",
+        });
+      }
+      const item = (await getPublicServiceCatalog()).packages.find(
+        (item) => item.id === packageId,
+      );
+      if (!item)
+        return apiError(request, {
+          status: 400,
+          code: "BAD_REQUEST",
+          message:
+            "This package is no longer published. Refresh the form or submit a general request.",
+        });
+      selectedPackage = {
+        id: item.id,
+        name: item.name,
+        serviceId: item.serviceId,
+      };
+    }
 
     const { data: client, error: clientError } = await adminClient
       .from("clients")
@@ -159,6 +198,7 @@ export async function POST(request: NextRequest) {
 
     const customFields = {
       ...(intakePayload.metadata || {}),
+      selectedPackage,
       type: "project",
       source: "public_project_request",
       executiveSummary: intakePayload.executiveSummary,
@@ -230,14 +270,18 @@ export async function POST(request: NextRequest) {
           requestTitle: intakePayload.title,
           companyName: intakePayload.companyName,
           request_title: intakePayload.title,
-          request_description: intakePayload.description || intakePayload.executiveSummary,
+          request_description:
+            intakePayload.description || intakePayload.executiveSummary,
           request_url: `${getAuthBaseUrl()}/projects/requests/${projectRequest.id}`,
           company_name: intakePayload.companyName,
           created_by_name: intakePayload.contactName,
         },
       });
     } catch (notifyErr) {
-      console.error("[POST /api/public/project-requests] notification dispatch:", notifyErr);
+      console.error(
+        "[POST /api/public/project-requests] notification dispatch:",
+        notifyErr,
+      );
     }
 
     let confirmationEmailSent = false;
@@ -247,7 +291,10 @@ export async function POST(request: NextRequest) {
         requestId: projectRequest.id,
       });
     } catch (confirmationError) {
-      console.error("[POST /api/public/project-requests] confirmation email:", confirmationError);
+      console.error(
+        "[POST /api/public/project-requests] confirmation email:",
+        confirmationError,
+      );
     }
 
     const result = {
