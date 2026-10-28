@@ -15,7 +15,7 @@ ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
 ENV NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=2048
 # Only public settings enter the build. Private credentials are injected at runtime.
-RUN pnpm build && rm -f .next/standalone/.env*
+RUN node scripts/release/write-build-info.cjs && pnpm build && rm -f .next/standalone/.env*
 
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
@@ -23,6 +23,7 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 COPY --from=build --chown=node:node /app/public ./public
+COPY --from=build --chown=node:node /app/.release-public.json ./.release-public.json
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /opt/yarn* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 USER node
 EXPOSE 3000

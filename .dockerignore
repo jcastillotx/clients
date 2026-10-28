@@ -11,6 +11,9 @@ test-results
 playwright-report
 .pnpm-store
 .claude
+.release-public.json
+release
+**/__pycache__
 
 # Local QA databases, signing material, fixtures and captured messages never enter images.
 staging

@@ -39,6 +39,9 @@ jobs:
       - name: Unit tests
         run: pnpm test:run
 
+      - name: Release safety tests
+        run: python3 -m unittest discover -s tests/release -v
+
       - name: Lint
         run: pnpm lint
 

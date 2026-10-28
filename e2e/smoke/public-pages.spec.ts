@@ -20,6 +20,15 @@ test.describe("public pages smoke", () => {
     ).toBeVisible();
   });
 
+  test("service request alias loads directly", async ({ page }) => {
+    const response = await page.goto("/service-request");
+    expect(response?.status()).toBe(200);
+    await expect(page).toHaveURL("/service-request");
+    await expect(
+      page.getByRole("heading", { name: "Request a New Project" }),
+    ).toBeVisible();
+  });
+
   test("public invoice payment page loads", async ({ page }) => {
     await page.goto("/pay-invoice");
     await expect(
