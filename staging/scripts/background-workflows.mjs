@@ -56,24 +56,28 @@ async function test(name, fn) {
     JSON.stringify(results, null, 2),
   );
 }
+const jobBase = env.INNGEST_BASE_URL || "http://127.0.0.1:8288";
+if (!["http://127.0.0.1:8288", "http://127.0.0.1:8488"].includes(jobBase))
+  throw Error("Local job server required");
+const jobHeaders = env.INNGEST_SIGNING_KEY
+  ? { Authorization: `Bearer ${env.INNGEST_SIGNING_KEY}` }
+  : {};
 async function invoke(name) {
   const response = await fetch(
-    "http://127.0.0.1:8288/v2/apps/kre8iv-clients/functions/" +
-      name +
-      "/invoke",
+    jobBase + "/v2/apps/kre8iv-clients/functions/" + name + "/invoke",
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...jobHeaders },
       body: JSON.stringify({ data: {} }),
     },
   );
   const body = await response.json();
   expect(response.ok, "Job invoke failed");
   for (let i = 0; i < 240; i++) {
-    const result = await fetch(
-      "http://127.0.0.1:8288/v1/runs/" + body.data.runId,
-    ).then((r) => r.json());
-    const status = result.data.status.toLowerCase();
+    const result = await fetch(jobBase + "/v1/runs/" + body.data.runId, {
+      headers: jobHeaders,
+    }).then((r) => r.json());
+    const status = (result.data?.status || "pending").toLowerCase();
     if (status === "completed") return;
     if (["failed", "cancelled"].includes(status))
       throw Error("Job " + name + " " + status);
