@@ -23,3 +23,13 @@ Show invite-only sign-in with a synthetic portal client, active paid-media entit
 ## Deployment gate
 
 PR #236 quality, build and browser smoke checks passed at 15f54f8. No integration release has been deployed. The owner requested deployment after verification requirements are finished. Business verification, access verification, complete App Review and publication remain unresolved. Do not equate a prepared form, API test or submitted request with provider approval.
+
+## October 28 evening recheck
+
+Meta now explicitly displays Verified for Kre8ivdesigns Marketing, LLC, business 144591516733766. Business verification is approved; App Review and Tech Provider access verification are separate and remain unsubmitted. The app is still unpublished.
+
+Access Verification is now available. Its draft selects Agency and SaaS Platform, describes the approved report-only portal behavior, and uses the public company website. Meta autosaved those non-sensitive draft fields. The required question about managing multiple Business Portfolios was left unanswered and requested from the owner; portfolio IDs must not be inferred from ad-account access. No legal/security/data-handling attestation or final Submit verification action was performed. Meta shows a completion deadline of December 27, 2026.
+
+The App Review draft still requests only ads_read, public_profile and Marketing API Access Tier and is Not submitted. Reviewer video, instructions, suitable isolated reviewer access and organizational data-handling answers remain outstanding. Evidence: `meta-access-verification-prepared-20261028.png`.
+
+The owner confirmed that the business does not manage multiple Business Portfolios. That No answer was saved in the draft. The completed form is awaiting action-time approval to submit the Tech Provider access-verification request; no submission or approval is claimed. Evidence: `meta-access-verification-ready-20261028.png`.

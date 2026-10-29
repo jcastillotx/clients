@@ -30,3 +30,11 @@ Tokens use AES256GCM encryption, user/client ownership, single-use hashed OAuth 
 Google's Data Access screen requests a demonstration video showing authorization and use of every scope. Prepare a recording with synthetic briefs and redacted/owned account data, confirm brand/domain requirements in Verification Center, and review the minimum-scope explanation above before submitting. This packet is a draft, not a submitted verification application or a Google approval. Any reviewer account access, external upload/publication and final submission require the owner's authorization at those steps.
 
 Evidence: google-analytics-provider-results.json, google-ads-provider-results.json, google-marketing-cleanup-results.json, google-ads-explorer-approved.png and client-connected-report-tools.png. Manager-hierarchy behavior has contract tests; no live manager account was available for acceptance.
+
+## October 28 evening recheck
+
+After the ownership-propagation wait, Google branding re-verification succeeded. The verified branding was published; Verification Center explicitly confirms it is verified and being shown to users. The ownership HTML proof still returns the exact expected content publicly. No OAuth audience or scope was expanded.
+
+Sensitive-scope verification is now available but remains unsubmitted. The preparation form requires scope justification and a demonstration video. A 905-character explanation covering the existing five scopes was drafted without changing scopes. Save remains disabled while the required YouTube demo URL is missing; the draft is not claimed as saved or submitted. A recording must show all assigned OAuth clients, the real consent flow and the expected unverified-app screen in an isolated review environment. No production integration release was performed.
+
+Evidence: `google-branding-verified-20261028.png`.

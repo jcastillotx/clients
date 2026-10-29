@@ -1,11 +1,13 @@
 {
-  "checkedAt": "2026-10-27T22:30:27Z",
+  "checkedAt": "2026-10-29T02:40:06.215134+00:00",
   "google": {
     "portalUrlOwnership": "verified",
     "method": "HTML file",
-    "branding": "blocked until ownership propagation/retry",
+    "branding": "verified_and_published",
     "earliestConservativeRetryCentral": "2026-10-28T17:25:00-05:00",
-    "sensitiveScopeReview": "not_submitted"
+    "sensitiveScopeReview": "not_submitted",
+    "scopeJustification": "drafted_in_form_not_saved_video_required",
+    "demonstrationVideo": "required_not_provided"
   },
   "meta": {
     "domain": "kre8ivdesigns.com",
@@ -15,10 +17,11 @@
       "1.1.1.1",
       "8.8.8.8"
     ],
-    "businessVerification": "in_review",
-    "accessVerification": "blocked_by_business_verification",
+    "businessVerification": "verified",
+    "accessVerification": "draft_prepared_owner_submission_approval_pending",
     "appReview": "draft_not_submitted",
-    "published": false
+    "published": false,
+    "managesMultipleBusinessPortfolios": false
   },
   "integrationsDeployed": false,
   "followUp": {
