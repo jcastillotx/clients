@@ -38,3 +38,7 @@ After the ownership-propagation wait, Google branding re-verification succeeded.
 Sensitive-scope verification is now available but remains unsubmitted. The preparation form requires scope justification and a demonstration video. A 905-character explanation covering the existing five scopes was drafted without changing scopes. Save remains disabled while the required YouTube demo URL is missing; the draft is not claimed as saved or submitted. A recording must show all assigned OAuth clients, the real consent flow and the expected unverified-app screen in an isolated review environment. No production integration release was performed.
 
 Evidence: `google-branding-verified-20261028.png`.
+
+## October 29 demo preparation
+
+Restored the dedicated localhost provider acceptance environment with synthetic tenants and only Google provider configuration. Actual owner Analytics reauthorization, selection of Kre8ivDesigns Website (properties/561030184), aggregate reporting and disconnect passed. No report data was sent to AI. Partial captured material is private and is not a completed or uploaded demo. Ads authorization now requires the owner’s passkey identity check; the browser tab is preserved for that handoff. Search Console and Calendar still need their demo sections. The required YouTube URL is not supplied, and scope review is not submitted.

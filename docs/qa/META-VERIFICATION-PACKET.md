@@ -33,3 +33,7 @@ Access Verification is now available. Its draft selects Agency and SaaS Platform
 The App Review draft still requests only ads_read, public_profile and Marketing API Access Tier and is Not submitted. Reviewer video, instructions, suitable isolated reviewer access and organizational data-handling answers remain outstanding. Evidence: `meta-access-verification-prepared-20261028.png`.
 
 The owner confirmed that the business does not manage multiple Business Portfolios. That No answer was saved in the draft. The completed form is awaiting action-time approval to submit the Tech Provider access-verification request; no submission or approval is claimed. Evidence: `meta-access-verification-ready-20261028.png`.
+
+## October 29 access-verification receipt
+
+The owner approved submitting access verification. On opening the current provider form, Meta already displayed “Access verification submitted on Oct 28, 2026, 9:47 PM” by Jeremiah Castillo. Expanded history states “We’re reviewing your submission and will reach out within 5 days if we need more information.” No duplicate request was sent. This is a submission receipt and pending review, not access approval. Evidence: `meta-access-in-review-20261029.png`.

@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-29T02:40:06.215134+00:00",
+  "checkedAt": "2026-10-29T18:56:56.334144+00:00",
   "google": {
     "portalUrlOwnership": "verified",
     "method": "HTML file",
@@ -7,7 +7,14 @@
     "earliestConservativeRetryCentral": "2026-10-28T17:25:00-05:00",
     "sensitiveScopeReview": "not_submitted",
     "scopeJustification": "drafted_in_form_not_saved_video_required",
-    "demonstrationVideo": "required_not_provided"
+    "demonstrationVideo": "partial_capture_identity_check_required_for_ads",
+    "demoProgress": {
+      "analytics": "real owner GA4 property report and disconnect passed",
+      "ads": "owner passkey check pending",
+      "searchConsole": "not recorded this run",
+      "calendar": "not recorded this run",
+      "youtubeUpload": "not uploaded"
+    }
   },
   "meta": {
     "domain": "kre8ivdesigns.com",
@@ -18,10 +25,11 @@
       "8.8.8.8"
     ],
     "businessVerification": "verified",
-    "accessVerification": "draft_prepared_owner_submission_approval_pending",
+    "accessVerification": "submitted_in_review",
     "appReview": "draft_not_submitted",
     "published": false,
-    "managesMultipleBusinessPortfolios": false
+    "managesMultipleBusinessPortfolios": false,
+    "accessVerificationSubmittedAtProvider": "October 28, 2026, 9:47 PM"
   },
   "integrationsDeployed": false,
   "followUp": {
