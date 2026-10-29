@@ -1,3 +1,12 @@
+import {
+  marketingProviders,
+  marketingProviderGroup,
+} from "@/lib/marketing/providers";
+import {
+  metaMarketingConfig,
+  metaMarketingToken,
+  metaMarketingResources,
+} from "@/lib/marketing/meta-connections";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -11,8 +20,6 @@ import {
 import { resolveStaffAccess } from "@/lib/api/resolve-staff-access";
 import { marketingConnectionAccess } from "@/lib/marketing/connection-access";
 import {
-  connectionGroup,
-  googleMarketingProviders,
   googleMarketingResources,
   googleMarketingToken,
   googleMarketingConfig,
@@ -29,16 +36,24 @@ export async function GET(request: Request) {
     const config = googleMarketingConfig();
     return apiSuccess(request, {
       configured: Boolean(config.clientId && config.clientSecret),
-      providers: googleMarketingProviders
+      providers: marketingProviders
         .filter(
           (p) =>
-            entitled?.plan.groups.includes(connectionGroup(p)) ||
+            entitled?.plan.groups.includes(marketingProviderGroup(p)) ||
             rows.some((r) => r.provider === p),
         )
         .map((provider) => ({
           provider,
+          configured:
+            provider === "meta_ads"
+              ? Boolean(
+                  metaMarketingConfig().clientId &&
+                  metaMarketingConfig().clientSecret &&
+                  metaMarketingConfig().configId,
+                )
+              : Boolean(config.clientId && config.clientSecret),
           permitted: Boolean(
-            entitled?.plan.groups.includes(connectionGroup(provider)),
+            entitled?.plan.groups.includes(marketingProviderGroup(provider)),
           ),
           connection: rows.find((r) => r.provider === provider) || null,
         })),
@@ -48,8 +63,8 @@ export async function GET(request: Request) {
   }
 }
 const schema = z.object({
-  provider: z.enum(googleMarketingProviders),
-  resourceId: z.string().max(100).optional(),
+  provider: z.enum(marketingProviders),
+  resourceId: z.string().max(2048).optional(),
 });
 export async function POST(request: Request) {
   if (!(await resolveStaffAccess())) return apiUnauthorized(request);
@@ -58,12 +73,18 @@ export async function POST(request: Request) {
     if (!p.success) return apiValidationError(request, p.error);
     const access = await marketingConnectionAccess(p.data.provider);
     if (!access) return apiForbidden(request);
-    const { token } = await googleMarketingToken(
-      access.clientId,
-      access.userId,
-      p.data.provider,
-    );
-    const resources = await googleMarketingResources(token, p.data.provider);
+    const { token } =
+      p.data.provider === "meta_ads"
+        ? await metaMarketingToken(access.clientId, access.userId)
+        : await googleMarketingToken(
+            access.clientId,
+            access.userId,
+            p.data.provider,
+          );
+    const resources =
+      p.data.provider === "meta_ads"
+        ? await metaMarketingResources(token)
+        : await googleMarketingResources(token, p.data.provider);
     if (p.data.resourceId) {
       if (!resources.some((r) => r.id === p.data.resourceId))
         return apiForbidden(

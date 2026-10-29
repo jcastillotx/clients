@@ -20,9 +20,9 @@ export default function CalendarPrivacyPage() {
         </p>
         <p>
           Kre8ivDesigns Marketing, LLC operates clients.kre8ivdesigns.com. This
-          notice explains optional calendar and Google marketing connections in
-          the portal. Calendar access and marketing access are authorized
-          separately.
+          notice explains optional calendar and Google and Meta marketing
+          connections in the portal. Calendar access and marketing access are
+          authorized separately.
         </p>
       </header>
       <section className="space-y-3" aria-labelledby="calendar-data">
@@ -81,18 +81,25 @@ export default function CalendarPrivacyPage() {
           Google Analytics authorization requests read-only access to Analytics
           data. The portal lists accessible GA4 properties and reads aggregate
           sessions, active users and key events for the selected property.
+          Search Console authorization requests read-only access to your
+          accessible properties and aggregate web-search clicks, impressions,
+          click-through rate and average position. Search data can be delayed.
           Google Ads authorization uses Google&apos;s Ads scope, which is
           broader than read-only; the portal only lists accessible accounts and
           reads aggregate impressions, clicks, advertising cost and conversions.
+          Meta Ads authorization requests ads_read and the default public
+          profile. The portal lists authorized ad accounts and reads aggregate
+          impressions, clicks and spend. Meta also permits server-side event
+          submission under ads_read; this portal does not submit those events.
           It does not change campaigns, publish advertisements or spend money.
         </p>
         <p>
           These connections belong to your portal user within your client
           account and are available when included in an active marketing plan.
-          We store encrypted access and refresh tokens, provider, selected
-          property or account identifier, your portal user and client
-          identifiers, expiry and connection timestamps. Performance summaries
-          are retrieved when requested.
+          We store encrypted access tokens and, where provided, refresh tokens,
+          provider, selected property or account identifier, your portal user
+          and client identifiers, expiry and connection timestamps. Performance
+          summaries are retrieved when requested.
         </p>
         <p>
           Marketing tools create drafts from the brief, supporting data and
@@ -108,10 +115,11 @@ export default function CalendarPrivacyPage() {
         <p>
           Use Disconnect in Marketing → Connections to remove the stored
           marketing connection and tokens. This does not alter the source Google
-          account or remove previously saved drafts. You can revoke the app in
-          Google account settings and contact us to request deletion of saved
-          information. Disconnect remains available after a plan expires. Backup
-          copies may persist under our recovery retention practices.
+          or Meta account or remove previously saved drafts. You can revoke the
+          app in Google or Meta account settings and contact us to request
+          deletion of saved information. Disconnect remains available after a
+          plan expires. Backup copies may persist under our recovery retention
+          practices.
         </p>
       </section>
       <section className="space-y-3" aria-labelledby="calendar-storage">

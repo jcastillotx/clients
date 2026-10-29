@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-type Provider = "google_analytics" | "google_ads";
+import type { MarketingProvider as Provider } from "@/lib/marketing/providers";
 type Item = {
   provider: Provider;
   permitted: boolean;
+  configured: boolean;
   connection: { resource_id: string | null } | null;
 };
 export function MarketingConnections() {
@@ -74,27 +75,29 @@ export function MarketingConnections() {
     <div className="space-y-6 p-6">
       <h1 className="text-3xl font-bold">Marketing Connections</h1>
       <p>
-        Connect your own Google accounts and select the property or advertising
-        account to use. Connections belong to your user within this client
-        account.
+        Connect your own Google and Meta accounts and select the property or
+        advertising account to use. Connections belong to your user within this
+        client account.
       </p>
       <p>
-        GA4 requests read-only Analytics access. Google Ads uses Google&apos;s
-        broader Ads permission; this portal only reads reports and does not
-        change campaigns or spend money. You can remove this app&apos;s grant in
-        your Google account at any time.
+        GA4 and Search Console request read-only access. Search Console reports
+        finalized web-search totals for seven days ending three days ago; recent
+        data can be delayed. Google Ads uses Google&apos;s broader Ads
+        permission; this portal only reads reports and does not change campaigns
+        or spend money. You can remove this app&apos;s grant in your Google
+        account at any time.
       </p>
       {query.get("error") === "connection_failed" && (
         <p role="alert">
-          Google connection was not completed or the authorization session
-          expired. Choose Connect Google account to start again.
+          Account connection was not completed or the authorization session
+          expired. Choose Connect account to start again.
         </p>
       )}
       {items.some(
         (item) => item.provider === query.get("connected") && item.connection,
       ) && (
         <p role="status">
-          Google authorization completed. Choose an account or property below.
+          Account authorization completed. Choose an account or property below.
         </p>
       )}
       {error && (
@@ -107,7 +110,7 @@ export function MarketingConnections() {
       )}
       {loaded && !items.length && (
         <p>
-          Your marketing plan does not include Google reporting connections.{" "}
+          Your marketing plan does not include reporting connections.{" "}
           <Link className="underline" href="/marketing/plans">
             View marketing plans
           </Link>
@@ -121,7 +124,11 @@ export function MarketingConnections() {
               <CardTitle>
                 {p.provider === "google_ads"
                   ? "Google Ads"
-                  : "Google Analytics 4"}
+                  : p.provider === "meta_ads"
+                    ? "Meta Ads"
+                    : p.provider === "google_search_console"
+                      ? "Google Search Console"
+                      : "Google Analytics 4"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -132,15 +139,18 @@ export function MarketingConnections() {
                   : ""}
               </p>
               <Button
-                disabled={busy || !configured || !p.permitted}
+                disabled={busy || !(p.configured ?? configured) || !p.permitted}
                 onClick={() => void act(p.provider, "connect")}
               >
-                {p.connection ? "Reconnect" : "Connect Google account"}
+                {p.connection
+                  ? "Reconnect"
+                  : p.provider === "meta_ads"
+                    ? "Connect Meta account"
+                    : "Connect Google account"}
               </Button>
-              {!configured && (
+              {!(p.configured ?? configured) && (
                 <p>
-                  Google marketing OAuth setup is required by your account
-                  manager.
+                  Marketing OAuth setup is required by your account manager.
                 </p>
               )}
               {!p.permitted && (
@@ -205,8 +215,8 @@ export function MarketingConnections() {
           <h2 className="text-xl font-semibold">Performance summary</h2>
           {reportEmpty && (
             <p role="status">
-              Google returned no report rows for this period. Check the selected
-              account or property and its tracking setup.
+              The provider returned no report rows for this period. Check the
+              selected account or property and its tracking setup.
             </p>
           )}
           <p>

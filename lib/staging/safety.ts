@@ -42,6 +42,7 @@ export function assertIsolatedStaging(
     }
   }
   for (const key of [
+    "META_MARKETING_CLIENT_SECRET",
     "GOOGLE_MARKETING_CLIENT_SECRET",
     "GOOGLE_CALENDAR_CLIENT_SECRET",
     "RESEND_API_KEY",
