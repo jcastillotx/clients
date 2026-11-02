@@ -16,10 +16,12 @@ Verdict: operational core, incomplete full-platform acceptance. This is a bounde
 
 Nodemailer 8.0.11 is replaced by 10.3.1. The SMTP transport disallows local-file and URL access. CI and the off-host production release now reject high as well as critical production dependency advisories. Zod 4.6.6 already exists on current main; tests now verify invalid form input and early rejection of oversized collections against that patched validator. An earlier installed dependency tree belonged to the older work branch; it must not be represented as a scan of the deployed image.
 
-Validation: production build, TypeScript, lint (existing warnings), 488 unit tests and 17 release-safety tests pass locally. A real localhost SMTP exchange verifies message/attachment delivery through the patched client. Dependency audit after installation reports zero high/critical, 55 moderate and 9 low findings; these remaining dependency paths still need reachability/upgrade review. A clean high-severity audit is not an all-advisory clean audit.
+Validation: production build, TypeScript, lint (existing warnings), 488 unit tests, 10 production-build browser smoke checks and 17 release-safety tests pass locally. A real localhost SMTP exchange verifies message/attachment delivery through the patched client. Dependency audit after installation reports zero high/critical, 55 moderate and 9 low findings; these remaining dependency paths still need reachability/upgrade review. A clean high-severity audit is not an all-advisory clean audit.
 
 ## Outstanding acceptance gates
 
 PR236 provider integrations remain a separate release. Last observed Meta access verification is In review; Meta App Review and Google sensitive-scope review remain incomplete. Owner passkey verification, factual Meta data-handling answers, complete demo/reviewer materials and final provider approvals remain required. Draft plan prices must stay unpublished until owner approval. No new payment, provider grant or client-data disclosure is authorized by this assessment.
 
 This source patch must pass required PR checks and the existing off-host production release before it is described as deployed. Preserve runtime secrets, schedules and rollback state. Do not claim every client workflow was newly tested against real providers in this audit.
+
+Browser checks used a fresh local server and installed Chrome after the standalone browser download stalled. The final suite passes, including production CSP without unsafe-eval and no sign-in page runtime errors. Public sensitive-file probes returned 404; sampled protected data/job endpoints returned 401. Meta access verification was rechecked and still states In review.
