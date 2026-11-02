@@ -13,6 +13,18 @@ const nextConfig = {
         "utf8",
       ),
     );
+    if (process.env.NODE_ENV === "development") {
+      for (const route of securityHeaders) {
+        for (const header of route.headers) {
+          if (header.key.toLowerCase() === "content-security-policy") {
+            header.value = header.value.replace(
+              "script-src 'self'",
+              "script-src 'self' 'unsafe-eval'",
+            );
+          }
+        }
+      }
+    }
     if (process.env.STAGING_ISOLATED === "1" || isLocalProviderAcceptance()) {
       for (const route of securityHeaders) {
         for (const header of route.headers) {

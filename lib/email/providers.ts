@@ -273,6 +273,8 @@ export async function sendViaSMTP(
     port,
     secure: encryption === "ssl",
     requireTLS: encryption === "starttls",
+    disableFileAccess: true,
+    disableUrlAccess: true,
     auth: cfg.smtp_user
       ? { user: cfg.smtp_user, pass: cfg.smtp_password ?? "" }
       : undefined,
