@@ -266,12 +266,15 @@ export function isDistributedRateLimitEnabled(): boolean {
  * Extract the real client IP from Next.js request headers.
  */
 export function getClientIp(request: Request): string {
-  const forwarded =
-    request.headers.get("x-forwarded-for") ??
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
-  return forwarded.split(",")[0].trim();
+  // OpenShip overwrites X-Real-IP after validating its trusted proxy chain.
+  // A caller can prepend arbitrary values to X-Forwarded-For; prefer the
+  // sanitized edge value so changing that prefix cannot reset a rate limit.
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  const cloudflareIp = request.headers.get("cf-connecting-ip")?.trim();
+  if (cloudflareIp) return cloudflareIp;
+  const forwarded = request.headers.get("x-forwarded-for");
+  return forwarded?.split(",").at(-1)?.trim() || "unknown";
 }
 
 /** @internal Reset in-memory store for tests. */
