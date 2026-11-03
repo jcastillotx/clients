@@ -38,6 +38,19 @@ class PromotionError(ReleaseError):
         self.rollback = rollback
 
 
+def security_overrides(path=Path("/opt/clients-openship/security-env.json")):
+    if not path.exists():
+        return {}
+    if path.is_symlink() or path.stat().st_uid != 0 or path.stat().st_mode & 0o077:
+        raise ReleaseError("Security runtime overrides must be root-private")
+    overrides = json.loads(path.read_text())
+    if not isinstance(overrides, dict) or set(overrides) != {"SHARED_RATE_LIMIT_URL", "SHARED_RATE_LIMIT_TOKEN", "SHARED_RATE_LIMIT_REQUIRED"}:
+        raise ReleaseError("Unexpected security runtime overrides")
+    if overrides["SHARED_RATE_LIMIT_URL"] != "http://clients-rate-limit:8080" or overrides["SHARED_RATE_LIMIT_REQUIRED"] != "1" or not isinstance(overrides["SHARED_RATE_LIMIT_TOKEN"], str) or not re.fullmatch(r"[0-9a-f]{64}", overrides["SHARED_RATE_LIMIT_TOKEN"]):
+        raise ReleaseError("Invalid shared rate-limit configuration")
+    return overrides
+
+
 def validate_release(release_id, commit, digest, url):
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ReleaseError("Invalid commit")
@@ -225,6 +238,7 @@ def deploy(args):
             if any(image_env.get(key, "") != expected_public[key] for key in PUBLIC_KEYS):
                 raise ReleaseError("Public build configuration differs from live runtime")
             live_env["BUILD_COMMIT"] = args.commit
+            live_env.update(security_overrides())
             if any("\n" in value or "\r" in value for value in live_env.values()):
                 raise ReleaseError("Multiline runtime values require an operator review")
             env_file = folder / "runtime.env"

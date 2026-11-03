@@ -1,0 +1,35 @@
+name: clients-rate-limit
+services:
+  counter:
+    image: python:3.13-alpine@sha256:7984cf56ceaddebe4fefeb75d64000b9f45d8b77b11a09b24524da6cdc3af0c8
+    container_name: clients-rate-limit
+    command: [python, /app/server.py]
+    user: "65532:65532"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
+    environment:
+      RATE_LIMIT_TOKEN: ${RATE_LIMIT_TOKEN:?required}
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./server.py:/app/server.py:ro
+      - ./data:/data
+    tmpfs: [/tmp:size=8m]
+    networks:
+      portal:
+        aliases: [clients-rate-limit]
+    logging:
+      driver: json-file
+      options: { max-size: 5m, max-file: "2" }
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+networks:
+  portal:
+    external: true
+    name: openship-kre8ivdesigns-clients

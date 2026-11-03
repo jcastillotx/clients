@@ -2,6 +2,8 @@ import importlib.util
 import json
 from pathlib import Path
 import unittest
+import tempfile
+from types import SimpleNamespace
 from unittest.mock import patch
 
 SPEC = importlib.util.spec_from_file_location("release_deploy", Path(__file__).parents[2] / "scripts/release/deploy.py")
@@ -15,6 +17,19 @@ PREVIOUS = {"Id": "previous", "Config": {"Labels": {}}}
 
 
 class ReleaseSafetyTests(unittest.TestCase):
+    def test_security_overrides_require_private_owner_validated_configuration(self):
+        values = {"SHARED_RATE_LIMIT_URL":"http://clients-rate-limit:8080", "SHARED_RATE_LIMIT_TOKEN":"a"*64, "SHARED_RATE_LIMIT_REQUIRED":"1"}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/"security.json"
+            self.assertEqual(deploy.security_overrides(path), {})
+            path.write_text(json.dumps(values))
+            with patch.object(Path, "stat", return_value=SimpleNamespace(st_uid=0, st_mode=0o100600)), patch.object(Path, "exists", return_value=True), patch.object(Path, "is_symlink", return_value=False):
+                self.assertEqual(deploy.security_overrides(path), values)
+                path.write_text(json.dumps({**values, "UNEXPECTED":"value"}))
+                with self.assertRaises(deploy.ReleaseError): deploy.security_overrides(path)
+            with patch.object(Path, "stat", return_value=SimpleNamespace(st_uid=0, st_mode=0o100644)), patch.object(Path, "exists", return_value=True), patch.object(Path, "is_symlink", return_value=False):
+                with self.assertRaises(deploy.ReleaseError): deploy.security_overrides(path)
+
     def test_rejects_artifacts_from_another_bucket_or_prefix(self):
         for url in [URL.replace(deploy.BUCKET, "other-bucket"), URL.replace("/clients/releases/", "/other/"),
                     URL.replace("https://", "http://"), URL + "#fragment"]:

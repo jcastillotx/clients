@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat } from "ai/react";
+import { useChat } from "@/lib/ai/use-portal-chat";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";

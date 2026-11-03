@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { withSentryConfig } from "@sentry/nextjs";
-import { isLocalProviderAcceptance } from "./lib/staging/provider-acceptance.mjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -13,35 +12,11 @@ const nextConfig = {
         "utf8",
       ),
     );
-    if (process.env.NODE_ENV === "development") {
-      for (const route of securityHeaders) {
-        for (const header of route.headers) {
-          if (header.key.toLowerCase() === "content-security-policy") {
-            header.value = header.value.replace(
-              "script-src 'self'",
-              "script-src 'self' 'unsafe-eval'",
-            );
-          }
-        }
-      }
-    }
-    if (process.env.STAGING_ISOLATED === "1" || isLocalProviderAcceptance()) {
-      for (const route of securityHeaders) {
-        for (const header of route.headers) {
-          if (header.key.toLowerCase() === "content-security-policy") {
-            header.value = header.value
-              .replace(/upgrade-insecure-requests;?/g, "")
-              .replace(
-                "connect-src ",
-                "connect-src http://127.0.0.1:55321 ws://127.0.0.1:55321 ",
-              )
-              .replace(
-                "img-src ",
-                "img-src http://127.0.0.1:55321 http://127.0.0.1:59000 ",
-              );
-          }
-        }
-      }
+    // Middleware supplies a fresh nonce policy, including on redirects/errors.
+    for (const route of securityHeaders) {
+      route.headers = route.headers.filter(
+        (header) => header.key.toLowerCase() !== "content-security-policy",
+      );
     }
     return securityHeaders;
   },

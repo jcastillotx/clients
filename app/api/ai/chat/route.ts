@@ -1,6 +1,6 @@
-import { OpenAIStream, StreamingTextResponse } from "ai";
+import { streamText } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { and, eq } from "drizzle-orm";
-import { Configuration, OpenAIApi } from "openai-edge";
 import { z } from "zod";
 import { resolveRouteAccess } from "@/lib/auth/route-access";
 import { db } from "@/lib/db";
@@ -23,10 +23,7 @@ const requestSchema = z.object({
     .min(1),
 });
 
-const config = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(config);
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const runtime = "nodejs";
 
@@ -92,8 +89,8 @@ export async function POST(req: Request) {
       conversation = newConversation;
     }
 
-    const response = await openai.createChatCompletion({
-      model: "gpt-4",
+    const result = streamText({
+      model: openai.chat("gpt-4"),
       messages: [
         {
           role: "system",
@@ -103,11 +100,7 @@ export async function POST(req: Request) {
         ...messages,
       ],
       temperature: 0.7,
-      stream: true,
-    });
-
-    const stream = OpenAIStream(response, {
-      async onCompletion(completion) {
+      async onFinish({ text: completion }) {
         try {
           const userMessage = messages[messages.length - 1];
           const assistantMessage = completion;
@@ -153,7 +146,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return new StreamingTextResponse(stream);
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error("Chat API error:", error);
     return new Response("Internal Server Error", { status: 500 });

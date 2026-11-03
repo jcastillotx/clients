@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope, Sora } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -31,15 +32,18 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${manrope.variable} ${sora.variable} font-sans antialiased`}>
-        <Providers>{children}</Providers>
+      <body
+        className={`${manrope.variable} ${sora.variable} font-sans antialiased`}
+      >
+        <Providers nonce={nonce}>{children}</Providers>
       </body>
     </html>
   );

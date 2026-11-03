@@ -1,23 +1,8 @@
-import { Resend } from "resend";
-import { loadEmailConfig, sendViaConfiguredProvider } from "./providers";
-
-let _resend: Resend | null = null;
-
-function getResend(): Resend {
-  if (!_resend) {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY is not set in environment variables");
-    }
-    _resend = new Resend(process.env.RESEND_API_KEY);
-  }
-  return _resend;
-}
-
-export const resend = new Proxy({} as Resend, {
-  get(_target, prop, receiver) {
-    return Reflect.get(getResend(), prop, receiver);
-  },
-});
+import {
+  loadEmailConfig,
+  sendViaConfiguredProvider,
+  sendViaResend,
+} from "./providers";
 
 // Email sender configuration (Resend: prefer RESEND_FROM_EMAIL + RESEND_FROM_NAME)
 function resolveFromAddress(): string {
@@ -25,7 +10,8 @@ function resolveFromAddress(): string {
     process.env.EMAIL_FROM?.trim() ||
     process.env.RESEND_FROM_EMAIL?.trim() ||
     "noreply@yourdomain.com";
-  const name = process.env.RESEND_FROM_NAME?.trim() || process.env.EMAIL_FROM_NAME?.trim();
+  const name =
+    process.env.RESEND_FROM_NAME?.trim() || process.env.EMAIL_FROM_NAME?.trim();
   if (name) {
     return `${name} <${email}>`;
   }
@@ -65,23 +51,15 @@ export async function sendEmail(options: EmailOptions) {
     }
 
     // Fallback: env-var Resend (original behaviour when no DB config is set)
-    const result = await resend.emails.send({
-      from: EMAIL_FROM,
-      to: Array.isArray(options.to) ? options.to : [options.to],
-      subject: options.subject,
-      html: options.html || "",
-      text: options.text || "",
-      cc: options.cc,
-      bcc: options.bcc,
-      reply_to: options.replyTo || EMAIL_REPLY_TO,
-      attachments: options.attachments,
-    });
-
-    if (result.error) {
-      console.error("Email provider rejected message:", result.error);
-      return { success: false, error: result.error.message };
-    }
-    return { success: true, data: result };
+    await sendViaResend(
+      {
+        provider: "resend",
+        api_key: process.env.RESEND_API_KEY,
+        from_email: EMAIL_FROM,
+      },
+      { ...options, replyTo: options.replyTo || EMAIL_REPLY_TO },
+    );
+    return { success: true };
   } catch (error) {
     console.error("Email send error:", error);
     return {

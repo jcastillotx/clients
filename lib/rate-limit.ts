@@ -1,10 +1,4 @@
-/**
- * Rate limiting with optional Upstash Redis for distributed/serverless deploys.
- *
- * When UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set, limits are
- * enforced globally across all application instances. Otherwise falls back to an
- * in-memory sliding window (single-process only).
- */
+/** Shared OpenShip counters in production; local memory only when unconfigured. */
 
 import { Ratelimit, type Duration } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
@@ -42,6 +36,37 @@ export interface RateLimitResult {
 
 let upstashRedis: Redis | null = null;
 const upstashLimiters = new Map<string, Ratelimit>();
+
+export async function checkSharedRateLimitHealth(): Promise<boolean> {
+  if (
+    !process.env.SHARED_RATE_LIMIT_URL &&
+    process.env.SHARED_RATE_LIMIT_REQUIRED !== "1"
+  )
+    return true;
+  if (
+    !process.env.SHARED_RATE_LIMIT_URL ||
+    !process.env.SHARED_RATE_LIMIT_TOKEN
+  )
+    return false;
+  try {
+    const response = await fetch(
+      new URL("/limit", process.env.SHARED_RATE_LIMIT_URL),
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.SHARED_RATE_LIMIT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ key: "0".repeat(64), limit: 1, windowMs: 1000 }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(2000),
+      },
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 
 function isUpstashConfigured(): boolean {
   return Boolean(
@@ -127,6 +152,65 @@ export async function rateLimit(
   config: RateLimitConfig,
   prefix = "default",
 ): Promise<RateLimitResult> {
+  if (
+    process.env.SHARED_RATE_LIMIT_URL ||
+    process.env.SHARED_RATE_LIMIT_REQUIRED === "1"
+  ) {
+    const denied = {
+      success: false,
+      remaining: 0,
+      resetAt: Date.now() + 10_000,
+    };
+    const base = process.env.SHARED_RATE_LIMIT_URL;
+    const token = process.env.SHARED_RATE_LIMIT_TOKEN;
+    if (!base || !token) return denied;
+    try {
+      const rawKey = `${prefix}:${config.limit}:${config.windowMs}:${identifier}`;
+      const digest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(rawKey),
+      );
+      const key = Array.from(new Uint8Array(digest), (byte) =>
+        byte.toString(16).padStart(2, "0"),
+      ).join("");
+      const response = await fetch(new URL("/limit", base), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ key, ...config }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(2000),
+      });
+      if (!response.ok) throw new Error("Counter unavailable");
+      const result: unknown = await response.json();
+      if (
+        !result ||
+        typeof result !== "object" ||
+        !("success" in result) ||
+        typeof result.success !== "boolean" ||
+        !("remaining" in result) ||
+        typeof result.remaining !== "number" ||
+        !Number.isInteger(result.remaining) ||
+        result.remaining < 0 ||
+        result.remaining > config.limit ||
+        !("resetAt" in result) ||
+        typeof result.resetAt !== "number" ||
+        !Number.isFinite(result.resetAt) ||
+        result.resetAt <= 0
+      )
+        throw new Error("Invalid counter response");
+      return {
+        success: result.success,
+        remaining: result.remaining,
+        resetAt: result.resetAt,
+      };
+    } catch {
+      console.error("Shared rate limiter unavailable; denying request");
+      return denied;
+    }
+  }
   if (isUpstashConfigured()) {
     const limiter = getUpstashLimiter(prefix, config);
     const result = await limiter.limit(identifier);
@@ -142,10 +226,7 @@ export async function rateLimit(
 
 export type LimiterFn = (id: string) => Promise<RateLimitResult>;
 
-function createLimiter(
-  prefix: string,
-  config: RateLimitConfig,
-): LimiterFn {
+function createLimiter(prefix: string, config: RateLimitConfig): LimiterFn {
   return (id: string) => rateLimit(id, config, prefix);
 }
 
@@ -172,9 +253,13 @@ export const rateLimitLimits = {
   publicPayment: 10,
 } as const;
 
-/** Whether distributed Upstash limiting is active. */
+/** Whether a shared counter backend is configured. */
 export function isDistributedRateLimitEnabled(): boolean {
-  return isUpstashConfigured();
+  return (
+    Boolean(
+      process.env.SHARED_RATE_LIMIT_URL && process.env.SHARED_RATE_LIMIT_TOKEN,
+    ) || isUpstashConfigured()
+  );
 }
 
 /**
