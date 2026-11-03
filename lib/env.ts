@@ -98,7 +98,13 @@ export function warnRecommendedProductionEnv(): void {
   }
 
   for (const { keys, feature } of RECOMMENDED_PRODUCTION_ENV) {
-    const configured = keys.every((key) => Boolean(process.env[key]?.trim()));
+    const configured =
+      keys.every((key) => Boolean(process.env[key]?.trim())) ||
+      (keys[0] === "UPSTASH_REDIS_REST_URL" &&
+        Boolean(
+          process.env.SHARED_RATE_LIMIT_URL?.trim() &&
+          process.env.SHARED_RATE_LIMIT_TOKEN?.trim(),
+        ));
     if (!configured) {
       console.warn(
         `[env] Recommended production config missing (${keys.join(", ")}): ${feature}`,
@@ -115,6 +121,6 @@ export function resetEnvValidationForTests(): void {
 export function isSupabaseConfigured(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   );
 }

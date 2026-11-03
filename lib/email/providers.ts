@@ -167,6 +167,12 @@ export async function sendViaResend(
       cc: options.cc,
       bcc: options.bcc,
       reply_to: options.replyTo,
+      attachments: options.attachments?.map((attachment) => ({
+        filename: attachment.filename,
+        content: Buffer.isBuffer(attachment.content)
+          ? attachment.content.toString("base64")
+          : Buffer.from(attachment.content).toString("base64"),
+      })),
     }),
   });
 
@@ -356,6 +362,7 @@ export async function sendViaMicrosoftGraph(
 
 export function buildFrom(cfg: EmailConfig): string {
   const email = cfg.from_email ?? "noreply@example.com";
+  if (email.includes("<") && email.endsWith(">")) return email;
   const name = cfg.from_name ?? "KRE8IV";
   return `"${name}" <${email}>`;
 }

@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { apiSuccess } from "@/lib/api/response";
 import { logger } from "@/lib/logger";
+import {
+  checkSharedRateLimitHealth,
+  isDistributedRateLimitEnabled,
+} from "@/lib/rate-limit";
 
 /**
  * Health check endpoint
@@ -8,26 +12,43 @@ import { logger } from "@/lib/logger";
  */
 export async function GET(request: Request) {
   try {
+    if (!(await checkSharedRateLimitHealth())) {
+      return apiSuccess(
+        request,
+        {
+          status: "degraded",
+          timestamp: new Date().toISOString(),
+          services: { rateLimiting: "unavailable" },
+        },
+        { status: 503 },
+      );
+    }
     const supabase = await createClient();
-    
+
     // Check database connection
     const { error } = await supabase.from("clients").select("id").limit(1);
-    
+
     // Check if query failed (Supabase returns errors in error field, doesn't throw)
     if (error) {
       // PGRST116 = "no rows returned" which is acceptable (table exists but empty)
       if (error.code !== "PGRST116") {
-        logger.error("Health check database error", error, { code: error.code });
-        return apiSuccess(request, {
-          status: "degraded",
-          timestamp: new Date().toISOString(),
-          services: {
-            database: "error",
-            auth: "unknown",
-          },
+        logger.error("Health check database error", error, {
           code: error.code,
-          errorMessage: error.message,
-        }, { status: 503 });
+        });
+        return apiSuccess(
+          request,
+          {
+            status: "degraded",
+            timestamp: new Date().toISOString(),
+            services: {
+              database: "error",
+              auth: "unknown",
+            },
+            code: error.code,
+            errorMessage: error.message,
+          },
+          { status: 503 },
+        );
       }
     }
 
@@ -38,19 +59,24 @@ export async function GET(request: Request) {
       services: {
         database: "ok",
         auth: "ok",
+        rateLimiting: isDistributedRateLimitEnabled() ? "shared" : "local",
       },
     });
   } catch (error) {
     logger.error("Health check exception", error);
-    return apiSuccess(request, {
-      status: "down",
-      timestamp: new Date().toISOString(),
-      services: {
-        database: "down",
-        auth: "unknown",
+    return apiSuccess(
+      request,
+      {
+        status: "down",
+        timestamp: new Date().toISOString(),
+        services: {
+          database: "down",
+          auth: "unknown",
+        },
+        errorMessage: "Health check failed",
       },
-      errorMessage: "Health check failed",
-    }, { status: 503 });
+      { status: 503 },
+    );
   }
 }
 
@@ -59,11 +85,13 @@ export async function GET(request: Request) {
  */
 export async function HEAD() {
   try {
+    if (!(await checkSharedRateLimitHealth()))
+      return new Response(null, { status: 503 });
     const supabase = await createClient();
-    
+
     // Actually check if the query succeeded
     const { error } = await supabase.from("clients").select("id").limit(1);
-    
+
     // Return 503 if query failed (even if no exception thrown)
     if (error) {
       logger.warn("Health check HEAD failed", { code: error.code });

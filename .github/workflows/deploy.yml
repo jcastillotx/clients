@@ -30,13 +30,15 @@ jobs:
           node-version: "22"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Block high and critical production dependency advisories
-        run: pnpm audit --prod --audit-level high
+      - name: Block dependency advisories at every severity
+        run: pnpm audit --audit-level low
       - run: pnpm type-check
       - run: pnpm lint
       - run: pnpm test -- --run
       - name: Test release safety
-        run: python3 -m unittest discover -s tests/release -v
+        run: |
+          python3 -m unittest discover -s tests/release -v
+          python3 -m unittest discover -s ops/rate-limit -v
       - name: Build Linux image off-host
         run: python3 scripts/release/build.py
       - run: pnpm exec playwright install --with-deps chromium
