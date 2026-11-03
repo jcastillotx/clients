@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createContentSecurityPolicy } from "@/lib/auth/content-security-policy";
-import { checkSharedRateLimitHealth, rateLimit } from "@/lib/rate-limit";
+import {
+  getClientIp,
+  checkSharedRateLimitHealth,
+  rateLimit,
+} from "@/lib/rate-limit";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -87,5 +91,30 @@ describe("shared rate limiting", () => {
     expect(
       (await rateLimit("client", { limit: 5, windowMs: 60000 })).success,
     ).toBe(false);
+  });
+});
+
+describe("trusted client address", () => {
+  it("uses the edge-sanitized address rather than a caller-controlled forwarded prefix", () => {
+    for (const forged of ["192.0.2.1", "192.0.2.2", "fake-client"]) {
+      const request = new Request("https://portal.test/login", {
+        headers: {
+          "x-real-ip": "203.0.113.10",
+          "x-forwarded-for": `${forged}, 203.0.113.10`,
+          "cf-connecting-ip": "192.0.2.99",
+        },
+      });
+      expect(getClientIp(request)).toBe("203.0.113.10");
+    }
+  });
+  it("does not select a prepended address in the forwarded-only fallback", () => {
+    expect(
+      getClientIp(
+        new Request("https://portal.test", {
+          headers: { "x-forwarded-for": "forged, 203.0.113.10" },
+        }),
+      ),
+    ).toBe("203.0.113.10");
+    expect(getClientIp(new Request("https://portal.test"))).toBe("unknown");
   });
 });
