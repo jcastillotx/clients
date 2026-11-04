@@ -42,32 +42,45 @@ export async function PATCH(
   try {
     const validated = updateRequestSchema.parse(body);
 
-    const [{ data: request }, { data: dbUser }, { data: roleRows }] =
-      await Promise.all([
-        supabase
-          .from("requests")
-          .select("id, client_id, custom_fields, status, assigned_to")
-          .eq("id", id)
-          .single(),
-        supabase
-          .from("users")
-          .select("id, client_id, is_super_admin")
-          .eq("id", user.id)
-          .maybeSingle(),
-        supabase
-          .from("user_roles")
-          .select("role:roles(name)")
-          .eq("user_id", user.id),
-      ]);
+    const [{ data: dbUser }, { data: roleRows }] = await Promise.all([
+      supabase
+        .from("users")
+        .select("id, client_id, is_super_admin")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("user_roles")
+        .select("role:roles(name)")
+        .eq("user_id", user.id),
+    ]);
 
-    if (!request) {
-      return apiNotFound(req, "Not found");
-    }
     if (!dbUser) {
       return apiNotFound(req, "User profile not found");
     }
 
-    const isAdmin = isAdminUser(user, dbUser, roleRows);
+    // Match the request detail page: staff can manage workflow, not delete.
+    const isAdmin = isAdminUser(user, dbUser, roleRows, ["staff"]);
+    const ownerOrAdmin = isAdminUser(user, dbUser, roleRows);
+    if (
+      isAdmin &&
+      !ownerOrAdmin &&
+      Object.keys(validated).some(
+        (key) => !["status", "assignedTo"].includes(key),
+      )
+    ) {
+      return apiForbidden(req);
+    }
+    // Match the server-rendered workflow page after authoritative role checks.
+    const workflowClient = isAdmin
+      ? (createAdminClientIfAvailable() ?? supabase)
+      : supabase;
+    const { data: request } = await workflowClient
+      .from("requests")
+      .select("id, client_id, custom_fields, status, assigned_to")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .single();
+    if (!request) return apiNotFound(req, "Not found");
     const isSameClient =
       dbUser.client_id && request.client_id === dbUser.client_id;
 
@@ -159,7 +172,7 @@ export async function PATCH(
       });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await workflowClient
       .from("requests")
       .update(updatePayload)
       .eq("id", id)

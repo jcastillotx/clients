@@ -130,17 +130,17 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{request.title}</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="break-words text-3xl font-bold tracking-tight">{request.title}</h1>
             <Badge variant={getStatusVariant(request.status)}>
               {getStatusIcon(request.status)}
               <span className="ml-1.5">{request.status.replace("_", " ")}</span>
             </Badge>
             <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
           </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Building2 className="h-4 w-4" />
               <span>{request.client?.company_name || "Unknown client"}</span>
@@ -283,11 +283,11 @@ export function RequestDetail({ request, assignableUsers = [], canManageWorkflow
               <Separator />
 
               <div>
-                <p className="text-sm font-medium mb-2">Assigned To</p>
+                <p id="request-assignment-label" className="text-sm font-medium mb-2">Assigned To</p>
                 {canManageWorkflow ? (
                   <div className="space-y-2">
                     <Select value={assignedToId} onValueChange={(value) => setAssignedToId(value)}>
-                      <SelectTrigger>
+                      <SelectTrigger aria-labelledby="request-assignment-label">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
