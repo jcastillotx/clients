@@ -37,6 +37,9 @@ export type RequestStatus = (typeof requestStatusEnum)[number];
  * Request update validation schema
  */
 export const updateRequestSchema = createRequestSchema.partial().extend({
+  // Creation defaults must never overwrite omitted fields during a PATCH.
+  priority: z.enum(["low", "medium", "high"]).optional(),
+  type: z.enum(requestTypeEnum).optional(),
   status: z.enum(requestStatusEnum).optional(),
   assignedTo: cleanTextSchema.guid().nullable().optional(),
 });
