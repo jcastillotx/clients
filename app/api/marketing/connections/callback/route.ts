@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { encrypt, decrypt } from "@/lib/encryption";
 import { marketingConnectionAccess } from "@/lib/marketing/connection-access";
 import {
+  googleMarketingProviders,
   googleMarketingConfig,
   googleMarketingScopes,
   type GoogleMarketingProvider,
@@ -21,7 +22,13 @@ export async function GET(request: Request) {
     const [saved] = await db.execute(
       sql`DELETE FROM marketing_oauth_states WHERE state_hash=${createHash("sha256").update(state).digest("hex")} AND expires_at>now() RETURNING *`,
     );
-    if (!saved) throw Error("expired");
+    if (
+      !saved ||
+      !googleMarketingProviders.includes(
+        saved.provider as GoogleMarketingProvider,
+      )
+    )
+      throw Error("expired");
     const provider = saved.provider as GoogleMarketingProvider,
       access = await marketingConnectionAccess(provider);
     if (

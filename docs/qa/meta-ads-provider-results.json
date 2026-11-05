@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Real Meta OAuth tokens are encrypted and absent from API responses",
+    "passed": true
+  },
+  {
+    "name": "Another client cannot see the owner Meta connection",
+    "passed": true
+  },
+  {
+    "name": "Selected Meta Ads property is available from the actual Meta account",
+    "passed": true
+  },
+  {
+    "name": "Forged property selection is rejected against Meta resource membership",
+    "passed": true
+  },
+  {
+    "name": "Actual Meta Ads aggregate report succeeds for the selected owner property",
+    "passed": true
+  },
+  {
+    "name": "Expired Meta user token requires reconnect instead of borrowing other credentials",
+    "passed": true
+  },
+  {
+    "name": "Foreign client cannot use the owner Meta Ads token",
+    "passed": true
+  },
+  {
+    "name": "Expired plan blocks reporting but preserves disconnect access",
+    "passed": true
+  },
+  {
+    "name": "Invalid OAuth state fails safely without changing saved connections",
+    "passed": true
+  }
+]

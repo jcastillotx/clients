@@ -1,3 +1,4 @@
+import { searchConsoleReport } from "@/lib/marketing/search-console";
 import { z } from "zod";
 import type { GoogleMarketingProvider } from "./google-connections";
 const analyticsReport = z
@@ -17,6 +18,10 @@ export function marketingReportStatus(
   provider: GoogleMarketingProvider,
   data: unknown,
 ) {
+  if (provider === "google_search_console") {
+    const report = searchConsoleReport.parse(data);
+    return report.rows?.length ? ("data" as const) : ("empty" as const);
+  }
   if (provider === "google_analytics") {
     const report = analyticsReport.parse(data);
     return report.rows?.length ? ("data" as const) : ("empty" as const);

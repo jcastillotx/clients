@@ -1,9 +1,11 @@
+import { searchConsoleSites } from "@/lib/marketing/search-console";
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { encrypt, decrypt } from "@/lib/encryption";
 export const googleMarketingProviders = [
   "google_analytics",
   "google_ads",
+  "google_search_console",
 ] as const;
 export type GoogleMarketingProvider = (typeof googleMarketingProviders)[number];
 export function googleMarketingConfig() {
@@ -23,9 +25,14 @@ export function googleMarketingConfig() {
 export const googleMarketingScopes = {
   google_analytics: "https://www.googleapis.com/auth/analytics.readonly",
   google_ads: "https://www.googleapis.com/auth/adwords",
+  google_search_console: "https://www.googleapis.com/auth/webmasters.readonly",
 };
 export function connectionGroup(provider: GoogleMarketingProvider) {
-  return provider === "google_ads" ? "paid-media" : "analytics";
+  return provider === "google_ads"
+    ? "paid-media"
+    : provider === "google_search_console"
+      ? "seo"
+      : "analytics";
 }
 export async function googleMarketingToken(
   clientId: string,
@@ -74,6 +81,21 @@ export async function googleMarketingResources(
   if (provider === "google_ads" && process.env.GOOGLE_ADS_DEVELOPER_TOKEN)
     headers["developer-token"] = process.env.GOOGLE_ADS_DEVELOPER_TOKEN;
   const resources: Array<{ id: string; name: string }> = [];
+  if (provider === "google_search_console") {
+    const response = await fetch(
+      "https://www.googleapis.com/webmasters/v3/sites",
+      {
+        headers,
+        signal: AbortSignal.timeout(20000),
+      },
+    );
+    if (!response.ok) throw Error("Search Console properties unavailable.");
+    const body: unknown = await response.json();
+    const parsed = searchConsoleSites.parse(body);
+    return (parsed.siteEntry || [])
+      .filter((site) => site.permissionLevel !== "siteUnverifiedUser")
+      .map((site) => ({ id: site.siteUrl, name: site.siteUrl }));
+  }
   if (provider === "google_ads") {
     const version = process.env.GOOGLE_ADS_API_VERSION || "v26";
     if (!/^v\d+$/.test(version)) throw Error("Ads API version invalid.");

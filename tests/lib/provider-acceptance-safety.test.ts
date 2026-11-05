@@ -11,6 +11,37 @@ const local = {
   DATABASE_URL: "postgres://fixture@127.0.0.1:55322/postgres",
 };
 describe("real provider acceptance boundary", () => {
+  it("keeps Meta acceptance separate from Google and AI credentials", () => {
+    const meta = {
+      ...local,
+      STAGING_PROVIDER_ACCEPTANCE: "meta_marketing",
+      META_MARKETING_CLIENT_ID: "fixture",
+      META_MARKETING_CLIENT_SECRET: "fixture",
+      META_MARKETING_LOGIN_CONFIG_ID: "fixture",
+    };
+    expect(isLocalProviderAcceptance(meta)).toBe(true);
+    expect(() =>
+      isLocalProviderAcceptance({
+        ...meta,
+        GOOGLE_MARKETING_CLIENT_SECRET: "fixture",
+      }),
+    ).toThrow();
+    expect(() =>
+      isLocalProviderAcceptance({ ...meta, OPENROUTER_API_KEY: "fixture" }),
+    ).toThrow();
+    expect(() =>
+      isLocalProviderAcceptance({
+        ...meta,
+        DATABASE_URL: "postgres://fixture@production.invalid/postgres",
+      }),
+    ).toThrow();
+    expect(() =>
+      isLocalProviderAcceptance({
+        ...local,
+        META_MARKETING_CLIENT_SECRET: "fixture",
+      }),
+    ).toThrow();
+  });
   it("permits Stripe sandbox with synthetic local services only", () =>
     expect(
       isLocalProviderAcceptance({

@@ -147,7 +147,13 @@ export function MarketingSkillTools({
       setRunning(false);
     }
   }
-  async function attachReport(provider: "google_analytics" | "google_ads") {
+  async function attachReport(
+    provider:
+      | "google_analytics"
+      | "google_ads"
+      | "google_search_console"
+      | "meta_ads",
+  ) {
     if (isStaff || running || attaching) return;
     setAttaching(true);
     setError("");
@@ -170,11 +176,11 @@ export function MarketingSkillTools({
         );
       if (body.data.dataStatus === "empty")
         throw new Error(
-          "Google returned no report rows for this period. Check your selected account or property in Connections.",
+          "The provider returned no report rows for this period. Check your selected account or property in Connections.",
         );
       const next = [
         evidence,
-        `Connected ${provider === "google_ads" ? "Google Ads" : "GA4"} report:\n${JSON.stringify(body.data, null, 2)}`,
+        `Connected ${provider === "google_ads" ? "Google Ads" : provider === "meta_ads" ? "Meta Ads" : provider === "google_search_console" ? "Search Console" : "GA4"} report:\n${JSON.stringify(body.data, null, 2)}`,
       ]
         .filter(Boolean)
         .join("\n\n");
@@ -227,8 +233,8 @@ export function MarketingSkillTools({
         </p>
         <p className="text-sm text-muted-foreground">
           Use your brief and supplied data to create reviewable drafts. You can
-          attach reports from your connected Google accounts. Draft tools do not
-          publish content, send email or spend money.
+          attach reports from your connected Google and Meta accounts. Draft
+          tools do not publish content, send email or spend money.
         </p>
       </header>
       <div className="flex gap-4 text-sm">
@@ -382,7 +388,8 @@ export function MarketingSkillTools({
                   />
                 </div>
                 {!isStaff &&
-                  (library.plan.groups.includes("analytics") ||
+                  (library.plan.groups.includes("seo") ||
+                    library.plan.groups.includes("analytics") ||
                     library.plan.groups.includes("paid-media")) && (
                     <div className="space-y-2 rounded border p-3">
                       <p className="text-sm">
@@ -403,6 +410,17 @@ export function MarketingSkillTools({
                             Attach GA4 report
                           </Button>
                         )}
+                        {library.plan.groups.includes("seo") && (
+                          <Button
+                            variant="outline"
+                            disabled={running || attaching}
+                            onClick={() =>
+                              void attachReport("google_search_console")
+                            }
+                          >
+                            Attach Search Console report
+                          </Button>
+                        )}
                         {library.plan.groups.includes("paid-media") && (
                           <Button
                             variant="outline"
@@ -410,6 +428,15 @@ export function MarketingSkillTools({
                             onClick={() => void attachReport("google_ads")}
                           >
                             Attach Google Ads report
+                          </Button>
+                        )}
+                        {library.plan.groups.includes("paid-media") && (
+                          <Button
+                            variant="outline"
+                            disabled={running || attaching}
+                            onClick={() => void attachReport("meta_ads")}
+                          >
+                            Attach Meta Ads report
                           </Button>
                         )}
                         <Link
